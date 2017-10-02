@@ -50,10 +50,10 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Instances of this class allow a user to select an existing hash database and
  * add it to the set of hash databases used to classify files as unknown, known,
- * or known bad.
+ * or notable.
  */
 final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private static final Logger LOGGER = Logger.getLogger(ImportHashDatabaseDialog.class.getName());
@@ -82,7 +82,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to select an existing hash database
      * and add it to the set of hash databases used to classify files as
-     * unknown, known, or known bad.
+     * unknown, known, or notable.
      */
     @Messages({"ImportHashDatabaseDialog.importHashDbMsg=Import Hash Database"})
     ImportHashDatabaseDialog() {
@@ -535,7 +535,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         // Future, make UI handle more than the "FILES" type.
         try {
             EamDb dbManager = EamDb.getInstance();
-            EamArtifact.Type contentType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID); // get "FILES" type
+            CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
             // run in the background and close dialog
             SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
             dispose();
@@ -577,9 +577,9 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         private final TskData.FileKnown knownStatus;
         private final int globalSetID;
         private final ProgressHandle progress;
-        private final EamArtifact.Type contentType;
+        private final CorrelationAttribute.Type contentType;
 
-        public ImportHashDatabaseWorker(String filename, TskData.FileKnown knownStatus, int globalSetID, EamArtifact.Type contentType) throws EamDbException, UnknownHostException {
+        public ImportHashDatabaseWorker(String filename, TskData.FileKnown knownStatus, int globalSetID, CorrelationAttribute.Type contentType) throws EamDbException, UnknownHostException {
             this.file = new File(filename);
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;
@@ -587,7 +587,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             this.progress = ProgressHandle.createHandle(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_displayName());
 
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central Repository database is not enabled."); // NON-NLS
+                throw new EamDbException("Central repository database is not enabled."); // NON-NLS
             }
         }
 

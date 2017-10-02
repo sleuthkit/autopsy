@@ -3,31 +3,31 @@
 What Does It Do
 ========
 
-The Hash Database Lookup Module calculates MD5 hash values for files and looks up hash values in a database to determine if the file is known bad, known (in general), or unknown.
+The Hash Database Lookup Module calculates MD5 hash values for files and looks up hash values in a database to determine if the file is notable, known (in general), or unknown.
 
 
 Configuration
 =======
 The Hash Database Management window is where you can set and update your hash database information. Hash databases are used to identify files that are 'known'.
 \li Known good files are those that can be safely ignored. This set of files frequently includes standard OS and application files. Ignoring such uninteresting-to-the-investigator files, can greatly reduce image analysis time.
-\li Known bad (also called notable) files are those that should raise awareness. This set will vary depending on the type of investigation, but common examples include contraband images and malware.
+\li Notable (or known bad) files are those that should raise awareness. This set will vary depending on the type of investigation, but common examples include contraband images and malware.
 
 \section notable_known_bad_hashsets Notable / Known Bad Hashsets
-Autopsy allows for multiple known bad hash databases to be set. Autopsy supports the following formats:
+Autopsy allows for multiple notable hash databases to be set. Autopsy supports the following formats:
 \li EnCase: An EnCase hashset file.
 \li MD5sum: Output from running the md5, md5sum, or md5deep program on a set of files.
 \li NSRL: The format of the NSRL database.
 \li HashKeeper: Hashset file conforming to the HashKeeper standard.
 
 \section adding_hashsets Adding Hashsets
-Autopsy needs an index of the hashset to actualy use a hash database. It can create the index if you import only the hashset. When you select the database from within this window, it will tell you if the index needs to be created. Autopsy uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or you can use Autopsy. If you attempt proceed without indexing a database, Autopsy will offer to automatically produce an index for you.
+Autopsy needs an index of the hashset to actually use a hash database. It can create the index if you import only the hashset. When you select the database from within this window, it will tell you if the index needs to be created. Autopsy uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or you can use Autopsy. If you attempt proceed without indexing a database, Autopsy will offer to automatically produce an index for you.
 You can also specify only the index file and not use the full hashset - the index file is sufficient to identify known files. This can save space. To do this, specify the .idx file from the Hash Database Management window.
 
 <br>
 \section using_hashsets Using Hashsets
 There is an \ref ingest_page "ingest module" that will hash the files and look them up in the hashsets. It will flag files that were in the notable hashset and those results will be shown in the Results tree of the \ref tree_viewer_page.
 Other ingest modules are able to use the known status of a file to decide if they should ignore the file or process it.
-You can also see the results in the \ref how_to_open_file_search "File Search" window. There is an option to choose the 'known status'. From here, you can do a search to see all 'known bad' files. From here, you can also choose to ignore all 'known' files that were found in the NSRL. You can also see the status of the file in a column when the file is listed.
+You can also see the results in the \ref how_to_open_file_search "File Search" window. There is an option to choose the 'known status'. From here, you can do a search to see all 'notable' files. From here, you can also choose to ignore all 'known' files that were found in the NSRL. You can also see the status of the file in a column when the file is listed.
 <br>
 NIST NSRL
 ------

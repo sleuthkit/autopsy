@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Central Repository
+ *
+ * Copyright 2015-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
@@ -59,7 +72,7 @@ public class EamDbSettingsDialog extends JDialog {
      */
     @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration",
         "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
-        "EamDbSettingsDialog.lbDatabaseType.text=Database type :",
+        "EamDbSettingsDialog.lbDatabaseType.text=Database Type :",
         "EamDbSettingsDialog.fcDatabasePath.title=Select location for central_repository.db"})
 
     public EamDbSettingsDialog() {
@@ -94,7 +107,7 @@ public class EamDbSettingsDialog extends JDialog {
 
             @Override
             public String getDescription() {
-                return "Directories and Central Repository databases";
+                return "Directories and central repository databases";
             }
         });
         cbDatabaseType.setSelectedItem(selectedPlatform);
@@ -419,7 +432,7 @@ public class EamDbSettingsDialog extends JDialog {
                             Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                    LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
+                    LOGGER.severe("Unable to initialize database schema or insert contents into central repository.");
                     return;
                 }
                 break;
@@ -440,7 +453,7 @@ public class EamDbSettingsDialog extends JDialog {
                             Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                    LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
+                    LOGGER.severe("Unable to initialize database schema or insert contents into central repository.");
                     return;
                 }
                 break;
@@ -459,7 +472,7 @@ public class EamDbSettingsDialog extends JDialog {
 
     @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
-        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to Central Repository database.",
+        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database.",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
         "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",

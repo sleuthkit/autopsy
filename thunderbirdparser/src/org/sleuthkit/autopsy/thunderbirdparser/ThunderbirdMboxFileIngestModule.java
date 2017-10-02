@@ -328,8 +328,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param attachments
      * @param abstractFile
+     * @param messageArtifact
      *
-     * @return
+     * @return List of attachments
      */
     private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile, BlackboardArtifact messageArtifact) {
         List<AbstractFile> files = new ArrayList<>();

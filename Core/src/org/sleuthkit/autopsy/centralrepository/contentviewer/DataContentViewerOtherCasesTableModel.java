@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
  * Model for cells in data content viewer table
@@ -40,18 +40,18 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
-    private enum TableColumns {
+    enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 75),
-        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 75),
-        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 145),
-        TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 40),
-        VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 145),
-        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 45),
-        SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 20),
+        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
+        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
+        TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 100),
+        VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
+        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
+        SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 50),
+        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
         COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
-        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 250);
+        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
 
         private final String columnName;
         private final int columnWidth;
@@ -70,7 +70,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    List<EamArtifact> eamArtifacts;
+    List<CorrelationAttribute> eamArtifacts;
 
     DataContentViewerOtherCasesTableModel() {
         eamArtifacts = new ArrayList<>();
@@ -127,24 +127,24 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     private Object mapValueById(int rowIdx, TableColumns colId) {
-        EamArtifact eamArtifact = eamArtifacts.get(rowIdx);
-        EamArtifactInstance eamArtifactInstance = eamArtifact.getInstances().get(0);
+        CorrelationAttribute eamArtifact = eamArtifacts.get(rowIdx);
+        CorrelationAttributeInstance eamArtifactInstance = eamArtifact.getInstances().get(0);
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
         switch (colId) {
             case CASE_NAME:
-                if (null != eamArtifactInstance.getEamCase()) {
-                    value = eamArtifactInstance.getEamCase().getDisplayName();
+                if (null != eamArtifactInstance.getCorrelationCase()) {
+                    value = eamArtifactInstance.getCorrelationCase().getDisplayName();
                 }
                 break;
             case DEVICE:
-                if (null != eamArtifactInstance.getEamDataSource()) {
-                    value = eamArtifactInstance.getEamDataSource().getDeviceID();
+                if (null != eamArtifactInstance.getCorrelationDataSource()) {
+                    value = eamArtifactInstance.getCorrelationDataSource().getDeviceID();
                 }
                 break;
             case DATA_SOURCE:
-                if (null != eamArtifactInstance.getEamDataSource()) {
-                    value = eamArtifactInstance.getEamDataSource().getName();
+                if (null != eamArtifactInstance.getCorrelationDataSource()) {
+                    value = eamArtifactInstance.getCorrelationDataSource().getName();
                 }
                 break;
             case FILE_PATH:
@@ -175,18 +175,19 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one local Central Repository Artifact to the table.
+     * Add one local central repository artifact to the table.
      *
-     * @param eamArtifact Central Repository Artifact to add to the
+     * @param eamArtifact central repository artifact to add to the
      *                   table
      */
-    public void addEamArtifact(EamArtifact eamArtifact) {
+    public void addEamArtifact(CorrelationAttribute eamArtifact) {
         eamArtifacts.add(eamArtifact);
         fireTableDataChanged();
     }
 
     public void clearTable() {
         eamArtifacts.clear();
+        fireTableDataChanged();
     }
 
 }

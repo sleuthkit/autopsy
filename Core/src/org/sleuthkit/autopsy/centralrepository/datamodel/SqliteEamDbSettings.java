@@ -296,9 +296,11 @@ public final class SqliteEamDbSettings {
         StringBuilder createDataSourcesTable = new StringBuilder();
         createDataSourcesTable.append("CREATE TABLE IF NOT EXISTS data_sources (");
         createDataSourcesTable.append("id integer primary key autoincrement NOT NULL,");
+        createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
-        createDataSourcesTable.append("CONSTRAINT device_id_unique UNIQUE(device_id)");
+        createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
@@ -322,7 +324,7 @@ public final class SqliteEamDbSettings {
         createReferenceTypesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
         createReferenceTypesTableTemplate.append("reference_set_id integer,");
         createReferenceTypesTableTemplate.append("value text NOT NULL,");
-        createReferenceTypesTableTemplate.append("known_status text NOT NULL,");
+        createReferenceTypesTableTemplate.append("known_status integer NOT NULL,");
         createReferenceTypesTableTemplate.append("comment text,");
         createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(reference_set_id, value) ON CONFLICT IGNORE,");
         createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
@@ -346,13 +348,13 @@ public final class SqliteEamDbSettings {
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
         createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
-        createArtifactInstancesTableTemplate.append("case_id integer,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer,");
+        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("value text NOT NULL,");
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(case_id, data_source_id, value, file_path) ON CONFLICT IGNORE,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createArtifactInstancesTableTemplate.append(")");
@@ -403,11 +405,11 @@ public final class SqliteEamDbSettings {
             stmt.execute(createDbInfoTable.toString());
 
             // Create a separate instance and reference table for each artifact type
-            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
+            List<CorrelationAttribute.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttribute.getDefaultCorrelationTypes();
 
             String reference_type_dbname;
             String instance_type_dbname;
-            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+            for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
                 reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
 
@@ -418,7 +420,7 @@ public final class SqliteEamDbSettings {
                 stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
 
                 // FUTURE: allow more than the FILES type
-                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
                     stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));

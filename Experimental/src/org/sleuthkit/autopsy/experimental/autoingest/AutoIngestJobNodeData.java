@@ -32,8 +32,22 @@ import javax.lang.model.type.TypeKind;
 final class AutoIngestJobNodeData {
 
     private static final int CURRENT_VERSION = 1;
-    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131629;
     private static final int DEFAULT_PRIORITY = 0;
+
+    /*
+     * This number is the sum of each piece of data, based on it's type. For the
+     * types boolean, int, and long, values 1, 4, and 8 will be added
+     * respectively. For String objects, the length of the string, plus either a
+     * byte or short respesenting the length of the string, will be added.
+     *
+     * This field is used to set the size of the buffer during the byte array
+     * creation in the 'toArray()' method. Since the final size of the array
+     * isn't immediately known at the time of creation, this number is used to
+     * create an array as large as could possibly be needed to store all the
+     * data. This avoids the need to continuously enlarge the buffer. Once the
+     * buffer has all the necessary data, it will be resized as appropriate.
+     */
+    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131629;
 
     /*
      * Version 0 fields.
@@ -48,17 +62,27 @@ final class AutoIngestJobNodeData {
      * Version 1 fields.
      */
     private int version;
-    private String manifestFilePath;
+    private String manifestFilePath;    // 'short' length used in byte array
     private long manifestFileDate;
-    private String caseName;
-    private String deviceId;
-    private String dataSourcePath;
-    private String caseDirectoryPath;
-    private String processingHostName;
+    private String caseName;            // 'byte' length used in byte array
+    private String deviceId;            // 'byte' length used in byte array
+    private String dataSourcePath;      // 'short' length used in byte array
+    private String caseDirectoryPath;   // 'short' length used in byte array
+    private String processingHostName;  // 'short' length used in byte array
     private byte processingStage;
     private long processingStageStartDate;
-    private String processingStageDetailsDescription;
+    private String processingStageDetailsDescription;   // 'byte' length used in byte array
     private long processingStageDetailsStartDate;
+
+    /**
+     * Gets the current version of the auto ingest job coordination service node
+     * data.
+     *
+     * @return The version number.
+     */
+    static int getCurrentVersion() {
+        return AutoIngestJobNodeData.CURRENT_VERSION;
+    }
 
     /**
      * Uses an auto ingest job to construct an object that converts auto ingest
@@ -70,7 +94,7 @@ final class AutoIngestJobNodeData {
     AutoIngestJobNodeData(AutoIngestJob job) {
         setProcessingStatus(job.getProcessingStatus());
         setPriority(job.getPriority());
-        setNumberOfCrashes(numberOfCrashes); // RJCTODO
+        setNumberOfCrashes(job.getNumberOfCrashes());
         setCompletedDate(job.getCompletedDate());
         setErrorsOccurred(job.getErrorsOccurred());
         this.version = CURRENT_VERSION;
@@ -84,7 +108,7 @@ final class AutoIngestJobNodeData {
         setProcessingHostName(job.getProcessingHostName());
         setProcessingStage(job.getProcessingStage());
         setProcessingStageStartDate(job.getProcessingStageStartDate());
-        setProcessingStageDetails(job.getStageDetails());
+        setProcessingStageDetails(job.getProcessingStageDetails());
     }
 
     /**
@@ -107,7 +131,7 @@ final class AutoIngestJobNodeData {
         this.numberOfCrashes = 0;
         this.completedDate = 0L;
         this.errorsOccurred = false;
-        this.version = CURRENT_VERSION;
+        this.version = 0;
         this.manifestFilePath = "";
         this.manifestFileDate = 0L;
         this.caseName = "";
@@ -151,7 +175,7 @@ final class AutoIngestJobNodeData {
                 this.processingStage = buffer.get();
                 this.processingStageStartDate = buffer.getLong();
                 this.processingStageDetailsDescription = getStringFromBuffer(buffer, TypeKind.BYTE);
-                this.processingStageDetailsStartDate = buffer.getLong();;
+                this.processingStageDetailsStartDate = buffer.getLong();
                 this.processingHostName = getStringFromBuffer(buffer, TypeKind.SHORT);
             }
 
@@ -318,14 +342,14 @@ final class AutoIngestJobNodeData {
     /**
      * Gets the path to the case directory of the case associated with the job.
      *
-     * @return The case directory path or null if the case directory has not
-     *         been created yet.
+     * @return The case directory path or an empty string path if the case
+     *         directory has not been created yet.
      */
     synchronized Path getCaseDirectoryPath() {
         if (!caseDirectoryPath.isEmpty()) {
             return Paths.get(caseDirectoryPath);
         } else {
-            return null;
+            return Paths.get("");
         }
     }
 
@@ -517,7 +541,16 @@ final class AutoIngestJobNodeData {
         return array;
     }
 
-    // DGL: Document what is going on here and how the max buffer sie constant is calculated.
+    /**
+     * This method retrieves a string from a given buffer. Depending on the type
+     * specified, either a 'byte' or a 'short' will first be read out of the
+     * buffer which gives the length of the string so it can be properly parsed.
+     *
+     * @param buffer     The buffer from which the string will be read.
+     * @param lengthType The size of the length data.
+     *
+     * @return The string read from the buffer.
+     */
     private String getStringFromBuffer(ByteBuffer buffer, TypeKind lengthType) {
         int length = 0;
         String output = "";
@@ -540,7 +573,16 @@ final class AutoIngestJobNodeData {
         return output;
     }
 
-    // DGL: Document what is going on here and how the max buffer sie constant is calculated.
+    /**
+     * This method puts a given string into a given buffer. Depending on the
+     * type specified, either a 'byte' or a 'short' will be inserted prior to
+     * the string which gives the length of the string so it can be properly
+     * parsed.
+     *
+     * @param stringValue The string to write to the buffer.
+     * @param buffer      The buffer to which the string will be written.
+     * @param lengthType  The size of the length data.
+     */
     private void putStringIntoBuffer(String stringValue, ByteBuffer buffer, TypeKind lengthType) {
         switch (lengthType) {
             case BYTE:

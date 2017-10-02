@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 
 /**
- * An automated ingest job for a manifest. The manifest specifies a co-located
- * data source and a case to which the data source is to be added.
+ * An automated ingest job, which is an ingest job performed by the automated
+ * ingest service.
  */
 @ThreadSafe
 public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
@@ -44,9 +44,13 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     private static final int CURRENT_VERSION = 1;
     private static final int DEFAULT_PRIORITY = 0;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private final int version;
+
+    /*
+     * Version 0 fields.
+     */
     private final Manifest manifest;
-    private final String nodeName;
+    @GuardedBy("this")
+    private String nodeName;
     @GuardedBy("this")
     private String caseDirectoryPath;
     @GuardedBy("this")
@@ -55,8 +59,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     private Stage stage;
     @GuardedBy("this")
     private Date stageStartDate;
-    @GuardedBy("this")
-    private StageDetails stageDetails;
     @GuardedBy("this")
     transient private DataSourceProcessor dataSourceProcessor;
     @GuardedBy("this")
@@ -69,96 +71,116 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     private Date completedDate;
     @GuardedBy("this")
     private boolean errorsOccurred;
+
+    /*
+     * Version 1 fields.
+     */
+    private final int version; // For possible future use.
     @GuardedBy("this")
     private ProcessingStatus processingStatus;
     @GuardedBy("this")
     private int numberOfCrashes;
+    @GuardedBy("this")
+    private StageDetails stageDetails;
 
     /**
-     * Constructs a new automated ingest job for a manifest. All job state not
-     * specified in the manifest is set to the default state for a new job.
+     * Constructs a new automated ingest job. All job state not specified in the
+     * job manifest is set to the default state for a new job.
      *
-     * @param manifest          The manifest.
+     * @param manifest The manifest for an automated ingest job.
      */
     AutoIngestJob(Manifest manifest) {
-        this.version = CURRENT_VERSION;
+        /*
+         * Version 0 fields.
+         */
         this.manifest = manifest;
-        this.nodeName = AutoIngestJob.LOCAL_HOST_NAME;
+        this.nodeName = "";
         this.caseDirectoryPath = "";
         this.priority = DEFAULT_PRIORITY;
         this.stage = Stage.PENDING;
         this.stageStartDate = manifest.getDateFileCreated();
-        this.stageDetails = this.getStageDetails();
         this.dataSourceProcessor = null;
         this.ingestJob = null;
         this.cancelled = false;
         this.completed = false;
         this.completedDate = new Date(0);
         this.errorsOccurred = false;
+
+        /*
+         * Version 1 fields.
+         */
+        this.version = CURRENT_VERSION;
         this.processingStatus = ProcessingStatus.PENDING;
         this.numberOfCrashes = 0;
+        this.stageDetails = this.getProcessingStageDetails();
     }
 
     /**
-     * Constructs an automated ingest job for a manifest. The manifest specifies
-     * a co-located data source and a case to which the data source is to be
-     * added.
+     * Constructs an automated ingest job using the coordination service node
+     * data for the job.
      *
-     * Note: Manifest objects will be phased out and no longer be part of the
-     * AutoIngestJob class.
-     *
-     * @param nodeData The node data.
+     * @param nodeData The coordination service node data for an automated
+     *                 ingest job.
      */
     AutoIngestJob(AutoIngestJobNodeData nodeData) {
-        this.version = nodeData.getVersion();        
+        /*
+         * Version 0 fields.
+         */
         this.manifest = new Manifest(nodeData.getManifestFilePath(), nodeData.getManifestFileDate(), nodeData.getCaseName(), nodeData.getDeviceId(), nodeData.getDataSourcePath(), Collections.emptyMap());
         this.nodeName = nodeData.getProcessingHostName();
         this.caseDirectoryPath = nodeData.getCaseDirectoryPath().toString();
         this.priority = nodeData.getPriority();
         this.stage = nodeData.getProcessingStage();
         this.stageStartDate = nodeData.getProcessingStageStartDate();
-        this.stageDetails = this.getStageDetails();
-        this.dataSourceProcessor = null;
-        this.ingestJob = null;
-        this.cancelled = false;
-        this.completed = false;
+        this.dataSourceProcessor = null; // Transient data not in node data.
+        this.ingestJob = null; // Transient data not in node data.
+        this.cancelled = false; // Transient data not in node data.
+        this.completed = false; // Transient data not in node data.
         this.completedDate = nodeData.getCompletedDate();
         this.errorsOccurred = nodeData.getErrorsOccurred();
+
+        /*
+         * Version 1 fields.
+         */
+        this.version = CURRENT_VERSION;
         this.processingStatus = nodeData.getProcessingStatus();
         this.numberOfCrashes = nodeData.getNumberOfCrashes();
+        this.stageDetails = this.getProcessingStageDetails();
     }
 
     /**
-     * Gets the auto ingest job manifest.
+     * Gets the job manifest.
      *
-     * @return The manifest.
+     * @return The job manifest.
      */
     Manifest getManifest() {
         return this.manifest;
     }
 
     /**
-     * Sets the path to the case directory of the case associated with this job.
+     * Sets the path to the case directory for the job.
      *
-     * @param caseDirectoryPath The path to the case directory.
+     * @param caseDirectoryPath The path to the case directory. Can be the empty
+     *                          path if the case directory has not been created
+     *                          yet.
      */
     synchronized void setCaseDirectoryPath(Path caseDirectoryPath) {
-        this.caseDirectoryPath = caseDirectoryPath.toString();
+        if (null != caseDirectoryPath) {
+            this.caseDirectoryPath = caseDirectoryPath.toString();
+        } else {
+            this.caseDirectoryPath = "";
+        }
     }
 
     /**
-     * Gets the path to the case directory of the case associated with this job,
-     * may be null.
+     * Gets the path to the case directory for job, may be the empty path if the
+     * case directory has not been created yet.
      *
-     * @return The case directory path or null if the case directory has not
-     *         been created yet.
+     * @return The case directory path. Will be the empty path if the case
+     *         directory has not been created yet.
      */
     synchronized Path getCaseDirectoryPath() {
-        if (!caseDirectoryPath.isEmpty()) {
-            return Paths.get(caseDirectoryPath);
-        } else {
-            return null;
-        }
+        return Paths.get(caseDirectoryPath);
     }
 
     /**
@@ -181,23 +203,50 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return this.priority;
     }
 
-    synchronized void setStage(Stage newStage) {
+    /**
+     * Sets the processing stage of the job. The start date/time for the stage
+     * is set when the stage is set.
+     *
+     * @param newStage The processing stage.
+     * @param stageStartDate The date and time this stage started.
+     */
+    synchronized void setProcessingStage(Stage newStage, Date stageStartDate) {
         if (Stage.CANCELLING == this.stage && Stage.COMPLETED != newStage) {
             return;
         }
         this.stage = newStage;
-        this.stageStartDate = Date.from(Instant.now());
+        this.stageStartDate = stageStartDate;
     }
 
+    /**
+     * Gets the processing stage of the job.
+     *
+     * @return The processing stage.
+     */
     synchronized Stage getProcessingStage() {
         return this.stage;
     }
 
+    /**
+     * Gets the date/time the current processing stage of the job started.
+     *
+     * @return The current processing stage start date/time.
+     */
     synchronized Date getProcessingStageStartDate() {
         return new Date(this.stageStartDate.getTime());
     }
 
-    synchronized StageDetails getStageDetails() {
+    /**
+     * Gets any available details associated with the current processing stage
+     * of the job, e.g., the currently running data source level ingest module,
+     * an ingest module in the process of being cancelled, etc. If no additional
+     * details are available, the stage details will be the same as the
+     * processing stage.
+     *
+     * @return A stage details object consisting of a descrition and associated
+     *         date/time.
+     */
+    synchronized StageDetails getProcessingStageDetails() {
         String description;
         Date startDate;
         if (Stage.CANCELLING != this.stage && null != this.ingestJob) {
@@ -235,24 +284,43 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return this.stageDetails;
     }
 
-    synchronized void setStageDetails(StageDetails stageDetails) {
-        this.stageDetails = stageDetails;
-    }
-    
+    /**
+     * Sets the data source processor for the job. Used for job cancellation.
+     *
+     * @param dataSourceProcessor A data source processor for the job.
+     */
     synchronized void setDataSourceProcessor(DataSourceProcessor dataSourceProcessor) {
         this.dataSourceProcessor = dataSourceProcessor;
     }
 
+    /**
+     * Sets the ingest job for the auto ingest job. Used for obtaining
+     * processing stage details, cancelling the currently running data source
+     * ingest module, and cancelling the job.
+     *
+     * @param ingestJob The ingest job for the auto ingest job.
+     */
     synchronized void setIngestJob(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
     }
 
+    /**
+     * Gets the ingest job for the auto ingest job.
+     *
+     * @return The ingest job, may be null.
+     *
+     * TODO (JIRA-3059): Provide an AutoIngestJob ingest module cancellation API
+     * instead.
+     */
     synchronized IngestJob getIngestJob() {
         return this.ingestJob;
     }
 
+    /**
+     * Cancels the job.
+     */
     synchronized void cancel() {
-        setStage(Stage.CANCELLING);
+        setProcessingStage(Stage.CANCELLING, Date.from(Instant.now()));
         cancelled = true;
         errorsOccurred = true;
         if (null != dataSourceProcessor) {
@@ -263,15 +331,33 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
     }
 
+    /**
+     * Indicates whether or not the job has been cancelled. This is transient
+     * state used by the auto ingest manager that is not saved as coordination
+     * service node data for the job.
+     *
+     * @return True or false.
+     */
     synchronized boolean isCanceled() {
         return cancelled;
     }
 
+    /**
+     * Marks the job as completed. This is transient state used by the auto
+     * ingest manager that is not saved as coordination service node data for
+     * the job.
+     */
     synchronized void setCompleted() {
-        setStage(Stage.COMPLETED);
+        setProcessingStage(Stage.COMPLETED, Date.from(Instant.now()));
         completed = true;
     }
 
+    /**
+     * Indicates whether or not the job has been completed. This is transient
+     * state that is not saved as coordination service node data for the job.
+     *
+     * @return True or false.
+     */
     synchronized boolean isCompleted() {
         return completed;
     }
@@ -314,57 +400,110 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return this.errorsOccurred;
     }
 
+    /**
+     * Gets the processing host name for this job.
+     *
+     * @return The processing host name.
+     */
     synchronized String getProcessingHostName() {
         return nodeName;
     }
 
-    int getVersion() {
-        return this.version;
+    /**
+     * Sets the processing host name for this job.
+     *
+     * @param processingHostName The processing host name.
+     */
+    synchronized void setProcessingHostName(String processingHostName) {
+        this.nodeName = processingHostName;
     }
 
+    /**
+     * Gets the processing status of the job.
+     *
+     * @return The processing status.
+     */
     synchronized ProcessingStatus getProcessingStatus() {
         return this.processingStatus;
     }
 
+    /**
+     * Sets the processing status of the job.
+     *
+     * @param processingStatus The processing status.
+     */
     synchronized void setProcessingStatus(ProcessingStatus processingStatus) {
         this.processingStatus = processingStatus;
     }
 
+    /**
+     * Gets the number of time this job has "crashed" during processing.
+     *
+     * @return The number of crashes.
+     */
     synchronized int getNumberOfCrashes() {
         return this.numberOfCrashes;
     }
 
+    /**
+     * Sets the number of time this job has "crashed" during processing.
+     *
+     * @param numberOfCrashes The number of crashes.
+     */
     synchronized void setNumberOfCrashes(int numberOfCrashes) {
         this.numberOfCrashes = numberOfCrashes;
     }
 
+    /**
+     * Indicates whether some other job is "equal to" this job. Two jobs are
+     * equal if they have the same manifest file path.
+     *
+     * @param otherJob The job to which this job is to be compared.
+     *
+     * @return True or false.
+     */
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof AutoIngestJob)) {
+    public boolean equals(Object otherJob) {
+        if (!(otherJob instanceof AutoIngestJob)) {
             return false;
         }
-        if (obj == this) {
+        if (otherJob == this) {
             return true;
         }
-        return this.getManifest().getFilePath().equals(((AutoIngestJob) obj).getManifest().getFilePath());
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 71 * (Objects.hashCode(this.caseDirectoryPath));
-        return hash;
-    }
-
-    @Override
-    public int compareTo(AutoIngestJob o) {
-        return -this.getManifest().getDateFileCreated().compareTo(o.getManifest().getDateFileCreated());
+        return this.getManifest().getFilePath().equals(((AutoIngestJob) otherJob).getManifest().getFilePath());
     }
 
     /**
-     * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
-     * chronological date modified (descending)
+     * Returns a hash code value for the job. The hash code is derived from the
+     * manifest file path.
+     *
+     * @return The hash code.
      */
-    static class ReverseCompletedDateComparator implements Comparator<AutoIngestJob> {
+    @Override
+    public int hashCode() {
+        int hash = 71 * (Objects.hashCode(this.getManifest().getFilePath()));
+        return hash;
+    }
+
+    /**
+     * Compares one job to another in a way that orders jobs by manifest
+     * creation date.
+     *
+     * @param otherJob The job to which this job is to be compared.
+     *
+     * @return A negative integer, zero, or a positive integer as this job is
+     *         less than, equal to, or greater than the specified job.
+     */
+    @Override
+    public int compareTo(AutoIngestJob otherJob) {
+        return -this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
+    }
+
+    /**
+     * Comparator that supports doing a descending sort of jobs based on job
+     * completion date.
+     */
+    static class CompletedDateDescendingComparator implements Comparator<AutoIngestJob> {
 
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
@@ -374,7 +513,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Comparator that sorts auto ingest jobs by priority in descending order.
+     * Comparator that orders jobs in descending order by job priority.
      */
     public static class PriorityComparator implements Comparator<AutoIngestJob> {
 
@@ -386,27 +525,40 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Custom comparator that allows us to sort List<AutoIngestJob> on case name
-     * alphabetically except for jobs for the current host, which are placed at
-     * the top of the list.
+     * Comparator that orders jobs such that those running on the local host
+     * appear first, then the remaining jobs are sorted alphabetically by case
+     * name. This is very specific to the auto ionghest control panel use case,
+     * where there is at most one job running on the local host.
      */
-    static class CaseNameAndProcessingHostComparator implements Comparator<AutoIngestJob> {
+    static class LocalHostAndCaseComparator implements Comparator<AutoIngestJob> {
 
         @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            if (o1.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
-                return -1; // o1 is for current case, float to top
-            } else if (o2.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
-                return 1; // o2 is for current case, float to top
+        public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
+            if (aJob.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+                return -1;
+            } else if (anotherJob.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+                return 1;
             } else {
-                return o1.getManifest().getCaseName().compareToIgnoreCase(o2.getManifest().getCaseName());
+                return aJob.getManifest().getCaseName().compareToIgnoreCase(anotherJob.getManifest().getCaseName());
             }
         }
 
     }
 
     /**
-     * Processing status for the auto ingest job for the manifest.
+     * Comparator that orders jobs by data source name.
+     */
+    static class DataSourceFileNameComparator implements Comparator<AutoIngestJob> {
+
+        @Override
+        public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
+            return aJob.getManifest().getDataSourceFileName().compareToIgnoreCase(anotherJob.getManifest().getDataSourceFileName());
+        }
+
+    }
+
+    /**
+     * Processing statuses for an auto ingest job.
      */
     enum ProcessingStatus {
         PENDING,
@@ -415,6 +567,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         DELETED
     }
 
+    /**
+     * Processing stages for an auto ingest job.
+     */
     enum Stage {
 
         PENDING("Pending"),
@@ -443,6 +598,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     }
 
+    /**
+     * Processing stage details for an auto ingest job.
+     */
     @Immutable
     static final class StageDetails implements Serializable {
 

@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Instances of this class allow a user to select an existing hash database and
  * add it to the set of hash databases used to classify files as unknown, known,
- * or known bad.
+ * or notable.
  */
 final class ManageTagsDialog extends javax.swing.JDialog {
 
@@ -58,27 +58,36 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to select an existing hash database
      * and add it to the set of hash databases used to classify files as
-     * unknown, known, or known bad.
+     * unknown, known, or notable.
      */
-    @Messages({"ManageTagDialog.title=Manage Tags"})
+    @Messages({"ManageTagDialog.title=Manage Tags",
+        "ManageTagDialog.tagInfo.text=Select the tags that cause files and results to be recorded in the central repository. Additional tags can be created in the Tags options panel."})
     ManageTagsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageTagDialog_title(),
                 true); // NON-NLS
         initComponents();
         customizeComponents();
+        setupHelpTextArea();
         display();
     }
 
-    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to Central Repository.",
-        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags."})
+
+    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to central cepository.",
+        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags.",
+        "ManageTagsDialog.tagColumn.header.text=Tags",
+        "ManageTagsDialog.notableColumn.header.text=Notable"})
+    private void setupHelpTextArea() {
+        helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text());
+    }
+
     private void customizeComponents() {
         lbWarnings.setText("");
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.");
+            LOGGER.log(Level.SEVERE, "Failed to connect to central repository database.");
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return;
         }
@@ -99,6 +108,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         Collections.sort(tagNames);
 
         DefaultTableModel model = (DefaultTableModel) tblTagNames.getModel();
+        model.setColumnIdentifiers(new String[] {Bundle.ManageTagsDialog_tagColumn_header_text(), Bundle.ManageTagsDialog_notableColumn_header_text()});
         for (String tagName : tagNames) {
             boolean enabled = badTags.contains(tagName);
             model.addRow(new Object[]{tagName, enabled});
@@ -125,9 +135,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         buttonGroup1 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        tagScrollArea = new javax.swing.JScrollPane();
         tblTagNames = new javax.swing.JTable();
         lbWarnings = new javax.swing.JLabel();
+        helpScrollPane = new javax.swing.JScrollPane();
+        helpTextArea = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -150,7 +162,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Tag", "Implies Known Bad"
+                "", ""
             }
         ) {
             Class[] types = new Class [] {
@@ -168,7 +180,20 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(tblTagNames);
+        tagScrollArea.setViewportView(tblTagNames);
+
+        helpScrollPane.setBorder(null);
+
+        helpTextArea.setEditable(false);
+        helpTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        helpTextArea.setColumns(20);
+        helpTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        helpTextArea.setLineWrap(true);
+        helpTextArea.setRows(3);
+        helpTextArea.setWrapStyleWord(true);
+        helpTextArea.setBorder(null);
+        helpTextArea.setFocusable(false);
+        helpScrollPane.setViewportView(helpTextArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -178,15 +203,16 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 223, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
-                            .addComponent(lbWarnings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(helpScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tagScrollArea, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+                            .addComponent(lbWarnings, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(2, 2, 2)))
                 .addContainerGap())
         );
 
@@ -196,9 +222,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 335, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lbWarnings, javax.swing.GroupLayout.DEFAULT_SIZE, 16, Short.MAX_VALUE)
+                .addComponent(helpScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(tagScrollArea, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lbWarnings, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(okButton)
@@ -237,7 +265,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             dbManager.setBadTags(badTags);
             dbManager.saveSettings();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to connect to central repository database."); // NON-NLS
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return false;
         }
@@ -245,13 +273,13 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     }
     
     /**
-     * If the user sets a tag to "Implies known bad", give them the option to update
+     * If the user sets a tag to "Notable", give them the option to update
      * any existing tagged items (in the current case only) in the central repo.
      */
     public class CheckBoxModelListener implements TableModelListener {
-        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as known bad any files/artifacts in the current case that have this tag?",
+        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as notable any files/results in the current case that have this tag?",
                     "ManageTagsDialog.updateCurrentCase.title=Update current case?",
-                    "ManageTagsDialog.updateCurrentCase.error=Error updating existing Central Repository entries"})
+                    "ManageTagsDialog.updateCurrentCase.error=Error updating existing central repository entries"})
         
         javax.swing.JDialog dialog;
         public CheckBoxModelListener(javax.swing.JDialog dialog){
@@ -281,7 +309,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                                 dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
                             } catch (EamDbException ex) {
-                                LOGGER.log(Level.SEVERE, "Failed to apply known bad status to current case", ex);
+                                LOGGER.log(Level.SEVERE, "Failed to apply notable status to artifacts in current case", ex);
                                 JOptionPane.showMessageDialog(null, Bundle.ManageTagsDialog_updateCurrentCase_error());
                             } finally {
                                 dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -308,9 +336,8 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);                  
             
             for(BlackboardArtifactTag bbTag:artifactTags){
-                List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, 
-                        EamDb.getInstance().getCorrelationTypes(), true);
-                for (EamArtifact eamArtifact : convertedArtifacts) {
+                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
+                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
                     EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact,TskData.FileKnown.BAD);
                 }
             }
@@ -318,9 +345,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             // Now search for files
             List<ContentTag> fileTags = curCase.getSleuthkitCase().getContentTagsByTagName(tagName);
             for(ContentTag contentTag:fileTags){
-                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
+                final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
                             TskData.FileKnown.BAD, "");
-                EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+                if(eamArtifact != null){
+                    EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+                }
             }
         } catch (TskCoreException ex){
             throw new EamDbException("Error updating artifacts", ex);
@@ -331,9 +360,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane helpScrollPane;
+    private javax.swing.JTextArea helpTextArea;
     private javax.swing.JLabel lbWarnings;
     private javax.swing.JButton okButton;
+    private javax.swing.JScrollPane tagScrollArea;
     private javax.swing.JTable tblTagNames;
     // End of variables declaration//GEN-END:variables
 }

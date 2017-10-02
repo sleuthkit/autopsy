@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterio
 import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadSortCriteria;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -204,7 +205,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private static boolean isSupported(Node node) {
         if (node != null) {
-            Content content = node.getLookup().lookup(Content.class);
+            Content content = node.getLookup().lookup(AbstractFile.class);
             if (content != null) {
                 return ImageUtils.thumbnailSupported(content);
             }
@@ -264,7 +265,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         private ThumbnailViewNode(Node wrappedNode, int thumbSize) {
             super(wrappedNode, FilterNode.Children.LEAF);
             this.thumbSize = thumbSize;
-            this.content = this.getLookup().lookup(Content.class);
+            this.content = this.getLookup().lookup(AbstractFile.class);
         }
 
         @Override
