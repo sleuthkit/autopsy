@@ -69,6 +69,7 @@ public class RegressionTest extends TestCase {
                     "testConfigureSearch",
                     "testAddSourceWizard1",
                     "testIngest",
+                    "testExpandDataSourcesTree", //After do ingest, before generate report, we expand Data Sources node
                     "testGenerateReportToolbar",
                     "testGenerateReportButton");
         }
@@ -83,6 +84,7 @@ public class RegressionTest extends TestCase {
                     "testConfigureSearch",
                     "testAddSourceWizard1",
                     "testIngest",
+                    "testExpandDataSourcesTree", 
                     "testGenerateReportToolbar",
                     "testGenerateReportButton");
         }
@@ -147,6 +149,9 @@ public class RegressionTest extends TestCase {
         autopsyTests.testIngest();
     }
 
+    public void testExpandDataSourcesTree() {
+        autopsyTests.testExpandDataSourcesTree();
+    }
     public void testGenerateReportToolbar() {
         autopsyTests.testGenerateReportToolbar();
     }
