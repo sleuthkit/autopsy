@@ -146,7 +146,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                             calllogAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.PHONE, number, general.MODULE_NAME, abstractFile);
 
                             # create relationship between accounts
-                            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [calllogAccount], artifact);
+                            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [calllogAccountInstance], artifact);
 
                             bbartifacts.append(artifact)
 
