@@ -20,7 +20,11 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionListener;
 import javax.swing.event.ChangeEvent;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.CentralRepoCaseOptionsPanel;
 
 /**
  * Panel for displaying the case information, including both case details and
@@ -29,6 +33,8 @@ import org.openide.util.NbBundle.Messages;
 class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    CasePropertiesPanel propertiesPanel;
+    CentralRepoCaseOptionsPanel centralRepoPanel;
 
     /**
      * Constructs a panel for displaying the case information, including both
@@ -44,10 +50,24 @@ class CaseInformationPanel extends javax.swing.JPanel {
         "CaseInformationPanel.ingestJobInfo.header=Ingest History"
     })
     private void customizeComponents() {
-        CasePropertiesPanel propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
+        propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
+        centralRepoPanel = new CentralRepoCaseOptionsPanel();
+        this.tabbedPane.addTab("Central Repository Details", centralRepoPanel);
+        tabbedPane.setEnabledAt(tabbedPane.indexOfComponent(centralRepoPanel), false);
+        centralRepoDetailsLabel.setVisible(true);
+        try {
+            if (EamDb.getInstance() != null) {
+                tabbedPane.setEnabledAt(tabbedPane.indexOfComponent(centralRepoPanel), true);
+                centralRepoDetailsLabel.setVisible(false);
+            }
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+//        this.tabbedPane.addTab("Organization", new CaseOrganizationPanel());
+//        this.tabbedPane.addTab("Examiner Details", new ExaminerDetailsPanel());
         this.tabbedPane.addChangeListener((ChangeEvent e) -> {
             tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
         });
@@ -71,9 +91,10 @@ class CaseInformationPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        outerDetailsPanel = new javax.swing.JPanel();
         tabbedPane = new javax.swing.JTabbedPane();
         closeButton = new javax.swing.JButton();
+        centralRepoDetailsLabel = new javax.swing.JLabel();
 
         tabbedPane.setPreferredSize(new java.awt.Dimension(420, 200));
 
@@ -84,23 +105,37 @@ class CaseInformationPanel extends javax.swing.JPanel {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        org.openide.awt.Mnemonics.setLocalizedText(centralRepoDetailsLabel, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.centralRepoDetailsLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout outerDetailsPanelLayout = new javax.swing.GroupLayout(outerDetailsPanel);
+        outerDetailsPanel.setLayout(outerDetailsPanelLayout);
+        outerDetailsPanelLayout.setHorizontalGroup(
+            outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 709, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, outerDetailsPanelLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(closeButton)
                 .addGap(5, 5, 5))
+            .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(centralRepoDetailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 633, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(66, Short.MAX_VALUE)))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+        outerDetailsPanelLayout.setVerticalGroup(
+            outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
                 .addComponent(closeButton)
                 .addGap(5, 5, 5))
+            .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, outerDetailsPanelLayout.createSequentialGroup()
+                    .addContainerGap(237, Short.MAX_VALUE)
+                    .addComponent(centralRepoDetailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap()))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -109,23 +144,31 @@ class CaseInformationPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(outerDetailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(outerDetailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        // Used by CasePropertiesAction
+        propertiesPanel.saveChanges();
+        try {
+            if (EamDb.getInstance() != null) {
+                centralRepoPanel.saveChanges();
+            }
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }//GEN-LAST:event_closeButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel centralRepoDetailsLabel;
     private javax.swing.JButton closeButton;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel outerDetailsPanel;
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
 }

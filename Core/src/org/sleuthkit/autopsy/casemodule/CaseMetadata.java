@@ -227,6 +227,17 @@ public final class CaseMetadata {
         return caseNumber;
     }
 
+    void setCaseNumber(String newCaseNumber) throws CaseMetadataException {
+        String oldCaseNumber = this.caseNumber;
+        this.caseNumber = newCaseNumber;
+        try {
+            writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.caseNumber = oldCaseNumber;
+            throw ex;
+        }
+    }
+
     /**
      * Gets the examiner.
      *
@@ -234,6 +245,17 @@ public final class CaseMetadata {
      */
     public String getExaminer() {
         return examiner;
+    }
+    
+    void setExaminer(String newExaminer) throws CaseMetadataException {
+        String oldExaminer = this.examiner;
+        this.examiner = newExaminer;
+        try {
+            writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.examiner = oldExaminer;
+            throw ex;
+        }
     }
 
     /**

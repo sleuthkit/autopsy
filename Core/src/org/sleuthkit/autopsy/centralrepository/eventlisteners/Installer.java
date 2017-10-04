@@ -23,7 +23,6 @@ import org.openide.modules.ModuleInstall;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.actions.EamEditCaseInfoAction;
 
 /**
  * Install event listeners during module initialization
@@ -53,8 +52,6 @@ public class Installer extends ModuleInstall {
     public void restored() {
         Case.addPropertyChangeListener(pcl);
         ieListener.installListeners();
-
-        CallableSystemAction.get(EamEditCaseInfoAction.class).setEnabled(true);
 
         // TODO: create a thread pool to process Runners.
     }

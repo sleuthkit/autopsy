@@ -30,6 +30,7 @@ import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
@@ -45,6 +46,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private boolean hasChanged;
+    private EamOrganization newOrg;
 
     /**
      * Creates new form AddNewOrganizationDialog
@@ -57,6 +59,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
         hasChanged = false;
+        newOrg = null;
         initComponents();
         customizeComponents();
         display();
@@ -175,6 +178,10 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
 
     public boolean isChanged() {
         return hasChanged;
+    }
+    
+    public EamOrganization getNewOrg() {
+        return newOrg;
     }
 
     /**
@@ -304,7 +311,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
 
     @Messages({"AddNewOrganizationDialog.bnOk.addFailed.text=Failed to add new organization."})
     private void bnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOKActionPerformed
-        EamOrganization newOrg = new EamOrganization(
+        newOrg = new EamOrganization(
                 tfOrganizationName.getText(),
                 tfPocName.getText(),
                 tfPocEmail.getText(),

@@ -1509,6 +1509,26 @@ public class Case {
         }
     }
 
+    void updateCaseNumber(String newCaseNumber) throws CaseActionException {
+        String oldCaseNumber = metadata.getCaseNumber();
+        try {
+            metadata.setCaseNumber(newCaseNumber);
+        } catch (CaseMetadataException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
+        }
+        eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseNumber, newCaseNumber));
+    }
+
+    void updateExaminer(String newExaminer) throws CaseActionException {
+        String oldExaminer = metadata.getExaminer();
+        try {
+            metadata.setExaminer(newExaminer);
+        } catch (CaseMetadataException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
+        }
+        eventPublisher.publish(new AutopsyEvent(Events.EXAMINER.toString(), oldExaminer, newExaminer));
+    }
+
     /**
      * Constructs a Case object for a new Autopsy case.
      *
