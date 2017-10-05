@@ -18,21 +18,12 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import javax.swing.SwingUtilities;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.casemodule.AddImageAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.CaseNewAction;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 
 /**
@@ -40,7 +31,6 @@ import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreference
  */
 final class AutoIngestCaseManager {
 
-    private static final Logger LOGGER = Logger.getLogger(AutoIngestCaseManager.class.getName());
     private static AutoIngestCaseManager instance;
 
     /**
@@ -60,9 +50,6 @@ final class AutoIngestCaseManager {
      * auto ingest.
      */
     private AutoIngestCaseManager() {
-
-        FileObject root = FileUtil.getConfigRoot();
-        FileObject openRecentCasesMenu = root.getFileObject("Menu/Case/OpenRecentCase");
     }
 
     /*
