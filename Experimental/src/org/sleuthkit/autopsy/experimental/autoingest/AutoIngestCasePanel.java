@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.casemodule.AutoIngestCasePanelInterface;
+import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.experimental.configuration.StartupWindow;
 
@@ -337,6 +338,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
                 AutoIngestCaseManager.getInstance().openCase(caseMetadataFilePath);
                 stopCasesTableRefreshes();
                 StartupWindowProvider.getInstance().close();
+                CueBannerPanel.closeAutoIngestCasesWindow();
                 return null;
             }
 

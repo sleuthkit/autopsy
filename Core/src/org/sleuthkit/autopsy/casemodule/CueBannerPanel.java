@@ -56,6 +56,12 @@ public class CueBannerPanel extends javax.swing.JPanel {
         }
     }
 
+    public static void closeAutoIngestCasesWindow() {
+        if (null != autoIngestCasePanelWindow) {
+            autoIngestCasePanelWindow.setVisible(false);
+        }
+    }
+
     public CueBannerPanel() {
         initComponents();
         customizeComponents();
@@ -84,8 +90,13 @@ public class CueBannerPanel extends javax.swing.JPanel {
     public void refresh() {
         enableComponents();
     }
-
+    
     private void customizeComponents() {
+        initRecentCasesWindow();
+        initAutoIngestCasesWindow();
+    }
+
+    private void initRecentCasesWindow() {
         recentCasesWindow = new JDialog(
                 WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.title.text"),
@@ -107,9 +118,33 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.pack();
         recentCasesWindow.setResizable(false);
     }
+    
+    private void initAutoIngestCasesWindow() {
+        autoIngestCasePanelWindow = new JDialog(
+                WindowManager.getDefault().getMainWindow(),
+                REVIEW_MODE_TITLE,
+                Dialog.ModalityType.APPLICATION_MODAL);
+        autoIngestCasePanelWindow.getRootPane().registerKeyboardAction(
+                e -> {
+                    autoIngestCasePanelWindow.setVisible(false);
+                },
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        OpenRecentCasePanel recentCasesPanel = OpenRecentCasePanel.getInstance();
+        recentCasesPanel.setCloseButtonActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                autoIngestCasePanelWindow.setVisible(false);
+            }
+        });
+        AutoIngestCasePanelInterface autoIngestCasePanel = Lookup.getDefault().lookup(AutoIngestCasePanelInterface.class);
+        autoIngestCasePanel.addWindowStateListener(autoIngestCasePanelWindow);
+        autoIngestCasePanelWindow.add((JPanel)autoIngestCasePanel);
+        autoIngestCasePanelWindow.pack();
+        autoIngestCasePanelWindow.setResizable(false);
+    }
 
     private void enableComponents() {
-        boolean enableOpenRecentCaseButton = (RecentCases.getInstance().getTotalRecentCases() == 0);
+        boolean enableOpenRecentCaseButton = (RecentCases.getInstance().getTotalRecentCases() > 0);
         openRecentCaseButton.setEnabled(enableOpenRecentCaseButton);
         openRecentCaseLabel.setEnabled(enableOpenRecentCaseButton);
         
@@ -282,15 +317,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
     private void openAutoIngestCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openAutoIngestCaseButtonActionPerformed
-        autoIngestCasePanelWindow = new JDialog();
-        autoIngestCasePanelWindow.setTitle(REVIEW_MODE_TITLE);
-        AutoIngestCasePanelInterface autoIngestCasePanel = Lookup.getDefault().lookup(AutoIngestCasePanelInterface.class);
-        autoIngestCasePanel.addWindowStateListener(autoIngestCasePanelWindow);
-        autoIngestCasePanelWindow.add((JPanel)autoIngestCasePanel);
-        autoIngestCasePanelWindow.pack();
-        autoIngestCasePanelWindow.toFront();
+        autoIngestCasePanelWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         autoIngestCasePanelWindow.setVisible(true);
-        autoIngestCasePanelWindow.setResizable(false);
     }//GEN-LAST:event_openAutoIngestCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
