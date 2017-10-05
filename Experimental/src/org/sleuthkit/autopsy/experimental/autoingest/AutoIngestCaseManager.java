@@ -61,21 +61,8 @@ final class AutoIngestCaseManager {
      */
     private AutoIngestCaseManager() {
 
-        /*
-         * Permanently delete the "Open Recent Cases" item in the "File" menu.
-         * This is quite drastic, as it also affects Autopsy standalone mode on
-         * this machine, but review mode is only for looking at cases created by
-         * automated ingest.
-         */
         FileObject root = FileUtil.getConfigRoot();
         FileObject openRecentCasesMenu = root.getFileObject("Menu/Case/OpenRecentCase");
-        if (openRecentCasesMenu != null) {
-            try {
-                openRecentCasesMenu.delete();
-            } catch (IOException ex) {
-                AutoIngestCaseManager.LOGGER.log(Level.WARNING, "Unable to remove Open Recent Cases file menu item", ex);
-            }
-        }
     }
 
     /*
