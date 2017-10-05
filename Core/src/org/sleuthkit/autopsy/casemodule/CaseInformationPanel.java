@@ -154,7 +154,6 @@ class CaseInformationPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        propertiesPanel.saveChanges();
         try {
             if (EamDb.getInstance() != null) {
                 centralRepoPanel.saveChanges();
@@ -162,6 +161,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
         }
+        propertiesPanel.saveChanges();
     }//GEN-LAST:event_closeButtonActionPerformed
 
 
