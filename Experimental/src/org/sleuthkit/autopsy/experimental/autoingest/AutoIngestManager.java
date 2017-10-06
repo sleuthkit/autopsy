@@ -1017,96 +1017,103 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          * @return TERMINATE if auto ingest is shutting down, CONTINUE if it has
          *         not.
          *
-         * @throws IOException if an I/O error occurs, but this implementation
-         *                     does not throw.
          */
         @Override
-        public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) {
             if (Thread.currentThread().isInterrupted()) {
                 return TERMINATE;
             }
 
-            Manifest manifest = null;
-            for (ManifestFileParser parser : Lookup.getDefault().lookupAll(ManifestFileParser.class)) {
-                if (parser.fileIsManifest(filePath)) {
-                    try {
-                        manifest = parser.parse(filePath);
-                        break;
-                    } catch (ManifestFileParserException ex) {
-                        SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to parse %s with parser %s", filePath, parser.getClass().getCanonicalName()), ex);
+            try {
+                Manifest manifest = null;
+                for (ManifestFileParser parser : Lookup.getDefault().lookupAll(ManifestFileParser.class)) {
+                    if (parser.fileIsManifest(filePath)) {
+                        try {
+                            manifest = parser.parse(filePath);
+                            break;
+                        } catch (ManifestFileParserException ex) {
+                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to parse %s with parser %s", filePath, parser.getClass().getCanonicalName()), ex);
+                        }
+                    }
+                    if (Thread.currentThread().isInterrupted()) {
+                        return TERMINATE;
                     }
                 }
+
                 if (Thread.currentThread().isInterrupted()) {
                     return TERMINATE;
                 }
-            }
 
-            if (Thread.currentThread().isInterrupted()) {
-                return TERMINATE;
-            }
-
-            if (null != manifest) {
-                /*
+                if (null != manifest) {
+                    /*
                  * Update the mapping of case names to manifest paths that is
                  * used for case deletion.
-                 */
-                String caseName = manifest.getCaseName();
-                Path manifestPath = manifest.getFilePath();
-                if (casesToManifests.containsKey(caseName)) {
-                    Set<Path> manifestPaths = casesToManifests.get(caseName);
-                    manifestPaths.add(manifestPath);
-                } else {
-                    Set<Path> manifestPaths = new HashSet<>();
-                    manifestPaths.add(manifestPath);
-                    casesToManifests.put(caseName, manifestPaths);
-                }
+                     */
+                    String caseName = manifest.getCaseName();
+                    Path manifestPath = manifest.getFilePath();
+                    if (casesToManifests.containsKey(caseName)) {
+                        Set<Path> manifestPaths = casesToManifests.get(caseName);
+                        manifestPaths.add(manifestPath);
+                    } else {
+                        Set<Path> manifestPaths = new HashSet<>();
+                        manifestPaths.add(manifestPath);
+                        casesToManifests.put(caseName, manifestPaths);
+                    }
 
-                /*
+                    /*
                  * Add a job to the pending jobs queue, the completed jobs list,
                  * or do crashed job recovery, as required.
-                 */
-                try {
-                    byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
-                    if (null != rawData && rawData.length > 0) {
-                        try {
-                            AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(rawData);
-                            AutoIngestJob.ProcessingStatus processingStatus = nodeData.getProcessingStatus();
-                            switch (processingStatus) {
-                                case PENDING:
-                                    addPendingJob(manifest, nodeData);
-                                    break;
-                                case PROCESSING:
-                                    doRecoveryIfCrashed(manifest, nodeData);
-                                    break;
-                                case COMPLETED:
-                                    addCompletedJob(manifest, nodeData);
-                                    break;
-                                case DELETED:
-                                    /*
+                     */
+                    try {
+                        byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
+                        if (null != rawData && rawData.length > 0) {
+                            try {
+                                AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(rawData);
+                                AutoIngestJob.ProcessingStatus processingStatus = nodeData.getProcessingStatus();
+                                switch (processingStatus) {
+                                    case PENDING:
+                                        addPendingJob(manifest, nodeData);
+                                        break;
+                                    case PROCESSING:
+                                        doRecoveryIfCrashed(manifest, nodeData);
+                                        break;
+                                    case COMPLETED:
+                                        addCompletedJob(manifest, nodeData);
+                                        break;
+                                    case DELETED:
+                                        /*
                                      * Ignore jobs marked as "deleted."
-                                     */
-                                    break;
-                                default:
-                                    SYS_LOGGER.log(Level.SEVERE, "Unknown ManifestNodeData.ProcessingStatus");
-                                    break;
+                                         */
+                                        break;
+                                    default:
+                                        SYS_LOGGER.log(Level.SEVERE, "Unknown ManifestNodeData.ProcessingStatus");
+                                        break;
+                                }
+                            } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
+                                SYS_LOGGER.log(Level.SEVERE, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
                             }
-                        } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
+                        } else {
+                            try {
+                                addNewPendingJob(manifest);
+                            } catch (AutoIngestJobException ex) {
+                                SYS_LOGGER.log(Level.SEVERE, String.format("Invalid manifest data for %s", manifestPath), ex);
+                            }
                         }
-                    } else {
-                        try {
-                            addNewPendingJob(manifest);
-                        } catch (AutoIngestJobException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Invalid manifest data for %s", manifestPath), ex);
-                        }
+                    } catch (CoordinationServiceException ex) {
+                        SYS_LOGGER.log(Level.SEVERE, String.format("Error transmitting node data for %s", manifestPath), ex);
+                        return CONTINUE;
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                        return TERMINATE;
                     }
-                } catch (CoordinationServiceException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Error transmitting node data for %s", manifestPath), ex);
-                    return CONTINUE;
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    return TERMINATE;
                 }
+
+            } catch (Exception ex) {
+                // Catch all unhandled and unexpected exceptions. Otherwise one bad file 
+                // can stop the entire input folder scanning. Given that the exception is unexpected,
+                // I'm hesitant to add logging which requires accessing or de-referencing data.
+                SYS_LOGGER.log(Level.SEVERE, "Unexpected exception in file visitor", ex);
+                return CONTINUE;
             }
 
             if (!Thread.currentThread().isInterrupted()) {
