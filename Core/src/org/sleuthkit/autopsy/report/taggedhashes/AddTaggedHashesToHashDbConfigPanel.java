@@ -36,11 +36,11 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettingsPanel;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  * Instances of this class are used to configure the report module plug in that
@@ -54,8 +54,8 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private final Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
     private final TagNamesListModel tagsNamesListModel = new TagNamesListModel();
     private final TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
-    private final Map<String, HashDb> hashSets = new HashMap<>();
-    private HashDb selectedHashSet = null;
+    private final Map<String, HashDatabase> hashSets = new HashMap<>();
+    private HashDatabase selectedHashSet = null;
 
     AddTaggedHashesToHashDbConfigPanel() {
         initComponents();
@@ -109,9 +109,9 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
         // Get the updateable hash databases and add their hash set names to the
         // JComboBox component.
-        List<HashDb> updateableHashSets = HashDbManager.getInstance().getUpdateableHashSets();
+        List<HashDatabase> updateableHashSets = HashDbManager.getInstance().getUpdateableHashSetsNew();
         if (!updateableHashSets.isEmpty()) {
-            for (HashDb hashDb : updateableHashSets) {
+            for (HashDatabase hashDb : updateableHashSets) {
                 hashSets.put(hashDb.getHashSetName(), hashDb);
                 hashSetsComboBox.addItem(hashDb.getHashSetName());
             }
@@ -142,7 +142,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
      *
      * @return A HashDb object representing the database or null.
      */
-    HashDb getSelectedHashDatabase() {
+    HashDatabase getSelectedHashDatabase() {
         return selectedHashSet;
     }
 

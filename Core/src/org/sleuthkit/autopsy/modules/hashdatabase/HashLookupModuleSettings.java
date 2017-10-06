@@ -29,12 +29,19 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
+    private boolean shouldCalculateHashes = true;
+    
+    // These should no longer be used. They are present only for upgrading to the
+    // newer format (enabled/disabled status saved in the HashDatabase object)
     private HashSet<String> namesOfEnabledKnownHashSets;
     private HashSet<String> namesOfDisabledKnownHashSets;    // Added in version 1.1
     private HashSet<String> namesOfEnabledKnownBadHashSets;
     private HashSet<String> namesOfDisabledKnownBadHashSets; // Added in version 1.1
-    private boolean shouldCalculateHashes = true;
 
+    HashLookupModuleSettings(boolean shouldCalculateHashes){
+        this.shouldCalculateHashes = shouldCalculateHashes;
+    }
+    
     /**
      * Constructs ingest job settings for the hash lookup module.
      *
@@ -44,11 +51,11 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param namesOfEnabledKnownBadHashSets A list of enabled notable hash
      *                                       sets.
      */
-    HashLookupModuleSettings(boolean shouldCalculateHashes,
-            List<String> namesOfEnabledKnownHashSets,
-            List<String> namesOfEnabledKnownBadHashSets) {
-        this(shouldCalculateHashes, namesOfEnabledKnownHashSets, namesOfEnabledKnownBadHashSets, new ArrayList<>(), new ArrayList<>());
-    }
+    //HashLookupModuleSettings(boolean shouldCalculateHashes,
+    //        List<String> namesOfEnabledKnownHashSets,
+    //        List<String> namesOfEnabledKnownBadHashSets) {
+    //    this(shouldCalculateHashes, namesOfEnabledKnownHashSets, namesOfEnabledKnownBadHashSets, new ArrayList<>(), new ArrayList<>());
+    //}
 
     /**
      * Constructs ingest job settings for the hash lookup module.
@@ -63,17 +70,17 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param namesOfDisabledKnownBadHashSets A list of disabled notable hash
      *                                        sets.
      */
-    HashLookupModuleSettings(boolean shouldCalculateHashes,
-            List<String> namesOfEnabledKnownHashSets,
-            List<String> namesOfEnabledKnownBadHashSets,
-            List<String> namesOfDisabledKnownHashSets,
-            List<String> namesOfDisabledKnownBadHashSets) {
-        this.shouldCalculateHashes = shouldCalculateHashes;
-        this.namesOfEnabledKnownHashSets = new HashSet<>(namesOfEnabledKnownHashSets);
-        this.namesOfEnabledKnownBadHashSets = new HashSet<>(namesOfEnabledKnownBadHashSets);
-        this.namesOfDisabledKnownHashSets = new HashSet<>(namesOfDisabledKnownHashSets);
-        this.namesOfDisabledKnownBadHashSets = new HashSet<>(namesOfDisabledKnownBadHashSets);
-    }
+    //HashLookupModuleSettings(boolean shouldCalculateHashes,
+    //        List<String> namesOfEnabledKnownHashSets,
+    //        List<String> namesOfEnabledKnownBadHashSets,
+    //        List<String> namesOfDisabledKnownHashSets,
+    //        List<String> namesOfDisabledKnownBadHashSets) {
+    //    this.shouldCalculateHashes = shouldCalculateHashes;
+    //    this.namesOfEnabledKnownHashSets = new HashSet<>(namesOfEnabledKnownHashSets);
+    //    this.namesOfEnabledKnownBadHashSets = new HashSet<>(namesOfEnabledKnownBadHashSets);
+    //    this.namesOfDisabledKnownHashSets = new HashSet<>(namesOfDisabledKnownHashSets);
+    //    this.namesOfDisabledKnownBadHashSets = new HashSet<>(namesOfDisabledKnownBadHashSets);
+    //}
 
     /**
      * @inheritDoc
@@ -103,62 +110,68 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      *
      * @return True if the hash set is enabled, false otherwise.
      */
-    boolean isHashSetEnabled(String hashSetName) {
-        this.upgradeFromOlderVersions();
-        return !(this.namesOfDisabledKnownHashSets.contains(hashSetName) || this.namesOfDisabledKnownBadHashSets.contains(hashSetName));
-    }
+    //boolean isHashSetEnabled(String hashSetName) {
+    //    this.upgradeFromOlderVersions();
+    //    return !(this.namesOfDisabledKnownHashSets.contains(hashSetName) || this.namesOfDisabledKnownBadHashSets.contains(hashSetName));
+    //}
 
     /**
      * Get the names of all explicitly enabled known files hash sets.
      *
      * @return The list of names.
      */
-    List<String> getNamesOfEnabledKnownHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(this.namesOfEnabledKnownHashSets);
-    }
+    //List<String> getNamesOfEnabledKnownHashSets() {
+    //    this.upgradeFromOlderVersions();
+    //    return new ArrayList<>(this.namesOfEnabledKnownHashSets);
+    //}
 
     /**
      * Get the names of all explicitly disabled known files hash sets.
      *
      * @return The list of names.
      */
-    List<String> getNamesOfDisabledKnownHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(namesOfDisabledKnownHashSets);
-    }
+    //List<String> getNamesOfDisabledKnownHashSets() {
+    //    this.upgradeFromOlderVersions();
+    //    return new ArrayList<>(namesOfDisabledKnownHashSets);
+    //}
 
     /**
      * Get the names of all explicitly enabled notable files hash sets.
      *
      * @return The list of names.
      */
-    List<String> getNamesOfEnabledKnownBadHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(this.namesOfEnabledKnownBadHashSets);
-    }
+    //List<String> getNamesOfEnabledKnownBadHashSets() {
+    //    this.upgradeFromOlderVersions();
+    //    return new ArrayList<>(this.namesOfEnabledKnownBadHashSets);
+    //}
 
     /**
      * Get the names of all explicitly disabled notable files hash sets.
      *
      * @return The list of names.
      */
-    List<String> getNamesOfDisabledKnownBadHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(this.namesOfDisabledKnownBadHashSets);
-    }
+    //List<String> getNamesOfDisabledKnownBadHashSets() {
+    //    this.upgradeFromOlderVersions();
+    //    return new ArrayList<>(this.namesOfDisabledKnownBadHashSets);
+    //}
 
     /**
      * Initialize fields set to null when an instance of a previous, but still
      * compatible, version of this class is de-serialized.
      */
     private void upgradeFromOlderVersions() {
-        if (null == this.namesOfDisabledKnownHashSets) {
-            this.namesOfDisabledKnownHashSets = new HashSet<>();
-        }
-        if (null == this.namesOfDisabledKnownBadHashSets) {
-            this.namesOfDisabledKnownBadHashSets = new HashSet<>();
-        }
+        //if (null == this.namesOfDisabledKnownHashSets) {
+        //    this.namesOfDisabledKnownHashSets = new HashSet<>();
+        //}
+        //if (null == this.namesOfDisabledKnownBadHashSets) {
+        //    this.namesOfDisabledKnownBadHashSets = new HashSet<>();
+        //}
+
+        // I think I need to see if there's any data in the old lists when they
+        // get deserialized, and use that to update the HashDatabase objects
+        // TO DO 
+        System.out.println("upgradeFromOlderVersions");
+        
     }
 
 }

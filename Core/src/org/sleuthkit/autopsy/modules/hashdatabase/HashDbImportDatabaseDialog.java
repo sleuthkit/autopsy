@@ -34,9 +34,9 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -47,7 +47,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
-    private HashDb selectedHashDb = null;
+    private HashDatabase selectedHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
 
     /**
@@ -69,7 +69,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
      *
      * @return A HashDb object or null.
      */
-    HashDb getHashDatabase() {
+    HashDatabase getHashDatabase() {
         return selectedHashDb;
     }
 
