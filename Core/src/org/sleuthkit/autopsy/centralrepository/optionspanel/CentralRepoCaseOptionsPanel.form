@@ -50,15 +50,15 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="lbOrganizationNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Component id="lbOrganizationNameLabel" alignment="0" max="32767" attributes="0"/>
                       <Component id="lbPointOfContactEmailLabel" min="-2" pref="34" max="-2" attributes="0"/>
                       <Component id="lbPointOfContactPhoneLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbPointOfContactNameLabel" min="-2" pref="124" max="-2" attributes="0"/>
+                      <Component id="lbPointOfContactNameLabel" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="comboBoxOrgName" alignment="0" max="32767" attributes="0"/>
+                      <Component id="comboBoxOrgName" alignment="0" pref="269" max="32767" attributes="0"/>
                       <Component id="lbPointOfContactEmailText" max="32767" attributes="0"/>
                       <Component id="lbPointOfContactPhoneText" alignment="0" max="32767" attributes="0"/>
                       <Component id="bnNewOrganization" alignment="1" min="-2" max="-2" attributes="0"/>
@@ -181,12 +181,12 @@
                       <Component id="lbExaminerPhoneLabel" alignment="0" min="-2" pref="87" max="-2" attributes="0"/>
                       <Component id="lbNotesLabel" alignment="0" min="-2" pref="87" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
+                  <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="tfExaminerEmailText" alignment="0" max="32767" attributes="0"/>
                       <Component id="tfExaminerPhoneText" alignment="0" max="32767" attributes="0"/>
                       <Component id="tfExaminerNameText" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jScrollPane2" alignment="0" pref="261" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" alignment="0" pref="268" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -229,9 +229,6 @@
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="tfExaminerNameText">
-          <Properties>
-            <Property name="editable" type="boolean" value="false"/>
-          </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbExaminerEmailLabel">
           <Properties>

@@ -656,15 +656,17 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Add a new organization
      *
+     * @return the Organization ID of the newly created organization.
+     * 
      * @param eamOrg The organization to add
      *
      * @throws EamDbException
      */
     @Override
-    public void newOrganization(EamOrganization eamOrg) throws EamDbException {
+    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
         try{
             acquireExclusiveLock();
-            super.newOrganization(eamOrg);
+            return super.newOrganization(eamOrg);
         } finally {
             releaseExclusiveLock();
         }         

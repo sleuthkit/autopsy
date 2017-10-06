@@ -6,6 +6,7 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -162,14 +163,14 @@ public class CentralRepoCaseOptionsPanel extends javax.swing.JPanel {
             pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnOrganizationLayout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbOrganizationNameLabel)
+                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbPointOfContactPhoneLabel)
-                    .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(comboBoxOrgName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(comboBoxOrgName, 0, 269, Short.MAX_VALUE)
                     .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(bnNewOrganization, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -204,8 +205,6 @@ public class CentralRepoCaseOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerNameLabel, org.openide.util.NbBundle.getMessage(CentralRepoCaseOptionsPanel.class, "CentralRepoCaseOptionsPanel.lbExaminerNameLabel.text")); // NOI18N
 
-        tfExaminerNameText.setEditable(false);
-
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerEmailLabel, org.openide.util.NbBundle.getMessage(CentralRepoCaseOptionsPanel.class, "CentralRepoCaseOptionsPanel.lbExaminerEmailLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerPhoneLabel, org.openide.util.NbBundle.getMessage(CentralRepoCaseOptionsPanel.class, "CentralRepoCaseOptionsPanel.lbExaminerPhoneLabel.text")); // NOI18N
@@ -236,12 +235,12 @@ public class CentralRepoCaseOptionsPanel extends javax.swing.JPanel {
                     .addComponent(lbExaminerNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(25, 25, 25)
+                .addGap(18, 18, 18)
                 .addGroup(pnExaminerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tfExaminerEmailText)
                     .addComponent(tfExaminerPhoneText)
                     .addComponent(tfExaminerNameText)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnExaminerLayout.setVerticalGroup(
@@ -313,10 +312,10 @@ public class CentralRepoCaseOptionsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_comboBoxOrgNameActionPerformed
 
     private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
-        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog();
+        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
         // update the combobox options and org data fields
-        if (dialogO.isChanged()) {
-            eamCase.setOrg(dialogO.getNewOrg());
+        if (dialog.isChanged()) {
+            eamCase.setOrg(dialog.getNewOrg());
             loadOrganizationData();
             updateDb();
             validate();

@@ -30,7 +30,6 @@ import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
@@ -47,6 +46,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
     private final TextBoxChangedListener textBoxChangedListener;
     private boolean hasChanged;
     private EamOrganization newOrg;
+    private final EamOrganization organizationToEdit;
 
     /**
      * Creates new form AddNewOrganizationDialog
@@ -62,6 +62,25 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
         newOrg = null;
         initComponents();
         customizeComponents();
+        organizationToEdit = null;
+        display();
+    }
+
+    public AddNewOrganizationDialog(EamOrganization orgToEdit) {
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
+                Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
+                true); // NON-NLS
+        organizationToEdit = orgToEdit;
+        textBoxes = new ArrayList<>();
+        textBoxChangedListener = new TextBoxChangedListener();
+        hasChanged = false;
+        newOrg = null;
+        initComponents();
+        customizeComponents();
+        tfOrganizationName.setText(orgToEdit.getName());
+        tfPocName.setText(orgToEdit.getPocName());
+        tfPocEmail.setText(orgToEdit.getPocEmail());
+        tfPocPhone.setText(orgToEdit.getPocPhone());
         display();
     }
 
@@ -179,7 +198,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
     public boolean isChanged() {
         return hasChanged;
     }
-    
+
     public EamOrganization getNewOrg() {
         return newOrg;
     }
@@ -311,14 +330,25 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
 
     @Messages({"AddNewOrganizationDialog.bnOk.addFailed.text=Failed to add new organization."})
     private void bnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOKActionPerformed
-        newOrg = new EamOrganization(
-                tfOrganizationName.getText(),
-                tfPocName.getText(),
-                tfPocEmail.getText(),
-                tfPocPhone.getText());
+
         try {
             EamDb dbManager = EamDb.getInstance();
-            dbManager.newOrganization(newOrg);
+            if (organizationToEdit != null) {
+                //check if new name exists with ID other than the one in use here
+                newOrg = new EamOrganization(organizationToEdit.getOrgID(),
+                        tfOrganizationName.getText(),
+                        tfPocName.getText(),
+                        tfPocEmail.getText(),
+                        tfPocPhone.getText());
+                dbManager.updateOrganization(newOrg);
+            } else {
+                newOrg = new EamOrganization(
+                        tfOrganizationName.getText(),
+                        tfPocName.getText(),
+                        tfPocEmail.getText(),
+                        tfPocPhone.getText());
+                newOrg.setOrgID((int)dbManager.newOrganization(newOrg));
+            }
             hasChanged = true;
             dispose();
         } catch (EamDbException ex) {
