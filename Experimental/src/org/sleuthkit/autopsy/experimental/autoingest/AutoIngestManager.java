@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -93,6 +94,7 @@ import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.AutoIngestJobException;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -759,7 +761,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         AutoIngestJob deletedJob = new AutoIngestJob(nodeData);
                         deletedJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.DELETED);
                         this.updateCoordinationServiceNode(deletedJob);
-                    } catch (AutoIngestJobNodeData.InvalidDataException ex) {
+                    } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
                         SYS_LOGGER.log(Level.WARNING, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
                         return CaseDeletionResult.PARTIALLY_DELETED;
                     } catch (InterruptedException | CoordinationServiceException ex) {
@@ -1088,11 +1090,15 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                                     SYS_LOGGER.log(Level.SEVERE, "Unknown ManifestNodeData.ProcessingStatus");
                                     break;
                             }
-                        } catch (AutoIngestJobNodeData.InvalidDataException ex) {
-                            SYS_LOGGER.log(Level.WARNING, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
+                        } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
+                            SYS_LOGGER.log(Level.SEVERE, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
                         }
                     } else {
-                        addNewPendingJob(manifest);
+                        try {
+                            addNewPendingJob(manifest);
+                        } catch (AutoIngestJobException ex) {
+                            SYS_LOGGER.log(Level.SEVERE, String.format("Invalid manifest data for %s", manifestPath), ex);
+                        }
                     }
                 } catch (CoordinationServiceException ex) {
                     SYS_LOGGER.log(Level.SEVERE, String.format("Error transmitting node data for %s", manifestPath), ex);
@@ -1122,7 +1128,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              blocked, i.e., if auto ingest is
          *                              shutting down.
          */
-        private void addPendingJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws InterruptedException {
+        private void addPendingJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws InterruptedException, AutoIngestJobException {
             AutoIngestJob job;
             if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
                 job = new AutoIngestJob(nodeData);
@@ -1176,7 +1182,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              blocked, i.e., if auto ingest is
          *                              shutting down.
          */
-        private void addNewPendingJob(Manifest manifest) throws InterruptedException {
+        private void addNewPendingJob(Manifest manifest) throws InterruptedException, AutoIngestJobException {
             /*
              * Create the coordination service node data for the job. Note that
              * getting the lock will create the node for the job (with no data)
@@ -1218,7 +1224,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              blocked, i.e., if auto ingest is
          *                              shutting down.
          */
-        private void doRecoveryIfCrashed(Manifest manifest, AutoIngestJobNodeData nodeData) throws InterruptedException {
+        private void doRecoveryIfCrashed(Manifest manifest, AutoIngestJobNodeData nodeData) throws InterruptedException, AutoIngestJobException {
             /*
              * Try to get an exclusive lock on the coordination service node for
              * the job. If the lock cannot be obtained, another host in the auto
@@ -1314,7 +1320,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          * @throws CoordinationServiceException
          * @throws InterruptedException
          */
-        private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws CoordinationServiceException, InterruptedException {
+        private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws CoordinationServiceException, InterruptedException, AutoIngestJobException {
             Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
             if (null != caseDirectoryPath) {
                 AutoIngestJob job;
