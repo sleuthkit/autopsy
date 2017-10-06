@@ -63,7 +63,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
         //HashDbManager hashDbManager = HashDbManager.getInstance();
         //List<String> knownHashSetNames = getHashSetNames(hashDbManager.getKnownFileHashSets());
         //List<String> knownBadHashSetNames = getHashSetNames(hashDbManager.getKnownBadFileHashSets());
-        return new HashLookupModuleSettings(true);
+        return new HashLookupModuleSettings(true, HashDbManager.getInstance().getAllHashSetsNew());
     }
 
     private List<String> getHashSetNames(List<HashDbManager.HashDb> hashDbs) {

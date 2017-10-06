@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.io.IOException;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
@@ -33,13 +37,35 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     
     // These should no longer be used. They are present only for upgrading to the
     // newer format (enabled/disabled status saved in the HashDatabase object)
-    private HashSet<String> namesOfEnabledKnownHashSets;
-    private HashSet<String> namesOfDisabledKnownHashSets;    // Added in version 1.1
-    private HashSet<String> namesOfEnabledKnownBadHashSets;
-    private HashSet<String> namesOfDisabledKnownBadHashSets; // Added in version 1.1
+    private HashSet<String> namesOfEnabledKnownHashSets = null;
+    private HashSet<String> namesOfDisabledKnownHashSets = null;    // Added in version 1.1
+    private HashSet<String> namesOfEnabledKnownBadHashSets = null;
+    private HashSet<String> namesOfDisabledKnownBadHashSets = null; // Added in version 1.1
+    
+    private List<HashLookupSettings.HashDbInfo> databaseInfoList;
 
-    HashLookupModuleSettings(boolean shouldCalculateHashes){
+    HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDatabase> hashDbList){
         this.shouldCalculateHashes = shouldCalculateHashes;
+        try{
+            databaseInfoList = HashLookupSettings.convertHashSetList(hashDbList);
+        } catch (HashLookupSettings.HashLookupSettingsException ex){
+            Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings.", ex); //NON-NLS
+            databaseInfoList = new ArrayList<>();
+        }
+    }
+    
+    /**
+     * This overrides the default deserialization code so we can 
+     * copy the enabled/disabled status into the DatabaseType objects
+     * @param stream
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    private void readObject(java.io.ObjectInputStream stream)
+        throws IOException, ClassNotFoundException {
+
+        stream.defaultReadObject();
+        upgradeFromOlderVersions();
     }
     
     /**
@@ -87,7 +113,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      */
     @Override
     public long getVersionNumber() {
-        this.upgradeFromOlderVersions();
+        //this.upgradeFromOlderVersions();
         return HashLookupModuleSettings.serialVersionUID;
     }
 
@@ -98,7 +124,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @return True if hashes are to be calculated, false otherwise.
      */
     boolean shouldCalculateHashes() {
-        this.upgradeFromOlderVersions();
+        //this.upgradeFromOlderVersions();
         return this.shouldCalculateHashes;
     }
 
@@ -167,11 +193,40 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         //    this.namesOfDisabledKnownBadHashSets = new HashSet<>();
         //}
 
-        // I think I need to see if there's any data in the old lists when they
-        // get deserialized, and use that to update the HashDatabase objects
-        // TO DO 
         System.out.println("upgradeFromOlderVersions");
+
+        if(databaseInfoList != null){
+            System.out.println("  No upgrade needed");
+            return;
+        }
         
+        try{
+            databaseInfoList = HashLookupSettings.convertHashSetList(HashDbManager.getInstance().getAllHashSetsNew());
+        } catch (HashLookupSettings.HashLookupSettingsException ex){
+            Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error updating hash database settings.", ex); //NON-NLS
+            return;
+        }
+        
+        List<String> disabledHashSetNames = new ArrayList<>();
+        if(namesOfDisabledKnownHashSets != null){
+            disabledHashSetNames.addAll(namesOfDisabledKnownHashSets);
+        }
+        if(namesOfDisabledKnownBadHashSets != null){
+            disabledHashSetNames.addAll(namesOfDisabledKnownBadHashSets);
+        }
+
+        for(HashLookupSettings.HashDbInfo db:databaseInfoList){
+            if(disabledHashSetNames.contains(db.getHashSetName())){
+                db.setSearchDuringIngest(false);
+            } else {
+                db.setSearchDuringIngest(true);
+            }
+        }
+        
+        namesOfDisabledKnownHashSets = null;
+        namesOfDisabledKnownBadHashSets = null;
+        namesOfEnabledKnownHashSets = null;
+        namesOfEnabledKnownBadHashSets = null;       
     }
 
 }

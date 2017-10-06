@@ -105,17 +105,26 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected());
+        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(), getHashSetList());
     }
 
-    private void getHashSetNames(List<HashSetModel> hashSetModels, List<String> enabledHashSetNames, List<String> disabledHashSetNames) {
-        for (HashSetModel model : hashSetModels) {
-            if (model.isEnabled() && model.isValid()) {
-                enabledHashSetNames.add(model.getName());
-            } else {
-                disabledHashSetNames.add(model.getName());
+    private List<HashDatabase> getHashSetList() {
+        List<HashDatabase> hashDatabases = new ArrayList<>();
+        for (HashSetModel model : this.knownBadHashSetModels) {
+            if (! model.isValid()) {
+                model.setEnabled(false);
             }
+            hashDatabases.add(model.getDatabase());
+            
         }
+        for (HashSetModel model : this.knownHashSetModels) {
+            if (! model.isValid()) {
+                model.setEnabled(false);
+            }
+            hashDatabases.add(model.getDatabase());
+            
+        }
+        return hashDatabases;
     }
 
     void update() {
@@ -135,6 +144,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
             hashSetDbs.put(db.getHashSetName(), db);
         }
 
+        // TODO compare based on more than name
         // Update the hash sets and detect deletions.
         List<HashSetModel> deletedHashSetModels = new ArrayList<>();
         for (HashSetModel model : hashSetModels) {
@@ -179,10 +189,23 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     private static final class HashSetModel {
 
-        private HashDatabase db;
+        private final HashDatabase db;
+        private boolean valid;
+        private boolean enabled;
 
         HashSetModel(HashDatabase db) {
             this.db = db;
+            try{
+                this.valid =  db.isValid();
+            } catch (TskCoreException ex){
+                Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting valid status info for hash set (name = " + db.getHashSetName() + ")", ex); //NON-NLS
+                this.valid = false;
+            }
+            this.enabled = db.getSearchDuringIngest();
+        }
+        
+        HashDatabase getDatabase(){
+            return db;
         }
 
         String getName() {
@@ -190,25 +213,19 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
 
         void setEnabled(boolean enabled) {
-            db.setSearchDuringIngest(enabled);
+            this.enabled = enabled;
         }
 
         boolean isEnabled() {
-            return db.getSearchDuringIngest();
+            return enabled;
         }
 
         void setValid(boolean valid) {
-            // I don't think I need this
-            //this.valid = valid;
+            this.valid = valid;
         }
 
         boolean isValid() {
-            try{
-                return db.isValid();
-            } catch (TskCoreException ex){
-                Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting valid status info for hash set (name = " + db.getHashSetName() + ")", ex); //NON-NLS
-                return false;
-            }
+            return valid;
         }
     }
 

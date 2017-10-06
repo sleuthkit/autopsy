@@ -284,7 +284,6 @@ final class HashLookupSettings implements Serializable {
             System.out.println("  DB type: " + info.dbType.toString());
             System.out.println("  Enabled: " + info.searchDuringIngest);
             System.out.println("  Type: " + info.knownFilesType.getDisplayName());
-            
         }
         
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
@@ -306,11 +305,11 @@ final class HashLookupSettings implements Serializable {
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
         private final HashDbManager.HashDb.KnownFilesType knownFilesType;
-        private final boolean searchDuringIngest;
+        private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final String path;
         private final int centralRepoIndex;
-        private final DatabaseType dbType;
+        private DatabaseType dbType;
 
         /**
          * Constructs a HashDbInfo object for files type
@@ -392,6 +391,14 @@ final class HashLookupSettings implements Serializable {
         boolean getSearchDuringIngest() {
             return searchDuringIngest;
         }
+        
+        /**
+         * Sets the search during ingest setting.
+         *
+         */
+        void setSearchDuringIngest(boolean searchDuringIngest) {
+            this.searchDuringIngest = searchDuringIngest;
+        }
 
         /**
          * Gets the send ingest messages setting.
@@ -425,6 +432,23 @@ final class HashLookupSettings implements Serializable {
         
         boolean isCentralRepoDatabaseType(){
             return dbType == DatabaseType.CENTRAL_REPOSITORY;
+        }
+        
+        /**
+         * This overrides the default deserialization code so we can 
+         * properly set the dbType enum and other new fields 
+         * given an old settings file.
+         * @param stream
+         * @throws IOException
+         * @throws ClassNotFoundException 
+         */
+        private void readObject(java.io.ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+            stream.defaultReadObject();
+            
+            if(dbType == null){
+                dbType = DatabaseType.FILE;
+            }
         }
     }
 
