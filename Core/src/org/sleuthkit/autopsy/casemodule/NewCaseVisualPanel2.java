@@ -73,6 +73,10 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
         lbPointOfContactNameText.setEnabled(cREnabled);
         lbPointOfContactEmailText.setEnabled(cREnabled);
         lbPointOfContactPhoneText.setEnabled(cREnabled);
+        lbOrganizationNameLabel.setEnabled(cREnabled);
+        lbPointOfContactNameLabel.setEnabled(cREnabled);
+        lbPointOfContactEmailLabel.setEnabled(cREnabled);
+        lbPointOfContactPhoneLabel.setEnabled(cREnabled);
         if (cREnabled) {
             loadOrganizationData();
         } else {
