@@ -47,6 +47,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         if (component == null) {
             component = new NewCaseVisualPanel2();
         }
+        component.setUpOrganization();
         return component;
     }
 
@@ -137,9 +138,9 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        NewCaseVisualPanel2 currentComponent = getComponent();
-        settings.putProperty("caseNumber", currentComponent.getCaseNumber()); //NON-NLS
-        settings.putProperty("caseExaminer", currentComponent.getExaminer()); //NON-NLS
+        settings.putProperty("caseNumber", component.getCaseNumber()); //NON-NLS
+        settings.putProperty("caseExaminer", component.getExaminer()); //NON-NLS
+        settings.putProperty("caseOrganization", component.getOrganization()); //NON-NLS
     }
 
     @Override

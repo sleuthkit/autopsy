@@ -48,20 +48,6 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
      */
     public NewCaseVisualPanel2() {
         initComponents();
-        try {
-            this.dbManager = EamDb.getInstance();
-        } catch (EamDbException ex) {
-            dbManager = null;
-        }
-        if (dbManager == null) {
-            comboBoxOrgName.setEnabled(false);
-            bnNewOrganization.setEnabled(false);
-            lbPointOfContactNameText.setEnabled(false);
-            lbPointOfContactEmailText.setEnabled(false);
-            lbPointOfContactPhoneText.setEnabled(false);
-        } else {
-            loadOrganizationData();
-        }
     }
 
     /**
@@ -73,6 +59,26 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
     @Override
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel2.getName.text");
+    }
+
+    void setUpOrganization() {
+        try {
+            this.dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            dbManager = null;
+        }
+        boolean cREnabled = (dbManager != null);
+        comboBoxOrgName.setEnabled(cREnabled);
+        bnNewOrganization.setEnabled(cREnabled);
+        lbPointOfContactNameText.setEnabled(cREnabled);
+        lbPointOfContactEmailText.setEnabled(cREnabled);
+        lbPointOfContactPhoneText.setEnabled(cREnabled);
+        if (cREnabled) {
+            loadOrganizationData();
+        } else {
+            selectedOrg = null;
+            clearOrganization();
+        }
     }
 
     /**
@@ -213,10 +219,7 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
         }
 
         if ("".equals(orgName)) {
-            selectedOrg = null;
-            lbPointOfContactNameText.setText("");
-            lbPointOfContactEmailText.setText("");
-            lbPointOfContactPhoneText.setText("");
+            clearOrganization();
             return;
         }
 
@@ -251,19 +254,16 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
                 comboBoxOrgName.addItem(org.getName());
             });
         } catch (EamDbException ex) {
-
+            selectedOrg = null;
         }
-        
-        if (!orgs.isEmpty() && null != selectedOrg) {
+
+        if (null != selectedOrg) {
             comboBoxOrgName.setSelectedItem(selectedOrg.getName());
             lbPointOfContactNameText.setText(selectedOrg.getPocName());
             lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
             lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
         } else {
-            comboBoxOrgName.setSelectedItem("");
-            lbPointOfContactNameText.setText("");
-            lbPointOfContactEmailText.setText("");
-            lbPointOfContactPhoneText.setText("");
+            clearOrganization();
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -283,12 +283,28 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
     private javax.swing.JLabel optionalLabel;
     // End of variables declaration//GEN-END:variables
 
+    private void clearOrganization() {
+        comboBoxOrgName.setSelectedItem("");
+        lbPointOfContactNameText.setText("");
+        lbPointOfContactEmailText.setText("");
+        lbPointOfContactPhoneText.setText("");
+    }
+
     String getCaseNumber() {
         return caseNumberTextField.getText();
     }
 
     String getExaminer() {
         return examinerTextField.getText();
+    }
+    
+    String getOrganization() {
+        if (selectedOrg != null) {
+            return selectedOrg.getName();
+        }
+        else {
+            return "";
+        }
     }
 
 }
