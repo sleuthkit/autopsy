@@ -27,16 +27,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.datamodel.TskCoreException;
+
 
 /**
  * Ingest job settings panel for hash lookup file ingest modules.
@@ -64,8 +62,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     private void initializeHashSetModels(HashLookupModuleSettings settings, List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
         hashSetModels.clear();
         for (HashDatabase db : hashDbs) {
-            String name = db.getHashSetName();
-            hashSetModels.add(new HashSetModel(db));
+            hashSetModels.add(new HashSetModel(db, settings.isHashSetEnabled(db), isHashDbValid(db)));
         }
     }
 
@@ -105,26 +102,25 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(), getHashSetList());
+        List<String> enabledKnownHashSetNames = new ArrayList<>();
+        List<String> disabledKnownHashSetNames = new ArrayList<>();
+        List<String> enabledKnownBadHashSetNames = new ArrayList<>();
+        List<String> disabledKnownBadHashSetNames = new ArrayList<>();
+        getHashSetNames(knownHashSetModels, enabledKnownHashSetNames, disabledKnownHashSetNames);
+        getHashSetNames(knownBadHashSetModels, enabledKnownBadHashSetNames, disabledKnownBadHashSetNames);
+        return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(),
+                enabledKnownHashSetNames, enabledKnownBadHashSetNames,
+                disabledKnownHashSetNames, disabledKnownBadHashSetNames);
     }
 
-    private List<HashDatabase> getHashSetList() {
-        List<HashDatabase> hashDatabases = new ArrayList<>();
-        for (HashSetModel model : this.knownBadHashSetModels) {
-            if (! model.isValid()) {
-                model.setEnabled(false);
+    private void getHashSetNames(List<HashSetModel> hashSetModels, List<String> enabledHashSetNames, List<String> disabledHashSetNames) {
+        for (HashSetModel model : hashSetModels) {
+            if (model.isEnabled() && model.isValid()) {
+                enabledHashSetNames.add(model.getName());
+            } else {
+                disabledHashSetNames.add(model.getName());
             }
-            hashDatabases.add(model.getDatabase());
-            
         }
-        for (HashSetModel model : this.knownHashSetModels) {
-            if (! model.isValid()) {
-                model.setEnabled(false);
-            }
-            hashDatabases.add(model.getDatabase());
-            
-        }
-        return hashDatabases;
     }
 
     void update() {
@@ -139,19 +135,16 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     void updateHashSetModels(List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
-        Map<String, HashDatabase> hashSetDbs = new HashMap<>();
-        for (HashDatabase db : hashDbs) {
-            hashSetDbs.put(db.getHashSetName(), db);
-        }
 
-        // TODO compare based on more than name
+        // TEMP TEMP SKIP TEMP
+        /*
         // Update the hash sets and detect deletions.
         List<HashSetModel> deletedHashSetModels = new ArrayList<>();
         for (HashSetModel model : hashSetModels) {
             String hashSetName = model.getName();
             if (hashSetDbs.containsKey(hashSetName)) {
-                HashDatabase db = hashSetDbs.get(hashSetName);
-                model.setValid(isHashDbValid(db));
+                HashDb db = hashSetDbs.get(hashSetName);
+                model.setIndexed(isHashDbValid(db));
                 hashSetDbs.remove(hashSetName);
             } else {
                 deletedHashSetModels.add(model);
@@ -164,10 +157,10 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
 
         // Add any new hash sets. All new sets are enabled by default.
-        for (HashDatabase db : hashSetDbs.values()) {
+        for (HashDb db : hashSetDbs.values()) {
             String name = db.getHashSetName();
-            hashSetModels.add(new HashSetModel(db));
-        }
+            hashSetModels.add(new HashSetModel(name, true, isHashDbValid(db)));
+        }*/
     }
 
     void reset(HashLookupModuleSettings newSettings) {
@@ -178,13 +171,13 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private boolean isHashDbValid(HashDatabase hashDb) {
-        boolean isValid = false;
+        boolean indexed = false;
         try {
-            isValid = hashDb.isValid();
+            indexed = hashDb.isValid();
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting valid status info for hash set (name = " + hashDb.getHashSetName() + ")", ex); //NON-NLS
+            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting indexed status info for hash set (name = " + hashDb.getHashSetName() + ")", ex); //NON-NLS
         }
-        return isValid;
+        return indexed;
     }
 
     private static final class HashSetModel {
@@ -193,15 +186,10 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         private boolean valid;
         private boolean enabled;
 
-        HashSetModel(HashDatabase db) {
+        HashSetModel(HashDatabase db, boolean enabled, boolean valid) {
             this.db = db;
-            try{
-                this.valid =  db.isValid();
-            } catch (TskCoreException ex){
-                Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting valid status info for hash set (name = " + db.getHashSetName() + ")", ex); //NON-NLS
-                this.valid = false;
-            }
-            this.enabled = db.getSearchDuringIngest();
+            this.enabled = enabled;
+            this.valid = valid;
         }
         
         HashDatabase getDatabase(){
@@ -264,15 +252,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            
             if (columnIndex == 0) {
-                System.out.println("Setting value of row " + rowIndex + " to " + ((Boolean) aValue));
                 hashSets.get(rowIndex).setEnabled((Boolean) aValue);
-                try{
-                    HashDbManager.getInstance().save();
-                } catch (HashDbManager.HashDbManagerException ex){
-                    Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error saving hash database settings", ex); //NON-NLS
-                }
             }
         }
 

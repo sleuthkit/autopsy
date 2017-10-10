@@ -129,7 +129,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private void updateEnabledHashSets(List<HashDatabase> allHashSets, List<HashDatabase> enabledHashSets) {
         enabledHashSets.clear();
         for (HashDatabase db : allHashSets) {
-            if (db.getSearchDuringIngest()) {
+            if (settings.isHashSetEnabled(db)) {
                 try {
                     if (db.isValid()) {
                         enabledHashSets.add(db);
