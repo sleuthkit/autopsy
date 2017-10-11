@@ -684,7 +684,11 @@ public class HashDbManager implements PropertyChangeListener {
         
         void close() throws TskCoreException;
         
+        public String toString();
+        
         DatabaseType getDatabaseType();
+        
+        
     }
 
     /**
@@ -957,6 +961,12 @@ public class HashDbManager implements PropertyChangeListener {
         public void close() throws TskCoreException {
             SleuthkitJNI.closeHashDatabase(handle);
         }
+        
+        @Override
+        public String toString(){
+            return getHashSetName();
+        }
+        
 
         @Override
         public int hashCode() {
