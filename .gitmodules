@@ -1,3 +1,0 @@
-[submodule "Core/src/org/sleuthkit/autopsy/modules/autopsy-gui-module"]
-	path = Core/src/org/sleuthkit/autopsy/modules/autopsy-gui-module
-	url = https://code.rand.org/ekohlenb/autopsy-gui-module
