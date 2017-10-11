@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase.DatabaseType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
@@ -432,6 +434,74 @@ final class HashLookupSettings implements Serializable {
         
         boolean isCentralRepoDatabaseType(){
             return dbType == DatabaseType.CENTRAL_REPOSITORY;
+        }
+        
+        boolean matches(HashDatabase hashDb){
+            if(hashDb == null){
+                return false;
+            }
+            
+            if( ! this.knownFilesType.equals(hashDb.getKnownFilesType())){
+                return false;
+            }
+            
+            if( ! this.dbType.equals(hashDb.getDatabaseType())){
+                return false;
+            }
+            
+            if( ! this.hashSetName.equals(hashDb.getHashSetName())){
+                return false;
+            }
+            
+            if(this.dbType.equals(DatabaseType.FILE)){
+                // FILE types will always have unique names, so no more testing required
+                return true;                        
+            }
+            
+            // TODO TODO central repo check
+            return true;
+            
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            
+            final HashDbInfo other = (HashDbInfo) obj;
+            
+            if(! this.dbType.equals(other.dbType)){
+                return false;
+            }
+            
+            if(this.dbType.equals(DatabaseType.FILE)){
+                // For files, we expect the name and known type to match
+                return (this.hashSetName.equals(other.hashSetName)
+                        && this.knownFilesType.equals(other.knownFilesType));
+            } else {
+                // For central repo, the name, index, and known files type should match
+                return (this.hashSetName.equals(other.hashSetName)
+                        && (this.centralRepoIndex == other.centralRepoIndex)
+                        && this.knownFilesType.equals(other.knownFilesType));
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 89 * hash + Objects.hashCode(this.hashSetName);
+            hash = 89 * hash + Objects.hashCode(this.knownFilesType);
+            hash = 89 * hash + Objects.hashCode(this.dbType);
+            if(this.dbType.equals(DatabaseType.CENTRAL_REPOSITORY)){
+                hash = 89 * hash + this.centralRepoIndex;
+            }
+            
+            return hash;
         }
         
         /**

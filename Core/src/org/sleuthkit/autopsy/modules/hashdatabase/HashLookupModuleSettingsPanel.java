@@ -21,9 +21,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -102,23 +100,20 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        List<String> enabledKnownHashSetNames = new ArrayList<>();
-        List<String> disabledKnownHashSetNames = new ArrayList<>();
-        List<String> enabledKnownBadHashSetNames = new ArrayList<>();
-        List<String> disabledKnownBadHashSetNames = new ArrayList<>();
-        getHashSetNames(knownHashSetModels, enabledKnownHashSetNames, disabledKnownHashSetNames);
-        getHashSetNames(knownBadHashSetModels, enabledKnownBadHashSetNames, disabledKnownBadHashSetNames);
+        List<HashDatabase> enabledHashSets = new ArrayList<>();
+        List<HashDatabase> disabledHashSets = new ArrayList<>();
+        addHashSets(knownHashSetModels, enabledHashSets, disabledHashSets);
+        addHashSets(knownBadHashSetModels, enabledHashSets, disabledHashSets);
         return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(),
-                enabledKnownHashSetNames, enabledKnownBadHashSetNames,
-                disabledKnownHashSetNames, disabledKnownBadHashSetNames);
+                enabledHashSets, disabledHashSets);
     }
 
-    private void getHashSetNames(List<HashSetModel> hashSetModels, List<String> enabledHashSetNames, List<String> disabledHashSetNames) {
+    private void addHashSets(List<HashSetModel> hashSetModels, List<HashDatabase> enabledHashSets, List<HashDatabase> disabledHashSets) {
         for (HashSetModel model : hashSetModels) {
             if (model.isEnabled() && model.isValid()) {
-                enabledHashSetNames.add(model.getName());
+                enabledHashSets.add(model.getDatabase());
             } else {
-                disabledHashSetNames.add(model.getName());
+                disabledHashSets.add(model.getDatabase());
             }
         }
     }
@@ -135,18 +130,22 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     void updateHashSetModels(List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
-
-        // TEMP TEMP SKIP TEMP
-        /*
+        
+        List<HashDatabase> hashDatabases = new ArrayList<>(hashDbs);
+        
         // Update the hash sets and detect deletions.
         List<HashSetModel> deletedHashSetModels = new ArrayList<>();
         for (HashSetModel model : hashSetModels) {
-            String hashSetName = model.getName();
-            if (hashSetDbs.containsKey(hashSetName)) {
-                HashDb db = hashSetDbs.get(hashSetName);
-                model.setIndexed(isHashDbValid(db));
-                hashSetDbs.remove(hashSetName);
-            } else {
+            boolean foundDatabase = false;
+            for(HashDatabase db : hashDatabases){
+                if(model.getDatabase().equals(db)){
+                    model.setValid(isHashDbValid(db));
+                    hashDatabases.remove(db);
+                    foundDatabase = true;
+                    break;
+                }
+            }
+            if(! foundDatabase){
                 deletedHashSetModels.add(model);
             }
         }
@@ -157,10 +156,9 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
 
         // Add any new hash sets. All new sets are enabled by default.
-        for (HashDb db : hashSetDbs.values()) {
-            String name = db.getHashSetName();
-            hashSetModels.add(new HashSetModel(name, true, isHashDbValid(db)));
-        }*/
+        for (HashDatabase db : hashDatabases) {
+            hashSetModels.add(new HashSetModel(db, true, isHashDbValid(db)));
+        }
     }
 
     void reset(HashLookupModuleSettings newSettings) {

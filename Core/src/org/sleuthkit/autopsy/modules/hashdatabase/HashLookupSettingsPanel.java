@@ -391,7 +391,12 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 getSelectionModel().setSelectionInterval(index, index);
             }
         }
+        
+        public void selectRowByDatabase(HashDatabase db){
+            setSelection(hashSetTableModel.getIndexByDatabase(db));
+        }
 
+        @Deprecated
         public void selectRowByName(String name) {
             setSelection(hashSetTableModel.getIndexByName(name));
         }
@@ -458,6 +463,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
 
+        int getIndexByDatabase(HashDatabase db){
+            for (int i = 0; i < hashSets.size(); ++i) {
+                if (hashSets.get(i).equals(db)) {
+                    return i;
+                }
+            }
+            return -1;            
+        }
+        
+        @Deprecated
         int getIndexByName(String name) {
             for (int i = 0; i < hashSets.size(); ++i) {
                 if (hashSets.get(i).getHashSetName().equals(name)) {
@@ -797,7 +812,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
-            ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
+            ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
@@ -844,7 +859,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDatabase hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
-            ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
+            ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_importDatabaseButtonActionPerformed

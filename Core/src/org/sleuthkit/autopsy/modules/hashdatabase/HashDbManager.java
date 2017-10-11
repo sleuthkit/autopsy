@@ -237,7 +237,7 @@ public class HashDbManager implements PropertyChangeListener {
             return new HashDb(handle, info.getHashSetName(), info.getSearchDuringIngest(), info.getSendIngestMessages(),
                 info.getKnownFilesType());
         } else if(info.isCentralRepoDatabaseType()){
-            throw new TskCoreException("Not done");
+            throw new TskCoreException("Not implemented yet");
         }
         throw new TskCoreException("Invalid database type in HashDbInfo");
     }
@@ -780,15 +780,7 @@ public class HashDbManager implements PropertyChangeListener {
         
         @Override
         public DatabaseType getDatabaseType(){
-            if(this instanceof HashDb){
-                return DatabaseType.FILE;
-            } else {
-                return DatabaseType.CENTRAL_REPOSITORY;
-            }
-        }
-        
-        public boolean hasIndexFile() {
-            return true;
+            return DatabaseType.FILE;
         }
 
         @Override
@@ -986,12 +978,6 @@ public class HashDbManager implements PropertyChangeListener {
             }
             final HashDb other = (HashDb) obj;
             if (!Objects.equals(this.hashSetName, other.hashSetName)) {
-                return false;
-            }
-            if (this.searchDuringIngest != other.searchDuringIngest) {
-                return false;
-            }
-            if (this.sendIngestMessages != other.sendIngestMessages) {
                 return false;
             }
             if (this.knownFilesType != other.knownFilesType) {

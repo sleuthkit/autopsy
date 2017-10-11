@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.io.IOException;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
 
 /**
  * Ingest job settings for the hash lookup module.
@@ -33,12 +35,12 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-    private HashSet<String> namesOfEnabledKnownHashSets;
-    private HashSet<String> namesOfDisabledKnownHashSets;    // Added in version 1.1
-    private HashSet<String> namesOfEnabledKnownBadHashSets;
-    private HashSet<String> namesOfDisabledKnownBadHashSets; // Added in version 1.1
+    private HashSet<String> namesOfEnabledKnownHashSets;    // The four lists of hash set names are only used for upgrading
+    private HashSet<String> namesOfDisabledKnownHashSets;   // from older settings files. All data should be stored in
+    private HashSet<String> namesOfEnabledKnownBadHashSets; // the databaseInfoList list.
+    private HashSet<String> namesOfDisabledKnownBadHashSets;
     private boolean shouldCalculateHashes = true;
-    private List<HashLookupSettings.HashDbInfo> databaseInfoList;
+    private List<HashDbInfo> databaseInfoList;
 
     HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDatabase> hashDbList){
         this.shouldCalculateHashes = shouldCalculateHashes;
@@ -52,7 +54,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     
     /**
      * This overrides the default deserialization code so we can 
-     * copy the enabled/disabled status into the DatabaseType objects
+     * copy the enabled/disabled status into the DatabaseType objects.
      * @param stream
      * @throws IOException
      * @throws ClassNotFoundException 
@@ -69,24 +71,34 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      *
      * @param shouldCalculateHashes           Whether or not hashes should be
      *                                        calculated.
-     * @param namesOfEnabledKnownHashSets     A list of enabled known hash sets.
-     * @param namesOfEnabledKnownBadHashSets  A list of enabled notable hash
-     *                                        sets.
-     * @param namesOfDisabledKnownHashSets    A list of disabled known hash
-     *                                        sets.
-     * @param namesOfDisabledKnownBadHashSets A list of disabled notable hash
-     *                                        sets.
+     * @param enabledHashSets     A list of enabled hash sets.
+     * @param disabledHashSets    A list of disabled hash sets.
      */
     HashLookupModuleSettings(boolean shouldCalculateHashes,
-            List<String> namesOfEnabledKnownHashSets,
-            List<String> namesOfEnabledKnownBadHashSets,
-            List<String> namesOfDisabledKnownHashSets,
-            List<String> namesOfDisabledKnownBadHashSets) {
+            List<HashDatabase> enabledHashSets,
+            List<HashDatabase> disabledHashSets) {
         this.shouldCalculateHashes = shouldCalculateHashes;
-        this.namesOfEnabledKnownHashSets = new HashSet<>(namesOfEnabledKnownHashSets);
-        this.namesOfEnabledKnownBadHashSets = new HashSet<>(namesOfEnabledKnownBadHashSets);
-        this.namesOfDisabledKnownHashSets = new HashSet<>(namesOfDisabledKnownHashSets);
-        this.namesOfDisabledKnownBadHashSets = new HashSet<>(namesOfDisabledKnownBadHashSets);
+        
+        databaseInfoList = new ArrayList<>();
+        for(HashDatabase db:enabledHashSets){
+            try{
+                HashDbInfo dbInfo = new HashDbInfo(db);
+                dbInfo.setSearchDuringIngest(true);
+                databaseInfoList.add(dbInfo);
+            } catch (TskCoreException ex){
+                Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings for " + db.getHashSetName(), ex); //NON-NLS
+            }
+        }
+        for(HashDatabase db:disabledHashSets){
+            try{
+                HashDbInfo dbInfo = new HashDbInfo(db);
+                dbInfo.setSearchDuringIngest(false);
+                databaseInfoList.add(dbInfo);
+            } catch (TskCoreException ex){
+                Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings for " + db.getHashSetName(), ex); //NON-NLS
+            }
+        }        
+        
     }
 
     /**
@@ -94,7 +106,6 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      */
     @Override
     public long getVersionNumber() {
-        this.upgradeFromOlderVersions();
         return HashLookupModuleSettings.serialVersionUID;
     }
 
@@ -105,7 +116,6 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @return True if hashes are to be calculated, false otherwise.
      */
     boolean shouldCalculateHashes() {
-        this.upgradeFromOlderVersions();
         return this.shouldCalculateHashes;
     }
 
@@ -118,50 +128,14 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @return True if the hash set is enabled, false otherwise.
      */
     boolean isHashSetEnabled(HashDatabase db) {
-        //this.upgradeFromOlderVersions();
-        // TEMP TEMP TEMP TEMP
-        return db.getSearchDuringIngest();
-        //return !(this.namesOfDisabledKnownHashSets.contains(hashSetName) || this.namesOfDisabledKnownBadHashSets.contains(hashSetName));
-    }
-
-    /**
-     * Get the names of all explicitly enabled known files hash sets.
-     *
-     * @return The list of names.
-     */
-    List<String> getNamesOfEnabledKnownHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(this.namesOfEnabledKnownHashSets);
-    }
-
-    /**
-     * Get the names of all explicitly disabled known files hash sets.
-     *
-     * @return The list of names.
-     */
-    List<String> getNamesOfDisabledKnownHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(namesOfDisabledKnownHashSets);
-    }
-
-    /**
-     * Get the names of all explicitly enabled notable files hash sets.
-     *
-     * @return The list of names.
-     */
-    List<String> getNamesOfEnabledKnownBadHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(this.namesOfEnabledKnownBadHashSets);
-    }
-
-    /**
-     * Get the names of all explicitly disabled notable files hash sets.
-     *
-     * @return The list of names.
-     */
-    List<String> getNamesOfDisabledKnownBadHashSets() {
-        this.upgradeFromOlderVersions();
-        return new ArrayList<>(this.namesOfDisabledKnownBadHashSets);
+        for(HashDbInfo dbInfo:databaseInfoList){
+            if(dbInfo.matches(db)){
+                return dbInfo.getSearchDuringIngest();
+            }
+        }
+        
+        // We didn't find it, so return true
+        return true;
     }
 
     /**
@@ -169,10 +143,8 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * compatible, version of this class is de-serialized.
      */
     private void upgradeFromOlderVersions() {
-        System.out.println("upgradeFromOlderVersions");
 
         if(databaseInfoList != null){
-            System.out.println("  No upgrade needed");
             return;
         }
         
@@ -192,7 +164,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         }
 
         for(HashLookupSettings.HashDbInfo db:databaseInfoList){
-            if(disabledHashSetNames.contains(db.getHashSetName())){
+            if(db.isFileDatabaseType() && disabledHashSetNames.contains(db.getHashSetName())){
                 db.setSearchDuringIngest(false);
             } else {
                 db.setSearchDuringIngest(true);
