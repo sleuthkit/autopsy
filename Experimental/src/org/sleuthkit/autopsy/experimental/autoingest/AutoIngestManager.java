@@ -93,6 +93,7 @@ import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
+import org.sleuthkit.autopsy.datasourceprocessors.IdentifyDataSourceProcessors;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -2204,7 +2205,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 return;
             }
 
-            DataSource dataSource = identifyDataSource(caseForJob);
+            DataSource dataSource = identifyDataSource();
             if (null == dataSource) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
@@ -2257,7 +2258,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                      interrupted while blocked, i.e.,
          *                                      if auto ingest is shutting down.
          */
-        private DataSource identifyDataSource(Case caseForJob) throws AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private DataSource identifyDataSource() throws AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
@@ -2276,7 +2277,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             String deviceId = manifest.getDeviceId();
             return new DataSource(deviceId, dataSourcePath);
         }
-
+        
         /**
          * Passes the data source for the current job through a data source
          * processor that adds it to the case database.
@@ -2306,21 +2307,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             try {
                 caseForJob.notifyAddingDataSource(taskId);
 
-                // lookup all AutomatedIngestDataSourceProcessors 
-                Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
-
-                Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = new HashMap<>();
-                for (AutoIngestDataSourceProcessor processor : processorCandidates) {
-                    try {
-                        int confidence = processor.canProcess(dataSource.getPath());
-                        if (confidence > 0) {
-                            validDataSourceProcessorsMap.put(processor, confidence);
-                        }
-                    } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                        SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
-                        // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
-                        throw ex;
-                    }
+                Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
+                try {
+                    // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
+                    validDataSourceProcessorsMap = IdentifyDataSourceProcessors.getDataSourceProcessor(dataSource.getPath());
+                } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
+                    SYS_LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
+                    // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
+                    throw ex;
                 }
 
                 // did we find a data source processor that can process the data source
@@ -2650,7 +2644,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             }
 
         }
-
+        
         /**
          * A data source processor progress monitor does nothing. There is
          * currently no mechanism for showing or recording data source processor
@@ -3032,7 +3026,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
 
     }
-
+    
     static final class AutoIngestManagerException extends Exception {
 
         private static final long serialVersionUID = 1L;
