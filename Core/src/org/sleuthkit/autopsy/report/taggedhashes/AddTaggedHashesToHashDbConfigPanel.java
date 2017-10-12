@@ -105,7 +105,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
         // Get the updateable hash databases and add their hash set names to the
         // JComboBox component.
-        List<HashDatabase> updateableHashSets = HashDbManager.getInstance().getUpdateableHashSetsNew();
+        List<HashDatabase> updateableHashSets = HashDbManager.getInstance().getUpdateableHashDatabases();
         if (!updateableHashSets.isEmpty()) {
             for (HashDatabase hashDb : updateableHashSets) {
                 hashSetsComboBox.addItem(hashDb);

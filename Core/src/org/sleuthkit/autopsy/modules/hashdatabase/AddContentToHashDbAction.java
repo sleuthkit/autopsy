@@ -106,7 +106,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             // Get the current set of updateable hash databases and add each
             // one to the menu as a separate menu item. Selecting a hash database
             // adds the selected files to the selected database.
-            final List<HashDatabase> hashDatabases = HashDbManager.getInstance().getUpdateableHashSetsNew();
+            final List<HashDatabase> hashDatabases = HashDbManager.getInstance().getUpdateableHashDatabases();
             if (!hashDatabases.isEmpty()) {
                 for (final HashDatabase database : hashDatabases) {
                     JMenuItem databaseItem = add(database.getHashSetName());

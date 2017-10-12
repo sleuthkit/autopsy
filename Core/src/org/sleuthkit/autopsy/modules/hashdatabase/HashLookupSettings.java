@@ -279,14 +279,6 @@ final class HashLookupSettings implements Serializable {
      * @return Whether or not the settings were written successfully
      */
     static boolean writeSettings(HashLookupSettings settings) {
-
-        System.out.println("\n#####\nwriteSettings");
-        for(HashDbInfo info:settings.hashDbInfoList){
-            System.out.println(info.hashSetName);
-            System.out.println("  DB type: " + info.dbType.toString());
-            System.out.println("  Enabled: " + info.searchDuringIngest);
-            System.out.println("  Type: " + info.knownFilesType.getDisplayName());
-        }
         
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
             out.writeObject(settings);
@@ -457,9 +449,8 @@ final class HashLookupSettings implements Serializable {
                 // FILE types will always have unique names, so no more testing required
                 return true;                        
             }
-            
-            // TODO TODO central repo check
-            return true;
+            // To do: central repo tests
+            return false;
             
         }
         
@@ -506,8 +497,7 @@ final class HashLookupSettings implements Serializable {
         
         /**
          * This overrides the default deserialization code so we can 
-         * properly set the dbType enum and other new fields 
-         * given an old settings file.
+         * properly set the dbType enum given an old settings file.
          * @param stream
          * @throws IOException
          * @throws ClassNotFoundException 

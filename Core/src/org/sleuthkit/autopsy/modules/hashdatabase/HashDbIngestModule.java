@@ -96,8 +96,8 @@ public class HashDbIngestModule implements FileIngestModule {
         if (!hashDbManager.verifyAllDatabasesLoadedCorrectly()) {
             throw new IngestModuleException("Could not load all hash databases");
         }
-        updateEnabledHashSets(hashDbManager.getKnownBadFileHashSetsNew(), knownBadHashSets);
-        updateEnabledHashSets(hashDbManager.getKnownFileHashSetsNew(), knownHashSets);
+        updateEnabledHashSets(hashDbManager.getNotableFileHashDatabases(), knownBadHashSets);
+        updateEnabledHashSets(hashDbManager.getKnownFileHashDatabases(), knownHashSets);
 
         if (refCounter.incrementAndGet(jobId) == 1) {
             // initialize job totals

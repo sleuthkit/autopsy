@@ -58,8 +58,6 @@ public class HashDbManager implements PropertyChangeListener {
 
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
-    //private List<HashDb> knownHashSets = new ArrayList<>();
-    //private List<HashDb> knownBadHashSets = new ArrayList<>();
     private List<HashDatabase> hashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
@@ -146,6 +144,7 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException
      */
+    @Deprecated
     public synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         hashDb = this.addExistingHashDatabaseNoSave(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
@@ -153,7 +152,12 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
 
+    @Deprecated
     synchronized HashDb addExistingHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
+        return (HashDb)addExistingFileTypeHashDatabase(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
+    }
+    
+    synchronized HashDatabase addExistingFileTypeHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         try {
             if (!new File(path).exists()) {
@@ -193,6 +197,7 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException
      */
+    @Deprecated
     public synchronized HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
             HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
 
@@ -204,7 +209,13 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
 
+    @Deprecated
     public synchronized HashDb addNewHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
+            HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
+        return (HashDb)addNewFileTypeHashDatabase(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
+    }
+    
+    public synchronized HashDatabase addNewFileTypeHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
             HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         try {
@@ -241,7 +252,7 @@ public class HashDbManager implements PropertyChangeListener {
         }
         throw new TskCoreException("Invalid database type in HashDbInfo");
     }
-
+    
     private HashDb addFileTypeHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
         // Wrap an object around the handle.
         HashDb hashDb = new HashDb(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
@@ -308,15 +319,10 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException
      */
-    public synchronized void removeHashDatabase(HashDb hashDb) throws HashDbManagerException {
+    public synchronized void removeHashDatabase(HashDatabase hashDb) throws HashDbManagerException {
         this.removeHashDatabaseNoSave(hashDb);
         this.save();
     }
-    
-   // public synchronized void removeHashDatabaseNoSave(HashDb hashDb) throws HashDbManagerException {
-   //     removeHashDatabaseNoSave((UnnamedHashSet)hashDb);
-   //     
-   // }
     
     public synchronized void removeHashDatabaseNoSave(HashDatabase hashDb) throws HashDbManagerException {
         // Don't remove a database if ingest is running
@@ -386,14 +392,30 @@ public class HashDbManager implements PropertyChangeListener {
      */
     @Deprecated
     public synchronized List<HashDb> getAllHashSets() {
+        return getAllFileTypeHashSets();
+    }
+    
+    /**
+     * Gets all of the file type hash databases used to classify files as known or known
+     * bad.
+     *
+     * @return A list, possibly empty, of hash databases.
+     */
+    public synchronized List<HashDb> getAllFileTypeHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((thisSet) -> (thisSet instanceof HashDb)).forEach((thisSet) -> {
             hashDbs.add((HashDb)thisSet);
         });
         return hashDbs;
-    }
+    }    
     
-    public synchronized List<HashDatabase> getAllHashSetsNew(){
+    /**
+     * Gets all of the hash databases used to classify files as known or known
+     * bad.
+     *
+     * @return A list, possibly empty, of hash databases.
+     */
+    public synchronized List<HashDatabase> getAllHashDatabases(){
         List<HashDatabase> hashDbs = new ArrayList<>();
         hashDbs.addAll(this.hashSets);
         return hashDbs;
@@ -413,7 +435,12 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDbs;
     }
     
-    public synchronized List<HashDatabase> getKnownFileHashSetsNew() {
+    /**
+     * Gets all of the hash databases used to classify files as known.
+     *
+     * @return A list, possibly empty, of hash databases.
+     */
+    public synchronized List<HashDatabase> getKnownFileHashDatabases() {
         List<HashDatabase> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN)).forEach((db) -> {
             hashDbs.add(db);
@@ -435,7 +462,12 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDbs;
     }
     
-    public synchronized List<HashDatabase> getKnownBadFileHashSetsNew() {
+    /**
+     * Gets all of the hash databases used to classify files as notable.
+     *
+     * @return A list, possibly empty, of hash databases.
+     */
+    public synchronized List<HashDatabase> getNotableFileHashDatabases() {
         List<HashDatabase> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD)).forEach((db) -> {
             hashDbs.add(db);
@@ -458,7 +490,12 @@ public class HashDbManager implements PropertyChangeListener {
         return updateableDbs;
     }
     
-    public synchronized List<HashDatabase> getUpdateableHashSetsNew(){
+    /**
+     * Gets all of the hash databases that accept updates.
+     *
+     * @return A list, possibly empty, of hash databases.
+     */
+    public synchronized List<HashDatabase> getUpdateableHashDatabases(){
         return getUpdateableHashSets(this.hashSets);
     }
 
@@ -684,6 +721,7 @@ public class HashDbManager implements PropertyChangeListener {
         
         void close() throws TskCoreException;
         
+        @Override
         public String toString();
         
         DatabaseType getDatabaseType();

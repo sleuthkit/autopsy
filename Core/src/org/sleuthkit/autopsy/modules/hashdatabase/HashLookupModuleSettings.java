@@ -55,6 +55,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     /**
      * This overrides the default deserialization code so we can 
      * copy the enabled/disabled status into the DatabaseType objects.
+     * Ignore the Netbeans warning that this method is unused.
      * @param stream
      * @throws IOException
      * @throws ClassNotFoundException 
@@ -149,7 +150,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         }
         
         try{
-            databaseInfoList = HashLookupSettings.convertHashSetList(HashDbManager.getInstance().getAllHashSetsNew());
+            databaseInfoList = HashLookupSettings.convertHashSetList(HashDbManager.getInstance().getAllHashDatabases());
         } catch (HashLookupSettings.HashLookupSettingsException ex){
             Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error updating hash database settings.", ex); //NON-NLS
             return;

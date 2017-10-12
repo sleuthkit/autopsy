@@ -259,7 +259,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     public void saveSettings() {
         //Checking for for any unindexed databases
         List<HashDatabase> unindexed = new ArrayList<>();
-        for (HashDatabase hashSet : hashSetManager.getAllHashSetsNew()) {
+        for (HashDatabase hashSet : hashSetManager.getAllHashDatabases()) {
             try {
                 if (!hashSet.hasIndex()) {
                     unindexed.add(hashSet);
@@ -408,7 +408,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      */
     private class HashSetTableModel extends AbstractTableModel {
 
-        List<HashDatabase> hashSets = HashDbManager.getInstance().getAllHashSetsNew();
+        List<HashDatabase> hashSets = HashDbManager.getInstance().getAllHashDatabases();
 
         @Override
         public int getColumnCount() {
@@ -483,7 +483,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
 
         void refreshModel() {
-            hashSets = HashDbManager.getInstance().getAllHashSetsNew();
+            hashSets = HashDbManager.getInstance().getAllHashDatabases();
             refreshDisplay();
         }
 

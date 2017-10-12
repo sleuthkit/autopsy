@@ -338,7 +338,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
         try {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabaseNoSave(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
+            newHashDb = HashDbManager.getInstance().addNewFileTypeHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,

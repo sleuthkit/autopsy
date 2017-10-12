@@ -53,8 +53,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
-        initializeHashSetModels(settings, hashDbManager.getKnownFileHashSetsNew(), knownHashSetModels);
-        initializeHashSetModels(settings, hashDbManager.getKnownBadFileHashSetsNew(), knownBadHashSetModels);
+        initializeHashSetModels(settings, hashDbManager.getKnownFileHashDatabases(), knownHashSetModels);
+        initializeHashSetModels(settings, hashDbManager.getNotableFileHashDatabases(), knownBadHashSetModels);
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings, List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
@@ -125,8 +125,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void updateHashSetModels() {
-        updateHashSetModels(hashDbManager.getKnownFileHashSetsNew(), knownHashSetModels);
-        updateHashSetModels(hashDbManager.getKnownBadFileHashSetsNew(), knownBadHashSetModels);
+        updateHashSetModels(hashDbManager.getKnownFileHashDatabases(), knownHashSetModels);
+        updateHashSetModels(hashDbManager.getNotableFileHashDatabases(), knownBadHashSetModels);
     }
 
     void updateHashSetModels(List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
