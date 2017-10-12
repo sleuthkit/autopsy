@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,28 +26,23 @@ package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
 
-import java.awt.*;
-import javax.swing.JComboBox;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
-
 /**
  *
  * @author dfickling
  */
 class NewCaseVisualPanel2 extends javax.swing.JPanel {
 
-    private EamOrganization selectedOrg = null;
-    private java.util.List<EamOrganization> orgs = null;
-    private EamDb dbManager;
-
+    OptionalCasePropertiesPanel propertiesPanel;
     /**
      * Creates new form NewCaseVisualPanel2
      */
     public NewCaseVisualPanel2() {
         initComponents();
+        propertiesPanel = new OptionalCasePropertiesPanel();
+        optionalPanel.add(propertiesPanel);
+        optionalPanel.setVisible(true);
+        propertiesPanel.setVisible(true);
+        
     }
 
     /**
@@ -61,29 +56,7 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
         return NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel2.getName.text");
     }
 
-    void setUpOrganization() {
-        try {
-            this.dbManager = EamDb.getInstance();
-        } catch (EamDbException ex) {
-            dbManager = null;
-        }
-        boolean cREnabled = (dbManager != null);
-        comboBoxOrgName.setEnabled(cREnabled);
-        bnNewOrganization.setEnabled(cREnabled);
-        lbPointOfContactNameText.setEnabled(cREnabled);
-        lbPointOfContactEmailText.setEnabled(cREnabled);
-        lbPointOfContactPhoneText.setEnabled(cREnabled);
-        lbOrganizationNameLabel.setEnabled(cREnabled);
-        lbPointOfContactNameLabel.setEnabled(cREnabled);
-        lbPointOfContactEmailLabel.setEnabled(cREnabled);
-        lbPointOfContactPhoneLabel.setEnabled(cREnabled);
-        if (cREnabled) {
-            loadOrganizationData();
-        } else {
-            selectedOrg = null;
-            clearOrganization();
-        }
-    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -94,56 +67,13 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        caseNumberTextField = new javax.swing.JTextField();
-        examinerTextField = new javax.swing.JTextField();
-        caseNumberLabel = new javax.swing.JLabel();
-        examinerLabel = new javax.swing.JLabel();
         optionalLabel = new javax.swing.JLabel();
-        lbOrganizationNameLabel = new javax.swing.JLabel();
-        comboBoxOrgName = new javax.swing.JComboBox<>();
-        bnNewOrganization = new javax.swing.JButton();
-        lbPointOfContactNameLabel = new javax.swing.JLabel();
-        lbPointOfContactNameText = new javax.swing.JLabel();
-        lbPointOfContactEmailLabel = new javax.swing.JLabel();
-        lbPointOfContactEmailText = new javax.swing.JLabel();
-        lbPointOfContactPhoneLabel = new javax.swing.JLabel();
-        lbPointOfContactPhoneText = new javax.swing.JLabel();
-
-        caseNumberTextField.setFont(caseNumberTextField.getFont().deriveFont(caseNumberTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNumberTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.caseNumberTextField.text")); // NOI18N
-
-        examinerTextField.setFont(examinerTextField.getFont().deriveFont(examinerTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        examinerTextField.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.examinerTextField.text")); // NOI18N
-
-        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.caseNumberLabel.text")); // NOI18N
-
-        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        examinerLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.examinerLabel.text")); // NOI18N
+        optionalPanel = new javax.swing.JPanel();
 
         optionalLabel.setFont(optionalLabel.getFont().deriveFont(optionalLabel.getFont().getStyle() | java.awt.Font.BOLD, 14));
         optionalLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.optionalLabel.text")); // NOI18N
 
-        lbOrganizationNameLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.lbOrganizationNameLabel.text")); // NOI18N
-
-        comboBoxOrgName.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                comboBoxOrgNameActionPerformed(evt);
-            }
-        });
-
-        bnNewOrganization.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.bnNewOrganization.text")); // NOI18N
-        bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnNewOrganizationActionPerformed(evt);
-            }
-        });
-
-        lbPointOfContactNameLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.lbPointOfContactNameLabel.text")); // NOI18N
-
-        lbPointOfContactEmailLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.lbPointOfContactEmailLabel.text")); // NOI18N
-
-        lbPointOfContactPhoneLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.lbPointOfContactPhoneLabel.text")); // NOI18N
+        optionalPanel.setLayout(new java.awt.BorderLayout());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -152,163 +82,41 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(optionalLabel)
-                        .addGap(0, 150, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(examinerLabel)
-                            .addComponent(lbOrganizationNameLabel)
-                            .addComponent(caseNumberLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseNumberTextField)
-                            .addComponent(examinerTextField)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(bnNewOrganization))
-                            .addComponent(comboBoxOrgName, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lbPointOfContactPhoneLabel)
-                                    .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(lbPointOfContactNameLabel))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
-                .addContainerGap())
+                    .addComponent(optionalLabel)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(optionalPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(optionalLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(caseNumberLabel)
-                    .addComponent(caseNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(examinerLabel)
-                    .addComponent(examinerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbOrganizationNameLabel)
-                    .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bnNewOrganization)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addComponent(optionalPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void comboBoxOrgNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboBoxOrgNameActionPerformed
-        JComboBox<String> cb = (JComboBox<String>) evt.getSource();
-        String orgName = (String) cb.getSelectedItem();
-        if (null == orgName) {
-            return;
-        }
-
-        if ("".equals(orgName)) {
-            clearOrganization();
-            return;
-        }
-
-        for (EamOrganization org : orgs) {
-            if (org.getName().equals(orgName)) {
-                selectedOrg = org;
-                lbPointOfContactNameText.setText(selectedOrg.getPocName());
-                lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
-                lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
-                return;
-            }
-        }
-    }//GEN-LAST:event_comboBoxOrgNameActionPerformed
-
-    private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
-        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
-        // update the combobox options and org data fields
-        if (dialog.isChanged()) {
-            selectedOrg = dialog.getNewOrg();
-            loadOrganizationData();
-            validate();
-            repaint();
-        }
-    }//GEN-LAST:event_bnNewOrganizationActionPerformed
-    private void loadOrganizationData() {
-
-        comboBoxOrgName.removeAllItems();
-        try {
-            orgs = dbManager.getOrganizations();
-            comboBoxOrgName.addItem(""); // for when a case has a null Org
-            orgs.forEach((org) -> {
-                comboBoxOrgName.addItem(org.getName());
-            });
-        } catch (EamDbException ex) {
-            selectedOrg = null;
-        }
-
-        if (null != selectedOrg) {
-            comboBoxOrgName.setSelectedItem(selectedOrg.getName());
-            lbPointOfContactNameText.setText(selectedOrg.getPocName());
-            lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
-            lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
-        } else {
-            clearOrganization();
-        }
-    }
+   
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton bnNewOrganization;
-    private javax.swing.JLabel caseNumberLabel;
-    private javax.swing.JTextField caseNumberTextField;
-    private javax.swing.JComboBox<String> comboBoxOrgName;
-    private javax.swing.JLabel examinerLabel;
-    private javax.swing.JTextField examinerTextField;
-    private javax.swing.JLabel lbOrganizationNameLabel;
-    private javax.swing.JLabel lbPointOfContactEmailLabel;
-    private javax.swing.JLabel lbPointOfContactEmailText;
-    private javax.swing.JLabel lbPointOfContactNameLabel;
-    private javax.swing.JLabel lbPointOfContactNameText;
-    private javax.swing.JLabel lbPointOfContactPhoneLabel;
-    private javax.swing.JLabel lbPointOfContactPhoneText;
     private javax.swing.JLabel optionalLabel;
+    private javax.swing.JPanel optionalPanel;
     // End of variables declaration//GEN-END:variables
 
-    private void clearOrganization() {
-        comboBoxOrgName.setSelectedItem("");
-        lbPointOfContactNameText.setText("");
-        lbPointOfContactEmailText.setText("");
-        lbPointOfContactPhoneText.setText("");
-    }
-
     String getCaseNumber() {
-        return caseNumberTextField.getText();
+        return propertiesPanel.getCaseNumber();
     }
 
-    String getExaminer() {
-        return examinerTextField.getText();
+    Examiner getExaminer() {
+        return propertiesPanel.getExaminer();
     }
     
     String getOrganization() {
-        if (selectedOrg != null) {
-            return selectedOrg.getName();
-        }
-        else {
-            return "";
-        }
+       return propertiesPanel.getOrganization();
+    }
+
+    void refreshCentralRepoFields() {
+       propertiesPanel.setUpCentralRepoFields();
     }
 
 }

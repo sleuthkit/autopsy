@@ -37,6 +37,10 @@ import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -75,11 +79,33 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 @Override
                 protected Void doInBackground() throws Exception {
                     String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
-                    String examiner = (String) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
+                    Examiner examiner = (Examiner) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
+                    String organizationName = (String) wizardDescriptor.getProperty("caseOrganization"); //NON-NLS
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
                     Case.createAsCurrentCase(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    if (EamDb.isEnabled()) {
+                        try {
+                            EamDb dbManager = EamDb.getInstance();
+                            if (dbManager != null) {
+                                CorrelationCase cRCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                                if (cRCase == null) {
+                                    cRCase = dbManager.newCase(Case.getCurrentCase());
+                                }
+                                if (!organizationName.isEmpty()) {
+                                    for (EamOrganization org : dbManager.getOrganizations()) {
+                                        if (org.getName().equals(organizationName)) {
+                                            cRCase.setOrg(org);
+                                            dbManager.updateCase(cRCase);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (EamDbException ex) {
+
+                        }
+                    }
                     return null;
                 }
 
@@ -116,6 +142,10 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 doFailedCaseCleanup(wizardDescriptor);
             }).start();
         }
+    }
+
+    private void updateCentralRepoCase() {
+
     }
 
     private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor) {

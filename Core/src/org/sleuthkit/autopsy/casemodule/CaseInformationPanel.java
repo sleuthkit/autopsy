@@ -18,13 +18,15 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JDialog;
 import javax.swing.event.ChangeEvent;
-import org.openide.util.Exceptions;
+import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.CentralRepoCaseOptionsPanel;
+import org.openide.windows.WindowManager;
 
 /**
  * Panel for displaying the case information, including both case details and
@@ -34,7 +36,6 @@ class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     CasePropertiesPanel propertiesPanel;
-    CentralRepoCaseOptionsPanel centralRepoPanel;
 
     /**
      * Constructs a panel for displaying the case information, including both
@@ -54,22 +55,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
-        centralRepoPanel = new CentralRepoCaseOptionsPanel();
-        this.tabbedPane.addTab("Central Repository Details", centralRepoPanel);
-        tabbedPane.setEnabledAt(tabbedPane.indexOfComponent(centralRepoPanel), false);
-        centralRepoDetailsLabel.setVisible(true);
-        try {
-            if (EamDb.getInstance() != null) {
-                tabbedPane.setEnabledAt(tabbedPane.indexOfComponent(centralRepoPanel), true);
-                centralRepoDetailsLabel.setVisible(false);
+        this.tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
             }
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-//        this.tabbedPane.addTab("Organization", new CaseOrganizationPanel());
-//        this.tabbedPane.addTab("Examiner Details", new ExaminerDetailsPanel());
-        this.tabbedPane.addChangeListener((ChangeEvent e) -> {
-            tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
         });
     }
 
@@ -94,48 +84,43 @@ class CaseInformationPanel extends javax.swing.JPanel {
         outerDetailsPanel = new javax.swing.JPanel();
         tabbedPane = new javax.swing.JTabbedPane();
         closeButton = new javax.swing.JButton();
-        centralRepoDetailsLabel = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
 
         tabbedPane.setPreferredSize(new java.awt.Dimension(420, 200));
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.closeButton.text")); // NOI18N
-        closeButton.addActionListener(new java.awt.event.ActionListener() {
+
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                closeButtonActionPerformed(evt);
+                jButton1ActionPerformed(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(centralRepoDetailsLabel, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.centralRepoDetailsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout outerDetailsPanelLayout = new javax.swing.GroupLayout(outerDetailsPanel);
         outerDetailsPanel.setLayout(outerDetailsPanelLayout);
         outerDetailsPanelLayout.setHorizontalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(outerDetailsPanelLayout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 709, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, outerDetailsPanelLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(closeButton)
                 .addGap(5, 5, 5))
-            .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(outerDetailsPanelLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(centralRepoDetailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 633, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(66, Short.MAX_VALUE)))
         );
+
+        outerDetailsPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, jButton1});
+
         outerDetailsPanelLayout.setVerticalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(outerDetailsPanelLayout.createSequentialGroup()
                 .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
-                .addComponent(closeButton)
+                .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(closeButton)
+                    .addComponent(jButton1))
                 .addGap(5, 5, 5))
-            .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, outerDetailsPanelLayout.createSequentialGroup()
-                    .addContainerGap(237, Short.MAX_VALUE)
-                    .addComponent(centralRepoDetailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap()))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -153,21 +138,31 @@ class CaseInformationPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        try {
-            if (EamDb.getInstance() != null) {
-                centralRepoPanel.saveChanges();
-            }
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        propertiesPanel.saveChanges();
-    }//GEN-LAST:event_closeButtonActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        JDialog editCasePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), "Edit Case Details", true);
+        EditOptionalCasePropertiesPanel casePropertiesPanel = new EditOptionalCasePropertiesPanel();
+        casePropertiesPanel.addCancelButtonAction((ActionEvent e) -> {
+            editCasePropertiesDialog.setVisible(false);
+        });
+        casePropertiesPanel.addSaveButtonAction((ActionEvent e) -> {
+            editCasePropertiesDialog.setVisible(false);
+        });
 
+        editCasePropertiesDialog.add(casePropertiesPanel);
+        editCasePropertiesDialog.setResizable(true);
+        editCasePropertiesDialog.pack();
+
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        double w = editCasePropertiesDialog.getSize().getWidth();
+        double h = editCasePropertiesDialog.getSize().getHeight();
+        editCasePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        editCasePropertiesDialog.setVisible(true);
+        editCasePropertiesDialog.toFront();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel centralRepoDetailsLabel;
     private javax.swing.JButton closeButton;
+    private javax.swing.JButton jButton1;
     private javax.swing.JPanel outerDetailsPanel;
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables

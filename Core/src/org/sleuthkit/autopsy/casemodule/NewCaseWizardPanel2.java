@@ -47,7 +47,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         if (component == null) {
             component = new NewCaseVisualPanel2();
         }
-        component.setUpOrganization();
+        component.refreshCentralRepoFields();
         return component;
     }
 

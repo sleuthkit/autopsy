@@ -19,10 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.nio.file.Paths;
-import java.util.logging.Level;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * A panel that allows the user to view various properties of a case and change
@@ -32,7 +29,7 @@ class CasePropertiesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(CasePropertiesPanel.class.getName());
-    private final Case theCase;
+    private Case theCase;
 
     /**
      * Constructs a panel that allows the user to view various properties of the
@@ -40,22 +37,19 @@ class CasePropertiesPanel extends javax.swing.JPanel {
      *
      * @param aCase A case.
      */
-    CasePropertiesPanel(Case aCase) {
+    CasePropertiesPanel(Case caseInfo) {
         initComponents();
-        theCase = aCase;
-        caseNameTextField.setText(theCase.getDisplayName());
-        String caseNumber = theCase.getNumber();
-        if (!caseNumber.isEmpty()) {
-            caseNumberTextField.setText(caseNumber);
-        } else {
-            caseNumberTextField.setText("");
-        }
-        String examiner = theCase.getExaminer();
-        if (!examiner.isEmpty()) {
-            examinerTextField.setText(examiner);
-        } else {
-            examinerTextField.setText("");
-        }
+        updateCaseInfo(caseInfo);
+    }
+
+    void updateCaseInfo(Case caseInfo) {
+        theCase = Case.getCurrentCase();
+        lbCaseNameText.setText(theCase.getDisplayName());
+        lbCaseNumberText.setText(theCase.getNumber());
+        lbExaminerNameText.setText(theCase.getExaminer());
+        lbExaminerPhoneText.setText(theCase.getExaminerPhone());
+        lbExaminerEmailText.setText(theCase.getExaminerEmail());
+        taNotesText.setText(theCase.getExaminerNotes());
         crDateField.setText(theCase.getCreatedDate());
         caseDirField.setText(theCase.getCaseDirectory());
         if (Case.CaseType.SINGLE_USER_CASE == theCase.getCaseType()) {
@@ -66,6 +60,9 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         Case.CaseType caseType = theCase.getCaseType();
         caseTypeField.setText(caseType.getLocalizedDisplayName());
         lbCaseUIDText.setText(theCase.getName());
+        validate();
+        repaint();
+        System.out.println("repainged CASE PROPS");
     }
 
     /**
@@ -88,258 +85,468 @@ class CasePropertiesPanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
-        jPanel1 = new javax.swing.JPanel();
+        detailsPanel = new javax.swing.JPanel();
+        casePanel = new javax.swing.JPanel();
         caseNameLabel = new javax.swing.JLabel();
-        crDateLabel = new javax.swing.JLabel();
-        caseDirLabel = new javax.swing.JLabel();
-        caseNameTextField = new javax.swing.JTextField();
-        caseNumberLabel = new javax.swing.JLabel();
-        examinerLabel = new javax.swing.JLabel();
         lbDbType = new javax.swing.JLabel();
-        lbDbName = new javax.swing.JLabel();
-        crDateField = new javax.swing.JLabel();
-        caseDirField = new javax.swing.JLabel();
-        dbNameField = new javax.swing.JLabel();
-        caseTypeField = new javax.swing.JLabel();
         lbCaseUUIDLabel = new javax.swing.JLabel();
+        caseTypeField = new javax.swing.JLabel();
+        dbNameField = new javax.swing.JLabel();
+        lbDbName = new javax.swing.JLabel();
+        caseNumberLabel = new javax.swing.JLabel();
+        caseDirLabel = new javax.swing.JLabel();
+        caseDirField = new javax.swing.JLabel();
+        crDateLabel = new javax.swing.JLabel();
+        crDateField = new javax.swing.JLabel();
         lbCaseUIDText = new javax.swing.JLabel();
-        caseNumberTextField = new javax.swing.JTextField();
-        examinerTextField = new javax.swing.JTextField();
+        lbCaseNameText = new javax.swing.JLabel();
+        lbCaseNumberText = new javax.swing.JLabel();
+        examinerPanel = new javax.swing.JPanel();
+        lbExaminerNameText = new javax.swing.JLabel();
+        lbNotesLabel = new javax.swing.JLabel();
+        examinerLabel = new javax.swing.JLabel();
+        examinerNotesScrollPane = new javax.swing.JScrollPane();
+        taNotesText = new javax.swing.JTextArea();
+        lbExaminerEmailLabel = new javax.swing.JLabel();
+        lbExaminerPhoneLabel = new javax.swing.JLabel();
+        lbExaminerPhoneText = new javax.swing.JLabel();
+        lbExaminerEmailText = new javax.swing.JLabel();
+        pnOrganization1 = new javax.swing.JPanel();
+        lbOrganizationNameLabel1 = new javax.swing.JLabel();
+        lbPointOfContactNameLabel1 = new javax.swing.JLabel();
+        lbPointOfContactEmailLabel1 = new javax.swing.JLabel();
+        lbPointOfContactPhoneLabel1 = new javax.swing.JLabel();
+        lbPointOfContactNameText1 = new javax.swing.JLabel();
+        lbPointOfContactEmailText1 = new javax.swing.JLabel();
+        lbPointOfContactPhoneText1 = new javax.swing.JLabel();
+        lbOrganizationNameText = new javax.swing.JLabel();
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
+        casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.casePanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
         caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNameLabel.text")); // NOI18N
-
-        crDateLabel.setFont(crDateLabel.getFont().deriveFont(crDateLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        crDateLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.crDateLabel.text")); // NOI18N
-
-        caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseDirLabel.text")); // NOI18N
-
-        caseNameTextField.setFont(caseNameTextField.getFont().deriveFont(caseNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNameTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNameTextField.text")); // NOI18N
-
-        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNumberLabel.text")); // NOI18N
-
-        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerLabel.text")); // NOI18N
+        caseNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        caseNameLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        caseNameLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
         lbDbType.setFont(lbDbType.getFont().deriveFont(lbDbType.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         lbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbType.text")); // NOI18N
+        lbDbType.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbDbType.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbDbType.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        lbDbName.setFont(lbDbName.getFont().deriveFont(lbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbName.text")); // NOI18N
-
-        caseDirField.setMinimumSize(new java.awt.Dimension(25, 14));
-
-        dbNameField.setMinimumSize(new java.awt.Dimension(25, 14));
+        lbCaseUUIDLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbCaseUUIDLabel.text")); // NOI18N
+        lbCaseUUIDLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbCaseUUIDLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbCaseUUIDLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
         caseTypeField.setMaximumSize(new java.awt.Dimension(1, 0));
 
-        lbCaseUUIDLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbCaseUUIDLabel.text")); // NOI18N
+        dbNameField.setMinimumSize(new java.awt.Dimension(25, 14));
 
-        caseNumberTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNumberTextField.text")); // NOI18N
+        lbDbName.setFont(lbDbName.getFont().deriveFont(lbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbName.text")); // NOI18N
+        lbDbName.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbDbName.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbDbName.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        examinerTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerTextField.text")); // NOI18N
+        caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNumberLabel.text")); // NOI18N
+        caseNumberLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        caseNumberLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        caseNumberLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseDirLabel.text")); // NOI18N
+        caseDirLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        caseDirLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        caseDirLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        caseDirField.setMinimumSize(new java.awt.Dimension(25, 14));
+
+        crDateLabel.setFont(crDateLabel.getFont().deriveFont(crDateLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        crDateLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.crDateLabel.text")); // NOI18N
+        crDateLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        crDateLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        crDateLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        lbCaseNameText.setMinimumSize(new java.awt.Dimension(25, 14));
+
+        lbCaseNumberText.setMinimumSize(new java.awt.Dimension(25, 14));
+
+        javax.swing.GroupLayout casePanelLayout = new javax.swing.GroupLayout(casePanel);
+        casePanel.setLayout(casePanelLayout);
+        casePanelLayout.setHorizontalGroup(
+            casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(casePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseNumberLabel)
-                            .addComponent(caseNameLabel)
-                            .addComponent(examinerLabel))
-                        .addGap(19, 19, 19)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseNameTextField)
-                            .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
-                            .addComponent(examinerTextField)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(lbCaseUUIDLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbDbName)
-                            .addComponent(lbDbType, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(caseDirLabel, javax.swing.GroupLayout.Alignment.LEADING))
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(casePanelLayout.createSequentialGroup()
+                        .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(caseNumberLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(6, 6, 6)
+                        .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbCaseNumberText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbCaseNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(casePanelLayout.createSequentialGroup()
+                        .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(lbCaseUUIDLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lbDbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(lbDbType, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(caseDirLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(crDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(crDateField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(caseDirField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(caseTypeField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(dbNameField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbCaseUIDText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(crDateLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(crDateField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(lbCaseUIDText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(caseNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(caseNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        casePanelLayout.setVerticalGroup(
+            casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(casePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(caseNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbCaseNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(caseNumberLabel)
-                    .addComponent(caseNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(caseNumberLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbCaseNumberText, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(examinerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(examinerLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(crDateLabel)
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(crDateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(crDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(caseDirLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(caseDirField, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(caseTypeField, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbDbType))
+                    .addComponent(lbDbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbDbName)
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbDbName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(dbNameField, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbCaseUUIDLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbCaseUIDText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addGap(6, 6, 6))
+        );
+
+        examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
+        lbNotesLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbNotesLabel.text")); // NOI18N
+        lbNotesLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbNotesLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbNotesLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+        lbNotesLabel.setRequestFocusEnabled(false);
+
+        examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerLabel.text")); // NOI18N
+        examinerLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        examinerLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        examinerLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        examinerNotesScrollPane.setBorder(null);
+
+        taNotesText.setBackground(new java.awt.Color(240, 240, 240));
+        taNotesText.setColumns(20);
+        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        taNotesText.setLineWrap(true);
+        taNotesText.setRows(2);
+        taNotesText.setWrapStyleWord(true);
+        taNotesText.setBorder(null);
+        examinerNotesScrollPane.setViewportView(taNotesText);
+
+        lbExaminerEmailLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerEmailLabel.text")); // NOI18N
+        lbExaminerEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbExaminerEmailLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbExaminerEmailLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        lbExaminerPhoneLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerPhoneLabel.text")); // NOI18N
+        lbExaminerPhoneLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbExaminerPhoneLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbExaminerPhoneLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        javax.swing.GroupLayout examinerPanelLayout = new javax.swing.GroupLayout(examinerPanel);
+        examinerPanel.setLayout(examinerPanelLayout);
+        examinerPanelLayout.setHorizontalGroup(
+            examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(examinerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(examinerPanelLayout.createSequentialGroup()
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbNotesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbExaminerPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(examinerNotesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, examinerPanelLayout.createSequentialGroup()
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(examinerLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbExaminerNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbExaminerEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap())
+        );
+        examinerPanelLayout.setVerticalGroup(
+            examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(examinerPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(examinerLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbExaminerNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbExaminerEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbExaminerPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(examinerNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6))
+        );
+
+        pnOrganization1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.pnOrganization1.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
+        lbOrganizationNameLabel1.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbOrganizationNameLabel1.text")); // NOI18N
+        lbOrganizationNameLabel1.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbOrganizationNameLabel1.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbOrganizationNameLabel1.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        lbPointOfContactNameLabel1.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbPointOfContactNameLabel1.text")); // NOI18N
+
+        lbPointOfContactEmailLabel1.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbPointOfContactEmailLabel1.text")); // NOI18N
+        lbPointOfContactEmailLabel1.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactEmailLabel1.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactEmailLabel1.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        lbPointOfContactPhoneLabel1.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbPointOfContactPhoneLabel1.text")); // NOI18N
+        lbPointOfContactPhoneLabel1.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactPhoneLabel1.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactPhoneLabel1.setPreferredSize(new java.awt.Dimension(82, 14));
+
+        javax.swing.GroupLayout pnOrganization1Layout = new javax.swing.GroupLayout(pnOrganization1);
+        pnOrganization1.setLayout(pnOrganization1Layout);
+        pnOrganization1Layout.setHorizontalGroup(
+            pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnOrganization1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(lbPointOfContactEmailLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lbPointOfContactPhoneLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lbPointOfContactNameLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lbOrganizationNameLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lbPointOfContactNameText1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbOrganizationNameText, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactPhoneText1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactEmailText1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        pnOrganization1Layout.setVerticalGroup(
+            pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnOrganization1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbOrganizationNameLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbOrganizationNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbPointOfContactNameLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactNameText1, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbPointOfContactEmailLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactEmailText1, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnOrganization1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbPointOfContactPhoneLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbPointOfContactPhoneText1, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6))
+        );
+
+        javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
+        detailsPanel.setLayout(detailsPanelLayout);
+        detailsPanelLayout.setHorizontalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(detailsPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(casePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(examinerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnOrganization1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        detailsPanelLayout.setVerticalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, detailsPanelLayout.createSequentialGroup()
+                .addComponent(casePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(examinerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(pnOrganization1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGap(0, 0, 0)
+                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    @NbBundle.Messages({
-        "CasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
-        "CasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
-    })
-    void saveChanges() {
-        saveCaseName();
-        saveCaseNumber();
-        saveExaminerName();
-    }
-
-    private void saveCaseName() {
-        String newCaseDisplayName = caseNameTextField.getText();
-
-        if (newCaseDisplayName.equals(theCase.getDisplayName())) {
-            return;
-        }
-
-        if (newCaseDisplayName.trim().isEmpty()) {
-            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
-            return;
-        }
-
-        if (!Case.isValidName(newCaseDisplayName)) {
-            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
-            return;
-        }
-
-        try {
-            theCase.updateDisplayName(newCaseDisplayName);
-        } catch (CaseActionException ex) {
-            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
-            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
-        }
-    }
-
-    private void saveCaseNumber() {
-        String newCaseNumber = caseNumberTextField.getText();
-
-        if (newCaseNumber.equals(theCase.getNumber())) {
-            return;
-        }
-
-        if (newCaseNumber.trim().isEmpty()) {
-            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
-            return;
-        }
-
-        if (!Case.isValidName(newCaseNumber)) {
-            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
-            return;
-        }
-
-        try {
-            theCase.updateCaseNumber(newCaseNumber);
-        } catch (CaseActionException ex) {
-            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
-            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
-        }
-    }
-
-    private void saveExaminerName() {
-        String newExaminerName = examinerTextField.getText();
-
-        if (newExaminerName.equals(theCase.getExaminer())) {
-            return;
-        }
-
-        if (newExaminerName.trim().isEmpty()) {
-            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
-            return;
-        }
-
-        if (!Case.isValidName(newExaminerName)) {
-            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
-            return;
-        }
-
-        try {
-            theCase.updateExaminer(newExaminerName);
-        } catch (CaseActionException ex) {
-            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
-            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
-        }
-    }
+//    @NbBundle.Messages({
+//        "CasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
+//        "CasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
+//    })
+//    void saveChanges() {
+//        saveCaseName();
+//        saveCaseNumber();
+//        saveExaminerName();
+//    }
+//    private void saveCaseName() {
+//        String newCaseDisplayName = caseNameTextField.getText();
+//
+//        if (newCaseDisplayName.equals(theCase.getDisplayName())) {
+//            return;
+//        }
+//
+//        if (newCaseDisplayName.trim().isEmpty()) {
+//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
+//            return;
+//        }
+//
+//        if (!Case.isValidName(newCaseDisplayName)) {
+//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
+//            return;
+//        }
+//
+//        try {
+//            theCase.updateDisplayName(newCaseDisplayName);
+//        } catch (CaseActionException ex) {
+//            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
+//            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
+//        }
+//    }
+//    private void saveCaseNumber() {
+//        String newCaseNumber = caseNumberTextField.getText();
+//
+//        if (newCaseNumber.equals(theCase.getNumber())) {
+//            return;
+//        }
+//
+//        if (newCaseNumber.trim().isEmpty()) {
+//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
+//            return;
+//        }
+//
+//        if (!Case.isValidName(newCaseNumber)) {
+//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
+//            return;
+//        }
+//
+//        try {
+//            theCase.updateCaseNumber(newCaseNumber);
+//        } catch (CaseActionException ex) {
+//            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
+//            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
+//        }
+//    }
+//    private void saveExaminerName() {
+//        String newExaminerName = examinerTextField.getText();
+//
+//        if (newExaminerName.equals(theCase.getExaminer())) {
+//            return;
+//        }
+//
+//        if (newExaminerName.trim().isEmpty()) {
+//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
+//            return;
+//        }
+//
+//        if (!Case.isValidName(newExaminerName)) {
+//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
+//            return;
+//        }
+//
+//        try {
+//            theCase.updateExaminer(newExaminerName);
+//        } catch (CaseActionException ex) {
+//            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
+//            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
+//        }
+//    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel caseDirField;
     private javax.swing.JLabel caseDirLabel;
     private javax.swing.JLabel caseNameLabel;
-    private javax.swing.JTextField caseNameTextField;
     private javax.swing.JLabel caseNumberLabel;
-    private javax.swing.JTextField caseNumberTextField;
+    private javax.swing.JPanel casePanel;
     private javax.swing.JLabel caseTypeField;
     private javax.swing.JLabel crDateField;
     private javax.swing.JLabel crDateLabel;
     private javax.swing.JLabel dbNameField;
+    private javax.swing.JPanel detailsPanel;
     private javax.swing.JLabel examinerLabel;
-    private javax.swing.JTextField examinerTextField;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane examinerNotesScrollPane;
+    private javax.swing.JPanel examinerPanel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JLabel lbCaseNameText;
+    private javax.swing.JLabel lbCaseNumberText;
     private javax.swing.JLabel lbCaseUIDText;
     private javax.swing.JLabel lbCaseUUIDLabel;
     private javax.swing.JLabel lbDbName;
     private javax.swing.JLabel lbDbType;
+    private javax.swing.JLabel lbExaminerEmailLabel;
+    private javax.swing.JLabel lbExaminerEmailText;
+    private javax.swing.JLabel lbExaminerNameText;
+    private javax.swing.JLabel lbExaminerPhoneLabel;
+    private javax.swing.JLabel lbExaminerPhoneText;
+    private javax.swing.JLabel lbNotesLabel;
+    private javax.swing.JLabel lbOrganizationNameLabel1;
+    private javax.swing.JLabel lbOrganizationNameText;
+    private javax.swing.JLabel lbPointOfContactEmailLabel1;
+    private javax.swing.JLabel lbPointOfContactEmailText1;
+    private javax.swing.JLabel lbPointOfContactNameLabel1;
+    private javax.swing.JLabel lbPointOfContactNameText1;
+    private javax.swing.JLabel lbPointOfContactPhoneLabel1;
+    private javax.swing.JLabel lbPointOfContactPhoneText1;
+    private javax.swing.JPanel pnOrganization1;
+    private javax.swing.JTextArea taNotesText;
     // End of variables declaration//GEN-END:variables
 
 }

@@ -66,6 +66,9 @@ public final class CaseMetadata {
     private final static String CASE_NAME_ELEMENT_NAME = "Name"; //NON-NLS
     private final static String CASE_NUMBER_ELEMENT_NAME = "Number"; //NON-NLS
     private final static String EXAMINER_ELEMENT_NAME = "Examiner"; //NON-NLS
+    private final static String EXAMINER_ELEMENT_PHONE = "ExaminerPhone"; //NON-NLS
+    private final static String EXAMINER_ELEMENT_EMAIL = "ExaminerEmail"; //NON-NLS
+    private final static String EXAMINER_ELEMENT_NOTES = "ExaminerNotes"; //NON-NLS
     private final static String CASE_TYPE_ELEMENT_NAME = "CaseType"; //NON-NLS
     private final static String CASE_DATABASE_NAME_ELEMENT_NAME = "DatabaseName"; //NON-NLS
     private final static String TEXT_INDEX_NAME_ELEMENT = "TextIndexName"; //NON-NLS
@@ -98,7 +101,7 @@ public final class CaseMetadata {
     private String caseName;
     private String caseDisplayName;
     private String caseNumber;
-    private String examiner;
+    private Examiner examiner;
     private String caseDatabaseName;
     private String caseDatabasePath; // Legacy
     private String textIndexName; // Legacy
@@ -127,7 +130,7 @@ public final class CaseMetadata {
      * @param caseNumber      The case number.
      * @param examiner        The name of the case examiner.
      */
-    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseDisplayName, String caseNumber, String examiner) {
+    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseDisplayName, String caseNumber, Examiner examiner) {
         metadataFilePath = Paths.get(caseDirectory, caseDisplayName + FILE_EXTENSION);
         this.caseType = caseType;
         this.caseName = caseName;
@@ -243,12 +246,12 @@ public final class CaseMetadata {
      *
      * @return The examiner, may be empty.
      */
-    public String getExaminer() {
+    public Examiner getExaminer() {
         return examiner;
     }
-    
-    void setExaminer(String newExaminer) throws CaseMetadataException {
-        String oldExaminer = this.examiner;
+
+    void setExaminer(Examiner newExaminer) throws CaseMetadataException {
+        Examiner oldExaminer = this.examiner;
         this.examiner = newExaminer;
         try {
             writeToFile();
@@ -413,7 +416,10 @@ public final class CaseMetadata {
         createChildElement(doc, caseElement, CASE_NAME_ELEMENT_NAME, caseName);
         createChildElement(doc, caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, caseDisplayName);
         createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, caseNumber);
-        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, examiner);
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, examiner.getName());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_PHONE, examiner.getPhone());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_EMAIL, examiner.getEmail());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NOTES, examiner.getNotes());
         createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, caseType.toString());
         createChildElement(doc, caseElement, CASE_DB_ABSOLUTE_PATH_ELEMENT_NAME, caseDatabasePath);
         createChildElement(doc, caseElement, CASE_DB_NAME_RELATIVE_ELEMENT_NAME, caseDatabaseName);
@@ -480,7 +486,20 @@ public final class CaseMetadata {
                 this.caseDisplayName = getElementTextContent(caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, true);
             }
             this.caseNumber = getElementTextContent(caseElement, CASE_NUMBER_ELEMENT_NAME, false);
-            this.examiner = getElementTextContent(caseElement, EXAMINER_ELEMENT_NAME, false);
+            String examinerName = getElementTextContent(caseElement, EXAMINER_ELEMENT_NAME, false);
+            String examinerPhone;
+            String examinerEmail;
+            String examinerNotes;
+            try {
+                examinerPhone = getElementTextContent(caseElement, EXAMINER_ELEMENT_PHONE, false);
+                examinerEmail = getElementTextContent(caseElement, EXAMINER_ELEMENT_EMAIL, false);
+                examinerNotes = getElementTextContent(caseElement, EXAMINER_ELEMENT_NOTES, false);
+            } catch (CaseMetadataException ex) {
+                examinerPhone = "";  //case had metadata file written before additional examiner details were included 
+                examinerEmail = "";
+                examinerNotes = "";
+            }
+            this.examiner = new Examiner(examinerName, examinerPhone, examinerEmail, examinerNotes);
             this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
             if (null == this.caseType) {
                 throw new CaseMetadataException("Case metadata file corrupted");
