@@ -93,7 +93,6 @@ import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
-import org.sleuthkit.autopsy.datasourceprocessors.IdentifyDataSourceProcessors;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -2277,7 +2276,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             String deviceId = manifest.getDeviceId();
             return new DataSource(deviceId, dataSourcePath);
         }
-        
+               
         /**
          * Passes the data source for the current job through a data source
          * processor that adds it to the case database.
@@ -2300,7 +2299,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE, Date.from(Instant.now()));
             UUID taskId = UUID.randomUUID();
-            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId);
+            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
@@ -2570,79 +2569,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
                 jobLogger.logFileExportError();
             }
-        }
-
-        /**
-         * A "callback" that collects the results of running a data source
-         * processor on a data source and unblocks the job processing thread
-         * when the data source processor finishes running in its own thread.
-         */
-        @Immutable
-        class AddDataSourceCallback extends DataSourceProcessorCallback {
-
-            private final Case caseForJob;
-            private final DataSource dataSourceInfo;
-            private final UUID taskId;
-
-            /**
-             * Constructs a "callback" that collects the results of running a
-             * data source processor on a data source and unblocks the job
-             * processing thread when the data source processor finishes running
-             * in its own thread.
-             *
-             * @param caseForJob     The case for the current job.
-             * @param dataSourceInfo The data source
-             * @param taskId         The task id to associate with ingest job
-             *                       events.
-             */
-            AddDataSourceCallback(Case caseForJob, DataSource dataSourceInfo, UUID taskId) {
-                this.caseForJob = caseForJob;
-                this.dataSourceInfo = dataSourceInfo;
-                this.taskId = taskId;
-            }
-
-            /**
-             * Called by the data source processor when it finishes running in
-             * its own thread.
-             *
-             * @param result            The result code for the processing of
-             *                          the data source.
-             * @param errorMessages     Any error messages generated during the
-             *                          processing of the data source.
-             * @param dataSourceContent The content produced by processing the
-             *                          data source.
-             */
-            @Override
-            public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSourceContent) {
-                if (!dataSourceContent.isEmpty()) {
-                    caseForJob.notifyDataSourceAdded(dataSourceContent.get(0), taskId);
-                } else {
-                    caseForJob.notifyFailedAddingDataSource(taskId);
-                }
-                dataSourceInfo.setDataSourceProcessorOutput(result, errorMessages, dataSourceContent);
-                dataSourceContent.addAll(dataSourceContent);
-                synchronized (ingestLock) {
-                    ingestLock.notify();
-                }
-            }
-
-            /**
-             * Called by the data source processor when it finishes running in
-             * its own thread, if that thread is the AWT (Abstract Window
-             * Toolkit) event dispatch thread (EDT).
-             *
-             * @param result            The result code for the processing of
-             *                          the data source.
-             * @param errorMessages     Any error messages generated during the
-             *                          processing of the data source.
-             * @param dataSourceContent The content produced by processing the
-             *                          data source.
-             */
-            @Override
-            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSources) {
-                done(result, errorMessages, dataSources);
-            }
-
         }
         
         /**
@@ -2983,48 +2909,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         FAILED,
         PARTIALLY_DELETED,
         FULLY_DELETED
-    }
-
-    @ThreadSafe
-    private static final class DataSource {
-
-        private final String deviceId;
-        private final Path path;
-        private DataSourceProcessorResult resultCode;
-        private List<String> errorMessages;
-        private List<Content> content;
-
-        DataSource(String deviceId, Path path) {
-            this.deviceId = deviceId;
-            this.path = path;
-        }
-
-        String getDeviceId() {
-            return deviceId;
-        }
-
-        Path getPath() {
-            return this.path;
-        }
-
-        synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
-            this.resultCode = result;
-            this.errorMessages = new ArrayList<>(errorMessages);
-            this.content = new ArrayList<>(content);
-        }
-
-        synchronized DataSourceProcessorResult getResultDataSourceProcessorResultCode() {
-            return resultCode;
-        }
-
-        synchronized List<String> getDataSourceProcessorErrorMessages() {
-            return new ArrayList<>(errorMessages);
-        }
-
-        synchronized List<Content> getContent() {
-            return new ArrayList<>(content);
-        }
-
     }
     
     static final class AutoIngestManagerException extends Exception {

@@ -3,19 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.datasourceprocessors;
+package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 
 /**
  * A utility class to find Data Source Processors
  */
-public class IdentifyDataSourceProcessors {
+class IdentifyDataSourceProcessors {
 
     /**
      * A utility method to find all Data Source Processors (DSP) that are able
@@ -28,7 +29,7 @@ public class IdentifyDataSourceProcessors {
      * @throws
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
-    public static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessor(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+    static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessor(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
 
         // lookup all AutomatedIngestDataSourceProcessors 
         Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
