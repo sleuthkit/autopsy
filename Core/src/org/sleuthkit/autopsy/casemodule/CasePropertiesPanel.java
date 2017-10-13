@@ -19,13 +19,18 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.nio.file.Paths;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel that allows the user to view various properties of a case and change
  * the display name of the case.
  */
-class CasePropertiesPanel extends javax.swing.JPanel {
+final class CasePropertiesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(CasePropertiesPanel.class.getName());
@@ -39,10 +44,10 @@ class CasePropertiesPanel extends javax.swing.JPanel {
      */
     CasePropertiesPanel(Case caseInfo) {
         initComponents();
-        updateCaseInfo(caseInfo);
+        updateCaseInfo();
     }
 
-    void updateCaseInfo(Case caseInfo) {
+    void updateCaseInfo() {
         theCase = Case.getCurrentCase();
         lbCaseNameText.setText(theCase.getDisplayName());
         lbCaseNumberText.setText(theCase.getNumber());
@@ -57,12 +62,48 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         } else {
             dbNameField.setText(theCase.getMetadata().getCaseDatabaseName());
         }
+        boolean cREnabled = EamDb.isEnabled();
+        lbOrganizationNameLabel1.setEnabled(cREnabled);
+        lbOrganizationNameText.setEnabled(cREnabled);
+        lbPointOfContactEmailLabel1.setEnabled(cREnabled);
+        lbPointOfContactEmailText1.setEnabled(cREnabled);
+        lbPointOfContactNameLabel1.setEnabled(cREnabled);
+        lbPointOfContactNameText1.setEnabled(cREnabled);
+        lbPointOfContactPhoneLabel1.setEnabled(cREnabled);
+        lbPointOfContactPhoneText1.setEnabled(cREnabled);
+        pnOrganization1.setEnabled(cREnabled);
+        EamOrganization currentOrg = null;
+        if (cREnabled) {
+            try {
+                EamDb dbManager = EamDb.getInstance();
+                if (dbManager != null) {
+                    CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                    if (null == correlationCase) {
+                        dbManager.newCase(Case.getCurrentCase());
+                        correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                    }
+                    currentOrg = correlationCase.getOrg();
+                }
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        if (currentOrg != null) {
+            lbOrganizationNameText.setText(currentOrg.getName());
+            lbPointOfContactNameText1.setText(currentOrg.getPocName());
+            lbPointOfContactPhoneText1.setText(currentOrg.getPocPhone());
+            lbPointOfContactEmailText1.setText(currentOrg.getPocEmail());
+        } else {
+            lbOrganizationNameText.setText("");
+            lbPointOfContactNameText1.setText("");
+            lbPointOfContactPhoneText1.setText("");
+            lbPointOfContactEmailText1.setText("");
+        }
         Case.CaseType caseType = theCase.getCaseType();
         caseTypeField.setText(caseType.getLocalizedDisplayName());
         lbCaseUIDText.setText(theCase.getName());
         validate();
         repaint();
-        System.out.println("repainged CASE PROPS");
     }
 
     /**

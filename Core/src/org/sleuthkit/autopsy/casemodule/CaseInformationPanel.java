@@ -140,15 +140,18 @@ class CaseInformationPanel extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         JDialog editCasePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), "Edit Case Details", true);
-        EditOptionalCasePropertiesPanel casePropertiesPanel = new EditOptionalCasePropertiesPanel();
-        casePropertiesPanel.addCancelButtonAction((ActionEvent e) -> {
+        EditOptionalCasePropertiesPanel editCasePropertiesPanel = new EditOptionalCasePropertiesPanel();
+        editCasePropertiesPanel.addCancelButtonAction((ActionEvent e) -> {
             editCasePropertiesDialog.setVisible(false);
         });
-        casePropertiesPanel.addSaveButtonAction((ActionEvent e) -> {
+        editCasePropertiesPanel.addSaveButtonAction((ActionEvent e) -> {
             editCasePropertiesDialog.setVisible(false);
+            editCasePropertiesPanel.saveProperties();
+            propertiesPanel.updateCaseInfo();
+
         });
 
-        editCasePropertiesDialog.add(casePropertiesPanel);
+        editCasePropertiesDialog.add(editCasePropertiesPanel);
         editCasePropertiesDialog.setResizable(true);
         editCasePropertiesDialog.pack();
 
@@ -158,6 +161,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
+        propertiesPanel.updateCaseInfo();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

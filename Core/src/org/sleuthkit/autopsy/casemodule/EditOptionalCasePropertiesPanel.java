@@ -37,6 +37,7 @@ class EditOptionalCasePropertiesPanel extends javax.swing.JPanel {
     EditOptionalCasePropertiesPanel() {
         initComponents();
         propertiesPanel = new OptionalCasePropertiesPanel(true);
+
         optionsPanel.add(propertiesPanel);
         optionsPanel.setVisible(true);
         propertiesPanel.setVisible(true);
@@ -60,11 +61,6 @@ class EditOptionalCasePropertiesPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(EditOptionalCasePropertiesPanel.class, "EditOptionalCasePropertiesPanel.cancelButton.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(saveButton, org.openide.util.NbBundle.getMessage(EditOptionalCasePropertiesPanel.class, "EditOptionalCasePropertiesPanel.saveButton.text")); // NOI18N
-        saveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveButtonActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -97,10 +93,9 @@ class EditOptionalCasePropertiesPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-        this.propertiesPanel.saveUpdatedCaseDetails();
-    }//GEN-LAST:event_saveButtonActionPerformed
-
+    void saveProperties(){
+         this.propertiesPanel.saveUpdatedCaseDetails();
+    }
     /**
      * Adds an action listener to the Save button of the panel.
      *

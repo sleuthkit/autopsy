@@ -27,6 +27,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
  */
 public class ManageOrganizationsDialog extends JDialog {
 
+    private static final long serialVersionUID = 1L;
+
     private EamDb dbManager;
     private EamOrganization newOrg;
     private final DefaultListModel<EamOrganization> rulesListModel = new DefaultListModel<>();
@@ -43,7 +45,6 @@ public class ManageOrganizationsDialog extends JDialog {
             this.dbManager = EamDb.getInstance();
             jList1.setCellRenderer(new DefaultListCellRenderer() {
                 private static final long serialVersionUID = 1L;
-
                 @Override
                 public Component getListCellRendererComponent(javax.swing.JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -58,7 +59,6 @@ public class ManageOrganizationsDialog extends JDialog {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
         }
-
         display();
     }
 

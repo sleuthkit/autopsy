@@ -35,13 +35,12 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  *
  * @author wschaefer
  */
-class OptionalCasePropertiesPanel extends javax.swing.JPanel {
+final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
     private final static Logger LOGGER = Logger.getLogger(EamCaseEditDetailsDialog.class.getName());
     private static final long serialVersionUID = 1L;
     private EamOrganization selectedOrg = null;
     private java.util.List<EamOrganization> orgs = null;
-    private EamDb dbManager;
 
     /**
      * Creates new form OptionalCasePropertiesPanel
@@ -50,6 +49,7 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         initComponents();
         caseDisplayNameLabel.setVisible(false);
         caseDisplayNameTextField.setVisible(false);
+        setUpCentralRepoFields();
     }
 
     OptionalCasePropertiesPanel(boolean editCurrentCase) {
@@ -61,26 +61,38 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             tfExaminerEmailText.setText(Case.getCurrentCase().getExaminerEmail());
             tfExaminerPhoneText.setText(Case.getCurrentCase().getExaminerPhone());
             taNotesText.setText(Case.getCurrentCase().getExaminerNotes());
-            try {
-                this.dbManager = EamDb.getInstance();
-                if (dbManager != null) {
-                    selectedOrg = dbManager.getCaseByUUID(Case.getCurrentCase().getName()).getOrg();
-                }
-            } catch (EamDbException ex) {
-                dbManager = null;
-            }
-
+            setUpOrganizationData();
+        } else {
+            caseDisplayNameLabel.setVisible(false);
+            caseDisplayNameTextField.setVisible(false);
         }
+        setUpCentralRepoFields();
+    }
 
+    private void setUpOrganizationData() {
+        if (EamDb.isEnabled()) {
+            loadOrganizationData();
+            Case currentCase = Case.getCurrentCase();
+            if (currentCase != null) {
+                try {
+                    EamDb dbManager = EamDb.getInstance();
+                    selectedOrg = dbManager.getCaseByUUID(currentCase.getName()).getOrg();
+                } catch (EamDbException ex) {
+                    System.out.println("THOWING ON CURRENT CASE " + ex.toString());
+                }
+            }
+            if (selectedOrg != null) {
+                System.out.println("SET CURRNETLY SELECTED");
+                setCurrentlySelectedOrganization(selectedOrg.getName());
+            } else {
+                System.out.println("CLEAR 1");
+                clearOrganization();
+            }
+        }
     }
 
     void setUpCentralRepoFields() {
-        try {
-            this.dbManager = EamDb.getInstance();
-        } catch (EamDbException ex) {
-            dbManager = null;
-        }
-        boolean cREnabled = (dbManager != null);
+        boolean cREnabled = EamDb.isEnabled();
         comboBoxOrgName.setEnabled(cREnabled);
         bnNewOrganization.setEnabled(cREnabled);
         lbPointOfContactNameText.setEnabled(cREnabled);
@@ -91,40 +103,29 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         lbPointOfContactEmailLabel.setEnabled(cREnabled);
         lbPointOfContactPhoneLabel.setEnabled(cREnabled);
         orgainizationPanel.setEnabled(cREnabled);
-
-        if (cREnabled) {
-            loadOrganizationData();
-        } else {
-            selectedOrg = null;
+        if (!cREnabled) {
+            System.out.println("CLEAR 2");
             clearOrganization();
         }
+
     }
 
     private void loadOrganizationData() {
-
         comboBoxOrgName.removeAllItems();
         try {
-            orgs = dbManager.getOrganizations();
             comboBoxOrgName.addItem(""); // for when a case has a null Org
+            EamDb dbManager = EamDb.getInstance();
+            orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 comboBoxOrgName.addItem(org.getName());
             });
         } catch (EamDbException ex) {
-            selectedOrg = null;
-        }
-
-        if (null != selectedOrg) {
-            comboBoxOrgName.setSelectedItem(selectedOrg.getName());
-            lbPointOfContactNameText.setText(selectedOrg.getPocName());
-            lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
-            lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
-        } else {
-            clearOrganization();
+            System.out.println("CATCH WHATS?");
         }
     }
 
     private void clearOrganization() {
-        comboBoxOrgName.setSelectedItem("");
+        selectedOrg = null;
         lbPointOfContactNameText.setText("");
         lbPointOfContactEmailText.setText("");
         lbPointOfContactPhoneText.setText("");
@@ -420,12 +421,10 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (null == orgName) {
             return;
         }
-
         if ("".equals(orgName)) {
             clearOrganization();
             return;
         }
-
         for (EamOrganization org : orgs) {
             if (org.getName().equals(orgName)) {
                 selectedOrg = org;
@@ -441,8 +440,9 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
         // update the combobox options and org data fields
         if (dialog.isChanged()) {
-            selectedOrg = dialog.getNewOrg();
             loadOrganizationData();
+            selectedOrg = dialog.getNewOrg();
+            setCurrentlySelectedOrganization(dialog.getNewOrg().getName());
             validate();
             repaint();
         }
@@ -454,6 +454,10 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
         }
+    }
+
+    void setCurrentlySelectedOrganization(String orgName) {
+        comboBoxOrgName.setSelectedItem(orgName);
     }
 
     void saveUpdatedCaseDetails() {
@@ -490,6 +494,7 @@ class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (EamDb.isEnabled()) {
             try {
+                EamDb dbManager = EamDb.getInstance();
                 CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
                 if (caseDisplayNameTextField.isVisible()) {
                     correlationCase.setDisplayName(caseDisplayNameTextField.getText());
