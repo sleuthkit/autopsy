@@ -107,8 +107,20 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
         return propertiesPanel.getCaseNumber();
     }
 
-    Examiner getExaminer() {
-        return propertiesPanel.getExaminer();
+    String getExaminerName() {
+        return propertiesPanel.getExaminerName();
+    }
+    
+    String getExaminerPhone() {
+        return propertiesPanel.getExaminerPhone();
+    }
+    
+    String getExaminerEmail() {
+        return propertiesPanel.getExaminerEmail();
+    }
+    
+    String getExaminerNotes() {
+        return propertiesPanel.getExaminerNotes();
     }
     
     String getOrganization() {

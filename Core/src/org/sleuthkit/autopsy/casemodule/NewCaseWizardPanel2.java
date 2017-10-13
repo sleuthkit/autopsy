@@ -141,7 +141,10 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     @Override
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty("caseNumber", component.getCaseNumber()); //NON-NLS
-        settings.putProperty("caseExaminer", component.getExaminer()); //NON-NLS
+        settings.putProperty("caseExaminerName", component.getExaminerName()); //NON-NLS
+        settings.putProperty("caseExaminerPhone", component.getExaminerPhone()); //NON-NLS
+        settings.putProperty("caseExaminerEmail", component.getExaminerEmail()); //NON-NLS
+        settings.putProperty("caseExaminerNotes", component.getExaminerNotes()); //NON-NLS
         settings.putProperty("caseOrganization", component.getOrganization()); //NON-NLS
     }
 

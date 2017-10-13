@@ -79,12 +79,15 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 @Override
                 protected Void doInBackground() throws Exception {
                     String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
-                    Examiner examiner = (Examiner) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
+                    String examinerName = (String) wizardDescriptor.getProperty("caseExaminerName"); //NON-NLS
+                    String examinerPhone = (String) wizardDescriptor.getProperty("caseExaminerPhone"); //NON-NLS
+                    String examinerEmail = (String) wizardDescriptor.getProperty("caseExaminerEmail"); //NON-NLS
+                    String examinerNotes = (String) wizardDescriptor.getProperty("caseExaminerNotes"); //NON-NLS
                     String organizationName = (String) wizardDescriptor.getProperty("caseOrganization"); //NON-NLS
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                    Case.createAsCurrentCase(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    Case.createAsCurrentCase(createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, examinerNotes), caseType);
                     if (EamDb.isEnabled()) {
                         try {
                             EamDb dbManager = EamDb.getInstance();

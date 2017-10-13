@@ -202,9 +202,12 @@ public class SingleUserCaseConverter {
         CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
                 CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
-                icd.getNewCaseName(),
+                new CaseDetails(icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
-                oldCaseMetadata.getExaminer());
+                oldCaseMetadata.getExaminer(),
+                oldCaseMetadata.getExaminerPhone(),
+                oldCaseMetadata.getExaminerEmail(),
+                oldCaseMetadata.getExaminerNotes()));
         newCaseMetadata.setCaseDatabaseName(dbName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());

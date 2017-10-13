@@ -479,7 +479,7 @@ public class Case {
      * @throws CaseActionCancelledException If creating the case is cancelled.
      */
     public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
-        createAsCurrentCase(caseDir, caseDisplayName, caseNumber, new Examiner(examiner, "", "", ""), caseType);
+        createAsCurrentCase(caseDir, new CaseDetails(caseDisplayName, caseNumber, examiner, "", "", ""), caseType);
     }
 
     /**
@@ -488,15 +488,14 @@ public class Case {
      * IMPORTANT: This method should not be called in the event dispatch thread
      * (EDT).
      *
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
-     * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case.
-     * @param caseType        The type of case (single-user or multi-user).
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
+     * @param caseDetails Contains the modifiable details of the case such as
+     *                    the case display name, the case number, and the
+     *                    examiner related data.
+     * @param caseType    The type of case (single-user or multi-user).
      *
      * @throws CaseActionException          If there is a problem creating the
      *                                      case.
@@ -506,14 +505,14 @@ public class Case {
         "Case.exceptionMessage.emptyCaseName=Must specify a case name.",
         "Case.exceptionMessage.emptyCaseDir=Must specify a case directory path."
     })
-    public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, Examiner examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
-        if (caseDisplayName.isEmpty()) {
+    public static void createAsCurrentCase(String caseDir, CaseDetails caseDetails, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
+        if (caseDetails.getCaseDisplayName().isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseName());
         }
         if (caseDir.isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseDir());
         }
-        openAsCurrentCase(new Case(caseType, caseDir, caseDisplayName, caseNumber, examiner), true);
+        openAsCurrentCase(new Case(caseType, caseDir, caseDetails), true);
     }
 
     /**
@@ -1188,7 +1187,7 @@ public class Case {
      * @return The examiner name.
      */
     public String getExaminer() {
-        return metadata.getExaminer().getName();
+        return metadata.getExaminer();
     }
 
     /**
@@ -1197,7 +1196,7 @@ public class Case {
      * @return The examiner phone number.
      */
     public String getExaminerPhone() {
-        return metadata.getExaminer().getPhone();
+        return metadata.getExaminerPhone();
     }
 
     /**
@@ -1206,7 +1205,7 @@ public class Case {
      * @return The examiner email address.
      */
     public String getExaminerEmail() {
-        return metadata.getExaminer().getEmail();
+        return metadata.getExaminerEmail();
     }
 
     /**
@@ -1215,7 +1214,7 @@ public class Case {
      * @return The examiner notes.
      */
     public String getExaminerNotes() {
-        return metadata.getExaminer().getNotes();
+        return metadata.getExaminerNotes();
     }
 
     /**
@@ -1542,21 +1541,21 @@ public class Case {
      * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
     @Messages({
-        "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata, cannot change case display name."
+        "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata"
     })
-    void updateDisplayName(String newDisplayName) throws CaseActionException {
+    void updateCaseDetails(CaseDetails caseDetails) throws CaseActionException {
         String oldDisplayName = metadata.getCaseDisplayName();
         try {
-            metadata.setCaseDisplayName(newDisplayName);
+            metadata.setCaseDetails(caseDetails);
         } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
+            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError(), ex);
         }
-        eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, newDisplayName));
+        eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, caseDetails.getCaseDisplayName()));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(newDisplayName + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + UserPreferences.getAppName());
                 try {
-                    RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), newDisplayName, metadata.getFilePath().toString());
+                    RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Error updating case name in UI", ex); //NON-NLS
                 }
@@ -1564,30 +1563,7 @@ public class Case {
         }
     }
 
-    void updateCaseNumber(String newCaseNumber) throws CaseActionException {
-        String oldCaseNumber = metadata.getCaseNumber();
-        try {
-            metadata.setCaseNumber(newCaseNumber);
-        } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
-        }
-    }
 
-    /**
-     * Update the examiner details associated with the case.
-     *
-     * @param newExaminer the new examiner for the case
-     *
-     * @throws CaseActionException
-     */
-    void updateExaminer(Examiner newExaminer) throws CaseActionException {
-        Examiner oldExaminer = metadata.getExaminer();
-        try {
-            metadata.setExaminer(newExaminer);
-        } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
-        }
-    }
 
     /**
      * Constructs a Case object for a new Autopsy case.
@@ -1603,8 +1579,8 @@ public class Case {
      * @param examiner        The examiner to associate with the case, can be
      *                        the empty string.
      */
-    private Case(CaseType caseType, String caseDir, String caseDisplayName, String caseNumber, Examiner examiner) {
-        metadata = new CaseMetadata(caseDir, caseType, displayNameToUniqueName(caseDisplayName), caseDisplayName, caseNumber, examiner);
+    private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
+        metadata = new CaseMetadata(caseDir, caseType, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
     }
 
     /**

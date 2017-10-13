@@ -135,8 +135,20 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         return caseNumberTextField.getText();
     }
 
-    Examiner getExaminer() {
-        return new Examiner(examinerTextField.getText(), tfExaminerPhoneText.getText(), tfExaminerEmailText.getText(), taNotesText.getText());
+    String getExaminerName() {
+        return examinerTextField.getText();
+    }
+
+    String getExaminerPhone() {
+        return tfExaminerPhoneText.getText();
+    }
+
+    String getExaminerEmail() {
+        return tfExaminerEmailText.getText();
+    }
+
+    String getExaminerNotes() {
+        return taNotesText.getText();
     }
 
     String getOrganization() {
@@ -448,44 +460,28 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
 
-    private void updateCaseNumber() {
-        try {
-            Case.getCurrentCase().updateCaseNumber(caseNumberTextField.getText());
-        } catch (CaseActionException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-    }
-
     void setCurrentlySelectedOrganization(String orgName) {
         comboBoxOrgName.setSelectedItem(orgName);
     }
 
     void saveUpdatedCaseDetails() {
-        updateCaseName();
-        updateCaseNumber();
-        updateExaminer();
+        updateCaseDetails();
         updateCorrelationCase();
     }
 
-    private void updateCaseName() {
+    private void updateCaseDetails() {
         if (caseDisplayNameTextField.isVisible()) {
             try {
-                Case.getCurrentCase().updateDisplayName(caseDisplayNameTextField.getText());
+                Case.getCurrentCase().updateCaseDetails(new CaseDetails(
+                        caseDisplayNameTextField.getText(), caseNumberTextField.getText(),
+                        examinerTextField.getText(), tfExaminerPhoneText.getText(),
+                        tfExaminerEmailText.getText(), taNotesText.getText()));
             } catch (CaseActionException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }
     }
-
-    private void updateExaminer() {
-        try {
-            Case.getCurrentCase().updateExaminer(new Examiner(examinerTextField.getText(), tfExaminerPhoneText.getText(), tfExaminerEmailText.getText(), taNotesText.getText()));
-        } catch (CaseActionException ex) {
-            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
-            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
-        }
-    }
-
+    
     /**
      * Save changed value from text fields and text areas into the EamCase
      * object.
