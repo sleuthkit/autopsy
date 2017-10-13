@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -39,16 +40,24 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import org.openide.util.NbBundle;
+import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.casemodule.AutoIngestCasePanelInterface;
+import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.experimental.configuration.StartupWindow;
 
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-public final class AutoIngestCasePanel extends JPanel {
+@ServiceProvider(service = AutoIngestCasePanelInterface.class)
+public final class AutoIngestCasePanel extends JPanel implements AutoIngestCasePanelInterface {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AutoIngestCasePanel.class.getName());
@@ -90,6 +99,34 @@ public final class AutoIngestCasePanel extends JPanel {
     private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER};
     private DefaultTableModel caseTableModel;
     private Path currentlySelectedCase = null;
+    
+    public AutoIngestCasePanel() {
+        init(null);
+    }
+    
+    @Override
+    public void addWindowStateListener(JDialog parent) {
+        /*
+         * Add a window state listener that starts and stops refreshing of the
+         * cases table.
+         */
+        parent.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                stopCasesTableRefreshes();
+            }
+
+            @Override
+            public void windowActivated(WindowEvent e) {
+                startCasesTableRefreshes();
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+                stopCasesTableRefreshes();
+            }
+        });
+    }
 
     /**
      * Constructs a panel that allows a user to open cases created by automated
@@ -98,6 +135,10 @@ public final class AutoIngestCasePanel extends JPanel {
      * @param parent The parent dialog for this panel.
      */
     public AutoIngestCasePanel(JDialog parent) {
+        init(parent);
+    }
+    
+    public void init(JDialog parent) {
         caseTableModel = new DefaultTableModel(columnNames, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -297,6 +338,7 @@ public final class AutoIngestCasePanel extends JPanel {
                 AutoIngestCaseManager.getInstance().openCase(caseMetadataFilePath);
                 stopCasesTableRefreshes();
                 StartupWindowProvider.getInstance().close();
+                CueBannerPanel.closeAutoIngestCasesWindow();
                 return null;
             }
 
