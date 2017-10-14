@@ -55,17 +55,17 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int GENERIC_COL_MAX_WIDTH = 2000;
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
-    private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
-    private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
+    private static final int STAGE_TIME_COL_MIN_WIDTH = 250;
+    private static final int STAGE_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
     private static final int TIME_COL_MAX_WIDTH = 250;
     private static final int TIME_COL_PREFERRED_WIDTH = 140;
     private static final int NAME_COL_MIN_WIDTH = 100;
     private static final int NAME_COL_MAX_WIDTH = 250;
     private static final int NAME_COL_PREFERRED_WIDTH = 140;
-    private static final int ACTIVITY_COL_MIN_WIDTH = 70;
-    private static final int ACTIVITY_COL_MAX_WIDTH = 2000;
-    private static final int ACTIVITY_COL_PREFERRED_WIDTH = 300;
+    private static final int STAGE_COL_MIN_WIDTH = 70;
+    private static final int STAGE_COL_MAX_WIDTH = 2000;
+    private static final int STAGE_COL_PREFERRED_WIDTH = 300;
     private static final int STATUS_COL_MIN_WIDTH = 55;
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 55;
@@ -213,6 +213,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
         pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
+        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
 
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -256,7 +257,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 return;
             }
             int row = pendingTable.getSelectedRow();
-            this.prioritizeButton.setEnabled(row >= 0 && row < pendingTable.getRowCount());
+			
+			boolean enablePrioritizeButtons = (row >= 0 && row < pendingTable.getRowCount());
+            this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
+            this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
         });
     }
 
@@ -275,6 +279,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
+        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
 
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -311,10 +316,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * jobs.
          */
         column = runningTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader());
-        column.setMinWidth(ACTIVITY_COL_MIN_WIDTH);
-        column.setMaxWidth(ACTIVITY_COL_MAX_WIDTH);
-        column.setPreferredWidth(ACTIVITY_COL_PREFERRED_WIDTH);
-        column.setWidth(ACTIVITY_COL_PREFERRED_WIDTH);
+        column.setMinWidth(STAGE_COL_MIN_WIDTH);
+        column.setMaxWidth(STAGE_COL_MAX_WIDTH);
+        column.setPreferredWidth(STAGE_COL_PREFERRED_WIDTH);
+        column.setWidth(STAGE_COL_PREFERRED_WIDTH);
 
         /*
          * Set up a column to display the ingest activity times associated with
@@ -323,9 +328,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         column = runningTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader());
         column.setCellRenderer(new DurationCellRenderer());
         column.setMinWidth(GENERIC_COL_MIN_WIDTH);
-        column.setMaxWidth(ACTIVITY_TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(ACTIVITY_TIME_COL_MIN_WIDTH);
-        column.setWidth(ACTIVITY_TIME_COL_MIN_WIDTH);
+        column.setMaxWidth(STAGE_TIME_COL_MAX_WIDTH);
+        column.setPreferredWidth(STAGE_TIME_COL_MIN_WIDTH);
+        column.setWidth(STAGE_TIME_COL_MIN_WIDTH);
 
         /*
          * Prevent sorting when a column header is clicked.
@@ -348,6 +353,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
 
         /*
          * Set up a column to display the cases associated with the jobs.
@@ -422,9 +428,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     @Override
-    public void update(Observable observable, Object argument) {
-        JobsSnapshot jobsSnapshot = (JobsSnapshot) argument;
-        EventQueue.invokeLater(new RefreshComponentsTask(jobsSnapshot));
+    public void update(Observable observable, Object arg) {
+        EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
     }
 
     /**
@@ -438,8 +443,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
         List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
         pendingJobs.sort(new AutoIngestJob.PriorityComparator());
-        runningJobs.sort(new AutoIngestJob.CaseNameAndProcessingHostComparator());
-        completedJobs.sort(new AutoIngestJob.ReverseCompletedDateComparator());
+        runningJobs.sort(new AutoIngestJob.DataSourceFileNameComparator());
+        completedJobs.sort(new AutoIngestJob.CompletedDateDescendingComparator());
         refreshTable(pendingJobs, pendingTable, pendingTableModel);
         refreshTable(runningJobs, runningTable, runningTableModel);
         refreshTable(completedJobs, completedTable, completedTableModel);
@@ -459,24 +464,19 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             Path currentRow = getSelectedEntry(table, tableModel);
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
-                if (job.getVersion() < 1) {
-                    // Ignore version '0' nodes since they don't carry enough
-                    // data to populate the table.
-                    continue;
-                }
-                AutoIngestJob.StageDetails status = job.getStageDetails();
+                AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE
                     job.getManifest().getDataSourcePath().getFileName(), job.getProcessingHostName(), // HOST_NAME
                     job.getManifest().getDateFileCreated(), // CREATED_TIME
                     job.getProcessingStageStartDate(), // STARTED_TIME 
                     job.getCompletedDate(), // COMPLETED_TIME
-                    status.getDescription(), // ACTIVITY
+                    status.getDescription(), // STAGE
                     job.getErrorsOccurred(), // STATUS 
-                    ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
+                    ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    job.getManifest().getFilePath() // MANIFEST_FILE_PATH
-                //DLG: Put job object in the table
+                    job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
+                    job
                 });
             }
             setSelectedEntry(table, tableModel, currentRow);
@@ -534,7 +534,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /*
-     * The enum is used in conjunction with the DefaultTableModel class to
+     * This enum is used in conjunction with the DefaultTableModel class to
      * provide table models for the JTables used to display a view of the
      * pending jobs queue, running jobs list, and completed jobs list for an
      * auto ingest cluster. The enum allows the columns of the table model to be
@@ -542,7 +542,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private enum JobsTableModelColumns {
 
-        // DLG: Go through the bundle.properties file and delete any unused key-value pairs.
         CASE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Case")),
         DATA_SOURCE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ImageFolder")),
         HOST_NAME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.HostName")),
@@ -553,8 +552,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         STAGE_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime")),
         STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
-        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath")); //DLG:,
-        //DLG: JOB("");
+        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath")),
+        JOB(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Job"));
 
         private final String header;
 
@@ -566,15 +565,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             return header;
         }
 
-        /*
-         * DLG: We need to add the AutoIngestJob object for the row to the
-         * table. As a model you can look in AutoIngestControlPanel to see how a
-         * boolean is stored in a hidden IS_LOCAL_JOB column and do something
-         * similar for the job. Once youy hjave done that, you can change the
-         * button event handler for the Prioritize button to make it pass the
-         * AutoIngestJob to the AutoIngestMonitor instead of the manifest file
-         * path.
-         */
         private static final String[] headers = {
             CASE.getColumnHeader(),
             DATA_SOURCE.getColumnHeader(),
@@ -586,8 +576,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             STATUS.getColumnHeader(),
             STAGE_TIME.getColumnHeader(),
             CASE_DIRECTORY_PATH.getColumnHeader(),
-            MANIFEST_FILE_PATH.getColumnHeader() //DLG: ,
-        //DLG: JOB.getColumnHeader()
+            MANIFEST_FILE_PATH.getColumnHeader(),
+            JOB.getColumnHeader()
         };
     };
 
@@ -670,7 +660,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         refreshButton = new javax.swing.JButton();
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
-        prioritizeButton = new javax.swing.JButton();
+        prioritizeJobButton = new javax.swing.JButton();
+        prioritizeCaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -753,12 +744,21 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         tbServicesStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.text")); // NOI18N
         tbServicesStatusMessage.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(prioritizeButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeButton.text")); // NOI18N
-        prioritizeButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeButton.toolTipText")); // NOI18N
-        prioritizeButton.setEnabled(false);
-        prioritizeButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(prioritizeJobButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeJobButton.text")); // NOI18N
+        prioritizeJobButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeJobButton.toolTipText")); // NOI18N
+        prioritizeJobButton.setEnabled(false);
+        prioritizeJobButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prioritizeButtonActionPerformed(evt);
+                prioritizeJobButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(prioritizeCaseButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeCaseButton.text")); // NOI18N
+        prioritizeCaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeCaseButton.toolTipText")); // NOI18N
+        prioritizeCaseButton.setEnabled(false);
+        prioritizeCaseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                prioritizeCaseButtonActionPerformed(evt);
             }
         });
 
@@ -782,7 +782,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(prioritizeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING))
@@ -810,7 +812,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
-                    .addComponent(prioritizeButton))
+                    .addComponent(prioritizeJobButton)
+                    .addComponent(prioritizeCaseButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -830,24 +833,44 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }//GEN-LAST:event_refreshButtonActionPerformed
 
     @Messages({
-        "AutoIngestDashboard.PrioritizeError=Failed to prioritize job \"%s\"."
+        "AutoIngestDashboard.PrioritizeJobError=Failed to prioritize job \"%s\"."
     })
-    private void prioritizeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeButtonActionPerformed
+    private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
+            AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
             JobsSnapshot jobsSnapshot;
             try {
-                jobsSnapshot = autoIngestMonitor.prioritizeJob(manifestFilePath);
+                jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
                 refreshTables(jobsSnapshot);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeError"), manifestFilePath);
+                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeJobError"), job.getManifest().getFilePath());
                 logger.log(Level.SEVERE, errorMessage, ex);
                 MessageNotifyUtil.Message.error(errorMessage);
             }
             setCursor(Cursor.getDefaultCursor());
         }
-    }//GEN-LAST:event_prioritizeButtonActionPerformed
+    }//GEN-LAST:event_prioritizeJobButtonActionPerformed
+
+    @Messages({
+        "AutoIngestDashboard.PrioritizeCaseError=Failed to prioritize job \"%s\"."
+    })
+    private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
+        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+            JobsSnapshot jobsSnapshot;
+            try {
+                jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
+                refreshTables(jobsSnapshot);
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeCaseError"), caseName);
+                logger.log(Level.SEVERE, errorMessage, ex);
+                MessageNotifyUtil.Message.error(errorMessage);
+            }
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane completedScrollPane;
@@ -859,7 +882,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JLabel lbServicesStatus;
     private javax.swing.JScrollPane pendingScrollPane;
     private javax.swing.JTable pendingTable;
-    private javax.swing.JButton prioritizeButton;
+    private javax.swing.JButton prioritizeCaseButton;
+    private javax.swing.JButton prioritizeJobButton;
     private javax.swing.JButton refreshButton;
     private javax.swing.JScrollPane runningScrollPane;
     private javax.swing.JTable runningTable;

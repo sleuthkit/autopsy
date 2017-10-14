@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.SortClause;
@@ -37,6 +37,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
@@ -46,8 +47,11 @@ import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.CREDIT_CAR
 import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.KEYWORD_SEARCH_DOCUMENT_ID;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -69,31 +73,34 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-    private final List<KeywordQueryFilter> filters = new ArrayList<>();
 
-    private final KeywordList keywordList;
-    private final Keyword originalKeyword; // The regular expression originalKeyword used to perform the search.
-    private String field = Server.Schema.CONTENT_STR.toString();
-    private final String keywordString;
-    static final private int MAX_RESULTS_PER_CURSOR_MARK = 512;
-    private boolean escaped;
-    private String escapedQuery;
-
-    private final int MIN_EMAIL_ADDR_LENGTH = 8;
-
-    // Lucene regular expressions do not support the following Java predefined
-    // and POSIX character classes. There are other valid Java character classes
-    // that are not supported by Lucene but we do not check for all of them.
-    // See https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
-    // for Java regex syntax.
-    // See https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html
-    // for Lucene syntax.
-    // We use \p as a shortcut for all of the character classes of the form \p{XXX}.
+    /**
+     * Lucene regular expressions do not support the following Java predefined
+     * and POSIX character classes. There are other valid Java character classes
+     * that are not supported by Lucene but we do not check for all of them. See
+     * https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+     * for Java regex syntax. See
+     * https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html
+     * for Lucene syntax. We use \p as a shortcut for all of the character
+     * classes of the form \p{XXX}.
+     */
     private static final CharSequence[] UNSUPPORTED_CHARS = {"\\d", "\\D", "\\w", "\\W", "\\s", "\\S", "\\n",
         "\\t", "\\r", "\\f", "\\a", "\\e", "\\v", "\\V", "\\h", "\\H", "\\p"}; //NON-NLS
 
-    private boolean queryStringContainsWildcardPrefix = false;
-    private boolean queryStringContainsWildcardSuffix = false;
+    private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
+    private static final int MIN_EMAIL_ADDR_LENGTH = 8;
+    private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
+
+    private final List<KeywordQueryFilter> filters = new ArrayList<>();
+    private final KeywordList keywordList;
+    private final Keyword originalKeyword; // The regular expression originalKeyword used to perform the search.
+    private final String keywordString;
+    private final boolean queryStringContainsWildcardPrefix;
+    private final boolean queryStringContainsWildcardSuffix;
+
+    private boolean escaped;
+    private String escapedQuery;
+    private String field = Server.Schema.CONTENT_STR.toString();
 
     /**
      * Constructor with query to process.
@@ -106,13 +113,8 @@ final class RegexQuery implements KeywordSearchQuery {
         this.originalKeyword = keyword;
         this.keywordString = keyword.getSearchTerm();
 
-        if (this.keywordString.startsWith(".*")) {
-            this.queryStringContainsWildcardPrefix = true;
-        }
-
-        if (this.keywordString.endsWith(".*")) {
-            this.queryStringContainsWildcardSuffix = true;
-        }
+        this.queryStringContainsWildcardPrefix = this.keywordString.startsWith(".*");
+        this.queryStringContainsWildcardSuffix = this.keywordString.endsWith(".*");
     }
 
     @Override
@@ -150,7 +152,7 @@ final class RegexQuery implements KeywordSearchQuery {
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();
 
-        /**
+        /*
          * The provided regular expression may include wildcards at the
          * beginning and/or end. These wildcards are used to indicate that the
          * user wants to find hits for the regex that are embedded within other
@@ -240,7 +242,6 @@ final class RegexQuery implements KeywordSearchQuery {
                 int offset = 0;
 
                 while (hitMatcher.find(offset)) {
-                    StringBuilder snippet = new StringBuilder();
 
                     // If the location of the hit is beyond this chunk (i.e. it
                     // exists in the overlap region), we skip the hit. It will
@@ -252,6 +253,7 @@ final class RegexQuery implements KeywordSearchQuery {
                     String hit = hitMatcher.group();
 
                     offset = hitMatcher.end();
+                    final ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
                     // We attempt to reduce false positives for phone numbers and IP address hits
                     // by querying Solr for hits delimited by a set of known boundary characters.
@@ -260,9 +262,9 @@ final class RegexQuery implements KeywordSearchQuery {
                     // needs to be chopped off, unless the user has supplied their own wildcard suffix
                     // as part of the regex.
                     if (!queryStringContainsWildcardSuffix
-                            && (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
-                            || originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
-                        if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
+                            && (artifactAttributeType == ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
+                            || artifactAttributeType == ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
+                        if (artifactAttributeType == ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
                             // For phone numbers replace all non numeric characters (except "(") at the start of the hit.
                             hit = hit.replaceAll("^[^0-9\\(]", "");
                         } else {
@@ -273,44 +275,48 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
-                    if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL) {
-                        // Reduce false positives by eliminating email address hits that are either
-                        // too short or are not for valid top level domains.
-                        if (hit.length() < MIN_EMAIL_ADDR_LENGTH
-                                || !DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                            continue;
+                    if (artifactAttributeType == null) {
+                        hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                    } else {
+                        switch (artifactAttributeType) {
+                            case TSK_EMAIL:
+                                /*
+                                 * Reduce false positives by eliminating email
+                                 * address hits that are either too short or are
+                                 * not for valid top level domains.
+                                 */
+                                if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
+                                        && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
+                                    hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                }
+
+                                break;
+                            case TSK_CARD_NUMBER:
+                                /*
+                                 * If searching for credit card account numbers,
+                                 * do extra validation on the term and discard
+                                 * it if it does not pass.
+                                 */
+                                Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
+
+                                for (int rLength = hit.length(); rLength >= 12; rLength--) {
+                                    ccnMatcher.region(0, rLength);
+                                    if (ccnMatcher.find()) {
+                                        final String group = ccnMatcher.group("ccn");
+                                        if (CreditCardValidator.isValidCCN(group)) {
+                                            hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                        };
+                                    }
+                                }
+
+                                break;
+                            default:
+                                hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                break;
                         }
                     }
-
-                    /*
-                     * If searching for credit card account numbers, do a Luhn
-                     * check on the term and discard it if it does not pass.
-                     */
-                    if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-                        Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                        if (ccnMatcher.find()) {
-                            final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
-                            if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
-                                continue;
-                            }
-                        } else {
-                            continue;
-                        }
-                    }
-
-                    /**
-                     * Get the snippet from the document if keyword search is
-                     * configured to use snippets.
-                     */
-                    int maxIndex = content.length() - 1;
-                    snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
-                    snippet.appendCodePoint(171);
-                    snippet.append(hit);
-                    snippet.appendCodePoint(171);
-                    snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
-
-                    hits.add(new KeywordHit(docId, snippet.toString(), hit));
                 }
+
             }
         } catch (TskCoreException ex) {
             throw ex;
@@ -326,6 +332,30 @@ final class RegexQuery implements KeywordSearchQuery {
             throw new TskCoreException("Failed to create keyword hits for Solr document id " + docId + " due to " + error.getMessage());
         }
         return hits;
+    }
+
+    /**
+     * Make a snippet from the given content that has the given hit plus some
+     * surrounding context.
+     *
+     * @param content    The content to extract the snippet from.
+     *
+     * @param hitMatcher The Matcher that has the start/end info for where the
+     *                   hit is in the content.
+     * @param hit        The actual hit in the content.
+     *
+     * @return A snippet extracted from content that contains hit plus some
+     *         surrounding context.
+     */
+    private String makeSnippet(String content, Matcher hitMatcher, String hit) {
+        // Get the snippet from the document.
+        int maxIndex = content.length() - 1;
+        final int end = hitMatcher.end();
+        final int start = hitMatcher.start();
+
+        return content.substring(Integer.max(0, start - 20), Integer.max(0, start))
+                + SNIPPET_DELIMITER + hit + SNIPPET_DELIMITER
+                + content.substring(Integer.min(maxIndex, end), Integer.min(maxIndex, end + 20));
     }
 
     @Override
@@ -390,11 +420,11 @@ final class RegexQuery implements KeywordSearchQuery {
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (originalKeyword.getArtifactAttributeType() != BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
+        if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
             try {
-                newArtifact = content.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
                 return null;
@@ -404,7 +434,6 @@ final class RegexQuery implements KeywordSearchQuery {
              * Parse the credit card account attributes from the snippet for the
              * hit.
              */
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.getTypeName()));
             Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
             Matcher matcher = TermsComponentQuery.CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
             if (matcher.find()) {
@@ -414,7 +443,7 @@ final class RegexQuery implements KeywordSearchQuery {
             if (matcher.find()) {
                 parseTrack2Data(parsedTrackAttributeMap, matcher);
             }
-            final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
+            final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
             if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
                 if (hit.isArtifactHit()) {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
@@ -433,21 +462,21 @@ final class RegexQuery implements KeywordSearchQuery {
             CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
             if (binInfo != null) {
                 binInfo.getScheme().ifPresent(scheme
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_SCHEME, MODULE_NAME, scheme)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_SCHEME, MODULE_NAME, scheme)));
                 binInfo.getCardType().ifPresent(cardType
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_TYPE, MODULE_NAME, cardType)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_TYPE, MODULE_NAME, cardType)));
                 binInfo.getBrand().ifPresent(brand
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BRAND_NAME, MODULE_NAME, brand)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND_NAME, MODULE_NAME, brand)));
                 binInfo.getBankName().ifPresent(bankName
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, bankName)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, bankName)));
                 binInfo.getBankPhoneNumber().ifPresent(phoneNumber
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, phoneNumber)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, phoneNumber)));
                 binInfo.getBankURL().ifPresent(url
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, url)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, url)));
                 binInfo.getCountry().ifPresent(country
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, country)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, country)));
                 binInfo.getBankCity().ifPresent(city
-                        -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, city)));
+                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, city)));
             }
 
             /*
@@ -464,10 +493,11 @@ final class RegexQuery implements KeywordSearchQuery {
             }
 
             /*
-             * Create an account artifact.
+             * Create an account instance.
              */
             try {
-                newArtifact = content.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
+                AccountInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+                newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccountInstance.getArtifactId());
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
                 return null;
@@ -475,17 +505,17 @@ final class RegexQuery implements KeywordSearchQuery {
         }
 
         if (StringUtils.isNotBlank(listName)) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-      
+
         hit.getArtifactID().ifPresent(artifactID
-                -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+                -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
 
         try {
             newArtifact.addAttributes(attributes);
@@ -505,11 +535,11 @@ final class RegexQuery implements KeywordSearchQuery {
      * @param matcher       A matcher for the snippet.
      */
     static private void parseTrack2Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap, Matcher matcher) {
-        addAttributeIfNotAlreadyCaptured(attributesMap, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
-        addAttributeIfNotAlreadyCaptured(attributesMap, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
-        addAttributeIfNotAlreadyCaptured(attributesMap, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
-        addAttributeIfNotAlreadyCaptured(attributesMap, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
-        addAttributeIfNotAlreadyCaptured(attributesMap, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
     }
 
     /**
@@ -518,12 +548,12 @@ final class RegexQuery implements KeywordSearchQuery {
      * same fields as the track two data, plus the account holder's name.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param matcher       A matcher for the snippet.
+     *                     creating duplicate attributes.
+     * @param matcher      A matcher for the snippet.
      */
     static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         parseTrack2Data(attributeMap, matcher);
-        addAttributeIfNotAlreadyCaptured(attributeMap, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMap, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
     }
 
     /**
@@ -531,26 +561,27 @@ final class RegexQuery implements KeywordSearchQuery {
      * value parsed from the snippet for a credit account number hit.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param attrType      The type of attribute to create.
-     * @param groupName     The group name of the regular expression that was
-     *                      used to parse the attribute data.
-     * @param matcher       A matcher for the snippet.
-
+     *                     creating duplicate attributes.
+     * @param attrType     The type of attribute to create.
+     * @param groupName    The group name of the regular expression that was
+     *                     used to parse the attribute data.
+     * @param matcher      A matcher for the snippet.
+     *
      */
-    static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, BlackboardAttribute.ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
+    static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
-        attributeMap.computeIfAbsent(type, (BlackboardAttribute.Type t) -> {
+        attributeMap.computeIfAbsent(type, t -> {
             String value = matcher.group(groupName);
-            if (attrType.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
-                attributeMap.put(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD),
-                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
+            if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
+                attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD),
+                        new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
             if (StringUtils.isNotBlank(value)) {
                 return new BlackboardAttribute(attrType, MODULE_NAME, value);
+            } else {
+                return null;
             }
-            return null;
         });
     }
 }

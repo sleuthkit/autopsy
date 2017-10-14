@@ -147,21 +147,21 @@ public interface EamDb {
      *
      * @param eamCase The case to add
      */
-    void newCase(EamCase eamCase) throws EamDbException;
-    
-     /**
+    void newCase(CorrelationCase eamCase) throws EamDbException;
+
+    /**
      * Creates new Case in the database from the given case
-     * 
-     * @param case The case to add
+     *
+     * @param autopsyCase The case to add
      */
-    EamCase newCase(Case autopsyCase) throws EamDbException;   
+    CorrelationCase newCase(Case autopsyCase) throws EamDbException;
 
     /**
      * Updates an existing Case in the database
      *
      * @param eamCase The case to update
      */
-    void updateCase(EamCase eamCase) throws EamDbException;
+    void updateCase(CorrelationCase eamCase) throws EamDbException;
 
     /**
      * Retrieves Case details based on Case UUID
@@ -170,44 +170,39 @@ public interface EamDb {
      *
      * @return The retrieved case
      */
-    EamCase getCaseDetails(String caseUUID) throws EamDbException;
+    CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException;
 
     /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases
      */
-    List<EamCase> getCases() throws EamDbException;
+    List<CorrelationCase> getCases() throws EamDbException;
 
     /**
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
      */
-    void newDataSource(EamDataSource eamDataSource) throws EamDbException;
-
-    /**
-     * Updates a Data Source in the database
-     *
-     * @param eamDataSource the data source to update
-     */
-    void updateDataSource(EamDataSource eamDataSource) throws EamDbException;
+    void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
      *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
-    EamDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException;
+    CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
 
     /**
      * Retrieves data sources that are in DB
      *
      * @return List of data sources
      */
-    List<EamDataSource> getDataSources() throws EamDbException;
+    List<CorrelationDataSource> getDataSources() throws EamDbException;
 
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
@@ -215,7 +210,7 @@ public interface EamDb {
      *
      * @param eamArtifact The artifact to add
      */
-    void addArtifact(EamArtifact eamArtifact) throws EamDbException;
+    void addArtifact(CorrelationAttribute eamArtifact) throws EamDbException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -226,7 +221,7 @@ public interface EamDb {
      *
      * @return List of artifact instances for a given type/value
      */
-    List<EamArtifactInstance> getArtifactInstancesByTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -239,7 +234,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    List<EamArtifactInstance> getArtifactInstancesByPath(EamArtifact.Type aType, String filePath) throws EamDbException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByPath(CorrelationAttribute.Type aType, String filePath) throws EamDbException;
 
     /**
      * Retrieves number of artifact instances in the database that are
@@ -251,20 +246,16 @@ public interface EamDb {
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
      */
-    Long getCountArtifactInstancesByTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
+    Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
-     * Using the ArtifactType and ArtifactValue from the given eamArtfact,
-     * compute the ratio of: (The number of unique case_id/datasource_id tuples
-     * where Type/Value is found) divided by (The total number of unique
-     * case_id/datasource_id tuples in the database) expressed as a percentage.
+     * Calculate the percentage of data sources that have this attribute value.
      *
-     * @param aType EamArtifact.Type to search for
-     * @param value Value to search for
+     * @param corAttr Attribute type and value to get data about
      *
      * @return Int between 0 and 100
      */
-    int getCommonalityPercentageForTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
+    int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException;
 
     /**
      * Retrieves number of unique caseDisplayName / dataSource tuples in the
@@ -276,15 +267,14 @@ public interface EamDb {
      *
      * @return Number of unique tuples
      */
-    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
+    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
-     * Retrieves number of unique caseDisplayName/dataSource tuples in the
-     * database.
+     * Retrieves number of data sources in the database.
      *
-     * @return Number of unique tuples
+     * @return Number of unique data sources
      */
-    Long getCountUniqueCaseDataSourceTuples() throws EamDbException;
+    Long getCountUniqueDataSources() throws EamDbException;
 
     /**
      * Retrieves number of eamArtifact instances in the database that are
@@ -306,7 +296,7 @@ public interface EamDb {
      *
      * @param eamArtifact The artifact to add
      */
-    void prepareBulkArtifact(EamArtifact eamArtifact) throws EamDbException;
+    void prepareBulkArtifact(CorrelationAttribute eamArtifact) throws EamDbException;
 
     /**
      * Executes a bulk insert of the eamArtifacts added from the
@@ -317,17 +307,17 @@ public interface EamDb {
     /**
      * Executes a bulk insert of the cases
      */
-    void bulkInsertCases(List<EamCase> cases) throws EamDbException;
+    void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param FileKnown The status to change the artifact to
+     * @param knownStatus   The status to change the artifact to
      */
-    void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
-    
+    void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
+
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
      * "Bad".
@@ -337,7 +327,7 @@ public interface EamDb {
      *
      * @return List with 0 or more matching eamArtifact instances.
      */
-    List<EamArtifactInstance> getArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException;
+    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
@@ -347,7 +337,7 @@ public interface EamDb {
      *
      * @return Number of matching eamArtifacts
      */
-    Long getCountArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException;
+    Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Gets list of distinct case display names, where each case has 1+ Artifact
@@ -361,7 +351,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    List<String> getListCasesHavingArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException;
+    List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -371,7 +361,7 @@ public interface EamDb {
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactlKnownBadByReference(EamArtifact.Type aType, String value) throws EamDbException;
+    boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Add a new organization
@@ -433,16 +423,8 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, EamArtifact.Type correlationType) throws EamDbException;
+    void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException;
 
-    /**
-     * Add a new global file instance to the bulk collection
-     *
-     * @param eamGlobalFileInstance The global file instance to add
-     *
-     * @throws EamDbException
-     */
-//    void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException;
     /**
      * Insert the bulk collection of Global File Instances
      *
@@ -452,7 +434,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, EamArtifact.Type contentType) throws EamDbException;
+    void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttribute.Type contentType) throws EamDbException;
 
     /**
      * Get all reference entries having a given correlation type and value
@@ -464,7 +446,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(EamArtifact.Type aType, String aValue) throws EamDbException;
+    List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException;
 
     /**
      * Add a new EamArtifact.Type to the db.
@@ -475,18 +457,18 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public int newCorrelationType(EamArtifact.Type newType) throws EamDbException;
+    public int newCorrelationType(CorrelationAttribute.Type newType) throws EamDbException;
 
     /**
-     * Get the list of EamArtifact.Type's that will be used to correlate
-     * artifacts.
+     * Get the list of EamArtifact.Type's that are defined in the DB and can be
+     * used to correlate artifacts.
      *
      * @return List of EamArtifact.Type's. If none are defined in the database,
      *         the default list will be returned.
      *
      * @throws EamDbException
      */
-    public List<EamArtifact.Type> getCorrelationTypes() throws EamDbException;
+    public List<CorrelationAttribute.Type> getDefinedCorrelationTypes() throws EamDbException;
 
     /**
      * Get the list of enabled EamArtifact.Type's that will be used to correlate
@@ -497,7 +479,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<EamArtifact.Type> getEnabledCorrelationTypes() throws EamDbException;
+    public List<CorrelationAttribute.Type> getEnabledCorrelationTypes() throws EamDbException;
 
     /**
      * Get the list of supported EamArtifact.Type's that can be used to
@@ -508,7 +490,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<EamArtifact.Type> getSupportedCorrelationTypes() throws EamDbException;
+    public List<CorrelationAttribute.Type> getSupportedCorrelationTypes() throws EamDbException;
 
     /**
      * Update a EamArtifact.Type.
@@ -517,7 +499,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public void updateCorrelationType(EamArtifact.Type aType) throws EamDbException;
+    public void updateCorrelationType(CorrelationAttribute.Type aType) throws EamDbException;
 
     /**
      * Get the EamArtifact.Type that has the given Type.Id.
@@ -528,5 +510,5 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public EamArtifact.Type getCorrelationTypeById(int typeId) throws EamDbException;
+    public CorrelationAttribute.Type getCorrelationTypeById(int typeId) throws EamDbException;
 }

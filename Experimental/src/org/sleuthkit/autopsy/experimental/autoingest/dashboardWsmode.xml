@@ -3,8 +3,8 @@
     <name unique="dashboard"/>
     <kind type="editor"/>
     <state type="separated"/>
-    <bounds x="76" y="68" width="996" height="672"/>
+    <bounds x="76" y="68" width="1005" height="750"/>
     <frame state="0"/>
     
-    <empty-behavior permanent="false"/>
+    <empty-behavior permanent="true"/>
 </mode>

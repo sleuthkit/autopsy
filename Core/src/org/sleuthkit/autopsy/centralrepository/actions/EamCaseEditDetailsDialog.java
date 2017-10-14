@@ -36,19 +36,19 @@ import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.AddNewOrganizationDialog;
 
 /**
- * Handle editing details of cases within the Central Repository
+ * Handle editing details of cases within the central repository
  */
 public class EamCaseEditDetailsDialog extends JDialog {
 
     private final static Logger LOGGER = Logger.getLogger(EamCaseEditDetailsDialog.class.getName());
-    private EamCase eamCase;
+    private CorrelationCase eamCase;
     private EamDb dbManager;
     private Boolean contentChanged = false;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
@@ -69,7 +69,7 @@ public class EamCaseEditDetailsDialog extends JDialog {
 
         try {
             this.dbManager = EamDb.getInstance();
-            this.eamCase = this.dbManager.getCaseDetails(Case.getCurrentCase().getName());
+            this.eamCase = this.dbManager.getCaseByUUID(Case.getCurrentCase().getName());
             if(this.eamCase == null){
                 this.eamCase = dbManager.newCase(Case.getCurrentCase());
             }
@@ -531,14 +531,14 @@ public class EamCaseEditDetailsDialog extends JDialog {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         if (!EamDb.isEnabled()) {
-            LOGGER.log(Level.SEVERE, "Central Repository database not enabled"); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Central repository database not enabled"); // NON-NLS
             return;
         }
 
         try {
             dbManager.updateCase(eamCase);
         } catch (IllegalArgumentException | EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to central repository database", ex); // NON-NLS
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }

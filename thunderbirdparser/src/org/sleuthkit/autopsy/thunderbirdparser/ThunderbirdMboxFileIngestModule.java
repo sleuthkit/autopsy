@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -327,8 +328,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param attachments
      * @param abstractFile
+     * @param messageArtifact
      *
-     * @return
+     * @return List of attachments
      */
     private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile, BlackboardArtifact messageArtifact) {
         List<AbstractFile> files = new ArrayList<>();
@@ -404,11 +406,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String senderAddress;
         senderAddressList.addAll(findEmailAddresess(from));
         
-        Account senderAccount = null;        
+        AccountInstance senderAccountInstance = null;        
         if (senderAddressList.size() == 1) {
             senderAddress = senderAddressList.get(0);
             try {
-                senderAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
+                senderAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
             }
             catch(TskCoreException ex) {
                  logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
@@ -423,13 +425,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         recipientAddresses.addAll(findEmailAddresess(cc));
         recipientAddresses.addAll(findEmailAddresess(bcc));
         
-        List<Account> recipientAccounts = new ArrayList<>();
+        List<AccountInstance> recipientAccountInstances = new ArrayList<>();
         recipientAddresses.forEach((addr) -> {
             try {
-                Account recipientAccount = 
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.EMAIL, addr,
+                AccountInstance recipientAccountInstance = 
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.EMAIL, addr,
                         EmailParserModuleFactory.getModuleName(), abstractFile);
-                recipientAccounts.add(recipientAccount);
+                recipientAccountInstances.add(recipientAccountInstance);
             }
             catch(TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to create account for email address  " + addr, ex); //NON-NLS
@@ -463,7 +465,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             bbart.addAttributes(bbattributes);
 
             // Add account relationships
-            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccount, recipientAccounts, bbart);
+            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart);
             
             try {
                 // index the artifact for keyword search

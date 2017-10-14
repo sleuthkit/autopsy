@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerExc
 /**
  * Instances of this class allow a user to create a new hash database and add it
  * to the set of hash databases used to classify files as unknown, known or
- * known bad.
+ * notable.
  */
 final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
@@ -53,7 +53,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to create a new hash database and
      * add it to the set of hash databases used to classify files as unknown,
-     * known or known bad.
+     * known or notable.
      */
     HashDbCreateDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);

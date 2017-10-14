@@ -286,7 +286,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *
      * @return source file/content name
      */
-    public String getSrcName() {
+    public String getSourceName() {
 
         String srcName = "";
         if (associated != null) {
@@ -318,7 +318,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.name"),
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
-                this.getSrcName()));
+                this.getSourceName()));
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));

@@ -44,7 +44,7 @@ import traceback
 import general
 
 wwfAccountType = None
-deviceAccount = None
+deviceAccountInstance = None
 
 """
 Analyzes messages from Words With Friends
@@ -65,8 +65,8 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
             deviceID = ds.getDeviceId()
 
-            global deviceAccount
-            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            global deviceAccountInstance
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "WordsFramework")
             for abstractFile in absFiles:
@@ -112,10 +112,10 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Words With Friends Message"))
 
                 # Create an account
-                wwfAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
+                wwfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [wwfAccount], artifact);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact);
 
                 try:
                     # index the artifact for keyword search
