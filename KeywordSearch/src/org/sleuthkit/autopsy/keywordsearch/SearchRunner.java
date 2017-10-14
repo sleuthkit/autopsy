@@ -492,7 +492,7 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched].progress(keywordList.getName() + ": " + queryDisplayStr, unitProgress);
 
                         // Create blackboard artifacts                
-                        newResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages());
+                        newResults.process(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages());
 
                     } //if has results
 
