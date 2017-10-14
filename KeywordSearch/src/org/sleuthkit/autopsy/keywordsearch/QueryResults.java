@@ -63,6 +63,8 @@ class QueryResults {
      * blackboard, sending messages about the search hits to the ingest inbox,
      * and publishing an event to notify subscribers of the blackboard posts.
      *
+     * The KeywordSearchQuery is used to do the blackboard posts.
+     * 
      * @param query The query.
      */
     QueryResults(KeywordSearchQuery query) {
@@ -219,7 +221,7 @@ class QueryResults {
                 /*
                  * Post an artifact for the hit to the blackboard.
                  */
-                BlackboardArtifact artifact = query.writeSingleFileHitsToBlackBoard(content, keyword, hit, snippet, query.getKeywordList().getName());
+                BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
                 if (null == artifact) {
                     logger.log(Level.SEVERE, "Error posting keyword hit artifact for keyword {0} in {1} to the blackboard", new Object[]{keyword.toString(), content}); //NON-NLS
                 }
