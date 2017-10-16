@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 public class AddNewOrganizationDialog extends javax.swing.JDialog {
 
     private static final Logger LOGGER = Logger.getLogger(AddNewOrganizationDialog.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;

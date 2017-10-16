@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import java.beans.PropertyChangeListener;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 

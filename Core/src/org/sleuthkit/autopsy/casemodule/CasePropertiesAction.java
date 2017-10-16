@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;

@@ -61,7 +61,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="casePanel" max="32767" attributes="0"/>
                       <Component id="examinerPanel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="pnOrganization1" alignment="1" max="32767" attributes="0"/>
+                      <Component id="pnOrganization" alignment="1" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -74,7 +74,7 @@
                   <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   <Component id="examinerPanel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                  <Component id="pnOrganization1" min="-2" max="-2" attributes="0"/>
+                  <Component id="pnOrganization" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
@@ -416,13 +416,13 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="lbExaminerEmailLabel" max="32767" attributes="0"/>
-                          <Component id="lbExaminerEmailText" max="32767" attributes="0"/>
+                          <Component id="lbExaminerPhoneLabel" max="32767" attributes="0"/>
+                          <Component id="lbExaminerPhoneText" min="-2" pref="14" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="lbExaminerPhoneLabel" max="32767" attributes="0"/>
-                          <Component id="lbExaminerPhoneText" max="32767" attributes="0"/>
+                          <Component id="lbExaminerEmailLabel" max="32767" attributes="0"/>
+                          <Component id="lbExaminerEmailText" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -544,12 +544,12 @@
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="pnOrganization1">
+        <Container class="javax.swing.JPanel" name="pnOrganization">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
                 <TitledBorder title="Organization">
-                  <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.pnOrganization1.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.pnOrganization.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                   <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                 </TitledBorder>
               </Border>
@@ -559,24 +559,31 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="lbPointOfContactEmailLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbPointOfContactPhoneLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbPointOfContactNameLabel1" alignment="0" max="32767" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="lbPointOfContactEmailLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lbPointOfContactNameLabel" alignment="0" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Component id="lbOrganizationNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="1" attributes="0">
+                                  <Component id="lbPointOfContactNameText" alignment="1" pref="411" max="32767" attributes="0"/>
+                                  <Component id="lbOrganizationNameText" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lbPointOfContactEmailText" alignment="0" max="32767" attributes="0"/>
+                              </Group>
                           </Group>
-                          <Component id="lbOrganizationNameLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="lbPointOfContactPhoneLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lbPointOfContactPhoneText" max="32767" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="lbPointOfContactNameText1" alignment="1" max="32767" attributes="0"/>
-                          <Component id="lbOrganizationNameText" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lbPointOfContactPhoneText1" alignment="1" max="32767" attributes="0"/>
-                          <Component id="lbPointOfContactEmailText1" alignment="0" max="32767" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -585,23 +592,23 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="lbOrganizationNameLabel1" max="32767" attributes="0"/>
+                          <Component id="lbOrganizationNameLabel" max="32767" attributes="0"/>
                           <Component id="lbOrganizationNameText" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="lbPointOfContactNameLabel1" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lbPointOfContactNameText1" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="lbPointOfContactEmailLabel1" alignment="0" max="32767" attributes="0"/>
-                          <Component id="lbPointOfContactEmailText1" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
+                          <Component id="lbPointOfContactNameLabel" alignment="0" max="32767" attributes="0"/>
+                          <Component id="lbPointOfContactNameText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="lbPointOfContactPhoneLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="lbPointOfContactPhoneText1" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
+                          <Component id="lbPointOfContactPhoneLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbPointOfContactPhoneText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="lbPointOfContactEmailLabel" alignment="0" max="32767" attributes="0"/>
+                          <Component id="lbPointOfContactEmailText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                   </Group>
@@ -609,10 +616,10 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="lbOrganizationNameLabel1">
+            <Component class="javax.swing.JLabel" name="lbOrganizationNameLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbOrganizationNameLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbOrganizationNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[82, 14]"/>
@@ -625,17 +632,17 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="lbPointOfContactNameLabel1">
+            <Component class="javax.swing.JLabel" name="lbPointOfContactNameLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbPointOfContactNameLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbPointOfContactNameLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="lbPointOfContactEmailLabel1">
+            <Component class="javax.swing.JLabel" name="lbPointOfContactEmailLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbPointOfContactEmailLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbPointOfContactEmailLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[82, 14]"/>
@@ -648,10 +655,10 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="lbPointOfContactPhoneLabel1">
+            <Component class="javax.swing.JLabel" name="lbPointOfContactPhoneLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbPointOfContactPhoneLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.lbPointOfContactPhoneLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[82, 14]"/>
@@ -664,11 +671,11 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="lbPointOfContactNameText1">
+            <Component class="javax.swing.JLabel" name="lbPointOfContactNameText">
             </Component>
-            <Component class="javax.swing.JLabel" name="lbPointOfContactEmailText1">
+            <Component class="javax.swing.JLabel" name="lbPointOfContactEmailText">
             </Component>
-            <Component class="javax.swing.JLabel" name="lbPointOfContactPhoneText1">
+            <Component class="javax.swing.JLabel" name="lbPointOfContactPhoneText">
             </Component>
             <Component class="javax.swing.JLabel" name="lbOrganizationNameText">
             </Component>

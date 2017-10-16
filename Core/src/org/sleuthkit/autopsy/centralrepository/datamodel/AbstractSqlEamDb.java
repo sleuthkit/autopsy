@@ -34,7 +34,6 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;

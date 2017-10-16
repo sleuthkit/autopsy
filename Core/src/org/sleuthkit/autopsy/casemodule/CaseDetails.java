@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.casemodule;
  * Wrapper to contain the modifiable details of a case, such as case display
  * name, case number, and examiner related fields.
  */
-class CaseDetails {
+final class CaseDetails {
 
     private final String caseDisplayName;
     private final String caseNumber;

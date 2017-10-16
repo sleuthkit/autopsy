@@ -32,7 +32,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <EmptySpace min="0" pref="413" max="32767" attributes="0"/>
+          <EmptySpace min="0" pref="439" max="32767" attributes="0"/>
           <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
                   <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -115,9 +115,6 @@
                 <Font bold="false" component="caseNumberTextField" property="font" relativeSize="false" size="11"/>
               </FontInfo>
             </Property>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="OptionalCasePropertiesPanel.caseNumberTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="caseDisplayNameLabel">
@@ -147,6 +144,9 @@
               <FontInfo relative="true">
                 <Font bold="false" component="caseDisplayNameTextField" property="font" relativeSize="false" size="11"/>
               </FontInfo>
+            </Property>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="OptionalCasePropertiesPanel.caseDisplayNameTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -206,13 +206,13 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="tfExaminerEmailText" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbExaminerEmailLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="tfExaminerPhoneText" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbExaminerPhoneLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="tfExaminerPhoneText" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbExaminerPhoneLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="tfExaminerEmailText" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbExaminerEmailLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
@@ -281,9 +281,6 @@
               <FontInfo relative="true">
                 <Font bold="false" component="examinerTextField" property="font" relativeSize="false" size="11"/>
               </FontInfo>
-            </Property>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="OptionalCasePropertiesPanel.examinerTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -400,13 +397,13 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="lbPointOfContactEmailLabel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="lbPointOfContactEmailText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
+                      <Component id="lbPointOfContactPhoneLabel" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lbPointOfContactPhoneText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="lbPointOfContactPhoneLabel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="lbPointOfContactPhoneText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
+                      <Component id="lbPointOfContactEmailLabel" alignment="0" max="32767" attributes="0"/>
+                      <Component id="lbPointOfContactEmailText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>

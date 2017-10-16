@@ -16,10 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionListener;
+import org.openide.util.NbBundle.Messages;
 
 /**
  *
@@ -43,6 +43,10 @@ class EditOptionalCasePropertiesPanel extends javax.swing.JPanel {
         propertiesPanel.setVisible(true);
     }
 
+    @Messages({
+        "EditOptionalCasePropertiesPanel.saveButton.text=Save",
+        "EditOptionalCasePropertiesPanel.cancelButton.text=Cancel"
+    })
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -68,9 +72,9 @@ class EditOptionalCasePropertiesPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(254, Short.MAX_VALUE)
-                .addComponent(cancelButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(saveButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cancelButton)
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(optionsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -93,9 +97,10 @@ class EditOptionalCasePropertiesPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    void saveProperties(){
-         this.propertiesPanel.saveUpdatedCaseDetails();
+    void saveProperties() {
+        this.propertiesPanel.saveUpdatedCaseDetails();
     }
+
     /**
      * Adds an action listener to the Save button of the panel.
      *

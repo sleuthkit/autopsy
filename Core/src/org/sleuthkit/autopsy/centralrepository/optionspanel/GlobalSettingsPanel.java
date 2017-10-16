@@ -41,7 +41,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(GlobalSettingsPanel.class.getName());
-    
+
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
     /**
@@ -61,12 +61,17 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
         "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and results between cases.",
         "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable items. "
-                + "When these tags are used, the file or result will be recorded in the central repository. "
-                + "If that file or result is seen again in future cases, it will be flagged.",
-        "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and result properties to store in the central repository for later correlation."})
+        + "When these tags are used, the file or result will be recorded in the central repository. "
+        + "If that file or result is seen again in future cases, it will be flagged.",
+        "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and result properties to store in the central repository for later correlation.",
+        "GlobalSettingsPanel.organizationPanel.border.title=Organizations",
+        "GlobalSettingsPanel.manageOrganizationButton.text=Manage Organizations",
+        "GlobalSettingsPanel.organizationTextArea.text=Organization information can be tracked in the central repository"
+    })
+
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
-        
+
         // The hash set functions of central repo are not being included in the current release.
         bnImportDatabase.setVisible(false);
     }
@@ -472,6 +477,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     protected void finalize() throws Throwable {
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventListener);
         super.finalize();
+
     }
 
     /**
@@ -556,7 +562,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableButtonSubComponents(Boolean enable) {
-        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();   
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         pnCorrelationProperties.setEnabled(enable && !ingestRunning);
         pnTagManagement.setEnabled(enable && !ingestRunning);
         bnManageTypes.setEnabled(enable && !ingestRunning);

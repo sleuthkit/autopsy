@@ -47,8 +47,10 @@ class CaseInformationPanel extends javax.swing.JPanel {
     }
 
     @Messages({
-        "CaseInformationPanel.caseDetails.header=Case Details",
-        "CaseInformationPanel.ingestJobInfo.header=Ingest History"
+        "CaseInformationPanel.caseDetails.header=Details",
+        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
+        "CaseInformationPanel.editDetailsButton.text=Edit Details",
+        "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
         propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
@@ -84,16 +86,16 @@ class CaseInformationPanel extends javax.swing.JPanel {
         outerDetailsPanel = new javax.swing.JPanel();
         tabbedPane = new javax.swing.JTabbedPane();
         closeButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
+        editDetailsButton = new javax.swing.JButton();
 
         tabbedPane.setPreferredSize(new java.awt.Dimension(420, 200));
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.closeButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(editDetailsButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.editDetailsButton.text")); // NOI18N
+        editDetailsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                editDetailsButtonActionPerformed(evt);
             }
         });
 
@@ -102,15 +104,13 @@ class CaseInformationPanel extends javax.swing.JPanel {
         outerDetailsPanelLayout.setHorizontalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, outerDetailsPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(closeButton)
-                .addGap(5, 5, 5))
+            .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                .addComponent(editDetailsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(closeButton))
         );
 
-        outerDetailsPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, jButton1});
+        outerDetailsPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, editDetailsButton});
 
         outerDetailsPanelLayout.setVerticalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -119,7 +119,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
-                    .addComponent(jButton1))
+                    .addComponent(editDetailsButton))
                 .addGap(5, 5, 5))
         );
 
@@ -138,8 +138,8 @@ class CaseInformationPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        JDialog editCasePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), "Edit Case Details", true);
+    private void editDetailsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editDetailsButtonActionPerformed
+        JDialog editCasePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), Bundle.CaseInformationPanel_editDetailsDialog_title(), true);
         EditOptionalCasePropertiesPanel editCasePropertiesPanel = new EditOptionalCasePropertiesPanel();
         editCasePropertiesPanel.addCancelButtonAction((ActionEvent e) -> {
             editCasePropertiesDialog.setVisible(false);
@@ -162,11 +162,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
         propertiesPanel.updateCaseInfo();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_editDetailsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton editDetailsButton;
     private javax.swing.JPanel outerDetailsPanel;
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
