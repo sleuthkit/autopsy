@@ -346,7 +346,8 @@ public final class ManageOrganizationsDialog extends JDialog {
                 Bundle.ManageOrganizationsDialog_confirmDeletion_title(),
                 JOptionPane.YES_NO_OPTION)) {
             try {
-                EamDb.getInstance().deleteOrganization(organizationList.getSelectedValue());   //WJS-TODO implement delete 
+                EamDb.getInstance().deleteOrganization(organizationList.getSelectedValue());
+                populateList();
             } catch (EamDbException ex) {
                 JOptionPane.showMessageDialog(null,
                         Bundle.ManageOrganizationsDialog_unableToDeleteOrg_message(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);

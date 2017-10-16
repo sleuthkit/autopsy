@@ -1428,7 +1428,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
         PreparedStatement checkIfUsedStatement = null;
         ResultSet resultSet = null;
-        String checkIfUsedSql = "SELECT count(*) FROM cases, reference_sets WHERE cases.org_id=? OR reference_sets.org_id=?";
+        String checkIfUsedSql = "SELECT (select count(*) FROM cases WHERE org_id=?) + (select count(*) FROM reference_sets WHERE org_id=?)";
         PreparedStatement deleteOrgStatement = null;
         String deleteOrgSql = "DELETE FROM organizations WHERE id=?";
         try {
@@ -1436,8 +1436,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
             checkIfUsedStatement.setInt(1, organizationToDelete.getOrgID());
             checkIfUsedStatement.setInt(2, organizationToDelete.getOrgID());
             resultSet = checkIfUsedStatement.executeQuery();
+            System.out.println(checkIfUsedStatement.toString());
             resultSet.next();
-            if (resultSet.getLong(1) > 0) {
+            long count = resultSet.getLong(1);
+            System.out.println("COUNT OF RESULTS: "+ count);
+            if (count > 0) {
                 throw new EamDbException("Can not delete organization which is currently  a case in the central repo");
             }
             deleteOrgStatement = conn.prepareStatement(deleteOrgSql);

@@ -393,7 +393,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
                         .addComponent(comboBoxOrgName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)))
+                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         orgainizationPanelLayout.setVerticalGroup(
