@@ -401,8 +401,24 @@ final class RegexQuery implements KeywordSearchQuery {
         return escapedQuery;
     }
 
+    /**
+     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
+     *
+     * @param content      The text source object for the hit.
+     * @param foundKeyword The keyword that was found by the search, this may be
+     *                     different than the Keyword that was searched if, for
+     *                     example, it was a RegexQuery.
+     * @param hit          The keyword hit.
+     * @param snippet      A snippet from the text that contains the hit.
+     * @param listName     The name of the keyword list that contained the
+     *                     keyword for which the hit was found.
+     *
+     *
+     * @return The newly created artifact or null if there was a problem
+     *         creating it.
+     */
     @Override
-    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {
