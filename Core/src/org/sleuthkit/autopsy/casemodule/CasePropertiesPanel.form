@@ -85,7 +85,7 @@
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Case">
+                <TitledBorder title="&lt;CasePropertiesPanel.casePanel.border.title&gt;">
                   <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.casePanel.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                   <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                 </TitledBorder>
@@ -365,7 +365,7 @@
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Examiner">
+                <TitledBorder title="&lt;CasePropertiesPanel.examinerPanel.border.title&gt;">
                   <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.examinerPanel.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                   <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                 </TitledBorder>
@@ -548,7 +548,7 @@
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                <TitledBorder title="Organization">
+                <TitledBorder title="&lt;CasePropertiesPanel.pnOrganization.border.title&gt;">
                   <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesPanel.pnOrganization.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                   <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                 </TitledBorder>

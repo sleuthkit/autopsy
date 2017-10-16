@@ -55,7 +55,8 @@ public final class ManageOrganizationsDialog extends JDialog {
             this.dbManager = EamDb.getInstance();
             organizationList.setCellRenderer(new DefaultListCellRenderer() {
                 private static final long serialVersionUID = 1L;
-
+                
+                @SuppressWarnings("rawtypes")
                 @Override
                 public Component getListCellRendererComponent(javax.swing.JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
