@@ -483,7 +483,19 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         comboBoxOrgName.setSelectedItem(orgName);
     }
 
+    @Messages({
+        "OptionalCasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
+        "OptionalCasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
+    })
     void saveUpdatedCaseDetails() {
+        if (caseDisplayNameTextField.getText().trim().isEmpty()) {
+            MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_emptyCaseNameMessage());
+            return;
+        }
+        if (!Case.isValidName(caseDisplayNameTextField.getText())) {
+            MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_invalidCaseNameMessage());
+            return;
+        }
         updateCaseDetails();
         updateCorrelationCase();
     }
@@ -501,10 +513,6 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         }
     }
 
-    @Messages({
-        "OptionalCasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
-        "OptionalCasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
-    })
     /**
      * Save changed value from text fields and text areas into the EamCase
      * object.
@@ -513,14 +521,6 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (EamDb.isEnabled()) {
             try {
-                if (caseDisplayNameTextField.getText().trim().isEmpty()) {
-                    MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_emptyCaseNameMessage());
-                    return;
-                }
-                if (!Case.isValidName(caseDisplayNameTextField.getText())) {
-                    MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_invalidCaseNameMessage());
-                    return;
-                }
                 EamDb dbManager = EamDb.getInstance();
                 CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
                 if (caseDisplayNameTextField.isVisible()) {
