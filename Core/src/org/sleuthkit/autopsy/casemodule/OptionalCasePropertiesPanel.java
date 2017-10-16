@@ -77,7 +77,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                     EamDb dbManager = EamDb.getInstance();
                     selectedOrg = dbManager.getCaseByUUID(currentCase.getName()).getOrg();
                 } catch (EamDbException ex) {
-                    //WJS-TODO HANDLE
+                    LOGGER.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
                 }
             }
             if (selectedOrg != null) {
@@ -116,7 +116,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 comboBoxOrgName.addItem(org.getName());
             });
         } catch (EamDbException ex) {
-            //WJS-TODO HANDLE EXCEPT
+            LOGGER.log(Level.WARNING, "Unable to populate list of Organizations from Central Repo", ex);
         }
     }
 

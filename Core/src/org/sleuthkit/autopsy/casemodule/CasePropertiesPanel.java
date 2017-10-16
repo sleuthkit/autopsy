@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -86,8 +87,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                     currentOrg = correlationCase.getOrg();
                 }
             } catch (EamDbException ex) {
-                //WJS-TODO handle exception
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Unable to access Correlation Case when Central Repo is enabled", ex);
             }
         }
         if (currentOrg != null) {
