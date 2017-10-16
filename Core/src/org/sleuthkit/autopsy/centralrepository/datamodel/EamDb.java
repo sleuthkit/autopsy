@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
@@ -354,6 +355,14 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param index
+     * @return 
+     */
+    public boolean isHashInReferenceSet(String hash, int index) throws EamDbException;
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -402,6 +411,18 @@ public interface EamDb {
      * @throws EamDbException
      */
     int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
+
+    /**
+     * Add a new Global Set
+     * 
+     * @param orgID
+     * @param setName
+     * @param version
+     * 
+     * @return The ID of the new global set
+     * @throws EamDbException 
+     */
+    int newReferenceSet(int orgID, String setName, String version) throws EamDbException;   
 
     /**
      * Get a global set by ID

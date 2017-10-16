@@ -21,8 +21,12 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,12 +36,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.ImportHashDatabaseDialog;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -49,6 +59,7 @@ import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
@@ -286,6 +297,87 @@ public class HashDbManager implements PropertyChangeListener {
                     MessageNotifyUtil.MessageType.ERROR);
         }
         return hashDb;
+    }
+    
+    public CentralRepoHashDb importCentralRepoHashSet(String hashSetName, String version, int orgId,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType,
+            String importFile) throws TskCoreException {
+
+        try{
+            // Create an empty hashset in the central repository
+            int crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version);
+            
+            // Import the hashes
+            
+            TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
+            if (knownFilesType.equals(HashDb.KnownFilesType.KNOWN)) {
+                knownStatus = TskData.FileKnown.KNOWN;
+            } else {
+                knownStatus = TskData.FileKnown.BAD;
+            }
+            
+            // Future, make UI handle more than the "FILES" type.
+
+            EamDb dbManager = EamDb.getInstance();
+            CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
+            BufferedReader reader = new BufferedReader(new FileReader(importFile));
+            String line;
+            Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
+
+            long totalLines = Files.lines(new File(importFile).toPath()).count();
+
+            int numLines = 0;
+            while ((line = reader.readLine()) != null) {
+
+                String[] parts = line.split("\\|");
+
+                // Header lines start with a 41 character dummy hash, 1 character longer than a SHA-1 hash
+                if (parts.length != 2 || parts[0].length() == 41) {
+                    continue;
+                }
+
+                EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
+                        crIndex, 
+                        parts[0].toLowerCase(), 
+                        knownStatus, 
+                        "");
+
+                globalInstances.add(eamGlobalFileInstance);
+
+                if(numLines % 1000 == 0){
+                    dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+                    globalInstances.clear();
+                }
+            }
+
+            dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+
+            // this should wait until after init
+            CentralRepoHashDb hashDb = new CentralRepoHashDb(hashSetName, version, crIndex, 
+                    searchDuringIngest, sendIngestMessages, knownFilesType);
+
+            // Add the hash database to the collection
+            hashSets.add(hashDb);
+        
+
+
+            // Let any external listeners know that there's a new set   
+            try {
+                changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
+                MessageNotifyUtil.Notify.show(
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
+            return hashDb;
+        
+        } catch (Exception ex){
+            // TODO
+            ex.printStackTrace();
+            throw new TskCoreException(ex.getLocalizedMessage());
+        }
     }
 
     synchronized void indexHashDatabase(HashDatabase hashDb) {
@@ -1035,6 +1127,304 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
 
+    /**
+     * Instances of this class represent hash databases used to classify files
+     * as known or know bad.
+     */
+    public static class CentralRepoHashDb implements HashDatabase{
+
+        private static final long serialVersionUID = 1L;
+        private final String hashSetName;
+        private boolean searchDuringIngest;
+        private boolean sendIngestMessages;
+        private final HashDb.KnownFilesType knownFilesType;  
+        private final int centralRepoIndex;
+        private final String version;
+        private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
+        private CentralRepoHashDb(String hashSetName, String version, int centralRepoIndex, 
+                boolean useForIngest, boolean sendHitMessages, HashDb.KnownFilesType knownFilesType) {
+            this.hashSetName = hashSetName;
+            this.version = version;
+            this.centralRepoIndex = centralRepoIndex;
+            this.searchDuringIngest = useForIngest;
+            this.sendIngestMessages = sendHitMessages;
+            this.knownFilesType = knownFilesType;
+        }
+
+        /**
+         * Adds a listener for the events defined in HashDb.Event.
+         * Listeners are used during indexing.
+         *
+         * @param pcl
+         */
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener pcl) {
+            propertyChangeSupport.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a listener for the events defined in HashDb.Event.
+         *
+         * @param pcl
+         */
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener pcl) {
+            propertyChangeSupport.removePropertyChangeListener(pcl);
+        }
+        
+        @Override
+        public int getHandle(){
+            return 0;
+        }
+
+        @Override
+        public String getHashSetName() {
+            return hashSetName;
+        }
+        
+        public String getVersion(){
+            return version;
+        }
+        
+        public int getCentralRepoIndex(){
+            return centralRepoIndex;
+        }
+
+        @Override
+        public String getDatabasePath() throws TskCoreException {
+            return "";
+        }
+        
+        @Override
+        public void setIndexing(boolean indexing){
+            
+        }
+        
+        @Override
+        public DatabaseType getDatabaseType(){
+            return DatabaseType.FILE;
+        }
+
+        @Override
+        public String getIndexPath() throws TskCoreException {
+            return "";
+        }
+
+        @Override
+        public HashDb.KnownFilesType getKnownFilesType() {
+            return knownFilesType;
+        }
+
+        @Override
+        public boolean getSearchDuringIngest() {
+            return searchDuringIngest;
+        }
+
+        @Override
+        public void setSearchDuringIngest(boolean useForIngest) {
+            this.searchDuringIngest = useForIngest;
+        }
+
+        @Override
+        public boolean getSendIngestMessages() {
+            return sendIngestMessages;
+        }
+
+        @Override
+        public void setSendIngestMessages(boolean showInboxMessages) {
+            this.sendIngestMessages = showInboxMessages;
+        }
+
+        /**
+         * Indicates whether the hash database accepts updates.
+         *
+         * @return True if the database accepts updates, false otherwise.
+         *
+         * @throws org.sleuthkit.datamodel.TskCoreException
+         */
+        @Override
+        public boolean isUpdateable() throws TskCoreException {
+            return false;
+        }
+
+        /**
+         * Adds hashes of content (if calculated) to the hash database.
+         *
+         * @param content The content for which the calculated hashes, if any,
+         *                are to be added to the hash database.
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public void addHashes(Content content) throws TskCoreException {
+            addHashes(content, null);
+        }
+
+        /**
+         * Adds hashes of content (if calculated) to the hash database.
+         *
+         * @param content The content for which the calculated hashes, if any,
+         *                are to be added to the hash database.
+         * @param comment A comment to associate with the hashes, e.g., the name
+         *                of the case in which the content was encountered.
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public void addHashes(Content content, String comment) throws TskCoreException {
+            
+        }
+
+        /**
+         * Adds a list of hashes to the hash database at once
+         *
+         * @param hashes List of hashes
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public void addHashes(List<HashEntry> hashes) throws TskCoreException {
+            
+        }
+
+        /**
+         * Perform a basic boolean lookup of the file's hash.
+         *
+         * @param content
+         *
+         * @return True if file's MD5 is in the hash database
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public boolean lookupMD5Quick(Content content) throws TskCoreException {
+            // This only works for AbstractFiles and MD5 hashes 
+            assert content instanceof AbstractFile;
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) content;
+                if (null != file.getMd5Hash()) {
+                    try{
+                        return EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.centralRepoIndex);
+                    } catch (EamDbException ex){
+                        Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup", ex); //NON-NLS
+                        throw new TskCoreException(ex.getLocalizedMessage());
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Lookup hash value in DB and provide details on file.
+         *
+         * @param content
+         *
+         * @return null if file is not in database.
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public HashHitInfo lookupMD5(Content content) throws TskCoreException {
+            HashHitInfo result = null;
+            // This only works for AbstractFiles and MD5 hashes 
+            assert content instanceof AbstractFile;
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) content;
+                if (null != file.getMd5Hash()) {
+                    try{
+                        if(EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.centralRepoIndex)){
+                            // Make a bare-bones HashHitInfo for now
+                            result = new HashHitInfo(file.getMd5Hash(), "", "");
+                        }
+                    } catch (EamDbException ex){
+                        Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup", ex); //NON-NLS
+                        throw new TskCoreException(ex.getLocalizedMessage());
+                    }
+                }
+            }
+            return result;
+        }
+        
+        /**
+         * Returns whether this database can be enabled.
+         * For file type, this is the same as checking that it has an index
+         * @return true if is valid, false otherwise
+         * @throws TskCoreException 
+         */
+        @Override
+        public boolean isValid() throws TskCoreException {
+            return true;
+        }
+
+        @Override
+        public boolean hasIndex() throws TskCoreException {
+            return false;
+        }
+
+        @Override
+        public boolean hasIndexOnly() throws TskCoreException {
+            return false;
+        }
+
+        @Override
+        public boolean canBeReIndexed() throws TskCoreException {
+            return false;
+        }
+
+        @Override
+        public boolean isIndexing() {
+            return false;
+        }
+        
+        @Override
+        public void firePropertyChange(String propertyName, Object oldValue, Object newValue){
+            this.propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
+
+        @Override
+        public void close() throws TskCoreException {
+            
+        }
+        
+        @Override
+        public String toString(){
+            return getHashSetName();
+        }
+        
+
+        @Override
+        public int hashCode() {
+            int code = 23;
+            code = 47 * code + Objects.hashCode(this.hashSetName);
+            code = 47 * code + Objects.hashCode(this.version);
+            code = 47 * code + Integer.hashCode(this.centralRepoIndex);
+            code = 47 * code + Objects.hashCode(this.knownFilesType);
+            return code;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final CentralRepoHashDb other = (CentralRepoHashDb) obj;
+            if (!Objects.equals(this.hashSetName, other.hashSetName)) {
+                return false;
+            }
+            if (!Objects.equals(this.version, other.version)) {
+                return false;
+            }
+            if (this.knownFilesType != other.knownFilesType) {
+                return false;
+            }
+            return true;
+        }
+    }    
+    
     /**
      * Worker thread to make an index of a database
      */

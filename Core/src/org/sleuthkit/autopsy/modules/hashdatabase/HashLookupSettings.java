@@ -302,6 +302,7 @@ final class HashLookupSettings implements Serializable {
         private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final String path;
+        private final String version;
         private final int centralRepoIndex;
         private DatabaseType dbType;
 
@@ -322,11 +323,13 @@ final class HashLookupSettings implements Serializable {
             this.sendIngestMessages = sendIngestMessages;
             this.path = path;
             this.centralRepoIndex = -1;
+            this.version = "";
             this.dbType = DatabaseType.FILE;
         }
         
-        HashDbInfo(String hashSetName, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages){
             this.hashSetName = hashSetName;
+            this.version = version;
             this.centralRepoIndex = centralRepoIndex;
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
@@ -336,27 +339,33 @@ final class HashLookupSettings implements Serializable {
         }
         
         HashDbInfo(HashDbManager.HashDatabase db) throws TskCoreException{
-            if(db.getDatabaseType() == DatabaseType.FILE){
-                this.hashSetName = db.getHashSetName();
-                this.knownFilesType = db.getKnownFilesType();
-                this.searchDuringIngest = db.getSearchDuringIngest();
-                this.sendIngestMessages = db.getSendIngestMessages();
+            if(db instanceof HashDbManager.HashDb){
+                HashDbManager.HashDb fileTypeDb = (HashDbManager.HashDb)db;
+                this.hashSetName = fileTypeDb.getHashSetName();
+                this.knownFilesType = fileTypeDb.getKnownFilesType();
+                this.searchDuringIngest = fileTypeDb.getSearchDuringIngest();
+                this.sendIngestMessages = fileTypeDb.getSendIngestMessages();
                 this.centralRepoIndex = -1;
+                this.version = "";
                 this.dbType = DatabaseType.FILE;
-                if (db.hasIndexOnly()) {
-                    this.path = db.getIndexPath();
+                if (fileTypeDb.hasIndexOnly()) {
+                    this.path = fileTypeDb.getIndexPath();
                 } else {
-                    this.path = db.getDatabasePath();
+                    this.path = fileTypeDb.getDatabasePath();
                 }
-            } else {
-                this.hashSetName = db.getHashSetName();
-                this.knownFilesType = db.getKnownFilesType();
-                this.searchDuringIngest = db.getSearchDuringIngest();
-                this.sendIngestMessages = db.getSendIngestMessages();
+            } else {// if(db instanceof HashDbManager.CentralRepoHashDb){
+                HashDbManager.CentralRepoHashDb centralRepoDb = (HashDbManager.CentralRepoHashDb)db;
+                this.hashSetName = centralRepoDb.getHashSetName();
+                this.version = centralRepoDb.getVersion();
+                this.knownFilesType = centralRepoDb.getKnownFilesType();
+                this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
+                this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
                 this.path = "";
-                this.centralRepoIndex = -1;
+                this.centralRepoIndex = centralRepoDb.getCentralRepoIndex();
                 this.dbType = DatabaseType.CENTRAL_REPOSITORY;
-            }
+            } //else {
+            //    throw new TskCoreException("Unknown hash database type");
+            //}
         }
 
         /**

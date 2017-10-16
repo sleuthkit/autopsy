@@ -636,6 +636,22 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param index
+     * @return 
+     */
+    @Override
+    public boolean isHashInReferenceSet(String hash, int index) throws EamDbException{
+        try{
+            acquireSharedLock();
+            return super.isHashInReferenceSet(hash, index);
+        } finally {
+            releaseSharedLock();
+        }          
+    }
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for

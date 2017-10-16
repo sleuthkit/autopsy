@@ -1245,6 +1245,42 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return caseNames.stream().collect(Collectors.toList());
     }
+    
+    /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param index
+     * @return 
+     */
+    @Override
+    public boolean isHashInReferenceSet(String hash, int index) throws EamDbException{
+
+        Connection conn = connect();
+
+        Long matchingInstances = 0L;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql = "SELECT count(*) FROM %s WHERE value=? AND reference_set_id=?";
+        
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setString(1, hash);
+            preparedStatement.setInt(2, index);
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            matchingInstances = resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error determining if file is in reference set.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return 0 < matchingInstances;
+    }
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -1382,6 +1418,27 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
+    
+    /**
+     * Add a new Global Set
+     * 
+     * @param orgID
+     * @param setName
+     * @param version
+     * @param importDate
+     * @return
+     * @throws EamDbException 
+     */
+    @Override
+    public int newReferenceSet(int orgID, String setName, String version) throws EamDbException {
+        EamDb dbManager = EamDb.getInstance();
+        EamGlobalSet eamGlobalSet = new EamGlobalSet(
+            orgID,
+            setName,
+            version,
+            LocalDate.now());
+        return dbManager.newReferencelSet(eamGlobalSet);
+    } 
 
     /**
      * Add a new Global Set

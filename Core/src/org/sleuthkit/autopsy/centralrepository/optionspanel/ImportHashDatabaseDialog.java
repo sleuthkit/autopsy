@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -67,7 +68,7 @@ import org.sleuthkit.datamodel.TskData;
  * add it to the set of hash databases used to classify files as unknown, known,
  * or notable.
  */
-final class ImportHashDatabaseDialog extends javax.swing.JDialog {
+final public class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private static final Logger LOGGER = Logger.getLogger(ImportHashDatabaseDialog.class.getName());
 
     private final JFileChooser fileChooser = new JFileChooser();
@@ -77,6 +78,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private List<EamOrganization> orgs = null;
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
+    private HashDbManager.HashDatabase selectedHashDb = null;
 
 
     /**
@@ -85,7 +87,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
      * unknown, known, or notable.
      */
     @Messages({"ImportHashDatabaseDialog.importHashDbMsg=Import Hash Database"})
-    ImportHashDatabaseDialog() {
+    public ImportHashDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ImportHashDatabaseDialog_importHashDbMsg(),
                 true); // NON-NLS
@@ -121,6 +123,10 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         populateCombobox();
         setTextBoxListeners();
         enableOkButton(false);        
+    }
+    
+    public HashDbManager.HashDatabase getHashDatabase(){
+        return this.selectedHashDb;
     }
 
     /**
@@ -513,6 +519,23 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             return;
         }
         
+        HashDbManager.HashDb.KnownFilesType known;
+        if (knownRadioButton.isSelected()) {
+            known = HashDbManager.HashDb.KnownFilesType.KNOWN;
+        } else{
+            known = HashDbManager.HashDb.KnownFilesType.KNOWN_BAD;
+        }
+        
+        try{
+        HashDbManager.getInstance().importCentralRepoHashSet(tfDatabaseName.getText().trim(), tfDatabaseVersion.getText().trim(), 
+                selectedOrg.getOrgID(), true, true, 
+                known, selectedFilePath);
+        } catch (Exception ex){
+            
+        } finally {
+            dispose();
+        }
+        /*
         // create global set
         int globalSetID;
         try {
@@ -542,7 +565,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         } catch (EamDbException | UnknownHostException ex) {
             Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
             lbWarningMsg.setText(ex.getMessage());
-        }
+        }*/
 
     }//GEN-LAST:event_okButtonActionPerformed
     
@@ -571,7 +594,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_comboboxSourceOrganizationActionPerformed
 
     @NbBundle.Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
-    private class ImportHashDatabaseWorker extends SwingWorker<Void, Void> {
+    public class ImportHashDatabaseWorker extends SwingWorker<Void, Void> {
 
         private final File file;
         private final TskData.FileKnown knownStatus;

@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.ImportHashDatabaseDialog;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -530,6 +531,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         indexPathLabelLabel = new javax.swing.JLabel();
         indexPathLabel = new javax.swing.JLabel();
         addHashesToDatabaseButton = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel2.text")); // NOI18N
@@ -668,6 +670,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -714,11 +723,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                         .addGap(70, 70, 70)
                                         .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addComponent(ingestWarningLabel))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGap(25, 25, 25)
-                                        .addComponent(sendIngestMessagesCheckBox)))
+                                        .addComponent(sendIngestMessagesCheckBox))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(ingestWarningLabel)
+                                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                 .addGap(50, 50, 50))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -776,6 +787,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         .addComponent(sendIngestMessagesCheckBox)
                         .addGap(18, 18, 18)
                         .addComponent(ingestWarningLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton1)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -900,6 +913,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }//GEN-LAST:event_hashSetTableKeyPressed
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        HashDatabase hashDb = new ImportHashDatabaseDialog().getHashDatabase();
+        if (null != hashDb) {
+            hashSetTableModel.refreshModel();
+            ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addHashesToDatabaseButton;
     private javax.swing.JButton createDatabaseButton;
@@ -918,6 +940,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private javax.swing.JLabel informationLabel;
     private javax.swing.JSeparator informationSeparator;
     private javax.swing.JLabel ingestWarningLabel;
+    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
