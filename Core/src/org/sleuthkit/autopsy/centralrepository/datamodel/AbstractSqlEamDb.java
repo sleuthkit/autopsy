@@ -1422,7 +1422,37 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
-
+    
+@Override
+    public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
+        Connection conn = connect();
+        PreparedStatement checkIfUsedStatement = null;
+        ResultSet resultSet = null;
+        String checkIfUsedSql = "SELECT count(*) FROM cases, reference_sets WHERE cases.org_id=? OR reference_sets.org_id=?";
+        PreparedStatement deleteOrgStatement = null;
+        String deleteOrgSql = "DELETE FROM organizations WHERE id=?";
+        try {
+            checkIfUsedStatement = conn.prepareStatement(checkIfUsedSql);
+            checkIfUsedStatement.setInt(1, organizationToDelete.getOrgID());
+            checkIfUsedStatement.setInt(2, organizationToDelete.getOrgID());
+            resultSet = checkIfUsedStatement.executeQuery();
+            resultSet.next();
+            if (resultSet.getLong(1) > 0) {
+                throw new EamDbException("Can not delete organization which is currently  a case in the central repo");
+            }
+            deleteOrgStatement = conn.prepareStatement(deleteOrgSql);
+            deleteOrgStatement.setInt(1, organizationToDelete.getOrgID());
+            deleteOrgStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting organization by id.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(checkIfUsedStatement);
+            EamDbUtil.closePreparedStatement(deleteOrgStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+    
     /**
      * Add a new Global Set
      *

@@ -405,6 +405,16 @@ public interface EamDb {
     void updateOrganization(EamOrganization updatedOrganization) throws EamDbException;
 
     /**
+     * Delete an organization if it is not being used by any case.
+     * 
+     * @param organizationToDelete the organization to be deleted
+     * 
+     * @throws EamDbException 
+     */
+    void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException;
+    
+    
+    /**
      * Add a new Global Set
      *
      * @param eamGlobalSet The global set to add

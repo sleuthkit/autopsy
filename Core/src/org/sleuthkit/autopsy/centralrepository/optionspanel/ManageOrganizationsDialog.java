@@ -22,10 +22,12 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.openide.util.Exceptions;
@@ -34,6 +36,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public final class ManageOrganizationsDialog extends JDialog {
 
@@ -42,6 +45,8 @@ public final class ManageOrganizationsDialog extends JDialog {
     private EamDb dbManager;
     private EamOrganization newOrg;
     private final DefaultListModel<EamOrganization> rulesListModel = new DefaultListModel<>();
+    private final static Logger LOGGER = Logger.getLogger(ManageOrganizationsDialog.class.getName());
+
     @Messages({"ManageOrganizationsDialog.title.text=Manage Organizations"})
     /**
      * Creates new form ManageOrganizationsPanel
@@ -55,7 +60,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             this.dbManager = EamDb.getInstance();
             organizationList.setCellRenderer(new DefaultListCellRenderer() {
                 private static final long serialVersionUID = 1L;
-                
+
                 @SuppressWarnings("rawtypes")
                 @Override
                 public Component getListCellRendererComponent(javax.swing.JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -117,7 +122,11 @@ public final class ManageOrganizationsDialog extends JDialog {
         "ManageOrganizationsDialog.pocPhoneLabel.text=Point of Contact Phone:",
         "ManageOrganizationsDialog.orgDescriptionTextArea.text=Organizations are used to provide additional contact information for the content they are associated with.",
         "ManageOrganizationsDialog.orgListLabel.text=Organizations",
-        "ManageOrganizationsDialog.orgDetailsLabel.text=Organization Details"})
+        "ManageOrganizationsDialog.orgDetailsLabel.text=Organization Details",
+        "ManageOrganizationsDialog.confirmDeletion.title=Confirm Deletion",
+        "ManageOrganizationsDialog.confirmDeletion.message=Are you sure you want to delete the selected organization from the central repo?",
+        "ManageOrganizationsDialog.unableToDeleteOrg.title=Unable to Delete",
+        "ManageOrganizationsDialog.unableToDeleteOrg.message=Unable to delete selected organizaiton."})
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -171,6 +180,9 @@ public final class ManageOrganizationsDialog extends JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(newButton, org.openide.util.NbBundle.getMessage(ManageOrganizationsDialog.class, "ManageOrganizationsDialog.newButton.text")); // NOI18N
         newButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        newButton.setMaximumSize(new java.awt.Dimension(70, 23));
+        newButton.setMinimumSize(new java.awt.Dimension(70, 23));
+        newButton.setPreferredSize(new java.awt.Dimension(70, 23));
         newButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newButtonActionPerformed(evt);
@@ -179,6 +191,9 @@ public final class ManageOrganizationsDialog extends JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteButton, org.openide.util.NbBundle.getMessage(ManageOrganizationsDialog.class, "ManageOrganizationsDialog.deleteButton.text")); // NOI18N
         deleteButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        deleteButton.setMaximumSize(new java.awt.Dimension(70, 23));
+        deleteButton.setMinimumSize(new java.awt.Dimension(70, 23));
+        deleteButton.setPreferredSize(new java.awt.Dimension(70, 23));
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteButtonActionPerformed(evt);
@@ -213,6 +228,9 @@ public final class ManageOrganizationsDialog extends JDialog {
         pocEmailTextField.setEditable(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(editButton, org.openide.util.NbBundle.getMessage(ManageOrganizationsDialog.class, "ManageOrganizationsDialog.editButton.text")); // NOI18N
+        editButton.setMaximumSize(new java.awt.Dimension(70, 23));
+        editButton.setMinimumSize(new java.awt.Dimension(70, 23));
+        editButton.setPreferredSize(new java.awt.Dimension(70, 23));
         editButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editButtonActionPerformed(evt);
@@ -231,11 +249,11 @@ public final class ManageOrganizationsDialog extends JDialog {
                     .addComponent(orgDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(orgListLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(manageOrganizationsPanelLayout.createSequentialGroup()
-                        .addComponent(newButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(newButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(editButton)
+                        .addComponent(editButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteButton))
+                        .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(orgListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 224, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -264,9 +282,6 @@ public final class ManageOrganizationsDialog extends JDialog {
                         .addComponent(orgDetailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
-
-        manageOrganizationsPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteButton, editButton, newButton});
-
         manageOrganizationsPanelLayout.setVerticalGroup(
             manageOrganizationsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(manageOrganizationsPanelLayout.createSequentialGroup()
@@ -301,9 +316,9 @@ public final class ManageOrganizationsDialog extends JDialog {
                         .addComponent(orgListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 288, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(manageOrganizationsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(newButton)
-                            .addComponent(deleteButton)
-                            .addComponent(editButton))))
+                            .addComponent(newButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(editButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
 
@@ -326,7 +341,18 @@ public final class ManageOrganizationsDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        //WJS-TODO implement delete 
+        if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                Bundle.ManageOrganizationsDialog_confirmDeletion_message(),
+                Bundle.ManageOrganizationsDialog_confirmDeletion_title(),
+                JOptionPane.YES_NO_OPTION)) {
+            try {
+                EamDb.getInstance().deleteOrganization(organizationList.getSelectedValue());   //WJS-TODO implement delete 
+            } catch (EamDbException ex) {
+                JOptionPane.showMessageDialog(null,
+                        Bundle.ManageOrganizationsDialog_unableToDeleteOrg_message(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);
+                LOGGER.log(Level.INFO, "Was unable to delete organization from central repository", ex);
+            }
+        }
     }//GEN-LAST:event_deleteButtonActionPerformed
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
@@ -406,7 +432,8 @@ public final class ManageOrganizationsDialog extends JDialog {
             } else {
                 selected = organizationList.getSelectedValue();
             }
-            if (selected != null) {
+            boolean isSelected = (selected != null);
+            if (isSelected) {
                 orgNameTextField.setText(selected.getName());
                 pocNameTextField.setText(selected.getPocName());
                 pocPhoneTextField.setText(selected.getPocPhone());
@@ -417,6 +444,8 @@ public final class ManageOrganizationsDialog extends JDialog {
                 pocPhoneTextField.setText("");
                 pocEmailTextField.setText("");
             }
+            newButton.setEnabled(isSelected);
+            deleteButton.setEnabled(isSelected);
         }
 
     }
