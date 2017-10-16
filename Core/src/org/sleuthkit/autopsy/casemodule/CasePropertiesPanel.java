@@ -488,36 +488,6 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-//WJS-TODO ensure case not saved with empty name    
-//    @NbBundle.Messages({
-//        "CasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
-//        "CasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
-//    })
-//    private void saveCaseName() {
-//        String newCaseDisplayName = caseNameTextField.getText();
-//
-//        if (newCaseDisplayName.equals(theCase.getDisplayName())) {
-//            return;
-//        }
-//
-//        if (newCaseDisplayName.trim().isEmpty()) {
-//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
-//            return;
-//        }
-//
-//        if (!Case.isValidName(newCaseDisplayName)) {
-//            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
-//            return;
-//        }
-//
-//        try {
-//            theCase.updateDisplayName(newCaseDisplayName);
-//        } catch (CaseActionException ex) {
-//            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
-//            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
-//        }
-//    }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel caseDirField;
     private javax.swing.JLabel caseDirLabel;

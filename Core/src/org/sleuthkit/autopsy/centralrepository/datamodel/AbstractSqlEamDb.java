@@ -1436,12 +1436,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
             checkIfUsedStatement.setInt(1, organizationToDelete.getOrgID());
             checkIfUsedStatement.setInt(2, organizationToDelete.getOrgID());
             resultSet = checkIfUsedStatement.executeQuery();
-            System.out.println(checkIfUsedStatement.toString());
             resultSet.next();
-            long count = resultSet.getLong(1);
-            System.out.println("COUNT OF RESULTS: "+ count);
-            if (count > 0) {
-                throw new EamDbException("Can not delete organization which is currently  a case in the central repo");
+            if (resultSet.getLong(1) > 0) {
+                throw new EamDbException("Can not delete organization which is currently in use by a case or reference set in the central repo");
             }
             deleteOrgStatement = conn.prepareStatement(deleteOrgSql);
             deleteOrgStatement.setInt(1, organizationToDelete.getOrgID());

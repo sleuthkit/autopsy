@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Panel which allows for editing and setting of the case details which are
@@ -500,6 +501,10 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         }
     }
 
+    @Messages({
+        "OptionalCasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
+        "OptionalCasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
+    })
     /**
      * Save changed value from text fields and text areas into the EamCase
      * object.
@@ -508,6 +513,14 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (EamDb.isEnabled()) {
             try {
+                if (caseDisplayNameTextField.getText().trim().isEmpty()) {
+                    MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_emptyCaseNameMessage());
+                    return;
+                }
+                if (!Case.isValidName(caseDisplayNameTextField.getText())) {
+                    MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_invalidCaseNameMessage());
+                    return;
+                }
                 EamDb dbManager = EamDb.getInstance();
                 CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
                 if (caseDisplayNameTextField.isVisible()) {
