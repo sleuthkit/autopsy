@@ -31,9 +31,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  *
@@ -43,7 +43,7 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
 
     private final AddHashValuesToDatabaseDialog parentRef;
     private boolean disposeParent = false;
-    private final HashDb hashDb;
+    private final HashDatabase hashDb;
     private final List<HashEntry> hashes;
     private final List<String> invalidHashes;
     private final Pattern md5Pattern;
@@ -58,7 +58,7 @@ public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
      * @param hashDb
      * @param text
      */
-    AddHashValuesToDatabaseProgressDialog(AddHashValuesToDatabaseDialog parent, HashDb hashDb, String text) {
+    AddHashValuesToDatabaseProgressDialog(AddHashValuesToDatabaseDialog parent, HashDatabase hashDb, String text) {
         super(parent);
         initComponents();
         display();

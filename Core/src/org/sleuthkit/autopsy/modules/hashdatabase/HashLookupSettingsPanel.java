@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -103,7 +104,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     private void updateComponents() {
-        HashDb db = ((HashSetTable) hashSetTable).getSelection();
+        HashDatabase db = ((HashSetTable) hashSetTable).getSelection();
         if (db != null) {
             updateComponentsForSelection(db);
         } else {
@@ -142,7 +143,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         ingestWarningLabel.setVisible(ingestIsRunning);
     }
 
-    private void updateComponentsForSelection(HashDb db) {
+    private void updateComponentsForSelection(HashDatabase db) {
         boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
 
         // Update descriptive labels.        
@@ -257,8 +258,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
     public void saveSettings() {
         //Checking for for any unindexed databases
-        List<HashDb> unindexed = new ArrayList<>();
-        for (HashDb hashSet : hashSetManager.getAllHashSets()) {
+        List<HashDatabase> unindexed = new ArrayList<>();
+        for (HashDatabase hashSet : hashSetManager.getAllHashDatabases()) {
             try {
                 if (!hashSet.hasIndex()) {
                     unindexed.add(hashSet);
@@ -306,8 +307,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     @Messages({"# {0} - hash lookup name", "HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}"})
-    void removeThese(List<HashDb> toRemove) {
-        for (HashDb hashDb : toRemove) {
+    void removeThese(List<HashDatabase> toRemove) {
+        for (HashDatabase hashDb : toRemove) {
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
             } catch (HashDbManager.HashDbManagerException ex) {
@@ -325,10 +326,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
-    private void showInvalidIndex(boolean plural, List<HashDb> unindexed) {
+    private void showInvalidIndex(boolean plural, List<HashDatabase> unindexed) {
         String total = "";
         String message;
-        for (HashDb hdb : unindexed) {
+        for (HashDatabase hdb : unindexed) {
             total += "\n" + hdb.getHashSetName();
         }
         if (plural) {
@@ -381,7 +382,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             return cellRenderer;
         }
 
-        public HashDb getSelection() {
+        public HashDatabase getSelection() {
             return hashSetTableModel.getHashSetAt(getSelectionModel().getMinSelectionIndex());
         }
 
@@ -390,7 +391,12 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 getSelectionModel().setSelectionInterval(index, index);
             }
         }
+        
+        public void selectRowByDatabase(HashDatabase db){
+            setSelection(hashSetTableModel.getIndexByDatabase(db));
+        }
 
+        @Deprecated
         public void selectRowByName(String name) {
             setSelection(hashSetTableModel.getIndexByName(name));
         }
@@ -402,7 +408,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      */
     private class HashSetTableModel extends AbstractTableModel {
 
-        List<HashDb> hashSets = HashDbManager.getInstance().getAllHashSets();
+        List<HashDatabase> hashSets = HashDbManager.getInstance().getAllHashDatabases();
 
         @Override
         public int getColumnCount() {
@@ -449,7 +455,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             return getValueAt(0, c).getClass();
         }
 
-        HashDb getHashSetAt(int index) {
+        HashDatabase getHashSetAt(int index) {
             if (!hashSets.isEmpty() && index >= 0 && index < hashSets.size()) {
                 return hashSets.get(index);
             } else {
@@ -457,6 +463,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
 
+        int getIndexByDatabase(HashDatabase db){
+            for (int i = 0; i < hashSets.size(); ++i) {
+                if (hashSets.get(i).equals(db)) {
+                    return i;
+                }
+            }
+            return -1;            
+        }
+        
+        @Deprecated
         int getIndexByName(String name) {
             for (int i = 0; i < hashSets.size(); ++i) {
                 if (hashSets.get(i).getHashSetName().equals(name)) {
@@ -467,7 +483,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
 
         void refreshModel() {
-            hashSets = HashDbManager.getInstance().getAllHashSets();
+            hashSets = HashDbManager.getInstance().getAllHashDatabases();
             refreshDisplay();
         }
 
@@ -788,21 +804,21 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     private void addHashesToDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashesToDatabaseButtonActionPerformed
 
-        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+        HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
         AddHashValuesToDatabaseDialog dialog = new AddHashValuesToDatabaseDialog(hashDb);
     }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed
 
     private void createDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createDatabaseButtonActionPerformed
-        HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
+        HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
-            ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
+            ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
 
     private void sendIngestMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendIngestMessagesCheckBoxActionPerformed
-        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+        HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
         if (hashDb != null) {
             hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -810,7 +826,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
-        final HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+        final HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
         assert hashDb != null;
 
         // Add a listener for the INDEXING_DONE event. This listener will update
@@ -819,7 +835,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.toString())) {
-                    HashDb selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
+                    HashDatabase selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
                     if (selectedHashDb != null && hashDb != null && hashDb.equals(selectedHashDb)) {
                         updateComponents();
                     }
@@ -840,10 +856,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed
-        HashDb hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
+        HashDatabase hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             hashSetTableModel.refreshModel();
-            ((HashSetTable) hashSetTable).selectRowByName(hashDb.getHashSetName());
+            ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
@@ -856,7 +872,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
-        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+        HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
         if (hashDb != null) {
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
@@ -871,7 +887,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     private void hashSetTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_hashSetTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
-            HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+            HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
             if (hashDb != null) {
                 try {
                     hashSetManager.removeHashDatabaseNoSave(hashDb);
