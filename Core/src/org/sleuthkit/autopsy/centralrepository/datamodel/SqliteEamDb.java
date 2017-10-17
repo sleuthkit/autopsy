@@ -636,6 +636,21 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Remove a reference set and all hashes contained in it.
+     * @param centralRepoIndex
+     * @throws EamDbException 
+     */
+    @Override
+    public void deleteReferenceSet(int centralRepoIndex) throws EamDbException{
+        try{
+            acquireExclusiveLock();
+            super.deleteReferenceSet(centralRepoIndex);
+        } finally {
+            releaseExclusiveLock();
+        }   
+    }    
+    
+    /**
      * Check if the given hash is in a specific reference set
      * @param hash
      * @param index
@@ -649,6 +664,23 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseSharedLock();
         }          
+    }
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo
+     * @param hashSetName
+     * @param version
+     * @return
+     * @throws EamDbException 
+     */
+    @Override
+    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.referenceSetExists(hashSetName, version);
+        } finally {
+            releaseSharedLock();
+        }  
     }
     
     /**

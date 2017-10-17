@@ -1247,6 +1247,77 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
     
     /**
+     * Remove a reference set and all hashes contained in it.
+     * @param centralRepoIndex
+     * @throws EamDbException 
+     */
+    @Override
+    public void deleteReferenceSet(int centralRepoIndex) throws EamDbException{ 
+        deleteReferenceSetFiles(centralRepoIndex);
+        deleteReferenceSetEntry(centralRepoIndex);
+    }  
+    
+    private void deleteReferenceSetEntry(int centralRepoIndex) throws EamDbException{
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "DELETE FROM reference_sets WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, centralRepoIndex);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting reference set", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }                
+    }
+    
+    
+    private void deleteReferenceSetFiles(int centralRepoIndex) throws EamDbException{
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "DELETE FROM %s WHERE reference_set_id=?";
+        
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setInt(1, centralRepoIndex);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting files from reference set", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }                
+    }
+    
+    /**
+     * Check whether the given reference set exists in the central repository.
+     * @param centralRepoIndex
+     * @param hashSetName
+     * @param version
+     * @return 
+     */
+    @Override
+    public boolean referenceSetIsValid(int centralRepoIndex, String hashSetName, String version) throws EamDbException{
+        System.out.println("###\nChecking if " + centralRepoIndex + " : " + hashSetName + " " + version + " is valid");
+        EamGlobalSet refSet = this.getReferenceSetByID(centralRepoIndex);
+        if(refSet == null){
+            System.out.println("  Not valid - no matching index");
+            return false;
+        }
+        
+        boolean res = refSet.getSetName().equals(hashSetName) && refSet.getVersion().equals(version);
+        System.out.println("  res: " + res + " (" + refSet.getSetName() + ", " + refSet.getVersion() + ")");
+        return(refSet.getSetName().equals(hashSetName) && refSet.getVersion().equals(version));
+    }
+    
+    /**
      * Check if the given hash is in a specific reference set
      * @param hash
      * @param index
@@ -1551,6 +1622,37 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
+    }
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo
+     * @param hashSetName
+     * @param version
+     * @return
+     * @throws EamDbException 
+     */
+    @Override
+    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException{
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement1 = null;
+        ResultSet resultSet = null;
+        String sql1 = "SELECT * FROM reference_sets WHERE set_name=? AND version=?";
+
+        try {
+            preparedStatement1 = conn.prepareStatement(sql1);
+            preparedStatement1.setString(1, hashSetName);
+            preparedStatement1.setString(2, version);
+            resultSet = preparedStatement1.executeQuery();
+            return (resultSet.next());
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }        
     }
 
     /**

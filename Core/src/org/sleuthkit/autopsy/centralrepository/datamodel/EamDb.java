@@ -355,6 +355,31 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
+     * Remove a reference set and all hashes contained in it.
+     * @param centralRepoIndex
+     * @throws EamDbException 
+     */
+    public void deleteReferenceSet(int centralRepoIndex) throws EamDbException;
+    
+    /**
+     * Check whether the given reference set exists in the central repository.
+     * @param centralRepoIndex
+     * @param hashSetName
+     * @param version
+     * @return 
+     */
+    public boolean referenceSetIsValid(int centralRepoIndex, String hashSetName, String version) throws EamDbException;
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo
+     * @param hashSetName
+     * @param version
+     * @return
+     * @throws EamDbException 
+     */
+    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException;
+    
+    /**
      * Check if the given hash is in a specific reference set
      * @param hash
      * @param index

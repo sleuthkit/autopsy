@@ -333,8 +333,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
         store();
-        ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
-        firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        //ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
+        //firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnImportDatabaseActionPerformed
 
     private void bnManageTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTagsActionPerformed

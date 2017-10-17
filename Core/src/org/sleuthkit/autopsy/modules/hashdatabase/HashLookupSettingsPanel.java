@@ -38,6 +38,7 @@ import javax.swing.table.TableCellRenderer;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -47,7 +48,6 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.ImportHashDatabaseDialog;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -159,58 +159,61 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
 
         try {
-            indexPathLabel.setText(shortenPath(db.getIndexPath()));
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
-            indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
-        }
-
-        try {
             addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
         } catch (TskCoreException ex) {
             Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the database is updateable.", ex); //NON-NLS
             addHashesToDatabaseButton.setEnabled(false);
         }
 
-        // Update indexing components.
-        try {
-            if (db.isIndexing()) {
-                indexButton.setText(
-                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.indexing"));
-                hashDbIndexStatusLabel.setText(
-                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
-                hashDbIndexStatusLabel.setForeground(Color.black);
-                indexButton.setEnabled(false);
-            } else if (db.hasIndex()) {
-                if (db.hasIndexOnly()) {
-                    hashDbIndexStatusLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
-                } else {
-                    hashDbIndexStatusLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexed"));
-                }
-                hashDbIndexStatusLabel.setForeground(Color.black);
-                if (db.canBeReIndexed()) {
+        if(db instanceof HashDb){
+            HashDb hashDb = (HashDb)db;
+            try {
+                indexPathLabel.setText(shortenPath(hashDb.getIndexPath()));
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
+            }
+        
+            // Update indexing components.
+            try {
+                if (hashDb.isIndexing()) {
                     indexButton.setText(
-                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.reIndex"));
-                    indexButton.setEnabled(true);
-                } else {
-                    indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.indexing"));
+                    hashDbIndexStatusLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexGen"));
+                    hashDbIndexStatusLabel.setForeground(Color.black);
                     indexButton.setEnabled(false);
+                } else if (hashDb.hasIndex()) {
+                    if (hashDb.hasIndexOnly()) {
+                        hashDbIndexStatusLabel.setText(
+                                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexOnly"));
+                    } else {
+                        hashDbIndexStatusLabel.setText(
+                                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.indexed"));
+                    }
+                    hashDbIndexStatusLabel.setForeground(Color.black);
+                    if (hashDb.canBeReIndexed()) {
+                        indexButton.setText(
+                                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.reIndex"));
+                        indexButton.setEnabled(true);
+                    } else {
+                        indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
+                        indexButton.setEnabled(false);
+                    }
+                } else {
+                    hashDbIndexStatusLabel.setText(
+                            NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
+                    hashDbIndexStatusLabel.setForeground(Color.red);
+                    indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
+                    indexButton.setEnabled(true);
                 }
-            } else {
-                hashDbIndexStatusLabel.setText(
-                        NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexStatusText.noIndex"));
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex); //NON-NLS
+                hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
                 hashDbIndexStatusLabel.setForeground(Color.red);
                 indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
-                indexButton.setEnabled(true);
+                indexButton.setEnabled(false);
             }
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex); //NON-NLS
-            hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
-            hashDbIndexStatusLabel.setForeground(Color.red);
-            indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
-            indexButton.setEnabled(false);
         }
 
         // Disable the indexing button if ingest is in progress.
@@ -259,14 +262,17 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
     public void saveSettings() {
         //Checking for for any unindexed databases
-        List<HashDatabase> unindexed = new ArrayList<>();
+        List<HashDb> unindexed = new ArrayList<>();
         for (HashDatabase hashSet : hashSetManager.getAllHashDatabases()) {
-            try {
-                if (!hashSet.hasIndex()) {
-                    unindexed.add(hashSet);
+            if(hashSet instanceof HashDb){
+                HashDb db = (HashDb)hashSet;
+                try {
+                    if (!db.hasIndex()) {
+                        unindexed.add(db);
+                    }
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
             }
         }
 
@@ -308,8 +314,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     @Messages({"# {0} - hash lookup name", "HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}"})
-    void removeThese(List<HashDatabase> toRemove) {
-        for (HashDatabase hashDb : toRemove) {
+    void removeThese(List<HashDb> toRemove) {
+        for (HashDb hashDb : toRemove) {
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
             } catch (HashDbManager.HashDbManagerException ex) {
@@ -327,7 +333,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
-    private void showInvalidIndex(boolean plural, List<HashDatabase> unindexed) {
+    private void showInvalidIndex(boolean plural, List<HashDb> unindexed) {
         String total = "";
         String message;
         for (HashDatabase hdb : unindexed) {
@@ -433,7 +439,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         private boolean indexExists(int rowIndex) {
             try {
-                return hashSets.get(rowIndex).hasIndex();
+                if(hashSets.get(rowIndex) instanceof HashDb){
+                    return ((HashDb)(hashSets.get(rowIndex))).hasIndex();
+                }
+                return false;
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
                 return false;
@@ -839,11 +848,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
-        final HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
-        assert hashDb != null;
+        final HashDatabase hashDatabase = ((HashSetTable) hashSetTable).getSelection();
+        assert hashDatabase != null;
+        assert hashDatabase instanceof HashDb;
 
         // Add a listener for the INDEXING_DONE event. This listener will update
         // the UI.
+        HashDb hashDb = (HashDb)hashDatabase;
         hashDb.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -914,11 +925,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_hashSetTableKeyPressed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        HashDatabase hashDb = new ImportHashDatabaseDialog().getHashDatabase();
-        if (null != hashDb) {
-            hashSetTableModel.refreshModel();
-            ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        if(EamDb.isEnabled()){
+            HashDatabase hashDb = new ImportCentralRepoDatabaseDialog().getHashDatabase();
+            if (null != hashDb) {
+                hashSetTableModel.refreshModel();
+                ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            }
+        } else {
+            // TEMP
+            JOptionPane.showMessageDialog(null, "Central repo not enabled");
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
