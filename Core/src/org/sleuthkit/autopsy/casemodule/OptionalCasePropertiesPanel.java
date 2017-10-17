@@ -68,7 +68,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             caseDisplayNameTextField.setVisible(false);
             setUpCentralRepoFields();
         }
-        
+
     }
 
     private void setUpOrganizationData() {
@@ -475,13 +475,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
         ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
         // update the combobox options and org data fields
+        loadOrganizationData();
         if (dialog.isChanged()) {
-            loadOrganizationData();
             selectedOrg = dialog.getNewOrg();
             setCurrentlySelectedOrganization(dialog.getNewOrg().getName());
-            validate();
-            repaint();
         }
+        validate();
+        repaint();
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
 
     void setCurrentlySelectedOrganization(String orgName) {
