@@ -72,6 +72,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             organizationList.setModel(rulesListModel);
             organizationList.addListSelectionListener(new OrganizationListSelectionListener());
             populateList();
+            setButtonsEnabled(organizationList.getSelectedValue() != null);
             newOrg = null;
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -87,8 +88,6 @@ public final class ManageOrganizationsDialog extends JDialog {
 
     private void populateListAndSelect(EamOrganization selected) throws EamDbException {
         rulesListModel.clear();
-        if (selected != null) {
-        }
         List<EamOrganization> orgs = dbManager.getOrganizations();
         if (orgs.size() > 0) {
             for (EamOrganization org : orgs) {
@@ -341,17 +340,20 @@ public final class ManageOrganizationsDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                Bundle.ManageOrganizationsDialog_confirmDeletion_message(),
-                Bundle.ManageOrganizationsDialog_confirmDeletion_title(),
-                JOptionPane.YES_NO_OPTION)) {
-            try {
-                EamDb.getInstance().deleteOrganization(organizationList.getSelectedValue());
-                populateList();
-            } catch (EamDbException ex) {
-                JOptionPane.showMessageDialog(null,
-                        Bundle.ManageOrganizationsDialog_unableToDeleteOrg_message(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);
-                LOGGER.log(Level.INFO, "Was unable to delete organization from central repository", ex);
+        EamOrganization orgToDelete = organizationList.getSelectedValue();
+        if (orgToDelete != null) {
+            if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.ManageOrganizationsDialog_confirmDeletion_message(),
+                    Bundle.ManageOrganizationsDialog_confirmDeletion_title(),
+                    JOptionPane.YES_NO_OPTION)) {
+                try {
+                    EamDb.getInstance().deleteOrganization(orgToDelete);
+                    populateList();
+                } catch (EamDbException ex) {
+                    JOptionPane.showMessageDialog(null,
+                            Bundle.ManageOrganizationsDialog_unableToDeleteOrg_message(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);
+                    LOGGER.log(Level.INFO, "Was unable to delete organization from central repository", ex);
+                }
             }
         }
     }//GEN-LAST:event_deleteButtonActionPerformed
@@ -365,7 +367,7 @@ public final class ManageOrganizationsDialog extends JDialog {
         if (dialogO.isChanged()) {
             try {
                 newOrg = dialogO.getNewOrg();
-                populateListAndSelect(newOrg);
+                populateListAndSelect(dialogO.getNewOrg());
             } catch (EamDbException ex) {
 
             }
@@ -374,13 +376,15 @@ public final class ManageOrganizationsDialog extends JDialog {
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editButtonActionPerformed
         EamOrganization orgToEdit = organizationList.getSelectedValue();
-        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog(orgToEdit);
-        if (dialogO.isChanged()) {
-            try {
-                newOrg = dialogO.getNewOrg();
-                populateListAndSelect(newOrg);
-            } catch (EamDbException ex) {
+        if (orgToEdit != null) {
+            AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog(orgToEdit);
+            if (dialogO.isChanged()) {
+                try {
+                    newOrg = dialogO.getNewOrg();
+                    populateListAndSelect(dialogO.getNewOrg());
+                } catch (EamDbException ex) {
 
+                }
             }
         }
     }//GEN-LAST:event_editButtonActionPerformed
@@ -417,6 +421,11 @@ public final class ManageOrganizationsDialog extends JDialog {
         return newOrg;
     }
 
+    private void setButtonsEnabled(boolean isSelected) {
+        editButton.setEnabled(isSelected);
+        deleteButton.setEnabled(isSelected);
+    }
+
     /**
      * A list events listener for the interesting files sets list component.
      */
@@ -427,14 +436,10 @@ public final class ManageOrganizationsDialog extends JDialog {
             if (e.getValueIsAdjusting()) {
                 return;
             }
-            EamOrganization selected;
-            if (newOrg != null) {
-                selected = newOrg;
-            } else {
-                selected = organizationList.getSelectedValue();
-            }
+            EamOrganization selected = organizationList.getSelectedValue();
             boolean isSelected = (selected != null);
-            if (isSelected) {
+            setButtonsEnabled(isSelected);
+            if (selected != null) {
                 orgNameTextField.setText(selected.getName());
                 pocNameTextField.setText(selected.getPocName());
                 pocPhoneTextField.setText(selected.getPocPhone());
@@ -445,9 +450,7 @@ public final class ManageOrganizationsDialog extends JDialog {
                 pocPhoneTextField.setText("");
                 pocEmailTextField.setText("");
             }
-            newButton.setEnabled(isSelected);
-            deleteButton.setEnabled(isSelected);
         }
-
     }
+
 }
