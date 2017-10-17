@@ -61,17 +61,18 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             tfExaminerEmailText.setText(Case.getCurrentCase().getExaminerEmail());
             tfExaminerPhoneText.setText(Case.getCurrentCase().getExaminerPhone());
             taNotesText.setText(Case.getCurrentCase().getExaminerNotes());
+            setUpCentralRepoFields();
             setUpOrganizationData();
         } else {
             caseDisplayNameLabel.setVisible(false);
             caseDisplayNameTextField.setVisible(false);
+            setUpCentralRepoFields();
         }
-        setUpCentralRepoFields();
+        
     }
 
     private void setUpOrganizationData() {
         if (EamDb.isEnabled()) {
-            loadOrganizationData();
             Case currentCase = Case.getCurrentCase();
             if (currentCase != null) {
                 try {
@@ -103,11 +104,14 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanel.setEnabled(cREnabled);
         if (!cREnabled) {
             clearOrganization();
+        } else {
+            loadOrganizationData();
         }
 
     }
 
     private void loadOrganizationData() {
+        Object selectedBeforeLoad = comboBoxOrgName.getSelectedItem();
         comboBoxOrgName.removeAllItems();
         try {
             comboBoxOrgName.addItem(""); // for when a case has a null Org
@@ -116,6 +120,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             orgs.forEach((org) -> {
                 comboBoxOrgName.addItem(org.getName());
             });
+            comboBoxOrgName.setSelectedItem(selectedBeforeLoad);
         } catch (EamDbException ex) {
             LOGGER.log(Level.WARNING, "Unable to populate list of Organizations from Central Repo", ex);
         }
@@ -310,7 +315,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(examinerLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(examinerTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE)
+                            .addComponent(examinerTextField)
                             .addComponent(tfExaminerEmailText))))
                 .addGap(11, 11, 11))
         );
@@ -392,9 +397,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                        .addComponent(comboBoxOrgName, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         orgainizationPanelLayout.setVerticalGroup(

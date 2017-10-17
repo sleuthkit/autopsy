@@ -188,7 +188,7 @@
                           </Group>
                           <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="examinerTextField" pref="377" max="32767" attributes="1"/>
+                              <Component id="examinerTextField" max="32767" attributes="1"/>
                               <Component id="tfExaminerEmailText" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -373,9 +373,9 @@
                           </Group>
                       </Group>
                       <Group type="102" attributes="0">
-                          <Component id="comboBoxOrgName" max="32767" attributes="0"/>
+                          <Component id="comboBoxOrgName" min="-2" pref="238" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="bnNewOrganization" min="-2" pref="122" max="-2" attributes="0"/>
+                          <Component id="bnNewOrganization" min="-2" pref="134" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
