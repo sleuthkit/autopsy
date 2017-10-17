@@ -34,6 +34,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1315,11 +1317,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
             preparedStatement.executeUpdate();
             ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    return generatedKeys.getLong(1);
-                } else {
-                    throw new SQLException("Creating user failed, no ID obtained.");
-                }
+            if (generatedKeys.next()) {
+                return generatedKeys.getLong(1);
+            } else {
+                throw new SQLException("Creating user failed, no ID obtained.");
+            }
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new organization.", ex); // NON-NLS
         } finally {
@@ -1422,8 +1424,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
-    
-@Override
+
+    @Messages({"AbstractSqlEamDb.deleteOrganization.inUseException.message=Can not delete organization "
+            + "which is currently in use by a case or reference set in the central repository.",
+             "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
+    @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
         Connection conn = connect();
         PreparedStatement checkIfUsedStatement = null;
@@ -1438,13 +1443,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
             resultSet = checkIfUsedStatement.executeQuery();
             resultSet.next();
             if (resultSet.getLong(1) > 0) {
-                throw new EamDbException("Can not delete organization which is currently in use by a case or reference set in the central repo.");
+                throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_inUseException_message());
             }
             deleteOrgStatement = conn.prepareStatement(deleteOrgSql);
             deleteOrgStatement.setInt(1, organizationToDelete.getOrgID());
             deleteOrgStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new EamDbException("Error executing query when attempting to delete organization by id.", ex); // NON-NLS
+            throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_errorDeleting_message(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(checkIfUsedStatement);
             EamDbUtil.closePreparedStatement(deleteOrgStatement);
@@ -1452,7 +1457,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
-    
+
     /**
      * Add a new Global Set
      *
