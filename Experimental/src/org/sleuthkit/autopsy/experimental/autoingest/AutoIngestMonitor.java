@@ -265,7 +265,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     }
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unexpected interrupt while retrieving coordination service node data for '%s'", node), ex);
-                } catch (AutoIngestJobNodeData.InvalidDataException ex) {
+                } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJob.AutoIngestJobException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unable to use node data for '%s'", node), ex);
                 }
             }
