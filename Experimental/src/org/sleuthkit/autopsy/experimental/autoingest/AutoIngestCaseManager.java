@@ -22,23 +22,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 
 /**
  * Handles locating and opening cases created by auto ingest.
  */
 final class AutoIngestCaseManager {
 
-    private static final Logger LOGGER = Logger.getLogger(AutoIngestCaseManager.class.getName());
     private static AutoIngestCaseManager instance;
     
     private CoordinationService coordinationService;
@@ -47,6 +40,8 @@ final class AutoIngestCaseManager {
      * Gets the auto ingest case manager.
      *
      * @return The auto ingest case manager singleton.
+     * 
+     * @throws AutoIngestCaseManagerException
      */
     synchronized static AutoIngestCaseManager getInstance() throws AutoIngestCaseManager.AutoIngestCaseManagerException {
         if (null == instance) {
@@ -58,48 +53,30 @@ final class AutoIngestCaseManager {
     /**
      * Constructs an object that handles locating and opening cases created by
      * auto ingest.
+     * 
+     * @throws AutoIngestCaseManagerException
      */
     private AutoIngestCaseManager() throws AutoIngestCaseManagerException {
         try {
-            init();
-        } catch (AutoIngestCaseManager.AutoIngestCaseManagerException ex) {
-            Logger.getLogger(AutoIngestCaseManager.class.getName()).log(Level.SEVERE, null, ex);
-            throw ex;
-        }
-    }
-    
-    /**
-     * Initialize the coordination service.
-     * 
-     * @throws org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCaseManager.AutoIngestCaseManagerException 
-     */
-    private void init() throws AutoIngestCaseManager.AutoIngestCaseManagerException {
-        try {
             coordinationService = CoordinationService.getInstance();
         } catch (CoordinationServiceException ex) {
-            throw new AutoIngestCaseManager.AutoIngestCaseManagerException(ex.getMessage(), ex);
+            throw new AutoIngestCaseManager.AutoIngestCaseManagerException("Failed to get the coordination service.", ex);
         }
     }
 
     /**
      * Gets a list of the cases in the top level case folder used by auto
      * ingest.
+     * 
+     * @return List of cases.
+     * 
+     * @throws AutoIngestCaseManagerException
      */
-    @Messages({
-        "AutoIngestCaseManager.CasePathsError=An error occurred while trying to retrieve the list of case paths."
-    })
-    List<AutoIngestCase> getCases() {
+    List<AutoIngestCase> getCases() throws AutoIngestCaseManagerException {
         List<AutoIngestCase> cases = new ArrayList<>();
-        List<Path> casePathList;
-        try {
-            casePathList = getCasePaths();
-            for (Path casePath : casePathList) {
-                cases.add(new AutoIngestCase(casePath));
-            }
-        } catch (AutoIngestCaseManagerException ex) {
-            String errorMessage = NbBundle.getMessage(AutoIngestCaseManager.class, "AutoIngestCaseManager.CasePathsError");
-            LOGGER.log(Level.SEVERE, errorMessage, ex);
-            MessageNotifyUtil.Message.error(errorMessage);
+        List<Path> casePathList = getCasePaths();
+        for (Path casePath : casePathList) {
+            cases.add(new AutoIngestCase(casePath));
         }
         return cases;
     }
@@ -109,6 +86,8 @@ final class AutoIngestCaseManager {
      * case paths.
      * 
      * @return List of case paths.
+     * 
+     * @throws AutoIngestCaseManagerException
      */
     private List<Path> getCasePaths() throws AutoIngestCaseManagerException {
         try {
@@ -122,7 +101,8 @@ final class AutoIngestCaseManager {
                     String nodeUpperCase = node.toUpperCase();
                     if(!nodeUpperCase.endsWith("_RESOURCES") && !nodeUpperCase.endsWith("AUTO_INGEST_LOG.TXT")) {
                         /*
-                         * This is not a case resource lock. Collect the path.
+                         * This is not a case resource lock, nor a case auto
+                         * ingest log lock. Collect the path.
                          */
                         casePathList.add(Paths.get(node));
                     }
