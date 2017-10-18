@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -212,6 +213,40 @@ public final class ExecUtil {
         }
     }
 
+    /**
+     * Shuts down a task executor service, waiting until all tasks are
+     * terminated. The current policy is to wait for the tasks to finish so that
+     * the case for which the executor is running can be left in a consistent
+     * state.
+     *
+     * @param executor The executor.
+     */
+    public static void shutDownTaskExecutor(ExecutorService executor) {
+        executor.shutdown();
+        boolean taskCompleted = false;
+        while (!taskCompleted) {
+            try {
+                taskCompleted = executor.awaitTermination(DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_UNITS);
+            } catch (InterruptedException ignored) {
+                /*
+                 * The current policy is to wait for the task to finish so that
+                 * the case can be left in a consistent state.
+                 *
+                 * For a specific example of the motivation for this policy,
+                 * note that a application service (Solr search service)
+                 * experienced an error condition when opening case resources
+                 * that left the service blocked uninterruptibly on a socket
+                 * read. This eventually led to a mysterious "freeze" as the
+                 * user-cancelled service task continued to run holdiong a lock
+                 * that a UI thread soon tried to acquire. Thus it has been
+                 * deemed better to make the "freeze" happen in a more
+                 * informative way, i.e., with the progress indicator for the
+                 * unfinished task on the screen, if a similar error condition
+                 * arises again.
+                 */
+            }
+        }
+    }
     /**
      * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL
      */
