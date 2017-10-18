@@ -67,21 +67,21 @@ final class MultiUserCaseManager {
      *
      * @return List of cases.
      *
-     * @throws MultiUserCaseManagerException
+     * @throws CoordinationServiceException
      */
-    List<MultiUserCase> getCases() {
+    List<MultiUserCase> getCases() throws CoordinationServiceException {
         List<MultiUserCase> cases = new ArrayList<>();
-		List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
-		for (String node : nodeList) {
-			Path casePath = Paths.get(node);
-			File caseFolder = casePath.toFile();
-			if(caseFolder.exists()) {
-				File[] autFiles = caseFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".aut"));
-				if(autFiles != null && autFiles.length > 0) {
-					cases.add(new MultiUserCase(casePath));
-				}
-			}
-		}
+        List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
+        for (String node : nodeList) {
+                Path casePath = Paths.get(node);
+                File caseFolder = casePath.toFile();
+                if(caseFolder.exists()) {
+                        File[] autFiles = caseFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".aut"));
+                        if(autFiles != null && autFiles.length > 0) {
+                                cases.add(new MultiUserCase(casePath));
+                        }
+                }
+        }
         return cases;
     }
 
