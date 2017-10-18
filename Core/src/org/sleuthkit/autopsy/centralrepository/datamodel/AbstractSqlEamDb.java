@@ -1304,7 +1304,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public long newOrganization(EamOrganization eamOrg) throws EamDbException {
         Connection conn = connect();
-
+        ResultSet generatedKeys = null;
         PreparedStatement preparedStatement = null;
         String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?)";
 
@@ -1316,7 +1316,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(4, eamOrg.getPocPhone());
 
             preparedStatement.executeUpdate();
-            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
                 return generatedKeys.getLong(1);
             } else {
@@ -1326,6 +1326,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Error inserting new organization.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(generatedKeys);
             EamDbUtil.closeConnection(conn);
         }
     }
