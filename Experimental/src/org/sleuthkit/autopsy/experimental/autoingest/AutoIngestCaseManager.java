@@ -151,7 +151,7 @@ final class AutoIngestCaseManager {
     
     /**
      * Exception type thrown when there is an error completing an auto ingest
-     * monitor operation.
+     * case manager operation.
      */
     static final class AutoIngestCaseManagerException extends Exception {
 
