@@ -61,7 +61,7 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
     private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ArchiveExtractorDataSourceProcessor.class, "ArchiveExtractorDataSourceProcessor.dsType.text");
 
     private static GeneralFilter zipFilter;
-    private static List<FileFilter> archiveFilters = new ArrayList<>();
+    private static final List<FileFilter> archiveFilters = new ArrayList<>();
     
     private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
     
@@ -69,6 +69,8 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
     private String deviceId;
     private String imagePath;
     private boolean setDataSourceOptionsCalled;
+    
+    private AddArchiveTask addArchiveTask;    
     
     /**
      * Constructs an archive data source processor that
@@ -171,22 +173,32 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
      * is started and uses the callback object to signal task completion and
      * return results.
      *
-     * This method should not be called unless isPanelValid returns true.
-     *
-     * @param progressMonitor Progress monitor that will be used by the
-     *                        background task to report progress.
-     * @param callback        Callback that will be used by the background task
-     *                        to return results.
+     * @param deviceId             An ASCII-printable identifier for the device
+     *                             associated with the data source that is
+     *                             intended to be unique across multiple cases
+     *                             (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param progressMonitor      Progress monitor for reporting progress
+     *                             during processing.
+     * @param callback             Callback to call when processing is done.
      */
-    public void run(String deviceId, String imageFolderPath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        //List<String> imageFilePaths = getImageFilePaths(imageFolderPath);
-        //addImagesTask = new AddCellebritePhysicalReportTask(deviceId, imageFilePaths, timeZone, progressMonitor, callback);
-        //new Thread(addImagesTask).start();
-    }    
+    public void run(String deviceId, String imagePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addArchiveTask = new AddArchiveTask(deviceId, imagePath, progressMonitor, callback);
+        new Thread(addArchiveTask).start();
+    }  
 
+    /**
+     * Requests cancellation of the background task that adds a data source to
+     * the case database, after the task is started using the run method. This
+     * is a "best effort" cancellation, with no guarantees that the case
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
+     */
     @Override
     public void cancel() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (null != addArchiveTask) {
+            addArchiveTask.cancelTask();
+        }
     }
 
     @Override
