@@ -27,9 +27,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.CaseCloseAction;
-import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
@@ -46,23 +46,6 @@ final class AutoIngestCaseOpenAction extends CallableSystemAction implements Act
 
         UserPreferences.SelectedMode mode = UserPreferences.getMode();
         switch (mode) {
-            case REVIEW:
-
-                if (Case.isCaseOpen()) {
-                    /*
-                     * In review mode, close the currently open case, if any, and
-                     * then display the review mode cases panel. This can be
-                     * accomplished by invoking CaseCloseAction because it calls
-                     * StartupWindowProvider.getInstance().open() after it closes
-                     * the current case.
-                     */
-                    SystemAction.get(CaseCloseAction.class).actionPerformed(e);
-                } else {
-                    // no case is open, so show the startup window
-                    StartupWindowProvider.getInstance().open();
-                }
-                break;
-                
             case AUTOINGEST:
                 /*
                  * New case action is disabled in auto ingest mode.
@@ -70,12 +53,12 @@ final class AutoIngestCaseOpenAction extends CallableSystemAction implements Act
                 break;
                 
             case STANDALONE:
+            case REVIEW:
                 /**
                  * In standalone mode, invoke default Autopsy version of CaseOpenAction.
                  */
                 Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(e);
                 break;
-
 
             default:
                 logger.log(Level.SEVERE, "Attempting to open case in unsupported mode {0}", mode.toString());

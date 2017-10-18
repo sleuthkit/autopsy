@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.casemodule;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,13 +28,14 @@ import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
  * A representation of a case created by automated ingest.
  */
-class AutoIngestCase implements Comparable<AutoIngestCase> {
+class MultiUserCase implements Comparable<MultiUserCase> {
 
-    private static final Logger logger = Logger.getLogger(AutoIngestCase.class.getName());
+    private static final Logger logger = Logger.getLogger(MultiUserCase.class.getName());
     private final Path caseDirectoryPath;
     private final String caseName;
     private final Path metadataFilePath;
@@ -46,9 +47,9 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      *
      * @param caseDirectoryPath The case directory path.
      */
-    AutoIngestCase(Path caseDirectoryPath) {
+    MultiUserCase(Path caseDirectoryPath) {
         this.caseDirectoryPath = caseDirectoryPath;
-        caseName = PathUtils.caseNameFromCaseDirectoryPath(caseDirectoryPath);
+        caseName = getCaseNameFromCaseDirectoryPath(caseDirectoryPath);
         metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
         BasicFileAttributes fileAttrs = null;
         try {
@@ -110,7 +111,7 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      * @return See CaseStatus enum definition.
      */
     CaseStatus getStatus() {
-        if (AutoIngestAlertFile.exists(caseDirectoryPath)) {
+        if(caseDirectoryPath.resolve("autoingest.alert").toFile().exists()) {
             return CaseStatus.ALERT;
         } else {
             return CaseStatus.OK;
@@ -118,8 +119,24 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
     }
 
     /**
+     * Extracts the case name from a case folder path.
+     *
+     * @param caseFolderPath A case folder path.
+     *
+     * @return A case name, with the time stamp suffix removed.
+     */
+    static String getCaseNameFromCaseDirectoryPath(Path caseFolderPath) {
+        String caseName = caseFolderPath.getFileName().toString();
+        if (caseName.length() > TimeStampUtils.getTimeStampLength()) {
+            return caseName.substring(0, caseName.length() - TimeStampUtils.getTimeStampLength());
+        } else {
+            return caseName;
+        }
+    }
+
+    /**
      * Indicates whether or not some other object is "equal to" this
-     * AutoIngestCase object.
+     * MultiUserCase object.
      *
      * @param other The other object.
      *
@@ -127,17 +144,17 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      */
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof AutoIngestCase)) {
+        if (!(other instanceof MultiUserCase)) {
             return false;
         }
         if (other == this) {
             return true;
         }
-        return this.caseDirectoryPath.toString().equals(((AutoIngestCase) other).caseDirectoryPath.toString());
+        return this.caseDirectoryPath.toString().equals(((MultiUserCase) other).caseDirectoryPath.toString());
     }
 
     /**
-     * Returns a hash code value for this AutoIngestCase object.
+     * Returns a hash code value for this MultiUserCase object.
      *
      * @return The has code.
      */
@@ -151,31 +168,31 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
     }
 
     /**
-     * Compares this AutopIngestCase object with abnother AutoIngestCase object
-     * for order.
+     * Compares this AutopIngestCase object with abnother MultiUserCase object
+ for order.
      */
     @Override
-    public int compareTo(AutoIngestCase other) {
+    public int compareTo(MultiUserCase other) {
         return -this.lastAccessedDate.compareTo(other.getLastAccessedDate());
     }
 
     /**
      * Comparator for a descending order sort on date created.
      */
-    static class LastAccessedDateDescendingComparator implements Comparator<AutoIngestCase> {
+    static class LastAccessedDateDescendingComparator implements Comparator<MultiUserCase> {
 
         /**
-         * Compares two AutoIngestCase objects for order based on last accessed
-         * date (descending).
+         * Compares two MultiUserCase objects for order based on last accessed
+ date (descending).
          *
-         * @param object      The first AutoIngestCase object
+         * @param object      The first MultiUserCase object
          * @param otherObject The second AuotIngestCase object.
          *
          * @return A negative integer, zero, or a positive integer as the first
          *         argument is less than, equal to, or greater than the second.
          */
         @Override
-        public int compare(AutoIngestCase object, AutoIngestCase otherObject) {
+        public int compare(MultiUserCase object, MultiUserCase otherObject) {
             return -object.getLastAccessedDate().compareTo(otherObject.getLastAccessedDate());
         }
     }

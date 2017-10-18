@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
         lazy = false
 )
 @ActionReference(path = "Menu/Case", position = 650, separatorAfter = 824)
-@Messages("CTL_CentralRepositoryCaseProperties=Central Repository Case Properties...")
+@Messages("CTL_CentralRepositoryCaseProperties=Central Repository Case Properties")
 public final class EamEditCaseInfoAction extends CallableSystemAction implements ActionListener {
 
     EamEditCaseInfoAction() {

@@ -26,12 +26,10 @@ import java.awt.event.KeyEvent;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.AutoIngestCasePanelInterface;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
@@ -42,13 +40,13 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final String REVIEW_MODE_TITLE = "Cases" + " (" + LOCAL_HOST_NAME + ")";
+    private static final String REVIEW_MODE_TITLE = "Open Multi-User Case (" + LOCAL_HOST_NAME + ")";
     /*
      * This is field is static for the sake of the closeOpenRecentCasesWindow
      * method.
      */
     private static JDialog recentCasesWindow;
-    private static JDialog autoIngestCasePanelWindow;
+    private static JDialog multiUserCaseWindow;
 
     public static void closeOpenRecentCasesWindow() {
         if (null != recentCasesWindow) {
@@ -56,9 +54,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
         }
     }
 
-    public static void closeAutoIngestCasesWindow() {
-        if (null != autoIngestCasePanelWindow) {
-            autoIngestCasePanelWindow.setVisible(false);
+    public static void closeMultiUserCasesWindow() {
+        if (null != multiUserCaseWindow) {
+            multiUserCaseWindow.setVisible(false);
         }
     }
 
@@ -93,7 +91,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
     
     private void customizeComponents() {
         initRecentCasesWindow();
-        initAutoIngestCasesWindow();
+        initMultiUserCasesWindow();
     }
 
     private void initRecentCasesWindow() {
@@ -119,28 +117,19 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.setResizable(false);
     }
     
-    private void initAutoIngestCasesWindow() {
-        autoIngestCasePanelWindow = new JDialog(
+    private void initMultiUserCasesWindow() {
+        multiUserCaseWindow = new JDialog(
                 WindowManager.getDefault().getMainWindow(),
                 REVIEW_MODE_TITLE,
                 Dialog.ModalityType.APPLICATION_MODAL);
-        autoIngestCasePanelWindow.getRootPane().registerKeyboardAction(
+        multiUserCaseWindow.getRootPane().registerKeyboardAction(
                 e -> {
-                    autoIngestCasePanelWindow.setVisible(false);
+                    multiUserCaseWindow.setVisible(false);
                 },
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        OpenRecentCasePanel recentCasesPanel = OpenRecentCasePanel.getInstance();
-        recentCasesPanel.setCloseButtonActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                autoIngestCasePanelWindow.setVisible(false);
-            }
-        });
-        AutoIngestCasePanelInterface autoIngestCasePanel = Lookup.getDefault().lookup(AutoIngestCasePanelInterface.class);
-        autoIngestCasePanel.addWindowStateListener(autoIngestCasePanelWindow);
-        autoIngestCasePanelWindow.add((JPanel)autoIngestCasePanel);
-        autoIngestCasePanelWindow.pack();
-        autoIngestCasePanelWindow.setResizable(false);
+        multiUserCaseWindow.add(new MultiUserCasePanel());
+        multiUserCaseWindow.pack();
+        multiUserCaseWindow.setResizable(false);
     }
 
     private void enableComponents() {
@@ -148,9 +137,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
         openRecentCaseButton.setEnabled(enableOpenRecentCaseButton);
         openRecentCaseLabel.setEnabled(enableOpenRecentCaseButton);
         
-        boolean showOpenAutoIngestCaseButton = (UserPreferences.getMode() == UserPreferences.SelectedMode.REVIEW);
-        openAutoIngestCaseButton.setVisible(showOpenAutoIngestCaseButton);
-        openAutoIngestCaseLabel.setVisible(showOpenAutoIngestCaseButton);
+        boolean enableOpenMultiUserCaseButton = UserPreferences.getIsMultiUserModeEnabled();
+        openMultiUserCaseButton.setEnabled(enableOpenMultiUserCaseButton);
+        openMultiUserCaseLabel.setEnabled(enableOpenMultiUserCaseButton);
     }
 
     /**
@@ -172,8 +161,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
         openExistingCaseLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        openAutoIngestCaseButton = new javax.swing.JButton();
-        openAutoIngestCaseLabel = new javax.swing.JLabel();
+        openMultiUserCaseButton = new javax.swing.JButton();
+        openMultiUserCaseLabel = new javax.swing.JLabel();
 
         autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N
         autopsyLogo.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLogo.text")); // NOI18N
@@ -229,21 +218,21 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        openAutoIngestCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
-        openAutoIngestCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openAutoIngestCaseButton.text")); // NOI18N
-        openAutoIngestCaseButton.setBorder(null);
-        openAutoIngestCaseButton.setBorderPainted(false);
-        openAutoIngestCaseButton.setContentAreaFilled(false);
-        openAutoIngestCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
-        openAutoIngestCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        openAutoIngestCaseButton.addActionListener(new java.awt.event.ActionListener() {
+        openMultiUserCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
+        openMultiUserCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openMultiUserCaseButton.text")); // NOI18N
+        openMultiUserCaseButton.setBorder(null);
+        openMultiUserCaseButton.setBorderPainted(false);
+        openMultiUserCaseButton.setContentAreaFilled(false);
+        openMultiUserCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
+        openMultiUserCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
+        openMultiUserCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openAutoIngestCaseButtonActionPerformed(evt);
+                openMultiUserCaseButtonActionPerformed(evt);
             }
         });
 
-        openAutoIngestCaseLabel.setFont(openAutoIngestCaseLabel.getFont().deriveFont(openAutoIngestCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        openAutoIngestCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openAutoIngestCaseLabel.text")); // NOI18N
+        openMultiUserCaseLabel.setFont(openMultiUserCaseLabel.getFont().deriveFont(openMultiUserCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        openMultiUserCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openMultiUserCaseLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -261,13 +250,13 @@ public class CueBannerPanel extends javax.swing.JPanel {
                             .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openExistingCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openAutoIngestCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(openMultiUserCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(createNewCaseLabel)
                             .addComponent(openRecentCaseLabel)
                             .addComponent(openExistingCaseLabel)
-                            .addComponent(openAutoIngestCaseLabel)))
+                            .addComponent(openMultiUserCaseLabel)))
                     .addComponent(closeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -290,9 +279,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
                             .addComponent(openExistingCaseLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(openAutoIngestCaseButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(openMultiUserCaseButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(openAutoIngestCaseLabel)
+                                .addComponent(openMultiUserCaseLabel)
                                 .addGap(20, 20, 20))))
                     .addComponent(jSeparator1)
                     .addComponent(autopsyLogo, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -316,10 +305,10 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
-    private void openAutoIngestCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openAutoIngestCaseButtonActionPerformed
-        autoIngestCasePanelWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        autoIngestCasePanelWindow.setVisible(true);
-    }//GEN-LAST:event_openAutoIngestCaseButtonActionPerformed
+    private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
+        multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        multiUserCaseWindow.setVisible(true);
+    }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel autopsyLogo;
@@ -327,8 +316,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private javax.swing.JButton createNewCaseButton;
     private javax.swing.JLabel createNewCaseLabel;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JButton openAutoIngestCaseButton;
-    private javax.swing.JLabel openAutoIngestCaseLabel;
+    private javax.swing.JButton openMultiUserCaseButton;
+    private javax.swing.JLabel openMultiUserCaseLabel;
     private javax.swing.JButton openExistingCaseButton;
     private javax.swing.JLabel openExistingCaseLabel;
     private javax.swing.JButton openRecentCaseButton;

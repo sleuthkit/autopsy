@@ -39,8 +39,7 @@ public final class AutoIngestDashboardOpenAction extends CallableSystemAction {
     
     @Override
     public boolean isEnabled() {
-        UserPreferences.SelectedMode mode = UserPreferences.getMode();
-        return (mode == REVIEW);
+        return (UserPreferences.getIsMultiUserModeEnabled());
     }
     
     @Override
