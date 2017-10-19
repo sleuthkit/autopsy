@@ -37,24 +37,34 @@ public class GroupSortBy implements Comparator<DrawableGroup> {
     /**
      * sort the groups by the number of files in each
      */
-    public final static GroupSortBy FILE_COUNT = new GroupSortBy(Bundle.GroupSortBy_groupSize(), "folder-open-image.png", Comparator.comparing(DrawableGroup::getSize));
+    public final static GroupSortBy FILE_COUNT =
+            new GroupSortBy(Bundle.GroupSortBy_groupSize(), "folder-open-image.png",
+                    Comparator.comparing(DrawableGroup::getSize));
 
     /**
      * sort the groups by the natural order of the grouping value ( eg group
      * them by path alphabetically )
      */
-    public final static GroupSortBy GROUP_BY_VALUE = new GroupSortBy(Bundle.GroupSortBy_groupName(), "folder-rename.png", Comparator.comparing(DrawableGroup::getGroupByValueDislpayName));
+    public final static GroupSortBy GROUP_BY_VALUE =
+            new GroupSortBy(Bundle.GroupSortBy_groupName(), "folder-rename.png",
+                    Comparator.comparing(DrawableGroup::getGroupByValueDislpayName));
 
     /**
      * don't sort the groups just use what ever order they come in (ingest
      * order)
      */
-    public final static GroupSortBy NONE = new GroupSortBy(Bundle.GroupSortBy_none(), "prohibition.png", new AllEqualComparator<>());
+    public final static GroupSortBy NONE =
+            new GroupSortBy(Bundle.GroupSortBy_none(), "prohibition.png",
+                    new AllEqualComparator<>());
 
     /**
      * sort the groups by some priority metric to be determined and implemented
      */
-    public final static GroupSortBy PRIORITY = new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png", Comparator.comparing(DrawableGroup::getHashHitDensity).thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount)).reversed());
+    public final static GroupSortBy PRIORITY =
+            new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png",
+                    Comparator.comparing(DrawableGroup::getHashHitDensity)
+                            .thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount))
+                            .reversed());
 
     @Override
     public int compare(DrawableGroup o1, DrawableGroup o2) {

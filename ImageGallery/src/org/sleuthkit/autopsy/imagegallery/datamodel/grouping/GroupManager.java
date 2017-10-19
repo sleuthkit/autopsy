@@ -122,7 +122,7 @@ public class GroupManager {
     /*
      * --- current grouping/sorting attributes ---
      */
-    private volatile GroupSortBy sortBy = GroupSortBy.NONE;
+    private volatile GroupSortBy sortBy = GroupSortBy.PRIORITY;
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
 
@@ -156,7 +156,6 @@ public class GroupManager {
      */
     public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
-
     }
 
     /**
@@ -188,7 +187,7 @@ public class GroupManager {
      * the groups the given file is a part of
      *
      * @return a a set of {@link GroupKey}s representing the group(s) the given
-     * file is a part of
+     *         file is a part of
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
@@ -208,7 +207,7 @@ public class GroupManager {
      * @param groupKey
      *
      * @return return the DrawableGroup (if it exists) for the given GroupKey,
-     * or null if no group exists for that key.
+     *         or null if no group exists for that key.
      */
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
@@ -284,7 +283,7 @@ public class GroupManager {
      * no-op
      *
      * @param groupKey the value of groupKey
-     * @param fileID the value of file
+     * @param fileID   the value of file
      */
     public synchronized DrawableGroup removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
@@ -512,7 +511,7 @@ public class GroupManager {
      * @param groupBy
      * @param sortBy
      * @param sortOrder
-     * @param force true to force a full db query regroup
+     * @param force     true to force a full db query regroup
      */
     public synchronized <A extends Comparable<A>> void regroup(final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
 
@@ -530,9 +529,7 @@ public class GroupManager {
             }
 
             groupByTask = new ReGroupTask<>(groupBy, sortBy, sortOrder);
-            Platform.runLater(() -> {
-                regroupProgress.bind(groupByTask.progressProperty());
-            });
+            Platform.runLater(() -> regroupProgress.bind(groupByTask.progressProperty()));
             regroupExecutor.submit(groupByTask);
         } else {
             // resort the list of groups
@@ -583,10 +580,7 @@ public class GroupManager {
         DrawableGroup group = g;
         if (group != null) {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-            Platform.runLater(() -> {
-                group.addFile(fileID);
-            });
-
+            Platform.runLater(() -> group.addFile(fileID));
         }
     }
 
@@ -682,9 +676,9 @@ public class GroupManager {
                             } else {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
-                                group.seenProperty().addListener((o, oldSeen, newSeen) -> {
-                                    Platform.runLater(() -> markGroupSeen(group, newSeen));
-                                });
+                                group.seenProperty().addListener((o, oldSeen, newSeen) -> 
+                                    Platform.runLater(() -> markGroupSeen(group, newSeen))
+                                );
                                 groupMap.put(groupKey, group);
                             }
                         }
@@ -693,7 +687,7 @@ public class GroupManager {
                                 analyzedGroups.add(group);
                                 if (Objects.isNull(task)) {
                                     FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
-                                }
+                               }
                             }
                             markGroupSeen(group, groupSeen);
                         });
@@ -743,17 +737,17 @@ public class GroupManager {
         "# {0} - groupBy attribute Name",
         "# {1} - atribute value",
         "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
-    private class ReGroupTask<A extends Comparable<A>> extends LoggedTask<Void> {
+    private class ReGroupTask<AttrType extends Comparable<AttrType>> extends LoggedTask<Void> {
 
         private ProgressHandle groupProgress;
 
-        private final DrawableAttribute<A> groupBy;
+        private final DrawableAttribute<AttrType> groupBy;
 
         private final GroupSortBy sortBy;
 
         private final SortOrder sortOrder;
 
-        ReGroupTask(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+        ReGroupTask(DrawableAttribute<AttrType> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
             super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), true);
 
             this.groupBy = groupBy;
@@ -780,13 +774,13 @@ public class GroupManager {
             });
 
             // Get the list of group keys
-            final List<A> vals = findValuesForAttribute(groupBy);
+            final List<AttrType> vals = findValuesForAttribute(groupBy);
 
             groupProgress.start(vals.size());
 
             int p = 0;
             // For each key value, partially create the group and add it to the list.
-            for (final A val : vals) {
+            for (final AttrType val : vals) {
                 if (isCancelled()) {
                     return null;//abort
                 }
