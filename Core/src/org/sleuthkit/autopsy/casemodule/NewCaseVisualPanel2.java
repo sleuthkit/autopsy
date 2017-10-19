@@ -30,18 +30,21 @@ import org.openide.util.NbBundle;
  *
  * @author dfickling
  */
-class NewCaseVisualPanel2 extends javax.swing.JPanel {
+final class NewCaseVisualPanel2 extends javax.swing.JPanel {
 
-    OptionalCasePropertiesPanel propertiesPanel;
+    private static final long serialVersionUID = 1L;
+
+    private final OptionalCasePropertiesPanel propertiesPanel;
+
     /**
      * Creates new form NewCaseVisualPanel2
      */
-    public NewCaseVisualPanel2() {
+    NewCaseVisualPanel2() {
         initComponents();
         propertiesPanel = new OptionalCasePropertiesPanel();
         this.add(propertiesPanel);
         propertiesPanel.setVisible(true);
-        
+
     }
 
     /**
@@ -55,8 +58,6 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
         return NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel2.getName.text");
     }
 
-
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -68,10 +69,9 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
 
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
-   
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-
     String getCaseNumber() {
         return propertiesPanel.getCaseNumber();
     }
@@ -79,25 +79,49 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
     String getExaminerName() {
         return propertiesPanel.getExaminerName();
     }
-    
+
     String getExaminerPhone() {
         return propertiesPanel.getExaminerPhone();
     }
-    
+
     String getExaminerEmail() {
         return propertiesPanel.getExaminerEmail();
     }
-    
+
     String getExaminerNotes() {
         return propertiesPanel.getExaminerNotes();
     }
-    
+
     String getOrganization() {
-       return propertiesPanel.getOrganization();
+        return propertiesPanel.getOrganization();
+    }
+
+    void setCaseNumber(String caseNumber) {
+        propertiesPanel.setCaseNumberField(caseNumber);
+    }
+
+    void setExaminerName(String examinerName) {
+        propertiesPanel.setExaminerNameField(examinerName);
+    }
+
+    void setExaminerPhone(String examinerPhone) {
+        propertiesPanel.setExaminerPhoneField(examinerPhone);
+    }
+
+    void setExaminerEmail(String examinerEmail) {
+        propertiesPanel.setExaminerEmailField(examinerEmail);
+    }
+
+    void setExaminerNotes(String examinerNotes) {
+        propertiesPanel.setExaminerNotesField(examinerNotes);
+    }
+
+    void setOrganization(String organizationName) {
+        propertiesPanel.setCurrentlySelectedOrganization(organizationName);
     }
 
     void refreshCentralRepoFields() {
-       propertiesPanel.setUpCentralRepoFields();
+        propertiesPanel.setUpCentralRepoFields();
     }
 
 }

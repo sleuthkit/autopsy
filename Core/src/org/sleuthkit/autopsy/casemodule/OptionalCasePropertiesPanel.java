@@ -96,8 +96,6 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             }
             if (selectedOrg != null) {
                 setCurrentlySelectedOrganization(selectedOrg.getName());
-            } else {
-                clearOrganization();
             }
         }
     }
@@ -171,6 +169,26 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         } else {
             return "";
         }
+    }
+
+    void setCaseNumberField(String caseNumber) {
+        caseNumberTextField.setText(caseNumber == null ? "" : caseNumber);
+    }
+
+    void setExaminerNameField(String examinerName) {
+        examinerTextField.setText(examinerName == null ? "" : examinerName);
+    }
+
+    void setExaminerPhoneField(String examinerPhone) {
+        tfExaminerPhoneText.setText(examinerPhone == null ? "" : examinerPhone);
+    }
+
+    void setExaminerEmailField(String examinerEmail) {
+        tfExaminerEmailText.setText(examinerEmail == null ? "" : examinerEmail);
+    }
+
+    void setExaminerNotesField(String examinerNotes) {
+        taNotesText.setText(examinerNotes == null ? "" : examinerNotes);
     }
 
     @Messages({"OptionalCasePropertiesPanel.caseDisplayNameLabel.text=Name:",
@@ -501,7 +519,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
 
     void setCurrentlySelectedOrganization(String orgName) {
-        comboBoxOrgName.setSelectedItem(orgName);
+        comboBoxOrgName.setSelectedItem(orgName == null ? "" : orgName);
     }
 
     @Messages({

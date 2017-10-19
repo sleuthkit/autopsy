@@ -28,12 +28,21 @@ import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * The second panel of the New Case wizard.
  */
 class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
+    private static final Logger logger = Logger.getLogger(NewCaseWizardPanel2.class.getName());
+    private static final String PROP_EXAMINER_NAME = "LBL_EXAMINER_NAME"; //NON-NLS
+    private static final String PROP_EXAMINER_PHONE = "LBL_EXAMINER_PHONE"; //NON-NLS
+    private static final String PROP_EXAMINER_EMAIL = "LBL_EXAMINER_EMAIL"; //NON-NLS
+    private static final String PROP_EXAMINER_NOTES = "LBL_EXAMINER_NOTES"; //NON-NLS
+    private static final String PROP_ORGANIZATION_NAME = "LBL_ORGANIZATION_NAME"; //NON-NLS
     private NewCaseVisualPanel2 component;
     private final Set<ChangeListener> listeners = new HashSet<>(1);
 
@@ -127,6 +136,22 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        NewCaseVisualPanel2 panel = getComponent();
+        try {
+            String lastExaminerName = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_NAME);
+            String lastExaminerPhone = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_PHONE);
+            String lastExaminerEmail = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_EMAIL);
+            String lastExaminerNotes = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_NOTES);
+            String lastOrganizationName = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_ORGANIZATION_NAME);
+            panel.setExaminerName(lastExaminerName);
+            panel.setExaminerPhone(lastExaminerPhone);
+            panel.setExaminerEmail(lastExaminerEmail);
+            panel.setExaminerNotes(lastExaminerNotes);
+            panel.setOrganization(lastOrganizationName);
+            panel.setCaseNumber("");  //clear the number field 
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel2, ", e); //NON-NLS
+        }
     }
 
     /**
@@ -142,10 +167,15 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty("caseNumber", component.getCaseNumber()); //NON-NLS
         settings.putProperty("caseExaminerName", component.getExaminerName()); //NON-NLS
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_NAME, component.getExaminerName());
         settings.putProperty("caseExaminerPhone", component.getExaminerPhone()); //NON-NLS
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_PHONE, component.getExaminerPhone());
         settings.putProperty("caseExaminerEmail", component.getExaminerEmail()); //NON-NLS
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_EMAIL, component.getExaminerEmail());
         settings.putProperty("caseExaminerNotes", component.getExaminerNotes()); //NON-NLS
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_NOTES, component.getExaminerNotes());
         settings.putProperty("caseOrganization", component.getOrganization()); //NON-NLS
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_ORGANIZATION_NAME, component.getOrganization());
     }
 
     @Override
