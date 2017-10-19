@@ -18,29 +18,12 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import javax.swing.JPanel;
-import javax.swing.filechooser.FileFilter;
-import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -56,15 +39,10 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
     @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
 )
-public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
+public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
     
-    private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ArchiveExtractorDataSourceProcessor.class, "ArchiveExtractorDataSourceProcessor.dsType.text");
-
-    private static GeneralFilter zipFilter;
-    private static final List<FileFilter> archiveFilters = new ArrayList<>();
-    
-    private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
-    
+    private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ArchiveExtractorDSProcessor.class, "ArchiveExtractorDataSourceProcessor.dsType.text");
+   
     private final ArchiveFilePanel configPanel;
     private String deviceId;
     private String imagePath;
@@ -78,17 +56,14 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
      * integration with the add data source wizard. It also provides a run
      * method overload to allow it to be used independently of the wizard.
      */
-    public ArchiveExtractorDataSourceProcessor() {
-        String[] extensions = ArchiveUtil.getSupportedArchiveTypes();
-        zipFilter = new GeneralFilter(Arrays.asList(extensions), "");
-        archiveFilters.add(zipFilter);
-        configPanel = ArchiveFilePanel.createInstance(ArchiveExtractorDataSourceProcessor.class.getName(), archiveFilters);
+    public ArchiveExtractorDSProcessor() {
+        configPanel = ArchiveFilePanel.createInstance(ArchiveExtractorDSProcessor.class.getName(), ArchiveUtil.getArchiveFilters());
     }
     
     @Override
     public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
         // check whether this is an archive
-        if (isArchive(dataSourcePath)){
+        if (ArchiveUtil.isArchive(dataSourcePath)){
             // return "high confidence" value
             return 100;
         }
@@ -97,17 +72,7 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
-        if (isArchive(dataSourcePath)) {
-            // extract the archive and pass the extracted folder as input
-            Path extractedDataSourcePath = Paths.get("");
-            try {
-                Case currentCase = Case.getCurrentCase();
-                extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), dataSourcePath);
-            } catch (Exception ex) {
-                throw new AutoIngestDataSourceProcessorException(NbBundle.getMessage(ArchiveExtractorDataSourceProcessor.class, "ArchiveExtractorDataSourceProcessor.process.exception.text"), ex);
-            }
-            run(deviceId, extractedDataSourcePath.toString(), progressMonitor, callBack);
-        }
+        run(deviceId, dataSourcePath.toString(), progressMonitor, callBack);
     }
 
     @Override
@@ -208,21 +173,6 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
         configPanel.reset();
         setDataSourceOptionsCalled = false;
     }
-
-    private static boolean isArchive(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
-        String fileName = dataSourcePath.getFileName().toString();
-        // check whether it's a zip archive file that can be extracted
-        return isAcceptedByFiler(new File(fileName), archiveFilters);
-    }    
-
-    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
-        for (FileFilter filter : filters) {
-            if (filter.accept(file)) {
-                return true;
-            }
-        }
-        return false;
-    }
     
         /**
      * Extracts the contents of a ZIP archive submitted as a data source to a
@@ -230,7 +180,7 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
      *
      * @throws IOException if there is a problem extracting the data source from
      *                     the archive.
-     */
+
     private static Path extractDataSource(Path outputDirectoryPath, Path dataSourcePath) throws IOException {
         String dataSourceFileNameNoExt = FilenameUtils.removeExtension(dataSourcePath.getFileName().toString());
         Path destinationFolder = Paths.get(outputDirectoryPath.toString(),
@@ -268,5 +218,5 @@ public class ArchiveExtractorDataSourceProcessor implements DataSourceProcessor,
             zipFile.close();
         }
         return destinationFolder;
-    }
+    }     */
 }

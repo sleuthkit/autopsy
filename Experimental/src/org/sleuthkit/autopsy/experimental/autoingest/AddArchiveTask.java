@@ -18,9 +18,15 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Content;
 
 /*
  * A runnable that adds an archive data source to the case database.
@@ -33,6 +39,8 @@ public class AddArchiveTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
+    
+    private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
 
     /*
      * The cancellation requested flag and SleuthKit add image process are
@@ -71,7 +79,25 @@ public class AddArchiveTask implements Runnable {
      */
     @Override
     public void run() {
+        if (!ArchiveUtil.isArchive(Paths.get(imagePath))) {
+            List<String> errorMessages = new ArrayList<>();
+            errorMessages.add("Input data source is not a valid datasource: " + imagePath.toString());
+            List<Content> newDataSources = new ArrayList<>();
+            DataSourceProcessorCallback.DataSourceProcessorResult result;
+            result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
+            callback.done(result, errorMessages, newDataSources);
+        }
 
+        // extract the archive and pass the extracted folder as input
+        Path extractedDataSourcePath = Paths.get("");
+        try {
+            Case currentCase = Case.getCurrentCase();
+            //extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), imagePath);
+        } catch (Exception ex) {
+            //throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException(NbBundle.getMessage(ArchiveExtractorDSProcessor.class, "ArchiveExtractorDataSourceProcessor.process.exception.text"), ex);
+        }
+
+        // do processing
     }
     
     
