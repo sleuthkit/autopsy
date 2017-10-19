@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -174,7 +175,11 @@ class TableReportGenerator {
                      * does not require a artifact name, so we make a synthetic
                      * compund name by appending a ":" and the account type.
                      */
-                    final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountType;
+                    String accountDisplayname = accountType;
+                    if (accountType != null && accountType.equals(Account.Type.CREDIT_CARD.name())) {
+                        accountDisplayname = Account.Type.CREDIT_CARD.getDisplayName();
+                    }
+                    final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountDisplayname;
                     writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
                 }
             } else {
