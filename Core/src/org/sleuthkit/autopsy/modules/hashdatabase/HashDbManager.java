@@ -346,7 +346,7 @@ public class HashDbManager implements PropertyChangeListener {
         try{
             // Import the hashes
             
-            TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
+            TskData.FileKnown knownStatus;
             if (knownFilesType.equals(HashDb.KnownFilesType.KNOWN)) {
                 knownStatus = TskData.FileKnown.KNOWN;
             } else {

@@ -92,6 +92,7 @@ final public class ImportCentralRepoDatabaseDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ImportCentralRepoDatabaseDialog_importHashDbMsg(),
                 true); // NON-NLS
+        
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
         initFileChooser();
@@ -531,9 +532,11 @@ final public class ImportCentralRepoDatabaseDialog extends javax.swing.JDialog {
         boolean sendMessages = this.cbInboxMessages.isSelected();
         
         try{
-            HashDbManager.getInstance().importCentralRepoHashSet(dbName, version, 
-                selectedOrg.getOrgID(), true, sendMessages, 
-                known, selectedFilePath);
+            ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
+            progressDialog.importFile(dbName, version, 
+                selectedOrg.getOrgID(), true, sendMessages, known, selectedFilePath);
+            //HashDbManager.getInstance().importCentralRepoHashSet(dbName, version, 
+            //    selectedOrg.getOrgID(), true, sendMessages, known, selectedFilePath);
         } catch (Exception ex){
             ex.printStackTrace();
         } finally {
