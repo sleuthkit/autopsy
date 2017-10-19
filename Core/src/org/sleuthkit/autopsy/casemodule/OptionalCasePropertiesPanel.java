@@ -49,6 +49,12 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         initComponents();
         caseDisplayNameLabel.setVisible(false);
         caseDisplayNameTextField.setVisible(false);
+        lbPointOfContactNameLabel.setVisible(false);
+        lbPointOfContactNameText.setVisible(false);
+        lbPointOfContactPhoneLabel.setVisible(false);
+        lbPointOfContactPhoneText.setVisible(false);
+        lbPointOfContactEmailLabel.setVisible(false);
+        lbPointOfContactEmailText.setVisible(false);
         setUpCentralRepoFields();
     }
 
@@ -66,6 +72,12 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         } else {
             caseDisplayNameLabel.setVisible(false);
             caseDisplayNameTextField.setVisible(false);
+            lbPointOfContactNameLabel.setVisible(false);
+            lbPointOfContactNameText.setVisible(false);
+            lbPointOfContactPhoneLabel.setVisible(false);
+            lbPointOfContactPhoneText.setVisible(false);
+            lbPointOfContactEmailLabel.setVisible(false);
+            lbPointOfContactEmailText.setVisible(false);
             setUpCentralRepoFields();
         }
 
@@ -163,7 +175,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
     @Messages({"OptionalCasePropertiesPanel.caseDisplayNameLabel.text=Name:",
         "OptionalCasePropertiesPanel.lbPointOfContactEmailLabel.text=Email:",
-        "OptionalCasePropertiesPanel.lbOrganizationNameLabel.text=Name:",
+        "OptionalCasePropertiesPanel.lbOrganizationNameLabel.text=Organization analysis is being done for:",
         "OptionalCasePropertiesPanel.bnNewOrganization.text=Manage Organizations",
         "OptionalCasePropertiesPanel.lbPointOfContactNameLabel.text=Point of Contact:",
         "OptionalCasePropertiesPanel.lbPointOfContactPhoneLabel.text=Phone:",
@@ -361,6 +373,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        bnNewOrganization.setMaximumSize(new java.awt.Dimension(123, 23));
+        bnNewOrganization.setMinimumSize(new java.awt.Dimension(123, 23));
+        bnNewOrganization.setPreferredSize(new java.awt.Dimension(123, 23));
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnNewOrganizationActionPerformed(evt);
@@ -368,9 +383,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationNameLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbOrganizationNameLabel.text")); // NOI18N
-        lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(41, 14));
-        lbOrganizationNameLabel.setMinimumSize(new java.awt.Dimension(41, 14));
-        lbOrganizationNameLabel.setPreferredSize(new java.awt.Dimension(41, 14));
+        lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(189, 14));
+        lbOrganizationNameLabel.setMinimumSize(new java.awt.Dimension(189, 14));
+        lbOrganizationNameLabel.setPreferredSize(new java.awt.Dimension(189, 14));
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactEmailLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbPointOfContactEmailLabel.text")); // NOI18N
         lbPointOfContactEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
@@ -382,24 +397,25 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanelLayout.setHorizontalGroup(
             orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
+                        .addGap(106, 106, 106)
                         .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(15, 15, 15)
                         .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                        .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap()
+                        .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(comboBoxOrgName, 0, 161, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         orgainizationPanelLayout.setVerticalGroup(
@@ -409,7 +425,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bnNewOrganization))
+                    .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -430,12 +446,12 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(casePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(examinerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(orgainizationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(10, 10, 10))
+                .addGap(6, 6, 6))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

@@ -39,8 +39,7 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
     public NewCaseVisualPanel2() {
         initComponents();
         propertiesPanel = new OptionalCasePropertiesPanel();
-        optionalPanel.add(propertiesPanel);
-        optionalPanel.setVisible(true);
+        this.add(propertiesPanel);
         propertiesPanel.setVisible(true);
         
     }
@@ -67,40 +66,10 @@ class NewCaseVisualPanel2 extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        optionalLabel = new javax.swing.JLabel();
-        optionalPanel = new javax.swing.JPanel();
-
-        optionalLabel.setFont(optionalLabel.getFont().deriveFont(optionalLabel.getFont().getStyle() | java.awt.Font.BOLD, 14));
-        optionalLabel.setText(org.openide.util.NbBundle.getMessage(NewCaseVisualPanel2.class, "NewCaseVisualPanel2.optionalLabel.text")); // NOI18N
-
-        optionalPanel.setLayout(new java.awt.BorderLayout());
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(optionalLabel)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(optionalPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(optionalLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(optionalPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel optionalLabel;
-    private javax.swing.JPanel optionalPanel;
     // End of variables declaration//GEN-END:variables
 
     String getCaseNumber() {

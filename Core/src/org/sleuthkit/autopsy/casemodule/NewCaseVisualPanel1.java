@@ -202,7 +202,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private void initComponents() {
 
         caseTypeButtonGroup = new javax.swing.ButtonGroup();
-        jLabel1 = new javax.swing.JLabel();
         caseNameLabel = new javax.swing.JLabel();
         caseDirLabel = new javax.swing.JLabel();
         caseNameTextField = new javax.swing.JTextField();
@@ -214,9 +213,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         multiUserCaseRadioButton = new javax.swing.JRadioButton();
         caseParentDirWarningLabel = new javax.swing.JLabel();
         caseTypeLabel = new javax.swing.JLabel();
-
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, 14));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.jLabel1.text_1")); // NOI18N
 
         caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, org.openide.util.NbBundle.getMessage(NewCaseVisualPanel1.class, "NewCaseVisualPanel1.caseNameLabel.text_1")); // NOI18N
@@ -283,9 +279,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(caseDirTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addGap(0, 227, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(caseNameLabel)
                                         .addGap(26, 26, 26)
@@ -300,7 +293,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                                                 .addComponent(singleUserCaseRadioButton)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(multiUserCaseRadioButton)
-                                                .addGap(0, 0, Short.MAX_VALUE))
+                                                .addGap(0, 192, Short.MAX_VALUE))
                                             .addComponent(caseParentDirTextField))))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(caseDirBrowseButton)))
@@ -312,9 +305,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(31, 31, 31)
-                .addComponent(jLabel1)
-                .addGap(18, 18, 18)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(caseNameLabel)
                     .addComponent(caseNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -334,7 +325,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
                 .addComponent(caseDirTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(27, 27, 27)
                 .addComponent(caseParentDirWarningLabel)
-                .addContainerGap(169, Short.MAX_VALUE))
+                .addContainerGap(115, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -377,7 +368,6 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.JLabel caseParentDirWarningLabel;
     private javax.swing.ButtonGroup caseTypeButtonGroup;
     private javax.swing.JLabel caseTypeLabel;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JRadioButton multiUserCaseRadioButton;
     private javax.swing.JRadioButton singleUserCaseRadioButton;
