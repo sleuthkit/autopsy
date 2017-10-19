@@ -192,7 +192,7 @@ public final class IngestMonitor {
             }
 
             logMemoryUsage();
-            logDiskSpaceUsage();
+            //logDiskSpaceUsage(); // this creates a log entry every minute
 
             if (!enoughDiskSpace()) {
                 /*
