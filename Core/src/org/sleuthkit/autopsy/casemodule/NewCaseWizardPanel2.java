@@ -29,6 +29,7 @@ import org.openide.util.HelpCtx;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -147,7 +148,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
             panel.setExaminerPhone(lastExaminerPhone);
             panel.setExaminerEmail(lastExaminerEmail);
             panel.setExaminerNotes(lastExaminerNotes);
-            panel.setOrganization(lastOrganizationName);
+            panel.setOrganization(EamDb.isEnabled() ? lastOrganizationName : "");
             panel.setCaseNumber("");  //clear the number field 
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel2, ", e); //NON-NLS
