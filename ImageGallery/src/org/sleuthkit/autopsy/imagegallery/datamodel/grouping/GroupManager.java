@@ -465,7 +465,7 @@ public class GroupManager {
         }
     }
 
-    public Comparator<DrawableGroup> getSortBy() {
+    public GroupSortBy getSortBy() {
         return sortBy;
     }
 
