@@ -1209,12 +1209,12 @@ public class Case {
     }
 
     /**
-     * Gets the examiner notes.
+     * Gets the case notes.
      *
-     * @return The examiner notes.
+     * @return The case notes.
      */
-    public String getExaminerNotes() {
-        return metadata.getExaminerNotes();
+    public String getCaseNotes() {
+        return metadata.getCaseNotes();
     }
 
     /**

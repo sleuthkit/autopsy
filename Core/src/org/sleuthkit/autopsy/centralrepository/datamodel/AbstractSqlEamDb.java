@@ -277,7 +277,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 autopsyCase.getExaminer(),
                 autopsyCase.getExaminerEmail(),
                 autopsyCase.getExaminerPhone(),
-                autopsyCase.getExaminerNotes());
+                autopsyCase.getCaseNotes());
         newCase(curCeCase);
         return curCeCase;
     }

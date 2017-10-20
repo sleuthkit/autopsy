@@ -294,7 +294,7 @@ public class CaseEventListener implements PropertyChangeListener {
                             curCase.getExaminer(),
                             curCase.getExaminerEmail(),
                             curCase.getExaminerPhone(),
-                            curCase.getExaminerNotes());
+                            curCase.getCaseNotes());
 
                     if (!EamDb.isEnabled()) {
                         break;

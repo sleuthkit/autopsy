@@ -29,15 +29,15 @@ final class CaseDetails {
     private final String examinerName;
     private final String examinerPhone;
     private final String examinerEmail;
-    private final String examinerNotes;
+    private final String caseNotes;
 
-    CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String exNotes) {
+    CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes) {
         caseDisplayName = displayName;
         caseNumber = number;
         examinerName = exName;
         examinerPhone = exPhone;
         examinerEmail = exEmail;
-        examinerNotes = exNotes;
+        caseNotes = notes;
     }
 
     /**
@@ -84,11 +84,11 @@ final class CaseDetails {
     }
 
     /**
-     * Get the examiner notes
+     * Get the case notes
      *
-     * @return notes - the note asssociated with the examiner
+     * @return notes - the note asssociated with the case
      */
-    String getExaminerNotes() {
-        return examinerNotes;
+    String getCaseNotes() {
+        return caseNotes;
     }
 }

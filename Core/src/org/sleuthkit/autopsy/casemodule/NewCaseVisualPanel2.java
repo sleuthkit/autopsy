@@ -88,8 +88,8 @@ final class NewCaseVisualPanel2 extends javax.swing.JPanel {
         return propertiesPanel.getExaminerEmail();
     }
 
-    String getExaminerNotes() {
-        return propertiesPanel.getExaminerNotes();
+    String getCaseNotes() {
+        return propertiesPanel.getCaseNotes();
     }
 
     String getOrganization() {
@@ -112,8 +112,8 @@ final class NewCaseVisualPanel2 extends javax.swing.JPanel {
         propertiesPanel.setExaminerEmailField(examinerEmail);
     }
 
-    void setExaminerNotes(String examinerNotes) {
-        propertiesPanel.setExaminerNotesField(examinerNotes);
+    void setCaseNotes(String caseNotes) {
+        propertiesPanel.setCaseNotesField(caseNotes);
     }
 
     void setOrganization(String organizationName) {

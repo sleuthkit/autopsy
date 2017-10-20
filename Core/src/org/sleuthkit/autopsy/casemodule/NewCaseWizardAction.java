@@ -82,12 +82,12 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     String examinerName = (String) wizardDescriptor.getProperty("caseExaminerName"); //NON-NLS
                     String examinerPhone = (String) wizardDescriptor.getProperty("caseExaminerPhone"); //NON-NLS
                     String examinerEmail = (String) wizardDescriptor.getProperty("caseExaminerEmail"); //NON-NLS
-                    String examinerNotes = (String) wizardDescriptor.getProperty("caseExaminerNotes"); //NON-NLS
+                    String caseNotes = (String) wizardDescriptor.getProperty("caseNotes"); //NON-NLS
                     String organizationName = (String) wizardDescriptor.getProperty("caseOrganization"); //NON-NLS
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                    Case.createAsCurrentCase(createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, examinerNotes), caseType);
+                    Case.createAsCurrentCase(createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes), caseType);
                     if (EamDb.isEnabled()) {  //if the eam is enabled we need to save the case organization information now
                         try {
                             EamDb dbManager = EamDb.getInstance();

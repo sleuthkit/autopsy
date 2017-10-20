@@ -243,7 +243,7 @@ class IngestModule implements FileIngestModule {
                     curCase.getExaminer(),
                     curCase.getExaminerEmail(),
                     curCase.getExaminerPhone(),
-                    curCase.getExaminerNotes());
+                    curCase.getCaseNotes());
             try {
                 dbManager.newCase(curCeCase);
                 eamCase = dbManager.getCaseByUUID(curCase.getName());

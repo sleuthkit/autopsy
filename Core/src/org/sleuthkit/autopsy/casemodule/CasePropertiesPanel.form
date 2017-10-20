@@ -387,7 +387,7 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="lbExaminerPhoneText" max="32767" attributes="0"/>
-                                  <Component id="examinerNotesScrollPane" pref="411" max="32767" attributes="0"/>
+                                  <Component id="caseNotesScrollPane" pref="411" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
@@ -427,7 +427,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="lbNotesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="examinerNotesScrollPane" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="caseNotesScrollPane" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                   </Group>
@@ -475,7 +475,7 @@
                 </Property>
               </Properties>
             </Component>
-            <Container class="javax.swing.JScrollPane" name="examinerNotesScrollPane">
+            <Container class="javax.swing.JScrollPane" name="caseNotesScrollPane">
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="null"/>

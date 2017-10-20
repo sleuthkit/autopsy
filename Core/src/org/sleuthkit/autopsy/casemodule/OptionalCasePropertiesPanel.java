@@ -66,7 +66,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             examinerTextField.setText(Case.getCurrentCase().getExaminer());
             tfExaminerEmailText.setText(Case.getCurrentCase().getExaminerEmail());
             tfExaminerPhoneText.setText(Case.getCurrentCase().getExaminerPhone());
-            taNotesText.setText(Case.getCurrentCase().getExaminerNotes());
+            taNotesText.setText(Case.getCurrentCase().getCaseNotes());
             setUpCentralRepoFields();
             setUpOrganizationData();
         } else {
@@ -159,7 +159,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         return tfExaminerEmailText.getText();
     }
 
-    String getExaminerNotes() {
+    String getCaseNotes() {
         return taNotesText.getText();
     }
 
@@ -187,8 +187,8 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         tfExaminerEmailText.setText(examinerEmail == null ? "" : examinerEmail);
     }
 
-    void setExaminerNotesField(String examinerNotes) {
-        taNotesText.setText(examinerNotes == null ? "" : examinerNotes);
+    void setCaseNotesField(String caseNotes) {
+        taNotesText.setText(caseNotes == null ? "" : caseNotes);
     }
 
     @Messages({"OptionalCasePropertiesPanel.caseDisplayNameLabel.text=Name:",
@@ -223,7 +223,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         examinerPanel = new javax.swing.JPanel();
         tfExaminerPhoneText = new javax.swing.JTextField();
         lbExaminerPhoneLabel = new javax.swing.JLabel();
-        examinerNotesScrollPane = new javax.swing.JScrollPane();
+        caseNotesScrollPane = new javax.swing.JScrollPane();
         taNotesText = new javax.swing.JTextArea();
         tfExaminerEmailText = new javax.swing.JTextField();
         examinerTextField = new javax.swing.JTextField();
@@ -296,7 +296,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         lbExaminerPhoneLabel.setMinimumSize(new java.awt.Dimension(41, 14));
         lbExaminerPhoneLabel.setPreferredSize(new java.awt.Dimension(41, 14));
 
-        examinerNotesScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        caseNotesScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         taNotesText.setColumns(20);
         taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
@@ -304,7 +304,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         taNotesText.setRows(2);
         taNotesText.setWrapStyleWord(true);
         taNotesText.setBorder(null);
-        examinerNotesScrollPane.setViewportView(taNotesText);
+        caseNotesScrollPane.setViewportView(taNotesText);
 
         examinerTextField.setFont(examinerTextField.getFont().deriveFont(examinerTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -337,7 +337,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(10, 10, 10)
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(examinerNotesScrollPane)
+                            .addComponent(caseNotesScrollPane)
                             .addComponent(tfExaminerPhoneText)))
                     .addGroup(examinerPanelLayout.createSequentialGroup()
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -367,7 +367,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(examinerNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(6, 6, 6))
         );
 
@@ -583,12 +583,12 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnNewOrganization;
     private javax.swing.JLabel caseDisplayNameLabel;
     private javax.swing.JTextField caseDisplayNameTextField;
+    private javax.swing.JScrollPane caseNotesScrollPane;
     private javax.swing.JLabel caseNumberLabel;
     private javax.swing.JTextField caseNumberTextField;
     private javax.swing.JPanel casePanel;
     private javax.swing.JComboBox<String> comboBoxOrgName;
     private javax.swing.JLabel examinerLabel;
-    private javax.swing.JScrollPane examinerNotesScrollPane;
     private javax.swing.JPanel examinerPanel;
     private javax.swing.JTextField examinerTextField;
     private javax.swing.JLabel lbExaminerEmailLabel;

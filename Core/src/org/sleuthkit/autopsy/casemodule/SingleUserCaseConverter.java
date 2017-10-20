@@ -207,7 +207,7 @@ public class SingleUserCaseConverter {
                 oldCaseMetadata.getExaminer(),
                 oldCaseMetadata.getExaminerPhone(),
                 oldCaseMetadata.getExaminerEmail(),
-                oldCaseMetadata.getExaminerNotes()));
+                oldCaseMetadata.getCaseNotes()));
         newCaseMetadata.setCaseDatabaseName(dbName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
