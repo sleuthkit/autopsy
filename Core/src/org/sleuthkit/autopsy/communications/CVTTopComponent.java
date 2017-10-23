@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.communications;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
@@ -33,7 +35,7 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Top component which displays something.
+ * Top component which displays the Communications Visualization Tool.
  */
 @TopComponent.Description(
         preferredID = "CVTTopComponent",
@@ -153,12 +155,17 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-
+        /*
+         * When the apply button is pressed, query for accounts using the
+         * selected filters, and send the results to the AccountsBrowser via the
+         * ExplorerManager
+         */
         try {
             List<Account> accounts;
-            accounts = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccounts(Account.Type.EMAIL);
+            accounts = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager()
+                    .getAccounts(Account.Type.EMAIL);
 
-            em.setRootContext(new AccountRootNode(accounts));
+            em.setRootContext(new AbstractNode(Children.create(new AccountsNodeFactory(accounts), true)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }

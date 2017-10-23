@@ -33,6 +33,10 @@ import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
+/**
+ * Action that opens the CVT. Available through the Tools menu and the main
+ * toolbar.
+ */
 @ActionID(category = "Tools",
         id = "org.sleuthkit.autopsy.communicationsVisualization.OpenCVTAction")
 @ActionRegistration(displayName = "#CTL_OpenCVTAction", lazy = false)
@@ -41,17 +45,17 @@ import org.openide.windows.WindowManager;
     ,    @ActionReference(path = "Toolbars/Case", position = 102)})
 @Messages("CTL_OpenCVTAction=Visualize Communications")
 public final class OpenCVTAction extends CallableSystemAction implements Presenter.Toolbar {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/email_link.png"))); //NON-NLS
 
     public OpenCVTAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
-        setEnabled(false);
+        setEnabled(false); //disabled by default.  Will be enabled in Case.java when a case is opened.
     }
-    
+
     @Override
     public void performAction() {
         final TopComponent tc = WindowManager.getDefault().findTopComponent("CVTTopComponent");
@@ -74,7 +78,7 @@ public final class OpenCVTAction extends CallableSystemAction implements Present
         super.setEnabled(value);
         toolbarButton.setEnabled(value);
     }
-    
+
     @Override
     @NbBundle.Messages("OpenCVTAction.displayName=Communications Visualizaton")
     public String getName() {
@@ -90,12 +94,12 @@ public final class OpenCVTAction extends CallableSystemAction implements Present
     public Component getToolbarPresenter() {
         return toolbarButton;
     }
-    
+
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     @Override
     public boolean asynchronous() {
         return false; // run on edt

@@ -26,6 +26,9 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 
+/**
+ * Node to represent an Account in the AccountsBrowser
+ */
 class AccountNode extends AbstractNode {
 
     private final Account account;
@@ -37,6 +40,12 @@ class AccountNode extends AbstractNode {
         setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + getIconFileName(account.getAccountType()));
     }
 
+    /**
+     * The file name of the icon for the given Account Type. Will not include
+     * the path but will include the extension.
+     *
+     * @return The file name of the icon for the given Account Type.
+     */
     final String getIconFileName(Account.Type type) {
         if (type == Account.Type.CREDIT_CARD) {
             return "creditcards.png";
@@ -59,6 +68,7 @@ class AccountNode extends AbstractNode {
         } else if (type == Account.Type.WHATSAPP) {
             return "WhatsApp.png";
         } else {
+            //there could be a default icon instead...
             throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
         }
 
@@ -85,12 +95,13 @@ class AccountNode extends AbstractNode {
         properties.put(new NodeProperty<>("count",
                 Bundle.AccountNode_messageCount(),
                 "count",
-                1)); // NON-NLS
+                1)); // NON-NLS //dummy value
+
+        //how do I get the device name
 //        properties.put(new NodeProperty<>("device",
 //                Bundle.AccountNode_device(),
 //                "device",
 //                account.)); // NON-NLS
-
         return s;
     }
 }
