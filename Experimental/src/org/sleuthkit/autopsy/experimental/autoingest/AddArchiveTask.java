@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -35,43 +36,30 @@ public class AddArchiveTask implements Runnable {
 
     private final Logger logger = Logger.getLogger(AddArchiveTask.class.getName());
     private final String deviceId;
-    private final String imagePath;
+    private final String archivePath;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
-    
+
     private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
 
-    /*
-     * The cancellation requested flag and SleuthKit add image process are
-     * guarded by a monitor (called a lock here to avoid confusion with the
-     * progress monitor) to synchronize cancelling the process (setting the flag
-     * and calling its stop method) and calling either its commit or revert
-     * method. The built-in monitor of the add image process can't be used for
-     * this because it is already used to synchronize its run (init part),
-     * commit, revert, and currentDirectory methods.
-     *
-     * TODO (AUT-2021): Merge SleuthkitJNI.AddImageProcess and AddImageTask
-     */
-    private final Object tskAddImageProcessLock;
-
     /**
-     * Constructs a runnable task that adds an image to the case database.
+     * Constructs a runnable task that adds an archive and data sources
+     * contained in the archive to the case database.
      *
      * @param deviceId An ASCII-printable identifier for the device associated
      * with the data source that is intended to be unique across multiple cases
      * (e.g., a UUID).
-     * @param imagePath Path to the image file.
+     * @param archivePath Path to the archive file.
      * @param progressMonitor Progress monitor to report progress during
      * processing.
      * @param callback Callback to call when processing is done.
      */
-    AddArchiveTask(String deviceId, String imagePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddArchiveTask(String deviceId, String archivePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
-        this.imagePath = imagePath;
+        this.archivePath = archivePath;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
-        tskAddImageProcessLock = new Object();
     }
 
     /**
@@ -79,9 +67,9 @@ public class AddArchiveTask implements Runnable {
      */
     @Override
     public void run() {
-        if (!ArchiveUtil.isArchive(Paths.get(imagePath))) {
+        if (!ArchiveUtil.isArchive(Paths.get(archivePath))) {
             List<String> errorMessages = new ArrayList<>();
-            errorMessages.add("Input data source is not a valid datasource: " + imagePath.toString());
+            errorMessages.add("Input data source is not a valid datasource: " + archivePath.toString());
             List<Content> newDataSources = new ArrayList<>();
             DataSourceProcessorCallback.DataSourceProcessorResult result;
             result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -89,22 +77,31 @@ public class AddArchiveTask implements Runnable {
         }
 
         // extract the archive and pass the extracted folder as input
-        Path extractedDataSourcePath = Paths.get("");
+        Path destinationFolder = Paths.get("");
         try {
             Case currentCase = Case.getCurrentCase();
-            //extractedDataSourcePath = extractDataSource(Paths.get(currentCase.getModuleDirectory()), imagePath);
+
+            // get file name without extension
+            String dataSourceFileNameNoExt = FilenameUtils.removeExtension(archivePath);
+
+            // create folder to extract archive to
+            destinationFolder = Paths.get(currentCase.getModuleDirectory(), dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
+            destinationFolder.toFile().mkdirs();
+
+            // extract contents of ZIP archive into destination folder            
+            ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
         } catch (Exception ex) {
             //throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException(NbBundle.getMessage(ArchiveExtractorDSProcessor.class, "ArchiveExtractorDataSourceProcessor.process.exception.text"), ex);
         }
 
         // do processing
+        return;
     }
-    
-    
+
     /*
-     * Attempts to cancel adding the image to the case database.
+     * Attempts to cancel adding the archive to the case database.
      */
     public void cancelTask() {
-        
+
     }
 }

@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 public class ArchiveFilePanel extends JPanel implements DocumentListener {
 
     private static final Logger logger = Logger.getLogger(ArchiveFilePanel.class.getName());
-    private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
+    private static final String PROP_LAST_ARCHIVE_PATH = "LBL_LastImage_PATH"; //NON-NLS
 
     private final JFileChooser fileChooser = new JFileChooser();
 
@@ -155,7 +155,7 @@ public class ArchiveFilePanel extends JPanel implements DocumentListener {
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         String oldText = getContentPaths();
-        // set the current directory of the FileChooser if the ImagePath Field is valid
+        // set the current directory of the FileChooser if the ArchivePath Field is valid
         File currentDir = new File(oldText);
         if (currentDir.exists()) {
             fileChooser.setCurrentDirectory(currentDir);
@@ -179,7 +179,7 @@ public class ArchiveFilePanel extends JPanel implements DocumentListener {
     /**
      * Get the path of the user selected archive.
      *
-     * @return the image path
+     * @return the archive path
      */
     public String getContentPaths() {
         return pathTextField.getText();
@@ -202,7 +202,7 @@ public class ArchiveFilePanel extends JPanel implements DocumentListener {
     /**
      * Should we enable the next button of the wizard?
      *
-     * @return true if a proper image has been selected, false otherwise
+     * @return true if a proper archive has been selected, false otherwise
      */
     @NbBundle.Messages("DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on \"C:\" drive")
     public boolean validatePanel() {
@@ -227,12 +227,12 @@ public class ArchiveFilePanel extends JPanel implements DocumentListener {
         String archivePathName = getContentPaths();
         if (null != archivePathName) {
             String archivePath = archivePathName.substring(0, archivePathName.lastIndexOf(File.separator) + 1);
-            ModuleSettings.setConfigSetting(contextName, PROP_LASTIMAGE_PATH, archivePath);
+            ModuleSettings.setConfigSetting(contextName, PROP_LAST_ARCHIVE_PATH, archivePath);
         }
     }
 
     public void readSettings() {
-        String lastArchivePath = ModuleSettings.getConfigSetting(contextName, PROP_LASTIMAGE_PATH);
+        String lastArchivePath = ModuleSettings.getConfigSetting(contextName, PROP_LAST_ARCHIVE_PATH);
         if (StringUtils.isNotBlank(lastArchivePath)) {
             setContentPath(lastArchivePath);
         }

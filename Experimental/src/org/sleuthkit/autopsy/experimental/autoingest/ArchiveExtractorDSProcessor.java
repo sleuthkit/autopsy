@@ -45,7 +45,7 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
    
     private final ArchiveFilePanel configPanel;
     private String deviceId;
-    private String imagePath;
+    private String archivePath;
     private boolean setDataSourceOptionsCalled;
     
     private AddArchiveTask addArchiveTask;    
@@ -126,9 +126,9 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
         if (!setDataSourceOptionsCalled) {
             configPanel.storeSettings();
             deviceId = UUID.randomUUID().toString();
-            imagePath = configPanel.getContentPaths();
+            archivePath = configPanel.getContentPaths();
         }
-        run(deviceId, imagePath, progressMonitor, callback);
+        run(deviceId, archivePath, progressMonitor, callback);
     }
     
     /**
@@ -142,13 +142,13 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
      *                             associated with the data source that is
      *                             intended to be unique across multiple cases
      *                             (e.g., a UUID).
-     * @param imagePath            Path to the image file.
+     * @param archivePath          Path to the archive file.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    public void run(String deviceId, String imagePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addArchiveTask = new AddArchiveTask(deviceId, imagePath, progressMonitor, callback);
+    public void run(String deviceId, String archivePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addArchiveTask = new AddArchiveTask(deviceId, archivePath, progressMonitor, callback);
         new Thread(addArchiveTask).start();
     }  
 
@@ -169,7 +169,7 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
     @Override
     public void reset() {
         deviceId = null;
-        imagePath = null;
+        archivePath = null;
         configPanel.reset();
         setDataSourceOptionsCalled = false;
     }
