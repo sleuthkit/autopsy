@@ -1,8 +1,9 @@
 package org.sleuthkit.autopsy.communications;
 
 import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 
-public class AccountsBrowser extends JPanel  {
+public class AccountsBrowser extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
@@ -11,7 +12,17 @@ public class AccountsBrowser extends JPanel  {
      */
     public AccountsBrowser() {
         initComponents();
-        
+        outlineView.getOutline().setRootVisible(false);
+        outlineView.setPropertyColumns(
+                "icon", Bundle.AccountNode_icon(),
+                "name", Bundle.AccountNode_accountName(),
+                "type", Bundle.AccountNode_accountType(),
+                "count", Bundle.AccountNode_messageCount(),
+                "known", Bundle.AccountNode_messageCount()
+        );
+                        
+        outlineView.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
     }
 
     /**
