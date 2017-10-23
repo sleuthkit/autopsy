@@ -1449,7 +1449,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      */
     private final class JobProcessingTask implements Runnable {
 
-        private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
         private final Object ingestLock;
         private final Object pauseLock;
         @GuardedBy("pauseLock")

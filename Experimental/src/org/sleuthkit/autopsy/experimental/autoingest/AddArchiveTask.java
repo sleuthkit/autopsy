@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -32,7 +31,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /*
- * A runnable that adds an archive data source to the case database.
+ * A runnable that adds an archive data source as well as data sources
+ * contained in the archive to the case database.
  */
 public class AddArchiveTask implements Runnable {
 
@@ -46,7 +46,7 @@ public class AddArchiveTask implements Runnable {
     private static final String ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR = "Archive Extractor";
 
     /**
-     * Constructs a runnable task that adds an archive and data sources
+     * Constructs a runnable task that adds an archive as well as data sources
      * contained in the archive to the case database.
      *
      * @param deviceId An ASCII-printable identifier for the device associated
@@ -93,11 +93,11 @@ public class AddArchiveTask implements Runnable {
             destinationFolder.toFile().mkdirs();
 
             // extract contents of ZIP archive into destination folder            
-            ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
+            //ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
             
             // do processing
             
-        } catch (ArchiveUtil.ArchiveExtractionException ex) {
+        } catch (Exception ex) {
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
             logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
