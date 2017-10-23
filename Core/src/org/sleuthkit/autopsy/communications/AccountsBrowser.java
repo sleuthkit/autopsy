@@ -1,5 +1,5 @@
 /*
- * Sleuth Kit Data Model
+ * Autopsy Forensic Browser
  *
  * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,7 +46,7 @@ class AccountsBrowser extends JPanel {
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
+        outline.setColumnSorted(3, false, 1); //it would be could if the column index wasn't hardcoded
     }
 
     /**
