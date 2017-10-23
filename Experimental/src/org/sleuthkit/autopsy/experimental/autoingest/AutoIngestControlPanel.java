@@ -39,17 +39,19 @@ import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.util.Collections;
+
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.RowSorter;
+import static javax.swing.SortOrder.DESCENDING;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.DialogDisplayer;
 import org.openide.LifecycleManager;
@@ -140,7 +142,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
     private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 50;
-    private static final int PRIORITY_COLUMN_MAX_WIDTH=150;
+    private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
@@ -290,13 +292,19 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 return false;
             }
         };
-
         initComponents(); // Generated code.
         setServicesStatusMessage();
         initPendingJobsTable();
         initRunningJobsTable();
         initCompletedJobsTable();
         initButtons();
+
+        @SuppressWarnings("unchecked")
+        TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) completedTable.getRowSorter();
+        List<RowSorter.SortKey> list = new ArrayList<>();
+        list.add(new RowSorter.SortKey(JobsTableModelColumns.COMPLETED_TIME.ordinal(), DESCENDING));
+        sorter.setSortKeys(list);
+        sorter.sort();
 
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
@@ -416,7 +424,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setMaxWidth(TIME_COL_MAX_WIDTH);
         column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
         column.setWidth(TIME_COL_PREFERRED_WIDTH);
-        
+
         column = pendingTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader());
         column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
         column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
@@ -554,10 +562,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * does not remove the columns from the model, just from this table.
          */
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
@@ -992,7 +1000,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             List<AutoIngestJob> completedJobs = new ArrayList<>();
             manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
-            Collections.sort(completedJobs, new AutoIngestJob.CompletedDateDescendingComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
         }
     }
@@ -1041,7 +1048,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
             if (null != pendingJobs) {
                 Path currentRow = getSelectedEntry(pendingTable);
-                refreshTable(pendingJobs, (DefaultTableModel)pendingTable.getModel(), null);
+                refreshTable(pendingJobs, (DefaultTableModel) pendingTable.getModel(), null);
                 setSelectedEntry(pendingTable, currentRow);
             }
 
@@ -1052,14 +1059,14 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     updateRunningTableButtonsBasedOnSelectedRow();
                 }
                 Path currentRow = getSelectedEntry(runningTable);
-                refreshTable(runningJobs, (DefaultTableModel)runningTable.getModel(), null);
-                setSelectedEntry(runningTable,  currentRow);
+                refreshTable(runningJobs, (DefaultTableModel) runningTable.getModel(), null);
+                setSelectedEntry(runningTable, currentRow);
             }
 
             if (null != completedJobs) {
                 Path currentRow = getSelectedEntry(completedTable);
-                refreshTable(completedJobs, (DefaultTableModel)completedTable.getModel(), null);
-                setSelectedEntry(completedTable,  currentRow);
+                refreshTable(completedJobs, (DefaultTableModel) completedTable.getModel(), null);
+                setSelectedEntry(completedTable, currentRow);
             }
         }
 
@@ -1179,9 +1186,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      */
     private void refreshTables() {
         JobsSnapshot jobsSnapshot = manager.getCurrentJobsSnapshot();
-        refreshTable(jobsSnapshot.getCompletedJobs(), (DefaultTableModel)completedTable.getModel(), null);
-        refreshTable(jobsSnapshot.getPendingJobs(), (DefaultTableModel)pendingTable.getModel(), null);
-        refreshTable(jobsSnapshot.getRunningJobs(), (DefaultTableModel)runningTable.getModel(), null);
+        refreshTable(jobsSnapshot.getCompletedJobs(), (DefaultTableModel) completedTable.getModel(), null);
+        refreshTable(jobsSnapshot.getPendingJobs(), (DefaultTableModel) pendingTable.getModel(), null);
+        refreshTable(jobsSnapshot.getRunningJobs(), (DefaultTableModel) runningTable.getModel(), null);
     }
 
     /**
@@ -1713,7 +1720,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
         if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            
+
             String caseName = (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.CASE.ordinal())).toString();
             try {
                 manager.prioritizeCase(caseName);
