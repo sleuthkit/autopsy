@@ -39,9 +39,11 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 //    @ServiceProvider(service=DataSourceProcessor.class),
 //    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
 //)
+@NbBundle.Messages({
+    "ArchiveDSP.dsType.text=Archive file"})
 public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
-    
-    private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ArchiveExtractorDSProcessor.class, "ArchiveExtractorDataSourceProcessor.dsType.text");
+
+    private final static String DATA_SOURCE_TYPE = Bundle.ArchiveDSP_dsType_text();
    
     private final ArchiveFilePanel configPanel;
     private String deviceId;

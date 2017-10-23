@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.Content;
  * A runnable that adds an archive data source as well as data sources
  * contained in the archive to the case database.
  */
-public class AddArchiveTask implements Runnable {
+class AddArchiveTask implements Runnable {
 
     private final Logger logger = Logger.getLogger(AddArchiveTask.class.getName());
     private final String deviceId;

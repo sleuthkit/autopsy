@@ -192,8 +192,6 @@ public final class IngestMonitor {
             }
 
             logMemoryUsage();
-            //logDiskSpaceUsage(); // this creates a log entry every minute
-
             if (!enoughDiskSpace()) {
                 /*
                  * Shut down ingest by cancelling all ingest jobs.

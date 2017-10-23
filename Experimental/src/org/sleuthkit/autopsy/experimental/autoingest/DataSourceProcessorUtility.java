@@ -29,7 +29,10 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.
 /**
  * A utility class to find Data Source Processors
  */
-class IdentifyDataSourceProcessors {
+class DataSourceProcessorUtility {
+    
+    private DataSourceProcessorUtility() {        
+    }
 
     /**
      * A utility method to find all Data Source Processors (DSP) that are able

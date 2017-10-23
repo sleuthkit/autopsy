@@ -2316,7 +2316,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
                 try {
                     // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
-                    validDataSourceProcessorsMap = IdentifyDataSourceProcessors.getDataSourceProcessor(dataSource.getPath());
+                    validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(dataSource.getPath());
                 } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                     SYS_LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
                     // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
