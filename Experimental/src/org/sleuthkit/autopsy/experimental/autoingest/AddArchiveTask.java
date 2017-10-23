@@ -22,7 +22,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -41,7 +43,7 @@ public class AddArchiveTask implements Runnable {
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
 
-    private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
+    private static final String ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR = "Archive Extractor";
 
     /**
      * Constructs a runnable task that adds an archive and data sources
@@ -67,11 +69,13 @@ public class AddArchiveTask implements Runnable {
      */
     @Override
     public void run() {
+        List<String> errorMessages = new ArrayList<>();
+        List<Content> newDataSources = new ArrayList<>();
+        DataSourceProcessorCallback.DataSourceProcessorResult result;
         if (!ArchiveUtil.isArchive(Paths.get(archivePath))) {
-            List<String> errorMessages = new ArrayList<>();
-            errorMessages.add("Input data source is not a valid datasource: " + archivePath.toString());
-            List<Content> newDataSources = new ArrayList<>();
-            DataSourceProcessorCallback.DataSourceProcessorResult result;
+            criticalErrorOccurred = true;
+            logger.log(Level.SEVERE, String.format("Input data source is not a valid datasource: %s", archivePath)); //NON-NLS
+            errorMessages.add("Input data source is not a valid datasource: " + archivePath);           
             result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
             callback.done(result, errorMessages, newDataSources);
         }
@@ -81,21 +85,32 @@ public class AddArchiveTask implements Runnable {
         try {
             Case currentCase = Case.getCurrentCase();
 
-            // get file name without extension
-            String dataSourceFileNameNoExt = FilenameUtils.removeExtension(archivePath);
+            // get file name without full path or extension
+            String dataSourceFileNameNoExt = FilenameUtils.getBaseName(archivePath);
 
             // create folder to extract archive to
-            destinationFolder = Paths.get(currentCase.getModuleDirectory(), dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
+            destinationFolder = Paths.get(currentCase.getModuleDirectory(), ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR, dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
             destinationFolder.toFile().mkdirs();
 
             // extract contents of ZIP archive into destination folder            
             ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
-        } catch (Exception ex) {
-            //throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException(NbBundle.getMessage(ArchiveExtractorDSProcessor.class, "ArchiveExtractorDataSourceProcessor.process.exception.text"), ex);
+            
+            // do processing
+            
+        } catch (ArchiveUtil.ArchiveExtractionException ex) {
+            criticalErrorOccurred = true;
+            errorMessages.add(ex.getMessage());
+            logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
+        } finally {
+            if (criticalErrorOccurred) {
+                result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
+            } else if (!errorMessages.isEmpty()) {
+                result = DataSourceProcessorCallback.DataSourceProcessorResult.NONCRITICAL_ERRORS;
+            } else {
+                result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
+            }
+            callback.done(result, errorMessages, newDataSources);
         }
-
-        // do processing
-        return;
     }
 
     /*
