@@ -41,16 +41,17 @@ import org.openide.windows.WindowManager;
     ,    @ActionReference(path = "Toolbars/Case", position = 102)})
 @Messages("CTL_OpenCVTAction=Visualize Communications")
 public final class OpenCVTAction extends CallableSystemAction implements Presenter.Toolbar {
-
+    
     private static final long serialVersionUID = 1L;
-
+    
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/email_link.png"))); //NON-NLS
 
     public OpenCVTAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
+        setEnabled(false);
     }
-
+    
     @Override
     public void performAction() {
         final TopComponent tc = WindowManager.getDefault().findTopComponent("CVTTopComponent");
@@ -63,6 +64,17 @@ public final class OpenCVTAction extends CallableSystemAction implements Present
         }
     }
 
+    /**
+     * Set this action to be enabled/disabled
+     *
+     * @param value whether to enable this action or not
+     */
+    @Override
+    public void setEnabled(boolean value) {
+        super.setEnabled(value);
+        toolbarButton.setEnabled(value);
+    }
+    
     @Override
     @NbBundle.Messages("OpenCVTAction.displayName=Communications Visualizaton")
     public String getName() {
@@ -78,12 +90,12 @@ public final class OpenCVTAction extends CallableSystemAction implements Present
     public Component getToolbarPresenter() {
         return toolbarButton;
     }
-
+    
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-
+    
     @Override
     public boolean asynchronous() {
         return false; // run on edt

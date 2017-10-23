@@ -26,18 +26,46 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 
-public class AccountNode extends AbstractNode {
+class AccountNode extends AbstractNode {
 
     private final Account account;
 
-    public AccountNode(Account account) {
+    AccountNode(Account account) {
         super(Children.LEAF, Lookups.fixed(account));
         this.account = account;
+        setName(account.getAccountUniqueID());
+        setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + getIconFileName(account.getAccountType()));
+    }
+
+    final String getIconFileName(Account.Type type) {
+        if (type == Account.Type.CREDIT_CARD) {
+            return "creditcards.png";
+        } else if (type == Account.Type.DEVICE) {
+            return "device.png";
+        } else if (type == Account.Type.EMAIL) {
+            return "email.png";
+        } else if (type == Account.Type.FACEBOOK) {
+            return "facebook.png";
+        } else if (type == Account.Type.INSTAGRAM) {
+            return "instagram.png";
+        } else if (type == Account.Type.MESSAGING_APP) {
+            return "messaging.png";
+        } else if (type == Account.Type.PHONE) {
+            return "phone.png";
+        } else if (type == Account.Type.TWITTER) {
+            return "twitter.png";
+        } else if (type == Account.Type.WEBSITE) {
+            return "world.png";
+        } else if (type == Account.Type.WHATSAPP) {
+            return "WhatsApp.png";
+        } else {
+            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
+        }
+
     }
 
     @Override
     @NbBundle.Messages({
-        "AccountNode.icon=Icon",
         "AccountNode.device=Device",
         "AccountNode.accountName=Account Name",
         "AccountNode.accountType=Type",
@@ -50,14 +78,6 @@ public class AccountNode extends AbstractNode {
             s.put(properties);
         }
 
-        properties.put(new NodeProperty<>("icon",
-                Bundle.AccountNode_icon(),
-                "icon",
-                true)); // NON-NLS //gets overridden with icon
-        properties.put(new NodeProperty<>("name",
-                Bundle.AccountNode_accountName(),
-                "name",
-                account.getAccountUniqueID())); // NON-NLS
         properties.put(new NodeProperty<>("type",
                 Bundle.AccountNode_accountType(),
                 "type",

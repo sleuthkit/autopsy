@@ -2,6 +2,8 @@ package org.sleuthkit.autopsy.communications;
 
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
+import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.netbeans.swing.outline.Outline;
 
 public class AccountsBrowser extends JPanel {
 
@@ -12,16 +14,16 @@ public class AccountsBrowser extends JPanel {
      */
     public AccountsBrowser() {
         initComponents();
-        outlineView.getOutline().setRootVisible(false);
+        final Outline outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
-                "icon", Bundle.AccountNode_icon(),
-                "name", Bundle.AccountNode_accountName(),
+                "device", Bundle.AccountNode_device(),
                 "type", Bundle.AccountNode_accountType(),
-                "count", Bundle.AccountNode_messageCount(),
-                "known", Bundle.AccountNode_messageCount()
+                "count", Bundle.AccountNode_messageCount()
         );
-                        
-        outlineView.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        outline.setRootVisible(false);
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
+        outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     }
 
