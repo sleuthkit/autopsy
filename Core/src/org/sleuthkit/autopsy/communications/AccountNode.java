@@ -18,6 +18,14 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-public class AccountNode {
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.Account;
 
+public class AccountNode extends AbstractNode {
+
+    public AccountNode(Account account) {
+        super(Children.LEAF, Lookups.fixed(account));
+    }
 }

@@ -2,7 +2,7 @@ package org.sleuthkit.autopsy.communications;
 
 import javax.swing.JPanel;
 
-public class AccountsBrowser extends JPanel {
+public class AccountsBrowser extends JPanel  {
 
     private static final long serialVersionUID = 1L;
 
@@ -11,6 +11,7 @@ public class AccountsBrowser extends JPanel {
      */
     public AccountsBrowser() {
         initComponents();
+        
     }
 
     /**

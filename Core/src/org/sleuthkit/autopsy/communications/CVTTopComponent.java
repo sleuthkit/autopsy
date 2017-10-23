@@ -21,12 +21,16 @@ package org.sleuthkit.autopsy.communications;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component which displays something.
@@ -59,6 +63,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private void initComponents() {
 
         jPanel2 = new javax.swing.JPanel();
+        jButton1 = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
@@ -69,15 +74,28 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jPanel2.border.title"))); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 232, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap(141, Short.MAX_VALUE)
+                .addComponent(jButton1)
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton1)
+                .addContainerGap())
         );
 
         jSplitPane1.setDividerLocation(600);
@@ -105,11 +123,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         jTextField1.setText(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jTextField1.text")); // NOI18N
-        jTextField1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField1ActionPerformed(evt);
-            }
-        });
         jSplitPane2.setTopComponent(jTextField1);
 
         jTextField2.setText(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jTextField2.text")); // NOI18N
@@ -125,7 +138,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
                 .addContainerGap()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1334, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1350, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -139,12 +152,22 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField1ActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+
+        try {
+            List<Account> accounts;
+            accounts = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccounts(Account.Type.EMAIL);
+
+            em.setRootContext(new AccountRootNode(accounts));
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
+    private javax.swing.JButton jButton1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JSplitPane jSplitPane1;
@@ -164,8 +187,8 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     public ExplorerManager getExplorerManager() {
         return em;
     }
-    
-      @Override
+
+    @Override
     public List<Mode> availableModes(List<Mode> modes) {
         /*
          * This looks like the right thing to do, but online discussions seems
