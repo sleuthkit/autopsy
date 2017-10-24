@@ -329,99 +329,33 @@ final class TermsComponentQuery implements KeywordSearchQuery {
 
     @Override
     public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+        
         /*
-         * Create either a "plain vanilla" keyword hit artifact with keyword and
-         * regex attributes, or a credit card account artifact with attributes
-         * parsed from from the snippet for the hit and looked up based on the
-         * parsed bank identifcation number.
+         * CCN hits are handled specially
+         */
+        if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            createCCNAccount(content, hit, snippet, listName);
+            return null;
+        }
+        
+        /*
+         * Create a "plain vanilla" keyword hit artifact with keyword and
+         * regex attributes, 
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
+        
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
 
-            try {
-                newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+        try {
+            newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
-                return null;
-            }
-        } else {
-            /*
-             * Parse the credit card account attributes from the snippet for the
-             * hit.
-             */
-            Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
-            Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
-            if (matcher.find()) {
-                parseTrack1Data(parsedTrackAttributeMap, matcher);
-            }
-            matcher = CREDIT_CARD_TRACK2_PATTERN.matcher(hit.getSnippet());
-            if (matcher.find()) {
-                parseTrack2Data(parsedTrackAttributeMap, matcher);
-            }
-            final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
-            if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
-                if (hit.isArtifactHit()) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
-                } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContentID())); //NON-NLS
-                }
-                return null;
-            }
-            attributes.addAll(parsedTrackAttributeMap.values());
-
-            /*
-             * Look up the bank name, scheme, etc. attributes for the bank
-             * indentification number (BIN).
-             */
-            final int bin = Integer.parseInt(ccnAttribute.getValueString().substring(0, 8));
-            CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
-            if (binInfo != null) {
-                binInfo.getScheme().ifPresent(scheme
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_SCHEME, MODULE_NAME, scheme)));
-                binInfo.getCardType().ifPresent(cardType
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_TYPE, MODULE_NAME, cardType)));
-                binInfo.getBrand().ifPresent(brand
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND_NAME, MODULE_NAME, brand)));
-                binInfo.getBankName().ifPresent(bankName
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, bankName)));
-                binInfo.getBankPhoneNumber().ifPresent(phoneNumber
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, phoneNumber)));
-                binInfo.getBankURL().ifPresent(url
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, url)));
-                binInfo.getCountry().ifPresent(country
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, country)));
-                binInfo.getBankCity().ifPresent(city
-                        -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, city)));
-            }
-
-            /*
-             * If the hit is from unused or unallocated space, record the Solr
-             * document id to support showing just the chunk that contained the
-             * hit.
-             */
-            if (content instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile) content;
-                if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
-                        || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
-                    attributes.add(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
-                }
-            }
-
-            /*
-             * Create an account artifact.
-             */
-            try {
-                AccountInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
-                newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccountInstance.getArtifactId());
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
-                return null;
-            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
+            return null;
         }
+        
 
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
@@ -446,6 +380,104 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         }
     }
 
+    private void createCCNAccount(Content content, KeywordHit hit, String snippet, String listName) {
+        
+        if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            LOGGER.log(Level.SEVERE, "Keyword hit is not a credit card number"); //NON-NLS
+            return;
+        }
+        
+        /*
+         * Create a credit card account with attributes
+         * parsed from from the snippet for the hit and looked up based on the
+         * parsed bank identifcation number.
+         */
+        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+       
+        Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
+        Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
+        if (matcher.find()) {
+            parseTrack1Data(parsedTrackAttributeMap, matcher);
+        }
+        matcher = CREDIT_CARD_TRACK2_PATTERN.matcher(hit.getSnippet());
+        if (matcher.find()) {
+            parseTrack2Data(parsedTrackAttributeMap, matcher);
+        }
+        final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
+        if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
+            if (hit.isArtifactHit()) {
+                LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
+            } else {
+                LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContentID())); //NON-NLS
+            }
+            return;
+        }
+        attributes.addAll(parsedTrackAttributeMap.values());
+
+        /*
+         * Look up the bank name, scheme, etc. attributes for the bank
+         * indentification number (BIN).
+         */
+        final int bin = Integer.parseInt(ccnAttribute.getValueString().substring(0, 8));
+        CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
+        if (binInfo != null) {
+            binInfo.getScheme().ifPresent(scheme
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_SCHEME, MODULE_NAME, scheme)));
+            binInfo.getCardType().ifPresent(cardType
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CARD_TYPE, MODULE_NAME, cardType)));
+            binInfo.getBrand().ifPresent(brand
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BRAND_NAME, MODULE_NAME, brand)));
+            binInfo.getBankName().ifPresent(bankName
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_BANK_NAME, MODULE_NAME, bankName)));
+            binInfo.getBankPhoneNumber().ifPresent(phoneNumber
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, MODULE_NAME, phoneNumber)));
+            binInfo.getBankURL().ifPresent(url
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL, MODULE_NAME, url)));
+            binInfo.getCountry().ifPresent(country
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNTRY, MODULE_NAME, country)));
+            binInfo.getBankCity().ifPresent(city
+                    -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_CITY, MODULE_NAME, city)));
+        }
+
+        /*
+         * If the hit is from unused or unallocated space, record the Solr
+         * document id to support showing just the chunk that contained the
+         * hit.
+         */
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile) content;
+            if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
+                    || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
+                attributes.add(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
+            }
+        }
+
+        if (StringUtils.isNotBlank(listName)) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+        }
+        if (snippet != null) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
+        }
+
+        hit.getArtifactID().ifPresent(
+                artifactID -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
+
+        // TermsComponentQuery is now being used exclusively for substring searches.
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+
+        /*
+         * Create an account.
+         */
+        try {
+            AccountInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+            ccAccountInstance.addAttributes(attributes);
+            //newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccountInstance.getArtifactId());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS
+        }
+
+    }
     /**
      * Parses the track 2 data from the snippet for a credit card account number
      * hit and turns them into artifact attributes.
