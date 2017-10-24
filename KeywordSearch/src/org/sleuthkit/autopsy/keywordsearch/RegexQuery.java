@@ -419,8 +419,9 @@ final class RegexQuery implements KeywordSearchQuery {
             createCCNAccount(content, foundKeyword, hit, snippet, listName);
             return null;
         }
+        
         /*
-         * Create either a "plain vanilla" keyword hit artifact with keyword and
+         * Create a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes
          */
         BlackboardArtifact newArtifact;
