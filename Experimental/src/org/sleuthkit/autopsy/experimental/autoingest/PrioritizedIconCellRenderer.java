@@ -33,7 +33,7 @@ class PrioritizedIconCellRenderer extends GrayableCellRenderer {
 
     
     @Messages({
-        "PrioritizedIconCellRenderer.prioritized.tooltiptext=This job has been prioritised. The most recently prioritised job should be processed next.",
+        "PrioritizedIconCellRenderer.prioritized.tooltiptext=This job has been prioritized. The most recently prioritized job should be processed next.",
         "PrioritizedIconCellRenderer.notPrioritized.tooltiptext=This job has not been prioritized."
     })
     private static final long serialVersionUID = 1L;
