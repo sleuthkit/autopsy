@@ -1429,7 +1429,14 @@ final public class Accounts implements AutopsyVisitableItem {
             artifacts.forEach(artifact -> {
                 try {
                     AccountInstance accountInstance = skCase.getCommunicationsManager().getAccountInstance(artifact);
-                    accountInstance.setReviewStatus(newStatus);
+                    
+                    if (BlackboardArtifact.ReviewStatus.APPROVED == newStatus) {
+                        accountInstance.approveAccount();
+                    }
+                    else {
+                         accountInstance.rejectAccount();
+                    }
+                    
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
