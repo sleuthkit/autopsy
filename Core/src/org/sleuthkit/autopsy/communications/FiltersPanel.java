@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -32,17 +37,32 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
- public class FiltersPanel extends javax.swing.JPanel {
+public class FiltersPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
     private ExplorerManager em;
+    private final DefaultListModel<Account.Type> accountTypesModel;
 
-    /**
-     * Creates new form NewJPanel
-     */
     public FiltersPanel() {
         initComponents();
+        accountTypesModel = new DefaultListModel<>();
+        try {
+            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
+            accountTypesInUse.forEach(accountTypesModel::addElement);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        accountTypesList.setCellRenderer(new ListCellRenderer<Account.Type>() {
+            @Override
+            public Component getListCellRendererComponent(JList<? extends Account.Type> list, Account.Type value, int index, boolean isSelected, boolean cellHasFocus) {
+                JCheckBox jCheckBox = new JCheckBox(value.getDisplayName());
+                return jCheckBox;
+            }
+        });
+
+        accountTypesList.setModel(accountTypesModel);
 
     }
 
@@ -65,6 +85,8 @@ import org.sleuthkit.datamodel.TskCoreException;
         jList1 = new javax.swing.JList<>();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        accountTypesList = new javax.swing.JList<>();
         applyFiltersButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -83,7 +105,7 @@ import org.sleuthkit.datamodel.TskCoreException;
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -92,15 +114,23 @@ import org.sleuthkit.datamodel.TskCoreException;
 
         jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
+        jScrollPane2.setViewportView(accountTypesList);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 77, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane2)
+                .addGap(0, 0, 0))
         );
 
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
@@ -132,7 +162,7 @@ import org.sleuthkit.datamodel.TskCoreException;
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 235, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(applyFiltersButton))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel3)
@@ -150,19 +180,20 @@ import org.sleuthkit.datamodel.TskCoreException;
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(applyFiltersButton))
-                .addGap(28, 28, 28)
+                .addGap(18, 18, Short.MAX_VALUE)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void applyFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyFiltersButtonActionPerformed
+
         /*
          * When the apply button is pressed, query for accounts using the
          * selected filters, and send the results to the AccountsBrowser via the
@@ -183,6 +214,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JList<Account.Type> accountTypesList;
     private javax.swing.JButton applyFiltersButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -191,5 +223,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 }
