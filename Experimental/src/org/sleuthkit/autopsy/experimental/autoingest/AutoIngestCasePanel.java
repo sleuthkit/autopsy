@@ -267,7 +267,8 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
     private void refreshCasesTable() {
         try {
             currentlySelectedCase = getSelectedCase();
-            List<AutoIngestCase> theModel = AutoIngestCaseManager.getInstance().getCases();
+            AutoIngestCaseManager manager = AutoIngestCaseManager.getInstance();
+            List<AutoIngestCase> theModel = manager.getCases();
             EventQueue.invokeLater(new CaseTableRefreshTask(theModel));
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unexpected exception in refreshCasesTable", ex); //NON-NLS

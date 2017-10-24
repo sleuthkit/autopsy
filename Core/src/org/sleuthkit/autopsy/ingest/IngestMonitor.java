@@ -192,8 +192,6 @@ public final class IngestMonitor {
             }
 
             logMemoryUsage();
-            logDiskSpaceUsage();
-
             if (!enoughDiskSpace()) {
                 /*
                  * Shut down ingest by cancelling all ingest jobs.
