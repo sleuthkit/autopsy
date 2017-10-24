@@ -81,8 +81,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * digit is 2 through 6
      *
      */
-    static final Pattern CREDIT_CARD_NUM_PATTERN =
-            Pattern.compile("(?<ccn>[2-6]([ -]?[0-9]){11,18})");
+    static final Pattern CREDIT_CARD_NUM_PATTERN
+            = Pattern.compile("(?<ccn>[2-6]([ -]?[0-9]){11,18})");
     static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
             /*
              * Track 1 is alphanumeric.
@@ -125,7 +125,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
     static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
-
 
     /**
      * Constructs an object that implements a regex query that will be performed
@@ -327,8 +326,24 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         return results;
     }
 
+    /**
+     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
+     *
+     * @param content      The text source object for the hit.
+     * @param foundKeyword The keyword that was found by the search, this may be
+     *                     different than the Keyword that was searched if, for
+     *                     example, it was a RegexQuery.
+     * @param hit          The keyword hit.
+     * @param snippet      A snippet from the text that contains the hit.
+     * @param listName     The name of the keyword list that contained the
+     *                     keyword for which the hit was found.
+     *
+     *
+     * @return The newly created artifact or null if there was a problem
+     *         creating it.
+     */
     @Override
-    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         
         /*
          * CCN hits are handled specially

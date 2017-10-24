@@ -52,8 +52,8 @@ class LuceneQuery implements KeywordSearchQuery {
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
     private String keywordStringEscaped;
     private boolean isEscaped;
-    private final Keyword originalKeyword ;
-    private final KeywordList keywordList ;
+    private final Keyword originalKeyword;
+    private final KeywordList keywordList;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
@@ -70,7 +70,7 @@ class LuceneQuery implements KeywordSearchQuery {
     LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.originalKeyword = keyword;
-        this.keywordStringEscaped = this.originalKeyword.getSearchTerm(); 
+        this.keywordStringEscaped = this.originalKeyword.getSearchTerm();
     }
 
     @Override
@@ -191,8 +191,24 @@ class LuceneQuery implements KeywordSearchQuery {
         return StringUtils.isNotBlank(originalKeyword.getSearchTerm());
     }
 
+    /**
+     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
+     *
+     * @param content      The text source object for the hit.
+     * @param foundKeyword The keyword that was found by the search, this may be
+     *                     different than the Keyword that was searched if, for
+     *                     example, it was a RegexQuery.
+     * @param hit          The keyword hit.
+     * @param snippet      A snippet from the text that contains the hit.
+     * @param listName     The name of the keyword list that contained the
+     *                     keyword for which the hit was found.
+     *
+     *
+     * @return The newly created artifact or null if there was a problem
+     *         creating it.
+     */
     @Override
-    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
@@ -225,11 +241,9 @@ class LuceneQuery implements KeywordSearchQuery {
             }
         }
 
-        
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
-     
 
         try {
             bba.addAttributes(attributes); //write out to bb
@@ -398,10 +412,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query +". Solr doc id " + solrObjectId + ", chunkID " + chunkID , ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query + ". Solr doc id " + solrObjectId + ", chunkID " + chunkID, ex); //NON-NLS
             throw ex;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query +". Solr doc id " + solrObjectId + ", chunkID " + chunkID , ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query + ". Solr doc id " + solrObjectId + ", chunkID " + chunkID, ex); //NON-NLS
             return "";
         }
     }
