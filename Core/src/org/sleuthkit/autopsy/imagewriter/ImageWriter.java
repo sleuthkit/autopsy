@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -130,6 +131,10 @@ class ImageWriter implements PropertyChangeListener{
         }
     }
     
+    @Messages({
+        "# {0} - data source name", 
+        "ImageWriter.progressBar.message=Finishing acquisition of {0}"
+    })
     private void startFinishImage(String dataSourceName){
       
         synchronized(currentTasksLock){
@@ -166,7 +171,7 @@ class ImageWriter implements PropertyChangeListener{
 
             if(doUI){
                 periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
-                progressHandle = ProgressHandle.createHandle("Image writer - " + dataSourceName);
+                progressHandle = ProgressHandle.createHandle(Bundle.ImageWriter_progressBar_message(dataSourceName));
                 progressHandle.start(100);
                 progressUpdateTask = periodicTasksExecutor.scheduleAtFixedRate(
                         new ProgressUpdateTask(progressHandle, imageHandle), 0, 250, TimeUnit.MILLISECONDS);

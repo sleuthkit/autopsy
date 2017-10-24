@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.text.JTextComponent;
+import javax.swing.tree.TreePath;
 import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
@@ -53,6 +54,8 @@ import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.jemmy.operators.JToggleButtonOperator;
+import org.netbeans.jemmy.operators.JTreeOperator;
+import org.netbeans.jemmy.operators.JTreeOperator.NoSuchPathException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
@@ -290,6 +293,16 @@ public class AutopsyTestCases {
 
     }
 
+    public void testExpandDataSourcesTree() {
+        logger.info("Data Sources Node");
+        MainWindowOperator mwo = MainWindowOperator.getDefault();
+        JTreeOperator jto = new JTreeOperator(mwo, "Data Sources");
+        String [] nodeNames = {"Data Sources"};
+        TreePath tp = jto.findPath(nodeNames);
+        expandNodes(jto, tp);
+        screenshot("Data Sources Tree");
+    }
+
     public void testGenerateReportToolbar() {
         logger.info("Generate Report Toolbars");
         MainWindowOperator mwo = MainWindowOperator.getDefault();
@@ -378,6 +391,17 @@ public class AutopsyTestCases {
             UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+        }
+    }
+    
+    private void expandNodes (JTreeOperator jto, TreePath tp) {
+        try {
+            jto.expandPath(tp);
+            for (TreePath t : jto.getChildPaths(tp)) {
+                expandNodes(jto, t);
+            }
+        } catch (NoSuchPathException ne) {
+            logger.log(Level.SEVERE, "Error expanding tree path", ne);
         }
     }
 }

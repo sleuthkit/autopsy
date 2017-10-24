@@ -45,195 +45,274 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Stores the results from running a Solr query (which could contain multiple
- * keywords).
- *
+ * Stores and processes the results of a keyword search query. Processing
+ * includes posting keyword hit artifacts to the blackboard, sending messages
+ * about the search hits to the ingest inbox, and publishing an event to notify
+ * subscribers of the blackboard posts.
  */
 class QueryResults {
 
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
-    /**
-     * The query that generated the results.
-     */
-    private final KeywordSearchQuery keywordSearchQuery;
-
-    /**
-     * A map of keywords to keyword hits.
-     */
+    private final KeywordSearchQuery query;
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
 
+    /**
+     * Constructs a object that stores and processes the results of a keyword
+     * search query. Processing includes posting keyword hit artifacts to the
+     * blackboard, sending messages about the search hits to the ingest inbox,
+     * and publishing an event to notify subscribers of the blackboard posts.
+     *
+     * The KeywordSearchQuery is used to do the blackboard posts.
+     * 
+     * @param query The query.
+     */
     QueryResults(KeywordSearchQuery query) {
-        this.keywordSearchQuery = query;
+        this.query = query;
     }
 
+    /**
+     * Gets the keyword search query that generated the results stored in this
+     * object.
+     *
+     * @return The query.
+     */
+    KeywordSearchQuery getQuery() {
+        return query;
+    }
+
+    /**
+     * Adds the keyword hits for a keyword to the hits that are stored in this
+     * object. All calls to this method MUST be completed before calling the
+     * process method.
+     *
+     * @param keyword The keyword,
+     * @param hits    The hits.
+     */
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
 
-    KeywordSearchQuery getQuery() {
-        return keywordSearchQuery;
-    }
-
+    /**
+     * Gets the keyword hits stored in this object for a given keyword.
+     *
+     * @param keyword The keyword.
+     *
+     * @return The keyword hits.
+     */
     List<KeywordHit> getResults(Keyword keyword) {
         return results.get(keyword);
     }
 
+    /**
+     * Gets the set of unique keywords for which keyword hits have been stored
+     * in this object.
+     *
+     * @return
+     */
     Set<Keyword> getKeywords() {
         return results.keySet();
     }
 
     /**
-     * Writes the keyword hits encapsulated in this query result to the
-     * blackboard. Makes one artifact per keyword per searched object (file or
-     * artifact), i.e., if a keyword is found several times in the object, only
-     * one artifact is created.
+     * Processes the keyword hits stored in this object by osting keyword hit
+     * artifacts to the blackboard, sending messages about the search hits to
+     * the ingest inbox, and publishing an event to notify subscribers of the
+     * blackboard posts.
      *
-     * @param progress    Can be null.
-     * @param subProgress Can be null.
-     * @param worker      The Swing worker that is writing the hits, needed to
-     *                    support cancellation.
-     * @param notifyInbox Whether or not write a message to the ingest messages
-     *                    inbox.
+     * Makes one artifact per keyword per searched text source object (file or
+     * artifact), i.e., if a keyword is found several times in the text
+     * extracted from the source object, only one artifact is created.
      *
-     * @return The artifacts that were created.
+     * This method ASSUMES that the processing is being done using a SwingWorker
+     * that should be checked for task cancellation.
+     *
+     * All calls to the addResult method MUST be completed before calling this
+     * method.
+     *
+     * @param progress    A progress indicator that reports the number of
+     *                    keywords processed. Can be null.
+     * @param subProgress A progress contributor that reports the keyword
+     *                    currently being processed. Can be null.
+     * @param worker      The SwingWorker that is being used to do the
+     *                    processing, will be checked for task cancellation
+     *                    before processing each keyword.
+     * @param notifyInbox Whether or not to write a message to the ingest
+     *                    messages inbox if there is a keyword hit in the text
+     *                    exrtacted from the text source object.
+     *
      */
-    Collection<BlackboardArtifact> writeAllHitsToBlackBoard(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox) {
-        final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
-        if (progress != null) {
+    void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox) {
+        /*
+         * Initialize the progress indicator to the number of keywords that will
+         * be processed.
+         */
+        if (null != progress) {
             progress.start(getKeywords().size());
         }
-        int unitProgress = 0;
 
+        /*
+         * Process the keyword hits for each keyword.
+         */
+        int keywordsProcessed = 0;
+        final Collection<BlackboardArtifact> hitArtifacts = new ArrayList<>();
         for (final Keyword keyword : getKeywords()) {
+            /*
+             * Cancellation check.
+             */
             if (worker.isCancelled()) {
-                logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
+                logger.log(Level.INFO, "Processing cancelled, exiting before processing search term {0}", keyword.getSearchTerm()); //NON-NLS
                 break;
             }
 
-            // Update progress object(s), if any
+            /*
+             * Update the progress indicator and the show the current keyword
+             * via the progress contributor.
+             */
             if (progress != null) {
-                progress.progress(keyword.toString(), unitProgress);
+                progress.progress(keyword.toString(), keywordsProcessed);
             }
             if (subProgress != null) {
                 String hitDisplayStr = keyword.getSearchTerm();
                 if (hitDisplayStr.length() > 50) {
                     hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                 }
-                subProgress.progress(keywordSearchQuery.getKeywordList().getName() + ": " + hitDisplayStr, unitProgress);
+                subProgress.progress(query.getKeywordList().getName() + ": " + hitDisplayStr, keywordsProcessed);
             }
 
-            for (KeywordHit hit : getOneHitPerObject(keyword)) {
-                String termString = keyword.getSearchTerm();
+            /*
+             * Reduce the hits for this keyword to one hit per text source
+             * object so that only one hit artifact is generated per text source
+             * object, no matter how many times the keyword was actually found.
+             */
+            for (KeywordHit hit : getOneHitPerTextSourceObject(keyword)) {
+                /*
+                 * Get a snippet (preview) for the hit. Regex queries always
+                 * have snippets made from the content_str pulled back from Solr
+                 * for executing the search. Other types of queries may or may
+                 * not have snippets yet.
+                 */
                 String snippet = hit.getSnippet();
                 if (StringUtils.isBlank(snippet)) {
-                    final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
+                    final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(keyword.getSearchTerm());
                     try {
-                        /*
-                         * this doesn't work for regex queries... But that is
-                         * okay because regex queries always have snippets made
-                         * from the content_str field we pull back from Solr
-                         */
-                        snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
+                        snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !query.isLiteral(), true);
                     } catch (NoOpenCoreException e) {
-                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                        //no reason to continue
-                        break;
+                        logger.log(Level.SEVERE, "Solr core closed while executing snippet query " + snippetQuery, e); //NON-NLS
+                        break; // Stop processing.
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                        continue;
+                        logger.log(Level.SEVERE, "Error executing snippet query " + snippetQuery, e); //NON-NLS
+                        continue; // Try processing the next hit.
                     }
                 }
+
+                /*
+                 * Get the content (file or artifact) that is the text source
+                 * for the hit.
+                 */
                 Content content = null;
                 try {
                     SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
                     content = tskCase.getContentById(hit.getContentID());
                 } catch (TskCoreException | IllegalStateException tskCoreException) {
-                    logger.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", tskCoreException); //NON-NLS
-                    return null;
+                    logger.log(Level.SEVERE, "Failed to get text source object for ", tskCoreException); //NON-NLS
                 }
-                BlackboardArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(content, keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
-                if (writeResult != null) {
-                    newArtifacts.add(writeResult);
+
+                /*
+                 * Post an artifact for the hit to the blackboard.
+                 */
+                BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
+                if (null == artifact) {
+                    logger.log(Level.SEVERE, "Error posting keyword hit artifact for keyword {0} in {1} to the blackboard", new Object[]{keyword.toString(), content}); //NON-NLS
+                }
+
+                /*
+                 * Send an ingest inbox message for the hit.
+                 */
+                if (null != artifact) {
+                    hitArtifacts.add(artifact);
                     if (notifyInbox) {
                         try {
-                            writeSingleFileInboxMessage(writeResult, content);
+                            writeSingleFileInboxMessage(artifact, content);
                         } catch (TskCoreException ex) {
-                            logger.log(Level.WARNING, "Error posting message to Ingest Inbox", ex); //NON-NLS
+                            logger.log(Level.SEVERE, "Error sending message to ingest messages inbox", ex); //NON-NLS
                         }
                     }
-                } else {
-                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{content, keyword.toString()}); //NON-NLS
                 }
             }
-            ++unitProgress;
+
+            ++keywordsProcessed;
         }
 
-        // Update artifact browser
-        if (!newArtifacts.isEmpty()) {
-            newArtifacts.stream()
-                    //group artifacts by type
+        /*
+         * Publish an event to notify subscribers of the blackboard posts. The
+         * artifacts are grouped by type, since they may contain both
+         * TSK_KEYWORD_HIT artifacts and TSK_ACCOUNT artifacts (for credit card
+         * account number hits).
+         */
+        if (!hitArtifacts.isEmpty()) {
+            hitArtifacts.stream()
+                    // Group artifacts by type
                     .collect(Collectors.groupingBy(BlackboardArtifact::getArtifactTypeID))
-                    //for each type send an event
+                    // For each type send an event
                     .forEach((typeID, artifacts)
                             -> IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
 
         }
-
-        return newArtifacts;
     }
 
     /**
-     * Gets the first hit of the keyword.
+     * Reduce the hits for a given keyword to one hit per text source object so
+     * that only one hit artifact is generated per text source object, no matter
+     * how many times the keyword was actually found.
      *
-     * @param keyword
+     * @param keyword The keyword.
      *
-     * @return Collection<KeywordHit> containing KeywordHits with lowest
-     *         SolrObjectID-ChunkID pairs.
+     * @return Collection<KeywordHit> The reduced set of keyword hits.
      */
-    private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
-        HashMap<Long, KeywordHit> hits = new HashMap<>();
-
-        // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
-        for (KeywordHit hit : getResults(keyword)) {
+    private Collection<KeywordHit> getOneHitPerTextSourceObject(Keyword keyword) {
+        /*
+         * For each Solr document (chunk) for a text source object, return only
+         * a single keyword hit from the first chunk of text (the one with the
+         * lowest chunk id).
+         */
+        HashMap< Long, KeywordHit> hits = new HashMap<>();
+        getResults(keyword).forEach((hit) -> {
             if (!hits.containsKey(hit.getSolrObjectId())) {
                 hits.put(hit.getSolrObjectId(), hit);
             } else if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
                 hits.put(hit.getSolrObjectId(), hit);
             }
-        }
+        });
         return hits.values();
     }
 
     /**
-     * Generate and post an ingest inbox message for the given keyword in the
-     * given content.
+     * Send an ingest inbox message indicating that there was a keyword hit in
+     * the given text source object.
      *
-     * @param artifact   The keyword hit artifact.
-     * @param hitContent The content that the hit is in.
+     * @param artifact   The keyword hit artifact for the hit.
+     * @param hitContent The text source object.
      *
-     * @throws TskCoreException If there is a problem generating or posting the
+     * @throws TskCoreException If there is a problem generating or send the
      *                          inbox message.
      */
     private void writeSingleFileInboxMessage(BlackboardArtifact artifact, Content hitContent) throws TskCoreException {
-        StringBuilder subjectSb = new StringBuilder();
-        StringBuilder detailsSb = new StringBuilder();
-
-        if (!keywordSearchQuery.isLiteral()) {
+        StringBuilder subjectSb = new StringBuilder(1024);
+        if (!query.isLiteral()) {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
         } else {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
         }
 
+        StringBuilder detailsSb = new StringBuilder(1024);
         String uniqueKey = null;
         BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
         if (attr != null) {
             final String keyword = attr.getValueString();
             subjectSb.append(keyword);
             uniqueKey = keyword.toLowerCase();
-            //details
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-            //hit
             detailsSb.append("<tr>"); //NON-NLS
             detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
             detailsSb.append("<td>").append(EscapeUtil.escapeHtml(keyword)).append("</td>"); //NON-NLS
@@ -270,7 +349,7 @@ class QueryResults {
         }
 
         //regex
-        if (!keywordSearchQuery.isLiteral()) {
+        if (!query.isLiteral()) {
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP));
             if (attr != null) {
                 detailsSb.append("<tr>"); //NON-NLS
@@ -279,7 +358,6 @@ class QueryResults {
                 detailsSb.append("</tr>"); //NON-NLS
             }
         }
-
         detailsSb.append("</table>"); //NON-NLS
 
         IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, artifact));
