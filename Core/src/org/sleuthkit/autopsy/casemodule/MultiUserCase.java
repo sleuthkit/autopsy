@@ -28,7 +28,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
