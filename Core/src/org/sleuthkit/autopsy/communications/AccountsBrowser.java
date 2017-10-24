@@ -27,14 +27,14 @@ import org.netbeans.swing.outline.Outline;
  * A panel that goes in the Browse tab of the CVT. Has a OutlineView that shows
  * information about Accounts.
  */
-class AccountsBrowser extends JPanel {
+public class AccountsBrowser extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form AccountsBrowser
      */
-    AccountsBrowser() {
+    public AccountsBrowser() {
         initComponents();
         final Outline outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
