@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -45,6 +46,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
@@ -120,7 +122,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         hashDbNameLabel.setText(NO_SELECTION_TEXT);
         hashDbTypeLabel.setText(NO_SELECTION_TEXT);
         hashDbLocationLabel.setText(NO_SELECTION_TEXT);
+        hashDbVersionLabel.setText(NO_SELECTION_TEXT);
+        hashDbOrgLabel.setText(NO_SELECTION_TEXT);
+        hashDbReadOnlyLabel.setText(NO_SELECTION_TEXT);
         indexPathLabel.setText(NO_SELECTION_TEXT);
+        
 
         // Update indexing components.
         hashDbIndexStatusLabel.setText(NO_SELECTION_TEXT);
@@ -144,18 +150,26 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         ingestWarningLabel.setVisible(ingestIsRunning);
     }
 
+    @NbBundle.Messages({"HashLookupSettingsPanel.readOnly=Read only",
+        "HashLookupSettingsPanel.editable=Editable",
+        "HashLookupSettingsPanel.updateStatusError=Error reading status",
+        "HashLookupSettingsPanel.notApplicable=N/A",
+        "HashLookupSettingsPanel.centralRepo=Central Repository"
+    })
     private void updateComponentsForSelection(HashDatabase db) {
         boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
 
         // Update descriptive labels.        
         hashDbNameLabel.setText(db.getHashSetName());
-        hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName());
-
-        try {
-            hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
-            hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
+        hashDbTypeLabel.setText(db.getKnownFilesType().getDisplayName()); 
+        try{
+            if(db.isUpdateable()){
+                hashDbReadOnlyLabel.setText(Bundle.HashLookupSettingsPanel_editable());
+            } else {
+                hashDbReadOnlyLabel.setText(Bundle.HashLookupSettingsPanel_readOnly());
+            }
+        } catch (TskCoreException ex){
+            hashDbReadOnlyLabel.setText(Bundle.HashLookupSettingsPanel_updateStatusError());
         }
 
         try {
@@ -167,6 +181,21 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         if(db instanceof HashDb){
             HashDb hashDb = (HashDb)db;
+            
+            // Disable the central repo fields
+            hashDbVersionLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
+            hashDbOrgLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
+            
+            // Enable the delete button if ingest is not running
+            deleteDatabaseButton.setEnabled(!ingestIsRunning);
+            
+            try {
+                hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
+            }
+            
             try {
                 indexPathLabel.setText(shortenPath(hashDb.getIndexPath()));
             } catch (TskCoreException ex) {
@@ -214,6 +243,19 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
                 indexButton.setEnabled(false);
             }
+        } else {
+            
+            // Disable the file type fields/buttons
+            indexPathLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
+            hashDbIndexStatusLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
+            hashDbLocationLabel.setText(Bundle.HashLookupSettingsPanel_centralRepo());
+            indexButton.setEnabled(false);
+            deleteDatabaseButton.setEnabled(false);
+            
+            CentralRepoHashDb crDb = (CentralRepoHashDb)db;
+
+            hashDbVersionLabel.setText(crDb.getVersion());
+            hashDbOrgLabel.setText(crDb.getOrgName());
         }
 
         // Disable the indexing button if ingest is in progress.
@@ -230,7 +272,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         // Update database action buttons.
         createDatabaseButton.setEnabled(true);
         importDatabaseButton.setEnabled(true);
-        deleteDatabaseButton.setEnabled(!ingestIsRunning);
 
         // Update ingest in progress warning label.
         ingestWarningLabel.setVisible(ingestIsRunning);
@@ -380,7 +421,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             // Give the user a visual indication of any hash sets with a hash
             // database that needs to be indexed by displaying the hash set name
             // in red.
-            if (hashSetTableModel.indexExists(row)) {
+            if (hashSetTableModel.isValid(row)) {
                 cellRenderer.setForeground(Color.black);
             } else {
                 cellRenderer.setForeground(Color.red);
@@ -437,12 +478,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             return hashSets.get(rowIndex).getHashSetName();
         }
 
-        private boolean indexExists(int rowIndex) {
+        private boolean isValid(int rowIndex) {            
             try {
-                if(hashSets.get(rowIndex) instanceof HashDb){
-                    return ((HashDb)(hashSets.get(rowIndex))).hasIndex();
-                }
-                return false;
+                return hashSets.get(rowIndex).isValid();
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
                 return false;
@@ -541,6 +579,12 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         indexPathLabel = new javax.swing.JLabel();
         addHashesToDatabaseButton = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        versionLabel = new javax.swing.JLabel();
+        hashDbVersionLabel = new javax.swing.JLabel();
+        orgLabel = new javax.swing.JLabel();
+        hashDbOrgLabel = new javax.swing.JLabel();
+        readOnlyLabel = new javax.swing.JLabel();
+        hashDbReadOnlyLabel = new javax.swing.JLabel();
 
         jLabel2.setFont(jLabel2.getFont().deriveFont(jLabel2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jLabel2.text")); // NOI18N
@@ -686,6 +730,18 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(versionLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.versionLabel.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbVersionLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbVersionLabel.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.orgLabel.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbOrgLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbOrgLabel.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(readOnlyLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.readOnlyLabel.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbReadOnlyLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbReadOnlyLabel.text_1")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -703,43 +759,56 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                 .addGap(309, 309, 309))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                        .addComponent(optionsLabel)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 334, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGap(10, 10, 10)
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                     .addComponent(locationLabel)
-                                                    .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                     .addComponent(typeLabel)
-                                                    .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(indexPathLabelLabel))
-                                                .addGap(10, 10, 10)
+                                                    .addComponent(versionLabel)
+                                                    .addComponent(orgLabel)
+                                                    .addComponent(readOnlyLabel))
+                                                .addGap(55, 55, 55)
                                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                     .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                     .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(indexPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(addHashesToDatabaseButton)))
+                                                    .addComponent(hashDbVersionLabel)
+                                                    .addComponent(hashDbOrgLabel)
+                                                    .addComponent(hashDbReadOnlyLabel)))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(nameLabel)
                                                 .addGap(53, 53, 53)
-                                                .addComponent(hashDbNameLabel))))
+                                                .addComponent(hashDbNameLabel))
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(indexPathLabelLabel))
+                                                .addGap(64, 64, 64)
+                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                    .addComponent(indexPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10, 10, 10)
+                                                .addComponent(addHashesToDatabaseButton))))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGap(70, 70, 70)
                                         .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(25, 25, 25)
-                                        .addComponent(sendIngestMessagesCheckBox))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(ingestWarningLabel)
-                                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                                .addGap(50, 50, 50))))
+                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                            .addComponent(optionsLabel)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 334, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                            .addGap(25, 25, 25)
+                                            .addComponent(sendIngestMessagesCheckBox))
+                                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                            .addGap(10, 10, 10)
+                                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(ingestWarningLabel)
+                                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(hashDatabasesLabel)
@@ -778,17 +847,29 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                             .addComponent(hashDbLocationLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(versionLabel)
+                            .addComponent(hashDbVersionLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(orgLabel)
+                            .addComponent(hashDbOrgLabel))
+                        .addGap(7, 7, 7)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(readOnlyLabel)
+                            .addComponent(hashDbReadOnlyLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(indexPathLabelLabel)
                             .addComponent(indexPathLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(indexLabel)
                             .addComponent(hashDbIndexStatusLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(indexButton)
                             .addComponent(addHashesToDatabaseButton))
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(optionsLabel)
                             .addComponent(optionsSeparator, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -946,7 +1027,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private javax.swing.JLabel hashDbIndexStatusLabel;
     private javax.swing.JLabel hashDbLocationLabel;
     private javax.swing.JLabel hashDbNameLabel;
+    private javax.swing.JLabel hashDbOrgLabel;
+    private javax.swing.JLabel hashDbReadOnlyLabel;
     private javax.swing.JLabel hashDbTypeLabel;
+    private javax.swing.JLabel hashDbVersionLabel;
     private javax.swing.JTable hashSetTable;
     private javax.swing.JButton importDatabaseButton;
     private javax.swing.JButton indexButton;
@@ -968,7 +1052,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private javax.swing.JLabel nameLabel;
     private javax.swing.JLabel optionsLabel;
     private javax.swing.JSeparator optionsSeparator;
+    private javax.swing.JLabel orgLabel;
+    private javax.swing.JLabel readOnlyLabel;
     private javax.swing.JCheckBox sendIngestMessagesCheckBox;
     private javax.swing.JLabel typeLabel;
+    private javax.swing.JLabel versionLabel;
     // End of variables declaration//GEN-END:variables
 }

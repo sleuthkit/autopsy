@@ -307,6 +307,7 @@ final class HashLookupSettings implements Serializable {
         private final boolean sendIngestMessages;
         private final String path;
         private final String version;
+        private final String orgName;
         private final int centralRepoIndex;
         private DatabaseType dbType;
 
@@ -328,12 +329,14 @@ final class HashLookupSettings implements Serializable {
             this.path = path;
             this.centralRepoIndex = -1;
             this.version = "";
+            this.orgName = "";
             this.dbType = DatabaseType.FILE;
         }
         
-        HashDbInfo(String hashSetName, String version, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, String orgName, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages){
             this.hashSetName = hashSetName;
             this.version = version;
+            this.orgName = orgName;
             this.centralRepoIndex = centralRepoIndex;
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
@@ -351,6 +354,7 @@ final class HashLookupSettings implements Serializable {
                 this.sendIngestMessages = fileTypeDb.getSendIngestMessages();
                 this.centralRepoIndex = -1;
                 this.version = "";
+                this.orgName = "";
                 this.dbType = DatabaseType.FILE;
                 if (fileTypeDb.hasIndexOnly()) {
                     this.path = fileTypeDb.getIndexPath();
@@ -361,6 +365,7 @@ final class HashLookupSettings implements Serializable {
                 HashDbManager.CentralRepoHashDb centralRepoDb = (HashDbManager.CentralRepoHashDb)db;
                 this.hashSetName = centralRepoDb.getHashSetName();
                 this.version = centralRepoDb.getVersion();
+                this.orgName = centralRepoDb.getOrgName();
                 this.knownFilesType = centralRepoDb.getKnownFilesType();
                 this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
                 this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
@@ -387,6 +392,14 @@ final class HashLookupSettings implements Serializable {
          */
         String getVersion(){
             return version;
+        }
+        
+        /**
+         * Get the organization name for the hash set
+         * @return org name
+         */
+        String getOrgName(){
+            return orgName;
         }
 
         /**

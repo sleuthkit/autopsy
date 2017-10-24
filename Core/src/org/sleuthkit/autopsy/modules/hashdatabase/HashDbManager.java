@@ -329,7 +329,7 @@ public class HashDbManager implements PropertyChangeListener {
         return db;        
         
     }
-    
+    /*
     public CentralRepoHashDb importCentralRepoHashSet(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType,
             String importFile) throws TskCoreException {
@@ -415,7 +415,7 @@ public class HashDbManager implements PropertyChangeListener {
             ex.printStackTrace();
             throw new TskCoreException(ex.getLocalizedMessage());
         }
-    }
+    }*/
 
     synchronized void indexHashDatabase(HashDb hashDb) {
         hashDb.addPropertyChangeListener(this);
@@ -703,7 +703,8 @@ public class HashDbManager implements PropertyChangeListener {
                         allDatabasesLoadedCorrectly = false;
                     }
                 } else {
-                    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), hashDbInfo.getCentralRepoIndex(), 
+                    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                            hashDbInfo.getCentralRepoIndex(), 
                             hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
                 }
             } catch (TskCoreException ex) {
@@ -1168,6 +1169,7 @@ public class HashDbManager implements PropertyChangeListener {
         private final HashDb.KnownFilesType knownFilesType;  
         private final int centralRepoIndex;
         private final String version;
+        private final String orgName = "";
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
         private CentralRepoHashDb(String hashSetName, String version, int centralRepoIndex, 
@@ -1213,6 +1215,10 @@ public class HashDbManager implements PropertyChangeListener {
         
         public String getVersion(){
             return version;
+        }
+        
+        public String getOrgName(){
+            return "org name";
         }
         
         public int getCentralRepoIndex(){

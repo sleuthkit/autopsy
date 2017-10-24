@@ -489,7 +489,7 @@ final public class ImportCentralRepoDatabaseDialog extends javax.swing.JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
-        String selectedFilePath = tfFilePath.getText();
+        /*String selectedFilePath = tfFilePath.getText();
 
         // have valid file path
         if (selectedFilePath.isEmpty()) {
@@ -517,7 +517,7 @@ final public class ImportCentralRepoDatabaseDialog extends javax.swing.JDialog {
             
         } finally {
             dispose();
-        }
+        }*/
         /*
         // create global set
         int globalSetID;

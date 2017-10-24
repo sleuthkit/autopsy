@@ -33,12 +33,16 @@ import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
+import javax.swing.WindowConstants;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.Executors;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,9 +53,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements PropertyChangeListener{
 
-
-    long totalHashes;
-    private SwingWorker<Void, Void> worker;
+    private CentralRepoImportWorker worker;
    
     
     /**
@@ -70,8 +72,14 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ImportCentralRepoDbProgressDialog_title_text(),
                 true);
-       
-        initComponents();    
+               
+        initComponents();   
+        customizeComponents();
+    }
+    
+    private void customizeComponents(){
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        bnOk.setEnabled(false);
     }
     
     void importFile(String hashSetName, String version, int orgId,
@@ -81,8 +89,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         
         File importFile = new File(importFileName);
         worker = new ImportIDXWorker(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, 
-                knownFilesType, importFile, totalHashes);
-        totalHashes = ((ImportIDXWorker)worker).getEstimatedTotalHashes();
+                knownFilesType, importFile);
         worker.addPropertyChangeListener(this);
         worker.execute();
         
@@ -91,16 +98,16 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         this.setVisible(true);
     }
     
+    @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.linesProcessed= lines processed"})
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         System.out.println("### Evt type: " + evt.getPropertyName());
         System.out.println("       newValue: " + evt.getNewValue().toString());
-        System.out.println("### Setting progress to " + worker.getProgress());
+        System.out.println("### Setting progress to " + worker.getProgressPercentage());
         
         if("progress".equals(evt.getPropertyName())){
-            progressBar.setValue(worker.getProgress());
-            String mes = "Count: " + worker.getProgress();
-            lbProgress.setText(mes);
+            progressBar.setValue(worker.getProgressPercentage());
+            lbProgress.setText(getProgressString());
         } else if ("state".equals(evt.getPropertyName())
                 && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
             // Disable cancel and enable ok
@@ -108,12 +115,24 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             bnOk.setEnabled(true);
             
             progressBar.setValue(progressBar.getMaximum());
-            String mes = "Count: " + worker.getProgress();
-            lbProgress.setText(mes);
+            lbProgress.setText(getProgressString());
         }
     }
     
-    class ImportIDXWorker extends SwingWorker<Void, Void>{
+    private String getProgressString(){
+        return worker.getLinesProcessed() + Bundle.ImportCentralRepoDbProgressDialog_linesProcessed();
+    }
+    
+    private interface CentralRepoImportWorker{
+        
+        void execute();
+        boolean cancel(boolean mayInterruptIfRunning);
+        void addPropertyChangeListener(PropertyChangeListener dialog);
+        int getProgressPercentage();
+        long getLinesProcessed();
+    }
+    
+    class ImportIDXWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
         
         private final int HASH_IMPORT_THRESHOLD = 10000;
         private final String hashSetName;
@@ -125,10 +144,11 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final File importFile;
         private final long totalLines;
         private int crIndex = -1;
+        private AtomicLong numLines = new AtomicLong();
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
-            File importFile, long totalLines){
+            File importFile){
             
             this.hashSetName = hashSetName;
             this.version = version;
@@ -137,7 +157,9 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             this.sendIngestMessages = sendIngestMessages;
             this.knownFilesType = knownFilesType;
             this.importFile = importFile;
-            this.totalLines = totalLines;
+            this.numLines.set(0);
+            
+            this.totalLines = getEstimatedTotalHashes();
         }
         
         /**
@@ -146,10 +168,30 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
          * progress bar.
          * @return Approximate number of hashes in the file
          */
-        long getEstimatedTotalHashes(){
+        final long getEstimatedTotalHashes(){
             long fileSize = importFile.length();
             return (fileSize / 0x33); // IDX file lines are generally 0x33 bytes long
         }
+        
+        @Override
+        public long getLinesProcessed(){
+            return numLines.get();
+        }
+        
+        @Override
+        public int getProgressPercentage(){
+            return this.getProgress();
+        }
+        
+        //@Override
+        //public void addPropertyChangeListener(PropertyChangeListener dialog){
+        //    super.addPropertyChangeListener(dialog);
+        //}
+        
+        //@Override
+        //public void run(){
+        //    this.execute();
+        //}
         
         @Override
         protected Void doInBackground() throws Exception {
@@ -176,8 +218,10 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 String line;
                 Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
 
-                long numLines = 0;
                 while ((line = reader.readLine()) != null) {
+                    if(isCancelled()){
+                        return null;
+                    }
                     
                     String[] parts = line.split("\\|");
 
@@ -193,13 +237,13 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                             "");
 
                     globalInstances.add(eamGlobalFileInstance);
-                    numLines++;
+                    numLines.incrementAndGet();
 
-                    if(numLines % HASH_IMPORT_THRESHOLD == 0){
+                    if(numLines.get() % HASH_IMPORT_THRESHOLD == 0){
                         dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
                         globalInstances.clear();
                         
-                        int progress = (int)(numLines * 100 / totalLines);
+                        int progress = (int)(numLines.get() * 100 / totalLines);
                         if(progress < 100){
                             this.setProgress(progress);
                         } else {
@@ -218,28 +262,40 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 ex.printStackTrace();
                 throw new TskCoreException(ex.getLocalizedMessage());
             }
+        }
+        
+        private void deleteIncompleteSet(int crIndex){
+            if(crIndex >= 0){
+                System.out.println("Deleting incomplete reference set");
+                
+                // This can be slow on large reference sets
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override 
+                    public void run() {
+                        try{
+                            EamDb.getInstance().deleteReferenceSet(crIndex);
+                        } catch (EamDbException ex2){
 
-
-            // Let any external listeners know that there's a new set   
-            //try {
-            //    changeSupport.firePropertyChange(HashDbManager.SetEvt.DB_ADDED.toString(), null, hashSetName);
-            //} catch (Exception e) {
-            //    logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
-            //    MessageNotifyUtil.Notify.show(
-            //            NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
-            //            NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
-             //           MessageNotifyUtil.MessageType.ERROR);
-            //}
-            //return hashDb;
+                        }
+                    }
+                });
+            }
         }
         
         @Override
         protected void done() {
+            if(isCancelled()){
+                // If the user hit cancel, delete this incomplete hash set from the central repo
+                deleteIncompleteSet(crIndex);
+                return;
+            }
+            
             try {
                 get();
                 try{
                     System.out.println("### Finished - adding hashDb object");
-                    HashDbManager.CentralRepoHashDb hashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, crIndex, 
+                    HashDbManager.CentralRepoHashDb hashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
+                            crIndex, 
                             searchDuringIngest, sendIngestMessages, knownFilesType);
                 } catch (TskCoreException ex){
                     System.out.println("\n### Error!");
@@ -248,7 +304,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 
                 System.out.println("\n### Interrupted!");
                 
-                // If the user hit cancel, delete this incomplete hash set from the central repo
+                // Delete this incomplete hash set from the central repo
                 if(crIndex >= 0){
                     try{
                         EamDb.getInstance().deleteReferenceSet(crIndex);
@@ -257,7 +313,12 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                     }
                 }
             }
-        }
+        }       
+        
+        //@Override
+        //public boolean cancel(boolean mayInterruptIfRunning) {
+        //    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //}
     }
     
     /**
@@ -271,20 +332,13 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
         progressBar = new javax.swing.JProgressBar();
         lbProgress = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
         bnOk = new javax.swing.JButton();
         bnCancel = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbProgress, org.openide.util.NbBundle.getMessage(ImportCentralRepoDbProgressDialog.class, "ImportCentralRepoDbProgressDialog.lbProgress.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(ImportCentralRepoDbProgressDialog.class, "ImportCentralRepoDbProgressDialog.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnOk, org.openide.util.NbBundle.getMessage(ImportCentralRepoDbProgressDialog.class, "ImportCentralRepoDbProgressDialog.bnOk.text")); // NOI18N
         bnOk.addActionListener(new java.awt.event.ActionListener() {
@@ -300,55 +354,52 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ImportCentralRepoDbProgressDialog.class, "ImportCentralRepoDbProgressDialog.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(27, 27, 27)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton1)
-                            .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(27, Short.MAX_VALUE))
+                        .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbProgress)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnOk)
-                        .addGap(18, 18, 18)
-                        .addComponent(bnCancel)
-                        .addGap(24, 24, 24))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(lbProgress))
+                        .addGap(0, 172, Short.MAX_VALUE))))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(bnOk, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bnCancel)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(112, 112, 112)
-                        .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lbProgress)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(bnOk)
-                            .addComponent(bnCancel))
-                        .addGap(72, 72, 72)))
-                .addComponent(jButton1)
-                .addGap(42, 42, 42))
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbProgress)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(bnCancel)
+                    .addComponent(bnOk))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        this.dispose();
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
         this.worker.cancel(true);
+        this.dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
@@ -359,7 +410,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancel;
     private javax.swing.JButton bnOk;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lbProgress;
     private javax.swing.JProgressBar progressBar;
     // End of variables declaration//GEN-END:variables
