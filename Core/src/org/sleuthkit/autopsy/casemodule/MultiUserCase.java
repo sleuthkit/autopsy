@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Comparator;
 import java.util.Date;
@@ -47,10 +49,19 @@ class MultiUserCase implements Comparable<MultiUserCase> {
      *
      * @param caseDirectoryPath The case directory path.
      */
-    MultiUserCase(Path caseDirectoryPath) {
+    MultiUserCase(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException {
+        CaseMetadata caseMetadata = null;
+        
+        try {
+            caseMetadata = getCaseMetadataFromCaseDirectoryPath(caseDirectoryPath);
+        } catch (CaseMetadata.CaseMetadataException ex) {
+            logger.log(Level.SEVERE, String.format("Error reading the case metadata for %s.", caseDirectoryPath), ex);
+            throw ex;
+        }
+        
         this.caseDirectoryPath = caseDirectoryPath;
-        caseName = getCaseNameFromCaseDirectoryPath(caseDirectoryPath);
-        metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
+        caseName = caseMetadata.getCaseDisplayName();
+        metadataFilePath = caseDirectoryPath.resolve(caseMetadata.getCaseName() + CaseMetadata.getFileExtension());
         BasicFileAttributes fileAttrs = null;
         try {
             fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);
@@ -119,19 +130,29 @@ class MultiUserCase implements Comparable<MultiUserCase> {
     }
 
     /**
-     * Extracts the case name from a case folder path.
+     * Gets the case metadata from a case directory path.
      *
-     * @param caseFolderPath A case folder path.
+     * @param caseDirectoryPath The case directory path.
      *
-     * @return A case name, with the time stamp suffix removed.
+     * @return Case metadata.
      */
-    static String getCaseNameFromCaseDirectoryPath(Path caseFolderPath) {
-        String caseName = caseFolderPath.getFileName().toString();
-        if (caseName.length() > TimeStampUtils.getTimeStampLength()) {
-            return caseName.substring(0, caseName.length() - TimeStampUtils.getTimeStampLength());
-        } else {
-            return caseName;
+    static CaseMetadata getCaseMetadataFromCaseDirectoryPath(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException {
+        CaseMetadata caseMetadata = null;
+        
+        File directory = new File(caseDirectoryPath.toString());
+        if (directory.isDirectory()) {
+            String fileNamePrefix = directory.getName();
+            if (TimeStampUtils.endsWithTimeStamp(fileNamePrefix)) {
+                fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix.length() - TimeStampUtils.getTimeStampLength());
+            }
+            
+            File file = new File(directory + "/" + fileNamePrefix + CaseMetadata.getFileExtension());
+            if(file.isFile()) {
+                caseMetadata = new CaseMetadata(Paths.get(file.getAbsolutePath()));
+            }
         }
+        
+        return caseMetadata;
     }
 
     /**

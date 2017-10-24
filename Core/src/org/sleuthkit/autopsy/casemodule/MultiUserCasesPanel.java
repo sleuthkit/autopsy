@@ -39,10 +39,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-public class MultiUserCasePanel extends javax.swing.JPanel {
+public class MultiUserCasesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(MultiUserCasePanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
     private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
     private static final MultiUserCase.LastAccessedDateDescendingComparator REVERSE_DATE_MODIFIED_COMPARATOR = new MultiUserCase.LastAccessedDateDescendingComparator();
     private static final int CASE_COL_MIN_WIDTH = 30;
@@ -62,11 +62,11 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
      * TODO (RC): Consider unifying this stuff in an enum as in
      * AutoIngestDashboard to make it less error prone.
      */
-    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "ReviewModeCasePanel.CaseHeaderText");
-    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
-    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
-    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
-    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
+    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CaseHeaderText");
+    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
+    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
+    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
+    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
 
     enum COLUMN_HEADERS {
 
@@ -86,7 +86,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
      *
      * @param parent The parent dialog for this panel.
      */
-    MultiUserCasePanel() {
+    MultiUserCasesPanel() {
         caseTableModel = new DefaultTableModel(columnNames, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -326,7 +326,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
 
         setName("Completed Cases"); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.bnOpen.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnOpen.text")); // NOI18N
         bnOpen.setEnabled(false);
         bnOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -346,7 +346,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
         });
         scrollPaneTable.setViewportView(casesTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.bnRefresh.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnRefresh.text")); // NOI18N
         bnRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnRefreshActionPerformed(evt);
@@ -355,7 +355,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
 
         rbGroupHistoryLength.add(rbAllCases);
         rbAllCases.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(rbAllCases, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.rbAllCases.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbAllCases, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbAllCases.text")); // NOI18N
         rbAllCases.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbAllCasesItemStateChanged(evt);
@@ -377,8 +377,8 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
                 .addComponent(rbAllCases))
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.bnShowLog.text")); // NOI18N
-        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.bnShowLog.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnShowLog.text")); // NOI18N
+        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnShowLog.toolTipText")); // NOI18N
         bnShowLog.setEnabled(false);
         bnShowLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -387,7 +387,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
         });
 
         rbGroupHistoryLength.add(rbDays);
-        org.openide.awt.Mnemonics.setLocalizedText(rbDays, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.rbDays.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbDays, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbDays.text")); // NOI18N
         rbDays.setName(""); // NOI18N
         rbDays.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -396,7 +396,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
         });
 
         rbGroupHistoryLength.add(rbWeeks);
-        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.rbWeeks.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbWeeks.text")); // NOI18N
         rbWeeks.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbWeeksItemStateChanged(evt);
@@ -404,7 +404,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
         });
 
         rbGroupHistoryLength.add(rbMonths);
-        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.rbMonths.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbMonths.text")); // NOI18N
         rbMonths.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbMonthsItemStateChanged(evt);
@@ -412,7 +412,7 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
         });
 
         rbGroupLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "MultiUserCasePanel.rbGroupLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbGroupLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -521,14 +521,14 @@ public class MultiUserCasePanel extends javax.swing.JPanel {
                     Desktop.getDesktop().edit(pathToLog.toFile());
 
                 } else {
-                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "DisplayLogDialog.cannotFindLog"),
-                            org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotFindLog"),
+                            org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Error attempting to open case auto ingest log file %s", pathToLog), ex);
                 JOptionPane.showMessageDialog(this,
-                        org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "DisplayLogDialog.cannotOpenLog"),
-                        org.openide.util.NbBundle.getMessage(MultiUserCasePanel.class, "DisplayLogDialog.unableToShowLogFile"),
+                        org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotOpenLog"),
+                        org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"),
                         JOptionPane.PLAIN_MESSAGE);
             }
         }

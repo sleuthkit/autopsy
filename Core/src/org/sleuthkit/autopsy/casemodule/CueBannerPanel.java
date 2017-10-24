@@ -31,7 +31,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /*
  * The panel in the default Autopsy startup window.
@@ -39,8 +38,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 public class CueBannerPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final String REVIEW_MODE_TITLE = "Open Multi-User Case (" + LOCAL_HOST_NAME + ")";
+    private static final String REVIEW_MODE_TITLE = "Open Multi-User Case";
     /*
      * This is field is static for the sake of the closeOpenRecentCasesWindow
      * method.
@@ -91,7 +89,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
     
     private void customizeComponents() {
         initRecentCasesWindow();
-        initMultiUserCasesWindow();
     }
 
     private void initRecentCasesWindow() {
@@ -127,7 +124,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     multiUserCaseWindow.setVisible(false);
                 },
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        multiUserCaseWindow.add(new MultiUserCasePanel());
+        multiUserCaseWindow.add(new MultiUserCasesPanel());
         multiUserCaseWindow.pack();
         multiUserCaseWindow.setResizable(false);
     }
@@ -306,6 +303,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
     private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
+        if(multiUserCaseWindow == null) {
+            initMultiUserCasesWindow();
+        }
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);
     }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed

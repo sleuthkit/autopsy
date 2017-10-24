@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 
@@ -78,7 +80,11 @@ final class MultiUserCaseManager {
                 if(caseFolder.exists()) {
                         File[] autFiles = caseFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".aut"));
                         if(autFiles != null && autFiles.length > 0) {
+                            try {
                                 cases.add(new MultiUserCase(casePath));
+                            } catch (CaseMetadata.CaseMetadataException ex) {
+                                // Ignore and continue.
+                            }
                         }
                 }
         }

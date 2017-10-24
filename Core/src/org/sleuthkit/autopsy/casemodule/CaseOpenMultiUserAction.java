@@ -31,16 +31,13 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import static org.sleuthkit.autopsy.core.UserPreferences.SelectedMode.REVIEW;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
- * The action associated with the Case/Open Case menu item via the layer.xml
- * file, a toolbar button, and the Create New Case button of the start up window
- * that allows a user to open a case. It opens an existing case.
+ * The action associated with the Open Multi-User Case menu item via the
+ * layer.xml file.
  *
  * This action should only be invoked in the event dispatch thread (EDT).
  */
@@ -57,14 +54,13 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
     private static final String REVIEW_MODE_TITLE = "Open Multi-User Case (" + LOCAL_HOST_NAME + ")";
 
+    public CaseOpenMultiUserAction() {}
+    
     /**
-     * Constructs the action associated with the Case/Open Case menu item via
-     * the layer.xml file, a toolbar button, and the Create New Case button of
-     * the start up window that allows a user to open a case. It opens an
-     * existing case.
-     *
+     * Constructs the Multi-User Cases window used by the Open Multi-User Case
+     * menu item.
      */
-    public CaseOpenMultiUserAction() {
+    private void initMultiUserCasesWindow() {
         multiUserCaseWindow = new JDialog(
                 WindowManager.getDefault().getMainWindow(),
                 REVIEW_MODE_TITLE,
@@ -74,7 +70,7 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
                     multiUserCaseWindow.setVisible(false);
                 },
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        multiUserCaseWindow.add(new MultiUserCasePanel());
+        multiUserCaseWindow.add(new MultiUserCasesPanel());
         multiUserCaseWindow.pack();
         multiUserCaseWindow.setResizable(false);
     }
@@ -91,13 +87,16 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     }
 
     /**
-     * Pops up a file chooser to allow the user to select a case metadata file
-     * (.aut file) and attempts to open the case described by the file.
+     * Pops up a case selection panel to allow the user to selecte a multi-user
+     * case to open.
      *
      * @param e The action event.
      */
     @Override
     public void actionPerformed(ActionEvent event) {
+        if(multiUserCaseWindow == null) {
+            initMultiUserCasesWindow();
+        }
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);
     }
