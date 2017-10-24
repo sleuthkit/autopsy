@@ -141,7 +141,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int GENERIC_COL_MAX_WIDTH = 2000;
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
-    private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 50;
+    private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
     private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
@@ -182,7 +182,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * ordinal or a column header string.
      */
     @Messages({
-        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority=Priority",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority=Prioritized",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Case=Case",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ImageFolder=Data Source",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.HostName=Host Name",
@@ -266,32 +266,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         manager = AutoIngestManager.getInstance();
 
-        pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
+        pendingTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        runningTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-        runningTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
+        completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        completedTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
         initComponents(); // Generated code.
         setServicesStatusMessage();
         initPendingJobsTable();
@@ -426,12 +406,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setWidth(TIME_COL_PREFERRED_WIDTH);
 
         column = pendingTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader());
+        column.setCellRenderer(new PrioritizedIconCellRenderer());
         column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
         column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
         column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
 
         /**
-         * Prevent sorting when a column header is clicked.
+         * Allow sorting when a column header is clicked.
          */
         pendingTable.setAutoCreateRowSorter(true);
 
@@ -621,7 +602,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setWidth(STATUS_COL_PREFERRED_WIDTH);
 
         /*
-         * Prevent sorting when a column header is clicked.
+         * Allow sorting when a column header is clicked.
          */
         completedTable.setAutoCreateRowSorter(true);
 
@@ -1846,4 +1827,33 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private javax.swing.JTextField tbStatusMessage;
     // End of variables declaration//GEN-END:variables
 
+    private class AutoIngestTableModel extends DefaultTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        private AutoIngestTableModel(String[] headers, int i) {
+            super(headers, i);
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex == JobsTableModelColumns.PRIORITY.ordinal()) {
+                return Integer.class;
+            } else if (columnIndex == JobsTableModelColumns.CREATED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.COMPLETED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.STARTED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.STAGE_TIME.ordinal()) {
+                return Date.class;
+            } else if (columnIndex == JobsTableModelColumns.STATUS.ordinal()) {
+                return Boolean.class;
+            } else {
+                return super.getColumnClass(columnIndex);
+            }
+        }
+    }
 }

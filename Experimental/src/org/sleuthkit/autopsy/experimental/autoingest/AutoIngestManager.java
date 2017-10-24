@@ -503,6 +503,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
         SYS_LOGGER.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
         InputDirScanner scanner = new InputDirScanner();
+
         scanner.scan();
         SYS_LOGGER.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
     }
@@ -558,10 +559,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             if (!prioritizedJobs.isEmpty()) {
                 ++maxPriority;
                 for (AutoIngestJob job : prioritizedJobs) {
+                    int oldPriority = job.getPriority();
+                      job.setPriority(maxPriority);
                     try {
                         this.updateCoordinationServiceNode(job);
-                        job.setPriority(maxPriority);
                     } catch (CoordinationServiceException | InterruptedException ex) {
+                        job.setPriority(oldPriority);
                         throw new AutoIngestManagerException("Error updating case priority", ex);
                     }
                 }
@@ -612,12 +615,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
              */
             if (null != prioritizedJob) {
                 ++maxPriority;
+                int oldPriority = prioritizedJob.getPriority();
+                prioritizedJob.setPriority(maxPriority);
                 try {
                     this.updateCoordinationServiceNode(prioritizedJob);
                 } catch (CoordinationServiceException | InterruptedException ex) {
+                    prioritizedJob.setPriority(oldPriority);
                     throw new AutoIngestManagerException("Error updating job priority", ex);
                 }
-                prioritizedJob.setPriority(maxPriority);
             }
 
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
@@ -1046,8 +1051,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 if (null != manifest) {
                     /*
-                 * Update the mapping of case names to manifest paths that is
-                 * used for case deletion.
+                     * Update the mapping of case names to manifest paths that
+                     * is used for case deletion.
                      */
                     String caseName = manifest.getCaseName();
                     Path manifestPath = manifest.getFilePath();
@@ -1061,8 +1066,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     }
 
                     /*
-                 * Add a job to the pending jobs queue, the completed jobs list,
-                 * or do crashed job recovery, as required.
+                     * Add a job to the pending jobs queue, the completed jobs
+                     * list, or do crashed job recovery, as required.
                      */
                     try {
                         byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
@@ -1082,7 +1087,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                                         break;
                                     case DELETED:
                                         /*
-                                     * Ignore jobs marked as "deleted."
+                                         * Ignore jobs marked as "deleted."
                                          */
                                         break;
                                     default:
