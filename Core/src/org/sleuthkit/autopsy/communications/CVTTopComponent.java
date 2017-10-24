@@ -70,7 +70,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         HSplitPane.setDividerLocation(600);
 
         BrowseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), accountsBrowser); // NOI18N
+        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
 
         jPanel1.setName(""); // NOI18N
 
@@ -85,7 +85,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             .addGap(0, 710, Short.MAX_VALUE)
         );
 
-        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), jPanel1); // NOI18N
+        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), jPanel1); // NOI18N
 
         HSplitPane.setLeftComponent(BrowseVisualizeTabPane);
 
