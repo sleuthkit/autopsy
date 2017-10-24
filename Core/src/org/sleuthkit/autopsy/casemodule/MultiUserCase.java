@@ -145,9 +145,30 @@ class MultiUserCase implements Comparable<MultiUserCase> {
                 fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix.length() - TimeStampUtils.getTimeStampLength());
             }
             
-            File file = new File(directory + "/" + fileNamePrefix + CaseMetadata.getFileExtension());
-            if(file.isFile()) {
-                caseMetadata = new CaseMetadata(Paths.get(file.getAbsolutePath()));
+            /*
+             * Attempt to open an AUT file that has the folder name without a
+             * time stamp.
+             */
+            File autFile = new File(directory + "/" + fileNamePrefix + CaseMetadata.getFileExtension());
+            
+            /*
+             * If the AUT file doesn't exist, attempt to find an AUT file via a
+             * directory scan.
+             */
+            if(!autFile.isFile()) {
+                for (File file : directory.listFiles()) {
+                    if (file.getName().toLowerCase().endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
+                        autFile = file;
+                        break;
+                    }
+                }
+            }
+            
+            /*
+             * If the AUT file has been found, grab the case metadata.
+             */
+            if(autFile.isFile()) {
+                caseMetadata = new CaseMetadata(Paths.get(autFile.getAbsolutePath()));
             }
         }
         
