@@ -37,41 +37,7 @@ class AccountNode extends AbstractNode {
         super(Children.LEAF, Lookups.fixed(account));
         this.account = account;
         setName(account.getAccountUniqueID());
-        setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + getIconFileName(account.getAccountType()));
-    }
-
-    /**
-     * The file name of the icon for the given Account Type. Will not include
-     * the path but will include the extension.
-     *
-     * @return The file name of the icon for the given Account Type.
-     */
-    final String getIconFileName(Account.Type type) {
-        if (type == Account.Type.CREDIT_CARD) {
-            return "credit-card.png";
-        } else if (type == Account.Type.DEVICE) {
-            return "image.png";
-        } else if (type == Account.Type.EMAIL) {
-            return "email.png";
-        } else if (type == Account.Type.FACEBOOK) {
-            return "facebook.png";
-        } else if (type == Account.Type.INSTAGRAM) {
-            return "instagram.png";
-        } else if (type == Account.Type.MESSAGING_APP) {
-            return "messaging.png";
-        } else if (type == Account.Type.PHONE) {
-            return "phone.png";
-        } else if (type == Account.Type.TWITTER) {
-            return "twitter.png";
-        } else if (type == Account.Type.WEBSITE) {
-            return "web-file.png";
-        } else if (type == Account.Type.WHATSAPP) {
-            return "WhatsApp.png";
-        } else {
-            //there could be a default icon instead...
-            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
-        }
-
+        setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + AccountUtils.getIconFileName(account.getAccountType()));
     }
 
     @Override
@@ -79,7 +45,7 @@ class AccountNode extends AbstractNode {
         "AccountNode.device=Device",
         "AccountNode.accountName=Account",
         "AccountNode.accountType=Type",
-        "AccountNode.messageCount=Message Count"})
+        "AccountNode.messageCount=Msg Count"})
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set properties = s.get(Sheet.PROPERTIES);

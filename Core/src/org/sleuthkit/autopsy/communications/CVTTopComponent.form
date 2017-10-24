@@ -18,9 +18,9 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="filtersPane" min="-2" pref="276" max="-2" attributes="0"/>
+              <Component id="filtersPane" min="-2" pref="244" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="HSplitPane" pref="1290" max="32767" attributes="0"/>
+              <Component id="HSplitPane" pref="1322" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>

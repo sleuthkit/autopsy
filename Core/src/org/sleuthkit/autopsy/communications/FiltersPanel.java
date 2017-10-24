@@ -18,18 +18,18 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.awt.Component;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import javax.swing.DefaultListModel;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.swing.JCheckBox;
-import javax.swing.JList;
-import javax.swing.ListCellRenderer;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -42,28 +42,35 @@ public class FiltersPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
 
     private ExplorerManager em;
-    private final DefaultListModel<Account.Type> accountTypesModel;
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
 
     public FiltersPanel() {
         initComponents();
-        accountTypesModel = new DefaultListModel<>();
-        try {
-            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
-            accountTypesInUse.forEach(accountTypesModel::addElement);
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        accountTypesList.setCellRenderer(new ListCellRenderer<Account.Type>() {
-            @Override
-            public Component getListCellRendererComponent(JList<? extends Account.Type> list, Account.Type value, int index, boolean isSelected, boolean cellHasFocus) {
-                JCheckBox jCheckBox = new JCheckBox(value.getDisplayName());
-                return jCheckBox;
-            }
+        /*
+         * something like this commented code could be used to show only the
+         * account types that are found:
+         *
+         * final CommunicationsManager communicationsManager =
+         * Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+         * List<Account.Type> accountTypesInUse =
+         * communicationsManager.getAccountTypesInUse();
+         * accountTypesInUSe.forEach(....)
+         */
+        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
+            final JCheckBox jCheckBox = new JCheckBox(
+                    "<html><table cellpadding=0><tr><td><img src=\""
+                    + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                            + AccountUtils.getIconFileName(type))
+                    + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
+                    true
+            );
+            accountTypePane.add(jCheckBox);
+            accountTypeMap.put(type, jCheckBox);
         });
 
-        accountTypesList.setModel(accountTypesModel);
-
+        invalidate();
     }
 
     @Override
@@ -83,14 +90,18 @@ public class FiltersPanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
-        jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        accountTypesList = new javax.swing.JList<>();
         applyFiltersButton = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        filtersTitleLabel = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        accountTypePane = new javax.swing.JPanel();
+        unCheckAllAccountTypesButton = new javax.swing.JButton();
+        accountTypesLabel = new javax.swing.JLabel();
+        checkAllAccountTypesButton = new javax.swing.JButton();
+        jPanel3 = new javax.swing.JPanel();
+        unCheckAllDevicesButton = new javax.swing.JButton();
+        devicesLabel = new javax.swing.JLabel();
+        checkAllDevicesButton = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
 
         jList1.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -98,6 +109,89 @@ public class FiltersPanel extends javax.swing.JPanel {
             public String getElementAt(int i) { return strings[i]; }
         });
         jScrollPane1.setViewportView(jList1);
+
+        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/control-double.png"))); // NOI18N
+        applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
+        applyFiltersButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                applyFiltersButtonActionPerformed(evt);
+            }
+        });
+
+        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
+        filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
+
+        accountTypePane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        accountTypePane.setLayout(new javax.swing.BoxLayout(accountTypePane, javax.swing.BoxLayout.Y_AXIS));
+
+        unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
+        unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unCheckAllAccountTypesButtonActionPerformed(evt);
+            }
+        });
+
+        accountTypesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/accounts.png"))); // NOI18N
+        accountTypesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypesLabel.text")); // NOI18N
+
+        checkAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllAccountTypesButton.text")); // NOI18N
+        checkAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkAllAccountTypesButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(unCheckAllAccountTypesButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(checkAllAccountTypesButton))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(accountTypesLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 144, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap())))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(accountTypesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, 118, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(checkAllAccountTypesButton)
+                    .addComponent(unCheckAllAccountTypesButton))
+                .addContainerGap())
+        );
+
+        unCheckAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllDevicesButton.text")); // NOI18N
+        unCheckAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                unCheckAllDevicesButtonActionPerformed(evt);
+            }
+        });
+
+        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/image.png"))); // NOI18N
+        devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
+
+        checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
+        checkAllDevicesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkAllDevicesButtonActionPerformed(evt);
+            }
+        });
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -109,46 +203,39 @@ public class FiltersPanel extends javax.swing.JPanel {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 56, Short.MAX_VALUE)
+            .addGap(0, 48, Short.MAX_VALUE)
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        jScrollPane2.setViewportView(accountTypesList);
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addComponent(devicesLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(unCheckAllDevicesButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(checkAllDevicesButton)
+                .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(jScrollPane2)
-                .addGap(0, 0, 0))
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(devicesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(checkAllDevicesButton)
+                    .addComponent(unCheckAllDevicesButton))
+                .addContainerGap())
         );
-
-        applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
-        applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                applyFiltersButtonActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.jLabel1.text")); // NOI18N
-
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/image.png"))); // NOI18N
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.jLabel2.text")); // NOI18N
-
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/accounts.png"))); // NOI18N
-        jLabel3.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.jLabel3.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -158,37 +245,27 @@ public class FiltersPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(applyFiltersButton))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(filtersTitleLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(applyFiltersButton)
                         .addGap(12, 12, 12))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(filtersTitleLabel)
                     .addComponent(applyFiltersButton))
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -197,32 +274,61 @@ public class FiltersPanel extends javax.swing.JPanel {
         /*
          * When the apply button is pressed, query for accounts using the
          * selected filters, and send the results to the AccountsBrowser via the
-         * ExplorerManager
+         * ExplorerManager.
+         *
+         * This will need to be adapted to any changes in the Comunications
+         * Manager API
          */
         try {
-            List<Account> accounts = new ArrayList<>();
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            accounts.addAll(communicationsManager.getAccounts(Account.Type.EMAIL));
-            accounts.addAll(communicationsManager.getAccounts(Account.Type.DEVICE));
 
+            List<Account> accounts = new ArrayList<>();
+            for (Entry<Account.Type, JCheckBox> entry : accountTypeMap.entrySet()) {
+                if (entry.getValue().isSelected()) {
+                    accounts.addAll(communicationsManager.getAccounts(entry.getKey()));
+                }
+            }
             em.setRootContext(new AbstractNode(Children.create(new AccountsNodeFactory(accounts), true)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }
 
     }//GEN-LAST:event_applyFiltersButtonActionPerformed
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void setAllTypesSelected(boolean selected) {
+        accountTypeMap.values().forEach(box -> box.setSelected(selected));
+    }
+    private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
+        setAllTypesSelected(false);
+    }//GEN-LAST:event_unCheckAllAccountTypesButtonActionPerformed
+
+    private void checkAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkAllAccountTypesButtonActionPerformed
+        setAllTypesSelected(true);
+    }//GEN-LAST:event_checkAllAccountTypesButtonActionPerformed
+
+    private void unCheckAllDevicesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllDevicesButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_unCheckAllDevicesButtonActionPerformed
+
+    private void checkAllDevicesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkAllDevicesButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_checkAllDevicesButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JList<Account.Type> accountTypesList;
+    private javax.swing.JPanel accountTypePane;
+    private javax.swing.JLabel accountTypesLabel;
     private javax.swing.JButton applyFiltersButton;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
+    private javax.swing.JButton checkAllAccountTypesButton;
+    private javax.swing.JButton checkAllDevicesButton;
+    private javax.swing.JLabel devicesLabel;
+    private javax.swing.JLabel filtersTitleLabel;
     private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JButton unCheckAllAccountTypesButton;
+    private javax.swing.JButton unCheckAllDevicesButton;
     // End of variables declaration//GEN-END:variables
 }

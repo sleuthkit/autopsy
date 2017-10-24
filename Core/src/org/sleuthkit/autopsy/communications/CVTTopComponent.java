@@ -108,9 +108,9 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 276, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(HSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1290, Short.MAX_VALUE)
+                .addComponent(HSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1322, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
