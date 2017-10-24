@@ -48,9 +48,9 @@ class AccountNode extends AbstractNode {
      */
     final String getIconFileName(Account.Type type) {
         if (type == Account.Type.CREDIT_CARD) {
-            return "creditcards.png";
+            return "credit-card.png";
         } else if (type == Account.Type.DEVICE) {
-            return "device.png";
+            return "image.png";
         } else if (type == Account.Type.EMAIL) {
             return "email.png";
         } else if (type == Account.Type.FACEBOOK) {
@@ -64,7 +64,7 @@ class AccountNode extends AbstractNode {
         } else if (type == Account.Type.TWITTER) {
             return "twitter.png";
         } else if (type == Account.Type.WEBSITE) {
-            return "world.png";
+            return "web-file.png";
         } else if (type == Account.Type.WHATSAPP) {
             return "WhatsApp.png";
         } else {
@@ -77,7 +77,7 @@ class AccountNode extends AbstractNode {
     @Override
     @NbBundle.Messages({
         "AccountNode.device=Device",
-        "AccountNode.accountName=Account Name",
+        "AccountNode.accountName=Account",
         "AccountNode.accountType=Type",
         "AccountNode.messageCount=Message Count"})
     protected Sheet createSheet() {
