@@ -214,10 +214,11 @@ final class ArchiveUtil {
      * @param destinationFolder Path to directory where results will be
      *                          extracted to.
      *
+     * @return List of file names contained within archive 
      * @throws
      * ArchiveExtractionException
      */
-    static void unpackArchiveFile(String archiveFilePath, String destinationFolder) throws ArchiveExtractionException {
+    static List<String> unpackArchiveFile(String archiveFilePath, String destinationFolder) throws ArchiveExtractionException {
         if (!SevenZip.isInitializedSuccessfully() && (SevenZip.getLastInitializationException() == null)) {
             try {
                 SevenZip.initSevenZipFromPlatformJAR();
@@ -225,6 +226,7 @@ final class ArchiveUtil {
                 throw new ArchiveExtractionException("Unable to initialize 7Zip libraries", ex);
             }
         }
+        List<String> files = new ArrayList<>();
         ISevenZipInArchive inArchive = null;
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(new File(archiveFilePath), "r");
@@ -251,6 +253,8 @@ final class ArchiveUtil {
                         }
                     }
                 }
+                // keep track of extracted files
+                files.add(entryPathInArchive);
             }
         } catch (Exception ex) {
             throw new ArchiveExtractionException("Exception while unpacking archive contents", ex);
@@ -263,6 +267,7 @@ final class ArchiveUtil {
                 throw new ArchiveExtractionException("Exception while closing the archive", ex);
             }
         }
+        return files;
     }
 
     /**

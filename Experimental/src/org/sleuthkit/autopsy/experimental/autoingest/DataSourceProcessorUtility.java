@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
@@ -30,8 +32,8 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.
  * A utility class to find Data Source Processors
  */
 class DataSourceProcessorUtility {
-    
-    private DataSourceProcessorUtility() {        
+
+    private DataSourceProcessorUtility() {
     }
 
     /**
@@ -59,5 +61,22 @@ class DataSourceProcessorUtility {
         }
 
         return validDataSourceProcessorsMap;
+    }
+
+    /**
+     * A utility method to get an ordered list of data source processors. DSPs
+     * are ordered in descending order from highest confidence to lowest.
+     *
+     * @param validDataSourceProcessorsMap Hash map of all DSPs that can process
+     * the data source along with their confidence score
+     * @return Ordered list of data source processors
+     */
+    static List<AutoIngestDataSourceProcessor> orderDataSourceProcessorsByConfidence(Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap) {
+        List<AutoIngestDataSourceProcessor> validDataSourceProcessors = validDataSourceProcessorsMap.entrySet().stream()
+                .sorted(Map.Entry.<AutoIngestDataSourceProcessor, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        return validDataSourceProcessors;
     }
 }

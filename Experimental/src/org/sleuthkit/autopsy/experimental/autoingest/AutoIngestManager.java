@@ -2334,10 +2334,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 }
 
                 // Get an ordered list of data source processors to try
-                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = validDataSourceProcessorsMap.entrySet().stream()
-                        .sorted(Map.Entry.<AutoIngestDataSourceProcessor, Integer>comparingByValue().reversed())
-                        .map(Map.Entry::getKey)
-                        .collect(Collectors.toList());
+                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = DataSourceProcessorUtility.orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
 
                 synchronized (ingestLock) {
                     // Try each DSP in decreasing order of confidence

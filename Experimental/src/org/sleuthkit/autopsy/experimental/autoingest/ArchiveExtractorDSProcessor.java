@@ -35,10 +35,10 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * add data source wizard. It also provides a run method overload to allow it to
  * be used independently of the wizard.
  */
-//@ServiceProviders(value={
-//    @ServiceProvider(service=DataSourceProcessor.class),
-//    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
-//)
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+)
 @NbBundle.Messages({
     "ArchiveDSP.dsType.text=Archive file"})
 public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
