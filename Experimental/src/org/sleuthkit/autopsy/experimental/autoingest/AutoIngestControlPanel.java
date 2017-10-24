@@ -1154,8 +1154,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
-                    job.getManifest().getFilePath(),
-                    job.getPriority()}); // MANIFEST_FILE_PATH
+                    job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
+                    job.getPriority()}); // PRIORITY 
             }
         } catch (Exception ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
