@@ -45,7 +45,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.RowSorter;
-import static javax.swing.SortOrder.DESCENDING;
+import javax.swing.SortOrder;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
@@ -278,14 +278,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         initRunningJobsTable();
         initCompletedJobsTable();
         initButtons();
-
-        @SuppressWarnings("unchecked")
-        TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) completedTable.getRowSorter();
-        List<RowSorter.SortKey> list = new ArrayList<>();
-        list.add(new RowSorter.SortKey(JobsTableModelColumns.COMPLETED_TIME.ordinal(), DESCENDING));
-        sorter.setSortKeys(list);
-        sorter.sort();
-
+        completedTable.getRowSorter().toggleSortOrder(JobsTableModelColumns.COMPLETED_TIME.ordinal());
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */
@@ -414,7 +407,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /**
          * Allow sorting when a column header is clicked.
          */
-        pendingTable.setAutoCreateRowSorter(true);
+        pendingTable.setRowSorter(new AutoIngestTableRowSorter<>(pendingTableModel));
 
         /*
          * Create a row selection listener to enable/disable the prioritize
@@ -604,7 +597,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /*
          * Allow sorting when a column header is clicked.
          */
-        completedTable.setAutoCreateRowSorter(true);
+        completedTable.setRowSorter(new AutoIngestTableRowSorter<>(completedTableModel));
 
         /*
          * Create a row selection listener to enable/disable the delete case and
@@ -1853,6 +1846,36 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 return Boolean.class;
             } else {
                 return super.getColumnClass(columnIndex);
+            }
+        }
+    }
+
+    /**
+     * RowSorter which makes columns whose type is Date to be sorted first in
+     * Descending order then in Ascending order
+     */
+    private class AutoIngestTableRowSorter<M extends DefaultTableModel> extends TableRowSorter<M> {
+
+        private AutoIngestTableRowSorter(M tModel) {
+            super(tModel);
+        }
+
+        @Override
+        public void toggleSortOrder(int column) {
+            if (!this.getModel().getColumnClass(column).equals(Date.class)) {
+                super.toggleSortOrder(column);  //if it isn't a date perform the regular sorting
+            } else {
+                ArrayList<SortKey> sortKeys = new ArrayList<>(getSortKeys());
+                if (sortKeys.isEmpty() || sortKeys.get(0).getColumn() != column) {  //sort descending
+                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
+                } else if (sortKeys.get(0).getSortOrder() == SortOrder.ASCENDING) {
+                    sortKeys.removeIf(key -> key.getColumn() == column);
+                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
+                } else {
+                    sortKeys.removeIf(key -> key.getColumn() == column);
+                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.ASCENDING));
+                }
+                setSortKeys(sortKeys);
             }
         }
     }
