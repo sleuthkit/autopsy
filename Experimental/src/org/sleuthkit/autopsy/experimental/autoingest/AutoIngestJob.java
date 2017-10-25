@@ -89,30 +89,34 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *
      * @param manifest The manifest for an automated ingest job.
      */
-    AutoIngestJob(Manifest manifest) {
-        /*
-         * Version 0 fields.
-         */
-        this.manifest = manifest;
-        this.nodeName = "";
-        this.caseDirectoryPath = "";
-        this.priority = DEFAULT_PRIORITY;
-        this.stage = Stage.PENDING;
-        this.stageStartDate = manifest.getDateFileCreated();
-        this.dataSourceProcessor = null;
-        this.ingestJob = null;
-        this.cancelled = false;
-        this.completed = false;
-        this.completedDate = new Date(0);
-        this.errorsOccurred = false;
+    AutoIngestJob(Manifest manifest) throws AutoIngestJobException {
+        try {
+            /*
+             * Version 0 fields.
+             */
+            this.manifest = manifest;
+            this.nodeName = "";
+            this.caseDirectoryPath = "";
+            this.priority = DEFAULT_PRIORITY;
+            this.stage = Stage.PENDING;
+            this.stageStartDate = manifest.getDateFileCreated();
+            this.dataSourceProcessor = null;
+            this.ingestJob = null;
+            this.cancelled = false;
+            this.completed = false;
+            this.completedDate = new Date(0);
+            this.errorsOccurred = false;
 
-        /*
-         * Version 1 fields.
-         */
-        this.version = CURRENT_VERSION;
-        this.processingStatus = ProcessingStatus.PENDING;
-        this.numberOfCrashes = 0;
-        this.stageDetails = this.getProcessingStageDetails();
+            /*
+             * Version 1 fields.
+             */
+            this.version = CURRENT_VERSION;
+            this.processingStatus = ProcessingStatus.PENDING;
+            this.numberOfCrashes = 0;
+            this.stageDetails = this.getProcessingStageDetails();
+        } catch (Exception ex) {
+            throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
+        }
     }
 
     /**
@@ -122,30 +126,34 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * @param nodeData The coordination service node data for an automated
      *                 ingest job.
      */
-    AutoIngestJob(AutoIngestJobNodeData nodeData) {
-        /*
-         * Version 0 fields.
-         */
-        this.manifest = new Manifest(nodeData.getManifestFilePath(), nodeData.getManifestFileDate(), nodeData.getCaseName(), nodeData.getDeviceId(), nodeData.getDataSourcePath(), Collections.emptyMap());
-        this.nodeName = nodeData.getProcessingHostName();
-        this.caseDirectoryPath = nodeData.getCaseDirectoryPath().toString();
-        this.priority = nodeData.getPriority();
-        this.stage = nodeData.getProcessingStage();
-        this.stageStartDate = nodeData.getProcessingStageStartDate();
-        this.dataSourceProcessor = null; // Transient data not in node data.
-        this.ingestJob = null; // Transient data not in node data.
-        this.cancelled = false; // Transient data not in node data.
-        this.completed = false; // Transient data not in node data.
-        this.completedDate = nodeData.getCompletedDate();
-        this.errorsOccurred = nodeData.getErrorsOccurred();
+    AutoIngestJob(AutoIngestJobNodeData nodeData) throws AutoIngestJobException {
+        try {
+            /*
+             * Version 0 fields.
+             */
+            this.manifest = new Manifest(nodeData.getManifestFilePath(), nodeData.getManifestFileDate(), nodeData.getCaseName(), nodeData.getDeviceId(), nodeData.getDataSourcePath(), Collections.emptyMap());
+            this.nodeName = nodeData.getProcessingHostName();
+            this.caseDirectoryPath = nodeData.getCaseDirectoryPath().toString();
+            this.priority = nodeData.getPriority();
+            this.stage = nodeData.getProcessingStage();
+            this.stageStartDate = nodeData.getProcessingStageStartDate();
+            this.dataSourceProcessor = null; // Transient data not in node data.
+            this.ingestJob = null; // Transient data not in node data.
+            this.cancelled = false; // Transient data not in node data.
+            this.completed = false; // Transient data not in node data.
+            this.completedDate = nodeData.getCompletedDate();
+            this.errorsOccurred = nodeData.getErrorsOccurred();
 
-        /*
-         * Version 1 fields.
-         */
-        this.version = CURRENT_VERSION;
-        this.processingStatus = nodeData.getProcessingStatus();
-        this.numberOfCrashes = nodeData.getNumberOfCrashes();
-        this.stageDetails = this.getProcessingStageDetails();
+            /*
+             * Version 1 fields.
+             */
+            this.version = CURRENT_VERSION;
+            this.processingStatus = nodeData.getProcessingStatus();
+            this.numberOfCrashes = nodeData.getNumberOfCrashes();
+            this.stageDetails = this.getProcessingStageDetails();
+        } catch (Exception ex) {
+            throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
+        }
     }
 
     /**
@@ -622,5 +630,33 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
 
     }
+    
+    /**
+     * Exception thrown when there is a problem creating auto ingest job.
+     */
+    final static class AutoIngestJobException extends Exception {
 
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructs an exception to throw when there is a problem creating
+         * auto ingest job.
+         *
+         * @param message The exception message.
+         */
+        private AutoIngestJobException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs an exception to throw when there is a problem creating
+         * auto ingest job.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the exception, if it was an exception.
+         */
+        private AutoIngestJobException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }

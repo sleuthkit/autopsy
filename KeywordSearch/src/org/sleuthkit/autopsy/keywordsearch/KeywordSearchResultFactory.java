@@ -331,7 +331,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             try {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), () -> BlackboardResultWriter.this.cancel(true));
-                hits.writeAllHitsToBlackBoard(progress, null, this, false);
+                hits.process(progress, null, this, false);
             } finally {
                 finalizeWorker();
             }

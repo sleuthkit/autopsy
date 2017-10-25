@@ -59,7 +59,7 @@ public final class AutoIngestUserPreferences {
     }
 
      /**
-     * Get "Join Automated Ingest Cluster" setting from persistent storage.
+     * Get "Join auto ingest cluster" setting from persistent storage.
      *
      * @return SelectedMode Selected setting.
      */
@@ -71,7 +71,7 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
-     * Set "Join Automated Ingest Cluster" setting to persistent storage.
+     * Set "Join auto ingest cluster" setting to persistent storage.
      *
      * @param join boolean value of whether to join auto ingest cluster or not
      */

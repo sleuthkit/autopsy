@@ -210,35 +210,16 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         boolean needsRestart = false;
         UserPreferences.SelectedMode storedMode = UserPreferences.getMode();
 
-        if (AutoIngestUserPreferences.getJoinAutoModeCluster() != cbJoinAutoIngestCluster.isSelected()) {
-            needsRestart = true;
-        }
-
         AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
+            if(storedMode == UserPreferences.SelectedMode.AUTOINGEST) {
+                needsRestart = true;
+            }
+            
             UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
-            //before return popup the message
-            if (needsRestart) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
-                            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
-                            JOptionPane.WARNING_MESSAGE);
-                });
-            }
-            return;
         }
-
-        if (jRadioButtonAutomated.isSelected()) {
-            if (storedMode != UserPreferences.SelectedMode.AUTOINGEST) {
-                needsRestart = true;
-            }
-            String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
-            if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
-                needsRestart = true;
-            }
-            thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
-            if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
+        else if (jRadioButtonAutomated.isSelected()) {
+            if (storedMode == UserPreferences.SelectedMode.REVIEW) {
                 needsRestart = true;
             }
 
@@ -254,11 +235,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonReview.isSelected()) {
-            if (storedMode != UserPreferences.SelectedMode.REVIEW) {
-                needsRestart = true;
-            }
-            String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
-            if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
+            if (storedMode == UserPreferences.SelectedMode.AUTOINGEST) {
                 needsRestart = true;
             }
 
@@ -661,7 +638,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         nodePanel = new javax.swing.JPanel();
         jPanelNodeType = new javax.swing.JPanel();
         jLabelSelectMode = new javax.swing.JLabel();
-        restartRequiredNodeLabel = new javax.swing.JLabel();
         jRadioButtonAutomated = new javax.swing.JRadioButton();
         jRadioButtonReview = new javax.swing.JRadioButton();
         jLabelSelectInputFolder = new javax.swing.JLabel();
@@ -702,9 +678,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jPanelNodeType.setMinimumSize(new java.awt.Dimension(50, 50));
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectMode, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jLabelSelectMode.text")); // NOI18N
-
-        restartRequiredNodeLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(restartRequiredNodeLabel, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredNodeLabel.text")); // NOI18N
 
         modeRadioButtons.add(jRadioButtonAutomated);
         jRadioButtonAutomated.setSelected(true);
@@ -777,10 +750,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                             .addComponent(browseOutputFolderButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
                         .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
-                                .addComponent(jLabelSelectMode)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(restartRequiredNodeLabel))
+                            .addComponent(jLabelSelectMode)
                             .addComponent(jRadioButtonReview)
                             .addComponent(jRadioButtonAutomated))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -802,9 +772,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanelNodeTypeLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(jPanelNodeTypeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabelSelectMode)
-                            .addComponent(restartRequiredNodeLabel))
+                        .addComponent(jLabelSelectMode)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jRadioButtonAutomated)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1407,7 +1375,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         jRadioButtonAutomated.setEnabled(enabled);
         jRadioButtonReview.setEnabled(enabled);
         outputPathTextField.setEnabled(enabled);
-        restartRequiredNodeLabel.setEnabled(enabled);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1442,7 +1409,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane nodeScrollPane;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JProgressBar pbTaskInProgress;
-    private javax.swing.JLabel restartRequiredNodeLabel;
     private javax.swing.JCheckBox sharedConfigCheckbox;
     private javax.swing.JTextField sharedSettingsErrorTextField;
     private javax.swing.JTextField sharedSettingsTextField;
