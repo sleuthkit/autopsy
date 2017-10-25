@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -35,6 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Node to represent an Account in the AccountsBrowser
  */
 class AccountNode extends AbstractNode {
+    
+    private static final Logger LOGGER = Logger.getLogger(AbstractNode.class.getName());
 
     private final AccountDeviceInstance accountDeviceInstance;
 
@@ -102,7 +106,7 @@ class AccountNode extends AbstractNode {
             msgCount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getRelationshipsCount(filter, accountDeviceInstance);  
         }
         catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
         }
         
         properties.put(new NodeProperty<>("type",
