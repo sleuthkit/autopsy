@@ -76,6 +76,7 @@ class AddArchiveTask implements Runnable {
      */
     @Override
     public void run() {
+        progressMonitor.setIndeterminate(true);
         List<String> errorMessages = new ArrayList<>();
         List<Content> newDataSources = new ArrayList<>();
         DataSourceProcessorCallback.DataSourceProcessorResult result;
@@ -88,7 +89,6 @@ class AddArchiveTask implements Runnable {
         }
 
         // extract the archive and pass the extracted folder as input
-        Path destinationFolder = Paths.get("");
         UUID taskId = UUID.randomUUID();
         if (callback instanceof AddDataSourceCallback) {
             // if running as part of automated ingest - re-use the task ID
@@ -101,8 +101,14 @@ class AddArchiveTask implements Runnable {
             String dataSourceFileNameNoExt = FilenameUtils.getBaseName(archivePath);
 
             // create folder to extract archive to
-            destinationFolder = Paths.get(currentCase.getModuleDirectory(), ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR, dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
-            destinationFolder.toFile().mkdirs();
+            Path destinationFolder = Paths.get(currentCase.getModuleDirectory(), ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR, dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
+            if (destinationFolder.toFile().mkdirs() == false) {
+                // unable to create directory
+                criticalErrorOccurred = true;
+                errorMessages.add("Unable to create directory for archive extraction " + destinationFolder.toString());
+                logger.log(Level.SEVERE, "Unable to create directory for archive extraction {0}", destinationFolder.toString());
+                return;
+            }
 
             // extract contents of ZIP archive into destination folder            
             List<String> extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
@@ -110,6 +116,7 @@ class AddArchiveTask implements Runnable {
             // do processing
             Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
             for (String file : extractedFiles) {
+                progressMonitor.setProgressText(String.format("Adding: %s", file));
                 Path filePath = Paths.get(file);
                 // identify DSP for this file
                 // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
@@ -162,6 +169,7 @@ class AddArchiveTask implements Runnable {
             errorMessages.add(ex.getMessage());
             logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
         } finally {
+            progressMonitor.setProgress(100);
             if (criticalErrorOccurred) {
                 result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
             } else if (!errorMessages.isEmpty()) {

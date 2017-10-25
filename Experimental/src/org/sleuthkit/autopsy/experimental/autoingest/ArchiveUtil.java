@@ -254,7 +254,7 @@ final class ArchiveUtil {
                     }
                 }
                 // keep track of extracted files
-                files.add(entryPathInArchive);
+                files.add(fullPath.toString());
             }
         } catch (Exception ex) {
             throw new ArchiveExtractionException("Exception while unpacking archive contents", ex);
