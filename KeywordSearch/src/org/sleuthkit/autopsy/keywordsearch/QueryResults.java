@@ -222,9 +222,6 @@ class QueryResults {
                  * Post an artifact for the hit to the blackboard.
                  */
                 BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
-                if (null == artifact) {
-                    logger.log(Level.SEVERE, "Error posting keyword hit artifact for keyword {0} in {1} to the blackboard", new Object[]{keyword.toString(), content}); //NON-NLS
-                }
 
                 /*
                  * Send an ingest inbox message for the hit.
