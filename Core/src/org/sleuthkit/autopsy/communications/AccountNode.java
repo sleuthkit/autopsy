@@ -28,6 +28,10 @@ import org.sleuthkit.datamodel.Account;
 
 /**
  * Node to represent an Account in the AccountsBrowser
+ *
+ * TODO: This will change to AccountDeviceInstanceNode and wrap a
+ * AccountDeviceInstance. This will let us populate the device field. What about
+ * the counts? Are we going to end up doing another query for each object?
  */
 class AccountNode extends AbstractNode {
 
@@ -63,7 +67,7 @@ class AccountNode extends AbstractNode {
                 "count",
                 1)); // NON-NLS //dummy value
 
-        //how do I get the device name
+        //TODO: uncomment and correct this when this class changes to AccountDeviceInstanceNode
 //        properties.put(new NodeProperty<>("device",
 //                Bundle.AccountNode_device(),
 //                "device",
