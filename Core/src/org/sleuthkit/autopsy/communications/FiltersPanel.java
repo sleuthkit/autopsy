@@ -23,12 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -38,14 +38,15 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public class FiltersPanel extends javax.swing.JPanel {
-
+    
+    private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
-
+    
     private ExplorerManager em;
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
-
+    
     public FiltersPanel() {
         initComponents();
         /*
@@ -69,10 +70,10 @@ public class FiltersPanel extends javax.swing.JPanel {
             accountTypePane.add(jCheckBox);
             accountTypeMap.put(type, jCheckBox);
         });
-
+        
         invalidate();
     }
-
+    
     @Override
     public void addNotify() {
         super.addNotify();
@@ -281,16 +282,16 @@ public class FiltersPanel extends javax.swing.JPanel {
          */
         try {
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-
+            
             List<Account> accounts = new ArrayList<>();
             for (Entry<Account.Type, JCheckBox> entry : accountTypeMap.entrySet()) {
                 if (entry.getValue().isSelected()) {
                     accounts.addAll(communicationsManager.getAccounts(entry.getKey()));
                 }
             }
-            em.setRootContext(new AbstractNode(Children.create(new AccountsNodeFactory(accounts), true)));
+            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accounts)));
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
 
     }//GEN-LAST:event_applyFiltersButtonActionPerformed
