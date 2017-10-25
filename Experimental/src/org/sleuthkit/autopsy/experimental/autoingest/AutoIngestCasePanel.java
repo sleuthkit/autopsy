@@ -150,7 +150,7 @@ public final class AutoIngestCasePanel extends JPanel {
         theColumn.setWidth(STATUS_COL_PREFERRED_WIDTH);
 
         casesTable.removeColumn(casesTable.getColumn(OUTPUT_FOLDER_HEADER));
-
+        casesTable.setRowSorter(new AutoIngestTableRowSorter<>(caseTableModel));
         /*
          * Listen for row selection changes and set button state for the current
          * selection.
@@ -408,9 +408,7 @@ public final class AutoIngestCasePanel extends JPanel {
             }
         });
 
-        casesTable.setAutoCreateRowSorter(true);
         casesTable.setModel(caseTableModel);
-        casesTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         casesTable.setRowHeight(20);
         casesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         casesTable.addMouseListener(new java.awt.event.MouseAdapter() {
