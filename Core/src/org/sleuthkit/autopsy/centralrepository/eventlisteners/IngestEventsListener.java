@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
@@ -67,7 +67,7 @@ public class IngestEventsListener {
     }
 
     void shutdown() {
-        ExecUtil.shutDownTaskExecutor(jobProcessingExecutor);
+        ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
     }
 
     /*
