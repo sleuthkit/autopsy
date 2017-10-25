@@ -104,13 +104,13 @@ class HighlightedText implements IndexedText {
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
      * search results. In that case we have the entire QueryResults object and
-     * need to arrange the paging.
+ need to arrange the paging.
      *
      * @param objectId     The objectID of the content whose text will be
      *                     highlighted.
      * @param QueryResults The QueryResults for the ad-hoc search from whose
-     *                     results a selection was made leading to this
-     *                     HighlightedText.
+                     results a selection was made leading to this
+                     HighlightedText.
      */
     HighlightedText(long objectId, QueryResults hits) {
         this.objectId = objectId;

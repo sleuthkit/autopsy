@@ -124,6 +124,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         );
     }// </editor-fold>//GEN-END:initComponents
 
+            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accounts)));
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane BrowseVisualizeTabPane;
     private javax.swing.JSplitPane HSplitPane;

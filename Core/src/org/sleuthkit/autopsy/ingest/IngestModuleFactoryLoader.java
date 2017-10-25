@@ -29,7 +29,6 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.examples.SampleExecutableIngestModuleFactory;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
@@ -48,7 +47,6 @@ final class IngestModuleFactoryLoader {
 
     private static final Logger logger = Logger.getLogger(IngestModuleFactoryLoader.class.getName());
     private static final String SAMPLE_MODULE_FACTORY_CLASS_NAME = SampleIngestModuleFactory.class.getCanonicalName();
-    private static final String SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME = SampleExecutableIngestModuleFactory.class.getCanonicalName();
     private static final ArrayList<String> coreModuleOrdering = new ArrayList<String>() {
         {
             // The ordering of the core ingest module factories implemented
@@ -141,8 +139,7 @@ final class IngestModuleFactoryLoader {
     private static void addFactory(IngestModuleFactory factory, HashSet<String> moduleDisplayNames, HashMap<String, IngestModuleFactory> javaFactoriesByClass) {
         // Ignore the sample ingest module factories implemented in Java.        
         String className = factory.getClass().getCanonicalName();
-        if (className.equals(IngestModuleFactoryLoader.SAMPLE_MODULE_FACTORY_CLASS_NAME)
-                || className.equals(IngestModuleFactoryLoader.SAMPLE_EXECUTABLE_MODULE_FACTORY_CLASS_NAME)) {
+        if (className.equals(IngestModuleFactoryLoader.SAMPLE_MODULE_FACTORY_CLASS_NAME)) {
             return;
         }
 

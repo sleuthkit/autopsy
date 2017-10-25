@@ -16,31 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.casemodule;
 
-import java.util.List;
-import org.openide.nodes.ChildFactory;
-import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Account;
+import javax.swing.JDialog;
 
-
-
-class AccountsNodeFactory extends ChildFactory<Account> {
-
-    private final List<  Account> accounts;
-
-    AccountsNodeFactory(List<Account> accounts) {
-        this.accounts = accounts;
-    }
-
-    @Override
-    protected boolean createKeys(List<Account> list) {
-        list.addAll(accounts);
-        return true;
-    }
-
-    @Override
-    protected Node createNodeForKey(Account key) {
-        return new AccountNode(key);
-    }
+/**
+ * Interface for startup window implementations
+ */
+public interface AutoIngestCasePanelInterface {
+    
+    public void addWindowStateListener(JDialog parent);
 }
