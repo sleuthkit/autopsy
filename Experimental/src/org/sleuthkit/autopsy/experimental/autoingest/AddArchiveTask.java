@@ -166,6 +166,32 @@ class AddArchiveTask implements Runnable {
                     }
                 }
             }
+            
+            // after all archive contents have been ingested - all the archive itself as a logical file
+            progressMonitor.setProgressText(String.format("Adding: %s", archivePath));
+            LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
+            synchronized (archiveDspLock) {
+                try {
+                    Path filePath = Paths.get(archivePath);
+                    DataSource internalDataSource = new DataSource(deviceId, filePath);
+                    DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
+                    localFilesDSP.process(deviceId, filePath, progressMonitor, internalArchiveDspCallBack);
+                    archiveDspLock.wait();
+
+                    // at this point we got the content object(s) from the current DSP
+                    newDataSources.addAll(internalDataSource.getContent());
+                } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
+                    // Log that the current DSP failed and set the error flag. We consider it an error
+                    // if a DSP fails even if a later one succeeds since we expected to be able to process
+                    // the data source which each DSP on the list.
+                    //AutoIngestAlertFile.create(caseDirectoryPath);
+                    //currentJob.setErrorsOccurred(true);
+                    //jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
+                    criticalErrorOccurred = true;
+                    errorMessages.add(ex.getMessage());
+                    logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{archivePath, localFilesDSP.getDataSourceType()});
+                }
+            }          
         } catch (Exception ex) {
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
