@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
@@ -168,7 +167,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             accounts.addAll(communicationsManager.getAccounts(Account.Type.EMAIL));
             accounts.addAll(communicationsManager.getAccounts(Account.Type.DEVICE));
 
-            em.setRootContext(new AbstractNode(Children.create(new AccountsNodeFactory(accounts), true)));
+            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accounts)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }

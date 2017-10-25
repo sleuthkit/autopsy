@@ -44,14 +44,14 @@ import org.openide.windows.WindowManager;
     @ActionReference(path = "Menu/Tools", position = 102)
     ,    @ActionReference(path = "Toolbars/Case", position = 102)})
 @Messages("CTL_OpenCVTAction=Visualize Communications")
-public final class OpenCVTAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class OpenCommVisualizationToolAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
 
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/email_link.png"))); //NON-NLS
 
-    public OpenCVTAction() {
+    public OpenCommVisualizationToolAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
         setEnabled(false); //disabled by default.  Will be enabled in Case.java when a case is opened.
     }
