@@ -34,7 +34,6 @@ import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
@@ -42,7 +41,6 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettingsPanel;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * Instances of this class are used to configure the report module plug in that
  * provides a convenient way to add content hashes to hash set databases.
@@ -68,9 +66,6 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         populateHashSetComponents();
     }
 
-    @Messages({
-        "No_Tagged_File_Selected=There is no tagged results."
-    })
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
         try {
@@ -102,8 +97,6 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
                     String value = tagsNamesListModel.getElementAt(index);
                     tagNameSelections.put(value, !tagNameSelections.get(value));
                     list.repaint();
-                } else {
-                    MessageNotifyUtil.Message.warn(Bundle.No_Tagged_File_Selected());
                 }
             }
         });
