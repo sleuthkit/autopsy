@@ -85,12 +85,12 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -129,7 +129,6 @@ public class Case {
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
-    private static final long EXECUTOR_AWAIT_TIMEOUT_SECS = 5;
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
@@ -1646,7 +1645,7 @@ public class Case {
             } else {
                 future.cancel(true);
             }
-            ExecUtil.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
         } catch (CancellationException discarded) {
             /*
              * The create/open task has been cancelled. Wait for it to finish,
@@ -1655,7 +1654,7 @@ public class Case {
              * will have been closed and the case directory lock released will
              * have been released.
              */
-            ExecUtil.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         } catch (ExecutionException ex) {
             /*
@@ -1665,7 +1664,7 @@ public class Case {
              * case will have been closed and the case directory lock released
              * will have been released.
              */
-            ExecUtil.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -1993,7 +1992,7 @@ public class Case {
                  * would be possible to start the next task before the current
                  * task responded to a cancellation request.
                  */
-                ExecUtil.shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
 
@@ -2064,7 +2063,7 @@ public class Case {
         } catch (ExecutionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getMessage()), ex);
         } finally {
-            ExecUtil.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             progressIndicator.finish();
         }
     }
@@ -2175,7 +2174,7 @@ public class Case {
                             Bundle.Case_servicesException_serviceResourcesCloseError(service.getServiceName(), ex.getLocalizedMessage())));
                 }
             } finally {
-                ExecUtil.shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
         }

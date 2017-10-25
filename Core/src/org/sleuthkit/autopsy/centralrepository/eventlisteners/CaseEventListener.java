@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -68,7 +68,7 @@ final class CaseEventListener implements PropertyChangeListener {
     }
 
     void shutdown() {
-        ExecUtil.shutDownTaskExecutor(jobProcessingExecutor);
+        ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
     }
 
     @Override
