@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import java.awt.Component;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -63,9 +64,9 @@ public class AccountsBrowser extends JPanel {
         em = ExplorerManager.find(this);
         em.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
-                setColumnWidths();
+                SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
-                setColumnWidths();
+                SwingUtilities.invokeLater(this::setColumnWidths);
             }
         });
     }
@@ -74,10 +75,11 @@ public class AccountsBrowser extends JPanel {
         int margin = 4;
         int padding = 8;
 
+        final int rows = Math.min(100, outline.getRowCount());
+
         for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
             int columnWidthLimit = 500;
             int columnWidth = 0;
-            final int rows = Math.min(100, outline.getRowCount());
 
             // find the maximum width needed to fit the values for the first 100 rows, at most
             for (int row = 0; row < rows; row++) {
