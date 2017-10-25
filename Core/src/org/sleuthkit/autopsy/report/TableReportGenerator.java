@@ -176,8 +176,11 @@ class TableReportGenerator {
                      * compund name by appending a ":" and the account type.
                      */
                     String accountDisplayname = accountType;
-                    if (accountType != null && accountType.equals(Account.Type.CREDIT_CARD.name())) {
-                        accountDisplayname = Account.Type.CREDIT_CARD.getDisplayName();
+                    for (Account.Type acct : Account.Type.values()) {
+                        if (acct.equals(Account.Type.valueOf(accountType))) {
+                            accountDisplayname = acct.getDisplayName();
+                            break;
+                        }
                     }
                     final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountDisplayname;
                     writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
