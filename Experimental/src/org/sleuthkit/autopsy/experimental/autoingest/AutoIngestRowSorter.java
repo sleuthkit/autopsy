@@ -29,9 +29,9 @@ import javax.swing.table.TableRowSorter;
  * RowSorter which makes columns whose type is Date to be sorted first in
  * Descending order then in Ascending order
  */
-final class AutoIngestTableRowSorter<M extends DefaultTableModel> extends TableRowSorter<M> {
+class AutoIngestRowSorter<M extends DefaultTableModel> extends TableRowSorter<M> {
 
-    AutoIngestTableRowSorter(M tModel) {
+    AutoIngestRowSorter(M tModel) {
         super(tModel);
     }
 

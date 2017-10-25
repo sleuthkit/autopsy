@@ -150,7 +150,7 @@ public final class AutoIngestCasePanel extends JPanel {
         theColumn.setWidth(STATUS_COL_PREFERRED_WIDTH);
 
         casesTable.removeColumn(casesTable.getColumn(OUTPUT_FOLDER_HEADER));
-        casesTable.setRowSorter(new AutoIngestTableRowSorter<>(caseTableModel));
+        casesTable.setRowSorter(new AutoIngestRowSorter<>(caseTableModel));
         /*
          * Listen for row selection changes and set button state for the current
          * selection.

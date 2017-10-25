@@ -403,7 +403,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /**
          * Allow sorting when a column header is clicked.
          */
-        pendingTable.setRowSorter(new AutoIngestTableRowSorter<>(pendingTableModel));
+        pendingTable.setRowSorter(new AutoIngestRowSorter<>(pendingTableModel));
 
         /*
          * Create a row selection listener to enable/disable the prioritize
@@ -593,7 +593,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /*
          * Allow sorting when a column header is clicked.
          */
-        completedTable.setRowSorter(new AutoIngestTableRowSorter<>(completedTableModel));
+        completedTable.setRowSorter(new AutoIngestRowSorter<>(completedTableModel));
 
         /*
          * Create a row selection listener to enable/disable the delete case and
