@@ -80,7 +80,7 @@ final class MultiUserCaseManager {
                         if(autFiles != null && autFiles.length > 0) {
                             try {
                                 cases.add(new MultiUserCase(casePath));
-                            } catch (CaseMetadata.CaseMetadataException ex) {
+                            } catch (CaseMetadata.CaseMetadataException | MultiUserCase.MultiUserCaseException ex) {
                                 // Ignore and continue.
                             }
                         }

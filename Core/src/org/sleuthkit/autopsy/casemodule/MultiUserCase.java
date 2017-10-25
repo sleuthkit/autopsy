@@ -47,8 +47,15 @@ class MultiUserCase implements Comparable<MultiUserCase> {
      * Constructs a representation of case created by automated ingest.
      *
      * @param caseDirectoryPath The case directory path.
+     * 
+     * @throws CaseMetadata.CaseMetadataException If the CaseMetadata object
+     *                                            cannot be constructed for the
+     *                                            case display name.
+     * @throws MultiUserCaseException             If no case metadata (.aut)
+     *                                            file is found in the case
+     *                                            directory.
      */
-    MultiUserCase(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException {
+    MultiUserCase(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException, MultiUserCaseException {
         CaseMetadata caseMetadata = null;
         
         try {
@@ -60,7 +67,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
         
         this.caseDirectoryPath = caseDirectoryPath;
         caseName = caseMetadata.getCaseDisplayName();
-        metadataFilePath = caseDirectoryPath.resolve(caseMetadata.getCaseName() + CaseMetadata.getFileExtension());
+        metadataFilePath = caseMetadata.getFilePath();
         BasicFileAttributes fileAttrs = null;
         try {
             fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);
@@ -134,8 +141,14 @@ class MultiUserCase implements Comparable<MultiUserCase> {
      * @param caseDirectoryPath The case directory path.
      *
      * @return Case metadata.
+     * 
+     * @throws CaseMetadata.CaseMetadataException If the CaseMetadata object
+     *                                            cannot be constructed.
+     * @throws MultiUserCaseException             If no case metadata (.aut)
+     *                                            file is found in the case
+     *                                            directory.
      */
-    static CaseMetadata getCaseMetadataFromCaseDirectoryPath(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException {
+    private static CaseMetadata getCaseMetadataFromCaseDirectoryPath(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException, MultiUserCaseException {
         CaseMetadata caseMetadata = null;
         
         File directory = new File(caseDirectoryPath.toString());
@@ -145,31 +158,23 @@ class MultiUserCase implements Comparable<MultiUserCase> {
                 fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix.length() - TimeStampUtils.getTimeStampLength());
             }
             
-            /*
-             * Attempt to open an AUT file that has the folder name without a
-             * time stamp.
-             */
-            File autFile = new File(directory + "/" + fileNamePrefix + CaseMetadata.getFileExtension());
+            File autFile = null;
             
             /*
-             * If the AUT file doesn't exist, attempt to find an AUT file via a
-             * directory scan.
+             * Attempt to find an AUT file via a directory scan.
              */
-            if(!autFile.isFile()) {
-                for (File file : directory.listFiles()) {
-                    if (file.getName().toLowerCase().endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
-                        autFile = file;
-                        break;
-                    }
+            for (File file : directory.listFiles()) {
+                if (file.getName().toLowerCase().endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
+                    autFile = file;
+                    break;
                 }
             }
             
-            /*
-             * If the AUT file has been found, grab the case metadata.
-             */
-            if(autFile.isFile()) {
-                caseMetadata = new CaseMetadata(Paths.get(autFile.getAbsolutePath()));
+            if(autFile == null || !autFile.isFile()) {
+                throw new MultiUserCaseException(String.format("No case metadata (.aut) file found in the case directory '%s'.", caseDirectoryPath.toString()));
             }
+            
+            caseMetadata = new CaseMetadata(Paths.get(autFile.getAbsolutePath()));
         }
         
         return caseMetadata;
@@ -210,7 +215,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
 
     /**
      * Compares this AutopIngestCase object with abnother MultiUserCase object
- for order.
+     * for order.
      */
     @Override
     public int compareTo(MultiUserCase other) {
@@ -224,7 +229,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
 
         /**
          * Compares two MultiUserCase objects for order based on last accessed
- date (descending).
+         * date (descending).
          *
          * @param object      The first MultiUserCase object
          * @param otherObject The second AuotIngestCase object.
@@ -235,6 +240,35 @@ class MultiUserCase implements Comparable<MultiUserCase> {
         @Override
         public int compare(MultiUserCase object, MultiUserCase otherObject) {
             return -object.getLastAccessedDate().compareTo(otherObject.getLastAccessedDate());
+        }
+    }
+    
+    /**
+     * Exception thrown when there is a problem creating a multi-user case.
+     */
+    final static class MultiUserCaseException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructs an exception to throw when there is a problem creating a
+         * multi-user case.
+         *
+         * @param message The exception message.
+         */
+        private MultiUserCaseException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs an exception to throw when there is a problem creating a
+         * multi-user case.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the exception, if it was an exception.
+         */
+        private MultiUserCaseException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
