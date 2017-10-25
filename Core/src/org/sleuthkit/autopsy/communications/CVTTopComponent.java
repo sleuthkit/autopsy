@@ -31,7 +31,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -162,12 +162,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          * ExplorerManager
          */
         try {
-            List<Account> accounts = new ArrayList<>();
+            List<AccountDeviceInstance> accountDeviceInstances = new ArrayList<>();
+            
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            accounts.addAll(communicationsManager.getAccounts(Account.Type.EMAIL));
-            accounts.addAll(communicationsManager.getAccounts(Account.Type.DEVICE));
-
-            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accounts)));
+            accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(null));
+     
+            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accountDeviceInstances)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }

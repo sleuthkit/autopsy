@@ -22,15 +22,15 @@ import java.util.Collections;
 import java.util.List;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 
-class AccountsNodeChildren extends Children.Keys<Account> {
+class AccountsNodeChildren extends Children.Keys<AccountDeviceInstance> {
 
-    private final List<Account> accounts;
+    private final List<AccountDeviceInstance> accountDeviceInstances;
 
-    AccountsNodeChildren(List<Account> accounts) {
+    AccountsNodeChildren(List<AccountDeviceInstance> accountDeviceInstances) {
         super(true);
-        this.accounts = accounts;
+        this.accountDeviceInstances = accountDeviceInstances;
     }
 
     @Override
@@ -42,7 +42,7 @@ class AccountsNodeChildren extends Children.Keys<Account> {
     @Override
     protected void addNotify() {
         super.addNotify();
-        setKeys(accounts);
+        setKeys(accountDeviceInstances);
     }
 
     //These are the methods for ChildFactory. I am going to keep them around but commented until we make a final descision.
@@ -57,7 +57,7 @@ class AccountsNodeChildren extends Children.Keys<Account> {
     //        return new AccountNode(key);
     //    }
     @Override
-    protected Node[] createNodes(Account key) {
+    protected Node[] createNodes(AccountDeviceInstance key) {
         return new Node[]{new AccountNode(key)};
     }
 }
