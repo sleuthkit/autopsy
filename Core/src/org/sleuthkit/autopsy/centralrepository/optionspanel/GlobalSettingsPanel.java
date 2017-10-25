@@ -417,6 +417,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed
+        store();
         ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
     }//GEN-LAST:event_manageOrganizationButtonActionPerformed
 
