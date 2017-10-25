@@ -32,24 +32,30 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public class FiltersPanel extends javax.swing.JPanel {
-    
+
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
-    
+
     private ExplorerManager em;
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
-    
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final Map<DataSource, JCheckBox> devicesMap = new HashMap<>();
+
     public FiltersPanel() {
         initComponents();
+
         /*
+         * Populate the Account Types filter widgets
+         *
          * something like this commented code could be used to show only the
          * account types that are found:
          *
@@ -59,21 +65,34 @@ public class FiltersPanel extends javax.swing.JPanel {
          * communicationsManager.getAccountTypesInUse();
          * accountTypesInUSe.forEach(....)
          */
-        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
-            final JCheckBox jCheckBox = new JCheckBox(
-                    "<html><table cellpadding=0><tr><td><img src=\""
-                    + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                            + AccountUtils.getIconFileName(type))
-                    + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                    true
-            );
-            accountTypePane.add(jCheckBox);
-            accountTypeMap.put(type, jCheckBox);
-        });
-        
-        invalidate();
+        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(
+                type -> {
+                    final JCheckBox jCheckBox = new JCheckBox(
+                            "<html><table cellpadding=0><tr><td><img src=\""
+                            + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                                    + AccountUtils.getIconFileName(type))
+                            + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
+                            true
+                    );
+                    accountTypePane.add(jCheckBox);
+                    accountTypeMap.put(type, jCheckBox);
+                });
+
+        /**
+         * Populate the devices filter widgets
+         */
+        try {
+            Case.getCurrentCase().getSleuthkitCase().getDataSources().stream().forEach(
+                    dataSource -> {
+                        final JCheckBox jCheckBox = new JCheckBox(dataSource.getDeviceId(), true);
+                        devicesPane.add(jCheckBox);
+                        devicesMap.put(dataSource, jCheckBox);
+                    });
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
+        }
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
@@ -102,7 +121,7 @@ public class FiltersPanel extends javax.swing.JPanel {
         unCheckAllDevicesButton = new javax.swing.JButton();
         devicesLabel = new javax.swing.JLabel();
         checkAllDevicesButton = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
+        devicesPane = new javax.swing.JPanel();
 
         jList1.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -169,7 +188,7 @@ public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(accountTypesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, 118, Short.MAX_VALUE)
+                .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllAccountTypesButton)
@@ -194,34 +213,24 @@ public class FiltersPanel extends javax.swing.JPanel {
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 48, Short.MAX_VALUE)
-        );
+        devicesPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        devicesPane.setLayout(new javax.swing.BoxLayout(devicesPane, javax.swing.BoxLayout.Y_AXIS));
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-            .addGroup(jPanel3Layout.createSequentialGroup()
                 .addComponent(devicesLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(unCheckAllDevicesButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(checkAllDevicesButton)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(unCheckAllDevicesButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(checkAllDevicesButton)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -230,7 +239,7 @@ public class FiltersPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(devicesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 55, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllDevicesButton)
@@ -249,7 +258,7 @@ public class FiltersPanel extends javax.swing.JPanel {
                         .addComponent(filtersTitleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(applyFiltersButton)
-                        .addGap(12, 12, 12))
+                        .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addContainerGap())
@@ -282,7 +291,7 @@ public class FiltersPanel extends javax.swing.JPanel {
          */
         try {
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            
+
             List<Account> accounts = new ArrayList<>();
             for (Entry<Account.Type, JCheckBox> entry : accountTypeMap.entrySet()) {
                 if (entry.getValue().isSelected()) {
@@ -297,7 +306,17 @@ public class FiltersPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_applyFiltersButtonActionPerformed
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllTypesSelected(boolean selected) {
-        accountTypeMap.values().forEach(box -> box.setSelected(selected));
+        setAllSelected(accountTypeMap, selected);
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void setAllDevicesSelected(boolean selected) {
+        setAllSelected(devicesMap, selected);
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
+        map.values().forEach(box -> box.setSelected(selected));
     }
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
         setAllTypesSelected(false);
@@ -308,11 +327,11 @@ public class FiltersPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_checkAllAccountTypesButtonActionPerformed
 
     private void unCheckAllDevicesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllDevicesButtonActionPerformed
-        // TODO add your handling code here:
+        setAllDevicesSelected(false);
     }//GEN-LAST:event_unCheckAllDevicesButtonActionPerformed
 
     private void checkAllDevicesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkAllDevicesButtonActionPerformed
-        // TODO add your handling code here:
+        setAllDevicesSelected(true);
     }//GEN-LAST:event_checkAllDevicesButtonActionPerformed
 
 
@@ -323,9 +342,9 @@ public class FiltersPanel extends javax.swing.JPanel {
     private javax.swing.JButton checkAllAccountTypesButton;
     private javax.swing.JButton checkAllDevicesButton;
     private javax.swing.JLabel devicesLabel;
+    private javax.swing.JPanel devicesPane;
     private javax.swing.JLabel filtersTitleLabel;
     private javax.swing.JList<String> jList1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
