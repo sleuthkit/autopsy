@@ -189,7 +189,7 @@ public class Toolbar extends ToolBar {
         });
 
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
-        sortChooser.setComparator(GroupSortBy.PRIORITY);
+        sortChooser.setComparator(controller.getGroupManager().getSortBy());
         getItems().add(1, sortChooser);
         sortHelpImageView.setCursor(Cursor.HAND);
 
