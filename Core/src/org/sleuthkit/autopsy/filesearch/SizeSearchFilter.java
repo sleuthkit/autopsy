@@ -19,8 +19,12 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import javax.swing.InputVerifier;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -74,7 +78,27 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
     }
 
     @Override
+    @NbBundle.Messages ({
+        "Non_Negative_Number=Please input a non negative number."
+    })
     public boolean isValid() {
+        this.getComponent().getSizeTextField().setInputVerifier(new InputVerifier() {
+        @Override
+        public boolean verify(JComponent input) {
+            String inputText = ((JFormattedTextField) input).getText();
+            try {
+                int inputInt = Integer.parseInt(inputText);
+                if (inputInt < 0) {
+                    MessageNotifyUtil.Message.warn(Bundle.Non_Negative_Number());
+                    return false;
+                }
+            } catch (NumberFormatException | NullPointerException e) {
+                MessageNotifyUtil.Message.warn(Bundle.Non_Negative_Number());
+                return false;
+            }
+            return true;
+       }
+    });
         return true;
     }
 }

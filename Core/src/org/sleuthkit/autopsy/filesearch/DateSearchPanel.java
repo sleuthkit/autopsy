@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -50,6 +52,20 @@ class DateSearchPanel extends javax.swing.JPanel {
 
         dateFromTextField.setComponentPopupMenu(rightClickMenu);
         dateToTextField.setComponentPopupMenu(rightClickMenu);
+        //Block or disable user input to date time field
+        dateFromTextField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                e.consume();  // ignore event
+            }
+        });
+        dateToTextField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                e.consume();  // ignore event
+            }
+        });
+
         ActionListener actList = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -365,6 +381,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         if (evt.getNewValue() instanceof Date) {
             setToDate((Date) evt.getNewValue());
         }
+
     }//GEN-LAST:event_dateToPopupChanged
 
     private void dateCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateCheckBoxActionPerformed
@@ -399,6 +416,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         if (date != null) {
             dateStringResult = dateFormat.format(date);
         }
+        
         dateFromTextField.setText(dateStringResult);
         dateFromButtonCalendar.setTargetDate(date);
     }

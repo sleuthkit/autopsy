@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import javax.swing.JTextField;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
@@ -61,6 +62,7 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
 
     @Override
     public boolean isValid() {
-        return !this.getComponent().getSearchTextField().getText().isEmpty();
+        JTextField inputHashData = this.getComponent().getSearchTextField();
+        return !inputHashData.getText().isEmpty() || inputHashData.getText().length() == 32 || inputHashData.getText().matches("[0-9a-fA-F]+");
     }
 }
