@@ -81,17 +81,25 @@ final public class FiltersPanel extends javax.swing.JPanel {
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(
-                type -> accountTypeMap.computeIfAbsent(type, t -> {
-                    final JCheckBox jCheckBox = new JCheckBox(
-                            "<html><table cellpadding=0><tr><td><img src=\""
-                            + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                                    + AccountUtils.getIconFileName(type))
-                            + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                            true
-                    );
-                    accountTypePane.add(jCheckBox);
-                    return jCheckBox;
-                })
+                type -> {
+                    if (type.equals(Account.Type.CREDIT_CARD)) {
+                        //don't show a check box for credit cards
+                    } else if (type.equals(Account.Type.DEVICE)) {
+                        //don't show a check box fro device
+                    } else {
+                        accountTypeMap.computeIfAbsent(type, t -> {
+                            final JCheckBox jCheckBox = new JCheckBox(
+                                    "<html><table cellpadding=0><tr><td><img src=\""
+                                    + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                                            + AccountUtils.getIconFileName(type))
+                                    + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
+                                    true
+                            );
+                            accountTypePane.add(jCheckBox);
+                            return jCheckBox;
+                        });
+                    }
+                }
         );
     }
 
