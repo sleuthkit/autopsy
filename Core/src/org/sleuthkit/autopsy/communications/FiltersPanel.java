@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.DeviceFilter;
+import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -302,8 +303,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             CommunicationsFilter commsFilter = new CommunicationsFilter();
             commsFilter.addAndFilter(getDevceFilter());
 
-            //TODO: uncomment and correct  this one AccountTypeFilter is in place
-            //commsFilter.addAndFilter(getAccountTypeFilter());
+            commsFilter.addAndFilter(getAccountTypeFilter());
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
 
@@ -320,13 +320,13 @@ final public class FiltersPanel extends javax.swing.JPanel {
         return deviceFilter;
     }
 
-    //TODO: uncomment and correct  this one AccountTypeFilter is in place
-    //private AccountTypeFilter getAccountTypeFilter() {
-    //    AccountTypeFilter accountTypeFilter = new AccountTypeFilter(accountTypeMap.entrySet().stream()
-    //            .filter(entry -> entry.getValue().isSelected())
-    //            .map(entry -> entry.getKey()).collect(Collectors.toSet()));
-    //    return accountTypeFilter;
-    //}
+    private AccountTypeFilter getAccountTypeFilter() {
+        AccountTypeFilter accountTypeFilter = new AccountTypeFilter(accountTypeMap.entrySet().stream()
+                .filter(entry -> entry.getValue().isSelected())
+                .map(entry -> entry.getKey()).collect(Collectors.toSet()));
+        return accountTypeFilter;
+    }
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllTypesSelected(boolean selected) {
         setAllSelected(accountTypeMap, selected);
