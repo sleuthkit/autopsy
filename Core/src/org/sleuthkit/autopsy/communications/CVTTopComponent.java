@@ -125,6 +125,25 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        /*
+         * When the apply button is pressed, query for accounts using the
+         * selected filters, and send the results to the AccountsBrowser via the
+         * ExplorerManager
+         */
+        try {
+            List<AccountDeviceInstance> accountDeviceInstances = new ArrayList<>();
+            
+            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(null));
+     
+            em.setRootContext(new AbstractNode(new AccountDeviceInstancesNodeChildren(accountDeviceInstances)));
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTabbedPane BrowseVisualizeTabPane;
     private javax.swing.JSplitPane HSplitPane;

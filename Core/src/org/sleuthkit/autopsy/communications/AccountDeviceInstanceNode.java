@@ -37,7 +37,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 class AccountDeviceInstanceNode extends AbstractNode {
 
     private static final Logger LOGGER = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
-
     private final AccountDeviceInstance accountDeviceInstance;
 
     AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance) {
@@ -77,7 +76,7 @@ class AccountDeviceInstanceNode extends AbstractNode {
                 Bundle.AccountNode_accountType(),
                 "type",
                 accountDeviceInstance.getAccount().getAccountType().getDisplayName())); // NON-NLS
-
+       
         properties.put(new NodeProperty<>("count",
                 Bundle.AccountNode_messageCount(),
                 "count",
