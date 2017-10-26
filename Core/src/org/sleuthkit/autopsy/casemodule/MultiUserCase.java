@@ -120,6 +120,15 @@ class MultiUserCase implements Comparable<MultiUserCase> {
     Date getLastAccessedDate() {
         return this.lastAccessedDate;
     }
+    
+    /**
+     * Gets the full path of the metadata (.aut) file.
+     * 
+     * @return The metadata file path.
+     */
+    Path getMetadataFilePath() {
+        return this.metadataFilePath;
+    }
 
     /**
      * Gets the status of this case based on the auto ingest result file in the

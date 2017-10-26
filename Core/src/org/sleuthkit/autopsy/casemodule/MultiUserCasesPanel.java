@@ -79,6 +79,18 @@ public class MultiUserCasesPanel extends javax.swing.JPanel {
     private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER};
     private DefaultTableModel caseTableModel;
     private Path currentlySelectedCase = null;
+    private static MultiUserCasesPanel instance;
+
+    /*
+     * Gets the singleton instance of the panel.
+     */
+    static MultiUserCasesPanel getInstance() {
+        if (instance == null) {
+            instance = new MultiUserCasesPanel();
+        }
+        instance.refreshCasesTable();
+        return instance;
+    }
 
     /**
      * Constructs a panel that allows a user to open cases created by automated
@@ -86,7 +98,7 @@ public class MultiUserCasesPanel extends javax.swing.JPanel {
      *
      * @param parent The parent dialog for this panel.
      */
-    MultiUserCasesPanel() {
+    private MultiUserCasesPanel() {
         caseTableModel = new DefaultTableModel(columnNames, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -174,7 +186,7 @@ public class MultiUserCasesPanel extends javax.swing.JPanel {
                         autoIngestCase.getCreationDate(),
                         autoIngestCase.getLastAccessedDate(),
                         (MultiUserCase.CaseStatus.OK != autoIngestCase.getStatus()),
-                        autoIngestCase.getCaseDirectoryPath().toString()});
+                        autoIngestCase.getMetadataFilePath().toString()});
                 }
             }
             setSelectedCase(currentlySelectedCase);
@@ -472,8 +484,7 @@ public class MultiUserCasesPanel extends javax.swing.JPanel {
     private void bnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenActionPerformed
         int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
         Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(modelRow,
-                COLUMN_HEADERS.OUTPUTFOLDER.ordinal()),
-                caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
+                COLUMN_HEADERS.OUTPUTFOLDER.ordinal()));
         
         new Thread(() -> {
             openCase(caseMetadataFilePath);
@@ -538,8 +549,7 @@ public class MultiUserCasesPanel extends javax.swing.JPanel {
         if (evt.getClickCount() == 2) {
             int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
             Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(modelRow,
-                    COLUMN_HEADERS.OUTPUTFOLDER.ordinal()),
-                    caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
+                    COLUMN_HEADERS.OUTPUTFOLDER.ordinal()));
             openCase(caseMetadataFilePath);
         }
     }//GEN-LAST:event_casesTableMouseClicked

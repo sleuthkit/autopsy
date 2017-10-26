@@ -53,7 +53,6 @@ final class AutoIngestCaseOpenAction extends CallableSystemAction implements Act
                 break;
                 
             case STANDALONE:
-            case REVIEW:
                 /**
                  * In standalone mode, invoke default Autopsy version of CaseOpenAction.
                  */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -77,7 +76,6 @@ public final class UserPreferences {
 
         STANDALONE,
         AUTOINGEST,
-        REVIEW
     };
 
     /**
@@ -88,6 +86,14 @@ public final class UserPreferences {
     public static SelectedMode getMode() {
         if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MODE)) {
             int ordinal = Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MODE));
+            
+            // If mode is 'REVIEW' (2, now invalid), set it to 'STANDALONE' (0).
+            if(ordinal > 1) {
+                setMode(SelectedMode.STANDALONE);
+                ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
+                ordinal = 0;
+            }
+            
             return UserPreferences.SelectedMode.values()[ordinal];
         }
         return UserPreferences.SelectedMode.STANDALONE;

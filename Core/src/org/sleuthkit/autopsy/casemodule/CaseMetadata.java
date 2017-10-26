@@ -172,6 +172,17 @@ public final class CaseMetadata {
     public String getCaseDirectory() {
         return metadataFilePath.getParent().toString();
     }
+    
+    /**
+     * Gets the full case directory path.
+     * 
+     * @return The case directory path.
+     */
+    public String getCaseDirectoryPath() {
+        String fileName = metadataFilePath.getFileName().toString();
+        String caseDirectoryPath = metadataFilePath.toString();
+        return caseDirectoryPath.substring(0, caseDirectoryPath.lastIndexOf(fileName));
+    }
 
     /**
      * Gets the case type.

@@ -124,7 +124,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     multiUserCaseWindow.setVisible(false);
                 },
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        multiUserCaseWindow.add(new MultiUserCasesPanel());
+        multiUserCaseWindow.add(MultiUserCasesPanel.getInstance());
         multiUserCaseWindow.pack();
         multiUserCaseWindow.setResizable(false);
     }
