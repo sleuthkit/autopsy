@@ -86,14 +86,6 @@ public final class UserPreferences {
     public static SelectedMode getMode() {
         if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MODE)) {
             int ordinal = Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MODE));
-            
-            // If mode is 'REVIEW' (2, now invalid), set it to 'STANDALONE' (0).
-            if(ordinal > 1) {
-                setMode(SelectedMode.STANDALONE);
-                ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
-                ordinal = 0;
-            }
-            
             return UserPreferences.SelectedMode.values()[ordinal];
         }
         return UserPreferences.SelectedMode.STANDALONE;
