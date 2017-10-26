@@ -101,6 +101,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         HSplitPane.setRightComponent(VSplitPane);
 
         filtersPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

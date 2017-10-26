@@ -55,22 +55,28 @@ public class FiltersPanel extends javax.swing.JPanel {
 
     public FiltersPanel() {
         initComponents();
+        populateAccountTypeFilter();
+        populateDeviceFilter();
+    }
 
-        /*
-         * Populate the Account Types filter widgets
-         *
-         *
-         * TODO: something like this commented code could be used to show only
-         * the account types that are found:
-         *
-         * final CommunicationsManager communicationsManager =
-         * Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-         * List<Account.Type> accountTypesInUse =
-         * communicationsManager.getAccountTypesInUse();
-         * accountTypesInUSe.forEach(....)
-         */
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        em = ExplorerManager.find(this);
+    }
+
+    /**
+     * Populate the Account Types filter widgets
+     */
+    private void populateAccountTypeFilter() {
+
+        //TODO: something like this commented code could be used to show only
+        //the account types that are found:
+        //final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+        //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
+        //accountTypesInUSe.forEach(...)
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(
-                type -> {
+                type -> accountTypeMap.computeIfAbsent(type, t -> {
                     final JCheckBox jCheckBox = new JCheckBox(
                             "<html><table cellpadding=0><tr><td><img src=\""
                             + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
@@ -79,29 +85,29 @@ public class FiltersPanel extends javax.swing.JPanel {
                             true
                     );
                     accountTypePane.add(jCheckBox);
-                    accountTypeMap.put(type, jCheckBox);
-                });
+                    return jCheckBox;
+                })
+        );
     }
 
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        em = ExplorerManager.find(this);
-
-        /**
-         * Populate the devices filter widgets
-         */
+    /**
+     * Populate the devices filter widgets
+     */
+    private void populateDeviceFilter() {
         try {
-            Case.getCurrentCase().getSleuthkitCase().getDataSources().stream().forEach(
-                    dataSource -> {
+            final List<DataSource> dataSources = Case.getCurrentCase().getSleuthkitCase().getDataSources();
+            dataSources.forEach(
+                    dataSource -> devicesMap.computeIfAbsent(dataSource, ds -> {
                         final JCheckBox jCheckBox = new JCheckBox(dataSource.getDeviceId(), true);
                         devicesPane.add(jCheckBox);
-                        devicesMap.put(dataSource, jCheckBox);
-                    });
+                        return jCheckBox;
+                    })
+            );
+        } catch (IllegalStateException ex) {
+            logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
-
     }
 
     /**

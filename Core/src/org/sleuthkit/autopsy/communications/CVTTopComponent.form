@@ -154,6 +154,9 @@
             <EtchetBorder/>
           </Border>
         </Property>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[256, 495]"/>
+        </Property>
       </Properties>
     </Component>
   </SubComponents>
