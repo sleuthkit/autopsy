@@ -18,26 +18,35 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Node to represent an Account in the AccountsBrowser
  */
-class AccountNode extends AbstractNode {
+class AccountDeviceInstanceNode extends AbstractNode {
+    
+    private static final Logger LOGGER = Logger.getLogger(AbstractNode.class.getName());
 
-    private final Account account;
+    private final AccountDeviceInstance accountDeviceInstance;
 
-    AccountNode(Account account) {
-        super(Children.LEAF, Lookups.fixed(account));
-        this.account = account;
-        setName(account.getAccountUniqueID());
-        setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + getIconFileName(account.getAccountType()));
+    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance) {
+        super(Children.LEAF, Lookups.fixed(accountDeviceInstance));
+        this.accountDeviceInstance = accountDeviceInstance;
+        setName(accountDeviceInstance.getAccount().getAccountUniqueID());
+        setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
     }
 
     /**
@@ -47,25 +56,25 @@ class AccountNode extends AbstractNode {
      * @return The file name of the icon for the given Account Type.
      */
     final String getIconFileName(Account.Type type) {
-        if (type == Account.Type.CREDIT_CARD) {
+        if (type.equals(Account.Type.CREDIT_CARD)) {
             return "credit-card.png";
-        } else if (type == Account.Type.DEVICE) {
+        } else if (type.equals(Account.Type.DEVICE)) {
             return "image.png";
-        } else if (type == Account.Type.EMAIL) {
+        } else if (type.equals(Account.Type.EMAIL)) {
             return "email.png";
-        } else if (type == Account.Type.FACEBOOK) {
+        } else if (type.equals(Account.Type.FACEBOOK)) {
             return "facebook.png";
-        } else if (type == Account.Type.INSTAGRAM) {
+        } else if (type.equals(Account.Type.INSTAGRAM)) {
             return "instagram.png";
-        } else if (type == Account.Type.MESSAGING_APP) {
+        } else if (type.equals(Account.Type.MESSAGING_APP)) {
             return "messaging.png";
-        } else if (type == Account.Type.PHONE) {
+        } else if (type.equals(Account.Type.PHONE)) {
             return "phone.png";
-        } else if (type == Account.Type.TWITTER) {
+        } else if (type.equals(Account.Type.TWITTER)) {
             return "twitter.png";
-        } else if (type == Account.Type.WEBSITE) {
+        } else if (type.equals(Account.Type.WEBSITE)) {
             return "web-file.png";
-        } else if (type == Account.Type.WHATSAPP) {
+        } else if (type.equals(Account.Type.WHATSAPP)) {
             return "WhatsApp.png";
         } else {
             //there could be a default icon instead...
@@ -88,20 +97,32 @@ class AccountNode extends AbstractNode {
             s.put(properties);
         }
 
+        // RAMAN TBD: need to figure out how to get the right filters here
+        // We talked about either creating a wrapper class around AccountDeviceInstance to push the selected filters
+        // Or some kind of static access to pull the selected filters
+        long msgCount = 0;
+        try {
+            CommunicationsFilter filter = null;
+            msgCount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getRelationshipsCount(filter, accountDeviceInstance);  
+        }
+        catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
+        }
+        
         properties.put(new NodeProperty<>("type",
                 Bundle.AccountNode_accountType(),
                 "type",
-                account.getAccountType().getDisplayName())); // NON-NLS
+                accountDeviceInstance.getAccount().getAccountType().getDisplayName())); // NON-NLS
+       
         properties.put(new NodeProperty<>("count",
                 Bundle.AccountNode_messageCount(),
                 "count",
-                1)); // NON-NLS //dummy value
-
-        //how do I get the device name
-//        properties.put(new NodeProperty<>("device",
-//                Bundle.AccountNode_device(),
-//                "device",
-//                account.)); // NON-NLS
+                msgCount)); // NON-NLS
+        
+        properties.put(new NodeProperty<>("device",
+                Bundle.AccountNode_device(),
+                "device",
+                accountDeviceInstance.getDeviceId())); // NON-NLS
         return s;
     }
 }
