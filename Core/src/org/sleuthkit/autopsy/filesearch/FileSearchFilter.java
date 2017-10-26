@@ -47,6 +47,13 @@ interface FileSearchFilter {
      * @return Whether the panel has valid input for search.
      */
     boolean isValid();
+    
+    /**
+     * Get the last error recorded during the call to isValid
+     * 
+     * @return Description of why the filter is invalid
+     */
+    String getLastError();
 
     /**
      * Gets predicate expression to include in the SQL filter expression
