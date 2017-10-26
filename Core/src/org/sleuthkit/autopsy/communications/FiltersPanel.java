@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
@@ -41,7 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class FiltersPanel extends javax.swing.JPanel {
+final public class FiltersPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
@@ -51,12 +52,16 @@ public class FiltersPanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private final Map<DataSource, JCheckBox> devicesMap = new HashMap<>();
+    private final Map<String, JCheckBox> devicesMap = new HashMap<>();
 
     public FiltersPanel() {
         initComponents();
-        populateAccountTypeFilter();
-        populateDeviceFilter();
+        updateFilters();
+    }
+
+    void updateFilters() {
+        updateAccountTypeFilter();
+        updateDeviceFilter();
     }
 
     @Override
@@ -68,7 +73,7 @@ public class FiltersPanel extends javax.swing.JPanel {
     /**
      * Populate the Account Types filter widgets
      */
-    private void populateAccountTypeFilter() {
+    private void updateAccountTypeFilter() {
 
         //TODO: something like this commented code could be used to show only
         //the account types that are found:
@@ -93,11 +98,11 @@ public class FiltersPanel extends javax.swing.JPanel {
     /**
      * Populate the devices filter widgets
      */
-    private void populateDeviceFilter() {
+    private void updateDeviceFilter() {
         try {
             final List<DataSource> dataSources = Case.getCurrentCase().getSleuthkitCase().getDataSources();
             dataSources.forEach(
-                    dataSource -> devicesMap.computeIfAbsent(dataSource, ds -> {
+                    dataSource -> devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
                         final JCheckBox jCheckBox = new JCheckBox(dataSource.getDeviceId(), true);
                         devicesPane.add(jCheckBox);
                         return jCheckBox;
@@ -303,7 +308,7 @@ public class FiltersPanel extends javax.swing.JPanel {
     private DeviceFilter getDevceFilter() {
         DeviceFilter deviceFilter = new DeviceFilter(devicesMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
-                .map(entry -> entry.getKey().getDeviceId()).collect(Collectors.toSet()));
+                .map(Entry::getKey).collect(Collectors.toSet()));
         return deviceFilter;
     }
 

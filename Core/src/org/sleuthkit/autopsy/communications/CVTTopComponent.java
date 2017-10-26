@@ -148,6 +148,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     }
 
     @Override
+    public void open() {
+        super.open();
+        filtersPane.updateFilters();
+    }
+
+    @Override
     public List<Mode> availableModes(List<Mode> modes) {
         /*
          * This looks like the right thing to do, but online discussions seems
