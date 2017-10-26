@@ -21,14 +21,15 @@ package org.sleuthkit.autopsy.communications;
 import java.awt.Component;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 
 /**
- * A panel that goes in the Browse tab of the CVT. Has a OutlineView that shows
- * information about Accounts.
+ * A panel that goes in the Browse tab of the Communications Visualization Tool.
+ * Hosts an OutlineView that shows information about Accounts.
  */
 public class AccountsBrowser extends JPanel {
 
@@ -52,9 +53,7 @@ public class AccountsBrowser extends JPanel {
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        outline.setColumnSorted(3, false, 1); //it would be could if the column index wasn't hardcoded
-
-//        setColumnWidths();
+        outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
     }
 
     @Override
@@ -63,9 +62,9 @@ public class AccountsBrowser extends JPanel {
         em = ExplorerManager.find(this);
         em.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
-                setColumnWidths();
+                SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
-                setColumnWidths();
+                SwingUtilities.invokeLater(this::setColumnWidths);
             }
         });
     }
@@ -74,10 +73,11 @@ public class AccountsBrowser extends JPanel {
         int margin = 4;
         int padding = 8;
 
+        final int rows = Math.min(100, outline.getRowCount());
+
         for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
             int columnWidthLimit = 500;
             int columnWidth = 0;
-            final int rows = Math.min(100, outline.getRowCount());
 
             // find the maximum width needed to fit the values for the first 100 rows, at most
             for (int row = 0; row < rows; row++) {
