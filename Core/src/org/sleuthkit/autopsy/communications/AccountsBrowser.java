@@ -28,8 +28,8 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 
 /**
- * A panel that goes in the Browse tab of the CVT. Has a OutlineView that shows
- * information about Accounts.
+ * A panel that goes in the Browse tab of the Communications Visualization Tool.
+ * Hosts an OutlineView that shows information about Accounts.
  */
 public class AccountsBrowser extends JPanel {
 
@@ -53,9 +53,7 @@ public class AccountsBrowser extends JPanel {
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        outline.setColumnSorted(3, false, 1); //it would be could if the column index wasn't hardcoded
-
-//        setColumnWidths();
+        outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
     }
 
     @Override

@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
@@ -31,8 +31,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.DeviceFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -77,6 +80,12 @@ public class FiltersPanel extends javax.swing.JPanel {
                     accountTypePane.add(jCheckBox);
                     accountTypeMap.put(type, jCheckBox);
                 });
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        em = ExplorerManager.find(this);
 
         /**
          * Populate the devices filter widgets
@@ -91,12 +100,7 @@ public class FiltersPanel extends javax.swing.JPanel {
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
-    }
 
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        em = ExplorerManager.find(this);
     }
 
     /**
@@ -290,20 +294,35 @@ public class FiltersPanel extends javax.swing.JPanel {
          * Manager API
          */
         try {
-            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            List<AccountDeviceInstance> accountDeviceInstances = new ArrayList<>();
+            CommunicationsFilter commsFilter = new CommunicationsFilter();
+            commsFilter.addAndFilter(getDevceFilter());
 
-            List<Account> accounts = new ArrayList<>();
-            for (Entry<Account.Type, JCheckBox> entry : accountTypeMap.entrySet()) {
-                if (entry.getValue().isSelected()) {
-                    accounts.addAll(communicationsManager.getAccounts(entry.getKey()));
-                }
-            }
-            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accounts)));
+            //TODO: uncomment and correct  this one AccountTypeFilter is in place
+            //commsFilter.addAndFilter(getAccountTypeFilter());
+            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
+
+            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstances)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
-
     }//GEN-LAST:event_applyFiltersButtonActionPerformed
+
+    private DeviceFilter getDevceFilter() {
+        DeviceFilter deviceFilter = new DeviceFilter(devicesMap.entrySet().stream()
+                .filter(entry -> entry.getValue().isSelected())
+                .map(entry -> entry.getKey().getDeviceId()).collect(Collectors.toSet()));
+        return deviceFilter;
+    }
+
+    //TODO: uncomment and correct  this one AccountTypeFilter is in place
+    //private AccountTypeFilter getAccountTypeFilter() {
+    //    AccountTypeFilter accountTypeFilter = new AccountTypeFilter(accountTypeMap.entrySet().stream()
+    //            .filter(entry -> entry.getValue().isSelected())
+    //            .map(entry -> entry.getKey()).collect(Collectors.toSet()));
+    //    return accountTypeFilter;
+    //}
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllTypesSelected(boolean selected) {
         setAllSelected(accountTypeMap, selected);
