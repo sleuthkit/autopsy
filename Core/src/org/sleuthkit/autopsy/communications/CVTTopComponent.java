@@ -18,22 +18,15 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
-import org.openide.nodes.AbstractNode;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
-import org.sleuthkit.datamodel.CommunicationsManager;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component which displays the Communications Visualization Tool.
@@ -65,45 +58,19 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel2 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jSplitPane1 = new javax.swing.JSplitPane();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        HSplitPane = new javax.swing.JSplitPane();
+        BrowseVisualizeTabPane = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
         jPanel1 = new javax.swing.JPanel();
-        jSplitPane2 = new javax.swing.JSplitPane();
+        VSplitPane = new javax.swing.JSplitPane();
         jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
+        filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jPanel2.border.title"))); // NOI18N
+        HSplitPane.setDividerLocation(600);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(141, Short.MAX_VALUE)
-                .addComponent(jButton1)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton1)
-                .addContainerGap())
-        );
-
-        jSplitPane1.setDividerLocation(600);
-
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), accountsBrowser); // NOI18N
+        BrowseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
 
         jPanel1.setName(""); // NOI18N
 
@@ -115,23 +82,26 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 716, Short.MAX_VALUE)
+            .addGap(0, 710, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), jPanel1); // NOI18N
+        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), jPanel1); // NOI18N
 
-        jSplitPane1.setLeftComponent(jTabbedPane1);
+        HSplitPane.setLeftComponent(BrowseVisualizeTabPane);
 
-        jSplitPane2.setDividerLocation(200);
-        jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        VSplitPane.setDividerLocation(200);
+        VSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         jTextField1.setText(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jTextField1.text")); // NOI18N
-        jSplitPane2.setTopComponent(jTextField1);
+        VSplitPane.setTopComponent(jTextField1);
 
         jTextField2.setText(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.jTextField2.text")); // NOI18N
-        jSplitPane2.setRightComponent(jTextField2);
+        VSplitPane.setRightComponent(jTextField2);
 
-        jSplitPane1.setRightComponent(jSplitPane2);
+        HSplitPane.setRightComponent(VSplitPane);
+
+        filtersPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -139,9 +109,9 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1350, Short.MAX_VALUE)
+                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(HSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1322, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -149,8 +119,8 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSplitPane1)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(filtersPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(HSplitPane))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -175,13 +145,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTabbedPane BrowseVisualizeTabPane;
+    private javax.swing.JSplitPane HSplitPane;
+    private javax.swing.JSplitPane VSplitPane;
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
-    private javax.swing.JButton jButton1;
+    private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JSplitPane jSplitPane2;
-    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     // End of variables declaration//GEN-END:variables
@@ -195,6 +164,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     @Override
     public ExplorerManager getExplorerManager() {
         return em;
+    }
+
+    @Override
+    public void open() {
+        super.open();
+        filtersPane.updateFilters();
     }
 
     @Override

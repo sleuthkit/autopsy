@@ -18,25 +18,32 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Component;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
+import org.openide.explorer.ExplorerManager;
 
 /**
- * A panel that goes in the Browse tab of the CVT. Has a OutlineView that shows
- * information about Accounts.
+ * A panel that goes in the Browse tab of the Communications Visualization Tool.
+ * Hosts an OutlineView that shows information about Accounts.
  */
-class AccountsBrowser extends JPanel {
+public class AccountsBrowser extends JPanel {
 
     private static final long serialVersionUID = 1L;
+
+    private final Outline outline;
+    private ExplorerManager em;
 
     /**
      * Creates new form AccountsBrowser
      */
-    AccountsBrowser() {
+    public AccountsBrowser() {
         initComponents();
-        final Outline outline = outlineView.getOutline();
+        outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
                 "device", Bundle.AccountNode_device(),
                 "type", Bundle.AccountNode_accountType(),
@@ -46,7 +53,44 @@ class AccountsBrowser extends JPanel {
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        outline.setColumnSorted(3, false, 1); //it would be could if the column index wasn't hardcoded
+        outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        em = ExplorerManager.find(this);
+        em.addPropertyChangeListener(evt -> {
+            if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
+                SwingUtilities.invokeLater(this::setColumnWidths);
+            } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
+                SwingUtilities.invokeLater(this::setColumnWidths);
+            }
+        });
+    }
+
+    private void setColumnWidths() {
+        int margin = 4;
+        int padding = 8;
+
+        final int rows = Math.min(100, outline.getRowCount());
+
+        for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
+            int columnWidthLimit = 500;
+            int columnWidth = 0;
+
+            // find the maximum width needed to fit the values for the first 100 rows, at most
+            for (int row = 0; row < rows; row++) {
+                TableCellRenderer renderer = outline.getCellRenderer(row, column);
+                Component comp = outline.prepareRenderer(renderer, row, column);
+                columnWidth = Math.max(comp.getPreferredSize().width, columnWidth);
+            }
+
+            columnWidth += 2 * margin + padding; // add margin and regular padding
+            columnWidth = Math.min(columnWidth, columnWidthLimit);
+
+            outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
+        }
     }
 
     /**
