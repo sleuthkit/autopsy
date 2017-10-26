@@ -52,19 +52,6 @@ class DateSearchPanel extends javax.swing.JPanel {
 
         dateFromTextField.setComponentPopupMenu(rightClickMenu);
         dateToTextField.setComponentPopupMenu(rightClickMenu);
-        //Block or disable user input to date time field
-        dateFromTextField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                e.consume();  // ignore event
-            }
-        });
-        dateToTextField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                e.consume();  // ignore event
-            }
-        });
 
         ActionListener actList = new ActionListener() {
             @Override
@@ -192,6 +179,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        dateToTextField.setEditable(false);
         dateToTextField.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateToTextField.text")); // NOI18N
         dateToTextField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -213,6 +201,7 @@ class DateSearchPanel extends javax.swing.JPanel {
         jLabel3.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         jLabel3.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel3.text")); // NOI18N
 
+        dateFromTextField.setEditable(false);
         dateFromTextField.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateFromTextField.text")); // NOI18N
         dateFromTextField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
