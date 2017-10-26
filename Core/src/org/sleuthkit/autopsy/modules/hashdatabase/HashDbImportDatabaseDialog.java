@@ -422,6 +422,9 @@ private void populateCombobox() {
         this.dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=Read only",
+        "HashDbImportDatabaseDialog.missingOrg=Editable"
+    })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
@@ -434,6 +437,21 @@ private void populateCombobox() {
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
             return;
+        }
+        
+        if(centralRepoRadioButton.isSelected()){
+            if(versionTextField.getText().isEmpty()){
+                // Bundle.HashLookupSettingsPanel_editable()
+                JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbCreateDatabaseDialog.missingVersion"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            
         }
 
         if (selectedFilePath.isEmpty()) {

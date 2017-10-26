@@ -69,7 +69,6 @@
                                       <Component id="fileTypeRadioButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
                                       <Component id="centralRepoRadioButton" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="databasePathTextField" max="32767" attributes="0"/>
                               </Group>
