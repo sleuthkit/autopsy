@@ -24,11 +24,11 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 
-class AccountsNodeChildren extends Children.Keys<AccountDeviceInstance> {
+class AccountDeviceInstancesNodeChildren extends Children.Keys<AccountDeviceInstance> {
 
     private final List<AccountDeviceInstance> accountDeviceInstances;
 
-    AccountsNodeChildren(List<AccountDeviceInstance> accountDeviceInstances) {
+    AccountDeviceInstancesNodeChildren(List<AccountDeviceInstance> accountDeviceInstances) {
         super(true);
         this.accountDeviceInstances = accountDeviceInstances;
     }
@@ -54,10 +54,10 @@ class AccountsNodeChildren extends Children.Keys<AccountDeviceInstance> {
     //    
     //    @Override
     //    protected Node createNodeForKey(Account key) {
-    //        return new AccountNode(key);
+    //        return new AccountDeviceInstanceNode(key);
     //    }
     @Override
     protected Node[] createNodes(AccountDeviceInstance key) {
-        return new Node[]{new AccountNode(key)};
+        return new Node[]{new AccountDeviceInstanceNode(key)};
     }
 }

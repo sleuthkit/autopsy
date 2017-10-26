@@ -167,7 +167,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(null));
      
-            em.setRootContext(new AbstractNode(new AccountsNodeChildren(accountDeviceInstances)));
+            em.setRootContext(new AbstractNode(new AccountDeviceInstancesNodeChildren(accountDeviceInstances)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }

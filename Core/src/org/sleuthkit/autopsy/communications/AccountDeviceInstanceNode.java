@@ -36,13 +36,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Node to represent an Account in the AccountsBrowser
  */
-class AccountNode extends AbstractNode {
+class AccountDeviceInstanceNode extends AbstractNode {
     
     private static final Logger LOGGER = Logger.getLogger(AbstractNode.class.getName());
 
     private final AccountDeviceInstance accountDeviceInstance;
 
-    AccountNode(AccountDeviceInstance accountDeviceInstance) {
+    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance) {
         super(Children.LEAF, Lookups.fixed(accountDeviceInstance));
         this.accountDeviceInstance = accountDeviceInstance;
         setName(accountDeviceInstance.getAccount().getAccountUniqueID());
