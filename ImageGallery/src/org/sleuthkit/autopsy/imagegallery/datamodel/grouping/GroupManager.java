@@ -122,7 +122,7 @@ public class GroupManager {
     /*
      * --- current grouping/sorting attributes ---
      */
-    private volatile GroupSortBy sortBy = GroupSortBy.NONE;
+    private volatile GroupSortBy sortBy = GroupSortBy.PRIORITY;
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
 
@@ -466,7 +466,7 @@ public class GroupManager {
         }
     }
 
-    public Comparator<DrawableGroup> getSortBy() {
+    public GroupSortBy getSortBy() {
         return sortBy;
     }
 
