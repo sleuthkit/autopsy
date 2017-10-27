@@ -40,12 +40,9 @@ import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
@@ -207,41 +204,26 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     @Messages ({
-        "End_Date_Before_Start_Date=The end date should be after the start date."
+        "End.date.before.start.date=The end date should be after the start date.",
+        "No.checkbox.selected=Non of the date search checkbox is selected."
     })
     public boolean isValid() {
 
-        final DateSearchPanel panel = this.getComponent();
+        DateSearchPanel panel = this.getComponent();
+        Calendar startDate = getCalendarDate(panel.getDateFromTextField().getText());
+        Calendar endDate = getCalendarDate(panel.getDateToTextField().getText());
         
-        panel.getDateFromTextField().addCaretListener(new CaretListener() {
-            @Override
-            public void caretUpdate(CaretEvent ce) {
-                String startDateValue = panel.getDateFromTextField().getText();
-                Calendar startDate = getCalendarDate(startDateValue);
-                String endDateValue = panel.getDateToTextField().getText();
-                Calendar endDate = getCalendarDate(endDateValue);
-                
-                if (startDate != null && startDate.after(endDate)) {
-                    MessageNotifyUtil.Message.warn(Bundle.End_Date_Before_Start_Date());                  
-                }
-            }
-        });
+        if ((startDate != null && startDate.after(endDate)) || (endDate != null && endDate.before(startDate)))  {
+            setLastError(Bundle.End_date_before_start_date());
+            return false;
+        }
         
-        panel.getDateToTextField().addCaretListener(new CaretListener() {
-            @Override
-            public void caretUpdate(CaretEvent ce) {
-                String startDateValue = panel.getDateFromTextField().getText();
-                Calendar startDate = getCalendarDate(startDateValue);
-                String endDateValue = panel.getDateToTextField().getText();
-                Calendar endDate = getCalendarDate(endDateValue);
-                
-                if (endDate != null && endDate.before(startDate)) {
-                    MessageNotifyUtil.Message.warn(Bundle.End_Date_Before_Start_Date());                  
-                }
-            }
-        });
-
-        return this.getComponent().isValidSearch();
+        if (!panel.isValidSearch()) {
+            setLastError(Bundle.No_checkbox_selected());
+            return false;
+        }
+        
+        return true;
     }
 
     /**

@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -31,6 +29,8 @@ import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * Subpanel with controls for file data filtering.
@@ -77,6 +77,41 @@ class DateSearchPanel extends javax.swing.JPanel {
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        this.dateFromTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
+
+        this.dateToTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
+
+
         this.setComponentsEnabled();
     }
 

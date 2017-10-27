@@ -25,6 +25,8 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JMenuItem;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  *
@@ -65,6 +67,24 @@ class SizeSearchPanel extends javax.swing.JPanel {
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+            this.sizeTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            }
+        });
+
+
 
     }
 

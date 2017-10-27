@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
-import javax.swing.JTextField;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -61,8 +61,25 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
     }
 
     @Override
+    @Messages({
+        "Empty.hash=Hash data is empty.",
+        "# {0} - hash data length", "Wrong.length=Input lenght({0}), doesn't match the MD5 length(32).",
+        "Wrong.character=Input data is an invalid MD5 hex data."
+    })
     public boolean isValid() {
-        JTextField inputHashData = this.getComponent().getSearchTextField();
-        return !inputHashData.getText().isEmpty() || inputHashData.getText().length() == 32 || inputHashData.getText().matches("[0-9a-fA-F]+");
+        String inputHashData = this.getComponent().getSearchTextField().getText();
+        if (inputHashData.isEmpty()) {
+            setLastError(Bundle.Empty_hash());
+            return false;
+        }
+        if (inputHashData.length() != 32) {
+            setLastError(Bundle.Wrong_length(inputHashData.length()));
+            return false;
+        }
+        if (!inputHashData.matches("[0-9a-fA-F]+")) {
+            setLastError(Bundle.Wrong_character());
+            return false;
+        }
+        return true;
     }
 }
