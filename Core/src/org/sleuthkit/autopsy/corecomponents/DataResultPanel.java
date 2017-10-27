@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -260,11 +261,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     @Override
     public List<DataResultViewer> getViewers() {
-        List<DataResultViewer> viewers = new ArrayList<>();
-        resultViewers.forEach((viewer) -> {
-            viewers.add(viewer);
-        });
-        return viewers;
+        return Collections.unmodifiableList(resultViewers);
     }
 
     /**
@@ -397,9 +394,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param selectedNodes The nodes to be selected.
      */
     public void setSelectedNodes(Node[] selectedNodes) {
-        this.resultViewers.forEach((viewer) -> {
-            viewer.setSelectedNodes(selectedNodes);
-        });
+        this.resultViewers.forEach((viewer) -> viewer.setSelectedNodes(selectedNodes));
     }
 
     /**
@@ -517,14 +512,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             explorerManager = null;
         }
 
-        this.resultViewers.forEach((viewer) -> {
-            viewer.setNode(null);
-        });
+        this.resultViewers.forEach((viewer) -> viewer.setNode(null));
 
         if (!this.isMain) {
-            this.resultViewers.forEach((viewer) -> {
-                viewer.clearComponent();
-            });
+            this.resultViewers.forEach(DataResultViewer::clearComponent);
             this.directoryTablePath.removeAll();
             this.directoryTablePath = null;
             this.numberMatchLabel.removeAll();
@@ -563,9 +554,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                          * Pass the selected nodes to all of the result viewers
                          * sharing this explorer manager.
                          */
-                        resultViewers.forEach((viewer) -> {
-                            viewer.setSelectedNodes(selectedNodes);
-                        });
+                        resultViewers.forEach((viewer) -> viewer.setSelectedNodes(selectedNodes));
 
                         /*
                          * Passing null signals that either multiple nodes are
