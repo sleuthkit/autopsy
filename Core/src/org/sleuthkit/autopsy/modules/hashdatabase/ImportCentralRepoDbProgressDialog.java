@@ -98,6 +98,13 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         this.setVisible(true);
     }
     
+    HashDbManager.HashDatabase getDatabase(){
+        if(worker != null){
+            return worker.getDatabase();
+        }
+        return null;
+    }
+    
     @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.linesProcessed= lines processed"})
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -130,6 +137,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         void addPropertyChangeListener(PropertyChangeListener dialog);
         int getProgressPercentage();
         long getLinesProcessed();
+        HashDbManager.HashDatabase getDatabase();
     }
     
     class ImportIDXWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
@@ -144,7 +152,8 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final File importFile;
         private final long totalLines;
         private int crIndex = -1;
-        private AtomicLong numLines = new AtomicLong();
+        private HashDbManager.CentralRepoHashDb newHashDb = null;
+        private final AtomicLong numLines = new AtomicLong();
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
@@ -171,6 +180,11 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         final long getEstimatedTotalHashes(){
             long fileSize = importFile.length();
             return (fileSize / 0x33); // IDX file lines are generally 0x33 bytes long
+        }
+        
+        @Override 
+        public HashDbManager.HashDatabase getDatabase(){
+            return newHashDb;
         }
         
         @Override
@@ -294,7 +308,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 get();
                 try{
                     System.out.println("### Finished - adding hashDb object");
-                    HashDbManager.CentralRepoHashDb hashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
+                    newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
                             crIndex, 
                             searchDuringIngest, sendIngestMessages, knownFilesType);
                 } catch (TskCoreException ex){
@@ -314,11 +328,6 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
             }
         }       
-        
-        //@Override
-        //public boolean cancel(boolean mayInterruptIfRunning) {
-        //    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        //}
     }
     
     /**

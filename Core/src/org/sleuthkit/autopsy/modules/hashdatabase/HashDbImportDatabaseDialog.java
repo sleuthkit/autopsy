@@ -108,9 +108,12 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     
     private void enableComponents(){
         
+        
         if(! EamDb.isEnabled()){
             centralRepoRadioButton.setEnabled(false);
             fileTypeRadioButton.setSelected(true);
+        } else {
+            populateCombobox();
         }
         
         boolean isFileType = fileTypeRadioButton.isSelected();
@@ -124,7 +127,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         readOnlyCheckbox.setEnabled(! isFileType);
     }
     
-private void populateCombobox() {
+    private void populateCombobox() {
         orgComboBox.removeAllItems();
         try {
             EamDb dbManager = EamDb.getInstance();
@@ -136,6 +139,7 @@ private void populateCombobox() {
                 selectedOrg = orgs.get(0);
             }
         } catch (EamDbException ex) {
+            ex.printStackTrace();
             //LOGGER.log(Level.SEVERE, "Failure populating combobox with organizations.", ex);
         }
     }
@@ -237,7 +241,6 @@ private void populateCombobox() {
 
         org.openide.awt.Mnemonics.setLocalizedText(lbOrg, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.lbOrg.text")); // NOI18N
 
-        orgComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         orgComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 orgComboBoxActionPerformed(evt);
@@ -310,8 +313,7 @@ private void populateCombobox() {
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(fileTypeRadioButton)
                                         .addGap(26, 26, 26)
-                                        .addComponent(centralRepoRadioButton)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addComponent(centralRepoRadioButton))
                                     .addComponent(databasePathTextField))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(openButton))
@@ -422,8 +424,8 @@ private void populateCombobox() {
         this.dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
-    @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=Read only",
-        "HashDbImportDatabaseDialog.missingOrg=Editable"
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=A version must be entered",
+        "HashDbImportDatabaseDialog.missingOrg=An organization must be selected"
     })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
@@ -441,18 +443,25 @@ private void populateCombobox() {
         
         if(centralRepoRadioButton.isSelected()){
             if(versionTextField.getText().isEmpty()){
-                // Bundle.HashLookupSettingsPanel_editable()
                 JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.missingVersion"),
+                            "HashDbImportDatabaseDialog.missingVersion"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            
-        }
+            if(selectedOrg == null){
+                JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.missingOrg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }        
 
         if (selectedFilePath.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -482,18 +491,26 @@ private void populateCombobox() {
         }
 
         String errorMessage = NbBundle.getMessage(this.getClass(),
-                "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
-                selectedFilePath);
-        try {
-            selectedHashDb = HashDbManager.getInstance().addExistingFileTypeHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
-        } catch (HashDbManagerException ex) {
-            Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbImportDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
+            "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
+            selectedFilePath);
+        if(fileTypeRadioButton.isSelected()){
+
+            try {
+                selectedHashDb = HashDbManager.getInstance().addExistingFileTypeHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+            } catch (HashDbManagerException ex) {
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+                JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.importHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } else {
+            ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
+            progressDialog.importFile(hashSetNameTextField.getText(), versionTextField.getText(), 
+                selectedOrg.getOrgID(), true, sendIngestMessagesCheckbox.isSelected(), type, selectedFilePath);
+            selectedHashDb = progressDialog.getDatabase();
         }
 
         dispose();
