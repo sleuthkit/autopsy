@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -25,7 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.LocalDiskDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
@@ -89,7 +93,7 @@ class AddArchiveTask implements Runnable {
         }
 
         // extract the archive and pass the extracted folder as input
-        UUID taskId = UUID.randomUUID();    // ELTODO: do we want to come with a way to re-use task id?
+        UUID taskId = UUID.randomUUID();
         if (callback instanceof AddDataSourceCallback) {
             // if running as part of automated ingest - re-use the task ID
             taskId = ((AddDataSourceCallback) callback).getTaskId();
@@ -97,12 +101,9 @@ class AddArchiveTask implements Runnable {
         try {
             Case currentCase = Case.getCurrentCase();
 
-            // get file name without full path or extension
-            String dataSourceFileNameNoExt = FilenameUtils.getBaseName(archivePath);
-
             // create folder to extract archive to
-            Path destinationFolder = Paths.get(currentCase.getModuleDirectory(), ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR, dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
-            if (destinationFolder.toFile().mkdirs() == false) {
+            Path destinationFolder = createDirectoryForFile(archivePath, currentCase.getModuleDirectory());
+            if (destinationFolder.toString().isEmpty()) {
                 // unable to create directory
                 criticalErrorOccurred = true;
                 errorMessages.add("Unable to create directory for archive extraction " + destinationFolder.toString());
@@ -117,10 +118,9 @@ class AddArchiveTask implements Runnable {
             Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
             for (String file : extractedFiles) {
                 progressMonitor.setProgressText(String.format("Adding: %s", file));
-                Path filePath = Paths.get(file);
                 // identify DSP for this file
                 // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
-                validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(filePath);
+                validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(Paths.get(file));
                 if (validDataSourceProcessorsMap.isEmpty()) {
                     continue;
                 }
@@ -138,14 +138,32 @@ class AddArchiveTask implements Runnable {
                     if (selectedProcessor instanceof LocalFilesDSProcessor) {
                         continue;
                     }
+                    // also skip nested archive files, those will be ingested as logical files and extracted during ingest
+                    if (selectedProcessor instanceof ArchiveExtractorDSProcessor) {
+                        continue;
+                    }
+                    
+                    // identified a "valid" data source within the archive. 
+                    // Move it to a different folder 
+                    Path newFolder = createDirectoryForFile(file, currentCase.getModuleDirectory());
+                    if (newFolder.toString().isEmpty()) {
+                        // unable to create directory
+                        criticalErrorOccurred = true;
+                        errorMessages.add("Unable to create directory for archive extraction " + newFolder.toString());
+                        logger.log(Level.SEVERE, "Unable to create directory for archive extraction {0}", newFolder.toString());
+                        return;
+                    }
+                    
+                    FileUtils.moveFileToDirectory(new File(file), newFolder.toFile(), false);
+                    Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
                     
                     //jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                     //SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                     synchronized (archiveDspLock) {
                         try {
-                            DataSource internalDataSource = new DataSource(deviceId, filePath);
+                            DataSource internalDataSource = new DataSource(deviceId, newFilePath);
                             DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
-                            selectedProcessor.process(deviceId, filePath, progressMonitor, internalArchiveDspCallBack);
+                            selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
                             archiveDspLock.wait();
 
                             // at this point we got the content object(s) from the current DSP
@@ -161,37 +179,33 @@ class AddArchiveTask implements Runnable {
                             //jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
                             criticalErrorOccurred = true;
                             errorMessages.add(ex.getMessage());
-                            logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{file, selectedProcessor.getDataSourceType()});
+                            logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{newFilePath.toString(), selectedProcessor.getDataSourceType()});
                         }
                     }
                 }
             }
             
-            // after all archive contents have been ingested - all the archive itself as a logical file
-            progressMonitor.setProgressText(String.format("Adding: %s", archivePath));
-            LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
+            // after all archive contents have been examined, add remaining extracted contents as one logical file set
+            progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
             synchronized (archiveDspLock) {
-                try {
-                    Path filePath = Paths.get(archivePath);
-                    DataSource internalDataSource = new DataSource(deviceId, filePath);
-                    DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
-                    localFilesDSP.process(deviceId, filePath, progressMonitor, internalArchiveDspCallBack);
-                    archiveDspLock.wait();
-
-                    // at this point we got the content object(s) from the current DSP
-                    newDataSources.addAll(internalDataSource.getContent());
-                } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                    // Log that the current DSP failed and set the error flag. We consider it an error
-                    // if a DSP fails even if a later one succeeds since we expected to be able to process
-                    // the data source which each DSP on the list.
-                    //AutoIngestAlertFile.create(caseDirectoryPath);
-                    //currentJob.setErrorsOccurred(true);
-                    //jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
-                    criticalErrorOccurred = true;
-                    errorMessages.add(ex.getMessage());
-                    logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{archivePath, localFilesDSP.getDataSourceType()});
-                }
-            }          
+                DataSource internalDataSource = new DataSource(deviceId, destinationFolder); 
+                DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
+                
+                // folder where archive was extracted to
+                List<String> pathsList = new ArrayList<>();
+                pathsList.add(destinationFolder.toString());
+                
+                // use archive file name as the name of the logical file set
+                String archiveFileName = FilenameUtils.getName(archivePath);
+                
+                LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
+                localFilesDSP.run(deviceId, archiveFileName, pathsList, progressMonitor, internalArchiveDspCallBack);
+                
+                archiveDspLock.wait();
+                
+                // at this point we got the content object(s) from the current DSP
+                newDataSources.addAll(internalDataSource.getContent());
+            }
         } catch (Exception ex) {
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
@@ -207,6 +221,20 @@ class AddArchiveTask implements Runnable {
             }
             callback.done(result, errorMessages, newDataSources);
         }
+    }
+    
+    
+    private Path createDirectoryForFile(String fileName, String baseDirectory) {
+        // get file name without full path or extension
+        String fileNameNoExt = FilenameUtils.getBaseName(fileName);
+
+        // create folder to extract archive to
+        Path newFolder = Paths.get(baseDirectory, ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR, fileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
+        if (newFolder.toFile().mkdirs() == false) {
+            // unable to create directory
+            return Paths.get("");
+        }
+        return newFolder;
     }
 
     /*
