@@ -113,21 +113,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.pack();
         recentCasesWindow.setResizable(false);
     }
-    
-    private void initMultiUserCasesWindow() {
-        multiUserCaseWindow = new JDialog(
-                WindowManager.getDefault().getMainWindow(),
-                REVIEW_MODE_TITLE,
-                Dialog.ModalityType.APPLICATION_MODAL);
-        multiUserCaseWindow.getRootPane().registerKeyboardAction(
-                e -> {
-                    multiUserCaseWindow.setVisible(false);
-                },
-                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        multiUserCaseWindow.add(MultiUserCasesPanel.getInstance());
-        multiUserCaseWindow.pack();
-        multiUserCaseWindow.setResizable(false);
-    }
 
     private void enableComponents() {
         boolean enableOpenRecentCaseButton = (RecentCases.getInstance().getTotalRecentCases() > 0);
@@ -304,7 +289,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
         if(multiUserCaseWindow == null) {
-            initMultiUserCasesWindow();
+            multiUserCaseWindow = MultiUserCasesDialog.getInstance();
         }
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);

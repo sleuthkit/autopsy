@@ -32,7 +32,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import static org.sleuthkit.autopsy.core.UserPreferences.SETTINGS_PROPERTIES;
-import static org.sleuthkit.autopsy.core.UserPreferences.setMode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -74,13 +73,18 @@ public class Installer extends ModuleInstall {
         super.uninstalled();
     }
     
+    /**
+     * If the mode in the configuration file is 'REVIEW' (2, now invalid), this
+     * method will set it to 'STANDALONE' (0) and disable auto ingest.
+     */
     private void updateConfig() {
-        // If mode is 'REVIEW' (2, now invalid), set it to 'STANDALONE' (0).
-        int ordinal = Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, "AutopsyMode"));
-        if(ordinal > 1) {
-            setMode(UserPreferences.SelectedMode.STANDALONE);
-            ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
-            ordinal = 0;
+        String mode = ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, "AutopsyMode");
+        if(mode != null) {
+            int ordinal = Integer.parseInt(mode);
+            if(ordinal > 1) {
+                UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
+                ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
+            }
         }
     }
 

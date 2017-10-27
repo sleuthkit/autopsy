@@ -55,25 +55,6 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     private static final String REVIEW_MODE_TITLE = "Open Multi-User Case (" + LOCAL_HOST_NAME + ")";
 
     public CaseOpenMultiUserAction() {}
-    
-    /**
-     * Constructs the Multi-User Cases window used by the Open Multi-User Case
-     * menu item.
-     */
-    private void initMultiUserCasesWindow() {
-        multiUserCaseWindow = new JDialog(
-                WindowManager.getDefault().getMainWindow(),
-                REVIEW_MODE_TITLE,
-                Dialog.ModalityType.APPLICATION_MODAL);
-        multiUserCaseWindow.getRootPane().registerKeyboardAction(
-                e -> {
-                    multiUserCaseWindow.setVisible(false);
-                },
-                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        multiUserCaseWindow.add(MultiUserCasesPanel.getInstance());
-        multiUserCaseWindow.pack();
-        multiUserCaseWindow.setResizable(false);
-    }
 
     public static void closeMultiUserCasesWindow() {
         if (null != multiUserCaseWindow) {
@@ -95,7 +76,7 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     @Override
     public void actionPerformed(ActionEvent event) {
         if(multiUserCaseWindow == null) {
-            initMultiUserCasesWindow();
+            multiUserCaseWindow = MultiUserCasesDialog.getInstance();
         }
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);
