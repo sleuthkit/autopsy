@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
 /**
  * Key for AccountDeviceInstance node.
  * 
- * Encapsulates a AccountDeviceInstance, and CommunicationsFilter
+ * Encapsulates a AccountDeviceInstance, and CommunicationsFilter.
  */
 public class AccountDeviceInstanceKey {
 
