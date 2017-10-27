@@ -37,9 +37,10 @@ class AutoIngestRowSorter<M extends DefaultTableModel> extends TableRowSorter<M>
 
     @Override
     public void toggleSortOrder(int column) {
-        if (!this.getModel().getColumnClass(column).equals(Date.class)) {
-            super.toggleSortOrder(column);  //if it isn't a date perform the regular sorting
-        } else {
+            if (!this.getModel().getColumnClass(column).equals(Date.class) && !this.getModel().getColumnClass(column).equals(Integer.class)) {
+                //currently the only Integer column this sorter is being applied to is the Priority column
+                super.toggleSortOrder(column);  //if it isn't a date or Integer column perform the regular sorting
+        } else {  
             ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>(getSortKeys());
             if (sortKeys.isEmpty() || sortKeys.get(0).getColumn() != column) {  //sort descending
                 sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
