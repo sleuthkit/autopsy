@@ -204,8 +204,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     @Messages ({
-        "DateSearchFilter.endDateBeforeStartDate=The end date should be after the start date.",
-        "DateSearchFilter.noCheckboxSelected=Non of the date search checkbox is selected."
+        "DateSearchFilter.errorMessage.endDateBeforeStartDate=The end date should be after the start date.",
+        "DateSearchFilter.errorMessage.noCheckboxSelected=Non of the date search checkbox is selected."
     })
     public boolean isValid() {
 
@@ -214,12 +214,12 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         Calendar endDate = getCalendarDate(panel.getDateToTextField().getText());
         
         if ((startDate != null && startDate.after(endDate)) || (endDate != null && endDate.before(startDate)))  {
-            setLastError(Bundle.DateSearchFilter_endDateBeforeStartDate());
+            setLastError(Bundle.DateSearchFilter_errorMessage_endDateBeforeStartDate());
             return false;
         }
         
         if (!panel.isValidSearch()) {
-            setLastError(Bundle.DateSearchFilter_noCheckboxSelected());
+            setLastError(Bundle.DateSearchFilter_errorMessage_noCheckboxSelected());
             return false;
         }
         

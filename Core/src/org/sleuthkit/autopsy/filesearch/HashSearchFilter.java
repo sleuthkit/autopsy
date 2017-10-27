@@ -62,22 +62,22 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
 
     @Override
     @Messages({
-        "HashSearchFilter.emptyHash=Hash data is empty.",
-        "# {0} - hash data length", "HashSearchFilter.wrongLength=Input lenght({0}), doesn't match the MD5 length(32).",
-        "HashSearchFilter.wrongCharacter=Input data is an invalid MD5 hex data."
+        "HashSearchFilter.errorMessage.emptyHash=Hash data is empty.",
+        "# {0} - hash data length", "HashSearchFilter.errorMessage.wrongLength=Input lenght({0}), doesn't match the MD5 length(32).",
+        "HashSearchFilter.errorMessage.wrongCharacter=Input data is an invalid MD5 hex data."
     })
     public boolean isValid() {
         String inputHashData = this.getComponent().getSearchTextField().getText();
         if (inputHashData.isEmpty()) {
-            setLastError(Bundle.HashSearchFilter_emptyHash());
+            setLastError(Bundle.HashSearchFilter_errorMessage_emptyHash());
             return false;
         }
         if (inputHashData.length() != 32) {
-            setLastError(Bundle.HashSearchFilter_wrongLength(inputHashData.length()));
+            setLastError(Bundle.HashSearchFilter_errorMessage_wrongLength(inputHashData.length()));
             return false;
         }
         if (!inputHashData.matches("[0-9a-fA-F]+")) {
-            setLastError(Bundle.HashSearchFilter_wrongCharacter());
+            setLastError(Bundle.HashSearchFilter_errorMessage_wrongCharacter());
             return false;
         }
         return true;
