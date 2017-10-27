@@ -47,6 +47,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ImportCentralRepoDatabaseDialog;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -649,6 +651,24 @@ public class HashDbManager implements PropertyChangeListener {
         }
         return updateableDbs;
     }
+    
+    private List<HashDbInfo> getCentralRepoHashSetsFromDatabase(){
+        List<HashDbInfo> crHashSets = new ArrayList<>();
+        if(EamDb.isEnabled()){
+            try{
+                List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets();
+                for(EamGlobalSet globalSet:crSets){
+                    EamOrganization org = EamDb.getInstance().getOrganizationByID(globalSet.getOrgID());
+                            // TEMP TEMP FIX
+                    crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(), org.getName(),
+                        globalSet.getGlobalSetID(), HashDbManager.HashDb.KnownFilesType.KNOWN_BAD, true, true));
+               }
+            } catch (EamDbException ex){
+                ex.printStackTrace();
+            }
+        }
+        return crHashSets;
+    }
 
     /**
      * Restores the last saved hash sets configuration. This supports
@@ -702,11 +722,28 @@ public class HashDbManager implements PropertyChangeListener {
                         logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDbInfo.getHashSetName()));
                         allDatabasesLoadedCorrectly = false;
                     }
-                } else {
-                    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                }// else {
+                //    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                //            hashDbInfo.getCentralRepoIndex(), 
+                //            hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
+                //}
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                allDatabasesLoadedCorrectly = false;
+            }
+        }
+        
+        List<HashDbInfo> crHashDbInfoList = this.getCentralRepoHashSetsFromDatabase();
+        for(HashDbInfo hashDbInfo : crHashDbInfoList) {
+            try{
+                addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
                             hashDbInfo.getCentralRepoIndex(), 
-                            hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
-                }
+                            hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());   
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,

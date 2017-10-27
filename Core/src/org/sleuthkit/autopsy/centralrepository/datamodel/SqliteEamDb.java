@@ -793,6 +793,23 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Get all reference sets
+     *
+     * @return The global set associated with the ID
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+        try{
+            acquireSharedLock();
+            return super.getAllReferenceSets();
+        } finally {
+            releaseSharedLock();
+        } 
+    }
+    
+    /**
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add

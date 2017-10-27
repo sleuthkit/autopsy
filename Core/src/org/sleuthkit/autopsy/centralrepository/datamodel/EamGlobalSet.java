@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.time.LocalDate;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A global set in the Central Repository database
@@ -29,6 +31,8 @@ public class EamGlobalSet {
     private int orgID;
     private String setName;
     private String version;
+    private TskData.FileKnown knownStatus;
+    private boolean isReadOnly;
     private LocalDate importDate;
 
     public EamGlobalSet(
@@ -36,11 +40,15 @@ public class EamGlobalSet {
             int orgID,
             String setName,
             String version,
+            TskData.FileKnown knownStatus,
+            boolean isReadOnly,
             LocalDate importDate) {
         this.globalSetID = globalSetID;
         this.orgID = orgID;
         this.setName = setName;
         this.version = version;
+        this.knownStatus = knownStatus;
+        this.isReadOnly = isReadOnly;
         this.importDate = importDate;
     }
 
@@ -48,8 +56,10 @@ public class EamGlobalSet {
             int orgID,
             String setName,
             String version,
+            TskData.FileKnown knownStatus,
+            boolean isReadOnly,
             LocalDate importDate) {
-        this(-1, orgID, setName, version, importDate);
+        this(-1, orgID, setName, version, knownStatus, isReadOnly, importDate);
     }
 
     /**
@@ -106,6 +116,34 @@ public class EamGlobalSet {
      */
     public void setVersion(String version) {
         this.version = version;
+    }
+    
+    /**
+     * @return whether it is read only
+     */
+    public boolean isReadOnly() {
+        return isReadOnly;
+    }
+
+    /**
+     * @param isReadOnly
+     */
+    public void setReadOnly(boolean isReadOnly) {
+        this.isReadOnly = isReadOnly;
+    }
+    
+    /**
+     * @return the known status
+     */
+    public TskData.FileKnown getKnownStatus() {
+        return knownStatus;
+    }
+
+    /**
+     * @param knownStatus the known status to set
+     */
+    public void setKnownStatus(TskData.FileKnown knownStatus) {
+        this.knownStatus = knownStatus;
     }
 
     /**

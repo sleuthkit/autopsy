@@ -472,12 +472,14 @@ final public class ImportCentralRepoDatabaseDialog extends javax.swing.JDialog {
      */
     private int createGlobalSet() throws EamDbException {
         EamDb dbManager = EamDb.getInstance();
+        /*
         EamGlobalSet eamGlobalSet = new EamGlobalSet(
             selectedOrg.getOrgID(),
             tfDatabaseName.getText().trim(),
             tfDatabaseVersion.getText().trim(),
             LocalDate.now());
-        return dbManager.newReferencelSet(eamGlobalSet);
+        return dbManager.newReferencelSet(eamGlobalSet);*/
+        return 0;
     }
     
     @Messages({"ImportHashDatabaseDialog.createGlobalSet.failedMsg.text=Failed to store attribution details.",

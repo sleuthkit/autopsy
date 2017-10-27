@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 
 /**
  * Main interface for interacting with the database
@@ -447,7 +448,8 @@ public interface EamDb {
      * @return The ID of the new global set
      * @throws EamDbException 
      */
-    int newReferenceSet(int orgID, String setName, String version) throws EamDbException;   
+    int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
+            boolean isReadOnly) throws EamDbException;   
 
     /**
      * Get a global set by ID
@@ -459,6 +461,15 @@ public interface EamDb {
      * @throws EamDbException
      */
     EamGlobalSet getReferenceSetByID(int globalSetID) throws EamDbException;
+    
+    /**
+     * Get all reference sets
+     *
+     * @return The global set associated with the ID
+     *
+     * @throws EamDbException
+     */
+    List<EamGlobalSet> getAllReferenceSets() throws EamDbException;    
 
     /**
      * Add a new reference instance

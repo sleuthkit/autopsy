@@ -36,6 +36,7 @@ import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -1501,12 +1502,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException 
      */
     @Override
-    public int newReferenceSet(int orgID, String setName, String version) throws EamDbException {
+    public int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
+            boolean isReadOnly) throws EamDbException {
         EamDb dbManager = EamDb.getInstance();
         EamGlobalSet eamGlobalSet = new EamGlobalSet(
             orgID,
             setName,
             version,
+            knownStatus,
+            isReadOnly,
             LocalDate.now());
         return dbManager.newReferencelSet(eamGlobalSet);
     } 
@@ -1527,15 +1531,17 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, import_date) VALUES (?, ?, ?, ?)";
-        String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, import_date) VALUES (?, ?, ?, ?)";
+        String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND read_only=? AND known_status=? AND import_date=? LIMIT 1";
 
         try {
             preparedStatement1 = conn.prepareStatement(sql1);
             preparedStatement1.setInt(1, eamGlobalSet.getOrgID());
             preparedStatement1.setString(2, eamGlobalSet.getSetName());
             preparedStatement1.setString(3, eamGlobalSet.getVersion());
-            preparedStatement1.setString(4, eamGlobalSet.getImportDate().toString());
+            preparedStatement1.setInt(4, eamGlobalSet.getKnownStatus().getFileKnownValue());
+            preparedStatement1.setBoolean(5, eamGlobalSet.isReadOnly());
+            preparedStatement1.setString(6, eamGlobalSet.getImportDate().toString());
 
             preparedStatement1.executeUpdate();
 
@@ -1590,6 +1596,39 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
+    }
+    
+    /**
+     * Get all reference sets
+     *
+     * @return The global set associated with the ID
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+        List<EamGlobalSet> results = new ArrayList<>();
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement1 = null;
+        ResultSet resultSet = null;
+        String sql1 = "SELECT * FROM reference_sets";
+
+        try {
+            preparedStatement1 = conn.prepareStatement(sql1);
+            resultSet = preparedStatement1.executeQuery();
+            while (resultSet.next()) {
+                results.add(getEamGlobalSetFromResultSet(resultSet));
+            }
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting reference sets.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+        return results;
     }
 
     /**
@@ -2084,6 +2123,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("org_id"),
                 resultSet.getString("set_name"),
                 resultSet.getString("version"),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
+                resultSet.getBoolean("read_only"),
                 LocalDate.parse(resultSet.getString("import_date"))
         );
 
