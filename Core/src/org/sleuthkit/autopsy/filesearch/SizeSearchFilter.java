@@ -76,8 +76,8 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
 
     @Override
     @Messages ({
-        "Non.negative.number=Input size data is a negative number.",
-        "Not.a.number=Input size data is not a number."
+        "SizeSearchFilter.nonNegativeNumber=Input size data is a negative number.",
+        "SizeSearchFilter.notANumber=Input size data is not a number."
     })
     public boolean isValid() {
         String input = this.getComponent().getSizeTextField().getText();
@@ -85,11 +85,11 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
         try {
             int inputInt = Integer.parseInt(input);
             if (inputInt < 0) {
-                setLastError(Bundle.Non_negative_number());
+                setLastError(Bundle.SizeSearchFilter_nonNegativeNumber());
                 return false;
             }
         } catch (NumberFormatException | NullPointerException e) {
-            setLastError(Bundle.Not_a_number());
+            setLastError(Bundle.SizeSearchFilter_notANumber());
             return false;
         }
         return true;
