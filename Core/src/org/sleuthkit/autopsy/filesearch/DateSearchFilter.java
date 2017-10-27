@@ -205,7 +205,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     @Override
     @Messages ({
         "DateSearchFilter.errorMessage.endDateBeforeStartDate=The end date should be after the start date.",
-        "DateSearchFilter.errorMessage.noCheckboxSelected=Non of the date search checkbox is selected."
+        "DateSearchFilter.errorMessage.noCheckboxSelected=At least one date type checkbox must be selected."
     })
     public boolean isValid() {
 
