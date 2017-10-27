@@ -22,15 +22,14 @@ import java.util.Collections;
 import java.util.List;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 
-class AccountDeviceInstancesNodeChildren extends Children.Keys<AccountDeviceInstance> {
+class AccountDeviceInstancesNodeChildren extends Children.Keys<AccountDeviceInstanceKey> {
 
-    private final List<AccountDeviceInstance> accountDeviceInstances;
+    private final List<AccountDeviceInstanceKey> accountDeviceInstanceKeys;
 
-    AccountDeviceInstancesNodeChildren(List<AccountDeviceInstance> accountDeviceInstances) {
+    AccountDeviceInstancesNodeChildren(List<AccountDeviceInstanceKey> accountDeviceInstanceKeys) {
         super(true);
-        this.accountDeviceInstances = accountDeviceInstances;
+        this.accountDeviceInstanceKeys = accountDeviceInstanceKeys;
     }
 
     @Override
@@ -42,7 +41,7 @@ class AccountDeviceInstancesNodeChildren extends Children.Keys<AccountDeviceInst
     @Override
     protected void addNotify() {
         super.addNotify();
-        setKeys(accountDeviceInstances);
+        setKeys(accountDeviceInstanceKeys);
     }
 
     //These are the methods for ChildFactory. I am going to keep them around but commented until we make a final descision.
@@ -57,7 +56,7 @@ class AccountDeviceInstancesNodeChildren extends Children.Keys<AccountDeviceInst
     //        return new AccountDeviceInstanceNode(key);
     //    }
     @Override
-    protected Node[] createNodes(AccountDeviceInstance key) {
-        return new Node[]{new AccountDeviceInstanceNode(key)};
+    protected Node[] createNodes(AccountDeviceInstanceKey key) {
+        return new Node[]{new AccountDeviceInstanceNode(key.getAccountDeviceInstance(), key.getCommunicationsFilter())};
     }
 }

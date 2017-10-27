@@ -307,7 +307,12 @@ final public class FiltersPanel extends javax.swing.JPanel {
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
 
-            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstances)));
+            List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
+            accountDeviceInstances.forEach((accountDevInstance) -> {
+                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDevInstance, commsFilter ) );
+            });
+        
+            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstanceKeys)));    
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
