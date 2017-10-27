@@ -1862,8 +1862,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         @Override
         public void toggleSortOrder(int column) {
-            if (!this.getModel().getColumnClass(column).equals(Date.class)) {
-                super.toggleSortOrder(column);  //if it isn't a date perform the regular sorting
+            if (!this.getModel().getColumnClass(column).equals(Date.class) && !(this.getModel().getColumnName(column).equals(JobsTableModelColumns.PRIORITY.getColumnHeader()))) {
+                super.toggleSortOrder(column);  //if it isn't a date or the Priority column perform the regular sorting
             } else {
                 ArrayList<SortKey> sortKeys = new ArrayList<>(getSortKeys());
                 if (sortKeys.isEmpty() || sortKeys.get(0).getColumn() != column) {  //sort descending
