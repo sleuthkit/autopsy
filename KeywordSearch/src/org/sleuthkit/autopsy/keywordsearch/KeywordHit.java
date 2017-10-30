@@ -38,7 +38,6 @@ class KeywordHit implements Comparable<KeywordHit> {
 
     private static final String GET_CONTENT_ID_FROM_ARTIFACT_ID = "SELECT obj_id FROM blackboard_artifacts WHERE artifact_id = ";
 
-    private final String solrDocumentId;
     private final long solrObjectId;
     private final int chunkId;
     private final String snippet;
@@ -63,7 +62,6 @@ class KeywordHit implements Comparable<KeywordHit> {
     KeywordHit(String solrDocumentId, String snippet, String hit) throws TskCoreException {
         this.snippet = StringUtils.stripToEmpty(snippet);
         this.hit = hit;
-        this.solrDocumentId = solrDocumentId;
 
         /*
          * Parse the Solr document id to get the Solr object id and chunk id.
@@ -112,7 +110,7 @@ class KeywordHit implements Comparable<KeywordHit> {
     }
 
     String getSolrDocumentId() {
-        return this.solrDocumentId;
+        return Long.toString(solrObjectId) + Server.CHUNK_ID_SEPARATOR + Long.toString(chunkId);
     }
 
     long getSolrObjectId() {
