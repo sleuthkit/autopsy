@@ -41,8 +41,6 @@ class KeywordHit implements Comparable<KeywordHit> {
     private final long solrObjectId;
     private final int chunkId;
     private final String snippet;
-    private final long contentID;
-    private final boolean hitOnArtifact;
     private final String hit;
 
     /**
@@ -55,11 +53,8 @@ class KeywordHit implements Comparable<KeywordHit> {
      *                       For some searches (ie substring, regex) this will be
      *                       different than the search term.
      *
-     * @throws TskCoreException If there is a problem getting the underlying
-     *                          content associated with a hit on the text of an
-     *                          artifact.
      */
-    KeywordHit(String solrDocumentId, String snippet, String hit) throws TskCoreException {
+    KeywordHit(String solrDocumentId, String snippet, String hit) {
         this.snippet = StringUtils.stripToEmpty(snippet);
         this.hit = hit;
 
@@ -80,28 +75,6 @@ class KeywordHit implements Comparable<KeywordHit> {
         } else {
             this.solrObjectId = Long.parseLong(split[0]);
             this.chunkId = Integer.parseInt(split[1]);
-        }
-
-        //artifacts have negative obj ids
-        hitOnArtifact = this.solrObjectId < 0;
-
-        if (hitOnArtifact) {
-            // If the hit was in an artifact, look up the source content for the artifact.
-            SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
-            try (SleuthkitCase.CaseDbQuery executeQuery =
-                    caseDb.executeQuery(GET_CONTENT_ID_FROM_ARTIFACT_ID + this.solrObjectId);
-                    ResultSet resultSet = executeQuery.getResultSet();) {
-                if (resultSet.next()) {
-                    contentID = resultSet.getLong("obj_id");
-                } else {
-                    throw new TskCoreException("Failed to get obj_id for artifact with artifact_id =" + this.solrObjectId + ".  No matching artifact was found.");
-                }
-            } catch (SQLException ex) {
-                throw new TskCoreException("Error getting obj_id for artifact with artifact_id =" + this.solrObjectId, ex);
-            }
-        } else {
-            //else the object id is for content.
-            contentID = this.solrObjectId;
         }
     }
 
@@ -129,8 +102,36 @@ class KeywordHit implements Comparable<KeywordHit> {
         return this.snippet;
     }
 
-    long getContentID() {
-        return this.contentID;
+    /**
+     * Get the content id associated with the content underlying hit. 
+     * For hits on files this will be the same as the object id associated 
+     * with the file. For hits on artifacts we look up the id of the object
+     * that produced the artifact.
+     * 
+     * @return The id of the underlying content associated with the hit.
+     * @throws TskCoreException If there is a problem getting the underlying
+     *                          content associated with a hit on the text of an
+     *                          artifact.
+     */
+    long getContentID() throws TskCoreException {
+        if (isArtifactHit()) {
+            // If the hit was in an artifact, look up the source content for the artifact.
+            SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
+            try (SleuthkitCase.CaseDbQuery executeQuery =
+                    caseDb.executeQuery(GET_CONTENT_ID_FROM_ARTIFACT_ID + this.solrObjectId);
+                    ResultSet resultSet = executeQuery.getResultSet();) {
+                if (resultSet.next()) {
+                    return resultSet.getLong("obj_id");
+                } else {
+                    throw new TskCoreException("Failed to get obj_id for artifact with artifact_id =" + this.solrObjectId + ".  No matching artifact was found.");
+                }
+            } catch (SQLException ex) {
+                throw new TskCoreException("Error getting obj_id for artifact with artifact_id =" + this.solrObjectId, ex);
+            }
+        } else {
+            //else the object id is for content.
+            return this.solrObjectId;
+        }
     }
 
     /**
@@ -139,7 +140,8 @@ class KeywordHit implements Comparable<KeywordHit> {
      * @return
      */
     boolean isArtifactHit() {
-        return hitOnArtifact;
+        // artifacts have negative obj ids
+        return this.solrObjectId < 0;
     }
 
     /**
@@ -148,7 +150,7 @@ class KeywordHit implements Comparable<KeywordHit> {
      * @return The artifact whose indexed text this hit is in.
      */
     Optional<Long> getArtifactID() {
-        if (hitOnArtifact) {
+        if (isArtifactHit()) {
             return Optional.of(solrObjectId);
         } else {
             return Optional.empty();
