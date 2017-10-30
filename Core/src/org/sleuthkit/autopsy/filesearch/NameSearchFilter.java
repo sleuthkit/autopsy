@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -64,7 +65,14 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
     }
 
     @Override
+    @Messages ({
+        "NameSearchFilter.errorMessage.emtpyName=Please input a name to search."
+    })
     public boolean isValid() {
-        return !this.getComponent().getSearchTextField().getText().isEmpty();
+        if(this.getComponent().getSearchTextField().getText().isEmpty()) {
+            setLastError(Bundle.NameSearchFilter_errorMessage_emtpyName());
+            return false;
+        }
+        return true;
     }
 }
