@@ -199,8 +199,8 @@ public class SingleUserCaseConverter {
         copyImages(icd);
 
         // Create new .aut file
-        CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
-                CaseType.MULTI_USER_CASE,
+        CaseMetadata newCaseMetadata = new CaseMetadata(CaseType.MULTI_USER_CASE,
+                icd.getCaseOutputFolder().toString(),
                 icd.getNewCaseName(),
                 new CaseDetails(icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
