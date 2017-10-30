@@ -33,17 +33,19 @@ public class RelationShipFilterNode extends FilterNode {
         suppressedPropertyNames.add("Source File");
         suppressedPropertyNames.add("Data Source");
         suppressedPropertyNames.add("Path");
+        suppressedPropertyNames.add("Message ID");
+        suppressedPropertyNames.add("Tags");
         suppressedPropertyNames.add("Message (Plaintext)");
 
         ArrayList<PropertySet> retPropSets = new ArrayList<>();
-        boolean first = false;
+        boolean first = true;
         for (PropertySet set : propertySets) {
             Sheet.Set set1 = copySet(set);
-            if (first){
+            if (first) {
                 first = false;
-                
-                String valueString = wrappedNode.getArtifact().getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE)).getValueString();
-                set1.put(new NodeProperty<>("Type", "Type", "Type", valueString));
+
+                final String artifactTypeName = wrappedNode.getArtifact().getArtifactTypeName();
+                set1.put(new NodeProperty<>("Type", "Type", "Type", artifactTypeName));
             }
 
             for (Property<?> p : set.getProperties()) {
@@ -55,6 +57,7 @@ public class RelationShipFilterNode extends FilterNode {
         }
         return retPropSets.toArray(new PropertySet[retPropSets.size()]);
     }
+    private static final BlackboardAttribute.Type MSG_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE);
 
     private Sheet.Set copySet(PropertySet set) {
         Sheet.Set set1 = new Sheet.Set();
