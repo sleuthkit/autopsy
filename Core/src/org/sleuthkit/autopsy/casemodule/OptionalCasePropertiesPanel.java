@@ -55,7 +55,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         lbPointOfContactPhoneText.setVisible(false);
         lbPointOfContactEmailLabel.setVisible(false);
         lbPointOfContactEmailText.setVisible(false);
-        setUpCentralRepoFields();
+        setUpCaseDetailsFields();
     }
 
     OptionalCasePropertiesPanel(boolean editCurrentCase) {
@@ -67,7 +67,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             tfExaminerEmailText.setText(Case.getCurrentCase().getExaminerEmail());
             tfExaminerPhoneText.setText(Case.getCurrentCase().getExaminerPhone());
             taNotesText.setText(Case.getCurrentCase().getCaseNotes());
-            setUpCentralRepoFields();
+            setUpCaseDetailsFields();
             setUpOrganizationData();
         } else {
             caseDisplayNameLabel.setVisible(false);
@@ -78,7 +78,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             lbPointOfContactPhoneText.setVisible(false);
             lbPointOfContactEmailLabel.setVisible(false);
             lbPointOfContactEmailText.setVisible(false);
-            setUpCentralRepoFields();
+            setUpCaseDetailsFields();
         }
 
     }
@@ -100,7 +100,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         }
     }
 
-    void setUpCentralRepoFields() {
+    void setUpCaseDetailsFields() {
         boolean cREnabled = EamDb.isEnabled();
         comboBoxOrgName.setEnabled(cREnabled);
         bnNewOrganization.setEnabled(cREnabled);

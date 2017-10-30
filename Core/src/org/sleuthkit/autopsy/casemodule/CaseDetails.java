@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.casemodule;
  * Wrapper to contain the modifiable details of a case, such as case display
  * name, case number, and examiner related fields.
  */
-final class CaseDetails {
+public final class CaseDetails {
 
     private final String caseDisplayName;
     private final String caseNumber;
@@ -31,7 +31,32 @@ final class CaseDetails {
     private final String examinerEmail;
     private final String caseNotes;
 
-    CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes) {
+    /**
+     * Create a case details object with all optional fields set to default
+     * values.
+     *
+     * @param displayName the display name of the case
+     */
+    public CaseDetails(String displayName) {
+        caseDisplayName = displayName;
+        caseNumber = "";
+        examinerName = "";
+        examinerPhone = "";
+        examinerEmail = "";
+        caseNotes = "";
+    }
+
+    /**
+     * Create a case details object with the specified values.
+     * 
+     * @param displayName the display name of the case
+     * @param number the case number
+     * @param exName the examiner name
+     * @param exPhone the examiner phone number
+     * @param exEmail the examiner email address
+     * @param notes  the case notes
+     */
+    public CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes) {
         caseDisplayName = displayName;
         caseNumber = number;
         examinerName = exName;
@@ -41,27 +66,29 @@ final class CaseDetails {
     }
 
     /**
-     *  Get the case display name
-     * @return  caseDisplayName - the display name of the case
+     * Get the case display name
+     *
+     * @return caseDisplayName - the display name of the case
      */
-    String getCaseDisplayName(){
+    public String getCaseDisplayName() {
         return caseDisplayName;
     }
-    
+
     /**
-     *  Get the case number
+     * Get the case number
+     *
      * @return caseNumber - the optional number assiciated with the case
      */
-    String getCaseNumber(){
+    public String getCaseNumber() {
         return caseNumber;
     }
-    
+
     /**
      * Get the examiner name
      *
      * @return name - the name associated with the examiner
      */
-    String getExaminerName() {
+    public String getExaminerName() {
         return examinerName;
     }
 
@@ -70,7 +97,7 @@ final class CaseDetails {
      *
      * @return phone - the phone number associated with the examiner
      */
-    String getExaminerPhone() {
+    public String getExaminerPhone() {
         return examinerPhone;
     }
 
@@ -79,7 +106,7 @@ final class CaseDetails {
      *
      * @return email - the email address associated with the examiner
      */
-    String getExaminerEmail() {
+    public String getExaminerEmail() {
         return examinerEmail;
     }
 
@@ -88,7 +115,7 @@ final class CaseDetails {
      *
      * @return notes - the note asssociated with the case
      */
-    String getCaseNotes() {
+    public String getCaseNotes() {
         return caseNotes;
     }
 }

@@ -249,19 +249,28 @@ public class Case {
          * The name of the current case has changed. The old value of the
          * PropertyChangeEvent is the old case name (type: String), the new
          * value is the new case name (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         NAME,
         /**
          * The number of the current case has changed. The old value of the
          * PropertyChangeEvent is the old case number (type: String), the new
          * value is the new case number (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         NUMBER,
         /**
          * The examiner associated with the current case has changed. The old
          * value of the PropertyChangeEvent is the old examiner (type: String),
          * the new value is the new examiner (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         EXAMINER,
         /**
          * An attempt to add a new data source to the current case is being
@@ -346,7 +355,14 @@ public class Case {
          * The old value of the PropertyChangeEvent is is the tag info (type:
          * ContentTagDeletedEvent.DeletedContentTagInfo), the new value is null.
          */
-        CONTENT_TAG_DELETED;
+        CONTENT_TAG_DELETED,
+        /**
+         * The case display name or an optional detail which can be provided
+         * regarding a case has been changed. The optional details include the
+         * case number, the examiner name, examiner phone, examiner email, and
+         * the case notes.
+         */
+        CASE_DETAILS;
     };
 
     /**
@@ -477,9 +493,13 @@ public class Case {
      * @throws CaseActionException          If there is a problem creating the
      *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
+     *
+     * @Deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
+     * CaseDetails caseDetails) instead
      */
+    @Deprecated
     public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
-        createAsCurrentCase(caseDir, new CaseDetails(caseDisplayName, caseNumber, examiner, "", "", ""), caseType);
+        createAsCurrentCase(caseType, caseDir, new CaseDetails(caseDisplayName, caseNumber, examiner, "", "", ""));
     }
 
     /**
@@ -492,10 +512,10 @@ public class Case {
      *                    will be created if it doesn't already exist; if it
      *                    exists, it is ASSUMED it was created by calling
      *                    createCaseDirectory.
+     * @param caseType    The type of case (single-user or multi-user).
      * @param caseDetails Contains the modifiable details of the case such as
      *                    the case display name, the case number, and the
      *                    examiner related data.
-     * @param caseType    The type of case (single-user or multi-user).
      *
      * @throws CaseActionException          If there is a problem creating the
      *                                      case.
@@ -505,7 +525,7 @@ public class Case {
         "Case.exceptionMessage.emptyCaseName=Must specify a case name.",
         "Case.exceptionMessage.emptyCaseDir=Must specify a case directory path."
     })
-    public static void createAsCurrentCase(String caseDir, CaseDetails caseDetails, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
+    public static void createAsCurrentCase(CaseType caseType, String caseDir, CaseDetails caseDetails) throws CaseActionException, CaseActionCancelledException {
         if (caseDetails.getCaseDisplayName().isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseName());
         }
@@ -1544,26 +1564,33 @@ public class Case {
         "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata"
     })
     void updateCaseDetails(CaseDetails caseDetails) throws CaseActionException {
-        String oldDisplayName = metadata.getCaseDisplayName();
+        CaseDetails oldCaseDetails = metadata.getCaseDetails();
         try {
             metadata.setCaseDetails(caseDetails);
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError(), ex);
         }
-        eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, caseDetails.getCaseDisplayName()));
+        if (!oldCaseDetails.getCaseNumber().equals(caseDetails.getCaseNumber())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getCaseNumber(), caseDetails.getCaseNumber()));
+        }
+        if (!oldCaseDetails.getExaminerName().equals(caseDetails.getExaminerName())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getExaminerName(), caseDetails.getExaminerName()));
+        }
+        if (!oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseDetails.getCaseDisplayName(), caseDetails.getCaseDisplayName()));
+        }
+        eventPublisher.publish(new AutopsyEvent(Events.CASE_DETAILS.toString(), oldCaseDetails, caseDetails));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
                 mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + UserPreferences.getAppName());
                 try {
-                    RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
+                    RecentCases.getInstance().updateRecentCase(oldCaseDetails.getCaseDisplayName(), metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Error updating case name in UI", ex); //NON-NLS
                 }
             });
         }
     }
-
-
 
     /**
      * Constructs a Case object for a new Autopsy case.
@@ -1580,7 +1607,7 @@ public class Case {
      *                        the empty string.
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
-        metadata = new CaseMetadata(caseDir, caseType, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
+        metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
     }
 
     /**

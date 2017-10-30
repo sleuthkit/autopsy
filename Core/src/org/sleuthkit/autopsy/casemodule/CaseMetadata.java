@@ -81,14 +81,14 @@ public final class CaseMetadata {
     /*
      * Fields from schema version 3
      */
-    private static final String SCHEMA_VERSION_THREE = "3.0";  
+    private static final String SCHEMA_VERSION_THREE = "3.0";
     private final static String CASE_DISPLAY_NAME_ELEMENT_NAME = "DisplayName"; //NON-NLS
     private final static String CASE_DB_NAME_RELATIVE_ELEMENT_NAME = "CaseDatabase"; //NON-NLS
 
     /*
-     *  Fields from schema version 4
+     * Fields from schema version 4
      */
-    private static final String SCHEMA_VERSION_FOUR = "4.0"; 
+    private static final String SCHEMA_VERSION_FOUR = "4.0";
     private final static String EXAMINER_ELEMENT_PHONE = "ExaminerPhone"; //NON-NLS  
     private final static String EXAMINER_ELEMENT_EMAIL = "ExaminerEmail"; //NON-NLS
     private final static String CASE_ELEMENT_NOTES = "CaseNotes"; //NON-NLS
@@ -132,7 +132,7 @@ public final class CaseMetadata {
      * @param caseNumber      The case number.
      * @param examiner        The name of the case examiner.
      */
-    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, CaseDetails caseDetails) {
+    CaseMetadata(Case.CaseType caseType, String caseDirectory, String caseName, CaseDetails caseDetails) {
         metadataFilePath = Paths.get(caseDirectory, caseDetails.getCaseDisplayName() + FILE_EXTENSION);
         this.caseType = caseType;
         this.caseName = caseName;
@@ -192,6 +192,15 @@ public final class CaseMetadata {
      */
     public String getCaseName() {
         return caseName;
+    }
+
+    /**
+     * Get current values for the case details which are user modifiable.
+     *
+     * @return the case details
+     */
+    public CaseDetails getCaseDetails() {
+        return caseDetails;
     }
 
     /**
@@ -475,14 +484,14 @@ public final class CaseMetadata {
             String examinerPhone;
             String examinerEmail;
             String caseNotes;
-            try {
-                examinerPhone = getElementTextContent(caseElement, EXAMINER_ELEMENT_PHONE, false);
-                examinerEmail = getElementTextContent(caseElement, EXAMINER_ELEMENT_EMAIL, false);
-                caseNotes = getElementTextContent(caseElement, CASE_ELEMENT_NOTES, false);
-            } catch (CaseMetadataException ex) {
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE) || schemaVersion.equals(SCHEMA_VERSION_TWO) || schemaVersion.equals(SCHEMA_VERSION_THREE)) {
                 examinerPhone = "";  //case had metadata file written before additional examiner details were included 
                 examinerEmail = "";
                 caseNotes = "";
+            } else {
+                examinerPhone = getElementTextContent(caseElement, EXAMINER_ELEMENT_PHONE, false);
+                examinerEmail = getElementTextContent(caseElement, EXAMINER_ELEMENT_EMAIL, false);
+                caseNotes = getElementTextContent(caseElement, CASE_ELEMENT_NOTES, false);
             }
             this.caseDetails = new CaseDetails(caseDisplayName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes);
             this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));

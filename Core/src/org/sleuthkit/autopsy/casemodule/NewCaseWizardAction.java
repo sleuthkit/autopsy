@@ -87,9 +87,8 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                    Case.createAsCurrentCase(createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes), caseType);
+                    Case.createAsCurrentCase(caseType, createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes));
                     if (EamDb.isEnabled()) {  //if the eam is enabled we need to save the case organization information now
-                        try {
                             EamDb dbManager = EamDb.getInstance();
                             if (dbManager != null) {
                                 CorrelationCase cRCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
@@ -105,10 +104,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                                     }
                                 }
                             }
-                        } catch (EamDbException ex) {
-
-                        }
-                    }
+                        } 
                     return null;
                 }
 

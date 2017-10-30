@@ -120,8 +120,8 @@ final class NewCaseVisualPanel2 extends javax.swing.JPanel {
         propertiesPanel.setCurrentlySelectedOrganization(organizationName);
     }
 
-    void refreshCentralRepoFields() {
-        propertiesPanel.setUpCentralRepoFields();
+    void refreshCaseDetailsFields() {
+        propertiesPanel.setUpCaseDetailsFields();
     }
 
 }
