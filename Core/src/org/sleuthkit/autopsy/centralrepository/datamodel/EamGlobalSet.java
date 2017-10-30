@@ -31,7 +31,7 @@ public class EamGlobalSet {
     private int orgID;
     private String setName;
     private String version;
-    private TskData.FileKnown knownStatus;
+    private TskData.FileKnown fileKnownStatus;
     private boolean isReadOnly;
     private LocalDate importDate;
 
@@ -47,7 +47,7 @@ public class EamGlobalSet {
         this.orgID = orgID;
         this.setName = setName;
         this.version = version;
-        this.knownStatus = knownStatus;
+        this.fileKnownStatus = knownStatus;
         this.isReadOnly = isReadOnly;
         this.importDate = importDate;
     }
@@ -135,15 +135,26 @@ public class EamGlobalSet {
     /**
      * @return the known status
      */
-    public TskData.FileKnown getKnownStatus() {
-        return knownStatus;
+    public TskData.FileKnown getFileKnownStatus() {
+        return fileKnownStatus;
     }
 
     /**
      * @param knownStatus the known status to set
      */
-    public void setKnownStatus(TskData.FileKnown knownStatus) {
-        this.knownStatus = knownStatus;
+    public void setFileKnownStatus(TskData.FileKnown fileKnownStatus) {
+        this.fileKnownStatus = fileKnownStatus;
+    }
+    
+    /**
+     * Return the FileKnown status as a KnownFilesType
+     * @return KNOWN or KNOWN_BAD
+     */
+    public HashDbManager.HashDb.KnownFilesType getKnownStatus(){
+        if(fileKnownStatus.equals(TskData.FileKnown.BAD)){
+            return HashDbManager.HashDb.KnownFilesType.KNOWN_BAD;
+        }
+        return HashDbManager.HashDb.KnownFilesType.KNOWN;
     }
 
     /**

@@ -53,6 +53,11 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
+        try{
+            hashDbManager.updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error updating central repository hash sets", ex); //NON-NLS
+        }
         initializeHashSetModels(settings, hashDbManager.getKnownFileHashDatabases(), knownHashSetModels);
         initializeHashSetModels(settings, hashDbManager.getNotableFileHashDatabases(), knownBadHashSetModels);
     }

@@ -84,12 +84,12 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     
     void importFile(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
-            String importFileName){          
+            boolean readOnly, String importFileName){          
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));       
         
         File importFile = new File(importFileName);
         worker = new ImportIDXWorker(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, 
-                knownFilesType, importFile);
+                knownFilesType, readOnly, importFile);
         worker.addPropertyChangeListener(this);
         worker.execute();
         
@@ -149,6 +149,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final HashDbManager.HashDb.KnownFilesType knownFilesType;
+        private final boolean readOnly;
         private final File importFile;
         private final long totalLines;
         private int crIndex = -1;
@@ -157,7 +158,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
-            File importFile){
+            boolean readOnly, File importFile){
             
             this.hashSetName = hashSetName;
             this.version = version;
@@ -165,6 +166,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
             this.importFile = importFile;
             this.numLines.set(0);
             
@@ -210,22 +212,20 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         @Override
         protected Void doInBackground() throws Exception {
 
+            TskData.FileKnown knownStatus;
+            if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
+                knownStatus = TskData.FileKnown.KNOWN;
+            } else {
+                knownStatus = TskData.FileKnown.BAD;
+            }
             try{
                 // Create an empty hashset in the central repository
-                crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version);
+                crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
             } catch (EamDbException ex){
                 throw new TskCoreException(ex.getLocalizedMessage());
             }
 
             try{
-
-                TskData.FileKnown knownStatus;
-                if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
-                    knownStatus = TskData.FileKnown.KNOWN;
-                } else {
-                    knownStatus = TskData.FileKnown.BAD;
-                }
-
                 EamDb dbManager = EamDb.getInstance();
                 CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
                 BufferedReader reader = new BufferedReader(new FileReader(importFile));
@@ -310,7 +310,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                     System.out.println("### Finished - adding hashDb object");
                     newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
                             crIndex, 
-                            searchDuringIngest, sendIngestMessages, knownFilesType);
+                            searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
                 } catch (TskCoreException ex){
                     System.out.println("\n### Error!");
                 }

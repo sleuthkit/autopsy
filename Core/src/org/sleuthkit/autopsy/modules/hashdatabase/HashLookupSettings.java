@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase.DatabaseType;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -307,7 +308,7 @@ final class HashLookupSettings implements Serializable {
         private final boolean sendIngestMessages;
         private final String path;
         private final String version;
-        private final String orgName;
+        private final boolean readOnly;
         private final int centralRepoIndex;
         private DatabaseType dbType;
 
@@ -329,16 +330,16 @@ final class HashLookupSettings implements Serializable {
             this.path = path;
             this.centralRepoIndex = -1;
             this.version = "";
-            this.orgName = "";
+            this.readOnly = false;
             this.dbType = DatabaseType.FILE;
         }
         
-        HashDbInfo(String hashSetName, String version, String orgName, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
             this.hashSetName = hashSetName;
             this.version = version;
-            this.orgName = orgName;
             this.centralRepoIndex = centralRepoIndex;
             this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.path = "";
@@ -354,7 +355,7 @@ final class HashLookupSettings implements Serializable {
                 this.sendIngestMessages = fileTypeDb.getSendIngestMessages();
                 this.centralRepoIndex = -1;
                 this.version = "";
-                this.orgName = "";
+                this.readOnly = false;
                 this.dbType = DatabaseType.FILE;
                 if (fileTypeDb.hasIndexOnly()) {
                     this.path = fileTypeDb.getIndexPath();
@@ -365,8 +366,8 @@ final class HashLookupSettings implements Serializable {
                 HashDbManager.CentralRepoHashDb centralRepoDb = (HashDbManager.CentralRepoHashDb)db;
                 this.hashSetName = centralRepoDb.getHashSetName();
                 this.version = centralRepoDb.getVersion();
-                this.orgName = centralRepoDb.getOrgName();
                 this.knownFilesType = centralRepoDb.getKnownFilesType();
+                this.readOnly = centralRepoDb.isUpdateable();
                 this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
                 this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
                 this.path = "";
@@ -395,11 +396,11 @@ final class HashLookupSettings implements Serializable {
         }
         
         /**
-         * Get the organization name for the hash set
-         * @return org name
+         * Get whether the hash set is read only (only applies to central repo)
+         * @return readOnly
          */
-        String getOrgName(){
-            return orgName;
+        boolean isReadOnly(){
+            return readOnly;
         }
 
         /**
@@ -483,9 +484,18 @@ final class HashLookupSettings implements Serializable {
                 // FILE types will always have unique names, so no more testing required
                 return true;                        
             }
-            // To do: central repo tests
-            return false;
             
+            // Central repo tests
+            CentralRepoHashDb crDb = (CentralRepoHashDb) hashDb;
+            if(this.centralRepoIndex != crDb.getCentralRepoIndex()){
+                return false;
+            }
+            
+            if(! version.equals(crDb.getVersion())){
+                return false;
+            }
+            
+            return true;
         }
         
         @Override

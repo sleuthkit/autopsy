@@ -752,7 +752,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseSharedLock();
         }    
-    }    
+    } 
     
     /**
      * Add a new Global Set

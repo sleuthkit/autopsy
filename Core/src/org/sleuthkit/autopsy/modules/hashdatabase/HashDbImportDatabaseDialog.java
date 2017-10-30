@@ -509,7 +509,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         } else {
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
             progressDialog.importFile(hashSetNameTextField.getText(), versionTextField.getText(), 
-                selectedOrg.getOrgID(), true, sendIngestMessagesCheckbox.isSelected(), type, selectedFilePath);
+                selectedOrg.getOrgID(), true, sendIngestMessagesCheckbox.isSelected(), type, 
+                this.readOnlyCheckbox.isSelected(), selectedFilePath);
             selectedHashDb = progressDialog.getDatabase();
         }
 

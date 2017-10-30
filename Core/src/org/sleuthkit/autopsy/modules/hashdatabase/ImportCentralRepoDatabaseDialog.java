@@ -534,8 +534,8 @@ final public class ImportCentralRepoDatabaseDialog extends javax.swing.JDialog {
         
         try{
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
-            progressDialog.importFile(dbName, version, 
-                selectedOrg.getOrgID(), true, sendMessages, known, selectedFilePath);
+            //progressDialog.importFile(dbName, version, 
+            //    selectedOrg.getOrgID(), true, sendMessages, known, selectedFilePath);
             //HashDbManager.getInstance().importCentralRepoHashSet(dbName, version, 
             //    selectedOrg.getOrgID(), true, sendMessages, known, selectedFilePath);
         } catch (Exception ex){

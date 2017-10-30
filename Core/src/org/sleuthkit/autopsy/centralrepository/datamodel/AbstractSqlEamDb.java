@@ -1491,6 +1491,19 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
     }
     
+        /**
+     * Get the organization associated with the given reference set.
+     * @param globalSetID ID of the reference set
+     * @return The organization object
+     * @throws EamDbException 
+     */
+    @Override
+    public EamOrganization getReferenceSetOrganization(int globalSetID) throws EamDbException{
+
+        EamGlobalSet globalSet = getReferenceSetByID(globalSetID);
+        return (getOrganizationByID(globalSet.getOrgID()));
+    }
+    
     /**
      * Add a new Global Set
      * 
@@ -1531,15 +1544,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, import_date) VALUES (?, ?, ?, ?)";
-        String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND read_only=? AND known_status=? AND import_date=? LIMIT 1";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, import_date) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
             preparedStatement1 = conn.prepareStatement(sql1);
             preparedStatement1.setInt(1, eamGlobalSet.getOrgID());
             preparedStatement1.setString(2, eamGlobalSet.getSetName());
             preparedStatement1.setString(3, eamGlobalSet.getVersion());
-            preparedStatement1.setInt(4, eamGlobalSet.getKnownStatus().getFileKnownValue());
+            preparedStatement1.setInt(4, eamGlobalSet.getFileKnownStatus().getFileKnownValue());
             preparedStatement1.setBoolean(5, eamGlobalSet.isReadOnly());
             preparedStatement1.setString(6, eamGlobalSet.getImportDate().toString());
 

@@ -428,6 +428,14 @@ public interface EamDb {
     EamOrganization getOrganizationByID(int orgID) throws EamDbException;
 
     /**
+     * Get the organization associated with the given reference set.
+     * @param globalSetID ID of the reference set
+     * @return The organization object
+     * @throws EamDbException 
+     */
+    EamOrganization getReferenceSetOrganization(int globalSetID) throws EamDbException;
+    
+    /**
      * Add a new Global Set
      *
      * @param eamGlobalSet The global set to add

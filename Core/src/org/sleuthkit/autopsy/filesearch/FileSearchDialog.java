@@ -57,7 +57,7 @@ class FileSearchDialog extends javax.swing.JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
-            }
+           }
         });
     }
 

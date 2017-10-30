@@ -302,14 +302,15 @@ public class HashDbManager implements PropertyChangeListener {
     }
     
     public CentralRepoHashDb addExistingCentralRepoHashSet(String hashSetName, String version, int centralRepoIndex, 
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException{
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType, 
+            boolean readOnly) throws TskCoreException{
         
         if(! EamDb.isEnabled()){
             throw new TskCoreException("Could not load central repository database " + hashSetName + " - central repository is not enabled");
         }
         
         CentralRepoHashDb db = new CentralRepoHashDb(hashSetName, version, centralRepoIndex, searchDuringIngest,
-            sendIngestMessages, knownFilesType);
+            sendIngestMessages, knownFilesType, readOnly);
         
         if(! db.isValid()){
             throw new TskCoreException("Error finding database " + hashSetName + " in central repository");
@@ -559,6 +560,20 @@ public class HashDbManager implements PropertyChangeListener {
         hashDbs.addAll(this.hashSets);
         return hashDbs;
     }
+    
+    /**
+     * Adds any new central repository databases to the list of hashes
+     * before returning a copy of the hash set list
+     * @return A list, possibly empty, of hash databases.
+     */
+    public synchronized List<HashDatabase> refreshAndGetAllHashDatabases(){
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
+        return getAllHashDatabases();
+    }
 
     /**
      * Gets all of the hash databases used to classify files as known.
@@ -658,10 +673,13 @@ public class HashDbManager implements PropertyChangeListener {
             try{
                 List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets();
                 for(EamGlobalSet globalSet:crSets){
-                    EamOrganization org = EamDb.getInstance().getOrganizationByID(globalSet.getOrgID());
-                            // TEMP TEMP FIX
-                    crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(), org.getName(),
-                        globalSet.getGlobalSetID(), HashDbManager.HashDb.KnownFilesType.KNOWN_BAD, true, true));
+                    
+                    // Defaults for fields not stored in the central repository:
+                    //   searchDuringIngest: false
+                    //   sendIngestMessages: true if the hash set is notable
+                    boolean sendIngestMessages = globalSet.getKnownStatus().equals(HashDb.KnownFilesType.KNOWN_BAD);
+                    crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(),
+                        globalSet.getGlobalSetID(), globalSet.getKnownStatus(), globalSet.isReadOnly(), false, sendIngestMessages));
                }
             } catch (EamDbException ex){
                 ex.printStackTrace();
@@ -708,7 +726,8 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @param settings The settings to configure.
      */
-    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
+    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}",
+            "HashDbManager.centralRepoLoadError.message=Error loading central repository hash sets"})
     private void configureSettings(HashLookupSettings settings) {
         allDatabasesLoadedCorrectly = true;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
@@ -722,11 +741,14 @@ public class HashDbManager implements PropertyChangeListener {
                         logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDbInfo.getHashSetName()));
                         allDatabasesLoadedCorrectly = false;
                     }
-                }// else {
-                //    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
-                //            hashDbInfo.getCentralRepoIndex(), 
-                //            hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
-                //}
+                } else {
+                    if(EamDb.isEnabled()){
+                        addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                                hashDbInfo.getCentralRepoIndex(), 
+                                hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), 
+                                hashDbInfo.getKnownFilesType(), hashDbInfo.isReadOnly());
+                    }
+                }
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
@@ -738,17 +760,14 @@ public class HashDbManager implements PropertyChangeListener {
             }
         }
         
-        List<HashDbInfo> crHashDbInfoList = this.getCentralRepoHashSetsFromDatabase();
-        for(HashDbInfo hashDbInfo : crHashDbInfoList) {
+        if(EamDb.isEnabled()){
             try{
-                addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
-                            hashDbInfo.getCentralRepoIndex(), 
-                            hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());   
-            } catch (TskCoreException ex) {
+                updateHashSetsFromCentralRepository();
+            } catch (TskCoreException ex){
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
+                        Bundle.HashDbManager_centralRepoLoadError_message(),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
                 allDatabasesLoadedCorrectly = false;
@@ -771,6 +790,29 @@ public class HashDbManager implements PropertyChangeListener {
                 logger.log(Level.SEVERE, "Could not overwrite hash database settings.", ex);
             }
         }
+    }
+    
+    void updateHashSetsFromCentralRepository() throws TskCoreException {
+        if(EamDb.isEnabled()){
+            List<HashDbInfo> crHashDbInfoList = getCentralRepoHashSetsFromDatabase();
+            for(HashDbInfo hashDbInfo : crHashDbInfoList) {
+                if(hashDbInfoIsNew(hashDbInfo)){
+                    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                                hashDbInfo.getCentralRepoIndex(), 
+                                hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType(),
+                                hashDbInfo.isReadOnly());   
+                }
+            }
+        }
+    }
+        
+    private boolean hashDbInfoIsNew(HashDbInfo dbInfo){
+        for(HashDatabase db:this.hashSets){
+            if(dbInfo.matches(db)){
+                return false;
+            }
+        }
+        return true;
     }
 
     private String getValidFilePath(String hashSetName, String configuredPath) {
@@ -1206,17 +1248,29 @@ public class HashDbManager implements PropertyChangeListener {
         private final HashDb.KnownFilesType knownFilesType;  
         private final int centralRepoIndex;
         private final String version;
-        private final String orgName = "";
+        private String orgName;
+        private final boolean readOnly;
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
+        @Messages({"HashDbManager.CentralRepoHashDb.orgError=Error loading organization"})
         private CentralRepoHashDb(String hashSetName, String version, int centralRepoIndex, 
-                boolean useForIngest, boolean sendHitMessages, HashDb.KnownFilesType knownFilesType) {
+                boolean useForIngest, boolean sendHitMessages, HashDb.KnownFilesType knownFilesType, 
+                boolean readOnly)
+                throws TskCoreException{
             this.hashSetName = hashSetName;
             this.version = version;
             this.centralRepoIndex = centralRepoIndex;
             this.searchDuringIngest = useForIngest;
             this.sendIngestMessages = sendHitMessages;
             this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
+            
+            try{
+                orgName = EamDb.getInstance().getReferenceSetOrganization(centralRepoIndex).getName();
+            } catch (EamDbException ex){
+                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error looking up central repository organization", ex); //NON-NLS
+                orgName = Bundle.HashDbManager_CentralRepoHashDb_orgError();
+            }
         }
 
         /**
@@ -1255,7 +1309,7 @@ public class HashDbManager implements PropertyChangeListener {
         }
         
         public String getOrgName(){
-            return "org name";
+            return orgName;
         }
         
         public int getCentralRepoIndex(){
@@ -1311,6 +1365,8 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         public boolean isUpdateable() throws TskCoreException {
             return false;
+            // TEMP this will change as soon as adding to the database is supported 
+            // return (! readOnly);
         }
 
         /**

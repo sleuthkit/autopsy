@@ -65,6 +65,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
+    private final List<Integer> newCentralRepoIndices = new ArrayList<>();
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -350,6 +351,20 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
          * closed while they are still being used.
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
+            // Remove any new central repo hash sets from the database
+            for(int index:newCentralRepoIndices){
+                try{
+                    if(EamDb.isEnabled()){
+                        EamDb.getInstance().deleteReferenceSet(index);
+                    } else {
+                        xx
+                        Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+                    }
+                } catch (EamDbException ex){
+                    
+                }
+            }
+            
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
     }
@@ -963,6 +978,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed
         HashDatabase hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
+            if(hashDb instanceof CentralRepoHashDb){
+                int newDbIndex = ((CentralRepoHashDb)hashDb).getCentralRepoIndex();
+                newCentralRepoIndices.add(newDbIndex);
+            }
+            
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
