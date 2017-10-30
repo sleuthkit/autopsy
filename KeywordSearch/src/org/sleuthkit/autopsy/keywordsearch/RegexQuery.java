@@ -101,6 +101,16 @@ final class RegexQuery implements KeywordSearchQuery {
     private String field = Server.Schema.CONTENT_STR.toString();
 
     /**
+     * The following map is an optimization to ensure that we are referencing
+     * the same keyword hit String object in both the KeywordHit instance and
+     * it's associated Keyword instance. Even though we benefit from G1GC
+     * String deduplication, the overhead associated with both Keyword and
+     * KeywordHit maintaining their own reference can be significant when the
+     * number of hits gets large.
+     */
+    private final HashMap<String, String> keywordsFoundAcrossAllDocuments;
+
+    /**
      * Constructor with query to process.
      *
      * @param keywordList
@@ -113,6 +123,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         this.queryStringContainsWildcardPrefix = this.keywordString.startsWith(".*");
         this.queryStringContainsWildcardSuffix = this.keywordString.endsWith(".*");
+        this.keywordsFoundAcrossAllDocuments = new HashMap<>();
     }
 
     @Override
@@ -273,6 +284,14 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
+                    // Optimization to reduce the number of String objects created.
+                    if (keywordsFoundAcrossAllDocuments.containsKey(hit)) {
+                        // Use an existing String reference if it exists.
+                        hit = keywordsFoundAcrossAllDocuments.get(hit);
+                    } else {
+                        keywordsFoundAcrossAllDocuments.put(hit, hit);
+                    }
+
                     if (artifactAttributeType == null) {
                         hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                     } else {
@@ -303,7 +322,7 @@ final class RegexQuery implements KeywordSearchQuery {
                                         final String group = ccnMatcher.group("ccn");
                                         if (CreditCardValidator.isValidCCN(group)) {
                                             hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
-                                        };
+                                        }
                                     }
                                 }
 
