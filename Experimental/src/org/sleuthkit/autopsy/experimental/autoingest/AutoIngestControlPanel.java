@@ -39,19 +39,15 @@ import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableRowSorter;
 import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.DialogDisplayer;
 import org.openide.LifecycleManager;
@@ -407,7 +403,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /**
          * Allow sorting when a column header is clicked.
          */
-        pendingTable.setRowSorter(new AutoIngestTableRowSorter<>(pendingTableModel));
+        pendingTable.setRowSorter(new AutoIngestRowSorter<>(pendingTableModel));
 
         /*
          * Create a row selection listener to enable/disable the prioritize
@@ -597,7 +593,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /*
          * Allow sorting when a column header is clicked.
          */
-        completedTable.setRowSorter(new AutoIngestTableRowSorter<>(completedTableModel));
+        completedTable.setRowSorter(new AutoIngestRowSorter<>(completedTableModel));
 
         /*
          * Create a row selection listener to enable/disable the delete case and
@@ -1846,36 +1842,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 return Boolean.class;
             } else {
                 return super.getColumnClass(columnIndex);
-            }
-        }
-    }
-
-    /**
-     * RowSorter which makes columns whose type is Date to be sorted first in
-     * Descending order then in Ascending order
-     */
-    private class AutoIngestTableRowSorter<M extends DefaultTableModel> extends TableRowSorter<M> {
-
-        private AutoIngestTableRowSorter(M tModel) {
-            super(tModel);
-        }
-
-        @Override
-        public void toggleSortOrder(int column) {
-            if (!this.getModel().getColumnClass(column).equals(Date.class) && !(this.getModel().getColumnName(column).equals(JobsTableModelColumns.PRIORITY.getColumnHeader()))) {
-                super.toggleSortOrder(column);  //if it isn't a date or the Priority column perform the regular sorting
-            } else {
-                ArrayList<SortKey> sortKeys = new ArrayList<>(getSortKeys());
-                if (sortKeys.isEmpty() || sortKeys.get(0).getColumn() != column) {  //sort descending
-                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
-                } else if (sortKeys.get(0).getSortOrder() == SortOrder.ASCENDING) {
-                    sortKeys.removeIf(key -> key.getColumn() == column);
-                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
-                } else {
-                    sortKeys.removeIf(key -> key.getColumn() == column);
-                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.ASCENDING));
-                }
-                setSortKeys(sortKeys);
             }
         }
     }
