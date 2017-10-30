@@ -63,7 +63,7 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
     @Override
     @Messages({
         "HashSearchFilter.errorMessage.emptyHash=Hash data is empty.",
-        "# {0} - hash data length", "HashSearchFilter.errorMessage.wrongLength=Input lenght({0}), doesn''t match the MD5 length(32).",
+        "# {0} - hash data length", "HashSearchFilter.errorMessage.wrongLength=Input length({0}), doesn''t match the MD5 length(32).",
         "HashSearchFilter.errorMessage.wrongCharacter=MD5 contains invalid hex characters."
     })
     public boolean isValid() {
