@@ -101,12 +101,11 @@ final class RegexQuery implements KeywordSearchQuery {
     private String field = Server.Schema.CONTENT_STR.toString();
 
     /**
-     * The following map is an optimization to ensure that we are referencing
-     * the same keyword hit String object in both the KeywordHit instance and
-     * it's associated Keyword instance. Even though we benefit from G1GC
-     * String deduplication, the overhead associated with both Keyword and
-     * KeywordHit maintaining their own reference can be significant when the
-     * number of hits gets large.
+     * The following map is an optimization to ensure that we reuse
+     * the same keyword hit String object across all hits. Even though we 
+     * benefit from G1GC String deduplication, the overhead associated with
+     * creating a new String object for every KeywordHit can be significant 
+     * when the number of hits gets large.
      */
     private final HashMap<String, String> keywordsFoundAcrossAllDocuments;
 
