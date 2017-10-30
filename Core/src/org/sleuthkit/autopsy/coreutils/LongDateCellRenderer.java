@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.Component;
 import java.text.SimpleDateFormat;
@@ -28,7 +28,7 @@ import static javax.swing.SwingConstants.CENTER;
  * center-aligned, long-format date string. It also grays out the cell if the
  * table is disabled.
  */
-class LongDateCellRenderer extends GrayableCellRenderer {
+public class LongDateCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
     private static final String FORMAT_STRING = "yyyy/MM/dd HH:mm:ss"; //NON-NLS

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import static javax.swing.SwingConstants.CENTER;
+import org.sleuthkit.autopsy.coreutils.GrayableCellRenderer;
 
 /**
  * A JTable cell renderer that center-aligns cell content and grays out the cell

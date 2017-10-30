@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +16,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.Component;
 import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.CENTER;
 import org.openide.util.ImageUtilities;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * A JTable cell renderer that represents an auto ingest alert file exists flag
  * as a center-aligned icon, and grays out the cell if the table is disabled.
  */
-class CaseStatusIconCellRenderer extends GrayableCellRenderer {
+public class CaseStatusIconCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
     static final ImageIcon checkedIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false));
     static final ImageIcon warningIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false));
 
+    @Messages({
+        "CaseStatusIconCellRenderer.tooltiptext.ok=Images processed successfully",
+        "CaseStatusIconCellRenderer.tooltiptext.warning=An error occurred or processing was canceled for at least one image - please check the log"
+    })
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         setHorizontalAlignment(CENTER);
