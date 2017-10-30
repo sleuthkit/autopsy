@@ -315,6 +315,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
 
         caseNotesScrollPane.setBorder(null);
 
+        taNotesText.setEditable(false);
         taNotesText.setBackground(new java.awt.Color(240, 240, 240));
         taNotesText.setColumns(20);
         taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
@@ -322,6 +323,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         taNotesText.setRows(2);
         taNotesText.setWrapStyleWord(true);
         taNotesText.setBorder(null);
+        taNotesText.setFocusable(false);
         caseNotesScrollPane.setViewportView(taNotesText);
 
         lbExaminerEmailLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerEmailLabel.text")); // NOI18N
