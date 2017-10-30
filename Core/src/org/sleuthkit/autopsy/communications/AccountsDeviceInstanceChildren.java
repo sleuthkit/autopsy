@@ -23,14 +23,17 @@ import java.util.List;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.CommunicationsManager;
 
 class AccountsDeviceInstanceChildren extends Children.Keys<AccountDeviceInstance> {
 
     private final List<AccountDeviceInstance> accountDeviceInstances;
+    private final CommunicationsManager commsManager;
 
-    AccountsDeviceInstanceChildren(List<AccountDeviceInstance> accountDeviceInstances) {
+    AccountsDeviceInstanceChildren(List<AccountDeviceInstance> accountDeviceInstances, CommunicationsManager commsManager) {
         super(true);
         this.accountDeviceInstances = accountDeviceInstances;
+        this.commsManager = commsManager;
     }
 
     @Override
@@ -58,6 +61,6 @@ class AccountsDeviceInstanceChildren extends Children.Keys<AccountDeviceInstance
     //    }
     @Override
     protected Node[] createNodes(AccountDeviceInstance key) {
-        return new Node[]{new AccountDeviceInstanceNode(key)};
+        return new Node[]{new AccountDeviceInstanceNode(key, commsManager)};
     }
 }

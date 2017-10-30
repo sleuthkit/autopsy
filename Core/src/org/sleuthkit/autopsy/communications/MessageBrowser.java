@@ -1,20 +1,89 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obt ain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.beans.PropertyChangeEvent;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * The right hand side of the CVT. Has a DataResultPanel to show messages and
+ * account details, and a Content viewer to show individual
+ */
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
-    private final ExplorerManager em;
+    private static final long serialVersionUID = 1L;
 
-    MessageBrowser(ExplorerManager em) {
-        this.em = em;
+    private ExplorerManager parentExplorereManager;
+    private final DataContentPanel customContentView;
+    private final DataResultPanel messagesResultPanel;
+    private ExplorerManager internalExplorerManager;
 
-splitPane    }
+    MessageBrowser() {
+        initComponents();
+        customContentView = DataContentPanel.createInstance();
+        messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, customContentView);
+        splitPane.setTopComponent(messagesResultPanel);
+        splitPane.setBottomComponent(customContentView);
+
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        this.parentExplorereManager = ExplorerManager.find(this);
+
+        internalExplorerManager = new ExplorerManager();
+
+        parentExplorereManager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                final Node[] selectedNodes = parentExplorereManager.getSelectedNodes();
+                switch (selectedNodes.length) {
+                    case 0:
+                      messagesResultPanel.setNode(null);
+                        break;
+                    case 1:
+                        final Node selectedNode = selectedNodes[0];
+                        if (selectedNode instanceof AccountDeviceInstanceNode) {
+                            try {
+                                final AccountDetailsNode accountDetailsNode = new AccountDetailsNode((AccountDeviceInstanceNode) selectedNode);
+                                messagesResultPanel.setNode(new TableFilterNode(accountDetailsNode, true));
+                            } catch (TskCoreException ex) {
+                                Exceptions.printStackTrace(ex);
+                            }
+                        } else {
+                            internalExplorerManager.setRootContext(selectedNode);
+                        }
+                        break;
+                    // TODO: fill in multiseelct support
+                    default:
+                        break;
+                }
+            }
+        });
+        messagesResultPanel.open();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -53,6 +122,6 @@ splitPane    }
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return em;
+        return internalExplorerManager;
     }
 }

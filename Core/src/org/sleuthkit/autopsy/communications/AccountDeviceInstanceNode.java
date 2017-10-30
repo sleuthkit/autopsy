@@ -25,10 +25,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -38,10 +38,12 @@ class AccountDeviceInstanceNode extends AbstractNode {
 
     private static final Logger LOGGER = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
     private final AccountDeviceInstance accountDeviceInstance;
+    private final CommunicationsManager commsManager;
 
-    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance) {
-        super(Children.LEAF, Lookups.fixed(accountDeviceInstance));
+    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance, CommunicationsManager commsManager) {
+        super(Children.LEAF, Lookups.fixed(accountDeviceInstance, commsManager));
         this.accountDeviceInstance = accountDeviceInstance;
+        this.commsManager = commsManager;
         setName(accountDeviceInstance.getAccount().getAccountUniqueID());
         setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/"
                 + AccountUtils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
@@ -67,7 +69,7 @@ class AccountDeviceInstanceNode extends AbstractNode {
         long msgCount = 0;
         try {
             CommunicationsFilter filter = null;
-            msgCount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getRelationshipsCount(filter, accountDeviceInstance);
+            msgCount = commsManager.getRelationshipsCount(filter, accountDeviceInstance);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
         }

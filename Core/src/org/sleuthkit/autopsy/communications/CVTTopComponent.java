@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.beans.PropertyChangeEvent;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
@@ -45,20 +44,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final ExplorerManager em = new ExplorerManager();
-    private final ExplorerManager messageExplorerManager;
 
     public CVTTopComponent() {
+
         initComponents();
         setName(Bundle.CVTTopComponent_name());
-        messageExplorerManager = new ExplorerManager();
-        splitPane.setRightComponent(new MessageBrowser(messageExplorerManager));
-
-        em.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                
-                messageExplorerManager.setRootContext(em.getSelectedNodes()[0]);
-            }
-        });
+        splitPane.setRightComponent(new MessageBrowser());
     }
 
     /**

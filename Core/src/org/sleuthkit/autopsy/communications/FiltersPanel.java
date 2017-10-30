@@ -33,11 +33,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.DeviceFilter;
-import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -307,7 +307,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
 
-            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstances)));
+            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstances, communicationsManager)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
