@@ -28,8 +28,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.LocalDiskDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
@@ -40,8 +38,8 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.datamodel.Content;
 
 /*
- * A runnable that adds an archive data source as well as data sources
- * contained in the archive to the case database.
+ * A runnable that adds an archive data source as well as data sources contained
+ * in the archive to the case database.
  */
 class AddArchiveTask implements Runnable {
 
@@ -59,13 +57,13 @@ class AddArchiveTask implements Runnable {
      * Constructs a runnable task that adds an archive as well as data sources
      * contained in the archive to the case database.
      *
-     * @param deviceId An ASCII-printable identifier for the device associated
-     * with the data source that is intended to be unique across multiple cases
-     * (e.g., a UUID).
-     * @param archivePath Path to the archive file.
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param archivePath     Path to the archive file.
      * @param progressMonitor Progress monitor to report progress during
-     * processing.
-     * @param callback Callback to call when processing is done.
+     *                        processing.
+     * @param callback        Callback to call when processing is done.
      */
     AddArchiveTask(String deviceId, String archivePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
@@ -106,8 +104,8 @@ class AddArchiveTask implements Runnable {
             if (destinationFolder.toString().isEmpty()) {
                 // unable to create directory
                 criticalErrorOccurred = true;
-                errorMessages.add("Unable to create directory for archive extraction " + destinationFolder.toString());
-                logger.log(Level.SEVERE, "Unable to create directory for archive extraction {0}", destinationFolder.toString());
+                errorMessages.add(String.format("Unable to create directory {0} to extract archive {1} ", new Object[]{destinationFolder.toString(), archivePath}));
+                logger.log(Level.SEVERE, String.format("Unable to create directory {0} to extract archive {1} ", new Object[]{destinationFolder.toString(), archivePath}));
                 return;
             }
 
@@ -117,11 +115,19 @@ class AddArchiveTask implements Runnable {
             // do processing
             Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
             for (String file : extractedFiles) {
-                progressMonitor.setProgressText(String.format("Adding: %s", file));
+                
                 // identify DSP for this file
-                // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
-                validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(Paths.get(file));
-                if (validDataSourceProcessorsMap.isEmpty()) {
+                try {
+                    // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
+                    validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(Paths.get(file));
+                    if (validDataSourceProcessorsMap.isEmpty()) {
+                        continue;
+                    }
+                } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
+                    criticalErrorOccurred = true;
+                    errorMessages.add(ex.getMessage());
+                    logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
+                    // continue to next extracted file
                     continue;
                 }
 
@@ -130,7 +136,7 @@ class AddArchiveTask implements Runnable {
 
                 // Try each DSP in decreasing order of confidence
                 for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
-                    
+
                     // skip local files and local disk DSPs, only looking for "valid" data sources
                     if (selectedProcessor instanceof LocalDiskDSProcessor) {
                         continue;
@@ -142,23 +148,35 @@ class AddArchiveTask implements Runnable {
                     if (selectedProcessor instanceof ArchiveExtractorDSProcessor) {
                         continue;
                     }
-                    
-                    // identified a "valid" data source within the archive. 
-                    // Move it to a different folder 
+
+                    // identified a "valid" data source within the archive
+                    progressMonitor.setProgressText(String.format("Adding: %s", file));
+
+                    /*
+                     * NOTE: we have to move the valid data sources to a
+                     * separate folder and then add the data source from that
+                     * folder. This is necessary because after all valid data
+                     * sources have been identified, we are going to add the
+                     * remaining extracted contents of the archive as a single
+                     * logacl file set. Hence, if we do not move the data
+                     * sources out of the extracted contents folder, those data
+                     * source files will get added twice and can potentially
+                     * result in duplicate keyword hits.
+                     */
                     Path newFolder = createDirectoryForFile(file, currentCase.getModuleDirectory());
                     if (newFolder.toString().isEmpty()) {
                         // unable to create directory
                         criticalErrorOccurred = true;
-                        errorMessages.add("Unable to create directory for archive extraction " + newFolder.toString());
-                        logger.log(Level.SEVERE, "Unable to create directory for archive extraction {0}", newFolder.toString());
+                        errorMessages.add(String.format("Unable to create directory {0} to extract content of archive {1} ", new Object[]{newFolder.toString(), archivePath}));
+                        logger.log(Level.SEVERE, String.format("Unable to create directory {0} to extract content of archive {1} ", new Object[]{newFolder.toString(), archivePath}));
                         return;
                     }
-                    
+
+                    // Move it to a different folder                     
                     FileUtils.moveFileToDirectory(new File(file), newFolder.toFile(), false);
                     Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
-                    
-                    //jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
-                    //SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+
+                    // ELTBD - do we want to log this in case log and/or system admin log?
                     synchronized (archiveDspLock) {
                         try {
                             DataSource internalDataSource = new DataSource(deviceId, newFilePath);
@@ -169,14 +187,12 @@ class AddArchiveTask implements Runnable {
                             // at this point we got the content object(s) from the current DSP
                             newDataSources.addAll(internalDataSource.getContent());
 
-                            break; // skip all other DSPs for this file
+                            // skip all other DSPs for this data source
+                            break;
                         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                             // Log that the current DSP failed and set the error flag. We consider it an error
                             // if a DSP fails even if a later one succeeds since we expected to be able to process
                             // the data source which each DSP on the list.
-                            //AutoIngestAlertFile.create(caseDirectoryPath);
-                            //currentJob.setErrorsOccurred(true);
-                            //jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
                             criticalErrorOccurred = true;
                             errorMessages.add(ex.getMessage());
                             logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{newFilePath.toString(), selectedProcessor.getDataSourceType()});
@@ -184,25 +200,26 @@ class AddArchiveTask implements Runnable {
                     }
                 }
             }
-            
-            // after all archive contents have been examined, add remaining extracted contents as one logical file set
+
+            // after all archive contents have been examined (and moved to separate folders if necessary), 
+            // add remaining extracted contents as one logical file set
             progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
             synchronized (archiveDspLock) {
-                DataSource internalDataSource = new DataSource(deviceId, destinationFolder); 
+                DataSource internalDataSource = new DataSource(deviceId, destinationFolder);
                 DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
-                
+
                 // folder where archive was extracted to
                 List<String> pathsList = new ArrayList<>();
                 pathsList.add(destinationFolder.toString());
-                
+
                 // use archive file name as the name of the logical file set
                 String archiveFileName = FilenameUtils.getName(archivePath);
-                
+
                 LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
                 localFilesDSP.run(deviceId, archiveFileName, pathsList, progressMonitor, internalArchiveDspCallBack);
-                
+
                 archiveDspLock.wait();
-                
+
                 // at this point we got the content object(s) from the current DSP
                 newDataSources.addAll(internalDataSource.getContent());
             }
@@ -222,8 +239,7 @@ class AddArchiveTask implements Runnable {
             callback.done(result, errorMessages, newDataSources);
         }
     }
-    
-    
+
     private Path createDirectoryForFile(String fileName, String baseDirectory) {
         // get file name without full path or extension
         String fileNameNoExt = FilenameUtils.getBaseName(fileName);
