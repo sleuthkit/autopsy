@@ -90,6 +90,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -128,7 +129,6 @@ public class Case {
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
-    private static final long EXECUTOR_AWAIT_TIMEOUT_SECS = 5;
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
@@ -1645,7 +1645,7 @@ public class Case {
             } else {
                 future.cancel(true);
             }
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
         } catch (CancellationException discarded) {
             /*
              * The create/open task has been cancelled. Wait for it to finish,
@@ -1654,7 +1654,7 @@ public class Case {
              * will have been closed and the case directory lock released will
              * have been released.
              */
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         } catch (ExecutionException ex) {
             /*
@@ -1664,7 +1664,7 @@ public class Case {
              * case will have been closed and the case directory lock released
              * will have been released.
              */
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -1992,7 +1992,7 @@ public class Case {
                  * would be possible to start the next task before the current
                  * task responded to a cancellation request.
                  */
-                shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
 
@@ -2063,7 +2063,7 @@ public class Case {
         } catch (ExecutionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getMessage()), ex);
         } finally {
-            shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             progressIndicator.finish();
         }
     }
@@ -2174,7 +2174,7 @@ public class Case {
                             Bundle.Case_servicesException_serviceResourcesCloseError(service.getServiceName(), ex.getLocalizedMessage())));
                 }
             } finally {
-                shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
         }
@@ -2229,41 +2229,6 @@ public class Case {
         }
         return subDirectory.toString();
 
-    }
-
-    /**
-     * Shuts down a task executor service, waiting until all tasks are
-     * terminated. The current policy is to wait for the tasks to finish so that
-     * the case for which the executor is running can be left in a consistent
-     * state.
-     *
-     * @param executor The executor.
-     */
-    private static void shutDownTaskExecutor(ExecutorService executor) {
-        executor.shutdown();
-        boolean taskCompleted = false;
-        while (!taskCompleted) {
-            try {
-                taskCompleted = executor.awaitTermination(EXECUTOR_AWAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
-            } catch (InterruptedException ignored) {
-                /*
-                 * The current policy is to wait for the task to finish so that
-                 * the case can be left in a consistent state.
-                 *
-                 * For a specific example of the motivation for this policy,
-                 * note that a application service (Solr search service)
-                 * experienced an error condition when opening case resources
-                 * that left the service blocked uninterruptibly on a socket
-                 * read. This eventually led to a mysterious "freeze" as the
-                 * user-cancelled service task continued to run holdiong a lock
-                 * that a UI thread soon tried to acquire. Thus it has been
-                 * deemed better to make the "freeze" happen in a more
-                 * informative way, i.e., with the progress indicator for the
-                 * unfinished task on the screen, if a similar error condition
-                 * arises again.
-                 */
-            }
-        }
     }
 
     /**

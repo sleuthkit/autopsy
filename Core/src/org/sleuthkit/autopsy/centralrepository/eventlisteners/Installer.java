@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
-import java.beans.PropertyChangeListener;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -32,7 +31,7 @@ public class Installer extends ModuleInstall {
 
     private static final Logger LOGGER = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;
-    private final PropertyChangeListener pcl = new CaseEventListener();
+    private final CaseEventListener pcl = new CaseEventListener();
     private final IngestEventsListener ieListener = new IngestEventsListener();
 
     private static Installer instance;
@@ -71,6 +70,7 @@ public class Installer extends ModuleInstall {
         //module is being unloaded
 
         Case.removePropertyChangeListener(pcl);
+        pcl.shutdown();
         ieListener.uninstallListeners();
 
         // TODO: remove thread pool
