@@ -29,10 +29,9 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
- * A representation of a case created by automated ingest.
+ * A representation of a multi-user case.
  */
 class MultiUserCase implements Comparable<MultiUserCase> {
 
@@ -44,7 +43,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
     private final Date lastAccessedDate;
 
     /**
-     * Constructs a representation of case created by automated ingest.
+     * Constructs a representation of a multi-user case
      *
      * @param caseDirectoryPath The case directory path.
      * 
@@ -219,7 +218,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
     }
 
     /**
-     * Compares this AutopIngestCase object with abnother MultiUserCase object
+     * Compares this MultiUserCase object with another MultiUserCase object
      * for order.
      */
     @Override
@@ -237,7 +236,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
          * date (descending).
          *
          * @param object      The first MultiUserCase object
-         * @param otherObject The second AuotIngestCase object.
+         * @param otherObject The second MultiUserCase object.
          *
          * @return A negative integer, zero, or a positive integer as the first
          *         argument is less than, equal to, or greater than the second.
