@@ -40,6 +40,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -266,7 +267,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         // Update ingest option components.        
         sendIngestMessagesCheckBox.setSelected(db.getSendIngestMessages());
-        sendIngestMessagesCheckBox.setEnabled(!ingestIsRunning && db.getSearchDuringIngest() && db.getKnownFilesType().equals(KnownFilesType.KNOWN_BAD));
+        sendIngestMessagesCheckBox.setEnabled(!ingestIsRunning && db.getKnownFilesType().equals(KnownFilesType.KNOWN_BAD));
         optionsLabel.setEnabled(!ingestIsRunning);
         optionsSeparator.setEnabled(!ingestIsRunning);
 
@@ -357,11 +358,12 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     if(EamDb.isEnabled()){
                         EamDb.getInstance().deleteReferenceSet(index);
                     } else {
-                        xx
-                        Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+                        // This is the case where the user imported a database, then switched over to the central
+                        // repo panel and disabled it before cancelling. We can't delete the database at this point.
+                        Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.WARNING, "Error reverting central repository hash sets"); //NON-NLS
                     }
                 } catch (EamDbException ex){
-                    
+                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error reverting central repository hash sets", ex); //NON-NLS
                 }
             }
             
@@ -546,7 +548,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
 
         void refreshModel() {
-            hashSets = HashDbManager.getInstance().getAllHashDatabases();
+            hashSets = HashDbManager.getInstance().refreshAndGetAllHashDatabases();
             refreshDisplay();
         }
 

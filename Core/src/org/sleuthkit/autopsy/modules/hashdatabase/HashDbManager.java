@@ -869,12 +869,16 @@ public class HashDbManager implements PropertyChangeListener {
         };
         
         public String getHashSetName();
+        
+        public String getDisplayName();
 
         public String getDatabasePath() throws TskCoreException;
 
         public HashDb.KnownFilesType getKnownFilesType();
 
         public boolean getSearchDuringIngest();
+        
+        public boolean getDefaultSearchDuringIngest();
 		
         void setSearchDuringIngest(boolean useForIngest);
 
@@ -1015,6 +1019,11 @@ public class HashDbManager implements PropertyChangeListener {
         public String getHashSetName() {
             return hashSetName;
         }
+        
+        @Override
+        public String getDisplayName(){
+            return getHashSetName();
+        }
 
         @Override
         public String getDatabasePath() throws TskCoreException {
@@ -1042,6 +1051,12 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         public boolean getSearchDuringIngest() {
             return searchDuringIngest;
+        }
+        
+        @Override
+        public boolean getDefaultSearchDuringIngest(){
+            // File type hash sets are on by default
+            return true;
         }
 
         @Override
@@ -1304,6 +1319,11 @@ public class HashDbManager implements PropertyChangeListener {
             return hashSetName;
         }
         
+        @Override
+        public String getDisplayName(){
+            return getHashSetName() + " " + getVersion();
+        }
+        
         public String getVersion(){
             return version;
         }
@@ -1338,6 +1358,12 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         public boolean getSearchDuringIngest() {
             return searchDuringIngest;
+        }
+        
+        @Override
+        public boolean getDefaultSearchDuringIngest(){
+            // Central repo hash sets are off by default
+            return false;
         }
 
         @Override

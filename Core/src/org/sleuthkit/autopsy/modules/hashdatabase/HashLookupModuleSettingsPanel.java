@@ -200,7 +200,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
 
         String getName() {
-            return db.getHashSetName();
+            return db.getDisplayName();
         }
 
         void setEnabled(boolean enabled) {

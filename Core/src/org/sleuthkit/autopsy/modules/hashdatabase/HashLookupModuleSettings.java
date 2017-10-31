@@ -122,7 +122,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
     /**
      * Checks whether or not a hash set is enabled. If there is no setting for
-     * the requested hash set, it is deemed to be enabled.
+     * the requested hash set, return the default value
      *
      * @param db The hash set to check.
      *
@@ -135,8 +135,8 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
             }
         }
         
-        // We didn't find it, so return true
-        return true;
+        // We didn't find it, so use the default value
+        return db.getDefaultSearchDuringIngest();
     }
 
     /**
