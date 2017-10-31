@@ -39,11 +39,14 @@ class AccountDeviceInstanceNode extends AbstractNode {
     private static final Logger LOGGER = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
     private final AccountDeviceInstance accountDeviceInstance;
     private final CommunicationsManager commsManager;
+    private final CommunicationsFilter filter;
 
-    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance, CommunicationsManager commsManager) {
-        super(Children.LEAF, Lookups.fixed(accountDeviceInstance, commsManager));
-        this.accountDeviceInstance = accountDeviceInstance;
+    AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
+        super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
+        this.accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         this.commsManager = commsManager;
+        this.filter = accountDeviceInstanceKey.getCommunicationsFilter();
+
         setName(accountDeviceInstance.getAccount().getAccountUniqueID());
         setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/"
                 + AccountUtils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
@@ -63,12 +66,8 @@ class AccountDeviceInstanceNode extends AbstractNode {
             s.put(properties);
         }
 
-        // RAMAN TBD: need to figure out how to get the right filters here
-        // We talked about either creating a wrapper class around AccountDeviceInstance to push the selected filters
-        // Or some kind of static access to pull the selected filters
         long msgCount = 0;
         try {
-            CommunicationsFilter filter = null;
             msgCount = commsManager.getRelationshipsCount(filter, accountDeviceInstance);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
@@ -78,7 +77,7 @@ class AccountDeviceInstanceNode extends AbstractNode {
                 Bundle.AccountNode_accountType(),
                 "type",
                 accountDeviceInstance.getAccount().getAccountType().getDisplayName())); // NON-NLS
-       
+
         properties.put(new NodeProperty<>("count",
                 Bundle.AccountNode_messageCount(),
                 "count",

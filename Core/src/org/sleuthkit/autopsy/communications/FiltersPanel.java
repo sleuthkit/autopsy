@@ -41,7 +41,8 @@ import org.sleuthkit.datamodel.DeviceFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Panel that holds the Filter control widgets and translates user filtering
+ * changes into queries against the CommunicationsManager
  */
 final public class FiltersPanel extends javax.swing.JPanel {
 
@@ -304,10 +305,14 @@ final public class FiltersPanel extends javax.swing.JPanel {
             commsFilter.addAndFilter(getDevceFilter());
 
             commsFilter.addAndFilter(getAccountTypeFilter());
-            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
+            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            accountDeviceInstances.addAll(commsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
 
-            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstances, communicationsManager)));
+            List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
+            accountDeviceInstances.forEach(accountDeviceInstance
+                    -> accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter)));
+
+            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstanceKeys, commsManager)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
@@ -326,7 +331,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .map(entry -> entry.getKey()).collect(Collectors.toSet()));
         return accountTypeFilter;
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllTypesSelected(boolean selected) {
         setAllSelected(accountTypeMap, selected);
