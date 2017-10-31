@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -60,7 +61,25 @@ class HashSearchFilter extends AbstractFileSearchFilter<HashSearchPanel> {
     }
 
     @Override
+    @Messages({
+        "HashSearchFilter.errorMessage.emptyHash=Hash data is empty.",
+        "# {0} - hash data length", "HashSearchFilter.errorMessage.wrongLength=Input length({0}), doesn''t match the MD5 length(32).",
+        "HashSearchFilter.errorMessage.wrongCharacter=MD5 contains invalid hex characters."
+    })
     public boolean isValid() {
-        return !this.getComponent().getSearchTextField().getText().isEmpty();
+        String inputHashData = this.getComponent().getSearchTextField().getText();
+        if (inputHashData.isEmpty()) {
+            setLastError(Bundle.HashSearchFilter_errorMessage_emptyHash());
+            return false;
+        }
+        if (inputHashData.length() != 32) {
+            setLastError(Bundle.HashSearchFilter_errorMessage_wrongLength(inputHashData.length()));
+            return false;
+        }
+        if (!inputHashData.matches("[0-9a-fA-F]+")) {
+            setLastError(Bundle.HashSearchFilter_errorMessage_wrongCharacter());
+            return false;
+        }
+        return true;
     }
 }
