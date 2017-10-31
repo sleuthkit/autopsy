@@ -102,30 +102,6 @@ final class CaseEventListener implements PropertyChangeListener {
                 jobProcessingExecutor.submit(new CurrentCaseTask(dbManager, evt));
             }
             break;
-
-            case NAME: {
-                // The display name of the case has been changed
-
-                if (!EamDb.isEnabled()) {
-                    break;
-                }
-
-                if (evt.getNewValue() instanceof String) {
-                    String newName = (String) evt.getNewValue();
-                    try {
-                        // See if the case is in the database. If it is, update the display name.
-                        CorrelationCase existingCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
-
-                        if (null != existingCase) {
-                            existingCase.setDisplayName(newName);
-                            dbManager.updateCase(existingCase);
-                        }
-                    } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
-                    }
-                }
-            } // NAME
-            break;
         }
     }
 
@@ -391,20 +367,20 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
 
                 CorrelationCase curCeCase = new CorrelationCase(
-                        -1,
-                        curCase.getName(), // unique case ID
-                        EamOrganization.getDefault(),
-                        curCase.getDisplayName(),
-                        curCase.getCreatedDate(),
-                        curCase.getNumber(),
-                        curCase.getExaminer(),
-                        null,
-                        null,
-                        null);
+                            -1,
+                            curCase.getName(), // unique case ID
+                            EamOrganization.getDefault(),
+                            curCase.getDisplayName(),
+                            curCase.getCreatedDate(),
+                            curCase.getNumber(),
+                            curCase.getExaminer(),
+                            curCase.getExaminerEmail(),
+                            curCase.getExaminerPhone(),
+                            curCase.getCaseNotes());
 
-                if (!EamDb.isEnabled()) {
-                    return;
-                }
+                    if (!EamDb.isEnabled()) {
+                        return;
+                    }
 
                 try {
                     // NOTE: Cannot determine if the opened case is a new case or a reopened case,
