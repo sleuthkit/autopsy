@@ -60,7 +60,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     public CueBannerPanel() {
         initComponents();
-        customizeComponents();
+        initRecentCasesWindow();
         enableComponents();
     }
 
@@ -85,10 +85,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     public void refresh() {
         enableComponents();
-    }
-    
-    private void customizeComponents() {
-        initRecentCasesWindow();
     }
 
     private void initRecentCasesWindow() {
