@@ -57,6 +57,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
+import org.sleuthkit.autopsy.coreutils.CaseStatusIconCellRenderer;
+import org.sleuthkit.autopsy.coreutils.LongDateCellRenderer;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;

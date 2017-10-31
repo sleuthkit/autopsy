@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.text.SimpleDateFormat;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.CENTER;
+import org.sleuthkit.autopsy.coreutils.GrayableCellRenderer;
 
 /**
  * A JTable cell renderer that renders a date represented as a long as a
@@ -45,5 +47,27 @@ class ShortDateCellRenderer extends GrayableCellRenderer {
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
+    }
+
+    void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
+        if (table.isEnabled()) {
+            /*
+             * The table is enabled, make the foreground and background the
+             * normal selected or unselected color.
+             */
+            if (isSelected) {
+                setBackground(table.getSelectionBackground());
+                setForeground(table.getSelectionForeground());
+            } else {
+                setBackground(table.getBackground());
+                setForeground(table.getForeground());
+            }
+        } else {
+            /*
+             * The table is disabled, make the foreground and background gray.
+             */
+            setBackground(Color.lightGray);
+            setForeground(Color.darkGray);
+        }
     }
 }

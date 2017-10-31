@@ -141,7 +141,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(CaseOpenAction.class, "CTL_OpenAction");
+        return NbBundle.getMessage(CaseOpenAction.class, "CTL_CaseOpenAction");
     }
 
     @Override
