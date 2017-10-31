@@ -67,6 +67,7 @@ public class Installer extends ModuleInstall {
 
         Case.removePropertyChangeListener(pcl);
         pcl.shutdown();
+        ieListener.shutdown();
         ieListener.uninstallListeners();
 
         // TODO: remove thread pool
