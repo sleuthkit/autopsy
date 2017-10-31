@@ -180,8 +180,8 @@ public class Toolbar extends ToolBar {
 
         sortChooser = new SortChooser<>(GroupSortBy.getValues());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-            final boolean orderEnabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
-            sortChooser.setSortOrderDisabled(orderEnabled);
+            final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
+            sortChooser.setSortOrderDisabled(orderDisabled);
 
             final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
             sortChooser.setValueType(valueType);
@@ -189,7 +189,7 @@ public class Toolbar extends ToolBar {
         });
 
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
-        sortChooser.setComparator(GroupSortBy.PRIORITY);
+        sortChooser.setComparator(controller.getGroupManager().getSortBy());
         getItems().add(1, sortChooser);
         sortHelpImageView.setCursor(Cursor.HAND);
 

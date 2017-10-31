@@ -6,6 +6,7 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Filter by mime type used in filter areas of file search by attribute.
@@ -42,7 +43,14 @@ class MimeTypeFilter extends AbstractFileSearchFilter<MimeTypePanel> {
     }
 
     @Override
+    @Messages ({
+        "MimeTypeFilter.errorMessage.emptyMimeType=At least one MIME type must be selected."
+    })
     public boolean isValid() {
-        return !this.getComponent().getMimeTypesSelected().isEmpty();
+        if(this.getComponent().getMimeTypesSelected().isEmpty()){
+            setLastError(Bundle.MimeTypeFilter_errorMessage_emptyMimeType());
+            return false;
+        }
+        return true;
     }
 }

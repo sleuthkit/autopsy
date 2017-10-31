@@ -42,6 +42,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
@@ -79,25 +80,10 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         String query = "NULL";
         DateSearchPanel panel = this.getComponent();
 
-        // first, get the selected timeZone from the dropdown list
-        String tz = this.getComponent().getTimeZoneComboBox().getSelectedItem().toString();
-        String tzID = tz.substring(tz.indexOf(" ") + 1); // 1 index after the space is the ID
-        TimeZone selectedTZ = TimeZone.getTimeZone(tzID); //
-
         // convert the date from the selected timezone to get the GMT
         long fromDate = 0;
         String startDateValue = panel.getDateFromTextField().getText();
-        Calendar startDate = null;
-        try {
-            DateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-            sdf.setTimeZone(selectedTZ); // get the time in the selected timezone
-            Date temp = sdf.parse(startDateValue);
-
-            startDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
-            startDate.setTime(temp); // convert to GMT
-        } catch (ParseException ex) {
-            // for now, no need to show the error message to the user here
-        }
+        Calendar startDate = getCalendarDate(startDateValue);
         if (!startDateValue.isEmpty()) {
             if (startDate != null) {
                 fromDate = startDate.getTimeInMillis() / 1000; // divided by 1000 because we want to get the seconds, not miliseconds
@@ -106,29 +92,11 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         long toDate = 0;
         String endDateValue = panel.getDateToTextField().getText();
-        Calendar endDate = null;
-        try {
-            DateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-            sdf.setTimeZone(selectedTZ); // get the time in the selected timezone
-            Date temp2 = sdf.parse(endDateValue);
-
-            endDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
-            endDate.setTime(temp2); // convert to GMT
-            endDate.set(Calendar.HOUR, endDate.get(Calendar.HOUR) + 24); // get the next 24 hours
-        } catch (ParseException ex) {
-            // for now, no need to show the error message to the user here
-        }
+        Calendar endDate = getCalendarDate(endDateValue);
         if (!endDateValue.isEmpty()) {
             if (endDate != null) {
                 toDate = endDate.getTimeInMillis() / 1000; // divided by 1000 because we want to get the seconds, not miliseconds
             }
-        }
-
-        // If they put the dates in backwards, help them out.
-        if (fromDate > toDate) {
-            long temp = toDate;
-            toDate = fromDate;
-            fromDate = temp;
         }
 
         final boolean modifiedChecked = panel.getModifiedCheckBox().isSelected();
@@ -206,14 +174,56 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         return timeZones;
     }
 
+    private TimeZone getSelectedTimeZone() {
+        String tz = this.getComponent().getTimeZoneComboBox().getSelectedItem().toString();
+        String tzID = tz.substring(tz.indexOf(" ") + 1); // 1 index after the space is the ID
+        TimeZone selectedTZ = TimeZone.getTimeZone(tzID); //
+        return selectedTZ;
+    }
+    
+    private Calendar getCalendarDate(String dateValue) {
+        TimeZone selectedTZ = getSelectedTimeZone();
+        Calendar inputDate = null;
+        try {
+            DateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+            sdf.setTimeZone(selectedTZ); // get the time in the selected timezone
+            Date temp = sdf.parse(dateValue);
+
+            inputDate = Calendar.getInstance(new SimpleTimeZone(0, "GMT")); //NON-NLS
+            inputDate.setTime(temp); // convert to GMT
+        } catch (ParseException ex) {
+            // for now, no need to show the error message to the user here
+        }
+        return inputDate;
+    }
+      
     @Override
     public void addActionListener(ActionListener l) {
         getComponent().addActionListener(l);
     }
 
     @Override
+    @Messages ({
+        "DateSearchFilter.errorMessage.endDateBeforeStartDate=The end date should be after the start date.",
+        "DateSearchFilter.errorMessage.noCheckboxSelected=At least one date type checkbox must be selected."
+    })
     public boolean isValid() {
-        return this.getComponent().isValidSearch();
+
+        DateSearchPanel panel = this.getComponent();
+        Calendar startDate = getCalendarDate(panel.getDateFromTextField().getText());
+        Calendar endDate = getCalendarDate(panel.getDateToTextField().getText());
+        
+        if ((startDate != null && startDate.after(endDate)) || (endDate != null && endDate.before(startDate)))  {
+            setLastError(Bundle.DateSearchFilter_errorMessage_endDateBeforeStartDate());
+            return false;
+        }
+        
+        if (!panel.isValidSearch()) {
+            setLastError(Bundle.DateSearchFilter_errorMessage_noCheckboxSelected());
+            return false;
+        }
+        
+        return true;
     }
 
     /**

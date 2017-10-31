@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
  */
 class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
-    @NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Description:",
+    @NbBundle.Messages({"ProfilePanel.title.text=Profile",
+        "ProfilePanel.profileDescLabel.text=Description:",
         "ProfilePanel.profileNameLabel.text=Profile Name:",
         "ProfilePanel.newProfileText=NewEmptyProfile",
         "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named.",
@@ -50,6 +51,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
      */
     ProfilePanel() {
         initComponents();
+        setName(org.openide.util.NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.title.text"));
         settings = new IngestJobSettings(NEW_PROFILE_NAME);
         ingestSettingsPanel = new IngestJobSettingsPanel(settings);
         ingestSettingsPanel.setPastJobsButtonVisible(false);
@@ -59,6 +61,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     ProfilePanel(IngestProfile selectedProfile) {
         initComponents();
+        setName(org.openide.util.NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.title.text"));
         profile = selectedProfile;
         profileDescArea.setText(profile.getDescription());
         profileNameField.setText(profile.getName());
