@@ -52,7 +52,7 @@ final class CasePropertiesAction extends CallableSystemAction {
     public void performAction() {
         SwingUtilities.invokeLater(() -> {
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
-            casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, false);
+            casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, true);
             CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
             caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
                 casePropertiesDialog.setVisible(false);
@@ -65,7 +65,6 @@ final class CasePropertiesAction extends CallableSystemAction {
             double w = casePropertiesDialog.getSize().getWidth();
             double h = casePropertiesDialog.getSize().getHeight();
             casePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-            casePropertiesDialog.setVisible(true);
             casePropertiesDialog.setVisible(true);
             casePropertiesDialog.toFront();
         });

@@ -28,11 +28,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
@@ -271,9 +274,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 autopsyCase.getCreatedDate(),
                 autopsyCase.getNumber(),
                 autopsyCase.getExaminer(),
-                null,
-                null,
-                null);
+                autopsyCase.getExaminerEmail(),
+                autopsyCase.getExaminerPhone(),
+                autopsyCase.getCaseNotes());
         newCase(curCeCase);
         return curCeCase;
     }
@@ -450,7 +453,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
-     * @param correlationCase the current CorrelationCase used for ensuring uniqueness of DataSource
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
@@ -571,10 +575,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
-     * @param aType  The type of the artifact
-     * @param value  The correlation value
+     * @param aType The type of the artifact
+     * @param value The correlation value
      *
      * @return List of artifact instances for a given type/value
+     *
      * @throws EamDbException
      */
     @Override
@@ -674,8 +679,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
-     * @param aType  The type of the artifact
-     * @param value  The correlation value
+     * @param aType The type of the artifact
+     * @param value The correlation value
      *
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
@@ -724,8 +729,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * database that are associated with the artifactType and artifactValue of
      * the given artifact.
      *
-     * @param aType  The type of the artifact
-     * @param value  The correlation value
+     * @param aType The type of the artifact
+     * @param value The correlation value
      *
      * @return Number of unique tuples
      */
@@ -1018,7 +1023,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus   The status to change the artifact to
+     * @param knownStatus The status to change the artifact to
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
@@ -1392,29 +1397,38 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Add a new organization
      *
+     * @return the Organization ID of the newly created organization.
+     *
      * @param eamOrg The organization to add
      *
      * @throws EamDbException
      */
     @Override
-    public void newOrganization(EamOrganization eamOrg) throws EamDbException {
+    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
         Connection conn = connect();
-
+        ResultSet generatedKeys = null;
         PreparedStatement preparedStatement = null;
         String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?)";
 
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             preparedStatement.setString(1, eamOrg.getName());
             preparedStatement.setString(2, eamOrg.getPocName());
             preparedStatement.setString(3, eamOrg.getPocEmail());
             preparedStatement.setString(4, eamOrg.getPocPhone());
 
             preparedStatement.executeUpdate();
+            generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                return generatedKeys.getLong(1);
+            } else {
+                throw new SQLException("Creating user failed, no ID obtained.");
+            }
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new organization.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(generatedKeys);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1521,6 +1535,68 @@ public abstract class AbstractSqlEamDb implements EamDb {
             LocalDate.now());
         return dbManager.newReferencelSet(eamGlobalSet);
     } 
+
+    /**
+     * Update an existing organization.
+     *
+     * @param updatedOrganization the values the Organization with the same ID
+     *                            will be updated to in the database.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        String sql = "UPDATE organizations SET org_name = ?, poc_name = ?, poc_email = ?, poc_phone = ? WHERE id = ?";
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, updatedOrganization.getName());
+            preparedStatement.setString(2, updatedOrganization.getPocName());
+            preparedStatement.setString(3, updatedOrganization.getPocEmail());
+            preparedStatement.setString(4, updatedOrganization.getPocPhone());
+            preparedStatement.setInt(5, updatedOrganization.getOrgID());
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating organization.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    @Messages({"AbstractSqlEamDb.deleteOrganization.inUseException.message=Can not delete organization "
+            + "which is currently in use by a case or reference set in the central repository.",
+             "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
+    @Override
+    public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
+        Connection conn = connect();
+        PreparedStatement checkIfUsedStatement = null;
+        ResultSet resultSet = null;
+        String checkIfUsedSql = "SELECT (select count(*) FROM cases WHERE org_id=?) + (select count(*) FROM reference_sets WHERE org_id=?)";
+        PreparedStatement deleteOrgStatement = null;
+        String deleteOrgSql = "DELETE FROM organizations WHERE id=?";
+        try {
+            checkIfUsedStatement = conn.prepareStatement(checkIfUsedSql);
+            checkIfUsedStatement.setInt(1, organizationToDelete.getOrgID());
+            checkIfUsedStatement.setInt(2, organizationToDelete.getOrgID());
+            resultSet = checkIfUsedStatement.executeQuery();
+            resultSet.next();
+            if (resultSet.getLong(1) > 0) {
+                throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_inUseException_message());
+            }
+            deleteOrgStatement = conn.prepareStatement(deleteOrgSql);
+            deleteOrgStatement.setInt(1, organizationToDelete.getOrgID());
+            deleteOrgStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_errorDeleting_message(), ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(checkIfUsedStatement);
+            EamDbUtil.closePreparedStatement(deleteOrgStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
 
     /**
      * Add a new Global Set
@@ -2056,7 +2132,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getInt("case_id"),
                 resultSet.getString("device_id"),
-                resultSet.getString("name")        
+                resultSet.getString("name")
         );
 
         return eamDataSource;

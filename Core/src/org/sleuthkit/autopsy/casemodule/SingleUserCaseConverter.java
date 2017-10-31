@@ -199,12 +199,15 @@ public class SingleUserCaseConverter {
         copyImages(icd);
 
         // Create new .aut file
-        CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
-                CaseType.MULTI_USER_CASE,
+        CaseMetadata newCaseMetadata = new CaseMetadata(CaseType.MULTI_USER_CASE,
+                icd.getCaseOutputFolder().toString(),
                 icd.getNewCaseName(),
-                icd.getNewCaseName(),
+                new CaseDetails(icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
-                oldCaseMetadata.getExaminer());
+                oldCaseMetadata.getExaminer(),
+                oldCaseMetadata.getExaminerPhone(),
+                oldCaseMetadata.getExaminerEmail(),
+                oldCaseMetadata.getCaseNotes()));
         newCaseMetadata.setCaseDatabaseName(dbName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
