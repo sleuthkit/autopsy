@@ -7,6 +7,7 @@ package org.sleuthkit.autopsy.communications;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -18,24 +19,27 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public class RelationShipFilterNode extends FilterNode {
 
-    private final BlackboardArtifactNode wrappedNode;
 
     public RelationShipFilterNode(BlackboardArtifactNode wrappedNode) {
         super(wrappedNode, Children.LEAF);
-        this.wrappedNode = wrappedNode;
+        setDisplayName( StringUtils.stripEnd(wrappedNode.getArtifact().getDisplayName(),"s"));
     }
 
     @Override
     public PropertySet[] getPropertySets() {
         PropertySet[] propertySets = super.getPropertySets();
 
-        HashSet<String> suppressedPropertyNames = new HashSet<>();
-        suppressedPropertyNames.add("Source File");
-        suppressedPropertyNames.add("Data Source");
-        suppressedPropertyNames.add("Path");
-        suppressedPropertyNames.add("Message ID");
-        suppressedPropertyNames.add("Tags");
-        suppressedPropertyNames.add("Message (Plaintext)");
+        HashSet<String> propertyNames = new HashSet<>();
+        propertyNames.add("Source File");
+        propertyNames.add("Data Source");
+        propertyNames.add("Path");
+        propertyNames.add("Message ID");
+        propertyNames.add("Tags");
+        propertyNames.add("Text");
+        propertyNames.add("Read");
+        propertyNames.add("Directon");
+        propertyNames.add("Name");
+        propertyNames.add("Message (Plaintext)");
 
         ArrayList<PropertySet> retPropSets = new ArrayList<>();
         boolean first = true;
@@ -43,13 +47,11 @@ public class RelationShipFilterNode extends FilterNode {
             Sheet.Set set1 = copySet(set);
             if (first) {
                 first = false;
-
-                final String artifactTypeName = wrappedNode.getArtifact().getArtifactTypeName();
-                set1.put(new NodeProperty<>("Type", "Type", "Type", artifactTypeName));
+                set1.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
             }
 
             for (Property<?> p : set.getProperties()) {
-                if (false == suppressedPropertyNames.contains(p.getName())) {
+                if (false == propertyNames.contains(p.getName())) {
                     set1.put(p);
                 }
             }
