@@ -38,10 +38,13 @@ class AccountDeviceInstanceNode extends AbstractNode {
 
     private static final Logger LOGGER = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
     private final AccountDeviceInstance accountDeviceInstance;
+    private final CommunicationsFilter filter;
 
-    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance) {
+    AccountDeviceInstanceNode(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter) {
         super(Children.LEAF, Lookups.fixed(accountDeviceInstance));
         this.accountDeviceInstance = accountDeviceInstance;
+        this.filter = filter;
+        
         setName(accountDeviceInstance.getAccount().getAccountUniqueID());
         setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/"
                 + AccountUtils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
@@ -61,13 +64,9 @@ class AccountDeviceInstanceNode extends AbstractNode {
             s.put(properties);
         }
 
-        // RAMAN TBD: need to figure out how to get the right filters here
-        // We talked about either creating a wrapper class around AccountDeviceInstance to push the selected filters
-        // Or some kind of static access to pull the selected filters
         long msgCount = 0;
         try {
-            CommunicationsFilter filter = null;
-            msgCount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getRelationshipsCount(filter, accountDeviceInstance);
+            msgCount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getRelationshipsCount(this.filter, accountDeviceInstance);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
         }
