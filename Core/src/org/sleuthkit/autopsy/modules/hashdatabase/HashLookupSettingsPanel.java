@@ -595,7 +595,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         indexPathLabelLabel = new javax.swing.JLabel();
         indexPathLabel = new javax.swing.JLabel();
         addHashesToDatabaseButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
         versionLabel = new javax.swing.JLabel();
         hashDbVersionLabel = new javax.swing.JLabel();
         orgLabel = new javax.swing.JLabel();
@@ -740,13 +739,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(versionLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.versionLabel.text_1")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(hashDbVersionLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDbVersionLabel.text_1")); // NOI18N
@@ -822,9 +814,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                             .addComponent(sendIngestMessagesCheckBox))
                                         .addGroup(jPanel1Layout.createSequentialGroup()
                                             .addGap(10, 10, 10)
-                                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                .addComponent(ingestWarningLabel)
-                                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                            .addComponent(ingestWarningLabel))))
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -894,8 +884,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         .addComponent(sendIngestMessagesCheckBox)
                         .addGap(18, 18, 18)
                         .addComponent(ingestWarningLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton1)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1027,20 +1015,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }//GEN-LAST:event_hashSetTableKeyPressed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if(EamDb.isEnabled()){
-            HashDatabase hashDb = new ImportCentralRepoDatabaseDialog().getHashDatabase();
-            if (null != hashDb) {
-                hashSetTableModel.refreshModel();
-                ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            }
-        } else {
-            // TEMP
-            JOptionPane.showMessageDialog(null, "Central repo not enabled");
-        }
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addHashesToDatabaseButton;
     private javax.swing.JButton createDatabaseButton;
@@ -1062,7 +1036,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private javax.swing.JLabel informationLabel;
     private javax.swing.JSeparator informationSeparator;
     private javax.swing.JLabel ingestWarningLabel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;

@@ -24,27 +24,22 @@ import java.beans.PropertyChangeEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JFrame;
-import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executors;
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -53,8 +48,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements PropertyChangeListener{
 
-    private CentralRepoImportWorker worker;
-   
+    private CentralRepoImportWorker worker;   
     
     /**
      * 
@@ -108,9 +102,6 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.linesProcessed= lines processed"})
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        System.out.println("### Evt type: " + evt.getPropertyName());
-        System.out.println("       newValue: " + evt.getNewValue().toString());
-        System.out.println("### Setting progress to " + worker.getProgressPercentage());
         
         if("progress".equals(evt.getPropertyName())){
             progressBar.setValue(worker.getProgressPercentage());
@@ -199,16 +190,6 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             return this.getProgress();
         }
         
-        //@Override
-        //public void addPropertyChangeListener(PropertyChangeListener dialog){
-        //    super.addPropertyChangeListener(dialog);
-        //}
-        
-        //@Override
-        //public void run(){
-        //    this.execute();
-        //}
-        
         @Override
         protected Void doInBackground() throws Exception {
 
@@ -218,69 +199,58 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             } else {
                 knownStatus = TskData.FileKnown.BAD;
             }
-            try{
-                // Create an empty hashset in the central repository
-                crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
-            } catch (EamDbException ex){
-                throw new TskCoreException(ex.getLocalizedMessage());
-            }
+            
+            // Create an empty hashset in the central repository
+            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
 
-            try{
-                EamDb dbManager = EamDb.getInstance();
-                CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
-                BufferedReader reader = new BufferedReader(new FileReader(importFile));
-                String line;
-                Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
+            EamDb dbManager = EamDb.getInstance();
+            CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
+            BufferedReader reader = new BufferedReader(new FileReader(importFile));
+            String line;
+            Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
 
-                while ((line = reader.readLine()) != null) {
-                    if(isCancelled()){
-                        return null;
-                    }
-                    
-                    String[] parts = line.split("\\|");
-
-                    // Header lines start with a 41 character dummy hash, 1 character longer than a SHA-1 hash
-                    if (parts.length != 2 || parts[0].length() == 41) {
-                        continue;
-                    }
-
-                    EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                            crIndex, 
-                            parts[0].toLowerCase(), 
-                            knownStatus, 
-                            "");
-
-                    globalInstances.add(eamGlobalFileInstance);
-                    numLines.incrementAndGet();
-
-                    if(numLines.get() % HASH_IMPORT_THRESHOLD == 0){
-                        dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
-                        globalInstances.clear();
-                        
-                        int progress = (int)(numLines.get() * 100 / totalLines);
-                        if(progress < 100){
-                            this.setProgress(progress);
-                        } else {
-                            this.setProgress(99);
-                        }
-                    }
+            while ((line = reader.readLine()) != null) {
+                if(isCancelled()){
+                    return null;
                 }
 
-                dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
-                this.setProgress(100);
-                
-                return null;
+                String[] parts = line.split("\\|");
+
+                // Header lines start with a 41 character dummy hash, 1 character longer than a SHA-1 hash
+                if (parts.length != 2 || parts[0].length() == 41) {
+                    continue;
+                }
+
+                EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
+                        crIndex, 
+                        parts[0].toLowerCase(), 
+                        knownStatus, 
+                        "");
+
+                globalInstances.add(eamGlobalFileInstance);
+                numLines.incrementAndGet();
+
+                if(numLines.get() % HASH_IMPORT_THRESHOLD == 0){
+                    dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+                    globalInstances.clear();
+
+                    int progress = (int)(numLines.get() * 100 / totalLines);
+                    if(progress < 100){
+                        this.setProgress(progress);
+                    } else {
+                        this.setProgress(99);
+                    }
+                }
             }
-            catch (Exception ex){
-                // TODO
-                ex.printStackTrace();
-                throw new TskCoreException(ex.getLocalizedMessage());
-            }
+
+            dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+            this.setProgress(100);
+
+            return null;
         }
         
         private void deleteIncompleteSet(int crIndex){
             if(crIndex >= 0){
-                System.out.println("Deleting incomplete reference set");
                 
                 // This can be slow on large reference sets
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
@@ -289,13 +259,14 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                         try{
                             EamDb.getInstance().deleteReferenceSet(crIndex);
                         } catch (EamDbException ex2){
-
+                            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
                         }
                     }
                 });
             }
         }
         
+        @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.addDbError.message=Error adding new hash set"})
         @Override
         protected void done() {
             if(isCancelled()){
@@ -307,23 +278,20 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             try {
                 get();
                 try{
-                    System.out.println("### Finished - adding hashDb object");
                     newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
                             crIndex, 
                             searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
                 } catch (TskCoreException ex){
-                    System.out.println("\n### Error!");
+                    JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
+                    Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error adding imported hash set", ex);
                 }
-            } catch (InterruptedException | ExecutionException ex) {
-                
-                System.out.println("\n### Interrupted!");
-                
+            } catch (Exception ex) {
                 // Delete this incomplete hash set from the central repo
                 if(crIndex >= 0){
                     try{
                         EamDb.getInstance().deleteReferenceSet(crIndex);
                     } catch (EamDbException ex2){
-                        
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex);
                     }
                 }
             }

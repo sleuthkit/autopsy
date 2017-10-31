@@ -34,9 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -1306,15 +1304,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public boolean referenceSetIsValid(int centralRepoIndex, String hashSetName, String version) throws EamDbException{
-        System.out.println("###\nChecking if " + centralRepoIndex + " : " + hashSetName + " " + version + " is valid");
         EamGlobalSet refSet = this.getReferenceSetByID(centralRepoIndex);
         if(refSet == null){
-            System.out.println("  Not valid - no matching index");
             return false;
         }
         
-        boolean res = refSet.getSetName().equals(hashSetName) && refSet.getVersion().equals(version);
-        System.out.println("  res: " + res + " (" + refSet.getSetName() + ", " + refSet.getVersion() + ")");
         return(refSet.getSetName().equals(hashSetName) && refSet.getVersion().equals(version));
     }
     

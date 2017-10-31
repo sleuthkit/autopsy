@@ -512,10 +512,6 @@ public class HashDbManager implements PropertyChangeListener {
 
     void save() throws HashDbManagerException {
         try {
-            System.out.println("######\nHashDbManager: Saving Hash Lookup settings");
-            for(HashDatabase db: this.hashSets){
-                System.out.println("   " + db.getHashSetName() + "  " + db.getDatabaseType().name());
-            }
             if (!HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)))) {
                 throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
             }

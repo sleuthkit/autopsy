@@ -125,10 +125,6 @@ final class HashLookupSettings implements Serializable {
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(SERIALIZATION_FILE_PATH))) {
                 HashLookupSettings filesSetsSettings = (HashLookupSettings) in.readObject();
-                System.out.println("#####\nHashLookupSettings");
-                for(HashDbInfo dbInfo:filesSetsSettings.hashDbInfoList){
-                   System.out.println("    " + dbInfo.getHashSetName() + "   File type: " + dbInfo.isFileDatabaseType());
-                }
                 return filesSetsSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
