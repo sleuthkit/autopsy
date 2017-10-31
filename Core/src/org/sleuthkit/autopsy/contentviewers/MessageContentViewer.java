@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.util.logging.Level;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -28,8 +30,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 /**
  * Shows SMS/MMS/EMail messages
@@ -37,16 +37,15 @@ import org.jsoup.nodes.Document;
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
-    
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
-    
+
     private static final int HDR_TAB_INDEX = 0;
     private static final int TEXT_TAB_INDEX = 1;
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
-       
+
     private BlackboardArtifact artifact;    // Artifact currently being displayed
-    
+
     /**
      * Creates new form MessageContentViewer
      */
@@ -252,19 +251,18 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }// </editor-fold>//GEN-END:initComponents
 
     private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
-       
+
         try {
             BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML));
             if (attr != null && !attr.getValueString().isEmpty()) {
-               
+
                 if (showImagesToggleButton.isSelected()) {
                     showImagesToggleButton.setText(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.hide.text"));
-                   
+
                     this.htmlbodyTextPane.setText("<html><body>" + attr.getValueString() + "</body></html>");
-                }
-                else {
+                } else {
                     showImagesToggleButton.setText(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.text"));
-                    
+
                     this.htmlbodyTextPane.setText("<html><body>" + cleanseHTML(attr.getValueString()) + "</body></html>");
                 }
             }
@@ -302,27 +300,30 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     private void customizeComponents() {
         // do any customizations here
-         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
-         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
-         
+        Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
+        Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
+
     }
-    
+
     @Override
     public void setNode(Node node) {
-        
-        artifact = node.getLookup().lookup(BlackboardArtifact.class);
-       
-        if (artifact == null) {
+
+        if (node == null) {
             return;
         }
         
+        artifact = node.getLookup().lookup(BlackboardArtifact.class);
+
+        if (artifact == null) {
+            return;
+        }
+
         if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
             displayMsg();
-        }
-        else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
             displayEmailMsg();
         }
-       
+
     }
 
     @Override
@@ -352,211 +353,193 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public boolean isSupported(Node node) {
-       BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-       return ( (artifact != null) 
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        return ((artifact != null)
                 && ((artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
                 || (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())));
     }
 
     @Override
     public int isPreferred(Node node) {
-       
-        if ( isSupported(node)){
+
+        if (isSupported(node)) {
             return 6;
         }
         return 0;
     }
-  
-    
-    private void displayEmailMsg()
-    {
+
+    private void displayEmailMsg() {
         directionText.setVisible(false);
-        
+
         showImagesToggleButton.setVisible(false);
         showImagesToggleButton.setText("Show Images");
         showImagesToggleButton.setSelected(false);
-        
+
         try {
             BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM));
             this.fromText.setText(attr.getValueString());
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO));
             if (attr != null) {
-                 this.toText.setText(attr.getValueString());
+                this.toText.setText(attr.getValueString());
             }
-           
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC));
             if (attr != null && !attr.getValueString().isEmpty()) {
                 this.ccText.setVisible(true);
                 this.ccText.setText(attr.getValueString());
-            }
-            else {
+            } else {
                 this.ccText.setVisible(false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT));
             if (attr != null && !attr.getValueString().isEmpty()) {
                 this.subjectText.setVisible(true);
                 this.subjectText.setText(attr.getValueString());
-            }
-            else {
+            } else {
                 this.subjectText.setVisible(false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD));
             if (attr != null && !attr.getDisplayString().isEmpty()) {
                 this.datetimeText.setVisible(true);
                 this.datetimeText.setText(attr.getDisplayString());
-            }
-            else {
+            } else {
                 this.datetimeText.setVisible(false);
             }
-            
+
             int selectedTabIndex = -1;
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN));
             if (attr != null && !attr.getValueString().isEmpty()) {
                 this.textbodyTextArea.setVisible(true);
                 this.textbodyTextArea.setText(attr.getValueString());
-                
+
                 msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, true);
                 selectedTabIndex = TEXT_TAB_INDEX;
-            }
-            else {
+            } else {
                 msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML));
             if (attr != null && !attr.getValueString().isEmpty()) {
-                
+
                 this.showImagesToggleButton.setVisible(true);
-                
-                
+
                 this.htmlbodyTextPane.setVisible(true);
                 this.htmlbodyTextPane.setText("<html><body>" + cleanseHTML(attr.getValueString()) + "</body></html>");
                 //this.htmlbodyTextPane.setText(cleanseHTML(attr.getValueString()));
-                
+
                 msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, true);
                 selectedTabIndex = HTML_TAB_INDEX;
-            }
-            else {
+            } else {
                 msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
                 this.htmlbodyTextPane.setVisible(false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF));
             if (attr != null && !attr.getValueString().isEmpty()) {
-                
+
                 this.rtfbodyTextPane.setVisible(true);
                 this.rtfbodyTextPane.setText(attr.getValueString());
-                
+
                 msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, true);
                 selectedTabIndex = RTF_TAB_INDEX;
-            }
-            else {
+            } else {
                 msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS));
             if (attr != null && !attr.getValueString().isEmpty()) {
                 this.headersTextArea.setVisible(true);
                 this.headersTextArea.setText(attr.getValueString());
                 if (selectedTabIndex < 0) {
-                     selectedTabIndex = HDR_TAB_INDEX;
+                    selectedTabIndex = HDR_TAB_INDEX;
                 }
-            }
-            else {
+            } else {
                 msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             }
-            
+
             msgbodyTabbedPane.setSelectedIndex(selectedTabIndex);
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
         }
     }
-    
+
     private void displayMsg() {
-        
+
         this.ccText.setVisible(false);
         this.showImagesToggleButton.setVisible(false);
         msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
         msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
         msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
-         
+
         try {
-            
+
             BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
             if (attr != null) {
                 this.fromText.setText(attr.getValueString());
-            }else {
-                 this.fromText.setVisible(false);
+            } else {
+                this.fromText.setVisible(false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
             if (attr != null) {
-                 this.toText.setText(attr.getValueString());
-            }else {
-                 this.toText.setVisible(false);
+                this.toText.setText(attr.getValueString());
+            } else {
+                this.toText.setVisible(false);
             }
-           
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION));
             if (attr != null) {
-                 this.directionText.setText(attr.getValueString());
-            }else {
-                 this.directionText.setVisible(false);
+                this.directionText.setText(attr.getValueString());
+            } else {
+                this.directionText.setVisible(false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT));
             if (attr != null && !attr.getValueString().isEmpty()) {
                 this.subjectText.setVisible(true);
                 this.subjectText.setText(attr.getValueString());
-            }
-            else {
+            } else {
                 this.subjectText.setVisible(false);
             }
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
             if (attr != null && !attr.getDisplayString().isEmpty()) {
                 this.datetimeText.setVisible(true);
                 this.datetimeText.setText(attr.getDisplayString());
-            }
-            else {
+            } else {
                 this.datetimeText.setVisible(false);
             }
-            
-            
+
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT));
             if (attr != null && !attr.getValueString().isEmpty()) {
                 this.textbodyTextArea.setVisible(true);
                 this.textbodyTextArea.setText(attr.getValueString());
-                
+
                 msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, true);
-            }
-            else {
+            } else {
                 msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, false);
             }
             msgbodyTabbedPane.setSelectedIndex(TEXT_TAB_INDEX);
-        }
-        catch (TskCoreException ex) {
+        } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }
-        
+
     }
-    
+
     /**
      * Cleans out input HTML string
      */
-    private String cleanseHTML(String htmlInString)  {
-      
+    private String cleanseHTML(String htmlInString) {
+
         Document doc = Jsoup.parse(htmlInString);
-        
+
         // fix  all img tags
         doc.select("img[src]").forEach((img) -> {
             img.attr("src", "");
         });
 
         return doc.html();
-        
     }
 }

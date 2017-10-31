@@ -18,26 +18,30 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.openide.nodes.FilterNode;
+import java.util.logging.Level;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class AccountDetailsNode extends FilterNode {
+class AccountDetailsNode extends AbstractNode {
 
-    /**
-     * @param wrappedNode the value of selectedNode
-     */
-    AccountDetailsNode(AccountDeviceInstanceNode wrappedNode) throws TskCoreException {
-        super(wrappedNode, new AccountRelationshipChildren(wrappedNode));
+    private final static Logger logger = Logger.getLogger(AccountDetailsNode.class.getName());
+    private final CommunicationsFilter filter; //TODO: Use this
+
+    AccountDetailsNode(Set<Account> accounts,CommunicationsFilter filter, CommunicationsManager commsManager) {
+        super(new AccountRelationshipChildren(accounts, commsManager));
+        this.filter = filter;
     }
 
     /**
@@ -45,40 +49,40 @@ class AccountDetailsNode extends FilterNode {
      */
     private static class AccountRelationshipChildren extends Children.Keys<BlackboardArtifact> {
 
-        private final AccountDeviceInstanceNode wrappedNode;
+        private final Set<Account> accounts;
+        private final CommunicationsManager commsManager;
 
-        private AccountRelationshipChildren(AccountDeviceInstanceNode wrappedNode) {
-            this.wrappedNode = wrappedNode;
+        private AccountRelationshipChildren(Set<Account> accounts, CommunicationsManager commsManager) {
+            this.accounts = accounts;
+            this.commsManager = commsManager;
         }
 
         @Override
-        protected Node[] createNodes(BlackboardArtifact t) {
-            
-            final RelationShipFilterNode blackboardArtifactNode = new RelationShipFilterNode(new BlackboardArtifactNode(t));
-            return new Node[]{blackboardArtifactNode};
+        protected Node[] createNodes(BlackboardArtifact key) {
+            return new Node[]{new RelationShipFilterNode(new BlackboardArtifactNode(key))};
         }
 
         @Override
         protected void addNotify() {
-            try {
-                AccountDeviceInstance adi = wrappedNode.getLookup().lookup(AccountDeviceInstance.class);
-                CommunicationsManager communicationsManager = wrappedNode.getLookup().lookup(CommunicationsManager.class);
-                List<Account> accountsWithRelationship = communicationsManager.getAccountsWithRelationship(adi.getAccount());
-                Set<BlackboardArtifact> keys = new HashSet<>();
+            Set<BlackboardArtifact> keys = new HashSet<>();
+            for (Account account : accounts) {
+                List<Account> accountsWithRelationship = new ArrayList<>();
+                try {
+                    accountsWithRelationship.addAll(commsManager.getAccountsWithRelationship(account)); //TODO: Use filter
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error loading with relationships to " + account, ex);
+                }
 
-                accountsWithRelationship.forEach(account -> {
+                accountsWithRelationship.forEach(otherAcount -> {
                     try {
-                        keys.addAll(communicationsManager.getRelationships(adi.getAccount(), account));
+                        keys.addAll(commsManager.getRelationships(account, otherAcount)); //TODO:Use filter
                     } catch (TskCoreException ex) {
-                        Exceptions.printStackTrace(ex);
+                        logger.log(Level.WARNING, "Error loading relationships between " + account + " and " + otherAcount, ex);
                     }
                 });
-
-                setKeys(keys);
-            } catch (TskCoreException ex) {
-                //TODO: proper logging
-                Exceptions.printStackTrace(ex);
             }
+            setKeys(keys);
         }
     }
+
 }

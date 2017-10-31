@@ -18,14 +18,15 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.beans.PropertyChangeEvent;
+import java.util.HashSet;
+import java.util.Set;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.datamodel.CommunicationsManager;
 
 /**
  * The right hand side of the CVT. Has a DataResultPanel to show messages and
@@ -36,16 +37,14 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     private static final long serialVersionUID = 1L;
 
     private ExplorerManager parentExplorereManager;
-    private final DataContentPanel customContentView;
     private final DataResultPanel messagesResultPanel;
     private ExplorerManager internalExplorerManager;
 
     MessageBrowser() {
         initComponents();
-        customContentView = DataContentPanel.createInstance();
-        messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, customContentView);
+        messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
         splitPane.setTopComponent(messagesResultPanel);
-        splitPane.setBottomComponent(customContentView);
+        splitPane.setBottomComponent(messageDataContent);
 
     }
 
@@ -56,28 +55,34 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
 
         internalExplorerManager = new ExplorerManager();
 
-        parentExplorereManager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+        parentExplorereManager.addPropertyChangeListener(pce -> {
+            if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] selectedNodes = parentExplorereManager.getSelectedNodes();
                 switch (selectedNodes.length) {
                     case 0:
-                      messagesResultPanel.setNode(null);
+                        messagesResultPanel.setNode(null);
                         break;
-                    case 1:
-                        final Node selectedNode = selectedNodes[0];
-                        if (selectedNode instanceof AccountDeviceInstanceNode) {
-                            try {
-                                final AccountDetailsNode accountDetailsNode = new AccountDetailsNode((AccountDeviceInstanceNode) selectedNode);
-                                messagesResultPanel.setNode(new TableFilterNode(accountDetailsNode, true));
-                            } catch (TskCoreException ex) {
-                                Exceptions.printStackTrace(ex);
-                            }
-                        } else {
-                            internalExplorerManager.setRootContext(selectedNode);
-                        }
-                        break;
-                    // TODO: fill in multiseelct support
                     default:
+                        Set<Account> accounts = new HashSet<>();
+                        CommunicationsFilter filter = null;
+                        CommunicationsManager commsManager = null;
+                        for (Node n : selectedNodes) {
+                            if (n instanceof AccountDeviceInstanceNode) {
+                                final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) n;
+                                accounts.add(adiNode.getAccountDeviceInstance().getAccount());
+                                if (commsManager == null) {
+                                    commsManager = adiNode.getCommsManager();
+                                }
+                                if (filter == null) {
+                                    filter = adiNode.getFilter();
+                                } else if (filter != adiNode.getFilter()) {
+                                    //different filters ..... exception?
+                                }
+                            } else {
+                                ///this should never happen...
+                            }
+                        }
+                        messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accounts, filter, commsManager), true));
                         break;
                 }
             }
@@ -95,8 +100,12 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     private void initComponents() {
 
         splitPane = new javax.swing.JSplitPane();
+        messageDataContent = new org.sleuthkit.autopsy.communications.MessageDataContent();
 
+        splitPane.setDividerLocation(400);
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(0.5);
+        splitPane.setBottomComponent(messageDataContent);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -104,19 +113,20 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE))
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 652, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 578, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private org.sleuthkit.autopsy.communications.MessageDataContent messageDataContent;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 

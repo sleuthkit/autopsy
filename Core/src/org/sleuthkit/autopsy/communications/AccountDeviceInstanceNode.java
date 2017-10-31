@@ -52,6 +52,18 @@ class AccountDeviceInstanceNode extends AbstractNode {
                 + AccountUtils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
     }
 
+    public AccountDeviceInstance getAccountDeviceInstance() {
+        return accountDeviceInstance;
+    }
+
+    public CommunicationsManager getCommsManager() {
+        return commsManager;
+    }
+
+    public CommunicationsFilter getFilter() {
+        return filter;
+    }
+
     @Override
     @NbBundle.Messages({
         "AccountNode.device=Device",

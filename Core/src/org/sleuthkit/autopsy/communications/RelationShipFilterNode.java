@@ -37,9 +37,10 @@ public class RelationShipFilterNode extends FilterNode {
         propertyNames.add("Tags");
         propertyNames.add("Text");
         propertyNames.add("Read");
-        propertyNames.add("Directon");
+        propertyNames.add("Direction");
         propertyNames.add("Name");
         propertyNames.add("Message (Plaintext)");
+        propertyNames.add("Message Type");
 
         ArrayList<PropertySet> retPropSets = new ArrayList<>();
         boolean first = true;
