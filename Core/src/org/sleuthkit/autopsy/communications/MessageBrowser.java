@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.Iterables;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -34,6 +37,8 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  * account details, and a Content viewer to show individual
  */
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
+
+    private static final Logger logger = Logger.getLogger(MessageBrowser.class.getName());
 
     private static final long serialVersionUID = 1L;
 
@@ -59,32 +64,37 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         parentExplorereManager.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] selectedNodes = parentExplorereManager.getSelectedNodes();
-                switch (selectedNodes.length) {
-                    case 0:
-                        messagesResultPanel.setNode(null);
-                        break;
-                    default:
-                        Set<Account> accounts = new HashSet<>();
-                        CommunicationsFilter filter = null;
-                        CommunicationsManager commsManager = null;
-                        for (Node n : selectedNodes) {
-                            if (n instanceof AccountDeviceInstanceNode) {
-                                final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) n;
-                                accounts.add(adiNode.getAccountDeviceInstance().getAccount());
-                                if (commsManager == null) {
-                                    commsManager = adiNode.getCommsManager();
-                                }
-                                if (filter == null) {
-                                    filter = adiNode.getFilter();
-                                } else if (filter != adiNode.getFilter()) {
-                                    //different filters ..... exception?
-                                }
-                            } else {
-                                ///this should never happen...
+                if (selectedNodes.length == 0) {
+                    messagesResultPanel.setNode(null);
+                    messagesResultPanel.setPath("");
+                } else {
+                    Set<Account> accounts = new HashSet<>();
+                    CommunicationsFilter filter = null;
+                    CommunicationsManager commsManager = null;
+                    for (Node n : selectedNodes) {
+                        if (n instanceof AccountDeviceInstanceNode) {
+                            final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) n;
+                            accounts.add(adiNode.getAccountDeviceInstance().getAccount());
+                            if (commsManager == null) {
+                                commsManager = adiNode.getCommsManager();
                             }
+                            if (filter == null) {
+                                filter = adiNode.getFilter();
+                            } else if (filter != adiNode.getFilter()) {
+                                ///this should never happen...
+                                logger.log(Level.WARNING, "Not all AccountDeviceInstanceNodes have the same filter. Using the first.");
+                            }
+                        } else {
+                            ///this should never happen...
+                            logger.log(Level.WARNING, "Unexpected Node encountered: " + n.toString());
                         }
-                        messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accounts, filter, commsManager), true));
-                        break;
+                    }
+                    messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accounts, filter, commsManager), true));
+                    if (accounts.size() == 1) {
+                        messagesResultPanel.setPath(Iterables.getOnlyElement(accounts).getAccountUniqueID());
+                    } else {
+                        messagesResultPanel.setPath(accounts.size() + " accounts");
+                    }
                 }
             }
         });

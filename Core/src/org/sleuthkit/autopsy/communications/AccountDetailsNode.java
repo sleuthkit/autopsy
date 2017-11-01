@@ -39,7 +39,7 @@ class AccountDetailsNode extends AbstractNode {
     private final CommunicationsFilter filter; //TODO: Use this
 
     AccountDetailsNode(Set<Account> accounts,CommunicationsFilter filter, CommunicationsManager commsManager) {
-        super(new AccountRelationshipChildren(accounts, commsManager));
+        super(new AccountRelationshipChildren(accounts, commsManager, filter));
         this.filter = filter;
     }
 
@@ -50,10 +50,12 @@ class AccountDetailsNode extends AbstractNode {
 
         private final Set<Account> accounts;
         private final CommunicationsManager commsManager;
+        private final CommunicationsFilter filter;//TODO: Use this
 
-        private AccountRelationshipChildren(Set<Account> accounts, CommunicationsManager commsManager) {
+        private AccountRelationshipChildren(Set<Account> accounts, CommunicationsManager commsManager, CommunicationsFilter filter) {
             this.accounts = accounts;
             this.commsManager = commsManager;
+            this.filter = filter;
         }
 
         @Override
@@ -67,14 +69,14 @@ class AccountDetailsNode extends AbstractNode {
             for (Account account : accounts) {
                 List<Account> accountsWithRelationship = new ArrayList<>();
                 try {
-                    accountsWithRelationship.addAll(commsManager.getAccountsWithRelationship(account)); //TODO: Use filter
+                    accountsWithRelationship.addAll(commsManager.getAccountsWithRelationship(account)); //TODO: Use filter here
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Error loading with relationships to " + account, ex);
                 }
 
                 accountsWithRelationship.forEach(otherAcount -> {
                     try {
-                        keys.addAll(commsManager.getRelationships(account, otherAcount)); //TODO:Use filter
+                        keys.addAll(commsManager.getRelationships(account, otherAcount)); //TODO:Use filter here
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading relationships between " + account + " and " + otherAcount, ex);
                     }
@@ -83,5 +85,4 @@ class AccountDetailsNode extends AbstractNode {
             setKeys(keys);
         }
     }
-
 }
