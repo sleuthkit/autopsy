@@ -26,7 +26,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-              <Component id="splitPane" pref="578" max="32767" attributes="0"/>
+              <Component id="splitPane" pref="1083" max="32767" attributes="0"/>
               <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -36,6 +36,7 @@
     <Container class="javax.swing.JSplitPane" name="splitPane">
       <Properties>
         <Property name="dividerLocation" type="int" value="400"/>
+        <Property name="dividerSize" type="int" value="10"/>
         <Property name="orientation" type="int" value="0"/>
         <Property name="resizeWeight" type="double" value="0.4"/>
       </Properties>
@@ -43,6 +44,11 @@
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
       <SubComponents>
         <Component class="org.sleuthkit.autopsy.communications.MessageDataContent" name="messageDataContent">
+          <Properties>
+            <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+              <Dimension value="null"/>
+            </Property>
+          </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
               <JSplitPaneConstraints position="bottom"/>

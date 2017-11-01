@@ -49,7 +49,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
         initComponents();
         setName(Bundle.CVTTopComponent_name());
-//        splitPane.setRightComponent(new MessageBrowser());
+        splitPane.setRightComponent(new MessageBrowser());
     }
 
     /**
@@ -64,7 +64,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         BrowseVisualizeTabPane = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
         jPanel1 = new javax.swing.JPanel();
-        messageBrowser1 = new org.sleuthkit.autopsy.communications.MessageBrowser();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
         splitPane.setDividerLocation(600);
@@ -89,7 +88,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), jPanel1); // NOI18N
 
         splitPane.setLeftComponent(BrowseVisualizeTabPane);
-        splitPane.setRightComponent(messageBrowser1);
 
         filtersPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
@@ -122,7 +120,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
     private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
     private javax.swing.JPanel jPanel1;
-    private org.sleuthkit.autopsy.communications.MessageBrowser messageBrowser1;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 

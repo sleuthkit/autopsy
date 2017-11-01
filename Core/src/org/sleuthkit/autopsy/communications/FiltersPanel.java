@@ -141,18 +141,17 @@ final public class FiltersPanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(jList1);
 
-        setPreferredSize(new java.awt.Dimension(256, 469));
-
         applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/control-double.png"))); // NOI18N
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         applyFiltersButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        applyFiltersButton.setPreferredSize(null);
         applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 applyFiltersButtonActionPerformed(evt);
             }
         });
 
-        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
         filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
 
@@ -183,7 +182,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap(43, Short.MAX_VALUE)
                         .addComponent(unCheckAllAccountTypesButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(checkAllAccountTypesButton))
@@ -264,7 +263,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(filtersTitleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(applyFiltersButton)))
+                        .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -273,7 +272,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filtersTitleLabel)
-                    .addComponent(applyFiltersButton))
+                    .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -307,7 +306,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             accountDeviceInstances.forEach(accountDeviceInstance
                     -> accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter)));
 
-            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstanceKeys, commsManager)));
+            em.setRootContext(new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }

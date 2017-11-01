@@ -107,13 +107,6 @@
             </Container>
           </SubComponents>
         </Container>
-        <Component class="org.sleuthkit.autopsy.communications.MessageBrowser" name="messageBrowser1">
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
-              <JSplitPaneConstraints position="right"/>
-            </Constraint>
-          </Constraints>
-        </Component>
       </SubComponents>
     </Container>
     <Component class="org.sleuthkit.autopsy.communications.FiltersPanel" name="filtersPane">

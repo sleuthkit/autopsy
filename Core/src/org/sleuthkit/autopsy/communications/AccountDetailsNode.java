@@ -27,7 +27,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -59,7 +58,7 @@ class AccountDetailsNode extends AbstractNode {
 
         @Override
         protected Node[] createNodes(BlackboardArtifact key) {
-            return new Node[]{new RelationShipFilterNode(new BlackboardArtifactNode(key))};
+            return new Node[]{new RelationShipFilterNode(key)};
         }
 
         @Override

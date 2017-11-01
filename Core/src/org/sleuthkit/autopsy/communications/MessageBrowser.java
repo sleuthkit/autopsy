@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.datamodel.Account;
@@ -103,8 +104,11 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         messageDataContent = new org.sleuthkit.autopsy.communications.MessageDataContent();
 
         splitPane.setDividerLocation(400);
+        splitPane.setDividerSize(10);
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         splitPane.setResizeWeight(0.4);
+
+        messageDataContent.setMinimumSize(null);
         splitPane.setBottomComponent(messageDataContent);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -119,7 +123,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 578, Short.MAX_VALUE)
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1083, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents

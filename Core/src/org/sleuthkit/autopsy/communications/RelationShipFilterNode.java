@@ -1,72 +1,124 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.FilterNode;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
-public class RelationShipFilterNode extends FilterNode {
-
-
-    public RelationShipFilterNode(BlackboardArtifactNode wrappedNode) {
-        super(wrappedNode, Children.LEAF);
-        setDisplayName( StringUtils.stripEnd(wrappedNode.getArtifact().getDisplayName(),"s"));
+public class RelationShipFilterNode extends BlackboardArtifactNode {
+    
+    private static final Logger logger = Logger.getLogger(RelationShipFilterNode.class.getName());
+    
+    public RelationShipFilterNode(BlackboardArtifact artifact) {
+        super(artifact);
+        final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
+        String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message");
+        setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
     }
-
+    
     @Override
-    public PropertySet[] getPropertySets() {
-        PropertySet[] propertySets = super.getPropertySets();
-
-        HashSet<String> propertyNames = new HashSet<>();
-        propertyNames.add("Source File");
-        propertyNames.add("Data Source");
-        propertyNames.add("Path");
-        propertyNames.add("Message ID");
-        propertyNames.add("Tags");
-        propertyNames.add("Text");
-        propertyNames.add("Read");
-        propertyNames.add("Direction");
-        propertyNames.add("Name");
-        propertyNames.add("Message (Plaintext)");
-        propertyNames.add("Message Type");
-
-        ArrayList<PropertySet> retPropSets = new ArrayList<>();
-        boolean first = true;
-        for (PropertySet set : propertySets) {
-            Sheet.Set set1 = copySet(set);
-            if (first) {
-                first = false;
-                set1.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
-            }
-
-            for (Property<?> p : set.getProperties()) {
-                if (false == propertyNames.contains(p.getName())) {
-                    set1.put(p);
-                }
-            }
-            retPropSets.add(set1);
+    protected Sheet createSheet() {
+        
+        Sheet s = new Sheet();
+        Sheet.Set ss = s.get(Sheet.PROPERTIES);
+        if (ss == null) {
+            ss = Sheet.createPropertiesSet();
+            s.put(ss);
         }
-        return retPropSets.toArray(new PropertySet[retPropSets.size()]);
+        
+        ss.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
+        final BlackboardArtifact artifact = getArtifact();
+        BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
+        if (null != fromID) {
+            switch (fromID) {
+                case TSK_EMAIL_MSG:
+                    ss.put(new NodeProperty<>("From", "From", "From",
+                            getAttributeDisplayString(artifact, TSK_EMAIL_FROM)));
+                    ss.put(new NodeProperty<>("To", "To", "To",
+                            getAttributeDisplayString(artifact, TSK_EMAIL_TO)));
+                    ss.put(new NodeProperty<>("Date", "Date", "Date",
+                            getAttributeDisplayString(artifact, TSK_DATETIME_SENT)));
+                    ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
+                            getAttributeDisplayString(artifact, TSK_SUBJECT)));
+                    break;
+                case TSK_MESSAGE:
+                    ss.put(new NodeProperty<>("From", "From", "From",
+                            getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM)));
+                    ss.put(new NodeProperty<>("To", "To", "To",
+                            getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO)));
+                    ss.put(new NodeProperty<>("Date", "Date", "Date",
+                            getAttributeDisplayString(artifact, TSK_DATETIME)));
+                    ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
+                            getAttributeDisplayString(artifact, TSK_SUBJECT)));
+                    break;
+                case TSK_CALLLOG:
+                    ss.put(new NodeProperty<>("From", "From", "From",
+                            getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM)));
+                    ss.put(new NodeProperty<>("To", "To", "To",
+                            getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO)));
+                    ss.put(new NodeProperty<>("Date", "Date", "Date",
+                            getAttributeDisplayString(artifact, TSK_DATETIME_START)));
+                    break;
+                default:
+                    break;
+            }
+        }
+        return s;
     }
-    private static final BlackboardAttribute.Type MSG_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE);
 
-    private Sheet.Set copySet(PropertySet set) {
-        Sheet.Set set1 = new Sheet.Set();
-        set1.setName(set.getName());
-        set1.setDisplayName(set.getDisplayName());
-        set1.setShortDescription(set.getShortDescription());
-        return set1;
+    /**
+     *
+     * @param artifact      the value of artifact
+     * @param attributeType the value of TSK_SUBJECT1
+     *
+     * @throws TskCoreException
+     */
+    private static String getAttributeDisplayString(final BlackboardArtifact artifact, final ATTRIBUTE_TYPE attributeType) {
+        try {
+            BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attributeType.getTypeID())));
+            if (attribute == null) {
+                return "";
+            } else {
+                return attribute.getDisplayString();
+            }
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.WARNING, "Error getting attribute value.", tskCoreException);
+            return "";
+        }
     }
 }
