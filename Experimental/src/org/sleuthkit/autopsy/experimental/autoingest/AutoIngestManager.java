@@ -62,7 +62,6 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -2125,8 +2124,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                            CaseDetails caseDetails = new CaseDetails(caseName, "", "", "", "", "");
-                            Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
+                            Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
                             /*
                              * Sleep a bit before releasing the lock to ensure
                              * that the new case folder is visible on the
