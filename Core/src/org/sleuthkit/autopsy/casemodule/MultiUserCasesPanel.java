@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
@@ -167,47 +168,38 @@ public class MultiUserCasesPanel extends javax.swing.JPanel {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         });
         
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    currentlySelectedCase = getSelectedCase();
-                    MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
-                    List<MultiUserCase> cases = manager.getCases();
-                    cases.sort(REVERSE_DATE_MODIFIED_COMPARATOR);
-                    caseTableModel.setRowCount(0);
-                    long now = new Date().getTime();
-                    for (MultiUserCase autoIngestCase : cases) {
-                        if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
-                            caseTableModel.addRow(new Object[]{
-                                autoIngestCase.getCaseDisplayName(),
-                                autoIngestCase.getCreationDate(),
-                                autoIngestCase.getLastAccessedDate(),
-                                (MultiUserCase.CaseStatus.OK != autoIngestCase.getStatus()),
-                                autoIngestCase.getCaseDirectoryPath().toString(),
-                                autoIngestCase.getMetadataFileName()});
+        synchronized(this) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        currentlySelectedCase = getSelectedCase();
+                        MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
+                        List<MultiUserCase> cases = manager.getCases();
+                        cases.sort(REVERSE_DATE_MODIFIED_COMPARATOR);
+                        caseTableModel.setRowCount(0);
+                        long now = new Date().getTime();
+                        for (MultiUserCase autoIngestCase : cases) {
+                            if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
+                                caseTableModel.addRow(new Object[]{
+                                    autoIngestCase.getCaseDisplayName(),
+                                    autoIngestCase.getCreationDate(),
+                                    autoIngestCase.getLastAccessedDate(),
+                                    (MultiUserCase.CaseStatus.OK != autoIngestCase.getStatus()),
+                                    autoIngestCase.getCaseDirectoryPath().toString(),
+                                    autoIngestCase.getMetadataFileName()});
+                            }
                         }
+                        setSelectedCase(currentlySelectedCase);
+                        setButtons();
+                    } catch (Exception ex) {
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
+                    } finally {
+                        setCursor(null);
                     }
-                    setSelectedCase(currentlySelectedCase);
-                    setButtons();
-                } catch (Exception ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
                 }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                setCursor(null);
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
-                }
-            }
-        }.execute();
+            });
+        }
     }
 
     /**
