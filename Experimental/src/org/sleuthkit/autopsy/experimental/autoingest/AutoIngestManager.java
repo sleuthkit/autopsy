@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -58,6 +59,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.ThreadSafe;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -97,6 +101,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -498,6 +503,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
         SYS_LOGGER.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
         InputDirScanner scanner = new InputDirScanner();
+
         scanner.scan();
         SYS_LOGGER.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
     }
@@ -553,10 +559,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             if (!prioritizedJobs.isEmpty()) {
                 ++maxPriority;
                 for (AutoIngestJob job : prioritizedJobs) {
+                    int oldPriority = job.getPriority();
+                      job.setPriority(maxPriority);
                     try {
                         this.updateCoordinationServiceNode(job);
-                        job.setPriority(maxPriority);
                     } catch (CoordinationServiceException | InterruptedException ex) {
+                        job.setPriority(oldPriority);
                         throw new AutoIngestManagerException("Error updating case priority", ex);
                     }
                 }
@@ -607,12 +615,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
              */
             if (null != prioritizedJob) {
                 ++maxPriority;
+                int oldPriority = prioritizedJob.getPriority();
+                prioritizedJob.setPriority(maxPriority);
                 try {
                     this.updateCoordinationServiceNode(prioritizedJob);
                 } catch (CoordinationServiceException | InterruptedException ex) {
+                    prioritizedJob.setPriority(oldPriority);
                     throw new AutoIngestManagerException("Error updating job priority", ex);
                 }
-                prioritizedJob.setPriority(maxPriority);
             }
 
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
@@ -1041,8 +1051,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 if (null != manifest) {
                     /*
-                 * Update the mapping of case names to manifest paths that is
-                 * used for case deletion.
+                     * Update the mapping of case names to manifest paths that
+                     * is used for case deletion.
                      */
                     String caseName = manifest.getCaseName();
                     Path manifestPath = manifest.getFilePath();
@@ -1056,8 +1066,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     }
 
                     /*
-                 * Add a job to the pending jobs queue, the completed jobs list,
-                 * or do crashed job recovery, as required.
+                     * Add a job to the pending jobs queue, the completed jobs
+                     * list, or do crashed job recovery, as required.
                      */
                     try {
                         byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
@@ -1077,7 +1087,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                                         break;
                                     case DELETED:
                                         /*
-                                     * Ignore jobs marked as "deleted."
+                                         * Ignore jobs marked as "deleted."
                                          */
                                         break;
                                     default:
@@ -1458,6 +1468,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      */
     private final class JobProcessingTask implements Runnable {
 
+        private static final String AUTO_INGEST_MODULE_OUTPUT_DIR = "AutoIngest";
         private final Object ingestLock;
         private final Object pauseLock;
         @GuardedBy("pauseLock")
@@ -2220,7 +2231,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 return;
             }
 
-            DataSource dataSource = identifyDataSource();
+            DataSource dataSource = identifyDataSource(caseForJob);
             if (null == dataSource) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
@@ -2273,7 +2284,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                                      interrupted while blocked, i.e.,
          *                                      if auto ingest is shutting down.
          */
-        private DataSource identifyDataSource() throws AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
+        private DataSource identifyDataSource(Case caseForJob) throws AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
@@ -2292,7 +2303,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             String deviceId = manifest.getDeviceId();
             return new DataSource(deviceId, dataSourcePath);
         }
-               
+
         /**
          * Passes the data source for the current job through a data source
          * processor that adds it to the case database.
@@ -2315,21 +2326,28 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE, Date.from(Instant.now()));
             UUID taskId = UUID.randomUUID();
-            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
+            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId);
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             try {
                 caseForJob.notifyAddingDataSource(taskId);
 
-                Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
-                try {
-                    // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
-                    validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(dataSource.getPath());
-                } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
-                    // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
-                    throw ex;
+                // lookup all AutomatedIngestDataSourceProcessors 
+                Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
+
+                Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = new HashMap<>();
+                for (AutoIngestDataSourceProcessor processor : processorCandidates) {
+                    try {
+                        int confidence = processor.canProcess(dataSource.getPath());
+                        if (confidence > 0) {
+                            validDataSourceProcessorsMap.put(processor, confidence);
+                        }
+                    } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
+                        SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
+                        // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
+                        throw ex;
+                    }
                 }
 
                 // did we find a data source processor that can process the data source
@@ -2586,7 +2604,80 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 jobLogger.logFileExportError();
             }
         }
-        
+
+        /**
+         * A "callback" that collects the results of running a data source
+         * processor on a data source and unblocks the job processing thread
+         * when the data source processor finishes running in its own thread.
+         */
+        @Immutable
+        class AddDataSourceCallback extends DataSourceProcessorCallback {
+
+            private final Case caseForJob;
+            private final DataSource dataSourceInfo;
+            private final UUID taskId;
+
+            /**
+             * Constructs a "callback" that collects the results of running a
+             * data source processor on a data source and unblocks the job
+             * processing thread when the data source processor finishes running
+             * in its own thread.
+             *
+             * @param caseForJob     The case for the current job.
+             * @param dataSourceInfo The data source
+             * @param taskId         The task id to associate with ingest job
+             *                       events.
+             */
+            AddDataSourceCallback(Case caseForJob, DataSource dataSourceInfo, UUID taskId) {
+                this.caseForJob = caseForJob;
+                this.dataSourceInfo = dataSourceInfo;
+                this.taskId = taskId;
+            }
+
+            /**
+             * Called by the data source processor when it finishes running in
+             * its own thread.
+             *
+             * @param result            The result code for the processing of
+             *                          the data source.
+             * @param errorMessages     Any error messages generated during the
+             *                          processing of the data source.
+             * @param dataSourceContent The content produced by processing the
+             *                          data source.
+             */
+            @Override
+            public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSourceContent) {
+                if (!dataSourceContent.isEmpty()) {
+                    caseForJob.notifyDataSourceAdded(dataSourceContent.get(0), taskId);
+                } else {
+                    caseForJob.notifyFailedAddingDataSource(taskId);
+                }
+                dataSourceInfo.setDataSourceProcessorOutput(result, errorMessages, dataSourceContent);
+                dataSourceContent.addAll(dataSourceContent);
+                synchronized (ingestLock) {
+                    ingestLock.notify();
+                }
+            }
+
+            /**
+             * Called by the data source processor when it finishes running in
+             * its own thread, if that thread is the AWT (Abstract Window
+             * Toolkit) event dispatch thread (EDT).
+             *
+             * @param result            The result code for the processing of
+             *                          the data source.
+             * @param errorMessages     Any error messages generated during the
+             *                          processing of the data source.
+             * @param dataSourceContent The content produced by processing the
+             *                          data source.
+             */
+            @Override
+            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSources) {
+                done(result, errorMessages, dataSources);
+            }
+
+        }
+
         /**
          * A data source processor progress monitor does nothing. There is
          * currently no mechanism for showing or recording data source processor
@@ -2926,7 +3017,49 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         PARTIALLY_DELETED,
         FULLY_DELETED
     }
-    
+
+    @ThreadSafe
+    private static final class DataSource {
+
+        private final String deviceId;
+        private final Path path;
+        private DataSourceProcessorResult resultCode;
+        private List<String> errorMessages;
+        private List<Content> content;
+
+        DataSource(String deviceId, Path path) {
+            this.deviceId = deviceId;
+            this.path = path;
+        }
+
+        String getDeviceId() {
+            return deviceId;
+        }
+
+        Path getPath() {
+            return this.path;
+        }
+
+        synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
+            this.resultCode = result;
+            this.errorMessages = new ArrayList<>(errorMessages);
+            this.content = new ArrayList<>(content);
+        }
+
+        synchronized DataSourceProcessorResult getResultDataSourceProcessorResultCode() {
+            return resultCode;
+        }
+
+        synchronized List<String> getDataSourceProcessorErrorMessages() {
+            return new ArrayList<>(errorMessages);
+        }
+
+        synchronized List<Content> getContent() {
+            return new ArrayList<>(content);
+        }
+
+    }
+
     static final class AutoIngestManagerException extends Exception {
 
         private static final long serialVersionUID = 1L;
