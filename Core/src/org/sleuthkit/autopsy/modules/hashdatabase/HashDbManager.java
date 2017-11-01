@@ -1344,7 +1344,7 @@ public class HashDbManager implements PropertyChangeListener {
                         return EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.centralRepoIndex);
                     } catch (EamDbException ex){
                         Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup", ex); //NON-NLS
-                        throw new TskCoreException(ex.getLocalizedMessage());
+                        throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
                     }
                 }
             }
@@ -1375,7 +1375,7 @@ public class HashDbManager implements PropertyChangeListener {
                         }
                     } catch (EamDbException ex){
                         Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup", ex); //NON-NLS
-                        throw new TskCoreException(ex.getLocalizedMessage());
+                        throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
                     }
                 }
             }
