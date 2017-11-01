@@ -43,6 +43,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static final int TEXT_TAB_INDEX = 1;
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
+    private static final long serialVersionUID = 1L;
 
     private BlackboardArtifact artifact;    // Artifact currently being displayed
 
@@ -79,20 +80,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         headersTextArea = new javax.swing.JTextArea();
         textbodyScrollPane = new javax.swing.JScrollPane();
         textbodyTextArea = new javax.swing.JTextArea();
-        htmlbodyScrollPane = new javax.swing.JScrollPane();
-        jPanel2 = new javax.swing.JPanel();
+        htmlPane = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         htmlbodyTextPane = new javax.swing.JTextPane();
         showImagesToggleButton = new javax.swing.JToggleButton();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
         rtfbodyTextPane = new javax.swing.JTextPane();
 
-        setMinimumSize(new java.awt.Dimension(650, 546));
+        setMinimumSize(null);
 
         envelopePanel.setBackground(new java.awt.Color(204, 204, 204));
 
         org.openide.awt.Mnemonics.setLocalizedText(fromLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.fromLabel.text")); // NOI18N
 
+        datetimeText.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         org.openide.awt.Mnemonics.setLocalizedText(datetimeText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.datetimeText.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(fromText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.fromText.text")); // NOI18N
@@ -109,6 +110,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         org.openide.awt.Mnemonics.setLocalizedText(subjectText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.subjectText.text")); // NOI18N
 
+        directionText.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         org.openide.awt.Mnemonics.setLocalizedText(directionText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.directionText.text")); // NOI18N
 
         javax.swing.GroupLayout envelopePanelLayout = new javax.swing.GroupLayout(envelopePanel);
@@ -116,7 +118,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         envelopePanelLayout.setHorizontalGroup(
             envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(envelopePanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(5, 5, 5)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(envelopePanelLayout.createSequentialGroup()
                         .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -124,32 +126,28 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                             .addComponent(toLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(fromText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(toText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(envelopePanelLayout.createSequentialGroup()
-                                .addGap(8, 8, 8)
-                                .addComponent(datetimeText))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, envelopePanelLayout.createSequentialGroup()
+                                .addComponent(toText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(directionText))))
+                                .addComponent(directionText, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(envelopePanelLayout.createSequentialGroup()
+                                .addComponent(fromText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(datetimeText, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(envelopePanelLayout.createSequentialGroup()
-                        .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(envelopePanelLayout.createSequentialGroup()
-                                .addComponent(ccLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(ccText))
-                            .addGroup(envelopePanelLayout.createSequentialGroup()
-                                .addComponent(subjectLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(subjectText, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(ccLabel)
+                        .addGap(26, 26, 26)
+                        .addComponent(ccText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(envelopePanelLayout.createSequentialGroup()
+                        .addComponent(subjectLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(subjectText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(5, 5, 5))
         );
         envelopePanelLayout.setVerticalGroup(
             envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(envelopePanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(5, 5, 5)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(fromLabel)
                     .addComponent(datetimeText)
@@ -163,11 +161,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ccLabel)
                     .addComponent(ccText))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(subjectLabel)
                     .addComponent(subjectText))
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addGap(5, 5, 5))
         );
 
         headersTextArea.setEditable(false);
@@ -194,35 +192,26 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(536, Short.MAX_VALUE)
+        javax.swing.GroupLayout htmlPaneLayout = new javax.swing.GroupLayout(htmlPane);
+        htmlPane.setLayout(htmlPaneLayout);
+        htmlPaneLayout.setHorizontalGroup(
+            htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, htmlPaneLayout.createSequentialGroup()
+                .addContainerGap(533, Short.MAX_VALUE)
                 .addComponent(showImagesToggleButton)
-                .addContainerGap())
-            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 623, Short.MAX_VALUE)
-                    .addContainerGap()))
+                .addGap(3, 3, 3))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
+        htmlPaneLayout.setVerticalGroup(
+            htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(htmlPaneLayout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
-                .addContainerGap(333, Short.MAX_VALUE))
-            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                    .addGap(0, 34, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2)
+                .addGap(0, 0, 0))
         );
 
-        htmlbodyScrollPane.setViewportView(jPanel2);
-
-        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlbodyScrollPane.TabConstraints.tabTitle"), htmlbodyScrollPane); // NOI18N
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
 
         rtfbodyTextPane.setEditable(false);
         rtfbodyScrollPane.setViewportView(rtfbodyTextPane);
@@ -233,20 +222,21 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(envelopePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-            .addComponent(msgbodyTabbedPane)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(msgbodyTabbedPane)
+                    .addComponent(envelopePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(5, 5, 5))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(envelopePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(5, 5, 5)
+                .addComponent(envelopePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(msgbodyTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 397, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(msgbodyTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 471, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -282,9 +272,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JLabel fromText;
     private javax.swing.JScrollPane headersScrollPane;
     private javax.swing.JTextArea headersTextArea;
-    private javax.swing.JScrollPane htmlbodyScrollPane;
+    private javax.swing.JPanel htmlPane;
     private javax.swing.JTextPane htmlbodyTextPane;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane msgbodyTabbedPane;
     private javax.swing.JScrollPane rtfbodyScrollPane;
@@ -311,7 +300,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         if (node == null) {
             return;
         }
-        
+
         artifact = node.getLookup().lookup(BlackboardArtifact.class);
 
         if (artifact == null) {
@@ -530,6 +519,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     /**
      * Cleans out input HTML string
+     *
+     * @param htmlInString The HTML string to cleanse
+     *
+     * @return The cleansed HTML String
      */
     private String cleanseHTML(String htmlInString) {
 
