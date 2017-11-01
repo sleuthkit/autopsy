@@ -20,12 +20,10 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.beans.PropertyChangeListener;
 import org.openide.nodes.Node;
-import org.openide.windows.TopComponent;
 
 /**
  * The interface for the "bottom right component" window.
  *
- * @author jantonius
  */
 public interface DataContent extends PropertyChangeListener {
 

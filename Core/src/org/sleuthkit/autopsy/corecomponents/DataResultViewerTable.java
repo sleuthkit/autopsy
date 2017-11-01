@@ -764,7 +764,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             // only override the color if a node is not selected
-            if (!isSelected) {
+            if (currentRoot != null  && !isSelected) {
                 Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
                 boolean tagFound = false;
                 if (node != null) {
