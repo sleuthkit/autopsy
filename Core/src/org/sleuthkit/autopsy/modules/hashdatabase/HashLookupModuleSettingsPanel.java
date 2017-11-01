@@ -174,13 +174,13 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private boolean isHashDbValid(HashDatabase hashDb) {
-        boolean indexed = false;
+        boolean isValid = false;
         try {
-            indexed = hashDb.isValid();
+            isValid = hashDb.isValid();
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting indexed status info for hash set (name = " + hashDb.getHashSetName() + ")", ex); //NON-NLS
+            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error checking validity for hash set (name = " + hashDb.getHashSetName() + ")", ex); //NON-NLS
         }
-        return indexed;
+        return isValid;
     }
 
     private static final class HashSetModel {

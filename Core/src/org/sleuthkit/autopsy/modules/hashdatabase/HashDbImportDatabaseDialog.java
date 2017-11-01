@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.AddNewOrganizationDialog;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -127,6 +128,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         readOnlyCheckbox.setEnabled(! isFileType);
     }
     
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.populateOrgsError.message=Failure loading organizations."})
     private void populateCombobox() {
         orgComboBox.removeAllItems();
         try {
@@ -139,8 +141,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 selectedOrg = orgs.get(0);
             }
         } catch (EamDbException ex) {
-            ex.printStackTrace();
-            //LOGGER.log(Level.SEVERE, "Failure populating combobox with organizations.", ex);
+            JOptionPane.showMessageDialog(null, Bundle.HashDbImportDatabaseDialog_populateOrgsError_message());
+            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Failure loading organizations", ex);
         }
     }
 
@@ -530,18 +532,19 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_centralRepoRadioButtonActionPerformed
 
     private void orgButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgButtonActionPerformed
-        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog();
+        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
         // update the combobox options
-        if (dialogO.isChanged()) {
+        if (dialog.isChanged()) {
             populateCombobox();
         } 
     }//GEN-LAST:event_orgButtonActionPerformed
 
     private void orgComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgComboBoxActionPerformed
-        JComboBox<String> cb = (JComboBox<String>)evt.getSource();
-        String orgName = (String)cb.getSelectedItem();
-        if (null == orgName) return;
+        //JComboBox<String> cb = (JComboBox<String>)evt.getSource();
+        //String orgName = (String)cb.getSelectedItem();
         
+        if (null == orgComboBox.getSelectedItem()) return;
+        String orgName = this.orgComboBox.getSelectedItem().toString();
         for (EamOrganization org : orgs) {
             if (org.getName().equals(orgName)) {
                 selectedOrg = org;

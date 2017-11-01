@@ -172,7 +172,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
          */
         final long getEstimatedTotalHashes(){
             long fileSize = importFile.length();
-            return (fileSize / 0x33); // IDX file lines are generally 0x33 bytes long
+            return (fileSize / 0x33 + 1); // IDX file lines are generally 0x33 bytes long, and we don't want this to be zero
         }
         
         @Override 

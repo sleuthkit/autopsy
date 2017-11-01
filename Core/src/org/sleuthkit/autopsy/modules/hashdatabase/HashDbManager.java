@@ -246,16 +246,6 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
     
-    static HashDatabase convertHashDbInfo(HashDbInfo info, int handle) throws TskCoreException{
-        if(info.isFileDatabaseType()){
-            return new HashDb(handle, info.getHashSetName(), info.getSearchDuringIngest(), info.getSendIngestMessages(),
-                info.getKnownFilesType());
-        } else if(info.isCentralRepoDatabaseType()){
-            throw new TskCoreException("Not implemented yet");
-        }
-        throw new TskCoreException("Invalid database type in HashDbInfo");
-    }
-    
     private HashDb addFileTypeHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
         // Wrap an object around the handle.
         HashDb hashDb = new HashDb(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
@@ -322,93 +312,6 @@ public class HashDbManager implements PropertyChangeListener {
         return db;        
         
     }
-    /*
-    public CentralRepoHashDb importCentralRepoHashSet(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType,
-            String importFile) throws TskCoreException {
-
-        int crIndex;
-        
-        try{
-            // Create an empty hashset in the central repository
-            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version);
-        } catch (EamDbException ex){
-            throw new TskCoreException(ex.getLocalizedMessage());
-        }
-           
-        try{
-            // Import the hashes
-            
-            TskData.FileKnown knownStatus;
-            if (knownFilesType.equals(HashDb.KnownFilesType.KNOWN)) {
-                knownStatus = TskData.FileKnown.KNOWN;
-            } else {
-                knownStatus = TskData.FileKnown.BAD;
-            }
-            
-            // Future, make UI handle more than the "FILES" type.
-
-            EamDb dbManager = EamDb.getInstance();
-            CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
-            BufferedReader reader = new BufferedReader(new FileReader(importFile));
-            String line;
-            Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
-
-            long totalLines = Files.lines(new File(importFile).toPath()).count();
-
-            int numLines = 0;
-            while ((line = reader.readLine()) != null) {
-
-                String[] parts = line.split("\\|");
-
-                // Header lines start with a 41 character dummy hash, 1 character longer than a SHA-1 hash
-                if (parts.length != 2 || parts[0].length() == 41) {
-                    continue;
-                }
-
-                EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                        crIndex, 
-                        parts[0].toLowerCase(), 
-                        knownStatus, 
-                        "");
-
-                globalInstances.add(eamGlobalFileInstance);
-
-                if(numLines % 1000 == 0){
-                    dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
-                    globalInstances.clear();
-                }
-            }
-
-            dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
-
-            // this should wait until after init
-            CentralRepoHashDb hashDb = new CentralRepoHashDb(hashSetName, version, crIndex, 
-                    searchDuringIngest, sendIngestMessages, knownFilesType);
-
-            // Add the hash database to the collection
-            hashSets.add(hashDb);
-        
-
-
-            // Let any external listeners know that there's a new set   
-            try {
-                changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
-                MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
-            return hashDb;
-        
-        } catch (Exception ex){
-            // TODO
-            ex.printStackTrace();
-            throw new TskCoreException(ex.getLocalizedMessage());
-        }
-    }*/
 
     synchronized void indexHashDatabase(HashDb hashDb) {
         hashDb.addPropertyChangeListener(this);
@@ -668,7 +571,7 @@ public class HashDbManager implements PropertyChangeListener {
                         globalSet.getGlobalSetID(), globalSet.getKnownStatus(), globalSet.isReadOnly(), false, sendIngestMessages));
                }
             } catch (EamDbException ex){
-                ex.printStackTrace();
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
             }
         }
         return crHashSets;
@@ -1486,14 +1389,15 @@ public class HashDbManager implements PropertyChangeListener {
          * @throws TskCoreException 
          */
         @Override
-        public boolean isValid() throws TskCoreException {
+        public boolean isValid() {
             if(! EamDb.isEnabled()) {
                 return false;
             }
             try{
                 return EamDb.getInstance().referenceSetIsValid(this.centralRepoIndex, this.hashSetName, this.version);
             } catch (EamDbException ex){
-                throw new TskCoreException(ex.getLocalizedMessage());
+                Logger.getLogger(CentralRepoHashDb.class.getName()).log(Level.SEVERE, "Error validating hash database " + hashSetName, ex); //NON-NLS
+                return false;
             }
         }
         

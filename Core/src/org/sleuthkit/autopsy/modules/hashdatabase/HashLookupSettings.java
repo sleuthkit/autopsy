@@ -358,7 +358,7 @@ final class HashLookupSettings implements Serializable {
                 } else {
                     this.path = fileTypeDb.getDatabasePath();
                 }
-            } else {// if(db instanceof HashDbManager.CentralRepoHashDb){
+            } else {
                 HashDbManager.CentralRepoHashDb centralRepoDb = (HashDbManager.CentralRepoHashDb)db;
                 this.hashSetName = centralRepoDb.getHashSetName();
                 this.version = centralRepoDb.getVersion();
@@ -369,9 +369,7 @@ final class HashLookupSettings implements Serializable {
                 this.path = "";
                 this.centralRepoIndex = centralRepoDb.getCentralRepoIndex();
                 this.dbType = DatabaseType.CENTRAL_REPOSITORY;
-            } //else {
-            //    throw new TskCoreException("Unknown hash database type");
-            //}
+            }
         }
 
         /**
