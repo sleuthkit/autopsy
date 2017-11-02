@@ -111,7 +111,8 @@ class AddArchiveTask implements Runnable {
                 return;
             }
 
-            // extract contents of ZIP archive into destination folder            
+            // extract contents of ZIP archive into destination folder
+            progressMonitor.setProgressText(String.format("Extracting archive contents to: %s", destinationFolder.toString()));
             List<String> extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
 
             // do processing

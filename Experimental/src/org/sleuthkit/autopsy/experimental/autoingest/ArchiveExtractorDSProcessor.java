@@ -175,7 +175,7 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
     public void cancel() {
         if (null != jobProcessingTaskFuture) {
             jobProcessingTaskFuture.cancel(true);
-            jobProcessingExecutor.shutdownNow();
+            jobProcessingExecutor.shutdown();
             // ELTBD - do we want to wait for the cancellation to complete? I think not, 
             // given that the cancelation is of "best effort" variety
         }
