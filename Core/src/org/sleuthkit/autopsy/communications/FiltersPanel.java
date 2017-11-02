@@ -301,7 +301,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         try {
             List<AccountDeviceInstance> accountDeviceInstances = new ArrayList<>();
             CommunicationsFilter commsFilter = new CommunicationsFilter();
-            commsFilter.addAndFilter(getDevceFilter());
+            commsFilter.addAndFilter(getDeviceFilter());
 
             commsFilter.addAndFilter(getAccountTypeFilter());
             final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
@@ -318,7 +318,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_applyFiltersButtonActionPerformed
 
-    private DeviceFilter getDevceFilter() {
+    private DeviceFilter getDeviceFilter() {
         DeviceFilter deviceFilter = new DeviceFilter(devicesMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
                 .map(Entry::getKey).collect(Collectors.toSet()));
