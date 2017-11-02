@@ -90,6 +90,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -128,7 +129,6 @@ public class Case {
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
-    private static final long EXECUTOR_AWAIT_TIMEOUT_SECS = 5;
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
@@ -249,19 +249,28 @@ public class Case {
          * The name of the current case has changed. The old value of the
          * PropertyChangeEvent is the old case name (type: String), the new
          * value is the new case name (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         NAME,
         /**
          * The number of the current case has changed. The old value of the
          * PropertyChangeEvent is the old case number (type: String), the new
          * value is the new case number (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         NUMBER,
         /**
          * The examiner associated with the current case has changed. The old
          * value of the PropertyChangeEvent is the old examiner (type: String),
          * the new value is the new examiner (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         EXAMINER,
         /**
          * An attempt to add a new data source to the current case is being
@@ -346,7 +355,14 @@ public class Case {
          * The old value of the PropertyChangeEvent is is the tag info (type:
          * ContentTagDeletedEvent.DeletedContentTagInfo), the new value is null.
          */
-        CONTENT_TAG_DELETED;
+        CONTENT_TAG_DELETED,
+        /**
+         * The case display name or an optional detail which can be provided
+         * regarding a case has been changed. The optional details include the
+         * case number, the examiner name, examiner phone, examiner email, and
+         * the case notes.
+         */
+        CASE_DETAILS;
     };
 
     /**
@@ -477,19 +493,46 @@ public class Case {
      * @throws CaseActionException          If there is a problem creating the
      *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
+     *
+     * @Deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
+     * CaseDetails caseDetails) instead
+     */
+    @Deprecated
+    public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
+        createAsCurrentCase(caseType, caseDir, new CaseDetails(caseDisplayName, caseNumber, examiner, "", "", ""));
+    }
+
+    /**
+     * Creates a new case and makes it the current case.
+     *
+     * IMPORTANT: This method should not be called in the event dispatch thread
+     * (EDT).
+     *
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
+     * @param caseType    The type of case (single-user or multi-user).
+     * @param caseDetails Contains the modifiable details of the case such as
+     *                    the case display name, the case number, and the
+     *                    examiner related data.
+     *
+     * @throws CaseActionException          If there is a problem creating the
+     *                                      case.
+     * @throws CaseActionCancelledException If creating the case is cancelled.
      */
     @Messages({
         "Case.exceptionMessage.emptyCaseName=Must specify a case name.",
         "Case.exceptionMessage.emptyCaseDir=Must specify a case directory path."
     })
-    public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
-        if (caseDisplayName.isEmpty()) {
+    public static void createAsCurrentCase(CaseType caseType, String caseDir, CaseDetails caseDetails) throws CaseActionException, CaseActionCancelledException {
+        if (caseDetails.getCaseDisplayName().isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseName());
         }
         if (caseDir.isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseDir());
         }
-        openAsCurrentCase(new Case(caseType, caseDir, caseDisplayName, caseNumber, examiner), true);
+        openAsCurrentCase(new Case(caseType, caseDir, caseDetails), true);
     }
 
     /**
@@ -1168,6 +1211,33 @@ public class Case {
     }
 
     /**
+     * Gets the examiner phone number.
+     *
+     * @return The examiner phone number.
+     */
+    public String getExaminerPhone() {
+        return metadata.getExaminerPhone();
+    }
+
+    /**
+     * Gets the examiner email address.
+     *
+     * @return The examiner email address.
+     */
+    public String getExaminerEmail() {
+        return metadata.getExaminerEmail();
+    }
+
+    /**
+     * Gets the case notes.
+     *
+     * @return The case notes.
+     */
+    public String getCaseNotes() {
+        return metadata.getCaseNotes();
+    }
+
+    /**
      * Gets the path to the top-level case directory.
      *
      * @return The top-level case directory path.
@@ -1484,24 +1554,37 @@ public class Case {
     }
 
     /**
-     * Updates the case display name name.
+     * Updates the case display name.
+     *
+     * @param newDisplayName the new display name for the case
+     *
+     * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
     @Messages({
-        "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata, cannot change case display name."
+        "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata"
     })
-    void updateDisplayName(String newDisplayName) throws CaseActionException {
-        String oldDisplayName = metadata.getCaseDisplayName();
+    void updateCaseDetails(CaseDetails caseDetails) throws CaseActionException {
+        CaseDetails oldCaseDetails = metadata.getCaseDetails();
         try {
-            metadata.setCaseDisplayName(newDisplayName);
+            metadata.setCaseDetails(caseDetails);
         } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
+            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError(), ex);
         }
-        eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, newDisplayName));
+        if (!oldCaseDetails.getCaseNumber().equals(caseDetails.getCaseNumber())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getCaseNumber(), caseDetails.getCaseNumber()));
+        }
+        if (!oldCaseDetails.getExaminerName().equals(caseDetails.getExaminerName())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getExaminerName(), caseDetails.getExaminerName()));
+        }
+        if (!oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseDetails.getCaseDisplayName(), caseDetails.getCaseDisplayName()));
+        }
+        eventPublisher.publish(new AutopsyEvent(Events.CASE_DETAILS.toString(), oldCaseDetails, caseDetails));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(newDisplayName + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + UserPreferences.getAppName());
                 try {
-                    RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), newDisplayName, metadata.getFilePath().toString());
+                    RecentCases.getInstance().updateRecentCase(oldCaseDetails.getCaseDisplayName(), metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Error updating case name in UI", ex); //NON-NLS
                 }
@@ -1523,8 +1606,8 @@ public class Case {
      * @param examiner        The examiner to associate with the case, can be
      *                        the empty string.
      */
-    private Case(CaseType caseType, String caseDir, String caseDisplayName, String caseNumber, String examiner) {
-        metadata = new CaseMetadata(caseDir, caseType, displayNameToUniqueName(caseDisplayName), caseDisplayName, caseNumber, examiner);
+    private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
+        metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
     }
 
     /**
@@ -1645,7 +1728,7 @@ public class Case {
             } else {
                 future.cancel(true);
             }
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
         } catch (CancellationException discarded) {
             /*
              * The create/open task has been cancelled. Wait for it to finish,
@@ -1654,7 +1737,7 @@ public class Case {
              * will have been closed and the case directory lock released will
              * have been released.
              */
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         } catch (ExecutionException ex) {
             /*
@@ -1664,7 +1747,7 @@ public class Case {
              * case will have been closed and the case directory lock released
              * will have been released.
              */
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -1992,7 +2075,7 @@ public class Case {
                  * would be possible to start the next task before the current
                  * task responded to a cancellation request.
                  */
-                shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
 
@@ -2063,7 +2146,7 @@ public class Case {
         } catch (ExecutionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getMessage()), ex);
         } finally {
-            shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             progressIndicator.finish();
         }
     }
@@ -2174,7 +2257,7 @@ public class Case {
                             Bundle.Case_servicesException_serviceResourcesCloseError(service.getServiceName(), ex.getLocalizedMessage())));
                 }
             } finally {
-                shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
         }
@@ -2229,41 +2312,6 @@ public class Case {
         }
         return subDirectory.toString();
 
-    }
-
-    /**
-     * Shuts down a task executor service, waiting until all tasks are
-     * terminated. The current policy is to wait for the tasks to finish so that
-     * the case for which the executor is running can be left in a consistent
-     * state.
-     *
-     * @param executor The executor.
-     */
-    private static void shutDownTaskExecutor(ExecutorService executor) {
-        executor.shutdown();
-        boolean taskCompleted = false;
-        while (!taskCompleted) {
-            try {
-                taskCompleted = executor.awaitTermination(EXECUTOR_AWAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
-            } catch (InterruptedException ignored) {
-                /*
-                 * The current policy is to wait for the task to finish so that
-                 * the case can be left in a consistent state.
-                 *
-                 * For a specific example of the motivation for this policy,
-                 * note that a application service (Solr search service)
-                 * experienced an error condition when opening case resources
-                 * that left the service blocked uninterruptibly on a socket
-                 * read. This eventually led to a mysterious "freeze" as the
-                 * user-cancelled service task continued to run holdiong a lock
-                 * that a UI thread soon tried to acquire. Thus it has been
-                 * deemed better to make the "freeze" happen in a more
-                 * informative way, i.e., with the progress indicator for the
-                 * unfinished task on the screen, if a similar error condition
-                 * arises again.
-                 */
-            }
-        }
     }
 
     /**
