@@ -50,8 +50,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     MessageBrowser() {
         initComponents();
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
-       messagesResultPanel.addResultViewer(new DataResultViewerTable("Messages"));
-        
+       
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
 
@@ -101,6 +100,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                 }
             }
         });
+         messagesResultPanel.addResultViewer(new DataResultViewerTable(internalExplorerManager,"Messages"));
+     
         messagesResultPanel.open();
     }
 

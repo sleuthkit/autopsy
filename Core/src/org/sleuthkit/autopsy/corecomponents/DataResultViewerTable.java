@@ -82,6 +82,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final Color TAGGED_COLOR = new Color(255, 255, 195);
 
     private final String title;
+
     /**
      * The properties map:
      *
@@ -110,56 +111,52 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Listener for table model event and mouse clicks.
      */
-    private TableListener tableListener;
+    private final  TableListener tableListener;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
-     * multiple selection actions.
+     * multiple selection actions, and the default title.
      *
      * @param explorerManager allow for explorer manager sharing
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
-        super(explorerManager);
-        title = Bundle.DataResultViewerTable_title();
-        initialize();
+        this(explorerManager, Bundle.DataResultViewerTable_title());
     }
 
     /**
-     * Creates a DataResultViewerTable object that is NOT compatible with node
-     * multiple selection actions, and with the default title.
-     */
-    public DataResultViewerTable() {
-        this(Bundle.DataResultViewerTable_title());
-    }
-
-    /**
-     * Creates a DataResultViewerTable object that is NOT compatible with node
-     * multiple selection actions, and with a custom title.
+     * Creates a DataResultViewerTable object that is compatible with node
+     * multiple selection actions, and a custom title.
      *
-     * @param title The title for this DataResultViewer.
+     * @param explorerManager allow for explorer manager sharing
+     * @param title           The custom title.
      */
-    public DataResultViewerTable(String title) {
+    public DataResultViewerTable(ExplorerManager explorerManager, String title) {
+        super(explorerManager);
         this.title = title;
-        initialize();
-    }
-
-    private void initialize() {
+        
         initComponents();
-
+        
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
-
         outline = outlineView.getOutline();
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);    // don't show the root node
         outline.setDragEnabled(false);
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
-
         // add a listener so that when columns are moved, the new order is stored
         tableListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(tableListener);
         // the listener also moves columns back if user tries to move the first column out of place
         outline.getTableHeader().addMouseListener(tableListener);
     }
+
+    /**
+     * Creates a DataResultViewerTable object that is NOT compatible with node
+     * multiple selection actions.
+     */
+    public DataResultViewerTable() {
+        this(new ExplorerManager(),Bundle.DataResultViewerTable_title());
+    }
+
 
     /**
      * Expand node
