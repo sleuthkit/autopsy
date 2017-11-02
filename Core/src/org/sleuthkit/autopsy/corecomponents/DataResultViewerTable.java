@@ -80,6 +80,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     private static final Color TAGGED_COLOR = new Color(255, 255, 195);
+
+    private final String title;
     /**
      * The properties map:
      *
@@ -118,14 +120,26 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         super(explorerManager);
+        title = Bundle.DataResultViewerTable_title();
         initialize();
     }
 
     /**
      * Creates a DataResultViewerTable object that is NOT compatible with node
-     * multiple selection actions.
+     * multiple selection actions, and with the default title.
      */
     public DataResultViewerTable() {
+        this(Bundle.DataResultViewerTable_title());
+    }
+
+    /**
+     * Creates a DataResultViewerTable object that is NOT compatible with node
+     * multiple selection actions, and with a custom title.
+     *
+     * @param title The title for this DataResultViewer.
+     */
+    public DataResultViewerTable(String title) {
+        this.title = title;
         initialize();
     }
 
@@ -579,7 +593,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
     public String getTitle() {
-        return Bundle.DataResultViewerTable_title();
+        return title;
     }
 
     @Override
@@ -764,7 +778,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             // only override the color if a node is not selected
-            if (currentRoot != null  && !isSelected) {
+            if (currentRoot != null && !isSelected) {
                 Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
                 boolean tagFound = false;
                 if (node != null) {
