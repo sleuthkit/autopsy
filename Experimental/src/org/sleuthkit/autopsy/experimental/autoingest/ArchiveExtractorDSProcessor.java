@@ -18,9 +18,15 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JPanel;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -50,6 +56,9 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
     private String archivePath;
     private boolean setDataSourceOptionsCalled;
     
+    private final ExecutorService jobProcessingExecutor;
+    private Future<?> jobProcessingTaskFuture;
+    private static final String ARCHIVE_DSP_THREAD_NAME = "Archive-DSP-%d";    
     private AddArchiveTask addArchiveTask;    
     
     /**
@@ -60,6 +69,7 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
      */
     public ArchiveExtractorDSProcessor() {
         configPanel = ArchiveFilePanel.createInstance(ArchiveExtractorDSProcessor.class.getName(), ArchiveUtil.getArchiveFilters());
+        jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(ARCHIVE_DSP_THREAD_NAME).build());
     }
     
     @Override
@@ -151,7 +161,7 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
      */
     public void run(String deviceId, String archivePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         addArchiveTask = new AddArchiveTask(deviceId, archivePath, progressMonitor, callback);
-        new Thread(addArchiveTask).start();
+        jobProcessingTaskFuture = jobProcessingExecutor.submit(addArchiveTask);
     }  
 
     /**
@@ -163,8 +173,11 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
      */
     @Override
     public void cancel() {
-        if (null != addArchiveTask) {
-            addArchiveTask.cancelTask();
+        if (null != jobProcessingTaskFuture) {
+            jobProcessingTaskFuture.cancel(true);
+            jobProcessingExecutor.shutdownNow();
+            // ELTBD - do we want to wait for the cancellation to complete? I think not, 
+            // given that the cancelation is of "best effort" variety
         }
     }
 

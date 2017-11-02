@@ -89,6 +89,8 @@ class AddArchiveTask implements Runnable {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
             callback.done(result, errorMessages, newDataSources);
         }
+        
+        logger.log(Level.INFO, "Using Archive Extractor DSP to process archive {0} ", archivePath);
 
         // extract the archive and pass the extracted folder as input
         UUID taskId = UUID.randomUUID();
@@ -151,6 +153,7 @@ class AddArchiveTask implements Runnable {
 
                     // identified a "valid" data source within the archive
                     progressMonitor.setProgressText(String.format("Adding: %s", file));
+                    logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file}); 
 
                     /*
                      * NOTE: we have to move the valid data sources to a
@@ -204,6 +207,7 @@ class AddArchiveTask implements Runnable {
             // after all archive contents have been examined (and moved to separate folders if necessary), 
             // add remaining extracted contents as one logical file set
             progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
+            logger.log(Level.INFO, "Adding directory {0} as logical file set", destinationFolder.toString());
             synchronized (archiveDspLock) {
                 DataSource internalDataSource = new DataSource(deviceId, destinationFolder);
                 DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
@@ -228,6 +232,7 @@ class AddArchiveTask implements Runnable {
             errorMessages.add(ex.getMessage());
             logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
         } finally {
+            logger.log(Level.INFO, "Finished processing of archive {0}", archivePath);
             progressMonitor.setProgress(100);
             if (criticalErrorOccurred) {
                 result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -251,12 +256,5 @@ class AddArchiveTask implements Runnable {
             return Paths.get("");
         }
         return newFolder;
-    }
-
-    /*
-     * Attempts to cancel adding the archive to the case database.
-     */
-    public void cancelTask() {
-        // do a cancelation via future instead
     }
 }
