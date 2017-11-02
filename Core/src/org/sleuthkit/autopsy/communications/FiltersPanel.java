@@ -33,15 +33,16 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.DeviceFilter;
-import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Panel that holds the Filter control widgets and translates user filtering
+ * changes into queries against the CommunicationsManager
  */
 final public class FiltersPanel extends javax.swing.JPanel {
 
@@ -133,8 +134,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jList1 = new javax.swing.JList<>();
-
         jList1.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
@@ -142,18 +141,17 @@ final public class FiltersPanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(jList1);
 
-        setPreferredSize(new java.awt.Dimension(256, 469));
-
         applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/control-double.png"))); // NOI18N
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         applyFiltersButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        applyFiltersButton.setPreferredSize(null);
         applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 applyFiltersButtonActionPerformed(evt);
             }
         });
 
-        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
         filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
 
@@ -184,7 +182,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addContainerGap(51, Short.MAX_VALUE)
+                        .addContainerGap(43, Short.MAX_VALUE)
                         .addComponent(unCheckAllAccountTypesButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(checkAllAccountTypesButton))
@@ -232,15 +230,12 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addComponent(devicesLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(unCheckAllDevicesButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(checkAllDevicesButton)))
-                .addGap(0, 0, 0))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(unCheckAllDevicesButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(checkAllDevicesButton))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -268,7 +263,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(filtersTitleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(applyFiltersButton)))
+                        .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -277,7 +272,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filtersTitleLabel)
-                    .addComponent(applyFiltersButton))
+                    .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -304,15 +299,14 @@ final public class FiltersPanel extends javax.swing.JPanel {
             commsFilter.addAndFilter(getDeviceFilter());
 
             commsFilter.addAndFilter(getAccountTypeFilter());
-            final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            accountDeviceInstances.addAll(communicationsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
+            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            accountDeviceInstances.addAll(commsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
 
             List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
-            accountDeviceInstances.forEach((accountDevInstance) -> {
-                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDevInstance, commsFilter ) );
-            });
-        
-            em.setRootContext(new AbstractNode(new AccountsDeviceInstanceChildren(accountDeviceInstanceKeys)));    
+            accountDeviceInstances.forEach(accountDeviceInstance
+                    -> accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter)));
+
+            em.setRootContext(new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
@@ -331,7 +325,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .map(entry -> entry.getKey()).collect(Collectors.toSet()));
         return accountTypeFilter;
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllTypesSelected(boolean selected) {
         setAllSelected(accountTypeMap, selected);
@@ -372,7 +366,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JLabel devicesLabel = new javax.swing.JLabel();
     private final javax.swing.JPanel devicesPane = new javax.swing.JPanel();
     private final javax.swing.JLabel filtersTitleLabel = new javax.swing.JLabel();
-    private javax.swing.JList<String> jList1;
+    private final javax.swing.JList<String> jList1 = new javax.swing.JList<>();
     private final javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
     private final javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
