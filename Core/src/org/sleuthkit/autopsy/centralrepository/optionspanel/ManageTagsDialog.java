@@ -91,15 +91,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return;
         }
-        List<String> badTags = dbManager.getBadTags();
+        List<String> badTags = TagsManager.getNotableTagDisplayNames();
 
         List<String> tagNames = new ArrayList<>(badTags);
         try {
-            tagNames.addAll(
-                    TagsManager.getTagDisplayNames()
-                    .stream()
-                    .filter(tagName -> !badTags.contains(tagName))
-                    .collect(Collectors.toList()));
+            tagNames.addAll(TagsManager.getTagDisplayNames());
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Could not get list of tags in case", ex);
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedGettingTags_msg());
@@ -262,7 +258,6 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         }
         try {
             EamDb dbManager = EamDb.getInstance();
-            dbManager.setBadTags(badTags);
             dbManager.saveSettings();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Failed to connect to central repository database."); // NON-NLS
