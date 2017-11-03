@@ -266,9 +266,9 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Retrieves the log file path for the selected case in the cases table.
+     * Open a case.
      *
-     * @return The case log path.
+     * @param caseMetadataFilePath The path to the case metadata file.
      */
     private void openCase(Path caseMetadataFilePath) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
