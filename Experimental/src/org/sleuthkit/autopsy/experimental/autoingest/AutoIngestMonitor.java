@@ -290,7 +290,6 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private MetricsSnapshot queryCoordinationServiceForMetrics() {
         try {
-            JobsSnapshot newJobsSnapshot = new JobsSnapshot();
             MetricsSnapshot newMetricsSnapshot = new MetricsSnapshot();
             List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
             for (String node : nodeList) {
@@ -307,16 +306,15 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     ProcessingStatus processingStatus = nodeData.getProcessingStatus();
                     switch (processingStatus) {
                         case PENDING:
-                            newJobsSnapshot.addOrReplacePendingJob(job);
-                            break;
                         case PROCESSING:
-                            newJobsSnapshot.addOrReplaceRunningJob(job);
+                        case DELETED:
+                            /*
+                             * These are not jobs we care about for metrics, so
+                             * we will ignore them.
+                             */
                             break;
                         case COMPLETED:
-                            newJobsSnapshot.addOrReplaceCompletedJob(job);
                             newMetricsSnapshot.addCompletedJobDate(job.getCompletedDate());
-                            break;
-                        case DELETED:
                             break;
                         default:
                             LOGGER.log(Level.SEVERE, "Unknown AutoIngestJobData.ProcessingStatus");

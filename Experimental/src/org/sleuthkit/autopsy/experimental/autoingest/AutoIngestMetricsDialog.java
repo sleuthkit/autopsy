@@ -31,7 +31,7 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Display basic metrics for a cluster.
  */
-class AutoIngestMetricsDialog extends javax.swing.JDialog {
+final class AutoIngestMetricsDialog extends javax.swing.JDialog {
     
     private final AutoIngestMonitor autoIngestMonitor;
 
@@ -45,7 +45,7 @@ class AutoIngestMetricsDialog extends javax.swing.JDialog {
         "AutoIngestMetricsDialog.title.text=Auto Ingest Cluster Metrics",
         "AutoIngestMetricsDialog.initReportText=Select a date below and click the 'Get Metrics Since...' button to generate\na metrics report."
     })
-    public AutoIngestMetricsDialog(Container parent, AutoIngestMonitor autoIngestMonitor) {
+    AutoIngestMetricsDialog(Container parent, AutoIngestMonitor autoIngestMonitor) {
         super((Window) parent, NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.title.text"), ModalityType.MODELESS);
         initComponents();
         reportTextArea.setText(NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.initReportText"));
