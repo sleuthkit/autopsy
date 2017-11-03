@@ -1449,7 +1449,7 @@ public class HashDbManager implements PropertyChangeListener {
         
         @Override
         public String toString(){
-            return getHashSetName();
+            return getDisplayName();
         }
         
 

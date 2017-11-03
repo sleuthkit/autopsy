@@ -51,7 +51,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
      */
     AddHashValuesToDatabaseDialog(HashDatabase hashDb) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JDialog.Title", hashDb.getHashSetName()),
+                NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JDialog.Title", hashDb.getDisplayName()),
                 true);
         this.hashDb = hashDb;
         initComponents();

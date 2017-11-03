@@ -109,7 +109,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             final List<HashDatabase> hashDatabases = HashDbManager.getInstance().getUpdateableHashDatabases();
             if (!hashDatabases.isEmpty()) {
                 for (final HashDatabase database : hashDatabases) {
-                    JMenuItem databaseItem = add(database.getHashSetName());
+                    JMenuItem databaseItem = add(database.getDisplayName());
                     databaseItem.addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
