@@ -303,7 +303,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     @Override
     @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
-    public void saveSettings() {
+    public void saveSettings() {       
         //Checking for for any unindexed databases
         List<HashDb> unindexed = new ArrayList<>();
         for (HashDatabase hashSet : hashSetManager.getAllHashDatabases()) {
@@ -325,8 +325,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         } else if (unindexed.size() > 1) {
             showInvalidIndex(true, unindexed);
         }
+        
         try {
             hashSetManager.save();
+            newCentralRepoIndices.clear();
         } catch (HashDbManager.HashDbManagerException ex) {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
