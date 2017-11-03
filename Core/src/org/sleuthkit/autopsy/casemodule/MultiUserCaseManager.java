@@ -78,7 +78,11 @@ final class MultiUserCaseManager {
                 if(caseFolder.exists()) {
                         File[] autFiles = caseFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".aut"));
                         if(autFiles != null && autFiles.length > 0) {
+                            try {
                                 cases.add(new MultiUserCase(casePath));
+                            } catch (CaseMetadata.CaseMetadataException | MultiUserCase.MultiUserCaseException ex) {
+                                // Ignore and continue.
+                            }
                         }
                 }
         }

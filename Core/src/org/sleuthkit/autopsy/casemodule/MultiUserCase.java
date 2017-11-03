@@ -18,15 +18,16 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
@@ -46,11 +47,27 @@ class MultiUserCase implements Comparable<MultiUserCase> {
      * Constructs a representation of case created by automated ingest.
      *
      * @param caseDirectoryPath The case directory path.
+     * 
+     * @throws CaseMetadata.CaseMetadataException If the CaseMetadata object
+     *                                            cannot be constructed for the
+     *                                            case display name.
+     * @throws MultiUserCaseException             If no case metadata (.aut)
+     *                                            file is found in the case
+     *                                            directory.
      */
-    MultiUserCase(Path caseDirectoryPath) {
+    MultiUserCase(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException, MultiUserCaseException {
+        CaseMetadata caseMetadata = null;
+        
+        try {
+            caseMetadata = getCaseMetadataFromCaseDirectoryPath(caseDirectoryPath);
+        } catch (CaseMetadata.CaseMetadataException ex) {
+            logger.log(Level.SEVERE, String.format("Error reading the case metadata for %s.", caseDirectoryPath), ex);
+            throw ex;
+        }
+        
         this.caseDirectoryPath = caseDirectoryPath;
-        caseName = getCaseNameFromCaseDirectoryPath(caseDirectoryPath);
-        metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
+        caseName = caseMetadata.getCaseDisplayName();
+        metadataFilePath = caseMetadata.getFilePath();
         BasicFileAttributes fileAttrs = null;
         try {
             fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);
@@ -103,6 +120,15 @@ class MultiUserCase implements Comparable<MultiUserCase> {
     Date getLastAccessedDate() {
         return this.lastAccessedDate;
     }
+    
+    /**
+     * Gets the full path of the metadata (.aut) file.
+     * 
+     * @return The metadata file path.
+     */
+    Path getMetadataFilePath() {
+        return this.metadataFilePath;
+    }
 
     /**
      * Gets the status of this case based on the auto ingest result file in the
@@ -119,19 +145,48 @@ class MultiUserCase implements Comparable<MultiUserCase> {
     }
 
     /**
-     * Extracts the case name from a case folder path.
+     * Gets the case metadata from a case directory path.
      *
-     * @param caseFolderPath A case folder path.
+     * @param caseDirectoryPath The case directory path.
      *
-     * @return A case name, with the time stamp suffix removed.
+     * @return Case metadata.
+     * 
+     * @throws CaseMetadata.CaseMetadataException If the CaseMetadata object
+     *                                            cannot be constructed.
+     * @throws MultiUserCaseException             If no case metadata (.aut)
+     *                                            file is found in the case
+     *                                            directory.
      */
-    static String getCaseNameFromCaseDirectoryPath(Path caseFolderPath) {
-        String caseName = caseFolderPath.getFileName().toString();
-        if (caseName.length() > TimeStampUtils.getTimeStampLength()) {
-            return caseName.substring(0, caseName.length() - TimeStampUtils.getTimeStampLength());
-        } else {
-            return caseName;
+    private static CaseMetadata getCaseMetadataFromCaseDirectoryPath(Path caseDirectoryPath) throws CaseMetadata.CaseMetadataException, MultiUserCaseException {
+        CaseMetadata caseMetadata = null;
+        
+        File directory = new File(caseDirectoryPath.toString());
+        if (directory.isDirectory()) {
+            String fileNamePrefix = directory.getName();
+            if (TimeStampUtils.endsWithTimeStamp(fileNamePrefix)) {
+                fileNamePrefix = fileNamePrefix.substring(0, fileNamePrefix.length() - TimeStampUtils.getTimeStampLength());
+            }
+            
+            File autFile = null;
+            
+            /*
+             * Attempt to find an AUT file via a directory scan.
+             */
+            for (File file : directory.listFiles()) {
+                if (file.getName().toLowerCase().endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
+                    autFile = file;
+                    break;
+                }
+            }
+            
+            if(autFile == null || !autFile.isFile()) {
+                throw new MultiUserCaseException(String.format("No case metadata (.aut) file found in the case directory '%s'.", caseDirectoryPath.toString()));
+            }
+            
+            caseMetadata = new CaseMetadata(Paths.get(autFile.getAbsolutePath()));
         }
+        
+        return caseMetadata;
     }
 
     /**
@@ -169,7 +224,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
 
     /**
      * Compares this AutopIngestCase object with abnother MultiUserCase object
- for order.
+     * for order.
      */
     @Override
     public int compareTo(MultiUserCase other) {
@@ -183,7 +238,7 @@ class MultiUserCase implements Comparable<MultiUserCase> {
 
         /**
          * Compares two MultiUserCase objects for order based on last accessed
- date (descending).
+         * date (descending).
          *
          * @param object      The first MultiUserCase object
          * @param otherObject The second AuotIngestCase object.
@@ -194,6 +249,35 @@ class MultiUserCase implements Comparable<MultiUserCase> {
         @Override
         public int compare(MultiUserCase object, MultiUserCase otherObject) {
             return -object.getLastAccessedDate().compareTo(otherObject.getLastAccessedDate());
+        }
+    }
+    
+    /**
+     * Exception thrown when there is a problem creating a multi-user case.
+     */
+    final static class MultiUserCaseException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructs an exception to throw when there is a problem creating a
+         * multi-user case.
+         *
+         * @param message The exception message.
+         */
+        private MultiUserCaseException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs an exception to throw when there is a problem creating a
+         * multi-user case.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the exception, if it was an exception.
+         */
+        private MultiUserCaseException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 

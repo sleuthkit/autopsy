@@ -23,10 +23,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -265,15 +267,92 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     }
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unexpected interrupt while retrieving coordination service node data for '%s'", node), ex);
-                } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJob.AutoIngestJobException ex) {
+                } catch (AutoIngestJobNodeData.InvalidDataException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unable to use node data for '%s'", node), ex);
+                } catch (AutoIngestJob.AutoIngestJobException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to create a job for '%s'", node), ex);
                 }
             }
+            
             return newJobsSnapshot;
+            
         } catch (CoordinationServiceException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
             return new JobsSnapshot();
         }
+    }
+
+    /**
+     * Gets a new metrics snapshot from the coordination service for an auto
+     * ingest cluster. The jobs snapshot will also be updated.
+     *
+     * @return The metrics snapshot.
+     */
+    private MetricsSnapshot queryCoordinationServiceForMetrics() {
+        try {
+            JobsSnapshot newJobsSnapshot = new JobsSnapshot();
+            MetricsSnapshot newMetricsSnapshot = new MetricsSnapshot();
+            List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
+            for (String node : nodeList) {
+                try {
+                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, node));
+                    if (nodeData.getVersion() < 1) {
+                        /*
+                         * Ignore version '0' nodes that have not been
+                         * "upgraded" since they don't carry enough data.
+                         */
+                        continue;
+                    }
+                    AutoIngestJob job = new AutoIngestJob(nodeData);
+                    ProcessingStatus processingStatus = nodeData.getProcessingStatus();
+                    switch (processingStatus) {
+                        case PENDING:
+                            newJobsSnapshot.addOrReplacePendingJob(job);
+                            break;
+                        case PROCESSING:
+                            newJobsSnapshot.addOrReplaceRunningJob(job);
+                            break;
+                        case COMPLETED:
+                            newJobsSnapshot.addOrReplaceCompletedJob(job);
+                            newMetricsSnapshot.addCompletedJobDate(job.getCompletedDate());
+                            break;
+                        case DELETED:
+                            break;
+                        default:
+                            LOGGER.log(Level.SEVERE, "Unknown AutoIngestJobData.ProcessingStatus");
+                            break;
+                    }
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Unexpected interrupt while retrieving coordination service node data for '%s'", node), ex);
+                } catch (AutoIngestJobNodeData.InvalidDataException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Unable to use node data for '%s'", node), ex);
+                } catch (AutoIngestJob.AutoIngestJobException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to create a job for '%s'", node), ex);
+                }
+            }
+            
+            return newMetricsSnapshot;
+            
+        } catch (CoordinationServiceException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
+            return new MetricsSnapshot();
+        }
+    }
+    
+    /**
+     * Gets a new metrics snapshot. The jobs snapshot will also be updated in
+     * effect.
+     * 
+     * @return The metrics snapshot.
+     */
+    public MetricsSnapshot getMetricsSnapshot() {
+        MetricsSnapshot metricsSnapshot;
+        
+        synchronized (jobsLock) {
+            metricsSnapshot = queryCoordinationServiceForMetrics();
+        }
+        
+        return metricsSnapshot;
     }
 
     /**
@@ -520,6 +599,32 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobSet.add(job);
         }
 
+    }
+    
+    /**
+     * A snapshot of metrics for an auto ingest cluster.
+     */
+    public static final class MetricsSnapshot {
+        
+        private final List<Long> completedJobDates = new ArrayList<>();
+        
+        /**
+         * Gets a list of completed job dates, formatted in milliseconds.
+         * 
+         * @return The completed job dates, formatted in milliseconds.
+         */
+        List<Long> getCompletedJobDates() {
+            return new ArrayList<>(completedJobDates);
+        }
+        
+        /**
+         * Adds a new date to the list of completed job dates.
+         * 
+         * @param date The date to be added.
+         */
+        void addCompletedJobDate(Date date) {
+            completedJobDates.add(date.getTime());
+        }
     }
     
     /**
