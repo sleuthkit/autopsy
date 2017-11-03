@@ -118,7 +118,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private static final int NUM_INPUT_SCAN_SCHEDULING_THREADS = 1;
     private static final String INPUT_SCAN_SCHEDULER_THREAD_NAME = "AIM-input-scan-scheduler-%d";
     private static final String INPUT_SCAN_THREAD_NAME = "AIM-input-scan-%d";
-    private static int DEFAULT_JOB_PRIORITY = 0;
     private static final String AUTO_INGEST_THREAD_NAME = "AIM-job-processing-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
     private static final String EVENT_CHANNEL_NAME = "Auto-Ingest-Manager-Events";
@@ -2116,7 +2115,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                            CaseDetails caseDetails = new CaseDetails(caseName, "", "", "", "", "");
+                            CaseDetails caseDetails = new CaseDetails(caseName, "", "", "", "", ""); //DLG: Update this.
                             Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
                             /*
                              * Sleep a bit before releasing the lock to ensure

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,29 +20,54 @@ package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
+import java.time.Duration;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.CENTER;
 
 /**
- * A JTable cell renderer that renders a date represented as a long as a
- * center-aligned, short-format date string. It also grays out the cell if the
- * table is disabled.
+ * A JTable cell renderer that renders a duration represented as a long as a
+ * string with days, hours, minutes, and seconds components. It center-aligns
+ * cell content and grays out the cell if the table is disabled.
  */
-class ShortDateCellRenderer extends GrayableCellRenderer {
+public class DurationCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
-    private static final String FORMAT_STRING = "MM/dd HH:mm"; //NON-NLS
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat(FORMAT_STRING);
 
-    public ShortDateCellRenderer() {
+    public DurationCellRenderer() {
         setHorizontalAlignment(CENTER);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (value != null) {
-            setText(dateFormat.format(value));
+        if (value instanceof Long) {
+            {
+                Duration d = Duration.ofMillis((long) value);
+                if (d.isNegative()) {
+                    d = Duration.ofMillis(-(long) value);
+                }
+
+                String result;
+                long days = d.toDays();
+                long hours = d.minusDays(days).toHours();
+                long minutes = d.minusDays(days).minusHours(hours).toMinutes();
+                long seconds = d.minusDays(days).minusHours(hours).minusMinutes(minutes).getSeconds();
+
+                if (minutes > 0) {
+                    if (hours > 0) {
+                        if (days > 0) {
+                            result = days + " d  " + hours + " h  " + minutes + " m " + seconds + " s";
+                        } else {
+                            result = hours + " h  " + minutes + " m " + seconds + " s";
+                        }
+                    } else {
+                        result = minutes + " m " + seconds + " s";
+                    }
+                } else {
+                    result = seconds + " s";
+                }
+
+                setText(result);
+            }
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;

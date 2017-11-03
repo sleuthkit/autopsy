@@ -38,23 +38,15 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 public class CueBannerPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String REVIEW_MODE_TITLE = "Open Multi-User Case";
     /*
      * This is field is static for the sake of the closeOpenRecentCasesWindow
      * method.
      */
     private static JDialog recentCasesWindow;
-    private static JDialog multiUserCaseWindow;
 
     public static void closeOpenRecentCasesWindow() {
         if (null != recentCasesWindow) {
             recentCasesWindow.setVisible(false);
-        }
-    }
-
-    public static void closeMultiUserCasesWindow() {
-        if (null != multiUserCaseWindow) {
-            multiUserCaseWindow.setVisible(false);
         }
     }
 
@@ -284,9 +276,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
     private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
-        if(multiUserCaseWindow == null) {
-            multiUserCaseWindow = MultiUserCasesDialog.getInstance();
-        }
+        MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);
     }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed
