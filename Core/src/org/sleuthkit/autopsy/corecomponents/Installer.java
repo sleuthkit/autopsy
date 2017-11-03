@@ -30,10 +30,7 @@ import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import static org.sleuthkit.autopsy.core.UserPreferences.SETTINGS_PROPERTIES;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Manages this module's life cycle. Opens the startup dialog during startup.
@@ -62,7 +59,6 @@ public class Installer extends ModuleInstall {
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
-        updateConfig();
         WindowManager.getDefault().invokeWhenUIReady(() -> {
             StartupWindowProvider.getInstance().open();
         });
@@ -71,21 +67,6 @@ public class Installer extends ModuleInstall {
     @Override
     public void uninstalled() {
         super.uninstalled();
-    }
-    
-    /**
-     * If the mode in the configuration file is 'REVIEW' (2, now invalid), this
-     * method will set it to 'STANDALONE' (0) and disable auto ingest.
-     */
-    private void updateConfig() {
-        String mode = ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, "AutopsyMode");
-        if(mode != null) {
-            int ordinal = Integer.parseInt(mode);
-            if(ordinal > 1) {
-                UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
-                ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
-            }
-        }
     }
 
     private void setLookAndFeel() {
