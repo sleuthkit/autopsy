@@ -22,10 +22,11 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.openide.modules.Places;
 
-public class IntestFileFiltersTest {
+public class IngestFileFiltersTest {
     
-    public IntestFileFiltersTest() {
+    public IngestFileFiltersTest() {
     }
     
     @BeforeClass
@@ -46,6 +47,7 @@ public class IntestFileFiltersTest {
 
     @Test
     public void testFilters() {
+        Places.getUserDirectory().getAbsoluteFile();
         System.out.println("Test filter");
     }
 }
