@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.swing.JFrame;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.event.TableModelEvent;
@@ -93,7 +92,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         }
         List<String> badTags = TagsManager.getNotableTagDisplayNames();
 
-        List<String> tagNames = new ArrayList<>(badTags);
+        List<String> tagNames = new ArrayList<>();
         try {
             tagNames.addAll(TagsManager.getTagDisplayNames());
         } catch (TskCoreException ex) {
