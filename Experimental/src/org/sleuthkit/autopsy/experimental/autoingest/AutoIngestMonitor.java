@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingSta
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
  */
-public final class AutoIngestMonitor extends Observable implements PropertyChangeListener {
+final class AutoIngestMonitor extends Observable implements PropertyChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(AutoIngestMonitor.class.getName());
     private static final int NUM_COORD_SVC_QUERY_THREADS = 1;
@@ -344,13 +344,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @return The metrics snapshot.
      */
     public MetricsSnapshot getMetricsSnapshot() {
-        MetricsSnapshot metricsSnapshot;
-        
-        synchronized (jobsLock) {
-            metricsSnapshot = queryCoordinationServiceForMetrics();
-        }
-        
-        return metricsSnapshot;
+        return queryCoordinationServiceForMetrics();
     }
 
     /**
