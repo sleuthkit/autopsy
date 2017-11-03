@@ -2115,7 +2115,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                            CaseDetails caseDetails = new CaseDetails(caseName, "", "", "", "", ""); //DLG: Update this.
+                            CaseDetails caseDetails = new CaseDetails(caseName);
                             Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
                             /*
                              * Sleep a bit before releasing the lock to ensure
