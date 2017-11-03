@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,11 +28,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private GlobalListSettingsPanel listsPanel;
-    private KeywordSearchGlobalLanguageSettingsPanel languagesPanel;
-    private KeywordSearchGlobalSearchSettingsPanel generalPanel;
+    private static final long serialVersionUID = 1L;
+    private final GlobalListSettingsPanel listsPanel = new GlobalListSettingsPanel();
+    private final KeywordSearchGlobalLanguageSettingsPanel languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
+    private final KeywordSearchGlobalSearchSettingsPanel generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
 
-    public KeywordSearchGlobalSettingsPanel() {
+    KeywordSearchGlobalSettingsPanel() {
         initComponents();
         customizeComponents();
     }
@@ -40,9 +41,6 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings"})
     private void customizeComponents() {
         setName(Bundle.KeywordSearchGlobalSettingsPanel_Title());
-        listsPanel = new GlobalListSettingsPanel();
-        languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
-        generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
                 listsPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listLabToolTip"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtTitle"), null,
@@ -53,6 +51,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
+        super.addPropertyChangeListener(l);
         listsPanel.addPropertyChangeListener(l);
         languagesPanel.addPropertyChangeListener(l);
         generalPanel.addPropertyChangeListener(l);
@@ -60,6 +59,7 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
+        super.removePropertyChangeListener(l);
         listsPanel.removePropertyChangeListener(l);
         languagesPanel.removePropertyChangeListener(l);
         generalPanel.removePropertyChangeListener(l);

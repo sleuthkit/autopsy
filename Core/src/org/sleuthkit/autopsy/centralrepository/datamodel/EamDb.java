@@ -314,7 +314,7 @@ public interface EamDb {
      * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus   The status to change the artifact to
+     * @param knownStatus The status to change the artifact to
      */
     void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
 
@@ -368,9 +368,11 @@ public interface EamDb {
      *
      * @param eamOrg The organization to add
      *
+     * @return the Organization ID of the newly created organization.
+     * 
      * @throws EamDbException
      */
-    void newOrganization(EamOrganization eamOrg) throws EamDbException;
+    long newOrganization(EamOrganization eamOrg) throws EamDbException;
 
     /**
      * Get all organizations
@@ -392,6 +394,26 @@ public interface EamDb {
      */
     EamOrganization getOrganizationByID(int orgID) throws EamDbException;
 
+    /**
+     * Update an existing organization.
+     *
+     * @param updatedOrganization the values the Organization with the same ID
+     *                            will be updated to in the database.
+     *
+     * @throws EamDbException
+     */
+    void updateOrganization(EamOrganization updatedOrganization) throws EamDbException;
+
+    /**
+     * Delete an organization if it is not being used by any case.
+     * 
+     * @param organizationToDelete the organization to be deleted
+     * 
+     * @throws EamDbException 
+     */
+    void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException;
+    
+    
     /**
      * Add a new Global Set
      *

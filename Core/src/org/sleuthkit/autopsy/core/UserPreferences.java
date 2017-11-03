@@ -75,7 +75,7 @@ public final class UserPreferences {
     public enum SelectedMode {
 
         STANDALONE,
-        AUTOINGEST,
+        AUTOINGEST
     };
 
     /**

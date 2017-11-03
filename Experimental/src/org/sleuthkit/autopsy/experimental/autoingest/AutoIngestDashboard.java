@@ -41,11 +41,12 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.coreutils.CaseStatusIconCellRenderer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.LongDateCellRenderer;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
+import org.sleuthkit.autopsy.guiutils.LongDateCellRenderer;
+import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -402,7 +403,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * renderer that will choose an icon to represent the job status.
          */
         column = completedTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader());
-        column.setCellRenderer(new CaseStatusIconCellRenderer());
+        column.setCellRenderer(new StatusIconCellRenderer());
         column.setMinWidth(STATUS_COL_MIN_WIDTH);
         column.setMaxWidth(STATUS_COL_MAX_WIDTH);
         column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
@@ -474,7 +475,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     job.getProcessingStageStartDate(), // STARTED_TIME 
                     job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // STAGE
-                    job.getErrorsOccurred(), // STATUS 
+                    job.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK, // STATUS 
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getManifest().getFilePath(), // MANIFEST_FILE_PATH

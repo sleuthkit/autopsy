@@ -583,7 +583,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        modeRadioButtons = new javax.swing.ButtonGroup();
         nodeScrollPane = new javax.swing.JScrollPane();
         nodePanel = new javax.swing.JPanel();
         cbJoinAutoIngestCluster = new javax.swing.JCheckBox();
@@ -1211,7 +1210,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabelSelectOutputFolder;
     private javax.swing.JLabel jLabelTaskDescription;
     private javax.swing.JCheckBox masterNodeCheckBox;
-    private javax.swing.ButtonGroup modeRadioButtons;
     private javax.swing.JPanel nodePanel;
     private javax.swing.JScrollPane nodeScrollPane;
     private javax.swing.JTextField outputPathTextField;

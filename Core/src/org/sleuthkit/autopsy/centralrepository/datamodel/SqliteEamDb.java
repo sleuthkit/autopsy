@@ -656,15 +656,17 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Add a new organization
      *
+     * @return the Organization ID of the newly created organization.
+     * 
      * @param eamOrg The organization to add
      *
      * @throws EamDbException
      */
     @Override
-    public void newOrganization(EamOrganization eamOrg) throws EamDbException {
+    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
         try{
             acquireExclusiveLock();
-            super.newOrganization(eamOrg);
+            return super.newOrganization(eamOrg);
         } finally {
             releaseExclusiveLock();
         }         
@@ -704,8 +706,27 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseSharedLock();
         }    
-    }    
+    } 
     
+    @Override
+    public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
+          try{
+            acquireExclusiveLock();
+            super.updateOrganization(updatedOrganization);
+        } finally {
+            releaseExclusiveLock();
+        }      
+    }
+    
+    @Override
+    public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
+          try{
+            acquireExclusiveLock();
+            super.deleteOrganization(organizationToDelete);
+        } finally {
+            releaseExclusiveLock();
+        }      
+    }
     /**
      * Add a new Global Set
      *

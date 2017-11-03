@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,59 +16,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.time.Duration;
 import javax.swing.JTable;
-import static javax.swing.SwingConstants.CENTER;
-import org.sleuthkit.autopsy.coreutils.GrayableCellRenderer;
+import static javax.swing.SwingConstants.LEFT;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
- * A JTable cell renderer that renders a duration represented as a long as a
- * string with days, hours, minutes, and seconds components. It center-aligns
- * cell content and grays out the cell if the table is disabled.
+ * A JTable cell renderer that left-aligns cell content and grays out the cell
+ * if the table is disabled.
  */
-class DurationCellRenderer extends GrayableCellRenderer {
+public class GrayableCellRenderer extends DefaultTableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
-    DurationCellRenderer() {
-        setHorizontalAlignment(CENTER);
+    public GrayableCellRenderer() {
+        setHorizontalAlignment(LEFT);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (value instanceof Long) {
-            {
-                Duration d = Duration.ofMillis((long) value);
-                if (d.isNegative()) {
-                    d = Duration.ofMillis(-(long) value);
-                }
-
-                String result;
-                long days = d.toDays();
-                long hours = d.minusDays(days).toHours();
-                long minutes = d.minusDays(days).minusHours(hours).toMinutes();
-                long seconds = d.minusDays(days).minusHours(hours).minusMinutes(minutes).getSeconds();
-
-                if (minutes > 0) {
-                    if (hours > 0) {
-                        if (days > 0) {
-                            result = days + " d  " + hours + " h  " + minutes + " m " + seconds + " s";
-                        } else {
-                            result = hours + " h  " + minutes + " m " + seconds + " s";
-                        }
-                    } else {
-                        result = minutes + " m " + seconds + " s";
-                    }
-                } else {
-                    result = seconds + " s";
-                }
-
-                setText(result);
-            }
+        if (null != value) {
+            setText(value.toString());
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
@@ -95,4 +66,5 @@ class DurationCellRenderer extends GrayableCellRenderer {
             setForeground(Color.darkGray);
         }
     }
+    
 }

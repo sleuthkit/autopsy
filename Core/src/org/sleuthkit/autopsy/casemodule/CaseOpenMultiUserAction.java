@@ -18,13 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.KeyStroke;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -33,7 +29,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * The action associated with the Open Multi-User Case menu item via the
@@ -51,16 +46,8 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     private static JDialog multiUserCaseWindow;
     
     private static final String DISPLAY_NAME = Bundle.CTL_CaseOpenMultiUserAction();
-    private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final String REVIEW_MODE_TITLE = "Open Multi-User Case (" + LOCAL_HOST_NAME + ")";
 
     public CaseOpenMultiUserAction() {}
-
-    public static void closeMultiUserCasesWindow() {
-        if (null != multiUserCaseWindow) {
-            multiUserCaseWindow.setVisible(false);
-        }
-    }
     
     @Override
     public boolean isEnabled() {
@@ -68,10 +55,10 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     }
 
     /**
-     * Pops up a case selection panel to allow the user to selecte a multi-user
+     * Pops up a case selection panel to allow the user to select a multi-user
      * case to open.
      *
-     * @param e The action event.
+     * @param event The action event.
      */
     @Override
     public void actionPerformed(ActionEvent event) {

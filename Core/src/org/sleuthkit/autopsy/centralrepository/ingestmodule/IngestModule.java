@@ -241,9 +241,9 @@ class IngestModule implements FileIngestModule {
                     curCase.getCreatedDate(),
                     curCase.getNumber(),
                     curCase.getExaminer(),
-                    null,
-                    null,
-                    null);
+                    curCase.getExaminerEmail(),
+                    curCase.getExaminerPhone(),
+                    curCase.getCaseNotes());
             try {
                 dbManager.newCase(curCeCase);
                 eamCase = dbManager.getCaseByUUID(curCase.getName());

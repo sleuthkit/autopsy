@@ -38,13 +38,11 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 public class CueBannerPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String REVIEW_MODE_TITLE = "Open Multi-User Case";
     /*
      * This is field is static for the sake of the closeOpenRecentCasesWindow
      * method.
      */
     private static JDialog recentCasesWindow;
-    private static JDialog multiUserCaseWindow;
 
     public static void closeOpenRecentCasesWindow() {
         if (null != recentCasesWindow) {
@@ -52,15 +50,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
         }
     }
 
-    public static void closeMultiUserCasesWindow() {
-        if (null != multiUserCaseWindow) {
-            multiUserCaseWindow.setVisible(false);
-        }
-    }
-
     public CueBannerPanel() {
         initComponents();
-        customizeComponents();
+        initRecentCasesWindow();
         enableComponents();
     }
 
@@ -71,7 +63,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             ImageIcon icon = new ImageIcon(cl.getResource(welcomeLogo));
             autopsyLogo.setIcon(icon);
         }
-        customizeComponents();
+        initRecentCasesWindow();
         enableComponents();
     }
 
@@ -85,10 +77,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     public void refresh() {
         enableComponents();
-    }
-    
-    private void customizeComponents() {
-        initRecentCasesWindow();
     }
 
     private void initRecentCasesWindow() {
@@ -288,9 +276,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
     private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
-        if(multiUserCaseWindow == null) {
-            multiUserCaseWindow = MultiUserCasesDialog.getInstance();
-        }
+        MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);
     }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed

@@ -28,9 +28,11 @@ import org.openide.windows.WindowManager;
 /**
  * This class extends a JDialog and maintains the MultiUserCasesPanel.
  */
-public class MultiUserCasesDialog extends JDialog {
+final class MultiUserCasesDialog extends JDialog {
+    
+    private static final long serialVersionUID = 1L;
     private static final String REVIEW_MODE_TITLE = "Open Multi-User Case";
-    private final MultiUserCasesPanel multiUserCasesPanel;
+    private static MultiUserCasesPanel multiUserCasesPanel;
     private static MultiUserCasesDialog instance;
 
     /**
@@ -41,6 +43,7 @@ public class MultiUserCasesDialog extends JDialog {
     static public MultiUserCasesDialog getInstance() {
         if(instance == null) {
             instance = new MultiUserCasesDialog();
+            instance.init();
         }
         return instance;
     }
@@ -48,18 +51,23 @@ public class MultiUserCasesDialog extends JDialog {
     /**
      * Constructs a MultiUserCasesDialog object.
      */
-    MultiUserCasesDialog() {
+    private MultiUserCasesDialog() {
         super(WindowManager.getDefault().getMainWindow(),
                 REVIEW_MODE_TITLE,
                 Dialog.ModalityType.APPLICATION_MODAL);
-        
+    }
+    
+    /**
+     * Initializes the multi-user cases panel.
+     */
+    private void init() {
         getRootPane().registerKeyboardAction(
                 e -> {
                     setVisible(false);
                 },
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
         
-        multiUserCasesPanel = new MultiUserCasesPanel();
+        multiUserCasesPanel = new MultiUserCasesPanel(this);
         add(multiUserCasesPanel);
         pack();
         setResizable(false);
@@ -74,7 +82,7 @@ public class MultiUserCasesDialog extends JDialog {
     @Override
     public void setVisible(boolean value) {
         if(value) {
-            multiUserCasesPanel.refreshCasesTable();
+            multiUserCasesPanel.refresh();
         }
         super.setVisible(value);
     }
