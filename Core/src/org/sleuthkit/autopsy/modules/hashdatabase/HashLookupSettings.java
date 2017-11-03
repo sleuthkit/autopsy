@@ -363,7 +363,7 @@ final class HashLookupSettings implements Serializable {
                 this.hashSetName = centralRepoDb.getHashSetName();
                 this.version = centralRepoDb.getVersion();
                 this.knownFilesType = centralRepoDb.getKnownFilesType();
-                this.readOnly = centralRepoDb.isUpdateable();
+                this.readOnly = ! centralRepoDb.isUpdateable();
                 this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
                 this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
                 this.path = "";
