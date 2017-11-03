@@ -427,7 +427,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=A version must be entered",
-        "HashDbImportDatabaseDialog.missingOrg=An organization must be selected"
+        "HashDbImportDatabaseDialog.missingOrg=An organization must be selected",
+        "HashDbImportDatabaseDialog.duplicateName=A hashset with this name and version already exists",
+        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository"
     })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
@@ -509,6 +511,29 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 return;
             }
         } else {
+            
+            // Check if a hash set with the same name/version already exists
+            try{
+                if(EamDb.getInstance().referenceSetExists(hashSetNameTextField.getText(), versionTextField.getText())){
+                    JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.duplicateName"),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.importHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (EamDbException ex){
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error looking up reference set", ex);
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.databaseLookupError"),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.importHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;                
+            }
+            
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
             progressDialog.importFile(hashSetNameTextField.getText(), versionTextField.getText(), 
                 selectedOrg.getOrgID(), true, sendIngestMessagesCheckbox.isSelected(), type, 
