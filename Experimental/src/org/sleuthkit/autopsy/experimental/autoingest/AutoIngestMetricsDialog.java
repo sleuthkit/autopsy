@@ -31,7 +31,7 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Display basic metrics for a cluster.
  */
-public class AutoIngestMetricsDialog extends javax.swing.JDialog {
+class AutoIngestMetricsDialog extends javax.swing.JDialog {
     
     private final AutoIngestMonitor autoIngestMonitor;
 
