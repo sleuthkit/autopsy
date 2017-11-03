@@ -284,7 +284,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
 
     /**
      * Gets a new metrics snapshot from the coordination service for an auto
-     * ingest cluster. The jobs snapshot will also be updated.
+     * ingest cluster.
      *
      * @return The metrics snapshot.
      */
