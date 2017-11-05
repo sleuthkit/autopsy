@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,11 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import javax.swing.text.JTextComponent;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.nodes.Node;
@@ -29,6 +32,8 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD;
@@ -52,21 +57,28 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
 
     private static final int HDR_TAB_INDEX = 0;
     private static final int TEXT_TAB_INDEX = 1;
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
-    private static final long serialVersionUID = 1L;
-
-    private BlackboardArtifact artifact;    // Artifact currently being displayed
+    private final List<JTextComponent> textAreas;
 
     /**
-     * Creates new form MessageContentViewer
+     * Artifact currently being displayed
+     */
+    private BlackboardArtifact artifact;
+
+    /**
+     * Creates new MessageContentViewer
      */
     public MessageContentViewer() {
         initComponents();
+
+        textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
+
         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
         resetComponent();
@@ -240,22 +252,23 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             .addGroup(layout.createSequentialGroup()
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(msgbodyTabbedPane)
+                    .addComponent(msgbodyTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 652, Short.MAX_VALUE)
                     .addComponent(envelopePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(5, 5, 5))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
+                .addContainerGap()
                 .addComponent(envelopePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(msgbodyTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 471, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addComponent(msgbodyTabbedPane)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    @NbBundle.Messages({"MessageContentViewer.showImagesToggleButton.hide.text=Hide Images",
+    @NbBundle.Messages({
+        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images",
         "MessageContentViewer.showImagesToggleButton.text=Show Images"})
     private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
         try {
@@ -302,7 +315,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public void setNode(Node node) {
-
         if (node == null) {
             resetComponent();
             return;
@@ -314,9 +326,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             return;
         }
 
-        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+        if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
             displayMsg();
-        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+        } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
             displayEmailMsg();
         } else {
             resetComponent();
@@ -355,6 +367,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         subjectText.setText("");
         datetimeText.setText("");
         directionText.setText("");
+        headersTextArea.setText("");
+        rtfbodyTextPane.setText("");
+        htmlbodyTextPane.setText("");
+        textbodyTextArea.setText("");
         setEnabled(false);
     }
 
@@ -375,10 +391,23 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return 0;
     }
 
+    void configureTextArea(BlackboardAttribute.ATTRIBUTE_TYPE type, int index) throws TskCoreException {
+        String attributeText = getAttributeValueSafe(artifact, type);
+        if (!attributeText.isEmpty()) {
+            attributeText = (index == HTML_TAB_INDEX)
+                    ? wrapInHtmlBody(cleanseHTML(attributeText))
+                    : attributeText;
+            textAreas.get(index).setText(attributeText);
+            msgbodyTabbedPane.setEnabledAt(index, true);
+            msgbodyTabbedPane.setSelectedIndex(index);
+        } else {
+            msgbodyTabbedPane.setEnabledAt(index, false);
+        }
+    }
+
     private void displayEmailMsg() {
         setEnabled(true);
         directionText.setText("");
-        showImagesToggleButton.setVisible(false);
         showImagesToggleButton.setText("Show Images");
         showImagesToggleButton.setSelected(false);
 
@@ -389,42 +418,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
             this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
 
-            String headersText = getAttributeValueSafe(artifact, TSK_HEADERS);
-            if (!headersText.isEmpty()) {
-                this.headersTextArea.setText(headersText);
-                msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, true);
-                msgbodyTabbedPane.setSelectedIndex(HDR_TAB_INDEX);
-            } else {
-                msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
-            }
-
-            String plainText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_PLAIN);
-            if (!plainText.isEmpty()) {
-                this.textbodyTextArea.setText(plainText);
-                msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, true);
-                msgbodyTabbedPane.setSelectedIndex(TEXT_TAB_INDEX);
-            } else {
-                msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, false);
-            }
-            String htmlText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_HTML);
-            if (!htmlText.isEmpty()) {
-                this.showImagesToggleButton.setVisible(true);
-                this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
-                msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, true);
-                msgbodyTabbedPane.setSelectedIndex(HTML_TAB_INDEX);
-            } else {
-                msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
-                this.htmlbodyTextPane.setVisible(false);
-            }
-
-            String rtfText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_RTF);
-            if (!rtfText.isEmpty()) {
-                this.rtfbodyTextPane.setText(rtfText);
-                msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, true);
-                msgbodyTabbedPane.setSelectedIndex(RTF_TAB_INDEX);
-            } else {
-                msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
-            }
+            configureTextArea(TSK_HEADERS, HDR_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
 
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
@@ -432,13 +429,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     private static String wrapInHtmlBody(String htmlText) {
-        return "<html><body>" + cleanseHTML(htmlText) + "</body></html>";
+        return "<html><body>" + htmlText + "</body></html>";
     }
 
     private void displayMsg() {
         setEnabled(true);
         this.ccText.setText("");
-        this.showImagesToggleButton.setVisible(false);
         msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
         msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
         msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
@@ -449,12 +445,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             this.directionText.setText(getAttributeValueSafe(artifact, TSK_DIRECTION));
             this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
             this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME));
-            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME));
 
-            String text = getAttributeValueSafe(artifact, TSK_TEXT);
-            this.textbodyTextArea.setText(text);
-            msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, text.isEmpty() == false);
-            msgbodyTabbedPane.setSelectedIndex(TEXT_TAB_INDEX);
+            configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }
