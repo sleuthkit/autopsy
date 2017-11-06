@@ -76,7 +76,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      */
     public MessageContentViewer() {
         initComponents();
-
         textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
 
         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
@@ -110,7 +109,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         textbodyScrollPane = new javax.swing.JScrollPane();
         textbodyTextArea = new javax.swing.JTextArea();
         htmlPane = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        htmlScrollPane = new javax.swing.JScrollPane();
         htmlbodyTextPane = new javax.swing.JTextPane();
         showImagesToggleButton = new javax.swing.JToggleButton();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
@@ -195,22 +194,33 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addGap(5, 5, 5))
         );
 
+        headersScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        headersScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         headersTextArea.setEditable(false);
         headersTextArea.setColumns(20);
+        headersTextArea.setLineWrap(true);
         headersTextArea.setRows(5);
+        headersTextArea.setWrapStyleWord(true);
         headersScrollPane.setViewportView(headersTextArea);
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.headersScrollPane.TabConstraints.tabTitle"), headersScrollPane); // NOI18N
 
+        textbodyScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        textbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         textbodyTextArea.setEditable(false);
-        textbodyTextArea.setColumns(20);
+        textbodyTextArea.setLineWrap(true);
         textbodyTextArea.setRows(5);
+        textbodyTextArea.setWrapStyleWord(true);
         textbodyScrollPane.setViewportView(textbodyTextArea);
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"), textbodyScrollPane); // NOI18N
 
+        htmlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         htmlbodyTextPane.setEditable(false);
-        jScrollPane2.setViewportView(htmlbodyTextPane);
+        htmlScrollPane.setViewportView(htmlbodyTextPane);
 
         org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.text")); // NOI18N
         showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -223,9 +233,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         htmlPane.setLayout(htmlPaneLayout);
         htmlPaneLayout.setHorizontalGroup(
             htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2)
+            .addComponent(htmlScrollPane)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, htmlPaneLayout.createSequentialGroup()
-                .addContainerGap(533, Short.MAX_VALUE)
+                .addContainerGap(283, Short.MAX_VALUE)
                 .addComponent(showImagesToggleButton)
                 .addGap(3, 3, 3))
         );
@@ -234,11 +244,13 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             .addGroup(htmlPaneLayout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2)
+                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
+
+        rtfbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         rtfbodyTextPane.setEditable(false);
         rtfbodyScrollPane.setViewportView(rtfbodyTextPane);
@@ -252,7 +264,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             .addGroup(layout.createSequentialGroup()
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(msgbodyTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 652, Short.MAX_VALUE)
+                    .addComponent(msgbodyTabbedPane)
                     .addComponent(envelopePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(5, 5, 5))
         );
@@ -299,8 +311,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JScrollPane headersScrollPane;
     private javax.swing.JTextArea headersTextArea;
     private javax.swing.JPanel htmlPane;
+    private javax.swing.JScrollPane htmlScrollPane;
     private javax.swing.JTextPane htmlbodyTextPane;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane msgbodyTabbedPane;
     private javax.swing.JScrollPane rtfbodyScrollPane;
     private javax.swing.JTextPane rtfbodyTextPane;
@@ -333,7 +345,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         } else {
             resetComponent();
         }
-
     }
 
     @Override
@@ -362,16 +373,23 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     final public void resetComponent() {
         // reset all fields
         fromText.setText("");
+        fromLabel.setEnabled(false);
         toText.setText("");
+        toLabel.setEnabled(false);
         ccText.setText("");
+        ccLabel.setEnabled(false);
         subjectText.setText("");
+        subjectLabel.setEnabled(false);
         datetimeText.setText("");
+        datetimeText.setEnabled(false);
         directionText.setText("");
+        directionText.setEnabled(false);
+
         headersTextArea.setText("");
         rtfbodyTextPane.setText("");
         htmlbodyTextPane.setText("");
         textbodyTextArea.setText("");
-        setEnabled(false);
+        msgbodyTabbedPane.setEnabled(false);
     }
 
     @Override
@@ -384,7 +402,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public int isPreferred(Node node) {
-
         if (isSupported(node)) {
             return 6;
         }
@@ -397,7 +414,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             attributeText = (index == HTML_TAB_INDEX)
                     ? wrapInHtmlBody(cleanseHTML(attributeText))
                     : attributeText;
-            textAreas.get(index).setText(attributeText);
+            final JTextComponent textComponent = textAreas.get(index);
+            textComponent.setText(attributeText);
+            textComponent.setCaretPosition(0);
             msgbodyTabbedPane.setEnabledAt(index, true);
             msgbodyTabbedPane.setSelectedIndex(index);
         } else {
@@ -406,14 +425,22 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     private void displayEmailMsg() {
-        setEnabled(true);
-        directionText.setText("");
+        msgbodyTabbedPane.setEnabled(true);
+        fromLabel.setEnabled(true);
+        toLabel.setEnabled(true);
+        ccLabel.setEnabled(true);
+        subjectLabel.setEnabled(true);
+        datetimeText.setEnabled(true);
+
+        directionText.setEnabled(false);
+
         showImagesToggleButton.setText("Show Images");
         showImagesToggleButton.setSelected(false);
 
         try {
             this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
             this.toText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
+            this.directionText.setText("");
             this.ccText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
             this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
             this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
@@ -422,7 +449,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
-
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
         }
@@ -433,19 +459,26 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     private void displayMsg() {
-        setEnabled(true);
-        this.ccText.setText("");
-        msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
-        msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
-        msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
+        msgbodyTabbedPane.setEnabled(true);
+        fromLabel.setEnabled(true);
+        toLabel.setEnabled(true);
+        subjectLabel.setEnabled(true);
+        directionText.setEnabled(true);
+        datetimeText.setEnabled(true);
+
+        ccLabel.setEnabled(false);
 
         try {
             this.fromText.setText(getAttributeValueSafe(artifact, TSK_PHONE_NUMBER_FROM));
             this.toText.setText(getAttributeValueSafe(artifact, TSK_PHONE_NUMBER_TO));
             this.directionText.setText(getAttributeValueSafe(artifact, TSK_DIRECTION));
+            this.ccText.setText("");
             this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
             this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME));
 
+            msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
+            msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
+            msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
