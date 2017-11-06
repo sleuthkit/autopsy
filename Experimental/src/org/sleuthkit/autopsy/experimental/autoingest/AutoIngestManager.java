@@ -98,7 +98,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -114,7 +113,7 @@ import org.sleuthkit.datamodel.Content;
  * The activities of the auto ingest nodes in a cluster are coordinated by way
  * of a coordination service and the nodes communicate via event messages.
  */
-public final class AutoIngestManager extends Observable implements PropertyChangeListener {
+final class AutoIngestManager extends Observable implements PropertyChangeListener {
 
     private static final int NUM_INPUT_SCAN_SCHEDULING_THREADS = 1;
     private static final String INPUT_SCAN_SCHEDULER_THREAD_NAME = "AIM-input-scan-scheduler-%d";
