@@ -247,10 +247,14 @@ class AddArchiveTask implements Runnable {
     }
     
     /**
-     * 
-     * @param dataSourcePath
-     * @param errorMessages
-     * @return 
+     * Get a list of data source processors that can process the data source of
+     * interest. The list is sorted by confidence in decreasing order.
+     * LocalDisk, LocalFiles, and ArchiveDSP are removed from the list.
+     *
+     * @param dataSourcePath Full path to the data source
+     * @param errorMessages List<String> for error messages
+     *
+     * @return Ordered list of applicable DSPs
      */
     private List<AutoIngestDataSourceProcessor> getValidDataSourceProcessors(Path dataSourcePath, List<String> errorMessages) {
         Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
@@ -285,6 +289,15 @@ class AddArchiveTask implements Runnable {
     }
     
 
+    /**
+     * Create a directory in ModuleOutput folder based on input file name. A
+     * time stamp is appended to the directory name.
+     *
+     * @param fileName File name
+     * @param baseDirectory Base directory. Typically the case output directory.
+     *
+     * @return Full path to the new directory
+     */
     private Path createDirectoryForFile(String fileName, String baseDirectory) {
         // get file name without full path or extension
         String fileNameNoExt = FilenameUtils.getBaseName(fileName);
