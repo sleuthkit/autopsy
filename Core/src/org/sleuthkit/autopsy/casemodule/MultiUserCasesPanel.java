@@ -266,7 +266,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Opens a case.
+     * Open a case.
      *
      * @param caseMetadataFilePath The path to the case metadata file.
      */
