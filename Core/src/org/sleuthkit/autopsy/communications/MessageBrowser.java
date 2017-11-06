@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -91,7 +92,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                             logger.log(Level.WARNING, "Unexpected Node encountered: " + n.toString());
                         }
                     }
-                    messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accounts, filter, commsManager), true));
+                    messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(new AccountDetailsNode(accounts, filter, commsManager),internalExplorerManager), true));
                     if (accounts.size() == 1) {
                         messagesResultPanel.setPath(Iterables.getOnlyElement(accounts).getAccountUniqueID());
                     } else {
