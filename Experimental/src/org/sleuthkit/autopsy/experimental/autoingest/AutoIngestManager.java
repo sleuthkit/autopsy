@@ -62,6 +62,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -117,7 +118,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private static final int NUM_INPUT_SCAN_SCHEDULING_THREADS = 1;
     private static final String INPUT_SCAN_SCHEDULER_THREAD_NAME = "AIM-input-scan-scheduler-%d";
     private static final String INPUT_SCAN_THREAD_NAME = "AIM-input-scan-%d";
-    private static int DEFAULT_JOB_PRIORITY = 0;
     private static final String AUTO_INGEST_THREAD_NAME = "AIM-job-processing-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
     private static final String EVENT_CHANNEL_NAME = "Auto-Ingest-Manager-Events";
@@ -2115,7 +2115,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                            Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
+                            CaseDetails caseDetails = new CaseDetails(caseName);
+                            Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
                             /*
                              * Sleep a bit before releasing the lock to ensure
                              * that the new case folder is visible on the

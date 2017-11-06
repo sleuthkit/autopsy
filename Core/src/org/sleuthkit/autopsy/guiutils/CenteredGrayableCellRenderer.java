@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.guiutils;
 
-import javax.swing.JDialog;
+import static javax.swing.SwingConstants.CENTER;
 
 /**
- * Interface for startup window implementations
+ * A JTable cell renderer that center-aligns cell content and grays out the cell
+ * if the table is disabled.
  */
-public interface AutoIngestCasePanelInterface {
-    
-    public void addWindowStateListener(JDialog parent);
+class CenteredGrayableCellRenderer extends GrayableCellRenderer {
+
+    private static final long serialVersionUID = 1L;
+
+    public CenteredGrayableCellRenderer() {
+        setHorizontalAlignment(CENTER);
+    }
 }

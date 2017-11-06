@@ -39,6 +39,7 @@ import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorC
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
 
 /*

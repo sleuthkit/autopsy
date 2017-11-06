@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.guiutils;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.time.Duration;
 import javax.swing.JTable;
@@ -28,11 +29,11 @@ import static javax.swing.SwingConstants.CENTER;
  * string with days, hours, minutes, and seconds components. It center-aligns
  * cell content and grays out the cell if the table is disabled.
  */
-class DurationCellRenderer extends GrayableCellRenderer {
+public class DurationCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
-    DurationCellRenderer() {
+    public DurationCellRenderer() {
         setHorizontalAlignment(CENTER);
     }
 
@@ -70,5 +71,27 @@ class DurationCellRenderer extends GrayableCellRenderer {
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
+    }
+
+    void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
+        if (table.isEnabled()) {
+            /*
+             * The table is enabled, make the foreground and background the
+             * normal selected or unselected color.
+             */
+            if (isSelected) {
+                setBackground(table.getSelectionBackground());
+                setForeground(table.getSelectionForeground());
+            } else {
+                setBackground(table.getBackground());
+                setForeground(table.getForeground());
+            }
+        } else {
+            /*
+             * The table is disabled, make the foreground and background gray.
+             */
+            setBackground(Color.lightGray);
+            setForeground(Color.darkGray);
+        }
     }
 }
