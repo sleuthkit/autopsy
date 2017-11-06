@@ -97,11 +97,6 @@ class AddArchiveTask implements Runnable {
         logger.log(Level.INFO, "Using Archive Extractor DSP to process archive {0} ", archivePath);
 
         // extract the archive and pass the extracted folder as input
-        UUID taskId = UUID.randomUUID();
-        if (callback instanceof AddDataSourceCallback) {
-            // if running as part of automated ingest - re-use the task ID
-            taskId = ((AddDataSourceCallback) callback).getTaskId();
-        }
         try {
             Case currentCase = Case.getCurrentCase();
 
@@ -135,7 +130,7 @@ class AddArchiveTask implements Runnable {
                  * folder and then add the data source from that folder. This is
                  * necessary because after all valid data sources have been
                  * identified, we are going to add the remaining extracted
-                 * contents of the archive as a single logacl file set. Hence,
+                 * contents of the archive as a single logical file set. Hence,
                  * if we do not move the data sources out of the extracted
                  * contents folder, those data source files will get added twice
                  * and can potentially result in duplicate keyword hits.
@@ -154,12 +149,13 @@ class AddArchiveTask implements Runnable {
                 Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
 
                 // Try each DSP in decreasing order of confidence
+                UUID taskId = UUID.randomUUID();
+                currentCase.notifyAddingDataSource(taskId);
                 boolean success = false;
                 for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
 
                     logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file}); 
 
-                    // ELTBD - do we want to log this in case log and/or system admin log?
                     synchronized (archiveDspLock) {
                         try {
                             DataSource internalDataSource = new DataSource(deviceId, newFilePath);
@@ -210,6 +206,8 @@ class AddArchiveTask implements Runnable {
             progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
             logger.log(Level.INFO, "Adding directory {0} as logical file set", destinationFolder.toString());
             synchronized (archiveDspLock) {
+                UUID taskId = UUID.randomUUID();
+                currentCase.notifyAddingDataSource(taskId);
                 DataSource internalDataSource = new DataSource(deviceId, destinationFolder);
                 DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
 

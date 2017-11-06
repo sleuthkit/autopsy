@@ -54,13 +54,6 @@ class AddDataSourceCallback extends DataSourceProcessorCallback {
         this.taskId = taskId;
         this.lock = lock;
     }
-    
-    /**
-     * @return the taskId
-     */
-    public UUID getTaskId() {
-        return taskId;
-    }    
 
     /**
      * Called by the data source processor when it finishes running in its own

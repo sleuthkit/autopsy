@@ -28,7 +28,6 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
@@ -40,12 +39,11 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * be used independently of the wizard.
  */
 @ServiceProviders(value={
-    @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
 )
 @NbBundle.Messages({
     "ArchiveDSP.dsType.text=Archive file"})
-public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
+public class ArchiveExtractorDSProcessor implements AutoIngestDataSourceProcessor {
 
     private final static String DATA_SOURCE_TYPE = Bundle.ArchiveDSP_dsType_text();
    
@@ -163,20 +161,11 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
     }  
 
     /**
-     * Requests cancellation of the background task that adds a data source to
-     * the case database, after the task is started using the run method. This
-     * is a "best effort" cancellation, with no guarantees that the case
-     * database will be unchanged. If cancellation succeeded, the list of new
-     * data sources returned by the background task will be empty.
+     * This DSP is a service to AutoIngestDataSourceProcessor only. Hence it is
+     * only used by AIM. AIM currently doesn't support DSP cancellation.
      */
     @Override
     public void cancel() {
-        if (null != jobProcessingTaskFuture) {
-            jobProcessingTaskFuture.cancel(true);
-            jobProcessingExecutor.shutdown();
-            // ELTBD - do we want to wait for the cancellation to complete? I think not, 
-            // given that the cancelation is of "best effort" variety
-        }
     }
 
     @Override
@@ -186,50 +175,4 @@ public class ArchiveExtractorDSProcessor implements DataSourceProcessor, AutoIng
         configPanel.reset();
         setDataSourceOptionsCalled = false;
     }
-    
-        /**
-     * Extracts the contents of a ZIP archive submitted as a data source to a
-     * subdirectory of the auto ingest module output directory.
-     *
-     * @throws IOException if there is a problem extracting the data source from
-     *                     the archive.
-
-    private static Path extractDataSource(Path outputDirectoryPath, Path dataSourcePath) throws IOException {
-        String dataSourceFileNameNoExt = FilenameUtils.removeExtension(dataSourcePath.getFileName().toString());
-        Path destinationFolder = Paths.get(outputDirectoryPath.toString(),
-                AUTO_INGEST_MODULE_OUTPUT_DIR,
-                dataSourceFileNameNoExt + "_" + TimeStampUtils.createTimeStamp());
-        Files.createDirectories(destinationFolder);
-
-        int BUFFER_SIZE = 524288; // Read/write 500KB at a time
-        File sourceZipFile = dataSourcePath.toFile();
-        ZipFile zipFile;
-        zipFile = new ZipFile(sourceZipFile, ZipFile.OPEN_READ);
-        Enumeration<? extends ZipEntry> zipFileEntries = zipFile.entries();
-        try {
-            while (zipFileEntries.hasMoreElements()) {
-                ZipEntry entry = zipFileEntries.nextElement();
-                String currentEntry = entry.getName();
-                File destFile = new File(destinationFolder.toString(), currentEntry);
-                destFile = new File(destinationFolder.toString(), destFile.getName());
-                File destinationParent = destFile.getParentFile();
-                destinationParent.mkdirs();
-                if (!entry.isDirectory()) {
-                    BufferedInputStream is = new BufferedInputStream(zipFile.getInputStream(entry));
-                    int currentByte;
-                    byte data[] = new byte[BUFFER_SIZE];
-                    try (FileOutputStream fos = new FileOutputStream(destFile); BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER_SIZE)) {
-                        currentByte = is.read(data, 0, BUFFER_SIZE);
-                        while (currentByte != -1) {
-                            dest.write(data, 0, currentByte);
-                            currentByte = is.read(data, 0, BUFFER_SIZE);
-                        }
-                    }
-                }
-            }
-        } finally {
-            zipFile.close();
-        }
-        return destinationFolder;
-    }     */
 }
