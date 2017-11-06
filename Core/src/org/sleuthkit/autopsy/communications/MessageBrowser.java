@@ -26,6 +26,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
@@ -49,6 +50,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     MessageBrowser() {
         initComponents();
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
+       
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
 
@@ -98,6 +100,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                 }
             }
         });
+         messagesResultPanel.addResultViewer(new DataResultViewerTable(internalExplorerManager,"Messages"));
+     
         messagesResultPanel.open();
     }
 

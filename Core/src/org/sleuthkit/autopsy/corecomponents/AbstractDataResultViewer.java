@@ -56,7 +56,9 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
      */
     public AbstractDataResultViewer(ExplorerManager explorerManager) {
         this.em = explorerManager;
-        initialize();
+        //DataContent is designed to return only the default viewer from lookup
+        //use the default one unless set otherwise
+        contentViewer = Lookup.getDefault().lookup(DataContent.class);
     }
 
     /**
@@ -65,14 +67,7 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
      * context lookup.
      */
     public AbstractDataResultViewer() {
-        em = new ExplorerManager();
-        initialize();
-    }
-
-    private void initialize() {
-        //DataContent is designed to return only the default viewer from lookup
-        //use the default one unless set otherwise
-        contentViewer = Lookup.getDefault().lookup(DataContent.class);
+        this(new ExplorerManager());
     }
 
     @Override
