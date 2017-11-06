@@ -120,9 +120,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         splitPane.setDividerLocation(400);
         splitPane.setDividerSize(10);
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPane.setResizeWeight(0.4);
-
-        messageDataContent.setMinimumSize(null);
+        splitPane.setResizeWeight(0.5);
         splitPane.setBottomComponent(messageDataContent);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -131,7 +129,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 652, Short.MAX_VALUE))
+                .addComponent(splitPane))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

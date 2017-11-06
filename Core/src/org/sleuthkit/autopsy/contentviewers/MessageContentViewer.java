@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,11 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
+import javax.swing.text.JTextComponent;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.nodes.Node;
@@ -28,7 +32,23 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -37,22 +57,30 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
 
     private static final int HDR_TAB_INDEX = 0;
     private static final int TEXT_TAB_INDEX = 1;
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
-    private static final long serialVersionUID = 1L;
-
-    private BlackboardArtifact artifact;    // Artifact currently being displayed
+    private final List<JTextComponent> textAreas;
 
     /**
-     * Creates new form MessageContentViewer
+     * Artifact currently being displayed
+     */
+    private BlackboardArtifact artifact;
+
+    /**
+     * Creates new MessageContentViewer
      */
     public MessageContentViewer() {
         initComponents();
-        customizeComponents();
+        textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
+
+        Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
+        Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
+        resetComponent();
     }
 
     /**
@@ -81,13 +109,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         textbodyScrollPane = new javax.swing.JScrollPane();
         textbodyTextArea = new javax.swing.JTextArea();
         htmlPane = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        htmlScrollPane = new javax.swing.JScrollPane();
         htmlbodyTextPane = new javax.swing.JTextPane();
         showImagesToggleButton = new javax.swing.JToggleButton();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
         rtfbodyTextPane = new javax.swing.JTextPane();
-
-        setMinimumSize(null);
 
         envelopePanel.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -128,11 +154,11 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                         .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(envelopePanelLayout.createSequentialGroup()
                                 .addComponent(toText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(directionText, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(envelopePanelLayout.createSequentialGroup()
                                 .addComponent(fromText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(datetimeText, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(envelopePanelLayout.createSequentialGroup()
                         .addComponent(ccLabel)
@@ -168,22 +194,33 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addGap(5, 5, 5))
         );
 
+        headersScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        headersScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         headersTextArea.setEditable(false);
         headersTextArea.setColumns(20);
+        headersTextArea.setLineWrap(true);
         headersTextArea.setRows(5);
+        headersTextArea.setWrapStyleWord(true);
         headersScrollPane.setViewportView(headersTextArea);
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.headersScrollPane.TabConstraints.tabTitle"), headersScrollPane); // NOI18N
 
+        textbodyScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        textbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         textbodyTextArea.setEditable(false);
-        textbodyTextArea.setColumns(20);
+        textbodyTextArea.setLineWrap(true);
         textbodyTextArea.setRows(5);
+        textbodyTextArea.setWrapStyleWord(true);
         textbodyScrollPane.setViewportView(textbodyTextArea);
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"), textbodyScrollPane); // NOI18N
 
+        htmlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         htmlbodyTextPane.setEditable(false);
-        jScrollPane2.setViewportView(htmlbodyTextPane);
+        htmlScrollPane.setViewportView(htmlbodyTextPane);
 
         org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.text")); // NOI18N
         showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
@@ -196,9 +233,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         htmlPane.setLayout(htmlPaneLayout);
         htmlPaneLayout.setHorizontalGroup(
             htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2)
+            .addComponent(htmlScrollPane)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, htmlPaneLayout.createSequentialGroup()
-                .addContainerGap(533, Short.MAX_VALUE)
+                .addContainerGap(283, Short.MAX_VALUE)
                 .addComponent(showImagesToggleButton)
                 .addGap(3, 3, 3))
         );
@@ -207,11 +244,13 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             .addGroup(htmlPaneLayout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2)
+                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
+
+        rtfbodyScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         rtfbodyTextPane.setEditable(false);
         rtfbodyScrollPane.setViewportView(rtfbodyTextPane);
@@ -232,28 +271,27 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
+                .addContainerGap()
                 .addComponent(envelopePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(msgbodyTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 471, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addComponent(msgbodyTabbedPane)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @NbBundle.Messages({
+        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images",
+        "MessageContentViewer.showImagesToggleButton.text=Show Images"})
     private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
-
         try {
-            BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-
+            String htmlText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_HTML);
+            if (!htmlText.isEmpty()) {
                 if (showImagesToggleButton.isSelected()) {
-                    showImagesToggleButton.setText(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.hide.text"));
-
-                    this.htmlbodyTextPane.setText("<html><body>" + attr.getValueString() + "</body></html>");
+                    showImagesToggleButton.setText(Bundle.MessageContentViewer_showImagesToggleButton_hide_text());
+                    this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
                 } else {
-                    showImagesToggleButton.setText(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.text"));
-
-                    this.htmlbodyTextPane.setText("<html><body>" + cleanseHTML(attr.getValueString()) + "</body></html>");
+                    showImagesToggleButton.setText(Bundle.MessageContentViewer_showImagesToggleButton_text());
+                    this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
                 }
             }
         } catch (TskCoreException ex) {
@@ -273,8 +311,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JScrollPane headersScrollPane;
     private javax.swing.JTextArea headersTextArea;
     private javax.swing.JPanel htmlPane;
+    private javax.swing.JScrollPane htmlScrollPane;
     private javax.swing.JTextPane htmlbodyTextPane;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane msgbodyTabbedPane;
     private javax.swing.JScrollPane rtfbodyScrollPane;
     private javax.swing.JTextPane rtfbodyTextPane;
@@ -287,42 +325,38 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JLabel toText;
     // End of variables declaration//GEN-END:variables
 
-    private void customizeComponents() {
-        // do any customizations here
-        Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
-        Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
-
-    }
-
     @Override
     public void setNode(Node node) {
-
         if (node == null) {
+            resetComponent();
             return;
         }
 
         artifact = node.getLookup().lookup(BlackboardArtifact.class);
-
         if (artifact == null) {
+            resetComponent();
             return;
         }
 
-        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+        if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
             displayMsg();
-        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+        } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
             displayEmailMsg();
+        } else {
+            resetComponent();
         }
-
     }
 
     @Override
+    @NbBundle.Messages("MessageContentViewer.title=Message")
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "MessageContentViewer.title");
+        return Bundle.MessageContentViewer_title();
     }
 
     @Override
+    @NbBundle.Messages("MessageContentViewer.toolTip=Displays messages.")
     public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "MessageContentViewer.toolTip");
+        return Bundle.MessageContentViewer_toolTip();
     }
 
     @Override
@@ -336,8 +370,26 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public void resetComponent() {
+    final public void resetComponent() {
         // reset all fields
+        fromText.setText("");
+        fromLabel.setEnabled(false);
+        toText.setText("");
+        toLabel.setEnabled(false);
+        ccText.setText("");
+        ccLabel.setEnabled(false);
+        subjectText.setText("");
+        subjectLabel.setEnabled(false);
+        datetimeText.setText("");
+        datetimeText.setEnabled(false);
+        directionText.setText("");
+        directionText.setEnabled(false);
+
+        headersTextArea.setText("");
+        rtfbodyTextPane.setText("");
+        htmlbodyTextPane.setText("");
+        textbodyTextArea.setText("");
+        msgbodyTabbedPane.setEnabled(false);
     }
 
     @Override
@@ -350,171 +402,93 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public int isPreferred(Node node) {
-
         if (isSupported(node)) {
             return 6;
         }
         return 0;
     }
 
-    private void displayEmailMsg() {
-        directionText.setVisible(false);
+    void configureTextArea(BlackboardAttribute.ATTRIBUTE_TYPE type, int index) throws TskCoreException {
+        String attributeText = getAttributeValueSafe(artifact, type);
+        if (!attributeText.isEmpty()) {
+            attributeText = (index == HTML_TAB_INDEX)
+                    ? wrapInHtmlBody(cleanseHTML(attributeText))
+                    : attributeText;
+            final JTextComponent textComponent = textAreas.get(index);
+            textComponent.setText(attributeText);
+            textComponent.setCaretPosition(0);
+            msgbodyTabbedPane.setEnabledAt(index, true);
+            msgbodyTabbedPane.setSelectedIndex(index);
+        } else {
+            msgbodyTabbedPane.setEnabledAt(index, false);
+        }
+    }
 
-        showImagesToggleButton.setVisible(false);
+    private void displayEmailMsg() {
+        msgbodyTabbedPane.setEnabled(true);
+        fromLabel.setEnabled(true);
+        toLabel.setEnabled(true);
+        ccLabel.setEnabled(true);
+        subjectLabel.setEnabled(true);
+        datetimeText.setEnabled(true);
+
+        directionText.setEnabled(false);
+
         showImagesToggleButton.setText("Show Images");
         showImagesToggleButton.setSelected(false);
 
         try {
-            BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM));
-            this.fromText.setText(attr.getValueString());
+            this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
+            this.toText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
+            this.directionText.setText("");
+            this.ccText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
+            this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
+            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
 
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO));
-            if (attr != null) {
-                this.toText.setText(attr.getValueString());
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-                this.ccText.setVisible(true);
-                this.ccText.setText(attr.getValueString());
-            } else {
-                this.ccText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-                this.subjectText.setVisible(true);
-                this.subjectText.setText(attr.getValueString());
-            } else {
-                this.subjectText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD));
-            if (attr != null && !attr.getDisplayString().isEmpty()) {
-                this.datetimeText.setVisible(true);
-                this.datetimeText.setText(attr.getDisplayString());
-            } else {
-                this.datetimeText.setVisible(false);
-            }
-
-            int selectedTabIndex = -1;
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-                this.textbodyTextArea.setVisible(true);
-                this.textbodyTextArea.setText(attr.getValueString());
-
-                msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, true);
-                selectedTabIndex = TEXT_TAB_INDEX;
-            } else {
-                msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-
-                this.showImagesToggleButton.setVisible(true);
-
-                this.htmlbodyTextPane.setVisible(true);
-                this.htmlbodyTextPane.setText("<html><body>" + cleanseHTML(attr.getValueString()) + "</body></html>");
-                //this.htmlbodyTextPane.setText(cleanseHTML(attr.getValueString()));
-
-                msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, true);
-                selectedTabIndex = HTML_TAB_INDEX;
-            } else {
-                msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
-                this.htmlbodyTextPane.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-
-                this.rtfbodyTextPane.setVisible(true);
-                this.rtfbodyTextPane.setText(attr.getValueString());
-
-                msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, true);
-                selectedTabIndex = RTF_TAB_INDEX;
-            } else {
-                msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-                this.headersTextArea.setVisible(true);
-                this.headersTextArea.setText(attr.getValueString());
-                if (selectedTabIndex < 0) {
-                    selectedTabIndex = HDR_TAB_INDEX;
-                }
-            } else {
-                msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
-            }
-
-            msgbodyTabbedPane.setSelectedIndex(selectedTabIndex);
+            configureTextArea(TSK_HEADERS, HDR_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
         }
     }
 
-    private void displayMsg() {
+    private static String wrapInHtmlBody(String htmlText) {
+        return "<html><body>" + htmlText + "</body></html>";
+    }
 
-        this.ccText.setVisible(false);
-        this.showImagesToggleButton.setVisible(false);
-        msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
-        msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
-        msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
+    private void displayMsg() {
+        msgbodyTabbedPane.setEnabled(true);
+        fromLabel.setEnabled(true);
+        toLabel.setEnabled(true);
+        subjectLabel.setEnabled(true);
+        directionText.setEnabled(true);
+        datetimeText.setEnabled(true);
+
+        ccLabel.setEnabled(false);
 
         try {
+            this.fromText.setText(getAttributeValueSafe(artifact, TSK_PHONE_NUMBER_FROM));
+            this.toText.setText(getAttributeValueSafe(artifact, TSK_PHONE_NUMBER_TO));
+            this.directionText.setText(getAttributeValueSafe(artifact, TSK_DIRECTION));
+            this.ccText.setText("");
+            this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
+            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME));
 
-            BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM));
-            if (attr != null) {
-                this.fromText.setText(attr.getValueString());
-            } else {
-                this.fromText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO));
-            if (attr != null) {
-                this.toText.setText(attr.getValueString());
-            } else {
-                this.toText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION));
-            if (attr != null) {
-                this.directionText.setText(attr.getValueString());
-            } else {
-                this.directionText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-                this.subjectText.setVisible(true);
-                this.subjectText.setText(attr.getValueString());
-            } else {
-                this.subjectText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME));
-            if (attr != null && !attr.getDisplayString().isEmpty()) {
-                this.datetimeText.setVisible(true);
-                this.datetimeText.setText(attr.getDisplayString());
-            } else {
-                this.datetimeText.setVisible(false);
-            }
-
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT));
-            if (attr != null && !attr.getValueString().isEmpty()) {
-                this.textbodyTextArea.setVisible(true);
-                this.textbodyTextArea.setText(attr.getValueString());
-
-                msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, true);
-            } else {
-                msgbodyTabbedPane.setEnabledAt(TEXT_TAB_INDEX, false);
-            }
-            msgbodyTabbedPane.setSelectedIndex(TEXT_TAB_INDEX);
+            msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
+            msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
+            msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
+            configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }
+    }
 
+    String getAttributeValueSafe(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException {
+        return Optional.ofNullable(artifact.getAttribute(new BlackboardAttribute.Type(type)))
+                .map(BlackboardAttribute::getDisplayString)
+                .orElse("");
     }
 
     /**
@@ -524,14 +498,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      *
      * @return The cleansed HTML String
      */
-    private String cleanseHTML(String htmlInString) {
+    static private String cleanseHTML(String htmlInString) {
 
         Document doc = Jsoup.parse(htmlInString);
 
-        // fix  all img tags
-        doc.select("img[src]").forEach((img) -> {
-            img.attr("src", "");
-        });
+        //fix all img tags
+        doc.select("img[src]").forEach(img -> img.attr("src", ""));
 
         return doc.html();
     }
