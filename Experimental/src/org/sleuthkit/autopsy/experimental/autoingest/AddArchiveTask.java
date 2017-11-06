@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -245,7 +246,12 @@ class AddArchiveTask implements Runnable {
         }
     }
     
-    
+    /**
+     * 
+     * @param dataSourcePath
+     * @param errorMessages
+     * @return 
+     */
     private List<AutoIngestDataSourceProcessor> getValidDataSourceProcessors(Path dataSourcePath, List<String> errorMessages) {
         Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
         try {
@@ -263,21 +269,15 @@ class AddArchiveTask implements Runnable {
         // Get an ordered list of data source processors to try
         List<AutoIngestDataSourceProcessor> validDataSourceProcessors = DataSourceProcessorUtility.orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
 
-        for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
+        for (Iterator<AutoIngestDataSourceProcessor> iterator = validDataSourceProcessors.iterator(); iterator.hasNext();) {
+                AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
 
-            // skip local files and local disk DSPs, only looking for "valid" data sources
-            if (selectedProcessor instanceof LocalDiskDSProcessor) {
-                validDataSourceProcessors.remove(selectedProcessor);
-                continue;
-            }
-            if (selectedProcessor instanceof LocalFilesDSProcessor) {
-                validDataSourceProcessors.remove(selectedProcessor);
-                continue;
-            }
+            // skip local files and local disk DSPs, only looking for "valid" data sources.
             // also skip nested archive files, those will be ingested as logical files and extracted during ingest
-            if (selectedProcessor instanceof ArchiveExtractorDSProcessor) {
-                validDataSourceProcessors.remove(selectedProcessor);
-                continue;
+            if ( (selectedProcessor instanceof LocalDiskDSProcessor) ||
+                    (selectedProcessor instanceof LocalFilesDSProcessor) ||
+                    (selectedProcessor instanceof ArchiveExtractorDSProcessor) ) {
+                iterator.remove();
             }
         }
         
