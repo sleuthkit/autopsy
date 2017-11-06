@@ -350,22 +350,7 @@ final class CaseEventListener implements PropertyChangeListener {
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
-                try {
-                    // only add default evidence tag if case is open and it doesn't already exist in the tags list.
-                    if (Case.isCaseOpen()
-                            && Case.getCurrentCase().getServices().getTagsManager().getAllTagNames().stream()
-                                    .map(tag -> tag.getDisplayName())
-                                    .filter(tagName -> Bundle.caseeventlistener_evidencetag().equals(tagName))
-                                    .collect(Collectors.toList())
-                                    .isEmpty()) {
-                        curCase.getServices().getTagsManager().addTagName(Bundle.caseeventlistener_evidencetag());
-                    }
-                } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    LOGGER.info("Evidence tag already exists"); // NON-NLS
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error adding tag.", ex); // NON-NLS
-                }
-
+                
                 CorrelationCase curCeCase = new CorrelationCase(
                         -1,
                         curCase.getName(), // unique case ID

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +30,6 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
@@ -47,13 +45,40 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
-    @NbBundle.Messages("TagsManager.predefTagNames.bookmark.text=Bookmark")
-    private static final Set<String> STANDARD_TAG_DISPLAY_NAMES = new HashSet<>(
-            Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text(), "Follow Up",
-                    "Notable Item", Category.ONE.getDisplayName(),
-                    Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
-                    Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName()));
+    @NbBundle.Messages({"TagsManager.predefTagNames.bookmark.text=Bookmark",
+        "TagsManager.predefTagNames.followUp.text=Follow Up",
+        "TagsManager.predefTagNames.notableItem.text=Notable Item"})
+    private static final String FOLLOW_UP = Bundle.TagsManager_predefTagNames_followUp_text();
+    private static final String BOOKMARK = Bundle.TagsManager_predefTagNames_bookmark_text();
+    private static final String NOTABLE_ITEM = Bundle.TagsManager_predefTagNames_notableItem_text();
     private final SleuthkitCase caseDb;
+
+    /**
+     * Get the text for the Follow Up tag.
+     * 
+     * @return FOLLOW_UP 
+     */
+    public static String getFollowUpText() {
+        return FOLLOW_UP;
+    }
+
+    /**
+     *  Get the text for the Bookmark tag.
+     * 
+     * @return BOOKMARK 
+     */
+    public static String getBookmarkText() {
+        return BOOKMARK;
+    }
+
+    /**
+     * Get the text for the Notable Item tag.
+     * 
+     * @return NOTABLE_ITEM
+     */
+    static String getNotableItemText() {
+        return NOTABLE_ITEM;
+    }
 
     /**
      * Tests whether or not a given tag display name contains an illegal

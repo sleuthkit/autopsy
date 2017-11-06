@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -38,9 +37,9 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
-    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList("Evidence", "Notable Item", Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
-    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text(), "Follow Up",
-            "Notable Item", Category.ONE.getDisplayName(),
+    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getNotableItemText(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
+    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getBookmarkText(), TagsManager.getFollowUpText(),
+            TagsManager.getNotableItemText(), Category.ONE.getDisplayName(),
             Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
             Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
     static final String NOTABLE = "(Notable)";
