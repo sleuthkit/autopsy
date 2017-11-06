@@ -46,7 +46,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
-    private final String knownStatus;
+    private final String knownStatusDenoted;
 
     /**
      * Constructs a tag name definition consisting of a display name,
@@ -61,7 +61,8 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatus = knownStatus;
+        this.knownStatusDenoted = knownStatus;
+
     }
 
     /**
@@ -92,10 +93,13 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     }
 
     /**
+     * Whether or not the status that this tag implies is the Notable status
      *
+     * @return true if the Notable status is implied by this tag, false
+     *         otherwise.
      */
     boolean isNotable() {
-        return knownStatus.equals(NOTABLE);
+        return knownStatusDenoted.equals(NOTABLE);
     }
 
     /**
@@ -158,7 +162,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
-        return displayName + "," + description + "," + color.name() + "," + knownStatus;
+        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted;
     }
 
     /**
