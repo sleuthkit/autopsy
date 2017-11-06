@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -42,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel that holds the Filter control widgets and translates user filtering
- * changes into queries against the CommunicationsManager
+ * changes into queries against the CommunicationsManager.
  */
 final public class FiltersPanel extends javax.swing.JPanel {
 
@@ -58,17 +56,27 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
     public FiltersPanel() {
         initComponents();
-        updateFilters();
+        updateAndApplyFilters();
     }
 
-    void updateFilters() {
+    /**
+     * Update the filter widgets, and apply them.
+     */
+    void updateAndApplyFilters() {
         updateAccountTypeFilter();
         updateDeviceFilter();
+        if (em != null) {
+            applyFilters();
+        }
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
+        /*
+         * Since we get the exploreremanager from the parent JComponenet, wait
+         * till this FiltersPanel is actaully added to a parent.
+         */
         em = ExplorerManager.find(this);
     }
 
@@ -282,36 +290,38 @@ final public class FiltersPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void applyFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyFiltersButtonActionPerformed
+        applyFilters();
+    }//GEN-LAST:event_applyFiltersButtonActionPerformed
 
-        /*
-         * When the apply button is pressed, query for accounts using the
-         * selected filters, and send the results to the AccountsBrowser via the
-         * ExplorerManager.
-         *
-         * TODO: This will need to be adapted to any changes in the
-         * Comunications Manager API, such as using Filter objcts built from the
-         * state of the checkboxes and the result types changing from Accounts
-         * to AccountDeviceInstances
-         */
+    /**
+     * Query for accounts using the selected filters, and send the results to
+     * the AccountsBrowser via the ExplorerManager.
+     */
+    private void applyFilters() {
+        CommunicationsFilter commsFilter = new CommunicationsFilter();
+        commsFilter.addAndFilter(getDevceFilter());
+        commsFilter.addAndFilter(getAccountTypeFilter());
+
         try {
-            List<AccountDeviceInstance> accountDeviceInstances = new ArrayList<>();
-            CommunicationsFilter commsFilter = new CommunicationsFilter();
-            commsFilter.addAndFilter(getDevceFilter());
-
-            commsFilter.addAndFilter(getAccountTypeFilter());
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            accountDeviceInstances.addAll(commsManager.getAccountDeviceInstancesWithRelationships(commsFilter));
 
-            List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
-            accountDeviceInstances.forEach(accountDeviceInstance
-                    -> accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter)));
+            List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
+                    commsManager.getAccountDeviceInstancesWithRelationships(commsFilter)
+                            .stream()
+                            .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
+                            .collect(Collectors.toList());
 
             em.setRootContext(new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
-    }//GEN-LAST:event_applyFiltersButtonActionPerformed
+    }
 
+    /**
+     * Get a DeviceFilter that matches the state of the UI widgets.
+     *
+     * @return a DeviceFilter
+     */
     private DeviceFilter getDevceFilter() {
         DeviceFilter deviceFilter = new DeviceFilter(devicesMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
@@ -319,6 +329,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
         return deviceFilter;
     }
 
+    /**
+     * Get an AccountTypeFilter that matches the state of the UI widgets
+     *
+     * @return an AccountTypeFilter
+     */
     private AccountTypeFilter getAccountTypeFilter() {
         AccountTypeFilter accountTypeFilter = new AccountTypeFilter(accountTypeMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
@@ -326,26 +341,43 @@ final public class FiltersPanel extends javax.swing.JPanel {
         return accountTypeFilter;
     }
 
+    /**
+     * Set the selection state of all the account type check boxes
+     *
+     * @param selected The selection state to set the check boxes to.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void setAllTypesSelected(boolean selected) {
+    private void setAllAccountTypesSelected(boolean selected) {
         setAllSelected(accountTypeMap, selected);
     }
 
+    /**
+     * Set the selection state of all the device check boxes
+     *
+     * @param selected The selection state to set the check boxes to.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllDevicesSelected(boolean selected) {
         setAllSelected(devicesMap, selected);
     }
 
+    /**
+     * Helper method that sets all the checkboxes in the given map to the given
+     * selection state.
+     *
+     * @param map      A map from anything to JCheckBoxes.
+     * @param selected The selection state to set all the checkboxes to.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
     }
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
-        setAllTypesSelected(false);
+        setAllAccountTypesSelected(false);
     }//GEN-LAST:event_unCheckAllAccountTypesButtonActionPerformed
 
     private void checkAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkAllAccountTypesButtonActionPerformed
-        setAllTypesSelected(true);
+        setAllAccountTypesSelected(true);
     }//GEN-LAST:event_checkAllAccountTypesButtonActionPerformed
 
     private void unCheckAllDevicesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllDevicesButtonActionPerformed

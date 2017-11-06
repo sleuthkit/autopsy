@@ -46,7 +46,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private final ExplorerManager em = new ExplorerManager();
 
     public CVTTopComponent() {
-
         initComponents();
         setName(Bundle.CVTTopComponent_name());
         splitPane.setRightComponent(new MessageBrowser());
@@ -137,7 +136,11 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     @Override
     public void open() {
         super.open();
-        filtersPane.updateFilters();
+        /*
+         * when the window is (re)opened make sure the filters and accounts are
+         * in a up to date and consistent state.
+         */
+        filtersPane.updateAndApplyFilters();
     }
 
     @Override
