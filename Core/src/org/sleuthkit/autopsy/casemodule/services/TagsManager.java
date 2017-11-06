@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.tags.Category;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
@@ -47,7 +48,11 @@ public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
     @NbBundle.Messages("TagsManager.predefTagNames.bookmark.text=Bookmark")
-    private static final Set<String> STANDARD_TAG_DISPLAY_NAMES = new HashSet<>(Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text()));
+    private static final Set<String> STANDARD_TAG_DISPLAY_NAMES = new HashSet<>(
+            Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text(), "Follow Up",
+                    "Notable Item", Category.ONE.getDisplayName(),
+                    Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
+                    Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName()));
     private final SleuthkitCase caseDb;
 
     /**
@@ -84,7 +89,7 @@ public class TagsManager implements Closeable {
      *                          querying the case database for tag types.
      */
     public static Set<String> getTagDisplayNames() throws TskCoreException {
-        Set<String> tagDisplayNames = new HashSet<>(STANDARD_TAG_DISPLAY_NAMES);
+        Set<String> tagDisplayNames = new HashSet<>();
         Set<TagNameDefiniton> customNames = TagNameDefiniton.getTagNameDefinitions();
         customNames.forEach((tagType) -> {
             tagDisplayNames.add(tagType.getDisplayName());
@@ -263,11 +268,9 @@ public class TagsManager implements Closeable {
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         try {
             TagName tagName = caseDb.addTagName(displayName, description, color);
-            if (!STANDARD_TAG_DISPLAY_NAMES.contains(displayName)) {
-                Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-                customTypes.add(new TagNameDefiniton(displayName, description, color, knownStatus));
-                TagNameDefiniton.setTagNameDefinitions(customTypes);
-            }
+            Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
+            customTypes.add(new TagNameDefiniton(displayName, description, color, knownStatus));
+            TagNameDefiniton.setTagNameDefinitions(customTypes);
             return tagName;
         } catch (TskCoreException ex) {
             List<TagName> existingTagNames = caseDb.getAllTagNames();

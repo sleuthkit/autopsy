@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.autopsy.datamodel.tags.Category;
 
 /**
  * A tag name definition consisting of a display name, description and color.
@@ -36,8 +38,11 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
-    private static final String DEFAULT_BAD_TAGS = "Evidence,Notable Item,"
-            + "CAT-1: Child Exploitation (Illegal),CAT-2: Child Exploitation (Non-Illegal/Age Difficult),CAT-3: Child Exploitive"; // NON-NLS
+    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList("Evidence", "Notable Item", Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
+    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text(), "Follow Up",
+            "Notable Item", Category.ONE.getDisplayName(),
+            Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
+            Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
     static final String NOTABLE = "(Notable)";
     private final String displayName;
     private final String description;
@@ -46,17 +51,18 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     /**
      * Constructs a tag name definition consisting of a display name,
-     * description and color.
+     * description, color and knownStatus.
      *
      * @param displayName The display name for the tag name.
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
+     * @param knownStatus The status denoted by the tag.
      */
-    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, String notable) {
+    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatus = notable;
+        this.knownStatus = knownStatus;
     }
 
     /**
@@ -85,13 +91,14 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     TagName.HTML_COLOR getColor() {
         return color;
     }
-    
+
     /**
-     * 
+     *
      */
-    boolean isNotable(){
+    boolean isNotable() {
         return knownStatus.equals(NOTABLE);
     }
+
     /**
      * Compares this tag name definition with the specified tag name definition
      * for order.
@@ -156,45 +163,49 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     }
 
     /**
-     * Gets tag name definitions from the tag settings file.
+     * Gets tag name definitions from the tag settings file as well as the
+     * default tag name definitions.
      *
      * @return A set of tag name definition objects.
      */
     static synchronized Set<TagNameDefiniton> getTagNameDefinitions() {
         Set<TagNameDefiniton> tagNames = new HashSet<>();
+        List<String> standardTags = new ArrayList<>(STANDARD_TAG_DISPLAY_NAMES);
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
-            List<String> badTags = null;
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
+            List<String> badTags = new ArrayList<>();
+            String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+            if (badTagsStr == null || badTagsStr.isEmpty()) {
+                badTags.addAll(STANDARD_NOTABLE_TAG_DISPLAY_NAMES);
+            } else {
+                badTags.addAll(Arrays.asList(badTagsStr.split(",")));
+            }
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
                 if (tagNameAttributes.length == 3) {
-                    if (badTags == null) {
-                        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-                        if (badTagsStr == null) {
-                            badTagsStr = DEFAULT_BAD_TAGS;
-                        }
-                        if (badTagsStr.isEmpty()) {
-                            badTags = new ArrayList<>();
-                        } else {
-                            badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
-                        }
-                    }
+                    standardTags.remove(tagNameAttributes[0]);  //Use standard tag's saved settings instead of default settings
                     if (badTags.contains(tagNameAttributes[0])) {
                         tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), NOTABLE));
                     } else {
                         tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), "")); //add the default value for that tag 
                     }
                 } else if (tagNameAttributes.length == 4) {
+                    standardTags.remove(tagNameAttributes[0]);  //Use standard tag's saved settings instead of default settings
                     tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), tagNameAttributes[3]));
                 }
-
+            }
+        }
+        for (String standardTagName : standardTags) {
+            if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
+                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, NOTABLE));
+            } else {
+                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, "")); //add the default value for that tag 
             }
         }
         return tagNames;
     }
 
-    
     /**
      * Sets the tag name definitions in the tag settings file.
      *

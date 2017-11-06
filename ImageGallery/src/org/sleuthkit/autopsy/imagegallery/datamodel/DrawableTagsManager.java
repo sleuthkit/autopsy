@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.tags.Category;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
@@ -55,7 +56,7 @@ public class DrawableTagsManager {
     private static final String BOOKMARK = Bundle.DrawableTagsManager_bookMark();
     private static Image FOLLOW_UP_IMAGE;
     private static Image BOOKMARK_IMAGE;
-
+    
     public static String getFollowUpText() {
         return FOLLOW_UP;
     }
@@ -161,6 +162,7 @@ public class DrawableTagsManager {
             return bookmarkTagName;
         }
     }
+
 
     /**
      * get all the TagNames that are not categories
