@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * An object that converts case data for a case directory coordination service
  * node to and from byte arrays.
  */
-public class CaseNodeData {
+public final class CaseNodeData {
 
     private static final int CURRENT_VERSION = 0;
     
