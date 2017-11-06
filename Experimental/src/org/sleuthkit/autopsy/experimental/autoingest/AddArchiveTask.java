@@ -30,7 +30,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.LocalDiskDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
