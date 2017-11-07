@@ -299,7 +299,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
      */
     private void applyFilters() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
-        commsFilter.addAndFilter(getDevceFilter());
+        commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
 
         try {
@@ -322,7 +322,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
      *
      * @return a DeviceFilter
      */
-    private DeviceFilter getDevceFilter() {
+    private DeviceFilter getDeviceFilter() {
         DeviceFilter deviceFilter = new DeviceFilter(devicesMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
                 .map(Entry::getKey).collect(Collectors.toSet()));
