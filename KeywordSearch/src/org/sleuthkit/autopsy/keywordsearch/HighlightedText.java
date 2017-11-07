@@ -205,7 +205,13 @@ class HighlightedText implements IndexedText {
      */
     synchronized private void loadPageInfoFromHits() {
         isLiteral = hits.getQuery().isLiteral();
-        //organize the hits by page, filter as needed
+
+        /**
+         * Organize the hits by page, filter as needed.
+         * We process *every* keyword here because in the case of a regular
+         * expression search there may be multiple different keyword
+         * hits located in different chunks for the same file/artifact.
+         */
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();

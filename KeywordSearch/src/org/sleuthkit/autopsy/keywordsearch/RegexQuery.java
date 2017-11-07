@@ -101,6 +101,15 @@ final class RegexQuery implements KeywordSearchQuery {
     private String field = Server.Schema.CONTENT_STR.toString();
 
     /**
+     * The following map is an optimization to ensure that we reuse
+     * the same keyword hit String object across all hits. Even though we 
+     * benefit from G1GC String deduplication, the overhead associated with
+     * creating a new String object for every KeywordHit can be significant 
+     * when the number of hits gets large.
+     */
+    private final HashMap<String, String> keywordsFoundAcrossAllDocuments;
+
+    /**
      * Constructor with query to process.
      *
      * @param keywordList
@@ -113,6 +122,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         this.queryStringContainsWildcardPrefix = this.keywordString.startsWith(".*");
         this.queryStringContainsWildcardSuffix = this.keywordString.endsWith(".*");
+        this.keywordsFoundAcrossAllDocuments = new HashMap<>();
     }
 
     @Override
@@ -273,6 +283,14 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
+                    // Optimization to reduce the number of String objects created.
+                    if (keywordsFoundAcrossAllDocuments.containsKey(hit)) {
+                        // Use an existing String reference if it exists.
+                        hit = keywordsFoundAcrossAllDocuments.get(hit);
+                    } else {
+                        keywordsFoundAcrossAllDocuments.put(hit, hit);
+                    }
+
                     if (artifactAttributeType == null) {
                         hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                     } else {
@@ -303,7 +321,7 @@ final class RegexQuery implements KeywordSearchQuery {
                                         final String group = ccnMatcher.group("ccn");
                                         if (CreditCardValidator.isValidCCN(group)) {
                                             hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
-                                        };
+                                        }
                                     }
                                 }
 
@@ -316,8 +334,6 @@ final class RegexQuery implements KeywordSearchQuery {
                 }
 
             }
-        } catch (TskCoreException ex) {
-            throw ex;
         } catch (Throwable error) {
             /*
              * NOTE: Matcher.find() is known to throw StackOverflowError in rare
@@ -447,7 +463,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 if (hit.isArtifactHit()) {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getSolrObjectId())); //NON-NLS
                 }
                 return null;
             }
