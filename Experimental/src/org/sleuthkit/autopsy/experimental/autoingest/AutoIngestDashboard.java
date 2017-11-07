@@ -48,13 +48,15 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnaps
 /**
  * A dashboard for monitoring an automated ingest cluster.
  */
-public final class AutoIngestDashboard extends JPanel implements Observer {
+final class AutoIngestDashboard extends JPanel implements Observer {
 
     private static final long serialVersionUID = 1L;
     private static final int GENERIC_COL_MIN_WIDTH = 30;
     private static final int GENERIC_COL_MAX_WIDTH = 2000;
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
+    private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
+    private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
     private static final int STAGE_TIME_COL_MIN_WIDTH = 250;
     private static final int STAGE_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
@@ -100,32 +102,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * Constructs a panel for monitoring an automated ingest cluster.
      */
     private AutoIngestDashboard() {
-        pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
+        pendingTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        runningTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-        runningTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        completedTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
         initComponents();
         setServicesStatusMessage();
@@ -243,10 +224,15 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
         column.setWidth(TIME_COL_PREFERRED_WIDTH);
 
-        /**
-         * Prevent sorting when a column header is clicked.
+        column = pendingTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader());
+        column.setCellRenderer(new PrioritizedIconCellRenderer());
+        column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
+        column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+        column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+        /*
+         * Allow sorting when a column header is clicked.
          */
-        pendingTable.setAutoCreateRowSorter(false);
+        pendingTable.setRowSorter(new AutoIngestRowSorter<>(pendingTableModel));
 
         /*
          * Create a row selection listener to enable/disable the Prioritize
@@ -257,8 +243,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 return;
             }
             int row = pendingTable.getSelectedRow();
-			
-			boolean enablePrioritizeButtons = (row >= 0 && row < pendingTable.getRowCount());
+
+            boolean enablePrioritizeButtons = (row >= 0 && row < pendingTable.getRowCount());
             this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
             this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
         });
@@ -280,7 +266,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
-
+        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -354,7 +340,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
-
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -405,11 +391,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         column.setMaxWidth(STATUS_COL_MAX_WIDTH);
         column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
         column.setWidth(STATUS_COL_PREFERRED_WIDTH);
-
         /*
-         * Prevent sorting when a column header is clicked.
+         * Allow sorting when a column header is clicked.
          */
-        completedTable.setAutoCreateRowSorter(false);
+        completedTable.setRowSorter(new AutoIngestRowSorter<>(completedTableModel));
     }
 
     /**
@@ -476,6 +461,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
+                    job.getPriority(), // PRIORITY 
                     job
                 });
             }
@@ -541,6 +527,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * described by either an enum ordinal or a column header string.
      */
     private enum JobsTableModelColumns {
+        @Messages({"AutoIngestDashboard.JobsTableModel.ColumnHeader.Priority=Prioritized"})
 
         CASE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Case")),
         DATA_SOURCE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ImageFolder")),
@@ -553,6 +540,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
         MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath")),
+        PRIORITY(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Priority")),
         JOB(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Job"));
 
         private final String header;
@@ -577,6 +565,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             STAGE_TIME.getColumnHeader(),
             CASE_DIRECTORY_PATH.getColumnHeader(),
             MANIFEST_FILE_PATH.getColumnHeader(),
+            PRIORITY.getColumnHeader(),
             JOB.getColumnHeader()
         };
     };
@@ -667,7 +656,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         pendingTable.setModel(pendingTableModel);
         pendingTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.pendingTable.toolTipText")); // NOI18N
-        pendingTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         pendingTable.setRowHeight(20);
         pendingTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -685,7 +673,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         runningTable.setModel(runningTableModel);
         runningTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.runningTable.toolTipText")); // NOI18N
-        runningTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         runningTable.setRowHeight(20);
         runningTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -703,7 +690,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         completedTable.setModel(completedTableModel);
         completedTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.completedTable.toolTipText")); // NOI18N
-        completedTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         completedTable.setRowHeight(20);
         completedTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -890,4 +876,33 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JTextField tbServicesStatusMessage;
     // End of variables declaration//GEN-END:variables
 
+    private class AutoIngestTableModel extends DefaultTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        private AutoIngestTableModel(String[] headers, int i) {
+            super(headers, i);
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex == JobsTableModelColumns.PRIORITY.ordinal()) {
+                return Integer.class;
+            } else if (columnIndex == JobsTableModelColumns.CREATED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.COMPLETED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.STARTED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.STAGE_TIME.ordinal()) {
+                return Date.class;
+            } else if (columnIndex == JobsTableModelColumns.STATUS.ordinal()) {
+                return Boolean.class;
+            } else {
+                return super.getColumnClass(columnIndex);
+            }
+        }
+    }
 }
