@@ -16,30 +16,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.text.SimpleDateFormat;
 import javax.swing.JTable;
-import static javax.swing.SwingConstants.LEFT;
-import javax.swing.table.DefaultTableCellRenderer;
+import static javax.swing.SwingConstants.CENTER;
 
 /**
- * A JTable cell renderer that left-aligns cell content and grays out the cell
- * if the table is disabled.
+ * A JTable cell renderer that renders a date represented as a long as a
+ * center-aligned, short-format date string. It also grays out the cell if the
+ * table is disabled.
  */
-class GrayableCellRenderer extends DefaultTableCellRenderer {
+class ShortDateCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
+    private static final String FORMAT_STRING = "MM/dd HH:mm"; //NON-NLS
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat(FORMAT_STRING);
 
-    GrayableCellRenderer() {
-        setHorizontalAlignment(LEFT);
+    public ShortDateCellRenderer() {
+        setHorizontalAlignment(CENTER);
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        if (null != value) {
-            setText(value.toString());
+        if (value != null) {
+            setText(dateFormat.format(value));
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
@@ -66,5 +69,4 @@ class GrayableCellRenderer extends DefaultTableCellRenderer {
             setForeground(Color.darkGray);
         }
     }
-    
 }

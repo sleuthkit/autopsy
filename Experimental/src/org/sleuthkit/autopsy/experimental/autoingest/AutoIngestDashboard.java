@@ -44,6 +44,9 @@ import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
+import org.sleuthkit.autopsy.guiutils.LongDateCellRenderer;
+import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -400,7 +403,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * renderer that will choose an icon to represent the job status.
          */
         column = completedTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader());
-        column.setCellRenderer(new CaseStatusIconCellRenderer());
+        column.setCellRenderer(new StatusIconCellRenderer());
         column.setMinWidth(STATUS_COL_MIN_WIDTH);
         column.setMaxWidth(STATUS_COL_MAX_WIDTH);
         column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
@@ -472,7 +475,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     job.getProcessingStageStartDate(), // STARTED_TIME 
                     job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // STAGE
-                    job.getErrorsOccurred(), // STATUS 
+                    job.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK, // STATUS 
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
@@ -662,6 +665,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         tbServicesStatusMessage = new javax.swing.JTextField();
         prioritizeJobButton = new javax.swing.JButton();
         prioritizeCaseButton = new javax.swing.JButton();
+        clusterMetricsButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -762,6 +766,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(clusterMetricsButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.clusterMetricsButton.text")); // NOI18N
+        clusterMetricsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clusterMetricsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -770,24 +781,26 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(pendingScrollPane)
+                    .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbPending)
-                            .addComponent(lbCompleted)
-                            .addComponent(lbRunning)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lbServicesStatus)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING))
+                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(clusterMetricsButton))
+                            .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbCompleted, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbRunning, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(lbServicesStatus)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -813,7 +826,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
                     .addComponent(prioritizeJobButton)
-                    .addComponent(prioritizeCaseButton))
+                    .addComponent(prioritizeCaseButton)
+                    .addComponent(clusterMetricsButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -872,7 +886,12 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
+    private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
+        new AutoIngestMetricsDialog(this.getTopLevelAncestor(), autoIngestMonitor);
+    }//GEN-LAST:event_clusterMetricsButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton clusterMetricsButton;
     private javax.swing.JScrollPane completedScrollPane;
     private javax.swing.JTable completedTable;
     private javax.swing.JButton jButton1;

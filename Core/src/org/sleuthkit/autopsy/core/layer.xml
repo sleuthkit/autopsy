@@ -51,7 +51,7 @@
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseOpenAction"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_OpenAction"/>
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseOpenAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
@@ -157,7 +157,7 @@
                 <attr name="position" intvalue="101"/>
             </file>
             <folder name="Open Recent Case">
-                <attr name="position" intvalue="102"/>
+                <attr name="position" intvalue="103"/>
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
@@ -165,11 +165,11 @@
             </folder>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAct.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
-                <attr name="position" intvalue="103"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
-                <attr name="position" intvalue="104"/>
+                <attr name="position" intvalue="105"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>

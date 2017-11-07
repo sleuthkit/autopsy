@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
  * A data source processor progress monitor for unit testing.
  */
 @Immutable
-public class UnitTestDspProgressMonitor implements DataSourceProcessorProgressMonitor {
+public class FunctionalTestDspProgressMonitor implements DataSourceProcessorProgressMonitor {
 
     /**
      * Switches the progress indicator to indeterminate mode (the total number
