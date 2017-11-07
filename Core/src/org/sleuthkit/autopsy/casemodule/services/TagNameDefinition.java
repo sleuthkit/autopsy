@@ -33,12 +33,12 @@ import org.sleuthkit.autopsy.datamodel.tags.Category;
  * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
+final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
     private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getNotableItemText(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
-    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getBookmarkText(), TagsManager.getFollowUpText(),
+    static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getBookmarkText(), TagsManager.getFollowUpText(),
             TagsManager.getNotableItemText(), Category.ONE.getDisplayName(),
             Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
             Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
@@ -57,7 +57,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      * @param color       The color for the tag name.
      * @param knownStatus The status denoted by the tag.
      */
-    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) {
+    TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
@@ -114,7 +114,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         the specified tag name definition.
      */
     @Override
-    public int compareTo(TagNameDefiniton other) {
+    public int compareTo(TagNameDefinition other) {
         return this.getDisplayName().toLowerCase().compareTo(other.getDisplayName().toLowerCase());
     }
 
@@ -140,10 +140,10 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      */
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof TagNameDefiniton)) {
+        if (!(obj instanceof TagNameDefinition)) {
             return false;
         }
-        TagNameDefiniton thatTagName = (TagNameDefiniton) obj;
+        TagNameDefinition thatTagName = (TagNameDefinition) obj;
         return this.getDisplayName().equals(thatTagName.getDisplayName());
     }
 
@@ -171,8 +171,8 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *
      * @return A set of tag name definition objects.
      */
-    static synchronized Set<TagNameDefiniton> getTagNameDefinitions() {
-        Set<TagNameDefiniton> tagNames = new HashSet<>();
+    static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
+        Set<TagNameDefinition> tagNames = new HashSet<>();
         List<String> standardTags = new ArrayList<>(STANDARD_TAG_DISPLAY_NAMES);
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
@@ -189,21 +189,21 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
                 if (tagNameAttributes.length == 3) {
                     standardTags.remove(tagNameAttributes[0]);  //Use standard tag's saved settings instead of default settings
                     if (badTags.contains(tagNameAttributes[0])) {
-                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), NOTABLE));
+                        tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), NOTABLE));
                     } else {
-                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), "")); //add the default value for that tag 
+                        tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), "")); //add the default value for that tag 
                     }
                 } else if (tagNameAttributes.length == 4) {
                     standardTags.remove(tagNameAttributes[0]);  //Use standard tag's saved settings instead of default settings
-                    tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), tagNameAttributes[3]));
+                    tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), tagNameAttributes[3]));
                 }
             }
         }
         for (String standardTagName : standardTags) {
             if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
-                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, NOTABLE));
+                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, NOTABLE));
             } else {
-                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, "")); //add the default value for that tag 
+                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, "")); //add the default value for that tag 
             }
         }
         return tagNames;
@@ -214,9 +214,9 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *
      * @param tagNames A set of tag name definition objects.
      */
-    static synchronized void setTagNameDefinitions(Set<TagNameDefiniton> tagNames) {
+    static synchronized void setTagNameDefinitions(Set<TagNameDefinition> tagNames) {
         StringBuilder setting = new StringBuilder();
-        for (TagNameDefiniton tagName : tagNames) {
+        for (TagNameDefinition tagName : tagNames) {
             if (setting.length() != 0) {
                 setting.append(";");
             }

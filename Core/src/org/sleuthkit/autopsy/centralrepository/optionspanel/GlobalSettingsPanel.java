@@ -57,12 +57,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
         "GlobalSettingsPanel.cbUseCentralRepo.text=Use a central repository",
-        "GlobalSettingsPanel.pnTagManagement.border.title=Tags",
         "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
         "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and results between cases.",
-        "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable items. "
-        + "When these tags are used, the file or result will be recorded in the central repository. "
-        + "If that file or result is seen again in future cases, it will be flagged.",
         "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and result properties to store in the central repository for later correlation.",
         "GlobalSettingsPanel.organizationPanel.border.title=Organizations",
         "GlobalSettingsPanel.manageOrganizationButton.text=Manage Organizations",
@@ -100,10 +96,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbLocationValue = new javax.swing.JLabel();
         cbUseCentralRepo = new javax.swing.JCheckBox();
         bnImportDatabase = new javax.swing.JButton();
-        pnTagManagement = new javax.swing.JPanel();
-        bnManageTags = new javax.swing.JButton();
-        manageTagsScrollPane = new javax.swing.JScrollPane();
-        manageTagsTextArea = new javax.swing.JTextArea();
         tbOops = new javax.swing.JTextField();
         pnCorrelationProperties = new javax.swing.JPanel();
         bnManageTypes = new javax.swing.JButton();
@@ -188,56 +180,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 bnImportDatabaseActionPerformed(evt);
             }
         });
-
-        pnTagManagement.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnTagManagement.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
-        pnTagManagement.setPreferredSize(new java.awt.Dimension(674, 97));
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnManageTags, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.text")); // NOI18N
-        bnManageTags.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.toolTipText")); // NOI18N
-        bnManageTags.setActionCommand(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.actionCommand")); // NOI18N
-        bnManageTags.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnManageTagsActionPerformed(evt);
-            }
-        });
-
-        manageTagsScrollPane.setBorder(null);
-
-        manageTagsTextArea.setEditable(false);
-        manageTagsTextArea.setBackground(new java.awt.Color(240, 240, 240));
-        manageTagsTextArea.setColumns(20);
-        manageTagsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        manageTagsTextArea.setLineWrap(true);
-        manageTagsTextArea.setRows(2);
-        manageTagsTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.manageTagsTextArea.text")); // NOI18N
-        manageTagsTextArea.setToolTipText("");
-        manageTagsTextArea.setWrapStyleWord(true);
-        manageTagsTextArea.setBorder(null);
-        manageTagsScrollPane.setViewportView(manageTagsTextArea);
-
-        javax.swing.GroupLayout pnTagManagementLayout = new javax.swing.GroupLayout(pnTagManagement);
-        pnTagManagement.setLayout(pnTagManagementLayout);
-        pnTagManagementLayout.setHorizontalGroup(
-            pnTagManagementLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnTagManagementLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnTagManagementLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnTagManagementLayout.createSequentialGroup()
-                        .addComponent(bnManageTags)
-                        .addGap(0, 555, Short.MAX_VALUE))
-                    .addGroup(pnTagManagementLayout.createSequentialGroup()
-                        .addComponent(manageTagsScrollPane)
-                        .addContainerGap())))
-        );
-        pnTagManagementLayout.setVerticalGroup(
-            pnTagManagementLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnTagManagementLayout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addComponent(manageTagsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bnManageTags, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(8, 8, 8))
-        );
 
         tbOops.setEditable(false);
         tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
@@ -351,7 +293,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                             .addComponent(organizationPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbCentralRepository, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(pnTagManagement, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(bnImportDatabase, javax.swing.GroupLayout.Alignment.LEADING))
@@ -366,8 +307,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(pnTagManagement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
                 .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(organizationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -377,8 +316,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addComponent(bnImportDatabase)
                 .addContainerGap())
         );
-
-        pnTagManagement.getAccessibleContext().setAccessibleName("");
     }// </editor-fold>//GEN-END:initComponents
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
@@ -386,12 +323,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnImportDatabaseActionPerformed
-
-    private void bnManageTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTagsActionPerformed
-        store();
-        ManageTagsDialog dialog = new ManageTagsDialog();
-        firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-    }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
         store();
@@ -565,11 +496,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private boolean enableButtonSubComponents(Boolean enable) {
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         pnCorrelationProperties.setEnabled(enable && !ingestRunning);
-        pnTagManagement.setEnabled(enable && !ingestRunning);
         bnManageTypes.setEnabled(enable && !ingestRunning);
         bnImportDatabase.setEnabled(enable && !ingestRunning);
-        bnManageTags.setEnabled(enable && !ingestRunning);
-        manageTagsTextArea.setEnabled(enable && !ingestRunning);
         correlationPropertiesTextArea.setEnabled(enable && !ingestRunning);
         organizationPanel.setEnabled(enable && !ingestRunning);
         organizationTextArea.setEnabled(enable && !ingestRunning);
@@ -580,7 +508,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnDbConfigure;
     private javax.swing.JButton bnImportDatabase;
-    private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
     private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
@@ -593,14 +520,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JLabel lbDbPlatformTypeLabel;
     private javax.swing.JLabel lbDbPlatformValue;
     private javax.swing.JButton manageOrganizationButton;
-    private javax.swing.JScrollPane manageTagsScrollPane;
-    private javax.swing.JTextArea manageTagsTextArea;
     private javax.swing.JPanel organizationPanel;
     private javax.swing.JScrollPane organizationScrollPane;
     private javax.swing.JTextArea organizationTextArea;
     private javax.swing.JPanel pnCorrelationProperties;
     private javax.swing.JPanel pnDatabaseConfiguration;
-    private javax.swing.JPanel pnTagManagement;
     private javax.swing.JTextField tbOops;
     // End of variables declaration//GEN-END:variables
 }

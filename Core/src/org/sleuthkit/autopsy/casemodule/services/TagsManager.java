@@ -115,7 +115,7 @@ public class TagsManager implements Closeable {
      */
     public static Set<String> getTagDisplayNames() throws TskCoreException {
         Set<String> tagDisplayNames = new HashSet<>();
-        Set<TagNameDefiniton> customNames = TagNameDefiniton.getTagNameDefinitions();
+        Set<TagNameDefinition> customNames = TagNameDefinition.getTagNameDefinitions();
         customNames.forEach((tagType) -> {
             tagDisplayNames.add(tagType.getDisplayName());
         });
@@ -134,7 +134,7 @@ public class TagsManager implements Closeable {
 
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
-        for (TagNameDefiniton tagDef : TagNameDefiniton.getTagNameDefinitions()) {
+        for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
             if (tagDef.isNotable()) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
@@ -203,8 +203,8 @@ public class TagsManager implements Closeable {
          * map.
          */
         Map<String, TagName> tagNames = new HashMap<>();
-        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-        for (TagNameDefiniton tagType : customTypes) {
+        Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
+        for (TagNameDefinition tagType : customTypes) {
             tagNames.put(tagType.getDisplayName(), null);
         }
         for (TagName tagName : caseDb.getAllTagNames()) {
@@ -268,7 +268,7 @@ public class TagsManager implements Closeable {
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
         String knownStatus = "";
         if (getNotableTagDisplayNames().contains(displayName)) {
-            knownStatus = TagNameDefiniton.NOTABLE;
+            knownStatus = TagNameDefinition.NOTABLE;
         }
         return addTagName(displayName, description, color, knownStatus);
     }
@@ -293,9 +293,9 @@ public class TagsManager implements Closeable {
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         try {
             TagName tagName = caseDb.addTagName(displayName, description, color);
-            Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-            customTypes.add(new TagNameDefiniton(displayName, description, color, knownStatus));
-            TagNameDefiniton.setTagNameDefinitions(customTypes);
+            Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
+            customTypes.add(new TagNameDefinition(displayName, description, color, knownStatus));
+            TagNameDefinition.setTagNameDefinitions(customTypes);
             return tagName;
         } catch (TskCoreException ex) {
             List<TagName> existingTagNames = caseDb.getAllTagNames();
