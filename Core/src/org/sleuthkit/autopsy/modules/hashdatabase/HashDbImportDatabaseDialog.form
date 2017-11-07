@@ -304,6 +304,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashDbImportDatabaseDialog.readOnlyCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="readOnlyCheckboxActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JRadioButton" name="fileTypeRadioButton">
       <Properties>

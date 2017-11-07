@@ -494,7 +494,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return hashSets.get(rowIndex).getHashSetName();
+            return hashSets.get(rowIndex).getDisplayName();
         }
 
         private boolean isValid(int rowIndex) {            
@@ -921,6 +921,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void createDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createDatabaseButtonActionPerformed
         HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
+            if(hashDb instanceof CentralRepoHashDb){
+                int newDbIndex = ((CentralRepoHashDb)hashDb).getCentralRepoIndex();
+                newCentralRepoIndices.add(newDbIndex);
+            }
+            
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);

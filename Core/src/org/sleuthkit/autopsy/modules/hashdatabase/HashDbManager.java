@@ -1213,7 +1213,11 @@ public class HashDbManager implements PropertyChangeListener {
         
         @Override
         public String getDisplayName(){
-            return getHashSetName() + " " + getVersion();
+            if(! getVersion().isEmpty()){
+                return getHashSetName() + " " + getVersion() + " (remote)";
+            } else {
+                return getHashSetName() + " (remote)";
+            }
         }
         
         public String getVersion(){

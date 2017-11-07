@@ -96,6 +96,14 @@ public interface EamDb {
         return EamDbUtil.useCentralRepo()
                 && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
+    
+    /**
+     * Placeholder version to use for non-read only databases
+     * @return The version that will be stored in the database
+     */
+    static String getDefaultVersion() {
+        return "";
+    }
 
     /**
      * Get the list of tags recognized as "Bad"
@@ -510,7 +518,7 @@ public interface EamDb {
      * @throws EamDbException
      */
     void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException;
-
+    
     /**
      * Insert the bulk collection of Global File Instances
      *
