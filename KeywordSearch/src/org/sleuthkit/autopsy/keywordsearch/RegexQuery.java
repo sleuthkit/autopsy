@@ -236,6 +236,8 @@ final class RegexQuery implements KeywordSearchQuery {
 
     private List<KeywordHit> createKeywordHits(SolrDocument solrDoc) throws TskCoreException {
 
+        final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
+
         List<KeywordHit> hits = new ArrayList<>();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         final Integer chunkSize = (Integer) solrDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
@@ -283,9 +285,14 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
-                    // Optimization to reduce the number of String objects created.
+                    // We will only create one KeywordHit instance per document for
+                    // a given hit.
+                    if (keywordsFoundInThisDocument.containsKey(hit)) {
+                        continue;
+                    }
+                    keywordsFoundInThisDocument.put(hit, hit);
+
                     if (keywordsFoundAcrossAllDocuments.containsKey(hit)) {
-                        // Use an existing String reference if it exists.
                         hit = keywordsFoundAcrossAllDocuments.get(hit);
                     } else {
                         keywordsFoundAcrossAllDocuments.put(hit, hit);
