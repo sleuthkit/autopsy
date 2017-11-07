@@ -887,7 +887,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
-        new AutoIngestMetricsDialog(this.getTopLevelAncestor(), autoIngestMonitor);
+        try {
+            new AutoIngestMetricsDialog(this.getTopLevelAncestor());
+        } catch (AutoIngestMetricsDialog.AutoIngestMetricsDialogException ex) {
+            MessageNotifyUtil.Message.error(ex.getMessage());
+        }
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
