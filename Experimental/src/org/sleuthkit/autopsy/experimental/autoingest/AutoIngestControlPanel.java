@@ -60,10 +60,13 @@ import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnapshot;
+import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
+import org.sleuthkit.autopsy.guiutils.LongDateCellRenderer;
+import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 /**
  * A panel for monitoring automated ingest by a cluster, and for controlling
@@ -596,7 +599,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * renderer that will choose an icon to represent the job status.
          */
         column = completedTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader());
-        column.setCellRenderer(new CaseStatusIconCellRenderer());
+        column.setCellRenderer(new StatusIconCellRenderer());
         column.setMinWidth(STATUS_COL_MIN_WIDTH);
         column.setMaxWidth(STATUS_COL_MAX_WIDTH);
         column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
@@ -1152,7 +1155,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     job.getProcessingStageStartDate(), // STARTED_TIME
                     job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    job.getErrorsOccurred(), // STATUS
+                    job.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK, // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
