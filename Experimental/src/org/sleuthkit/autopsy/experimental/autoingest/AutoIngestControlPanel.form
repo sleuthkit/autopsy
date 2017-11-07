@@ -25,56 +25,53 @@
                           <Component id="pendingScrollPane" min="-2" pref="920" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="bnPrioritizeCase" max="32767" attributes="0"/>
-                          <Component id="bnPrioritizeJob" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="bnPrioritizeCase" linkSize="1" max="32767" attributes="0"/>
+                          <Component id="bnPrioritizeJob" linkSize="1" max="32767" attributes="0"/>
                       </Group>
                   </Group>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="bnPause" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="bnRefresh" linkSize="1" min="-2" pref="100" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="bnOptions" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="bnOpenLogDir" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="bnClusterMetrics" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="bnExit" linkSize="1" min="-2" pref="94" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="lbStatus" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="tbStatusMessage" min="-2" pref="861" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="lbCompleted" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="lbRunning" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="lbServicesStatus" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="tbServicesStatusMessage" min="-2" pref="861" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="bnPause" linkSize="1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                              <Component id="bnRefresh" linkSize="1" min="-2" pref="100" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                              <Component id="bnOptions" linkSize="1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                              <Component id="bnOpenLogDir" linkSize="1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                              <Component id="bnExit" linkSize="1" min="-2" pref="94" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="runningScrollPane" min="-2" pref="920" max="-2" attributes="0"/>
-                                  <Component id="completedScrollPane" min="-2" pref="920" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="bnCancelJob" linkSize="1" pref="117" max="32767" attributes="0"/>
-                                  <Component id="bnShowProgress" linkSize="1" pref="116" max="32767" attributes="0"/>
-                                  <Component id="bnCancelModule" linkSize="1" alignment="0" pref="117" max="32767" attributes="0"/>
-                                  <Component id="bnDeleteCase" linkSize="1" alignment="0" pref="117" max="32767" attributes="0"/>
-                                  <Component id="bnShowCaseLog" max="32767" attributes="0"/>
-                                  <Component id="bnReprocessJob" alignment="0" max="32767" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="lbStatus" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="tbStatusMessage" min="-2" pref="861" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="lbCompleted" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="lbRunning" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="lbServicesStatus" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="tbServicesStatusMessage" min="-2" pref="861" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="runningScrollPane" min="-2" pref="920" max="-2" attributes="0"/>
+                          <Component id="completedScrollPane" min="-2" pref="920" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="bnCancelJob" linkSize="1" pref="117" max="32767" attributes="0"/>
+                          <Component id="bnShowProgress" linkSize="1" pref="116" max="32767" attributes="0"/>
+                          <Component id="bnCancelModule" linkSize="1" alignment="0" pref="117" max="32767" attributes="0"/>
+                          <Component id="bnDeleteCase" linkSize="1" alignment="0" pref="117" max="32767" attributes="0"/>
+                          <Component id="bnShowCaseLog" max="32767" attributes="0"/>
+                          <Component id="bnReprocessJob" alignment="0" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -99,9 +96,9 @@
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="82" max="-2" attributes="0"/>
-                      <Component id="bnPrioritizeCase" min="-2" max="-2" attributes="0"/>
+                      <Component id="bnPrioritizeCase" linkSize="2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="bnPrioritizeJob" min="-2" max="-2" attributes="0"/>
+                      <Component id="bnPrioritizeJob" linkSize="2" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -139,6 +136,7 @@
                           <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                               <Component id="bnExit" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="bnOpenLogDir" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnClusterMetrics" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="bnPause" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -459,6 +457,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnOpenLogDirActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="bnClusterMetrics">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestControlPanel.bnClusterMetrics.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnClusterMetricsActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="bnReprocessJob">

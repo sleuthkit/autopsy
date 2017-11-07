@@ -74,6 +74,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
  * one such panel per node.
  */
 @Messages({
+    "AutoIngestControlPanel.bnClusterMetrics.text=Cluster Metrics",
     "AutoIngestControlPanel.bnPause.text=Pause",
     "AutoIngestControlPanel.bnPause.paused=Paused",
     "AutoIngestControlPanel.bnPause.running=Running",
@@ -1210,6 +1211,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
         bnOpenLogDir = new javax.swing.JButton();
+        bnClusterMetrics = new javax.swing.JButton();
         bnReprocessJob = new javax.swing.JButton();
 
         pendingTable.setModel(pendingTableModel);
@@ -1388,6 +1390,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnClusterMetrics, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnClusterMetrics.text")); // NOI18N
+        bnClusterMetrics.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnClusterMetricsActionPerformed(evt);
+            }
+        });
+
         org.openide.awt.Mnemonics.setLocalizedText(bnReprocessJob, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnReprocessJob.text")); // NOI18N
         bnReprocessJob.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1407,48 +1416,47 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                             .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(bnPause)
+                        .addGap(18, 18, 18)
+                        .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(bnOptions)
+                        .addGap(18, 18, 18)
+                        .addComponent(bnOpenLogDir)
+                        .addGap(18, 18, 18)
+                        .addComponent(bnClusterMetrics)
+                        .addGap(18, 18, 18)
+                        .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lbStatus)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(tbStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbCompleted)
+                    .addComponent(lbRunning)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lbServicesStatus)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(bnPause)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnOptions)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnOpenLogDir)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(bnCancelJob, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnShowProgress, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
-                                    .addComponent(bnCancelModule, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnDeleteCase, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(bnReprocessJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lbStatus)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tbStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(lbCompleted)
-                            .addComponent(lbRunning)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lbServicesStatus)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                            .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(bnCancelJob, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
+                            .addComponent(bnShowProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 116, Short.MAX_VALUE)
+                            .addComponent(bnCancelModule, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
+                            .addComponent(bnDeleteCase, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
+                            .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(bnReprocessJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnPause, bnRefresh, bnShowProgress});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnClusterMetrics, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnPause, bnRefresh, bnShowProgress});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1501,7 +1509,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(bnExit)
-                                .addComponent(bnOpenLogDir))
+                                .addComponent(bnOpenLogDir)
+                                .addComponent(bnClusterMetrics))
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(bnPause)
                                 .addComponent(bnRefresh)
@@ -1509,7 +1518,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnRefresh, bnShowProgress});
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnClusterMetrics, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnRefresh, bnShowProgress});
 
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1804,9 +1813,18 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_bnReprocessJobActionPerformed
 
+    private void bnClusterMetricsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnClusterMetricsActionPerformed
+        try {
+            new AutoIngestMetricsDialog(this.getTopLevelAncestor());
+        } catch (AutoIngestMetricsDialog.AutoIngestMetricsDialogException ex) {
+            MessageNotifyUtil.Message.error(ex.getMessage());
+        }
+    }//GEN-LAST:event_bnClusterMetricsActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancelJob;
     private javax.swing.JButton bnCancelModule;
+    private javax.swing.JButton bnClusterMetrics;
     private javax.swing.JButton bnDeleteCase;
     private javax.swing.JButton bnExit;
     private javax.swing.JButton bnOpenLogDir;
