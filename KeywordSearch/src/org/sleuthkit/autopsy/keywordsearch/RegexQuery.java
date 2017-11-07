@@ -101,15 +101,6 @@ final class RegexQuery implements KeywordSearchQuery {
     private String field = Server.Schema.CONTENT_STR.toString();
 
     /**
-     * The following map is an optimization to ensure that we reuse
-     * the same keyword hit String object across all hits. Even though we 
-     * benefit from G1GC String deduplication, the overhead associated with
-     * creating a new String object for every KeywordHit can be significant 
-     * when the number of hits gets large.
-     */
-    private final HashMap<String, String> keywordsFoundAcrossAllDocuments;
-
-    /**
      * Constructor with query to process.
      *
      * @param keywordList
@@ -122,7 +113,6 @@ final class RegexQuery implements KeywordSearchQuery {
 
         this.queryStringContainsWildcardPrefix = this.keywordString.startsWith(".*");
         this.queryStringContainsWildcardSuffix = this.keywordString.endsWith(".*");
-        this.keywordsFoundAcrossAllDocuments = new HashMap<>();
     }
 
     @Override
@@ -285,18 +275,22 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
+                    /**
+                     * The use of String interning is an optimization to ensure
+                     * that we reuse the same keyword hit String object across
+                     * all hits. Even though we benefit from G1GC String
+                     * deduplication, the overhead associated with creating a
+                     * new String object for every KeywordHit can be significant
+                     * when the number of hits gets large.
+                     */
+                    hit = hit.intern();
+
                     // We will only create one KeywordHit instance per document for
                     // a given hit.
                     if (keywordsFoundInThisDocument.containsKey(hit)) {
                         continue;
                     }
                     keywordsFoundInThisDocument.put(hit, hit);
-
-                    if (keywordsFoundAcrossAllDocuments.containsKey(hit)) {
-                        hit = keywordsFoundAcrossAllDocuments.get(hit);
-                    } else {
-                        keywordsFoundAcrossAllDocuments.put(hit, hit);
-                    }
 
                     if (artifactAttributeType == null) {
                         hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
