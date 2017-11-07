@@ -38,29 +38,29 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUB
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Node for a relationship, as represented by a BlackboardArtifact.
  */
-public class RelationShipFilterNode extends BlackboardArtifactNode {
-    
-    private static final Logger logger = Logger.getLogger(RelationShipFilterNode.class.getName());
-    
-    public RelationShipFilterNode(BlackboardArtifact artifact) {
+public class RelationShipNode extends BlackboardArtifactNode {
+
+    private static final Logger logger = Logger.getLogger(RelationShipNode.class.getName());
+
+    public RelationShipNode(BlackboardArtifact artifact) {
         super(artifact);
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message");
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
     }
-    
+
     @Override
     protected Sheet createSheet() {
-        
+
         Sheet s = new Sheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
         if (ss == null) {
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        
+
         ss.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
@@ -103,10 +103,14 @@ public class RelationShipFilterNode extends BlackboardArtifactNode {
 
     /**
      *
+     * Get the display string for the attribute of the given type from the given
+     * artifact.
+     *
      * @param artifact      the value of artifact
      * @param attributeType the value of TSK_SUBJECT1
      *
-     * @throws TskCoreException
+     * @return The display string, or an empty string if there is no such
+     *         attribute or an an error.
      */
     private static String getAttributeDisplayString(final BlackboardArtifact artifact, final ATTRIBUTE_TYPE attributeType) {
         try {
