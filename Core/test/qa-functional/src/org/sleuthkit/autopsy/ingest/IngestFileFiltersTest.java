@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import static junit.framework.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
