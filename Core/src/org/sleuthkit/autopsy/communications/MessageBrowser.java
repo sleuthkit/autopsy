@@ -26,8 +26,10 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -49,6 +51,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     MessageBrowser() {
         initComponents();
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
+       
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
 
@@ -89,7 +92,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                             logger.log(Level.WARNING, "Unexpected Node encountered: " + n.toString());
                         }
                     }
-                    messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accounts, filter, commsManager), true));
+                    messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(new AccountDetailsNode(accounts, filter, commsManager),internalExplorerManager), true));
                     if (accounts.size() == 1) {
                         messagesResultPanel.setPath(Iterables.getOnlyElement(accounts).getAccountUniqueID());
                     } else {
@@ -98,6 +101,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                 }
             }
         });
+         messagesResultPanel.addResultViewer(new DataResultViewerTable(internalExplorerManager,"Messages"));
+     
         messagesResultPanel.open();
     }
 
@@ -116,9 +121,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         splitPane.setDividerLocation(400);
         splitPane.setDividerSize(10);
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPane.setResizeWeight(0.4);
-
-        messageDataContent.setMinimumSize(null);
+        splitPane.setResizeWeight(0.5);
         splitPane.setBottomComponent(messageDataContent);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -127,7 +130,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 652, Short.MAX_VALUE))
+                .addComponent(splitPane))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
