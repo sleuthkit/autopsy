@@ -66,9 +66,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
                 true);
-        initFileChooser();
         initComponents();
         enableComponents();
+        initFileChooser();
         display();
     }
 
@@ -84,11 +84,23 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
-        fileChooser.setFileFilter(filter);
+        updateFileChooserFilter();
         fileChooser.setMultiSelectionEnabled(false);
+    }
+    
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.idx only)"})
+    private void updateFileChooserFilter() {
+        if(centralRepoRadioButton.isSelected()){
+            String[] EXTENSION = new String[]{"idx"}; //NON-NLS
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.centralRepoExtFilter.text"), EXTENSION);
+            fileChooser.setFileFilter(filter);  
+        } else {
+            String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
+            fileChooser.setFileFilter(filter);            
+        }
     }
 
     private void display() {
@@ -396,6 +408,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             hashDbFolder.mkdir();
         }
         fileChooser.setCurrentDirectory(hashDbFolder);
+        updateFileChooserFilter();
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
