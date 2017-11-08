@@ -154,9 +154,9 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
          * javax.swing.JPanel.<init>(JPanel.java:109) at
          * javax.swing.JPanel.<init>(JPanel.java:117)
          *
-         * When this happens, the following child components of this panel have
-         * not been constructed yet, since this panel's constructor has not been
-         * called yet.
+         * When this happens, the following child components of this JPanel
+         * subclass have not been constructed yet, since this panel's
+         * constructor has not been called yet.
          */
         if (null != listsManagementPanel) {
             listsManagementPanel.addPropertyChangeListener(l);
