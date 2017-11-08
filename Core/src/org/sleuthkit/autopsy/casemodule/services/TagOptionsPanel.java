@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
+import java.awt.EventQueue;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.DefaultListModel;
@@ -26,6 +29,7 @@ import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -38,6 +42,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private static final TagName.HTML_COLOR DEFAULT_COLOR = TagName.HTML_COLOR.NONE;
     private final DefaultListModel<TagNameDefinition> tagTypesListModel;
     private Set<TagNameDefinition> tagTypes;
+    private IngestJobEventPropertyChangeListener ingestJobEventsListener;
 
     /**
      * Creates new form TagsManagerOptionsPanel
@@ -54,6 +59,18 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         tagNamesList.addListSelectionListener((ListSelectionEvent event) -> {
             updatePanel();
         });
+        addIngestJobEventsListener();
+    }
+
+    /**
+     * Add a property change listener that listens to ingest job events to
+     * disable the buttons on the panel if ingest is running. This is done to
+     * prevent changes to user-defined types while the type definitions are in
+     * use.
+     */
+    private void addIngestJobEventsListener() {
+        ingestJobEventsListener = new IngestJobEventPropertyChangeListener();
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventsListener);
     }
 
     /**
@@ -83,6 +100,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         descriptionTextArea = new javax.swing.JTextArea();
         isNotableLabel = new javax.swing.JLabel();
         notableYesOrNoLabel = new javax.swing.JLabel();
+        ingestRunningWarningLabel = new javax.swing.JLabel();
 
         jPanel1.setPreferredSize(new java.awt.Dimension(750, 490));
 
@@ -119,6 +137,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             }
         });
 
+        editTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit-tag.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editTagNameButton, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.editTagNameButton.text")); // NOI18N
         editTagNameButton.setMaximumSize(new java.awt.Dimension(111, 25));
         editTagNameButton.setMinimumSize(new java.awt.Dimension(111, 25));
@@ -202,6 +221,10 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(notableYesOrNoLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.notableYesOrNoLabel.text")); // NOI18N
 
+        ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestRunningWarningLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.ingestRunningWarningLabel.text")); // NOI18N
+
         javax.swing.GroupLayout tagTypesAdditionalPanelLayout = new javax.swing.GroupLayout(tagTypesAdditionalPanel);
         tagTypesAdditionalPanel.setLayout(tagTypesAdditionalPanelLayout);
         tagTypesAdditionalPanelLayout.setHorizontalGroup(
@@ -210,11 +233,15 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 .addContainerGap()
                 .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(descriptionScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
-                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
-                        .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(notableYesOrNoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
+                                .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(notableYesOrNoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(ingestRunningWarningLabel))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         tagTypesAdditionalPanelLayout.setVerticalGroup(
@@ -228,7 +255,9 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(notableYesOrNoLabel))
-                .addContainerGap(351, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 304, Short.MAX_VALUE)
+                .addComponent(ingestRunningWarningLabel)
+                .addGap(31, 31, 31))
         );
 
         jSplitPane1.setRightComponent(tagTypesAdditionalPanel);
@@ -323,6 +352,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private javax.swing.JScrollPane descriptionScrollPane;
     private javax.swing.JTextArea descriptionTextArea;
     private javax.swing.JButton editTagNameButton;
+    private javax.swing.JLabel ingestRunningWarningLabel;
     private javax.swing.JLabel isNotableLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -371,28 +401,54 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
      * component.
      */
     private void updatePanel() {
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         /*
          * Only enable the delete button when there is a tag type selected in
          * the tag types JList.
          */
+        ingestRunningWarningLabel.setVisible(ingestIsRunning);
         boolean isSelected = tagNamesList.getSelectedIndex() != -1;
-        editTagNameButton.setEnabled(isSelected);
-        boolean enableDelete = isSelected && !TagNameDefinition.STANDARD_TAG_DISPLAY_NAMES.contains(tagNamesList.getSelectedValue().getDisplayName());
+        boolean enableEdit = !ingestIsRunning && isSelected;
+        editTagNameButton.setEnabled(enableEdit);
+        boolean enableDelete = enableEdit && !TagNameDefinition.STANDARD_TAG_DISPLAY_NAMES.contains(tagNamesList.getSelectedValue().getDisplayName());
         deleteTagNameButton.setEnabled(enableDelete);
-        if (isSelected){
-            
+        if (isSelected) {
+
             descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
-            if (tagNamesList.getSelectedValue().isNotable()){
+            if (tagNamesList.getSelectedValue().isNotable()) {
                 notableYesOrNoLabel.setText("Yes");
+            } else {
+                notableYesOrNoLabel.setText("No");
             }
-            else {
-                 notableYesOrNoLabel.setText("No");
-            }    
-        }
-        else {
+        } else {
             descriptionTextArea.setText("");
             notableYesOrNoLabel.setText("");
         }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
+    @SuppressWarnings("FinalizeDeclaration")
+    protected void finalize() throws Throwable {
+        IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventsListener);
+        super.finalize();
+    }
+
+    /**
+     * A property change listener that listens to ingest job events.
+     */
+    private class IngestJobEventPropertyChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    updatePanel();
+                }
+            });
+        }
+    }
 }
