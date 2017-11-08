@@ -19,18 +19,29 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.text.JTextComponent;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
@@ -70,17 +81,36 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Artifact currently being displayed
      */
     private BlackboardArtifact artifact;
+    private  DataResultPanel drp;
 
     /**
      * Creates new MessageContentViewer
      */
     public MessageContentViewer() {
         initComponents();
+
+        drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, new DataContent() {
+            @Override
+            public void setNode(Node selectedNode) {
+//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        }
+        );
+        msgbodyTabbedPane.addTab("Attachments", drp);
+        msgbodyTabbedPane.setEnabledAt(4, true);
+
         textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
 
         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
         resetComponent();
+
+        drp.open();
     }
 
     /**
@@ -339,6 +369,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         }
 
         if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
+
             displayMsg();
         } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
             displayEmailMsg();
@@ -480,6 +511,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
             msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
+            drp.setNode(new DataResultFilterNode(new TableFilterNode(new AbstractNode(new AttachmentsChildren(artifact.getChildren().stream()
+                    .filter(AbstractFile.class::isInstance)
+                    .map(AbstractFile.class::cast)
+                    .collect(Collectors.toSet()))), true), null));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }
@@ -506,5 +541,25 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         doc.select("img[src]").forEach(img -> img.attr("src", ""));
 
         return doc.html();
+    }
+
+    private static class AttachmentsChildren extends Children.Keys<AbstractFile> {
+
+        private final Set<AbstractFile> files;
+
+        AttachmentsChildren(Set<AbstractFile> collect) {
+            this.files = collect;
+        }
+
+        @Override
+        protected Node[] createNodes(AbstractFile t) {
+            return new Node[]{new FileNode(t)};
+        }
+
+        @Override
+        protected void addNotify() {
+            super.addNotify();
+            setKeys(files);
+        }
     }
 }

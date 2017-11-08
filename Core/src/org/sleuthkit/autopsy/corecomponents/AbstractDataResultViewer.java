@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerManager.Provider;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -40,11 +39,11 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em;
-    /**
-     * Content viewer to respond to selection events Either the main one, or
-     * custom one if set
-     */
-    protected DataContent contentViewer;
+//    /**
+//     * Content viewer to respond to selection events Either the main one, or
+//     * custom one if set
+//     */
+//    protected DataContent contentViewer;
 
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
@@ -58,7 +57,7 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
         this.em = explorerManager;
         //DataContent is designed to return only the default viewer from lookup
         //use the default one unless set otherwise
-        contentViewer = Lookup.getDefault().lookup(DataContent.class);
+//        contentViewer = Lookup.getDefault().lookup(DataContent.class);
     }
 
     /**
@@ -112,6 +111,6 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
 
     @Override
     public void setContentViewer(DataContent contentViewer) {
-        this.contentViewer = contentViewer;
+//        this.contentViewer = contentViewer;
     }
 }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -75,6 +76,14 @@ public class RelationShipNode extends BlackboardArtifactNode {
                             getAttributeDisplayString(artifact, TSK_DATETIME_SENT)));
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
+                     {
+                        try {
+                            ss.put(new NodeProperty<>("at", "at", "at",
+                                    artifact.getChildrenCount() > 0));
+                        } catch (TskCoreException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+                    }
                     break;
                 case TSK_MESSAGE:
                     ss.put(new NodeProperty<>("From", "From", "From",
