@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
@@ -35,6 +34,7 @@ import javax.swing.WindowConstants;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executors;
 import javax.swing.JOptionPane;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
@@ -139,6 +139,23 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         return worker.getLinesProcessed() + Bundle.ImportCentralRepoDbProgressDialog_linesProcessed();
     }
     
+    private static void deleteIncompleteSet(int crIndex){
+        if(crIndex >= 0){
+
+            // This can be slow on large reference sets
+            Executors.newSingleThreadExecutor().execute(new Runnable() {
+                @Override 
+                public void run() {
+                    try{
+                        EamDb.getInstance().deleteReferenceSet(crIndex);
+                    } catch (EamDbException ex2){
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
+                    }
+                }
+            });
+        }
+    }
+
     private interface CentralRepoImportWorker{
         
         void execute();
@@ -271,23 +288,6 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             return null;
         }
         
-        private void deleteIncompleteSet(int crIndex){
-            if(crIndex >= 0){
-                
-                // This can be slow on large reference sets
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override 
-                    public void run() {
-                        try{
-                            EamDb.getInstance().deleteReferenceSet(crIndex);
-                        } catch (EamDbException ex2){
-                            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
-                        }
-                    }
-                });
-            }
-        }
-        
         @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.importError=Error importing hash set"})
         @Override
         protected void done() {
@@ -310,17 +310,180 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
             } catch (Exception ex) {
                 // Delete this incomplete hash set from the central repo
-                if(crIndex >= 0){
-                    try{
-                        EamDb.getInstance().deleteReferenceSet(crIndex);
-                    } catch (EamDbException ex2){
-                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex);
-                    }
-                }
+                deleteIncompleteSet(crIndex);
                 errorString = Bundle.ImportCentralRepoDbProgressDialog_importError();
             }
         }       
     }
+    
+    class ImportKdbWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
+        private final int HASH_IMPORT_THRESHOLD = 10000;
+        private final String hashSetName;
+        private final String version;
+        private final int orgId;
+        private final boolean searchDuringIngest;
+        private final boolean sendIngestMessages;
+        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
+        private final boolean readOnly;
+        private final File importFile;
+        private final long totalLines;
+        private int crIndex = -1;
+        private HashDbManager.CentralRepoHashDb newHashDb = null;
+        private final AtomicLong numLines = new AtomicLong();
+        private String errorString = "";
+        
+        private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
+        private final String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
+        private final String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
+        
+        ImportKdbWorker(String hashSetName, String version, int orgId,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+            boolean readOnly, File importFile){
+            
+            this.hashSetName = hashSetName;
+            this.version = version;
+            this.orgId = orgId;
+            this.searchDuringIngest = searchDuringIngest;
+            this.sendIngestMessages = sendIngestMessages;
+            this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
+            this.importFile = importFile;
+            this.numLines.set(0);
+            
+            this.totalLines = getEstimatedTotalHashes();
+        }
+        
+        /**
+         * Encase files have a 0x480 byte header, then each hash takes 18 bytes
+         * @return Approximate number of hashes in the file
+         */
+        final long getEstimatedTotalHashes(){
+            // TEMP - Figure this out
+            long fileSize = importFile.length();
+            return 100;
+        }
+        
+        @Override 
+        public HashDbManager.HashDatabase getDatabase(){
+            return newHashDb;
+        }
+        
+        @Override
+        public long getLinesProcessed(){
+            return numLines.get();
+        }
+        
+        @Override
+        public int getProgressPercentage(){
+            return this.getProgress();
+        }
+        
+        @Override
+        public String getError(){
+            return errorString;
+        }
+        
+        @Override
+        protected Void doInBackground() throws Exception {
+
+            EncaseHashSetParser encaseParser = new EncaseHashSetParser(this.importFile.getAbsolutePath());
+            
+            TskData.FileKnown knownStatus;
+            if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
+                knownStatus = TskData.FileKnown.KNOWN;
+            } else {
+                knownStatus = TskData.FileKnown.BAD;
+            }
+            
+            // Create an empty hashset in the central repository
+            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+
+            EamDb dbManager = EamDb.getInstance();
+            CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
+
+            Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
+
+            // Open the database
+            BasicDataSource connectionPool = new BasicDataSource();
+            connectionPool.setDriverClassName(JDBC_DRIVER);
+
+            StringBuilder connectionURL = new StringBuilder();
+            connectionURL.append(JDBC_BASE_URI);
+            connectionURL.append(importFile);
+
+            connectionPool.setUrl(connectionURL.toString());
+
+            // tweak pool configuration
+            connectionPool.setInitialSize(50);
+            connectionPool.setMaxTotal(-1);
+            connectionPool.setMaxIdle(-1);
+            connectionPool.setMaxWaitMillis(1000);
+            connectionPool.setValidationQuery(VALIDATION_QUERY);
+            
+            
+            
+            /*while (! encaseParser.doneReading()) {
+                if(isCancelled()){
+                    return null;
+                }
+
+                String newHash = encaseParser.getNextHash();
+
+                if(newHash != null){
+                    EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
+                            crIndex, 
+                            newHash, 
+                            knownStatus, 
+                            "");
+
+                    globalInstances.add(eamGlobalFileInstance);
+                    numLines.incrementAndGet();
+
+                    if(numLines.get() % HASH_IMPORT_THRESHOLD == 0){
+                        dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+                        globalInstances.clear();
+
+                        int progress = (int)(numLines.get() * 100 / totalLines);
+                        if(progress < 100){
+                            this.setProgress(progress);
+                        } else {
+                            this.setProgress(99);
+                        }
+                    }
+                }
+            }*/
+
+            dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+            this.setProgress(100);
+            return null;
+        }
+        
+        @Override
+        protected void done() {
+            
+            if(isCancelled()){
+                // If the user hit cancel, delete this incomplete hash set from the central repo
+                deleteIncompleteSet(crIndex);
+                return;
+            }
+            
+            try {
+                get();
+                try{
+                    newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
+                            crIndex, 
+                            searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
+                } catch (TskCoreException ex){
+                    JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
+                    Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error adding imported hash set", ex);
+                }
+            } catch (Exception ex) {
+                // Delete this incomplete hash set from the central repo
+                deleteIncompleteSet(crIndex);
+                errorString = Bundle.ImportCentralRepoDbProgressDialog_importError();
+            }
+        }       
+    }    
     
     class ImportIDXWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
         
@@ -446,23 +609,6 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             return null;
         }
         
-        private void deleteIncompleteSet(int crIndex){
-            if(crIndex >= 0){
-                
-                // This can be slow on large reference sets
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override 
-                    public void run() {
-                        try{
-                            EamDb.getInstance().deleteReferenceSet(crIndex);
-                        } catch (EamDbException ex2){
-                            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
-                        }
-                    }
-                });
-            }
-        }
-        
         @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.addDbError.message=Error adding new hash set"})
         @Override
         protected void done() {
@@ -484,13 +630,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
             } catch (Exception ex) {
                 // Delete this incomplete hash set from the central repo
-                if(crIndex >= 0){
-                    try{
-                        EamDb.getInstance().deleteReferenceSet(crIndex);
-                    } catch (EamDbException ex2){
-                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex);
-                    }
-                }
+                deleteIncompleteSet(crIndex);
             }
         }       
     }
