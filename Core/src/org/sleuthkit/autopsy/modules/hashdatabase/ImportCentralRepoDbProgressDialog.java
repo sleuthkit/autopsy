@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
@@ -84,10 +85,10 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));       
         
         File importFile = new File(importFileName);
-        if(importFileName.endsWith(".idx")){  // < need case insensitive
+        if(importFileName.toLowerCase().endsWith(".idx")){
             worker = new ImportIDXWorker(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, 
                     knownFilesType, readOnly, importFile);
-        } else if(importFileName.endsWith(".hash")){ // < need case insensitive
+        } else if(importFileName.toLowerCase().endsWith(".hash")){
             worker = new ImportEncaseWorker(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, 
                     knownFilesType, readOnly, importFile);
         } else {
@@ -123,8 +124,14 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             bnCancel.setEnabled(false);
             bnOk.setEnabled(true);
             
-            progressBar.setValue(progressBar.getMaximum());
-            lbProgress.setText(getProgressString());
+            if(worker.getError().isEmpty()){
+                progressBar.setValue(progressBar.getMaximum());
+                lbProgress.setText(getProgressString());
+            } else {
+                progressBar.setValue(0);
+                lbProgress.setForeground(Color.red);
+                lbProgress.setText(worker.getError());
+            }
         }
     }
     
@@ -140,6 +147,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         int getProgressPercentage();
         long getLinesProcessed();
         HashDbManager.HashDatabase getDatabase();
+        String getError();
     }
     
     class ImportEncaseWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
@@ -156,6 +164,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private int crIndex = -1;
         private HashDbManager.CentralRepoHashDb newHashDb = null;
         private final AtomicLong numLines = new AtomicLong();
+        private String errorString = "";
         
         ImportEncaseWorker(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
@@ -199,6 +208,11 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         @Override
         public int getProgressPercentage(){
             return this.getProgress();
+        }
+        
+        @Override
+        public String getError(){
+            return errorString;
         }
         
         @Override
@@ -274,6 +288,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
         }
         
+        @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.importError=Error importing hash set"})
         @Override
         protected void done() {
             
@@ -302,6 +317,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                         Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex);
                     }
                 }
+                errorString = Bundle.ImportCentralRepoDbProgressDialog_importError();
             }
         }       
     }
@@ -321,6 +337,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private int crIndex = -1;
         private HashDbManager.CentralRepoHashDb newHashDb = null;
         private final AtomicLong numLines = new AtomicLong();
+        private String errorString = "";
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
@@ -363,6 +380,11 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         @Override
         public int getProgressPercentage(){
             return this.getProgress();
+        }
+        
+        @Override
+        public String getError(){
+            return errorString;
         }
         
         @Override
