@@ -128,9 +128,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             }
         }
-
         return hashSetHitsCount.get();
-
     }
 
     public ReadOnlyLongProperty hashSetHitsCountProperty() {
@@ -226,7 +224,6 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     // By default, sort by group key name
     @Override
     public int compareTo(DrawableGroup other) {
-        return this.groupKey.getValueDisplayName().compareTo(other.groupKey.getValueDisplayName());
+        return getGroupByValueDislpayName().compareTo(other.getGroupByValueDislpayName());
     }
-
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import static java.lang.Boolean.FALSE;
@@ -25,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
@@ -42,6 +45,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
@@ -53,8 +57,18 @@ public class IngestEventsListener {
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int ceModuleInstanceCount = 0;
+    private final ExecutorService jobProcessingExecutor;
+    private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
+
+    IngestEventsListener() {
+        jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INGEST_EVENT_THREAD_NAME).build());
+    }
+
+    void shutdown() {
+        ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
+    }
 
     /*
      * Add all of our Ingest Event Listeners to the IngestManager Instance.
@@ -86,7 +100,7 @@ public class IngestEventsListener {
      * Engine.
      */
     public synchronized static void decrementCorrelationEngineModuleCount() {
-        if (getCeModuleInstanceCount()>0) {  //prevent it ingestJobCounter from going negative
+        if (getCeModuleInstanceCount() > 0) {  //prevent it ingestJobCounter from going negative
             ceModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
         }
     }
@@ -109,89 +123,10 @@ public class IngestEventsListener {
         return ceModuleInstanceCount;
     }
 
-    private class IngestModuleEventListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (getCeModuleInstanceCount() > 0) {
-                EamDb dbManager;
-                try {
-                    dbManager = EamDb.getInstance();
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
-                    return;
-                }
-                switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
-                    case DATA_ADDED: {
-                        if (!EamDb.isEnabled()) {
-                            return;
-                        }
-                        final ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
-                        Collection<BlackboardArtifact> bbArtifacts = mde.getArtifacts();
-                        if (null == bbArtifacts) { //the ModuleDataEvents don't always have a collection of artifacts set
-                            return;
-                        }
-                        List<CorrelationAttribute> eamArtifacts = new ArrayList<>();
-                        
-                        for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                            // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                            List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
-                            for (CorrelationAttribute eamArtifact : convertedArtifacts) {
-                                try {
-                                    // Only do something with this artifact if it's unique within the job
-                                    if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
-                                        // Was it previously marked as bad?
-                                        // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
-                                        // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
-                                        // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
-                                        List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                                        if (!caseDisplayNames.isEmpty()) {
-                                            postCorrelatedBadArtifactToBlackboard(bbArtifact,
-                                                    caseDisplayNames);
-                                        }
-                                        eamArtifacts.add(eamArtifact);
-                                    }
-                                } catch (EamDbException ex) {
-                                    LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);
-                                }
-                            }
-                        }
-                        
-                        if (FALSE == eamArtifacts.isEmpty()) {
-                            // send update to entperirse artifact manager db
-                            Runnable r = new NewArtifactsRunner(eamArtifacts);
-                            // TODO: send r into a thread pool instead
-                            Thread t = new Thread(r);
-                            t.start();
-                        } // DATA_ADDED
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    private class IngestJobEventListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
-                case DATA_SOURCE_ANALYSIS_COMPLETED: {
-                    // clear the tracker to reduce memory usage
-                    if (getCeModuleInstanceCount() == 0) {
-                        recentlyAddedCeArtifacts.clear();
-                    }
-                    //else another instance of the Correlation Engine Module is still being run.
-                } // DATA_SOURCE_ANALYSIS_COMPLETED
-                break;
-            }
-        }
-    }
-
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
-           "IngestEventsListener.prevCaseComment.text=Previous Case: ",
+        "IngestEventsListener.prevCaseComment.text=Previous Case: ",
         "IngestEventsListener.ingestmodule.name=Correlation Engine"})
-    private void postCorrelatedBadArtifactToBlackboard(BlackboardArtifact bbArtifact, List<String> caseDisplayNames) {
+    static private void postCorrelatedBadArtifactToBlackboard(BlackboardArtifact bbArtifact, List<String> caseDisplayNames) {
 
         try {
             AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
@@ -220,6 +155,111 @@ public class IngestEventsListener {
             LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+        }
+    }
+
+    private class IngestModuleEventListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (getCeModuleInstanceCount() > 0) {
+                EamDb dbManager;
+                try {
+                    dbManager = EamDb.getInstance();
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                    return;
+                }
+                switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
+                    case DATA_ADDED: {
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private class IngestJobEventListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
+                case DATA_SOURCE_ANALYSIS_COMPLETED: {
+                    jobProcessingExecutor.submit(new AnalysisCompleteTask());
+                    break;
+                }
+            }
+        }
+
+    }
+
+    private final class AnalysisCompleteTask implements Runnable {
+
+        @Override
+        public void run() {
+            // clear the tracker to reduce memory usage
+            if (getCeModuleInstanceCount() == 0) {
+                recentlyAddedCeArtifacts.clear();
+            }
+            //else another instance of the Correlation Engine Module is still being run.
+        } // DATA_SOURCE_ANALYSIS_COMPLETED
+    }
+
+    private final class DataAddedTask implements Runnable {
+
+        private final EamDb dbManager;
+        private final PropertyChangeEvent event;
+
+        private DataAddedTask(EamDb db, PropertyChangeEvent evt) {
+            dbManager = db;
+            event = evt;
+        }
+
+        @Override
+        public void run() {
+            if (!EamDb.isEnabled()) {
+                return;
+            }
+            final ModuleDataEvent mde = (ModuleDataEvent) event.getOldValue();
+            Collection<BlackboardArtifact> bbArtifacts = mde.getArtifacts();
+            if (null == bbArtifacts) { //the ModuleDataEvents don't always have a collection of artifacts set
+                return;
+            }
+            List<CorrelationAttribute> eamArtifacts = new ArrayList<>();
+
+            for (BlackboardArtifact bbArtifact : bbArtifacts) {
+                // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
+                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
+                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                    try {
+                        // Only do something with this artifact if it's unique within the job
+                        if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
+                            // Was it previously marked as bad?
+                            // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
+                            // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
+                            // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
+                            List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                            if (!caseDisplayNames.isEmpty()) {
+                                postCorrelatedBadArtifactToBlackboard(bbArtifact,
+                                        caseDisplayNames);
+                            }
+                            eamArtifacts.add(eamArtifact);
+                        }
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);
+                    }
+                }
+            }
+            if (FALSE == eamArtifacts.isEmpty()) {
+                try {
+                    for (CorrelationAttribute eamArtifact : eamArtifacts) {
+                        dbManager.addArtifact(eamArtifact);
+                    }
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
+                }
+            } // DATA_ADDED
         }
     }
 }

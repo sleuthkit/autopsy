@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -168,14 +169,27 @@ class TableReportGenerator {
                                 return "unknown";
                             }
                         });
-                for (String accountType : groupedArtifacts.keySet()) {
+                for (String accountTypeStr : groupedArtifacts.keySet()) {
                     /* If the report is a ReportHTML, the data type name
                      * eventualy makes it to useDataTypeIcon which expects but
                      * does not require a artifact name, so we make a synthetic
                      * compund name by appending a ":" and the account type.
                      */
-                    final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountType;
-                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
+                    String accountDisplayname = accountTypeStr;
+                    if (accountTypeStr != null) {
+                        try {
+                            Account.Type acctType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountType(accountTypeStr);
+                            if (acctType != null) {
+                                 accountDisplayname = acctType.getDisplayName();
+                            }
+                        }
+                        catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Unable to get dusplay name for account type.", ex);   
+                        }
+                    }
+                    
+                    final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountDisplayname;
+                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountTypeStr)), type, compundDataTypeName, comment);
                 }
             } else {
                 //all other artifact types are sent to writeTableForDataType directly

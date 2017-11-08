@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2016 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
  */
 public class FilesSetPanel extends javax.swing.JPanel {
 
-    @NbBundle.Messages({"FilesSetPanel.ingest.title=File Ingest Filter", "FilesSetPanel.ingest.createNewFilter=Create/edit file ingest filters...", "FilesSetPanel.ingest.messages.filtersMustBeNamed=File ingest filters must be named."})
+    @NbBundle.Messages({"FilesSetPanel.filter.title=File Filter", "FilesSetPanel.rule.title=File Filter Rule", "FilesSetPanel.ingest.createNewFilter=Create/edit file ingest filters...", "FilesSetPanel.ingest.messages.filtersMustBeNamed=File ingest filters must be named."})
 
     private static final String CREATE_NEW_FILE_INGEST_FILTER = Bundle.FilesSetPanel_ingest_createNewFilter();
     private final String mustBeNamedErrorText;

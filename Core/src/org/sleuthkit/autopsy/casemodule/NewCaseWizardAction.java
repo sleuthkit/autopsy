@@ -37,6 +37,10 @@ import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -75,11 +79,32 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 @Override
                 protected Void doInBackground() throws Exception {
                     String caseNumber = (String) wizardDescriptor.getProperty("caseNumber"); //NON-NLS
-                    String examiner = (String) wizardDescriptor.getProperty("caseExaminer"); //NON-NLS
+                    String examinerName = (String) wizardDescriptor.getProperty("caseExaminerName"); //NON-NLS
+                    String examinerPhone = (String) wizardDescriptor.getProperty("caseExaminerPhone"); //NON-NLS
+                    String examinerEmail = (String) wizardDescriptor.getProperty("caseExaminerEmail"); //NON-NLS
+                    String caseNotes = (String) wizardDescriptor.getProperty("caseNotes"); //NON-NLS
+                    String organizationName = (String) wizardDescriptor.getProperty("caseOrganization"); //NON-NLS
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                    Case.createAsCurrentCase(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    Case.createAsCurrentCase(caseType, createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes));
+                    if (EamDb.isEnabled()) {  //if the eam is enabled we need to save the case organization information now
+                            EamDb dbManager = EamDb.getInstance();
+                            if (dbManager != null) {
+                                CorrelationCase cRCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                                if (cRCase == null) {
+                                    cRCase = dbManager.newCase(Case.getCurrentCase());
+                                }
+                                if (!organizationName.isEmpty()) {
+                                    for (EamOrganization org : dbManager.getOrganizations()) {
+                                        if (org.getName().equals(organizationName)) {
+                                            cRCase.setOrg(org);
+                                            dbManager.updateCase(cRCase);
+                                        }
+                                    }
+                                }
+                            }
+                        } 
                     return null;
                 }
 
