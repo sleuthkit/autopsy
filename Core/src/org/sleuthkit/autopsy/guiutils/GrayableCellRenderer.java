@@ -45,7 +45,7 @@ public class GrayableCellRenderer extends DefaultTableCellRenderer {
         return this;
     }
 
-    void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
+    public void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
         if (table.isEnabled()) {
             /*
              * The table is enabled, make the foreground and background the
