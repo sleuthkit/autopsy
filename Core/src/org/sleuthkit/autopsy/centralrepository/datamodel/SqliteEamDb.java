@@ -637,14 +637,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     
     /**
      * Remove a reference set and all hashes contained in it.
-     * @param centralRepoIndex
+     * @param referenceSetID
      * @throws EamDbException 
      */
     @Override
-    public void deleteReferenceSet(int centralRepoIndex) throws EamDbException{
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException{
         try{
             acquireExclusiveLock();
-            super.deleteReferenceSet(centralRepoIndex);
+            super.deleteReferenceSet(referenceSetID);
         } finally {
             releaseExclusiveLock();
         }   
@@ -653,14 +653,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Check if the given hash is in a specific reference set
      * @param hash
-     * @param index
-     * @return 
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
      */
     @Override
-    public boolean isHashInReferenceSet(String hash, int index) throws EamDbException{
+    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
         try{
             acquireSharedLock();
-            return super.isHashInReferenceSet(hash, index);
+            return super.isHashInReferenceSet(hash, referenceSetID);
         } finally {
             releaseSharedLock();
         }          
@@ -670,7 +670,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * Check whether a reference set with the given name/version is in the central repo
      * @param hashSetName
      * @param version
-     * @return
+     * @return true if a matching set is found
      * @throws EamDbException 
      */
     @Override
@@ -816,7 +816,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Get all reference sets
      *
-     * @return The global set associated with the ID
+     * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
@@ -847,7 +847,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseExclusiveLock();
         }  
-    }    
+    }  
     
     /**
      * Insert the bulk collection of Reference Type Instances
