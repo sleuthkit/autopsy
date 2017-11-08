@@ -237,6 +237,55 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
+            <test-dependencies>
+                <test-type>
+                    <name>unit</name>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.libs.junit4</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.jellytools.java</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.jellytools.platform</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.jemmy</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.nbjunit</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                </test-type>
+                <test-type>
+                    <name>qa-functional</name>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.libs.junit4</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.jellytools.java</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.jellytools.platform</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.jemmy</code-name-base>
+                        <compile-dependency/>
+                    </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.netbeans.modules.nbjunit</code-name-base>
+                        <recursive/>
+                        <compile-dependency/>
+                    </test-dependency>
+                </test-type>
+            </test-dependencies>
             <public-packages>
                 <package>net.sf.sevenzipjbinding</package>
                 <package>net.sf.sevenzipjbinding.impl</package>
@@ -260,6 +309,7 @@
                 <package>org.sleuthkit.autopsy.events</package>
                 <package>org.sleuthkit.autopsy.externalresults</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
+                <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
@@ -365,6 +415,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-dbcp2-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

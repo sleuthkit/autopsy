@@ -31,9 +31,20 @@ import javax.swing.JComponent;
 abstract class AbstractFileSearchFilter<T extends JComponent> implements FileSearchFilter {
 
     final private T component;
-
+    private String lastErrorMessage;
+    
     AbstractFileSearchFilter(T component) {
         this.component = component;
+        this.lastErrorMessage = "";
+    }
+    
+    void setLastError(String mes){
+        lastErrorMessage = mes;
+    }
+    
+    @Override
+    public String getLastError(){
+        return this.lastErrorMessage;
     }
 
     @Override

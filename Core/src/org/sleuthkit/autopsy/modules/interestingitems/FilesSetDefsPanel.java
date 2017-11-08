@@ -77,6 +77,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private final JButton okButton = new JButton("OK");
     private final JButton cancelButton = new JButton("Cancel");
     private final PANEL_TYPE panelType;
+    private final String filterDialogTitle;
     private final String ruleDialogTitle;
     private boolean canBeEnabled = true;
 
@@ -109,7 +110,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.jLabel7.setVisible(false);
             this.fileSizeUnitComboBox.setVisible(false);
             this.fileSizeSpinner.setVisible(false);
-            this.ruleDialogTitle = "FilesSetPanel.ingest.title";
+            this.filterDialogTitle = "FilesSetPanel.filter.title";
+            this.ruleDialogTitle = "FilesSetPanel.rule.title";
             this.jLabel8.setVisible(false);
             this.equalitySignComboBox.setVisible(false);
             this.ignoreKnownFilesCheckbox.setVisible(false);
@@ -124,13 +126,14 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             org.openide.awt.Mnemonics.setLocalizedText(deleteSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingest.deleteSetButton.text")); // NOI18N
             org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingest.jLabel6.text")); // NOI18N
         } else {
+            this.filterDialogTitle = "FilesSetPanel.interesting.title";
             this.ruleDialogTitle = "FilesSetPanel.interesting.title";
             this.ingoreUnallocCheckbox.setVisible(false);
         }
     }
 
     @NbBundle.Messages({"FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings",
-        "FilesSetDefsPanel.Ingest.Title=File Ingest Filter Settings"})
+        "FilesSetDefsPanel.Ingest.Title=File Filter Settings"})
     private void customInit() {
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
             setName(Bundle.FilesSetDefsPanel_Ingest_Title());
@@ -408,7 +411,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, filterDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.

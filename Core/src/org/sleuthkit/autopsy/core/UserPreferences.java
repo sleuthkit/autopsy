@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
-import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -76,8 +75,7 @@ public final class UserPreferences {
     public enum SelectedMode {
 
         STANDALONE,
-        AUTOINGEST,
-        REVIEW
+        AUTOINGEST
     };
 
     /**
