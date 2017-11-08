@@ -115,7 +115,7 @@ class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
             }
             long msgCount = 0;
             try {
-                msgCount = commsManager.getRelationshipsCount(accountDeviceInstance.getAccount(), filter );
+                msgCount = commsManager.getCommunicationsCount(accountDeviceInstance, filter );
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
             }

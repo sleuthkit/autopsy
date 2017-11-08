@@ -28,6 +28,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -38,8 +39,8 @@ class AccountDetailsNode extends AbstractNode {
     private final static Logger logger = Logger.getLogger(AccountDetailsNode.class.getName());
     private final CommunicationsFilter filter; //TODO: Use this
 
-    AccountDetailsNode(Set<Account> accounts,CommunicationsFilter filter, CommunicationsManager commsManager) {
-        super(new AccountRelationshipChildren(accounts, commsManager, filter));
+    AccountDetailsNode(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter filter, CommunicationsManager commsManager) {
+        super(new AccountRelationshipChildren(accountDeviceInstances, commsManager, filter));
         this.filter = filter;
     }
 
@@ -48,12 +49,12 @@ class AccountDetailsNode extends AbstractNode {
      */
     private static class AccountRelationshipChildren extends Children.Keys<BlackboardArtifact> {
 
-        private final Set<Account> accounts;
+        private final Set<AccountDeviceInstance> accountDeviceInstances;
         private final CommunicationsManager commsManager;
-        private final CommunicationsFilter filter;//TODO: Use this
+        private final CommunicationsFilter filter;
 
-        private AccountRelationshipChildren(Set<Account> accounts, CommunicationsManager commsManager, CommunicationsFilter filter) {
-            this.accounts = accounts;
+        private AccountRelationshipChildren(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsManager commsManager, CommunicationsFilter filter) {
+            this.accountDeviceInstances = accountDeviceInstances;
             this.commsManager = commsManager;
             this.filter = filter;
         }
@@ -66,22 +67,15 @@ class AccountDetailsNode extends AbstractNode {
         @Override
         protected void addNotify() {
             Set<BlackboardArtifact> keys = new HashSet<>();
-            for (Account account : accounts) {
-                List<Account> accountsWithRelationship = new ArrayList<>();
-                try {
-                    accountsWithRelationship.addAll(commsManager.getAccountsWithRelationship(account)); //TODO: Use filter here
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error loading with relationships to " + account, ex);
-                }
-
-                accountsWithRelationship.forEach(otherAcount -> {
-                    try {
-                        keys.addAll(commsManager.getRelationships(account, otherAcount)); //TODO:Use filter here
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Error loading relationships between " + account + " and " + otherAcount, ex);
-                    }
-                });
+           
+            try {
+                Set<BlackboardArtifact> communications  = commsManager.getCommunications(accountDeviceInstances, filter);
+                keys = new HashSet<>(communications);
             }
+            catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error loading communications for accounts. ", ex);
+            }
+            
             setKeys(keys);
         }
     }

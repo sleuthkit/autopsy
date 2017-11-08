@@ -306,7 +306,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
 
             List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
-                    commsManager.getAccountDeviceInstancesWithRelationships(commsFilter)
+                    commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)
                             .stream()
                             .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
                             .collect(Collectors.toList());

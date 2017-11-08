@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 
@@ -71,13 +72,13 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                     messagesResultPanel.setNode(null);
                     messagesResultPanel.setPath("");
                 } else {
-                    Set<Account> accounts = new HashSet<>();
+                    Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
                     CommunicationsFilter filter = null;
                     CommunicationsManager commsManager = null;
                     for (Node n : selectedNodes) {
                         if (n instanceof AccountDeviceInstanceNode) {
                             final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) n;
-                            accounts.add(adiNode.getAccountDeviceInstance().getAccount());
+                            accountDeviceInstances.add(adiNode.getAccountDeviceInstance());
                             if (commsManager == null) {
                                 commsManager = adiNode.getCommsManager();
                             }
@@ -92,11 +93,11 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                             logger.log(Level.WARNING, "Unexpected Node encountered: " + n.toString());
                         }
                     }
-                    messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(new AccountDetailsNode(accounts, filter, commsManager),internalExplorerManager), true));
-                    if (accounts.size() == 1) {
-                        messagesResultPanel.setPath(Iterables.getOnlyElement(accounts).getAccountUniqueID());
+                    messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accountDeviceInstances, filter, commsManager), true));
+                    if (accountDeviceInstances.size() == 1) {
+                        messagesResultPanel.setPath(Iterables.getOnlyElement(accountDeviceInstances).getAccount().getAccountUniqueID());
                     } else {
-                        messagesResultPanel.setPath(accounts.size() + " accounts");
+                        messagesResultPanel.setPath(accountDeviceInstances.size() + " accounts");
                     }
                 }
             }
