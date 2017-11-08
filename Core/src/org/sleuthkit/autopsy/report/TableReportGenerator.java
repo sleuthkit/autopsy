@@ -184,7 +184,7 @@ class TableReportGenerator {
                             }
                         }
                         catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Unable to get dusplay name for account type.", ex);   
+                            logger.log(Level.SEVERE, "Unable to get display name for account type.", ex);   
                         }
                     }
                     
