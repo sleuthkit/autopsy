@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.services;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
@@ -29,7 +28,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.TskData;
+import org.openide.util.NbBundle.Messages;
 
 final class TagNameDialog extends javax.swing.JDialog {
 
@@ -47,15 +46,16 @@ final class TagNameDialog extends javax.swing.JDialog {
      * Creates a new NewUserTagNameDialog dialog.
      */
     TagNameDialog() {
-        super(new JFrame(NbBundle.getMessage(TagNameDialog.class, "NewTagNameDialog.title.text")),
-                NbBundle.getMessage(TagNameDialog.class, "NewTagNameDialog.title.text"), true);
+        super(new JFrame(NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.title.text")),
+                NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.title.text"), true);
         initComponents();
         this.display();
     }
 
+    @Messages({"TagNameDialog.editTitle.text=Edit Tag"})
     TagNameDialog(TagNameDefinition tagNameToEdit) {
-        super(new JFrame("Edit 1"),
-                "Edit 2", true);
+        super(new JFrame(NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.editTitle.text")),
+                NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.editTitle.text"), true);
         initComponents();
         tagNameTextField.setText(tagNameToEdit.getDisplayName());
         descriptionTextArea.setText(tagNameToEdit.getDescription());
@@ -131,8 +131,8 @@ final class TagNameDialog extends javax.swing.JDialog {
             String newTagDisplayName = tagNameTextField.getText().trim();
             if (newTagDisplayName.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameEmpty.message"),
-                        NbBundle.getMessage(TagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameEmpty.title"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -140,8 +140,8 @@ final class TagNameDialog extends javax.swing.JDialog {
             //if a tag name contains illegal characters and is not the name of one of the standard tags
             if (TagsManager.containsIllegalCharacters(newTagDisplayName) && !TagNameDefinition.STANDARD_TAG_DISPLAY_NAMES.contains(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
-                        NbBundle.getMessage(TagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
