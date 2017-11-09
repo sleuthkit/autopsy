@@ -23,12 +23,10 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
@@ -40,7 +38,6 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * be used independently of the wizard.
  */
 @ServiceProviders(value={
-    @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
 )
 @NbBundle.Messages({
@@ -55,7 +52,6 @@ public class ArchiveExtractorDSProcessor implements AutoIngestDataSourceProcesso
     private boolean setDataSourceOptionsCalled;
     
     private final ExecutorService jobProcessingExecutor;
-    private Future<?> jobProcessingTaskFuture;
     private static final String ARCHIVE_DSP_THREAD_NAME = "Archive-DSP-%d";    
     private AddArchiveTask addArchiveTask;    
     
@@ -159,7 +155,7 @@ public class ArchiveExtractorDSProcessor implements AutoIngestDataSourceProcesso
      */
     public void run(String deviceId, String archivePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         addArchiveTask = new AddArchiveTask(deviceId, archivePath, progressMonitor, callback);
-        jobProcessingTaskFuture = jobProcessingExecutor.submit(addArchiveTask);
+        jobProcessingExecutor.submit(addArchiveTask);
     }  
 
     /**
