@@ -2320,18 +2320,15 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE, Date.from(Instant.now()));
-            UUID taskId = UUID.randomUUID();
-            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             try {
-                caseForJob.notifyAddingDataSource(taskId);
 
-                Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
+                // Get an ordered list of data source processors to try
+                List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
                 try {
-                    // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
-                    validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(dataSource.getPath());
+                    validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath());
                 } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                     SYS_LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
                     // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
@@ -2339,7 +2336,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 }
 
                 // did we find a data source processor that can process the data source
-                if (validDataSourceProcessorsMap.isEmpty()) {
+                if (validDataSourceProcessors.isEmpty()) {
                     // This should never happen. We should add all unsupported data sources as logical files.
                     AutoIngestAlertFile.create(caseDirectoryPath);
                     currentJob.setErrorsOccurred(true);
@@ -2348,12 +2345,13 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     return;
                 }
 
-                // Get an ordered list of data source processors to try
-                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = DataSourceProcessorUtility.orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
-
                 synchronized (ingestLock) {
                     // Try each DSP in decreasing order of confidence
                     for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
+                        UUID taskId = UUID.randomUUID();
+                        caseForJob.notifyAddingDataSource(taskId);
+                        DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
+                        caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                         SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         try {
