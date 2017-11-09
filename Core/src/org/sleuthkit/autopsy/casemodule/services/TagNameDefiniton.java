@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A tag name definition consisting of a display name, description and color.
@@ -36,13 +37,12 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
-    private static final String DEFAULT_BAD_TAGS = "Evidence,Notable Item,"
+    private static final String STANDARD_NOTABLE_TAG_DISPLAY_NAMES = "Evidence,Notable Item,"
             + "CAT-1: Child Exploitation (Illegal),CAT-2: Child Exploitation (Non-Illegal/Age Difficult),CAT-3: Child Exploitive"; // NON-NLS
-    static final String NOTABLE = "(Notable)";
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
-    private final String knownStatusDenoted;
+    private final TskData.FileKnown knownStatusDenoted;
 
     /**
      * Constructs a tag name definition consisting of a display name,
@@ -52,11 +52,11 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
      */
-    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, String notable) {
+    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatusDenoted = notable;
+        this.knownStatusDenoted = status;
     }
 
     /**
@@ -90,7 +90,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      * 
      */
     boolean isNotable(){
-        return knownStatusDenoted.equals(NOTABLE);
+        return knownStatusDenoted == TskData.FileKnown.BAD;
     }
     /**
      * Compares this tag name definition with the specified tag name definition
@@ -152,7 +152,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
-        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted;
+        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted.toString();
     }
 
     /**
@@ -172,7 +172,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
                     if (badTags == null) {
                         String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
                         if (badTagsStr == null) {
-                            badTagsStr = DEFAULT_BAD_TAGS;
+                            badTagsStr = STANDARD_NOTABLE_TAG_DISPLAY_NAMES;
                         }
                         if (badTagsStr.isEmpty()) {
                             badTags = new ArrayList<>();
@@ -181,12 +181,12 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
                         }
                     }
                     if (badTags.contains(tagNameAttributes[0])) {
-                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), NOTABLE));
+                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.BAD));
                     } else {
-                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), "")); //add the default value for that tag 
+                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
                     }
                 } else if (tagNameAttributes.length == 4) {
-                    tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), tagNameAttributes[3]));
+                    tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.valueOf(tagNameAttributes[3])));
                 }
 
             }

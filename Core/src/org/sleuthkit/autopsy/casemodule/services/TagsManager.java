@@ -38,6 +38,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A per case Autopsy service that manages the addition of content and artifact
@@ -198,7 +199,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, "", TagName.HTML_COLOR.NONE, "");
+        return addTagName(displayName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
     }
 
     /**
@@ -217,7 +218,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, description, TagName.HTML_COLOR.NONE, "");
+        return addTagName(displayName, description, TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
     }
 
     /**
@@ -236,9 +237,9 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
-        String knownStatus = "";
+        TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
         if (getNotableTagDisplayNames().contains(displayName)) {
-            knownStatus = TagNameDefiniton.NOTABLE;
+            knownStatus = TskData.FileKnown.BAD;
         }
         return addTagName(displayName, description, color, knownStatus);
     }
@@ -260,7 +261,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException              If there is an error adding the tag
      *                                       name to the case database.
      */
-    public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
+    public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         try {
             TagName tagName = caseDb.addTagName(displayName, description, color);
             if (!STANDARD_TAG_DISPLAY_NAMES.contains(displayName)) {
