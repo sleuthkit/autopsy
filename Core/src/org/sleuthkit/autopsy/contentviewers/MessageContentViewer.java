@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
-import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +34,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -92,18 +90,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      */
     public MessageContentViewer() {
         initComponents();
-        drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, new DataContent() {
-            @Override
-            public void setNode(Node selectedNode) {
-//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-//                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-        }
-        );
+        drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, null);
 
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(4, true);
