@@ -111,7 +111,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         return null;
     }
     
-    @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.linesProcessed= lines processed"})
+    @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.linesProcessed= hashes processed"})
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         
@@ -138,52 +138,24 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     private String getProgressString(){
         return worker.getLinesProcessed() + Bundle.ImportCentralRepoDbProgressDialog_linesProcessed();
     }
-    
-    private static void deleteIncompleteSet(int crIndex){
-        if(crIndex >= 0){
 
-            // This can be slow on large reference sets
-            Executors.newSingleThreadExecutor().execute(new Runnable() {
-                @Override 
-                public void run() {
-                    try{
-                        EamDb.getInstance().deleteReferenceSet(crIndex);
-                    } catch (EamDbException ex2){
-                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
-                    }
-                }
-            });
-        }
-    }
-
-    private interface CentralRepoImportWorker{
+    abstract class CentralRepoImportWorker extends SwingWorker<Void, Void>{
+        final int HASH_IMPORT_THRESHOLD = 10000;
+        final String hashSetName;
+        final String version;
+        final int orgId;
+        final boolean searchDuringIngest;
+        final boolean sendIngestMessages;
+        final HashDbManager.HashDb.KnownFilesType knownFilesType;
+        final boolean readOnly;
+        final File importFile;
+        long totalHashes = 1;
+        int referenceSetID = -1;
+        HashDbManager.CentralRepoHashDb newHashDb = null;
+        final AtomicLong numLines = new AtomicLong();
+        String errorString = "";
         
-        void execute();
-        boolean cancel(boolean mayInterruptIfRunning);
-        void addPropertyChangeListener(PropertyChangeListener dialog);
-        int getProgressPercentage();
-        long getLinesProcessed();
-        HashDbManager.HashDatabase getDatabase();
-        String getError();
-    }
-    
-    class ImportEncaseWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
-        private final int HASH_IMPORT_THRESHOLD = 10000;
-        private final String hashSetName;
-        private final String version;
-        private final int orgId;
-        private final boolean searchDuringIngest;
-        private final boolean sendIngestMessages;
-        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
-        private final boolean readOnly;
-        private final File importFile;
-        private final long totalLines;
-        private int crIndex = -1;
-        private HashDbManager.CentralRepoHashDb newHashDb = null;
-        private final AtomicLong numLines = new AtomicLong();
-        private String errorString = "";
-        
-        ImportEncaseWorker(String hashSetName, String version, int orgId,
+        CentralRepoImportWorker(String hashSetName, String version, int orgId,
             boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
             boolean readOnly, File importFile){
             
@@ -196,46 +168,106 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             this.readOnly = readOnly;
             this.importFile = importFile;
             this.numLines.set(0);
-            
-            this.totalLines = getEstimatedTotalHashes();
         }
+        
+        HashDbManager.HashDatabase getDatabase(){
+            return newHashDb;
+        }
+        
+        long getLinesProcessed(){
+            return numLines.get();
+        }
+        
+        int getProgressPercentage(){
+            return this.getProgress();
+        }
+        
+        String getError(){
+            return errorString;
+        }
+        
+        /**
+         * Should be called in the constructor to set the max number of hashes.
+         * The value can be updated later after parsing the import file.
+         */
+        abstract void setEstimatedTotalHashes();
+        
+        void deleteIncompleteSet(){
+            if(referenceSetID >= 0){
+                
+                // This can be slow on large reference sets
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override 
+                    public void run() {
+                        try{
+                            EamDb.getInstance().deleteReferenceSet(referenceSetID);
+                        } catch (EamDbException ex2){
+                            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
+                        }
+                    }
+                });
+            }
+        }
+        
+        @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.importHashsetError=Error importing hash set",
+                            "ImportCentralRepoDbProgressDialog.addDbError.message=Error adding new hash set"})
+        @Override
+        protected void done() {
+            
+            if(isCancelled()){
+                // If the user hit cancel, delete this incomplete hash set from the central repo
+                deleteIncompleteSet();
+                return;
+            }
+            
+            try {
+                get();
+                try{
+                    newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
+                            referenceSetID, 
+                            searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
+                } catch (TskCoreException ex){
+                    JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
+                    Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error adding imported hash set", ex);
+                }
+            } catch (Exception ex) {
+                // Delete this incomplete hash set from the central repo
+                deleteIncompleteSet();
+                errorString = Bundle.ImportCentralRepoDbProgressDialog_importHashsetError();
+            }
+        }       
+                
+    }
+    
+    class ImportEncaseWorker extends CentralRepoImportWorker{
+        
+        ImportEncaseWorker(String hashSetName, String version, int orgId,
+                boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+                boolean readOnly, File importFile){
+            super(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, knownFilesType, readOnly, importFile);
+            
+            setEstimatedTotalHashes();
+        }
+        
         
         /**
          * Encase files have a 0x480 byte header, then each hash takes 18 bytes
          * @return Approximate number of hashes in the file
          */
-        final long getEstimatedTotalHashes(){
+        @Override
+        final void setEstimatedTotalHashes(){
             long fileSize = importFile.length();
             if(fileSize < 0x492){
-                return 1; // There's room for at most one hash
+                totalHashes =  1; // There's room for at most one hash
             }
-            return ((fileSize - 0x492) / 18);
-        }
-        
-        @Override 
-        public HashDbManager.HashDatabase getDatabase(){
-            return newHashDb;
-        }
-        
-        @Override
-        public long getLinesProcessed(){
-            return numLines.get();
-        }
-        
-        @Override
-        public int getProgressPercentage(){
-            return this.getProgress();
-        }
-        
-        @Override
-        public String getError(){
-            return errorString;
+            totalHashes = (fileSize - 0x492) / 18;
         }
         
         @Override
         protected Void doInBackground() throws Exception {
 
-            EncaseHashSetParser encaseParser = new EncaseHashSetParser(this.importFile.getAbsolutePath());
+            EncaseHashSetParser encaseParser = new EncaseHashSetParser(importFile.getAbsolutePath());
+            totalHashes = encaseParser.getExpectedHashes();
             
             TskData.FileKnown knownStatus;
             if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
@@ -245,7 +277,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -261,7 +293,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
                 if(newHash != null){
                     EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                            crIndex, 
+                            referenceSetID, 
                             newHash, 
                             knownStatus, 
                             "");
@@ -273,7 +305,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                         dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
                         globalInstances.clear();
 
-                        int progress = (int)(numLines.get() * 100 / totalLines);
+                        int progress = (int)(numLines.get() * 100 / totalHashes);
                         if(progress < 100){
                             this.setProgress(progress);
                         } else {
@@ -287,101 +319,27 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             this.setProgress(100);
             return null;
         }
-        
-        @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.importError=Error importing hash set"})
-        @Override
-        protected void done() {
-            
-            if(isCancelled()){
-                // If the user hit cancel, delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
-                return;
-            }
-            
-            try {
-                get();
-                try{
-                    newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
-                            crIndex, 
-                            searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
-                } catch (TskCoreException ex){
-                    JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
-                    Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error adding imported hash set", ex);
-                }
-            } catch (Exception ex) {
-                // Delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
-                errorString = Bundle.ImportCentralRepoDbProgressDialog_importError();
-            }
-        }       
     }
     
-    class ImportKdbWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
-        private final int HASH_IMPORT_THRESHOLD = 10000;
-        private final String hashSetName;
-        private final String version;
-        private final int orgId;
-        private final boolean searchDuringIngest;
-        private final boolean sendIngestMessages;
-        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
-        private final boolean readOnly;
-        private final File importFile;
-        private final long totalLines;
-        private int crIndex = -1;
-        private HashDbManager.CentralRepoHashDb newHashDb = null;
-        private final AtomicLong numLines = new AtomicLong();
-        private String errorString = "";
+    class ImportKdbWorker extends CentralRepoImportWorker{
         
         private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
         private final String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
         private final String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
         
         ImportKdbWorker(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
-            boolean readOnly, File importFile){
+                boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+                boolean readOnly, File importFile){
+            super(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, knownFilesType, readOnly, importFile);
+        
             
-            this.hashSetName = hashSetName;
-            this.version = version;
-            this.orgId = orgId;
-            this.searchDuringIngest = searchDuringIngest;
-            this.sendIngestMessages = sendIngestMessages;
-            this.knownFilesType = knownFilesType;
-            this.readOnly = readOnly;
-            this.importFile = importFile;
-            this.numLines.set(0);
-            
-            this.totalLines = getEstimatedTotalHashes();
         }
-        
-        /**
-         * Encase files have a 0x480 byte header, then each hash takes 18 bytes
-         * @return Approximate number of hashes in the file
-         */
-        final long getEstimatedTotalHashes(){
-            // TEMP - Figure this out
-            long fileSize = importFile.length();
-            return 100;
-        }
-        
-        @Override 
-        public HashDbManager.HashDatabase getDatabase(){
-            return newHashDb;
-        }
-        
+    
         @Override
-        public long getLinesProcessed(){
-            return numLines.get();
+        void setEstimatedTotalHashes(){
+            totalHashes = 100;
         }
-        
-        @Override
-        public int getProgressPercentage(){
-            return this.getProgress();
-        }
-        
-        @Override
-        public String getError(){
-            return errorString;
-        }
+ 
         
         @Override
         protected Void doInBackground() throws Exception {
@@ -396,7 +354,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -456,67 +414,17 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
             this.setProgress(100);
             return null;
-        }
-        
-        @Override
-        protected void done() {
-            
-            if(isCancelled()){
-                // If the user hit cancel, delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
-                return;
-            }
-            
-            try {
-                get();
-                try{
-                    newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
-                            crIndex, 
-                            searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
-                } catch (TskCoreException ex){
-                    JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
-                    Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error adding imported hash set", ex);
-                }
-            } catch (Exception ex) {
-                // Delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
-                errorString = Bundle.ImportCentralRepoDbProgressDialog_importError();
-            }
-        }       
+        }   
     }    
-    
-    class ImportIDXWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
-        
-        private final int HASH_IMPORT_THRESHOLD = 10000;
-        private final String hashSetName;
-        private final String version;
-        private final int orgId;
-        private final boolean searchDuringIngest;
-        private final boolean sendIngestMessages;
-        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
-        private final boolean readOnly;
-        private final File importFile;
-        private final long totalLines;
-        private int crIndex = -1;
-        private HashDbManager.CentralRepoHashDb newHashDb = null;
-        private final AtomicLong numLines = new AtomicLong();
-        private String errorString = "";
+   
+    class ImportIDXWorker extends CentralRepoImportWorker{
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
-            boolean readOnly, File importFile){
+                boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+                boolean readOnly, File importFile){
+            super(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, knownFilesType, readOnly, importFile);
             
-            this.hashSetName = hashSetName;
-            this.version = version;
-            this.orgId = orgId;
-            this.searchDuringIngest = searchDuringIngest;
-            this.sendIngestMessages = sendIngestMessages;
-            this.knownFilesType = knownFilesType;
-            this.readOnly = readOnly;
-            this.importFile = importFile;
-            this.numLines.set(0);
-            
-            this.totalLines = getEstimatedTotalHashes();
+            setEstimatedTotalHashes();
         }
         
         /**
@@ -525,29 +433,10 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
          * progress bar.
          * @return Approximate number of hashes in the file
          */
-        final long getEstimatedTotalHashes(){
+        @Override
+        final void setEstimatedTotalHashes(){
             long fileSize = importFile.length();
-            return (fileSize / 0x33 + 1); // IDX file lines are generally 0x33 bytes long, and we don't want this to be zero
-        }
-        
-        @Override 
-        public HashDbManager.HashDatabase getDatabase(){
-            return newHashDb;
-        }
-        
-        @Override
-        public long getLinesProcessed(){
-            return numLines.get();
-        }
-        
-        @Override
-        public int getProgressPercentage(){
-            return this.getProgress();
-        }
-        
-        @Override
-        public String getError(){
-            return errorString;
+            totalHashes = fileSize / 0x33 + 1; // IDX file lines are generally 0x33 bytes long, and we don't want this to be zero
         }
         
         @Override
@@ -561,7 +450,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -582,7 +471,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
 
                 EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                        crIndex, 
+                        referenceSetID, 
                         parts[0].toLowerCase(), 
                         knownStatus, 
                         "");
@@ -594,7 +483,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                     dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
                     globalInstances.clear();
 
-                    int progress = (int)(numLines.get() * 100 / totalLines);
+                    int progress = (int)(numLines.get() * 100 / totalHashes);
                     if(progress < 100){
                         this.setProgress(progress);
                     } else {
@@ -608,31 +497,6 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
             return null;
         }
-        
-        @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.addDbError.message=Error adding new hash set"})
-        @Override
-        protected void done() {
-            if(isCancelled()){
-                // If the user hit cancel, delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
-                return;
-            }
-            
-            try {
-                get();
-                try{
-                    newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
-                            crIndex, 
-                            searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
-                } catch (TskCoreException ex){
-                    JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
-                    Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error adding imported hash set", ex);
-                }
-            } catch (Exception ex) {
-                // Delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
-            }
-        }       
     }
     
     /**
