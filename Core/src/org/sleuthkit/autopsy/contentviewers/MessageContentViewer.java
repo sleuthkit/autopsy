@@ -521,21 +521,26 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
 
-            //TODO: Replace this with code to get the actual attachements!
-            final Set<AbstractFile> attachments = artifact.getDataSource().getChildren().stream()
-                    .filter(AbstractFile.class::isInstance)
-                    .map(AbstractFile.class::cast)
-                    .collect(Collectors.toSet());
-            final int numberOfAttachments = attachments.size();
-
-            msgbodyTabbedPane.setEnabledAt(4, numberOfAttachments > 0);
-            msgbodyTabbedPane.setTitleAt(4, "Attachments (" + numberOfAttachments + ")");
-            drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
-                    new AttachmentsChildren(attachments)), null), true));
+            
+            configureAttachments();
 
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
         }
+    }
+
+    private void configureAttachments() throws TskCoreException {
+        //TODO: Replace this with code to get the actual attachements!
+        final Set<AbstractFile> attachments = artifact.getChildren().stream()
+                .filter(AbstractFile.class::isInstance)
+                .map(AbstractFile.class::cast)
+                .collect(Collectors.toSet());
+        final int numberOfAttachments = attachments.size();
+        
+        msgbodyTabbedPane.setEnabledAt(4, numberOfAttachments > 0);
+        msgbodyTabbedPane.setTitleAt(4, "Attachments (" + numberOfAttachments + ")");
+        drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
+                new AttachmentsChildren(attachments)), null), true));
     }
 
     private static String wrapInHtmlBody(String htmlText) {
@@ -565,8 +570,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
-            msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, false);
-            msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments");
+            configureAttachments();
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }
@@ -637,6 +641,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             ss.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             ss.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", file.getMIMEType()));
             ss.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
+            
+            addTagProperty(ss);
             return s;
         }
 
