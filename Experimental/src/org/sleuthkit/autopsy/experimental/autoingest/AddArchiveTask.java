@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Lookup;
@@ -95,7 +96,7 @@ class AddArchiveTask implements Runnable {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
             callback.done(result, errorMessages, newDataSources);
         }
-        
+
         logger.log(Level.INFO, "Using Archive Extractor DSP to process archive {0} ", archivePath);
 
         // extract the archive and pass the extracted folder as input
@@ -116,22 +117,23 @@ class AddArchiveTask implements Runnable {
             progressMonitor.setProgressText(String.format("Extracting archive contents to: %s", destinationFolder.toString()));
             List<String> extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
             int numExtractedFilesRemaining = extractedFiles.size();
- 
-            // lookup all AutomatedIngestDataSourceProcessors so that we only do it once
-            Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
 
+            // lookup all AutomatedIngestDataSourceProcessors so that we only do it once. 
+            // LocalDisk, LocalFiles, and ArchiveDSP are removed from the list.
+            List<AutoIngestDataSourceProcessor> processorCandidates = getListOfValidDataSourceProcessors();
+            
             // do processing
             for (String file : extractedFiles) {
-                
+
                 // we only care about files, skip directories
                 File fileObject = new File(file);
                 if (fileObject.isDirectory()) {
                     numExtractedFilesRemaining--;
                     continue;
                 }
-                
+
                 // identify all "valid" DSPs that can process this file
-                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = getValidDataSourceProcessors(Paths.get(file), errorMessages, processorCandidates);
+                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = getDataSourceProcessorsForFile(Paths.get(file), errorMessages, processorCandidates);
                 if (validDataSourceProcessors.isEmpty()) {
                     continue;
                 }
@@ -168,7 +170,7 @@ class AddArchiveTask implements Runnable {
                 boolean success = false;
                 for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
 
-                    logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file}); 
+                    logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file});
 
                     synchronized (archiveDspLock) {
                         try {
@@ -179,12 +181,12 @@ class AddArchiveTask implements Runnable {
 
                             // at this point we got the content object(s) from the current DSP.
                             // check whether the data source was processed successfully
-                            if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS) ||
-                                    internalDataSource.getContent().isEmpty()) {
+                            if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                    || internalDataSource.getContent().isEmpty()) {
                                 // move onto the the next DSP that can process this data source
                                 continue;
                             }
-                            
+
                             // if we are here it means the data source was addedd successfully
                             success = true;
                             newDataSources.addAll(internalDataSource.getContent());
@@ -201,7 +203,7 @@ class AddArchiveTask implements Runnable {
                         }
                     }
                 }
-                
+
                 if (success) {
                     // one of the DSPs successfully processed the data source. delete the 
                     // copy of the data source in the original extracted archive folder. 
@@ -260,55 +262,65 @@ class AddArchiveTask implements Runnable {
             callback.done(result, errorMessages, newDataSources);
         }
     }
-    
+
+    /**
+     * Get a list of data source processors. LocalDisk, LocalFiles, and
+     * ArchiveDSP are removed from the list.
+     *
+     * @return List of data source processors
+     */
+    private List<AutoIngestDataSourceProcessor> getListOfValidDataSourceProcessors() {
+
+        Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
+
+        List<AutoIngestDataSourceProcessor> validDataSourceProcessors = processorCandidates.stream().collect(Collectors.toList());
+
+        for (Iterator<AutoIngestDataSourceProcessor> iterator = validDataSourceProcessors.iterator(); iterator.hasNext();) {
+            AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
+
+            // skip local files and local disk DSPs, only looking for "valid" data sources.
+            // also skip nested archive files, those will be ingested as logical files and extracted during ingest
+            if ((selectedProcessor instanceof LocalDiskDSProcessor)
+                    || (selectedProcessor instanceof LocalFilesDSProcessor)
+                    || (selectedProcessor instanceof ArchiveExtractorDSProcessor)) {
+                iterator.remove();
+            }
+        }
+
+        return validDataSourceProcessors;
+    }
+
     /**
      * Get a list of data source processors that can process the data source of
      * interest. The list is sorted by confidence in decreasing order.
-     * LocalDisk, LocalFiles, and ArchiveDSP are removed from the list.
      *
      * @param dataSourcePath Full path to the data source
-     * @param errorMessages List<String> for error messages
+     * @param errorMessages  List<String> for error messages
+     * @param errorMessages  List of AutoIngestDataSourceProcessor to try
      *
      * @return Ordered list of applicable DSPs
      */
-    private List<AutoIngestDataSourceProcessor> getValidDataSourceProcessors(Path dataSourcePath, List<String> errorMessages, 
-            Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) {
-        
+    private List<AutoIngestDataSourceProcessor> getDataSourceProcessorsForFile(Path dataSourcePath, List<String> errorMessages,
+            List<AutoIngestDataSourceProcessor> processorCandidates) {
+
         // Get an ordered list of data source processors to try
-        List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
+        List<AutoIngestDataSourceProcessor> validDataSourceProcessorsForFile = Collections.emptyList();
         try {
-            validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSourcePath, processorCandidates);
+            validDataSourceProcessorsForFile = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSourcePath, processorCandidates);
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
             logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
             return Collections.emptyList();
         }
-        if (validDataSourceProcessors.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        for (Iterator<AutoIngestDataSourceProcessor> iterator = validDataSourceProcessors.iterator(); iterator.hasNext();) {
-                AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
-
-            // skip local files and local disk DSPs, only looking for "valid" data sources.
-            // also skip nested archive files, those will be ingested as logical files and extracted during ingest
-            if ( (selectedProcessor instanceof LocalDiskDSProcessor) ||
-                    (selectedProcessor instanceof LocalFilesDSProcessor) ||
-                    (selectedProcessor instanceof ArchiveExtractorDSProcessor) ) {
-                iterator.remove();
-            }
-        }
-        
-        return validDataSourceProcessors;
+        return validDataSourceProcessorsForFile;
     }
-    
 
     /**
      * Create a directory in ModuleOutput folder based on input file name. A
      * time stamp is appended to the directory name.
      *
-     * @param fileName File name
+     * @param fileName      File name
      * @param baseDirectory Base directory. Typically the case output directory.
      *
      * @return Full path to the new directory
