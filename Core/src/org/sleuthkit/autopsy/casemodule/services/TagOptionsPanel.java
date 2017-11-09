@@ -31,6 +31,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A panel to allow the user to create and delete custom tag types.
@@ -297,8 +298,8 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         TagNameDialog dialog = new TagNameDialog();
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == TagNameDialog.BUTTON_PRESSED.OK) {
-            String status = dialog.isTagNotable() ? "(Notable)" : "";
-            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
+            TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
+            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), DEFAULT_DESCRIPTION, DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
              */
@@ -331,7 +332,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         TagNameDialog dialog = new TagNameDialog(originalTagName);
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == TagNameDialog.BUTTON_PRESSED.OK) {
-            String status = dialog.isTagNotable() ? "(Notable)" : "";
+            TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
             TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
