@@ -25,16 +25,21 @@ import java.beans.PropertyChangeEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executors;
 import javax.swing.JOptionPane;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
@@ -90,6 +95,9 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                     knownFilesType, readOnly, importFile);
         } else if(importFileName.toLowerCase().endsWith(".hash")){
             worker = new ImportEncaseWorker(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, 
+                    knownFilesType, readOnly, importFile);
+        } else if(importFileName.toLowerCase().endsWith(".kdb")){
+            worker = new ImportKdbWorker(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, 
                     knownFilesType, readOnly, importFile);
         } else {
             // We've gotten here with a format that can't be processed
@@ -150,7 +158,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         final boolean readOnly;
         final File importFile;
         long totalHashes = 1;
-        int referenceSetID = -1;
+        final AtomicInteger referenceSetID = new AtomicInteger(-1);
         HashDbManager.CentralRepoHashDb newHashDb = null;
         final AtomicLong numLines = new AtomicLong();
         String errorString = "";
@@ -193,14 +201,14 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         abstract void setEstimatedTotalHashes();
         
         void deleteIncompleteSet(){
-            if(referenceSetID >= 0){
+            if(referenceSetID.get() >= 0){
                 
                 // This can be slow on large reference sets
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override 
                     public void run() {
                         try{
-                            EamDb.getInstance().deleteReferenceSet(referenceSetID);
+                            EamDb.getInstance().deleteReferenceSet(referenceSetID.get());
                         } catch (EamDbException ex2){
                             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
                         }
@@ -224,7 +232,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 get();
                 try{
                     newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
-                            referenceSetID, 
+                            referenceSetID.get(), 
                             searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
                 } catch (TskCoreException ex){
                     JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
@@ -233,7 +241,11 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             } catch (Exception ex) {
                 // Delete this incomplete hash set from the central repo
                 deleteIncompleteSet();
-                errorString = Bundle.ImportCentralRepoDbProgressDialog_importHashsetError();
+                
+                Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error importing hash set", ex);
+                if(errorString == null){
+                    errorString = Bundle.ImportCentralRepoDbProgressDialog_importHashsetError();
+                }
             }
         }       
                 
@@ -277,7 +289,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID.set(EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly));
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -293,7 +305,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
                 if(newHash != null){
                     EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                            referenceSetID, 
+                            referenceSetID.get(), 
                             newHash, 
                             knownStatus, 
                             "");
@@ -326,25 +338,27 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
         private final String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
         private final String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
+       
         
         ImportKdbWorker(String hashSetName, String version, int orgId,
                 boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
                 boolean readOnly, File importFile){
             super(hashSetName, version, orgId, searchDuringIngest, sendIngestMessages, knownFilesType, readOnly, importFile);
         
-            
+            setEstimatedTotalHashes();
         }
     
         @Override
-        void setEstimatedTotalHashes(){
+        final void setEstimatedTotalHashes(){
             totalHashes = 100;
         }
  
         
+        @NbBundle.Messages({"ImportCentralRepoDbProgressDialog.kdbHashLengthError=Incorrect hash format",
+            "ImportCentralRepoDbProgressDialog.kdbImportError=Error reading SQLite database, may be the wrong format"
+        })
         @Override
         protected Void doInBackground() throws Exception {
-
-            EncaseHashSetParser encaseParser = new EncaseHashSetParser(this.importFile.getAbsolutePath());
             
             TskData.FileKnown knownStatus;
             if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
@@ -354,43 +368,51 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID.set(EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly));
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
 
             Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
 
-            // Open the database
-            BasicDataSource connectionPool = new BasicDataSource();
-            connectionPool.setDriverClassName(JDBC_DRIVER);
+            Connection conn = null;
+            PreparedStatement preparedStatement = null;
+            ResultSet resultSet = null;
+            try{
+                
+                // Open the database
+                StringBuilder connectionURL = new StringBuilder();
+                connectionURL.append(JDBC_BASE_URI);
+                connectionURL.append(importFile);
+                
+                Class.forName(JDBC_DRIVER);
+                conn = DriverManager.getConnection(connectionURL.toString());
+                
+                
+                String sql1 = "SELECT md5 FROM hashes";
 
-            StringBuilder connectionURL = new StringBuilder();
-            connectionURL.append(JDBC_BASE_URI);
-            connectionURL.append(importFile);
-
-            connectionPool.setUrl(connectionURL.toString());
-
-            // tweak pool configuration
-            connectionPool.setInitialSize(50);
-            connectionPool.setMaxTotal(-1);
-            connectionPool.setMaxIdle(-1);
-            connectionPool.setMaxWaitMillis(1000);
-            connectionPool.setValidationQuery(VALIDATION_QUERY);
-            
-            
-            
-            /*while (! encaseParser.doneReading()) {
-                if(isCancelled()){
-                    return null;
-                }
-
-                String newHash = encaseParser.getNextHash();
-
-                if(newHash != null){
+                preparedStatement = conn.prepareStatement(sql1);
+                resultSet = preparedStatement.executeQuery();
+                while (resultSet.next()) {
+                    if(isCancelled()){
+                        return null;
+                    }
+                    
+                    byte[] hashBytes = resultSet.getBytes("md5");
+                    StringBuilder sb = new StringBuilder();
+                    for (byte b : hashBytes) {
+                        sb.append(String.format("%02x", b));
+                    }
+                    
+                    if(sb.toString().length() != 32){
+                        errorString = Bundle.ImportCentralRepoDbProgressDialog_kdbHashLengthError();
+                        throw new TskCoreException("Hash has incorrect length: " + sb.toString());
+                    }
+                    
+                    
                     EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                            crIndex, 
-                            newHash, 
+                            referenceSetID.get(), 
+                            sb.toString(), 
                             knownStatus, 
                             "");
 
@@ -401,7 +423,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                         dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
                         globalInstances.clear();
 
-                        int progress = (int)(numLines.get() * 100 / totalLines);
+                        int progress = (int)(numLines.get() * 100 / totalHashes);
                         if(progress < 100){
                             this.setProgress(progress);
                         } else {
@@ -409,7 +431,33 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                         }
                     }
                 }
-            }*/
+                
+            } catch (ClassNotFoundException | SQLException ex) {
+                errorString = Bundle.ImportCentralRepoDbProgressDialog_kdbImportError();
+                throw new TskCoreException("Error opening/reading kdb file", ex);
+            } finally {
+                if(preparedStatement != null){
+                    try {
+                        preparedStatement.close();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error closing prepared statement.", ex);
+                    }
+                }
+                if(resultSet != null){
+                    try {
+                        resultSet.close();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error closing result set.", ex);
+                    }
+                }
+                if(conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error closing Connection.", ex);
+                    }
+                }
+            }
 
             dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
             this.setProgress(100);
@@ -450,7 +498,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID.set(EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly));
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -471,7 +519,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
 
                 EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                        referenceSetID, 
+                        referenceSetID.get(), 
                         parts[0].toLowerCase(), 
                         knownStatus, 
                         "");
