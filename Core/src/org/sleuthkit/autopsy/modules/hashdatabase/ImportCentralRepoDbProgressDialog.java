@@ -139,6 +139,55 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         return worker.getLinesProcessed() + Bundle.ImportCentralRepoDbProgressDialog_linesProcessed();
     }
     
+    abstract class CentralRepoImportWorker2 extends SwingWorker<Void, Void>{
+        private final int HASH_IMPORT_THRESHOLD = 10000;
+        private final String hashSetName;
+        private final String version;
+        private final int orgId;
+        private final boolean searchDuringIngest;
+        private final boolean sendIngestMessages;
+        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
+        private final boolean readOnly;
+        private final File importFile;
+        private long totalLines;
+        private int crIndex = -1;
+        private HashDbManager.CentralRepoHashDb newHashDb = null;
+        private final AtomicLong numLines = new AtomicLong();
+        private String errorString = "";
+        
+        CentralRepoImportWorker2(String hashSetName, String version, int orgId,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+            boolean readOnly, File importFile){
+            
+            this.hashSetName = hashSetName;
+            this.version = version;
+            this.orgId = orgId;
+            this.searchDuringIngest = searchDuringIngest;
+            this.sendIngestMessages = sendIngestMessages;
+            this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
+            this.importFile = importFile;
+            this.numLines.set(0);
+        }
+        
+        HashDbManager.HashDatabase getDatabase(){
+            return newHashDb;
+        }
+        
+        long getLinesProcessed(){
+            return numLines.get();
+        }
+        
+        int getProgressPercentage(){
+            return this.getProgress();
+        }
+        
+        String getError(){
+            return errorString;
+        }
+        
+    }
+    
     private interface CentralRepoImportWorker{
         
         void execute();
