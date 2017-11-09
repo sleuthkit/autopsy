@@ -24,7 +24,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Additional functionality of viewers supporting black board results such as
  * the directory tree
+ * 
+ *@deprecated No longer used.
  */
+@Deprecated
 public interface BlackboardResultViewer {
 
     public static final String FINISHED_DISPLAY_EVT = "FINISHED_DISPLAY_EVT"; //NON-NLS
