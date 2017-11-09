@@ -81,7 +81,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Artifact currently being displayed
      */
     private BlackboardArtifact artifact;
-    private  DataResultPanel drp;
+    private DataResultPanel drp;
 
     /**
      * Creates new MessageContentViewer
@@ -480,6 +480,15 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
+            
+            final Set<AbstractFile> attachments = artifact.getDataSource().getChildren().stream()
+                    .filter(AbstractFile.class::isInstance)
+                    .map(AbstractFile.class::cast)
+                    .collect(Collectors.toSet());
+
+            drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
+                    new AttachmentsChildren(attachments)), null), true));
+
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
         }
@@ -511,10 +520,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
             msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
-            drp.setNode(new DataResultFilterNode(new TableFilterNode(new AbstractNode(new AttachmentsChildren(artifact.getChildren().stream()
-                    .filter(AbstractFile.class::isInstance)
-                    .map(AbstractFile.class::cast)
-                    .collect(Collectors.toSet()))), true), null));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }
