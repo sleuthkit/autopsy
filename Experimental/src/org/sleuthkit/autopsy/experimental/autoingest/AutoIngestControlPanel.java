@@ -39,7 +39,6 @@ import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.util.Collections;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -141,6 +140,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int GENERIC_COL_MAX_WIDTH = 2000;
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
+    private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
+    private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
@@ -180,6 +181,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * ordinal or a column header string.
      */
     @Messages({
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority=Prioritized",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Case=Case",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ImageFolder=Data Source",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.HostName=Host Name",
@@ -206,8 +208,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         STATUS(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder")),
         IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob")),
-        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath"));
-
+        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath")),
+        PRIORITY(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority"));
         private final String header;
 
         private JobsTableModelColumns(String header) {
@@ -230,7 +232,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             STAGE_TIME.getColumnHeader(),
             CASE_DIRECTORY_PATH.getColumnHeader(),
             IS_LOCAL_JOB.getColumnHeader(),
-            MANIFEST_FILE_PATH.getColumnHeader()};
+            MANIFEST_FILE_PATH.getColumnHeader(),
+            PRIORITY.getColumnHeader()};
     }
 
     /**
@@ -262,32 +265,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         manager = AutoIngestManager.getInstance();
 
-        pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
+        pendingTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        runningTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-        runningTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        completedTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
+        completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
         initComponents(); // Generated code.
         setServicesStatusMessage();
@@ -295,7 +277,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         initRunningJobsTable();
         initCompletedJobsTable();
         initButtons();
-
+        completedTable.getRowSorter().toggleSortOrder(JobsTableModelColumns.COMPLETED_TIME.ordinal());
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */
@@ -415,10 +397,16 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
         column.setWidth(TIME_COL_PREFERRED_WIDTH);
 
+        column = pendingTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader());
+        column.setCellRenderer(new PrioritizedIconCellRenderer());
+        column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
+        column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+        column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+
         /**
-         * Prevent sorting when a column header is clicked.
+         * Allow sorting when a column header is clicked.
          */
-        pendingTable.setAutoCreateRowSorter(false);
+        pendingTable.setRowSorter(new AutoIngestRowSorter<>(pendingTableModel));
 
         /*
          * Create a row selection listener to enable/disable the prioritize
@@ -457,7 +445,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
-
+        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -527,9 +515,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     }
 
     private void updateRunningTableButtonsBasedOnSelectedRow() {
-        int row = runningTable.getSelectedRow();
+        int row = runningTable.convertRowIndexToModel(runningTable.getSelectedRow());
         if (row >= 0 && row < runningTable.getRowCount()) {
-            if ((boolean) runningTableModel.getValueAt(row, JobsTableModelColumns.IS_LOCAL_JOB.ordinal())) {
+            if ((boolean) runningTable.getModel().getValueAt(row, JobsTableModelColumns.IS_LOCAL_JOB.ordinal())) {
                 enableRunningTableButtons(true);
                 return;
             }
@@ -547,13 +535,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * does not remove the columns from the model, just from this table.
          */
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
-
+        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -606,9 +594,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setWidth(STATUS_COL_PREFERRED_WIDTH);
 
         /*
-         * Prevent sorting when a column header is clicked.
+         * Allow sorting when a column header is clicked.
          */
-        completedTable.setAutoCreateRowSorter(false);
+        completedTable.setRowSorter(new AutoIngestRowSorter<>(completedTableModel));
 
         /*
          * Create a row selection listener to enable/disable the delete case and
@@ -985,7 +973,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             List<AutoIngestJob> completedJobs = new ArrayList<>();
             manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
-            Collections.sort(completedJobs, new AutoIngestJob.CompletedDateDescendingComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
         }
     }
@@ -1033,9 +1020,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
              */
 
             if (null != pendingJobs) {
-                Path currentRow = getSelectedEntry(pendingTable, pendingTableModel);
-                refreshTable(pendingJobs, pendingTableModel, null);
-                setSelectedEntry(pendingTable, pendingTableModel, currentRow);
+                Path currentRow = getSelectedEntry(pendingTable);
+                refreshTable(pendingJobs, (DefaultTableModel) pendingTable.getModel(), null);
+                setSelectedEntry(pendingTable, currentRow);
             }
 
             if (null != runningJobs) {
@@ -1044,15 +1031,15 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 } else {
                     updateRunningTableButtonsBasedOnSelectedRow();
                 }
-                Path currentRow = getSelectedEntry(runningTable, runningTableModel);
-                refreshTable(runningJobs, runningTableModel, null);
-                setSelectedEntry(runningTable, runningTableModel, currentRow);
+                Path currentRow = getSelectedEntry(runningTable);
+                refreshTable(runningJobs, (DefaultTableModel) runningTable.getModel(), null);
+                setSelectedEntry(runningTable, currentRow);
             }
 
             if (null != completedJobs) {
-                Path currentRow = getSelectedEntry(completedTable, completedTableModel);
-                refreshTable(completedJobs, completedTableModel, null);
-                setSelectedEntry(completedTable, completedTableModel, currentRow);
+                Path currentRow = getSelectedEntry(completedTable);
+                refreshTable(completedJobs, (DefaultTableModel) completedTable.getModel(), null);
+                setSelectedEntry(completedTable, currentRow);
             }
         }
 
@@ -1090,12 +1077,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          *
          * @return a path representing the current selection
          */
-        Path getSelectedEntry(JTable table, DefaultTableModel tableModel) {
+        Path getSelectedEntry(JTable table) {
             try {
-                int currentlySelectedRow = table.getSelectedRow();
+                int currentlySelectedRow = table.convertRowIndexToModel(table.getSelectedRow());
                 if (currentlySelectedRow >= 0 && currentlySelectedRow < table.getRowCount()) {
-                    return Paths.get(tableModel.getValueAt(currentlySelectedRow, JobsTableModelColumns.CASE.ordinal()).toString(),
-                            tableModel.getValueAt(currentlySelectedRow, JobsTableModelColumns.DATA_SOURCE.ordinal()).toString());
+                    return Paths.get(table.getModel().getValueAt(currentlySelectedRow, JobsTableModelColumns.CASE.ordinal()).toString(),
+                            table.getModel().getValueAt(currentlySelectedRow, JobsTableModelColumns.DATA_SOURCE.ordinal()).toString());
                 }
             } catch (Exception ignored) {
                 return null;
@@ -1111,12 +1098,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * @param tableModel The tableModel of the table to set
          * @param path       The path of the item to set
          */
-        void setSelectedEntry(JTable table, DefaultTableModel tableModel, Path path) {
+        void setSelectedEntry(JTable table, Path path) {
             if (path != null) {
                 try {
                     for (int row = 0; row < table.getRowCount(); ++row) {
-                        Path temp = Paths.get(tableModel.getValueAt(row, JobsTableModelColumns.CASE.ordinal()).toString(),
-                                tableModel.getValueAt(row, JobsTableModelColumns.DATA_SOURCE.ordinal()).toString());
+                        Path temp = Paths.get(table.getModel().getValueAt(row, JobsTableModelColumns.CASE.ordinal()).toString(),
+                                table.getModel().getValueAt(row, JobsTableModelColumns.DATA_SOURCE.ordinal()).toString());
                         if (temp.compareTo(path) == 0) { // found it
                             table.setRowSelectionInterval(row, row);
                             return;
@@ -1159,7 +1146,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
-                    job.getManifest().getFilePath()}); // MANIFEST_FILE_PATH
+                    job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
+                    job.getPriority()}); // PRIORITY 
             }
         } catch (Exception ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
@@ -1171,9 +1159,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      */
     private void refreshTables() {
         JobsSnapshot jobsSnapshot = manager.getCurrentJobsSnapshot();
-        refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
-        refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
-        refreshTable(jobsSnapshot.getRunningJobs(), runningTableModel, null);
+        refreshTable(jobsSnapshot.getCompletedJobs(), (DefaultTableModel) completedTable.getModel(), null);
+        refreshTable(jobsSnapshot.getPendingJobs(), (DefaultTableModel) pendingTable.getModel(), null);
+        refreshTable(jobsSnapshot.getRunningJobs(), (DefaultTableModel) runningTable.getModel(), null);
     }
 
     /**
@@ -1214,7 +1202,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         pendingTable.setModel(pendingTableModel);
         pendingTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.pendingTable.toolTipText")); // NOI18N
-        pendingTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         pendingTable.setRowHeight(20);
         pendingTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -1232,7 +1219,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         runningTable.setModel(runningTableModel);
         runningTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.runningTable.toolTipText")); // NOI18N
-        runningTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         runningTable.setRowHeight(20);
         runningTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -1250,7 +1236,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         completedTable.setModel(completedTableModel);
         completedTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.completedTable.toolTipText")); // NOI18N
-        completedTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         completedTable.setRowHeight(20);
         completedTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -1428,10 +1413,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                                     .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(bnCancelJob, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnShowProgress, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE)
-                                    .addComponent(bnCancelModule, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnDeleteCase, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                                    .addComponent(bnCancelJob, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
+                                    .addComponent(bnShowProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 116, Short.MAX_VALUE)
+                                    .addComponent(bnCancelModule, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
+                                    .addComponent(bnDeleteCase, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
                                     .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(bnReprocessJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .addGroup(layout.createSequentialGroup()
@@ -1538,11 +1523,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.DeletionFailed=Deletion failed for job"
     })
     private void bnDeleteCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeleteCaseActionPerformed
-        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
+        if (completedTable.getModel().getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
             return;
         }
 
-        String caseName = (String) completedTable.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal());
+        String caseName = (String) completedTable.getModel().getValueAt(completedTable.convertRowIndexToModel(completedTable.getSelectedRow()), JobsTableModelColumns.CASE.ordinal());
         Object[] options = {
             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.Delete"),
             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DoNotDelete")
@@ -1559,8 +1544,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         if (reply == JOptionPane.YES_OPTION) {
             bnDeleteCase.setEnabled(false);
             bnShowCaseLog.setEnabled(false);
-            if (completedTableModel.getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
-                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
+            if (completedTable.getModel().getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
+                Path caseDirectoryPath = (Path) completedTable.getModel().getValueAt(completedTable.convertRowIndexToModel(completedTable.getSelectedRow()), JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
                 completedTable.clearSelection();
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 CaseDeletionResult result = manager.deleteCase(caseName, caseDirectoryPath);
@@ -1706,9 +1691,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      */
     @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+        if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+
+            String caseName = (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.CASE.ordinal())).toString();
             try {
                 manager.prioritizeCase(caseName);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
@@ -1734,9 +1720,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     })
     private void bnShowCaseLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowCaseLogActionPerformed
         try {
-            int selectedRow = completedTable.getSelectedRow();
+            int selectedRow = completedTable.convertRowIndexToModel(completedTable.getSelectedRow());
             if (selectedRow != -1) {
-                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(selectedRow, JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
+                Path caseDirectoryPath = (Path) completedTable.getModel().getValueAt(selectedRow, JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
                 if (null != caseDirectoryPath) {
                     Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
                     if (pathToLog.toFile().exists()) {
@@ -1765,9 +1751,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
     @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})
     private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+        if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
+            Path manifestFilePath = (Path) (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
             try {
                 manager.prioritizeJob(manifestFilePath);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
@@ -1794,11 +1780,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     }//GEN-LAST:event_bnOpenLogDirActionPerformed
 
     private void bnReprocessJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnReprocessJobActionPerformed
-        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
+        if (completedTable.getModel().getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
             return;
         }
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        Path manifestPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
+        Path manifestPath = (Path) completedTable.getModel().getValueAt(completedTable.convertRowIndexToModel(completedTable.getSelectedRow()), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
         manager.reprocessJob(manifestPath);
         refreshTables();
         AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
@@ -1833,4 +1819,33 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private javax.swing.JTextField tbStatusMessage;
     // End of variables declaration//GEN-END:variables
 
+    private class AutoIngestTableModel extends DefaultTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        private AutoIngestTableModel(String[] headers, int i) {
+            super(headers, i);
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            if (columnIndex == JobsTableModelColumns.PRIORITY.ordinal()) {
+                return Integer.class;
+            } else if (columnIndex == JobsTableModelColumns.CREATED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.COMPLETED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.STARTED_TIME.ordinal()
+                    || columnIndex == JobsTableModelColumns.STAGE_TIME.ordinal()) {
+                return Date.class;
+            } else if (columnIndex == JobsTableModelColumns.STATUS.ordinal()) {
+                return Boolean.class;
+            } else {
+                return super.getColumnClass(columnIndex);
+            }
+        }
+    }
 }
