@@ -143,7 +143,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final boolean readOnly;
         private final File importFile;
         private final long totalLines;
-        private int crIndex = -1;
+        private int referenceSetID = -1;
         private HashDbManager.CentralRepoHashDb newHashDb = null;
         private final AtomicLong numLines = new AtomicLong();
         
@@ -201,7 +201,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            crIndex = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -222,7 +222,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
 
                 EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
-                        crIndex, 
+                        referenceSetID, 
                         parts[0].toLowerCase(), 
                         knownStatus, 
                         "");
@@ -249,15 +249,15 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             return null;
         }
         
-        private void deleteIncompleteSet(int crIndex){
-            if(crIndex >= 0){
+        private void deleteIncompleteSet(int idToDelete){
+            if(idToDelete >= 0){
                 
                 // This can be slow on large reference sets
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override 
                     public void run() {
                         try{
-                            EamDb.getInstance().deleteReferenceSet(crIndex);
+                            EamDb.getInstance().deleteReferenceSet(idToDelete);
                         } catch (EamDbException ex2){
                             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
                         }
@@ -271,7 +271,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         protected void done() {
             if(isCancelled()){
                 // If the user hit cancel, delete this incomplete hash set from the central repo
-                deleteIncompleteSet(crIndex);
+                deleteIncompleteSet(referenceSetID);
                 return;
             }
             
@@ -279,7 +279,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 get();
                 try{
                     newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetName, version, 
-                            crIndex, 
+                            referenceSetID, 
                             searchDuringIngest, sendIngestMessages, knownFilesType, readOnly);
                 } catch (TskCoreException ex){
                     JOptionPane.showMessageDialog(null, Bundle.ImportCentralRepoDbProgressDialog_addDbError_message());
@@ -287,9 +287,9 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 }
             } catch (Exception ex) {
                 // Delete this incomplete hash set from the central repo
-                if(crIndex >= 0){
+                if(referenceSetID >= 0){
                     try{
-                        EamDb.getInstance().deleteReferenceSet(crIndex);
+                        EamDb.getInstance().deleteReferenceSet(referenceSetID);
                     } catch (EamDbException ex2){
                         Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex);
                     }

@@ -1252,16 +1252,21 @@ public abstract class AbstractSqlEamDb implements EamDb {
     
     /**
      * Remove a reference set and all hashes contained in it.
-     * @param centralRepoIndex
+     * @param referenceSetID
      * @throws EamDbException 
      */
     @Override
-    public void deleteReferenceSet(int centralRepoIndex) throws EamDbException{ 
-        deleteReferenceSetFiles(centralRepoIndex);
-        deleteReferenceSetEntry(centralRepoIndex);
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException{ 
+        deleteReferenceSetFiles(referenceSetID);
+        deleteReferenceSetEntry(referenceSetID);
     }  
     
-    private void deleteReferenceSetEntry(int centralRepoIndex) throws EamDbException{
+    /**
+     * Remove the entry for this set from the reference_sets table
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    private void deleteReferenceSetEntry(int referenceSetID) throws EamDbException{
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -1269,7 +1274,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setInt(1, centralRepoIndex);
+            preparedStatement.setInt(1, referenceSetID);
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new EamDbException("Error deleting reference set", ex); // NON-NLS
@@ -1279,8 +1284,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }                
     }
     
-    
-    private void deleteReferenceSetFiles(int centralRepoIndex) throws EamDbException{
+    /**
+     * Remove all entries for this reference set from the reference_file table
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    private void deleteReferenceSetFiles(int referenceSetID) throws EamDbException{
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -1290,7 +1299,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
-            preparedStatement.setInt(1, centralRepoIndex);
+            preparedStatement.setInt(1, referenceSetID);
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new EamDbException("Error deleting files from reference set", ex); // NON-NLS
@@ -1302,14 +1311,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
     
     /**
      * Check whether the given reference set exists in the central repository.
-     * @param centralRepoIndex
+     * @param referenceSetID
      * @param hashSetName
      * @param version
-     * @return 
+     * @return true if a matching entry exists in the central repository
+     * @throws EamDbException
      */
     @Override
-    public boolean referenceSetIsValid(int centralRepoIndex, String hashSetName, String version) throws EamDbException{
-        EamGlobalSet refSet = this.getReferenceSetByID(centralRepoIndex);
+    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException{
+        EamGlobalSet refSet = this.getReferenceSetByID(referenceSetID);
         if(refSet == null){
             return false;
         }
@@ -1320,11 +1330,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Check if the given hash is in a specific reference set
      * @param hash
-     * @param index
-     * @return 
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
      */
     @Override
-    public boolean isHashInReferenceSet(String hash, int index) throws EamDbException{
+    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
 
         Connection conn = connect();
 
@@ -1338,7 +1348,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
             preparedStatement.setString(1, hash);
-            preparedStatement.setInt(2, index);
+            preparedStatement.setInt(2, referenceSetID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             matchingInstances = resultSet.getLong(1);
@@ -1499,27 +1509,27 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
     }
     
-        /**
+    /**
      * Get the organization associated with the given reference set.
-     * @param globalSetID ID of the reference set
+     * @param referenceSetID ID of the reference set
      * @return The organization object
      * @throws EamDbException 
      */
     @Override
-    public EamOrganization getReferenceSetOrganization(int globalSetID) throws EamDbException{
+    public EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException{
 
-        EamGlobalSet globalSet = getReferenceSetByID(globalSetID);
+        EamGlobalSet globalSet = getReferenceSetByID(referenceSetID);
         return (getOrganizationByID(globalSet.getOrgID()));
     }
     
     /**
-     * Add a new Global Set
+     * Add a new reference set
      * 
      * @param orgID
      * @param setName
      * @param version
      * @param importDate
-     * @return
+     * @return the reference set ID of the newly created set
      * @throws EamDbException 
      */
     @Override
@@ -1684,7 +1694,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Get all reference sets
      *
-     * @return The global set associated with the ID
+     * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
@@ -1750,7 +1760,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Check whether a reference set with the given name/version is in the central repo
      * @param hashSetName
      * @param version
-     * @return
+     * @return true if a matching set is found
      * @throws EamDbException 
      */
     @Override

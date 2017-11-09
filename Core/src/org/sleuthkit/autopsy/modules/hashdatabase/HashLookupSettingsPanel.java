@@ -66,7 +66,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
-    private final List<Integer> newCentralRepoIndices = new ArrayList<>();
+    private final List<Integer> newReferenceSetIDs = new ArrayList<>();
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -328,7 +328,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         
         try {
             hashSetManager.save();
-            newCentralRepoIndices.clear();
+            newReferenceSetIDs.clear();
         } catch (HashDbManager.HashDbManagerException ex) {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
@@ -355,10 +355,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
             // Remove any new central repo hash sets from the database
-            for(int index:newCentralRepoIndices){
+            for(int refID:newReferenceSetIDs){
                 try{
                     if(EamDb.isEnabled()){
-                        EamDb.getInstance().deleteReferenceSet(index);
+                        EamDb.getInstance().deleteReferenceSet(refID);
                     } else {
                         // This is the case where the user imported a database, then switched over to the central
                         // repo panel and disabled it before cancelling. We can't delete the database at this point.
@@ -976,8 +976,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDatabase hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             if(hashDb instanceof CentralRepoHashDb){
-                int newDbIndex = ((CentralRepoHashDb)hashDb).getCentralRepoIndex();
-                newCentralRepoIndices.add(newDbIndex);
+                int newReferenceSetID = ((CentralRepoHashDb)hashDb).getReferenceSetID();
+                newReferenceSetIDs.add(newReferenceSetID);
             }
             
             hashSetTableModel.refreshModel();

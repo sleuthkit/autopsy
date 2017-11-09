@@ -284,7 +284,7 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
     
-    public CentralRepoHashDb addExistingCentralRepoHashSet(String hashSetName, String version, int centralRepoIndex, 
+    public CentralRepoHashDb addExistingCentralRepoHashSet(String hashSetName, String version, int referenceSetID, 
             boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType, 
             boolean readOnly) throws TskCoreException{
         
@@ -292,7 +292,7 @@ public class HashDbManager implements PropertyChangeListener {
             throw new TskCoreException("Could not load central repository database " + hashSetName + " - central repository is not enabled");
         }
         
-        CentralRepoHashDb db = new CentralRepoHashDb(hashSetName, version, centralRepoIndex, searchDuringIngest,
+        CentralRepoHashDb db = new CentralRepoHashDb(hashSetName, version, referenceSetID, searchDuringIngest,
             sendIngestMessages, knownFilesType, readOnly);
         
         if(! db.isValid()){
@@ -636,7 +636,7 @@ public class HashDbManager implements PropertyChangeListener {
                 } else {
                     if(EamDb.isEnabled()){
                         addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
-                                hashDbInfo.getCentralRepoIndex(), 
+                                hashDbInfo.getReferenceSetID(), 
                                 hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), 
                                 hashDbInfo.getKnownFilesType(), hashDbInfo.isReadOnly());
                     }
@@ -690,7 +690,7 @@ public class HashDbManager implements PropertyChangeListener {
             for(HashDbInfo hashDbInfo : crHashDbInfoList) {
                 if(hashDbInfoIsNew(hashDbInfo)){
                     addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
-                                hashDbInfo.getCentralRepoIndex(), 
+                                hashDbInfo.getReferenceSetID(), 
                                 hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType(),
                                 hashDbInfo.isReadOnly());   
                 }
@@ -1153,27 +1153,27 @@ public class HashDbManager implements PropertyChangeListener {
         private boolean searchDuringIngest;
         private boolean sendIngestMessages;
         private final HashDb.KnownFilesType knownFilesType;  
-        private final int centralRepoIndex;
+        private final int referenceSetID;
         private final String version;
         private String orgName;
         private final boolean readOnly;
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
         @Messages({"HashDbManager.CentralRepoHashDb.orgError=Error loading organization"})
-        private CentralRepoHashDb(String hashSetName, String version, int centralRepoIndex, 
+        private CentralRepoHashDb(String hashSetName, String version, int referenceSetID, 
                 boolean useForIngest, boolean sendHitMessages, HashDb.KnownFilesType knownFilesType, 
                 boolean readOnly)
                 throws TskCoreException{
             this.hashSetName = hashSetName;
             this.version = version;
-            this.centralRepoIndex = centralRepoIndex;
+            this.referenceSetID = referenceSetID;
             this.searchDuringIngest = useForIngest;
             this.sendIngestMessages = sendHitMessages;
             this.knownFilesType = knownFilesType;
             this.readOnly = readOnly;
             
             try{
-                orgName = EamDb.getInstance().getReferenceSetOrganization(centralRepoIndex).getName();
+                orgName = EamDb.getInstance().getReferenceSetOrganization(referenceSetID).getName();
             } catch (EamDbException ex){
                 Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error looking up central repository organization", ex); //NON-NLS
                 orgName = Bundle.HashDbManager_CentralRepoHashDb_orgError();
@@ -1228,8 +1228,8 @@ public class HashDbManager implements PropertyChangeListener {
             return orgName;
         }
         
-        public int getCentralRepoIndex(){
-            return centralRepoIndex;
+        public int getReferenceSetID(){
+            return referenceSetID;
         }
 
         @Override
@@ -1381,7 +1381,7 @@ public class HashDbManager implements PropertyChangeListener {
                 AbstractFile file = (AbstractFile) content;
                 if (null != file.getMd5Hash()) {
                     try{
-                        return EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.centralRepoIndex);
+                        return EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.referenceSetID);
                     } catch (EamDbException ex){
                         Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup", ex); //NON-NLS
                         throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
@@ -1409,7 +1409,7 @@ public class HashDbManager implements PropertyChangeListener {
                 AbstractFile file = (AbstractFile) content;
                 if (null != file.getMd5Hash()) {
                     try{
-                        if(EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.centralRepoIndex)){
+                        if(EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.referenceSetID)){
                             // Make a bare-bones HashHitInfo for now
                             result = new HashHitInfo(file.getMd5Hash(), "", "");
                         }
@@ -1434,7 +1434,7 @@ public class HashDbManager implements PropertyChangeListener {
                 return false;
             }
             try{
-                return EamDb.getInstance().referenceSetIsValid(this.centralRepoIndex, this.hashSetName, this.version);
+                return EamDb.getInstance().referenceSetIsValid(this.referenceSetID, this.hashSetName, this.version);
             } catch (EamDbException ex){
                 Logger.getLogger(CentralRepoHashDb.class.getName()).log(Level.SEVERE, "Error validating hash database " + hashSetName, ex); //NON-NLS
                 return false;
@@ -1462,7 +1462,7 @@ public class HashDbManager implements PropertyChangeListener {
             int code = 23;
             code = 47 * code + Objects.hashCode(this.hashSetName);
             code = 47 * code + Objects.hashCode(this.version);
-            code = 47 * code + Integer.hashCode(this.centralRepoIndex);
+            code = 47 * code + Integer.hashCode(this.referenceSetID);
             code = 47 * code + Objects.hashCode(this.knownFilesType);
             return code;
         }

@@ -18,12 +18,10 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 
 /**
  * Main interface for interacting with the database
@@ -365,25 +363,26 @@ public interface EamDb {
 
     /**
      * Remove a reference set and all hashes contained in it.
-     * @param centralRepoIndex
+     * @param referenceSetID
      * @throws EamDbException 
      */
-    public void deleteReferenceSet(int centralRepoIndex) throws EamDbException;
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException;
     
     /**
      * Check whether the given reference set exists in the central repository.
-     * @param centralRepoIndex
+     * @param referenceSetID
      * @param hashSetName
      * @param version
-     * @return 
+     * @return true if a matching entry exists in the central repository
+     * @throws EamDbException
      */
-    public boolean referenceSetIsValid(int centralRepoIndex, String hashSetName, String version) throws EamDbException;
+    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException;
     
     /**
      * Check whether a reference set with the given name/version is in the central repo
      * @param hashSetName
      * @param version
-     * @return
+     * @return true if a matching set is found
      * @throws EamDbException 
      */
     public boolean referenceSetExists(String hashSetName, String version) throws EamDbException;
@@ -391,10 +390,10 @@ public interface EamDb {
     /**
      * Check if the given hash is in a specific reference set
      * @param hash
-     * @param index
-     * @return 
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
      */
-    public boolean isHashInReferenceSet(String hash, int index) throws EamDbException;
+    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
     
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -439,11 +438,11 @@ public interface EamDb {
 
     /**
      * Get the organization associated with the given reference set.
-     * @param globalSetID ID of the reference set
+     * @param referenceSetID ID of the reference set
      * @return The organization object
      * @throws EamDbException 
      */
-    EamOrganization getReferenceSetOrganization(int globalSetID) throws EamDbException;
+    EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException;
 
     /**
      * Update an existing organization.
@@ -476,13 +475,13 @@ public interface EamDb {
     int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
 
     /**
-     * Add a new Global Set
+     * Add a new reference set
      * 
      * @param orgID
      * @param setName
      * @param version
-     * 
-     * @return The ID of the new global set
+     * @param importDate
+     * @return the reference set ID of the newly created set
      * @throws EamDbException 
      */
     int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
@@ -502,7 +501,7 @@ public interface EamDb {
     /**
      * Get all reference sets
      *
-     * @return The global set associated with the ID
+     * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
