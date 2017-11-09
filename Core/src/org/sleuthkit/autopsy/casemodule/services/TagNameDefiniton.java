@@ -28,6 +28,7 @@ import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A tag name definition consisting of a display name, description and color.
@@ -42,11 +43,10 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
             TagsManager.getNotableItemText(), Category.ONE.getDisplayName(),
             Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
             Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
-    static final String NOTABLE = "(Notable)";
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
-    private final String knownStatusDenoted;
+    private final TskData.FileKnown knownStatusDenoted;
 
     /**
      * Constructs a tag name definition consisting of a display name,
@@ -57,12 +57,11 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      * @param color       The color for the tag name.
      * @param knownStatus The status denoted by the tag.
      */
-    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, String knownStatus) {
+    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatusDenoted = knownStatus;
-
+        this.knownStatusDenoted = status;
     }
 
     /**
@@ -99,7 +98,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         otherwise.
      */
     boolean isNotable() {
-        return knownStatusDenoted.equals(NOTABLE);
+        return knownStatusDenoted == TskData.FileKnown.BAD;
     }
 
     /**
@@ -162,7 +161,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
-        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted;
+        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted.toString();
     }
 
     /**
@@ -189,21 +188,21 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
                 if (tagNameAttributes.length == 3) {
                     standardTags.remove(tagNameAttributes[0]);  //Use standard tag's saved settings instead of default settings
                     if (badTags.contains(tagNameAttributes[0])) {
-                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), NOTABLE));
+                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.BAD));
                     } else {
-                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), "")); //add the default value for that tag 
+                        tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
                     }
                 } else if (tagNameAttributes.length == 4) {
                     standardTags.remove(tagNameAttributes[0]);  //Use standard tag's saved settings instead of default settings
-                    tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), tagNameAttributes[3]));
+                    tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.valueOf(tagNameAttributes[3])));
                 }
             }
         }
         for (String standardTagName : standardTags) {
             if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
-                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, NOTABLE));
+                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
             } else {
-                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, "")); //add the default value for that tag 
+                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
             }
         }
         return tagNames;
