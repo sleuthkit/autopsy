@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import javax.swing.text.JTextComponent;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
@@ -75,6 +77,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static final int TEXT_TAB_INDEX = 1;
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
+    private static final int ATTM_TAB_INDEX = 4;
     private final List<JTextComponent> textAreas;
 
     /**
@@ -82,13 +85,13 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      */
     private BlackboardArtifact artifact;
     private DataResultPanel drp;
+    private final ExplorerManager drpExplorerManager;
 
     /**
      * Creates new MessageContentViewer
      */
     public MessageContentViewer() {
         initComponents();
-
         drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, new DataContent() {
             @Override
             public void setNode(Node selectedNode) {
@@ -101,7 +104,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             }
         }
         );
-        msgbodyTabbedPane.addTab("Attachments", drp);
+
+        attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(4, true);
 
         textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
@@ -111,6 +115,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         resetComponent();
 
         drp.open();
+        drpExplorerManager = drp.getExplorerManager();
+        drpExplorerManager.addPropertyChangeListener(evt
+                -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
+
     }
 
     /**
@@ -144,6 +152,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         showImagesToggleButton = new javax.swing.JToggleButton();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
         rtfbodyTextPane = new javax.swing.JTextPane();
+        attachmentsPanel = new javax.swing.JPanel();
+        viewInNewWindowButton = new javax.swing.JButton();
+        attachmentsScrollPane = new javax.swing.JScrollPane();
 
         envelopePanel.setBackground(new java.awt.Color(204, 204, 204));
 
@@ -287,6 +298,39 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.rtfbodyScrollPane.TabConstraints.tabTitle"), rtfbodyScrollPane); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(viewInNewWindowButton, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.viewInNewWindowButton.text")); // NOI18N
+        viewInNewWindowButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewInNewWindowButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout attachmentsPanelLayout = new javax.swing.GroupLayout(attachmentsPanel);
+        attachmentsPanel.setLayout(attachmentsPanelLayout);
+        attachmentsPanelLayout.setHorizontalGroup(
+            attachmentsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(attachmentsPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(attachmentsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, attachmentsPanelLayout.createSequentialGroup()
+                        .addComponent(viewInNewWindowButton)
+                        .addGap(3, 3, 3))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, attachmentsPanelLayout.createSequentialGroup()
+                        .addComponent(attachmentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)
+                        .addGap(0, 0, 0))))
+        );
+        attachmentsPanelLayout.setVerticalGroup(
+            attachmentsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(attachmentsPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(viewInNewWindowButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(attachmentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
+        );
+
+        msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.attachmentsPanel.TabConstraints.tabTitle"), attachmentsPanel); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -329,8 +373,15 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         }
     }//GEN-LAST:event_showImagesToggleButtonActionPerformed
 
+    private void viewInNewWindowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInNewWindowButtonActionPerformed
+     
+        new NewWindowViewAction("View in new window", drpExplorerManager.getSelectedNodes()[0]).actionPerformed(evt);
+    }//GEN-LAST:event_viewInNewWindowButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel attachmentsPanel;
+    private javax.swing.JScrollPane attachmentsScrollPane;
     private javax.swing.JLabel ccLabel;
     private javax.swing.JLabel ccText;
     private javax.swing.JLabel datetimeText;
@@ -353,6 +404,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JTextArea textbodyTextArea;
     private javax.swing.JLabel toLabel;
     private javax.swing.JLabel toText;
+    private javax.swing.JButton viewInNewWindowButton;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -480,12 +532,16 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
-            
+
+            //TODO: Replace this with code to get the actual attachements!
             final Set<AbstractFile> attachments = artifact.getDataSource().getChildren().stream()
                     .filter(AbstractFile.class::isInstance)
                     .map(AbstractFile.class::cast)
                     .collect(Collectors.toSet());
+            final int numberOfAttachments = attachments.size();
 
+            msgbodyTabbedPane.setEnabledAt(4, numberOfAttachments > 0);
+            msgbodyTabbedPane.setTitleAt(4, "Attachments (" + numberOfAttachments + ")");
             drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
                     new AttachmentsChildren(attachments)), null), true));
 
@@ -519,7 +575,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             msgbodyTabbedPane.setEnabledAt(HTML_TAB_INDEX, false);
             msgbodyTabbedPane.setEnabledAt(RTF_TAB_INDEX, false);
             msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
+            msgbodyTabbedPane.setEnabledAt(HDR_TAB_INDEX, false);
             configureTextArea(TSK_TEXT, TEXT_TAB_INDEX);
+            msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, false);
+            msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments");
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to get attributes for message.", ex); //NON-NLS
         }

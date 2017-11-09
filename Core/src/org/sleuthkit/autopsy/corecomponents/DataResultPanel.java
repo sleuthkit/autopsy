@@ -65,7 +65,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  * normally docked into the lower right hand side of the main window, underneath
  * the results view. A custom content view may be specified instead.
  */
-public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
+public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
@@ -519,6 +519,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.removeAll();
             this.setVisible(false);
         }
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
     }
 
     /**
