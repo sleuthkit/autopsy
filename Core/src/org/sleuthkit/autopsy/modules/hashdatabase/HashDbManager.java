@@ -1325,7 +1325,7 @@ public class HashDbManager implements PropertyChangeListener {
                     } else {
                         type = TskData.FileKnown.KNOWN;
                     }
-                    EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(centralRepoIndex, file.getMd5Hash(),
+                    EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
                         type, comment);
                     try{
                         EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
@@ -1353,7 +1353,7 @@ public class HashDbManager implements PropertyChangeListener {
                 } else {
                     type = TskData.FileKnown.KNOWN;
                 }               
-                globalFileInstances.add(new EamGlobalFileInstance(centralRepoIndex, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
+                globalFileInstances.add(new EamGlobalFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
             }
             
             try{

@@ -922,8 +922,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             if(hashDb instanceof CentralRepoHashDb){
-                int newDbIndex = ((CentralRepoHashDb)hashDb).getCentralRepoIndex();
-                newCentralRepoIndices.add(newDbIndex);
+                int newDbIndex = ((CentralRepoHashDb)hashDb).getReferenceSetID();
+                newReferenceSetIDs.add(newDbIndex);
             }
             
             hashSetTableModel.refreshModel();
