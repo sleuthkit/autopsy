@@ -32,6 +32,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -39,6 +40,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -603,7 +605,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         @Override
         protected Node[] createNodes(AbstractFile t) {
-            return new Node[]{new FileNode(t)};
+            return new Node[]{new AttachmentNode(t)};
         }
 
         @Override
@@ -611,5 +613,32 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             super.addNotify();
             setKeys(files);
         }
+    }
+
+    private static class AttachmentNode extends FileNode {
+
+        private final AbstractFile file;
+
+        AttachmentNode(AbstractFile file) {
+            super(file, true);
+            this.file = file;
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = new Sheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+
+            ss.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
+            ss.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
+            ss.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", file.getMIMEType()));
+            ss.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
+            return s;
+        }
+
     }
 }

@@ -54,7 +54,6 @@ public class RelationShipNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
-
         Sheet s = new Sheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
         if (ss == null) {
