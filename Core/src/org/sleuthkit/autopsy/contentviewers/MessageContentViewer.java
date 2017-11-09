@@ -228,7 +228,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ccLabel)
                     .addComponent(ccText))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(subjectLabel)
                     .addComponent(subjectText))
@@ -276,7 +276,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(htmlScrollPane)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, htmlPaneLayout.createSequentialGroup()
-                .addContainerGap(283, Short.MAX_VALUE)
+                .addContainerGap(533, Short.MAX_VALUE)
                 .addComponent(showImagesToggleButton)
                 .addGap(3, 3, 3))
         );
@@ -285,7 +285,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             .addGroup(htmlPaneLayout.createSequentialGroup()
                 .addComponent(showImagesToggleButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
+                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
 
@@ -325,7 +325,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addGap(0, 0, 0)
                 .addComponent(viewInNewWindowButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(attachmentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
+                .addComponent(attachmentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
 
@@ -345,17 +345,16 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(5, 5, 5)
                 .addComponent(envelopePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(msgbodyTabbedPane)
-                .addContainerGap())
+                .addGap(5, 5, 5))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     @NbBundle.Messages({
-        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images",
-        "MessageContentViewer.showImagesToggleButton.text=Show Images"})
+        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images"})
     private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
         try {
             String htmlText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_HTML);
@@ -374,7 +373,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }//GEN-LAST:event_showImagesToggleButtonActionPerformed
 
     private void viewInNewWindowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInNewWindowButtonActionPerformed
-     
+
         new NewWindowViewAction("View in new window", drpExplorerManager.getSelectedNodes()[0]).actionPerformed(evt);
     }//GEN-LAST:event_viewInNewWindowButtonActionPerformed
 
