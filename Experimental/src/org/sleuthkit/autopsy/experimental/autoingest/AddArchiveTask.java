@@ -165,15 +165,14 @@ class AddArchiveTask implements Runnable {
                 Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
 
                 // Try each DSP in decreasing order of confidence
-                UUID taskId = UUID.randomUUID();
-                currentCase.notifyAddingDataSource(taskId);
                 boolean success = false;
                 for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
 
                     logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file});
-
                     synchronized (archiveDspLock) {
                         try {
+                            UUID taskId = UUID.randomUUID();
+                            currentCase.notifyAddingDataSource(taskId);
                             DataSource internalDataSource = new DataSource(deviceId, newFilePath);
                             DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
                             selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
