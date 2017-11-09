@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
@@ -39,6 +40,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * be used independently of the wizard.
  */
 @ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
     @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
 )
 @NbBundle.Messages({

@@ -22,6 +22,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.LocalDiskDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
@@ -113,11 +115,23 @@ class AddArchiveTask implements Runnable {
             // extract contents of ZIP archive into destination folder
             progressMonitor.setProgressText(String.format("Extracting archive contents to: %s", destinationFolder.toString()));
             List<String> extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
+            int numExtractedFilesRemaining = extractedFiles.size();
+ 
+            // lookup all AutomatedIngestDataSourceProcessors so that we only do it once
+            Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
 
             // do processing
-            for (String file : extractedFiles) {                
+            for (String file : extractedFiles) {
+                
+                // we only care about files, skip directories
+                File fileObject = new File(file);
+                if (fileObject.isDirectory()) {
+                    numExtractedFilesRemaining--;
+                    continue;
+                }
+                
                 // identify all "valid" DSPs that can process this file
-                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = getValidDataSourceProcessors(Paths.get(file), errorMessages);
+                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = getValidDataSourceProcessors(Paths.get(file), errorMessages, processorCandidates);
                 if (validDataSourceProcessors.isEmpty()) {
                     continue;
                 }
@@ -145,7 +159,7 @@ class AddArchiveTask implements Runnable {
                 }
 
                 // Copy it to a different folder                     
-                FileUtils.copyFileToDirectory(new File(file), newFolder.toFile());
+                FileUtils.copyFileToDirectory(fileObject, newFolder.toFile());
                 Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
 
                 // Try each DSP in decreasing order of confidence
@@ -192,7 +206,8 @@ class AddArchiveTask implements Runnable {
                     // one of the DSPs successfully processed the data source. delete the 
                     // copy of the data source in the original extracted archive folder. 
                     // otherwise the data source is going to be added again as a logical file.
-                    FileUtils.deleteQuietly(Paths.get(file).toFile());
+                    numExtractedFilesRemaining--;
+                    FileUtils.deleteQuietly(fileObject);
                 } else {
                     // none of the DSPs were able to process the data source. delete the 
                     // copy of the data source in the temporary folder. the data source is 
@@ -203,28 +218,30 @@ class AddArchiveTask implements Runnable {
 
             // after all archive contents have been examined (and moved to separate folders if necessary), 
             // add remaining extracted contents as one logical file set
-            progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
-            logger.log(Level.INFO, "Adding directory {0} as logical file set", destinationFolder.toString());
-            synchronized (archiveDspLock) {
-                UUID taskId = UUID.randomUUID();
-                currentCase.notifyAddingDataSource(taskId);
-                DataSource internalDataSource = new DataSource(deviceId, destinationFolder);
-                DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
+            if (numExtractedFilesRemaining > 0) {
+                progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
+                logger.log(Level.INFO, "Adding directory {0} as logical file set", destinationFolder.toString());
+                synchronized (archiveDspLock) {
+                    UUID taskId = UUID.randomUUID();
+                    currentCase.notifyAddingDataSource(taskId);
+                    DataSource internalDataSource = new DataSource(deviceId, destinationFolder);
+                    DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
 
-                // folder where archive was extracted to
-                List<String> pathsList = new ArrayList<>();
-                pathsList.add(destinationFolder.toString());
+                    // folder where archive was extracted to
+                    List<String> pathsList = new ArrayList<>();
+                    pathsList.add(destinationFolder.toString());
 
-                // use archive file name as the name of the logical file set
-                String archiveFileName = FilenameUtils.getName(archivePath);
+                    // use archive file name as the name of the logical file set
+                    String archiveFileName = FilenameUtils.getName(archivePath);
 
-                LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
-                localFilesDSP.run(deviceId, archiveFileName, pathsList, progressMonitor, internalArchiveDspCallBack);
+                    LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
+                    localFilesDSP.run(deviceId, archiveFileName, pathsList, progressMonitor, internalArchiveDspCallBack);
 
-                archiveDspLock.wait();
+                    archiveDspLock.wait();
 
-                // at this point we got the content object(s) from the current DSP
-                newDataSources.addAll(internalDataSource.getContent());
+                    // at this point we got the content object(s) from the current DSP
+                    newDataSources.addAll(internalDataSource.getContent());
+                }
             }
         } catch (Exception ex) {
             criticalErrorOccurred = true;
@@ -254,22 +271,22 @@ class AddArchiveTask implements Runnable {
      *
      * @return Ordered list of applicable DSPs
      */
-    private List<AutoIngestDataSourceProcessor> getValidDataSourceProcessors(Path dataSourcePath, List<String> errorMessages) {
-        Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
+    private List<AutoIngestDataSourceProcessor> getValidDataSourceProcessors(Path dataSourcePath, List<String> errorMessages, 
+            Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) {
+        
+        // Get an ordered list of data source processors to try
+        List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
         try {
-            validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(dataSourcePath);
+            validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSourcePath, processorCandidates);
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
             criticalErrorOccurred = true;
             errorMessages.add(ex.getMessage());
             logger.log(Level.SEVERE, String.format("Critical error occurred while extracting archive %s", archivePath), ex); //NON-NLS
             return Collections.emptyList();
         }
-        if (validDataSourceProcessorsMap.isEmpty()) {
+        if (validDataSourceProcessors.isEmpty()) {
             return Collections.emptyList();
         }
-
-        // Get an ordered list of data source processors to try
-        List<AutoIngestDataSourceProcessor> validDataSourceProcessors = DataSourceProcessorUtility.orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
 
         for (Iterator<AutoIngestDataSourceProcessor> iterator = validDataSourceProcessors.iterator(); iterator.hasNext();) {
                 AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
