@@ -305,7 +305,7 @@ final class HashLookupSettings implements Serializable {
         private final String path;
         private final String version;
         private final boolean readOnly;
-        private final int centralRepoIndex;
+        private final int referenceSetID;
         private DatabaseType dbType;
 
         /**
@@ -324,16 +324,16 @@ final class HashLookupSettings implements Serializable {
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.path = path;
-            this.centralRepoIndex = -1;
+            this.referenceSetID = -1;
             this.version = "";
             this.readOnly = false;
             this.dbType = DatabaseType.FILE;
         }
         
-        HashDbInfo(String hashSetName, String version, int centralRepoIndex, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
             this.hashSetName = hashSetName;
             this.version = version;
-            this.centralRepoIndex = centralRepoIndex;
+            this.referenceSetID = referenceSetID;
             this.knownFilesType = knownFilesType;
             this.readOnly = readOnly;
             this.searchDuringIngest = searchDuringIngest;
@@ -349,7 +349,7 @@ final class HashLookupSettings implements Serializable {
                 this.knownFilesType = fileTypeDb.getKnownFilesType();
                 this.searchDuringIngest = fileTypeDb.getSearchDuringIngest();
                 this.sendIngestMessages = fileTypeDb.getSendIngestMessages();
-                this.centralRepoIndex = -1;
+                this.referenceSetID = -1;
                 this.version = "";
                 this.readOnly = false;
                 this.dbType = DatabaseType.FILE;
@@ -367,7 +367,7 @@ final class HashLookupSettings implements Serializable {
                 this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
                 this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
                 this.path = "";
-                this.centralRepoIndex = centralRepoDb.getCentralRepoIndex();
+                this.referenceSetID = centralRepoDb.getReferenceSetID();
                 this.dbType = DatabaseType.CENTRAL_REPOSITORY;
             }
         }
@@ -441,8 +441,8 @@ final class HashLookupSettings implements Serializable {
             return path;
         }
         
-        int getCentralRepoIndex(){
-            return centralRepoIndex;
+        int getReferenceSetID(){
+            return referenceSetID;
         }
         
         /**
@@ -481,7 +481,7 @@ final class HashLookupSettings implements Serializable {
             
             // Central repo tests
             CentralRepoHashDb crDb = (CentralRepoHashDb) hashDb;
-            if(this.centralRepoIndex != crDb.getCentralRepoIndex()){
+            if(this.referenceSetID != crDb.getReferenceSetID()){
                 return false;
             }
             
@@ -515,7 +515,7 @@ final class HashLookupSettings implements Serializable {
             } else {
                 // For central repo, the name, index, and known files type should match
                 return (this.hashSetName.equals(other.hashSetName)
-                        && (this.centralRepoIndex == other.centralRepoIndex)
+                        && (this.referenceSetID == other.referenceSetID)
                         && this.knownFilesType.equals(other.knownFilesType));
             }
         }
@@ -527,7 +527,7 @@ final class HashLookupSettings implements Serializable {
             hash = 89 * hash + Objects.hashCode(this.knownFilesType);
             hash = 89 * hash + Objects.hashCode(this.dbType);
             if(this.dbType.equals(DatabaseType.CENTRAL_REPOSITORY)){
-                hash = 89 * hash + this.centralRepoIndex;
+                hash = 89 * hash + this.referenceSetID;
             }
             
             return hash;
