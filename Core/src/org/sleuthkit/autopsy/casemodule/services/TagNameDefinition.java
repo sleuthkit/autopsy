@@ -46,7 +46,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
-    private final TskData.FileKnown knownStatusDenoted;
+    private final TskData.FileKnown knownStatus;
 
     /**
      * Constructs a tag name definition consisting of a display name,
@@ -55,14 +55,14 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param displayName The display name for the tag name.
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
-     * @param knownStatus The status denoted by the tag.
+     * @param knownStatus The status denoted by the tag name.
      */
 
     TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatusDenoted = status;
+        this.knownStatus = status;
     }
 
     /**
@@ -93,13 +93,13 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     /**
-     * Whether or not the status that this tag implies is the Notable status
+     * Whether or not the status that this tag implies Notable status
      *
      * @return true if the Notable status is implied by this tag, false
      *         otherwise.
      */
     boolean isNotable() {
-        return knownStatusDenoted == TskData.FileKnown.BAD;
+        return knownStatus == TskData.FileKnown.BAD;
     }
 
     /**
@@ -162,7 +162,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
-        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted.toString();
+        return displayName + "," + description + "," + color.name() + "," + knownStatus.toString();
     }
 
     /**
