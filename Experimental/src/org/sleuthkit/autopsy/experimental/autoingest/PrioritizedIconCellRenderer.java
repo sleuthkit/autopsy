@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,27 +23,34 @@ import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.CENTER;
 import org.openide.util.ImageUtilities;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
+import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
- * A JTable cell renderer that represents an auto ingest alert file exists flag
- * as a center-aligned icon, and grays out the cell if the table is disabled.
+ * A JTable cell renderer that represents whether the priority value of a job
+ * has ever been increased, tick if prioritized nothing if not.
  */
-class CaseStatusIconCellRenderer extends GrayableCellRenderer {
+class PrioritizedIconCellRenderer extends GrayableCellRenderer {
 
+    
+    @Messages({
+        "PrioritizedIconCellRenderer.prioritized.tooltiptext=This job has been prioritized. The most recently prioritized job should be processed next.",
+        "PrioritizedIconCellRenderer.notPrioritized.tooltiptext=This job has not been prioritized."
+    })
     private static final long serialVersionUID = 1L;
     static final ImageIcon checkedIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/tick.png", false));
-    static final ImageIcon warningIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/warning16.png", false));
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         setHorizontalAlignment(CENTER);
-        if ((value instanceof Boolean)) {
-            if (true == (Boolean) value) {
-                setIcon(warningIcon);
-                setToolTipText(org.openide.util.NbBundle.getMessage(CaseStatusIconCellRenderer.class, "CaseStatusIconCellRenderer.tooltiptext.warning"));
+        if ((value instanceof Integer)) {
+            if ((int) value == 0) {
+                setIcon(null);
+                setToolTipText(org.openide.util.NbBundle.getMessage(PrioritizedIconCellRenderer.class, "PrioritizedIconCellRenderer.notPrioritized.tooltiptext"));
             } else {
                 setIcon(checkedIcon);
-                setToolTipText(org.openide.util.NbBundle.getMessage(CaseStatusIconCellRenderer.class, "CaseStatusIconCellRenderer.tooltiptext.ok"));
+                setToolTipText(org.openide.util.NbBundle.getMessage(PrioritizedIconCellRenderer.class, "PrioritizedIconCellRenderer.prioritized.tooltiptext"));
             }
         }
         grayCellIfTableNotEnabled(table, isSelected);

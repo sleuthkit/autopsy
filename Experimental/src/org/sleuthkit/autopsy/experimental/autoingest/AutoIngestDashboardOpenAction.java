@@ -25,7 +25,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import static org.sleuthkit.autopsy.core.UserPreferences.SelectedMode.REVIEW;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboardOpenAction")
@@ -39,8 +38,7 @@ public final class AutoIngestDashboardOpenAction extends CallableSystemAction {
     
     @Override
     public boolean isEnabled() {
-        UserPreferences.SelectedMode mode = UserPreferences.getMode();
-        return (mode == REVIEW);
+        return (UserPreferences.getIsMultiUserModeEnabled());
     }
     
     @Override
