@@ -68,7 +68,10 @@ final public class FiltersPanel extends javax.swing.JPanel {
         initComponents();
         startCalendarButton.addPropertyChangeListener(this::startPopupChanged);
         endCalendarButton.addPropertyChangeListener(this::endPopupChanged);
-
+        final Instant threeWeeksAgoInstant =
+                LocalDate.now().minusWeeks(3).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        setStartDate(Date.from(threeWeeksAgoInstant));
+        setEndDate(new Date());
         updateAndApplyFilters();
     }
 
@@ -527,52 +530,34 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
     private void endDateTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_endDateTextFieldFocusLost
         String endDateString = this.endDateTextField.getText();
-        if (endDateString.isEmpty() == false) {
-            try {
-                Date fromDate = DATE_FORMAT.parse(endDateString);
-                endCalendarButton.setTargetDate(fromDate);
-            } catch (ParseException ex) {
-                // for now, no need to show the error message to the user here
-            }
-        } else {
-            endCheckBox.setSelected(false);
+        try {
+            Date fromDate = DATE_FORMAT.parse(endDateString);
+            endCalendarButton.setTargetDate(fromDate);
+        } catch (ParseException ex) {
+            // for now, no need to show the error message to the user here
         }
     }//GEN-LAST:event_endDateTextFieldFocusLost
 
     private void startDateTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_startDateTextFieldFocusLost
         String startDateString = this.startDateTextField.getText();
-        if (startDateString.isEmpty() == false) {
-            try {
-                Date fromDate = DATE_FORMAT.parse(startDateString);
-                startCalendarButton.setTargetDate(fromDate);
-            } catch (ParseException ex) {
-                // for now, no need to show the error message to the user here
-            }
-        } else {
-            startCheckBox.setSelected(false);
+        try {
+            Date fromDate = DATE_FORMAT.parse(startDateString);
+            startCalendarButton.setTargetDate(fromDate);
+        } catch (ParseException ex) {
+            // for now, no need to show the error message to the user here
         }
     }//GEN-LAST:event_startDateTextFieldFocusLost
 
     private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
-         boolean selected = startCheckBox.isSelected();
+        boolean selected = startCheckBox.isSelected();
         startCalendarButton.setEnabled(selected);
         startDateTextField.setEnabled(selected);
-
-        if (selected && startDateTextField.getText().isEmpty()) {
-            final Instant threeWeeksAgoInstant =
-            LocalDate.now().minusWeeks(3).atStartOfDay(ZoneId.systemDefault()).toInstant();
-            setStartDate(Date.from(threeWeeksAgoInstant));
-        }
     }//GEN-LAST:event_startCheckBoxStateChanged
 
     private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
-    boolean selected = endCheckBox.isSelected();
+        boolean selected = endCheckBox.isSelected();
         endCalendarButton.setEnabled(selected);
         endDateTextField.setEnabled(selected);
-
-        if (selected && endDateTextField.getText().isEmpty()) {
-            setEndDate(new Date());
-        }
     }//GEN-LAST:event_endCheckBoxStateChanged
 
 
