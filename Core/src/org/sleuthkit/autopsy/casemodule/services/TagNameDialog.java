@@ -29,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.datamodel.TskData;
 
 final class TagNameDialog extends javax.swing.JDialog {
 
@@ -59,7 +60,7 @@ final class TagNameDialog extends javax.swing.JDialog {
         initComponents();
         tagNameTextField.setText(tagNameToEdit.getDisplayName());
         descriptionTextArea.setText(tagNameToEdit.getDescription());
-        notableCheckbox.setSelected(tagNameToEdit.isNotable());
+        notableCheckbox.setSelected(tagNameToEdit.getKnownStatus()== TskData.FileKnown.BAD);
         tagNameTextField.setEnabled(false);
         this.display();
     }

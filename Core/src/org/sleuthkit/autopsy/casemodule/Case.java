@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.casemodule.services.TagNameDefinition;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -362,7 +363,13 @@ public class Case {
          * case number, the examiner name, examiner phone, examiner email, and
          * the case notes.
          */
-        CASE_DETAILS;
+        CASE_DETAILS,
+        /**
+         * The status which a Tag indicates has been changed and the new value
+         * of the TagNameDefinition is included.
+         */
+        TAG_STATUS_CHANGED;
+
     };
 
     /**
@@ -1472,6 +1479,9 @@ public class Case {
         eventPublisher.publish(new ContentTagDeletedEvent(deletedTag));
     }
 
+    public void notifyTagStatusChanged(TagNameDefinition oldTag, TagNameDefinition newTag) {
+       eventPublisher.publish(new AutopsyEvent(Events.TAG_STATUS_CHANGED.toString(), oldTag, newTag));
+    }
     /**
      * Notifies case event subscribers that an artifact tag has been added.
      *

@@ -28,6 +28,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
@@ -46,7 +47,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private IngestJobEventPropertyChangeListener ingestJobEventsListener;
 
     /**
-     * Creates new form TagsManagerOptionsPanel
+     * Creates new form TagOptionsPanel
      */
     TagOptionsPanel() {
         tagTypesListModel = new DefaultListModel<>();
@@ -336,14 +337,16 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
-             */
-
+             */            
             tagTypes.remove(originalTagName);
             tagTypes.add(newTagType);
             updateTagNamesListModel();
             tagNamesList.setSelectedValue(newTagType, true);
             updatePanel();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()){
+                Case.getCurrentCase().notifyTagStatusChanged(originalTagName,newTagType);
+            }
         }
     }//GEN-LAST:event_editTagNameButtonActionPerformed
 
@@ -416,7 +419,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         if (isSelected) {
 
             descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
-            if (tagNamesList.getSelectedValue().isNotable()) {
+            if (tagNamesList.getSelectedValue().getKnownStatus() == TskData.FileKnown.BAD) {
                 notableYesOrNoLabel.setText("Yes");
             } else {
                 notableYesOrNoLabel.setText("No");

@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.TskData;
  * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-final class TagNameDefinition implements Comparable<TagNameDefinition> {
+public final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
@@ -58,7 +58,8 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param knownStatus The status denoted by the tag.
      */
 
-    TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
+    public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
+
         this.displayName = displayName;
         this.description = description;
         this.color = color;
@@ -70,7 +71,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The display name.
      */
-    String getDisplayName() {
+    public String getDisplayName() {
         return displayName;
     }
 
@@ -92,14 +93,9 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         return color;
     }
 
-    /**
-     * Whether or not the status that this tag implies is the Notable status
-     *
-     * @return true if the Notable status is implied by this tag, false
-     *         otherwise.
-     */
-    boolean isNotable() {
-        return knownStatusDenoted == TskData.FileKnown.BAD;
+
+    public TskData.FileKnown getKnownStatus() {
+        return knownStatusDenoted;
     }
 
     /**

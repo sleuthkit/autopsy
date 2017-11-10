@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.services.TagNameDefinition;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
@@ -48,6 +49,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
@@ -97,6 +99,10 @@ final class CaseEventListener implements PropertyChangeListener {
                 jobProcessingExecutor.submit(new DataSourceAddedTask(dbManager, evt));
             }
             break;
+            case TAG_STATUS_CHANGED: {
+                //WJS-TODO actaully do stuff when event is seen.
+                jobProcessingExecutor.submit(new TagStatusChangeTask(dbManager, evt));
+            }
 
             case CURRENT_CASE: {
                 jobProcessingExecutor.submit(new CurrentCaseTask(dbManager, evt));
@@ -294,6 +300,93 @@ final class CaseEventListener implements PropertyChangeListener {
 
     }
 
+    private final class TagStatusChangeTask implements Runnable {
+
+        private final EamDb dbManager;
+        private final PropertyChangeEvent event;
+
+        private TagStatusChangeTask(EamDb db, PropertyChangeEvent evt) {
+            dbManager = db;
+            event = evt;
+        }
+
+        @Override
+        public void run() {
+            if (!EamDb.isEnabled()) {
+                return;
+            }
+            TskData.FileKnown status = ((TagNameDefinition) event.getNewValue()).getKnownStatus();
+            /**
+             * Set knownBad status for all files/artifacts in the given case
+             * that are tagged with the given tag name. Files/artifacts that are
+             * not already in the database will be added.
+             *
+             * @param tagName The name of the tag to search for
+             * @param curCase The case to search in
+             */
+            try {
+                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(((TagNameDefinition) event.getNewValue()).getDisplayName());
+                // First find any matching artifacts
+                List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
+                List<String> notableTags = TagsManager.getNotableTagDisplayNames();
+                for (BlackboardArtifactTag bbTag : artifactTags) {
+                    List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
+                    for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                        if (status == TskData.FileKnown.UNKNOWN) {
+                            Content content = bbTag.getContent();
+                            BlackboardArtifact bbArtifact = bbTag.getArtifact();
+                            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                            List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
+                            if (!(tags.stream()
+                                    .map(tag -> tag.getName().getDisplayName())
+                                    .filter(notableTags::contains)
+                                    .collect(Collectors.toList())
+                                    .isEmpty())) {   // There are more bad tags on the object
+                                break;
+                            }
+                            if ((content instanceof AbstractFile) && (((AbstractFile) content).getKnown() == TskData.FileKnown.KNOWN)) {
+                                break;
+                            }
+                        }
+                        System.out.println(
+                                "TAG " + ((TagNameDefinition) event.getNewValue()).getDisplayName() + " event FROM " + ((TagNameDefinition) event.getOldValue()).getKnownStatus() + " TO " + ((TagNameDefinition) event.getNewValue()).getKnownStatus());
+                        EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, status);
+                    }
+                }
+
+                // Now search for files
+                List<ContentTag> fileTags = Case.getCurrentCase().getSleuthkitCase().getContentTagsByTagName(tagName);
+                for (ContentTag contentTag : fileTags) {
+                    if (status == TskData.FileKnown.UNKNOWN) {
+                        Content content = contentTag.getContent();
+                        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                        List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
+                        if (!(tags.stream()
+                                .map(tag -> tag.getName().getDisplayName())
+                                .filter(notableTags::contains)
+                                .collect(Collectors.toList())
+                                .isEmpty())) {   // There are more bad tags on the object
+                            continue;
+                        }
+                    }
+                    System.out.println("MAKING ARTIFACT");
+                    final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(),
+                            TskData.FileKnown.BAD, "");
+                    if (eamArtifact != null) {
+                        EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, status);
+                        System.out.println(
+                                "TAG " + ((TagNameDefinition) event.getNewValue()).getDisplayName() + " event FROM " + ((TagNameDefinition) event.getOldValue()).getKnownStatus() + " TO " + ((TagNameDefinition) event.getNewValue()).getKnownStatus());
+                    }
+                }
+            } catch (TskCoreException ex) {
+                System.out.println("Cannot update ");
+            } catch (EamDbException ex) {
+                System.out.println("Cannot get CR");
+            }
+
+        } //TAG_STATUS_CHANGED
+    }
+
     private final class DataSourceAddedTask implements Runnable {
 
         private final EamDb dbManager;
@@ -350,7 +443,7 @@ final class CaseEventListener implements PropertyChangeListener {
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
-                
+
                 CorrelationCase curCeCase = new CorrelationCase(
                         -1,
                         curCase.getName(), // unique case ID
