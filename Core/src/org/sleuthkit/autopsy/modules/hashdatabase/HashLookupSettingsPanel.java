@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -66,7 +65,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
-    private final List<Integer> newReferenceSetIDs = new ArrayList<>();
+    private final List<CentralRepoHashDb> newReferenceSets = new ArrayList<>();
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -328,7 +327,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         
         try {
             hashSetManager.save();
-            newReferenceSetIDs.clear();
+            HashDbManager.getInstance().saveNewCentralRepoDatabases(newReferenceSets);
+            newReferenceSets.clear();
         } catch (HashDbManager.HashDbManagerException ex) {
             SwingUtilities.invokeLater(() -> {
                 JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
@@ -355,10 +355,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
             // Remove any new central repo hash sets from the database
-            for(int refID:newReferenceSetIDs){
+            for(CentralRepoHashDb db:newReferenceSets){
                 try{
                     if(EamDb.isEnabled()){
-                        EamDb.getInstance().deleteReferenceSet(refID);
+                        EamDb.getInstance().deleteReferenceSet(db.getReferenceSetID());
                     } else {
                         // This is the case where the user imported a database, then switched over to the central
                         // repo panel and disabled it before cancelling. We can't delete the database at this point.
@@ -368,6 +368,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error reverting central repository hash sets", ex); //NON-NLS
                 }
             }
+            newReferenceSets.clear();
             
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
@@ -922,8 +923,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             if(hashDb instanceof CentralRepoHashDb){
-                int newDbIndex = ((CentralRepoHashDb)hashDb).getReferenceSetID();
-                newReferenceSetIDs.add(newDbIndex);
+                CentralRepoHashDb crDb = (CentralRepoHashDb)hashDb;
+                newReferenceSets.add(crDb);
             }
             
             hashSetTableModel.refreshModel();
@@ -976,8 +977,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         HashDatabase hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
             if(hashDb instanceof CentralRepoHashDb){
-                int newReferenceSetID = ((CentralRepoHashDb)hashDb).getReferenceSetID();
-                newReferenceSetIDs.add(newReferenceSetID);
+                CentralRepoHashDb crDb = (CentralRepoHashDb)hashDb;
+                newReferenceSets.add(crDb);
             }
             
             hashSetTableModel.refreshModel();

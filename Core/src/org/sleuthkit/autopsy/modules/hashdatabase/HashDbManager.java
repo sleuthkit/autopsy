@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -70,6 +71,8 @@ public class HashDbManager implements PropertyChangeListener {
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     private boolean allDatabasesLoadedCorrectly = false;
+    private static final String CENTRAL_REPO_HASH_SET_SETTINGS = "CentralRepoHashSets";
+    private static final String CENTRAL_REPO_HASH_SET_LOCAL_KEY = "LocallyCreatedHashsets";
 
     /**
      * Property change event support In events: For both of these enums, the old
@@ -697,6 +700,44 @@ public class HashDbManager implements PropertyChangeListener {
             }
         }
     }
+    
+    /**
+     * Save any newly created central repo databases to the properties file.
+     * @param newHashSets 
+     */
+    static void saveNewCentralRepoDatabases(List<CentralRepoHashDb> newHashSets){
+        
+        if(! newHashSets.isEmpty()){
+            String newDbs = "";
+            for(CentralRepoHashDb db:newHashSets){
+                newDbs += makeCentralRepoHashSetString(db);
+            }
+            String oldSetting = ModuleSettings.getConfigSetting(CENTRAL_REPO_HASH_SET_SETTINGS, CENTRAL_REPO_HASH_SET_LOCAL_KEY);
+            String newSetting = "";
+            if((oldSetting != null) && (! oldSetting.isEmpty())){
+                newSetting = oldSetting;
+            }
+            newSetting += newDbs;
+            ModuleSettings.setConfigSetting(CENTRAL_REPO_HASH_SET_SETTINGS, CENTRAL_REPO_HASH_SET_LOCAL_KEY, newSetting);
+        }
+    }
+    
+    /**
+     * Check whether a given central repository hash set was created on this machine.
+     * @return true if it was created on this machine, false otherwise
+     */
+    static boolean centralRepoWasCreatedLocally(CentralRepoHashDb db){
+        String setting = ModuleSettings.getConfigSetting(CENTRAL_REPO_HASH_SET_SETTINGS, CENTRAL_REPO_HASH_SET_LOCAL_KEY);
+        String dbStr = makeCentralRepoHashSetString(db);
+        if(setting == null){
+            return false;
+        }
+        return setting.contains(dbStr);
+    }
+    
+    private static String makeCentralRepoHashSetString(CentralRepoHashDb db){
+        return "|" + db.getReferenceSetID() + "." + db.getHashSetName() + "." + db.getVersion() + "|";
+    }
         
     private boolean hashDbInfoIsNew(HashDbInfo dbInfo){
         for(HashDatabase db:this.hashSets){
@@ -1258,8 +1299,8 @@ public class HashDbManager implements PropertyChangeListener {
         
         @Override
         public boolean getDefaultSearchDuringIngest(){
-            // Central repo hash sets are off by default
-            return false;
+            // Central repo hash sets are off by default, unless created on this machine
+            return centralRepoWasCreatedLocally(this);
         }
 
         @Override
