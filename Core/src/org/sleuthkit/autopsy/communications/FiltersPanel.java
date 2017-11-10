@@ -18,6 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +32,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
+import javax.swing.JFormattedTextField;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -47,6 +55,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
+
     private ExplorerManager em;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -56,6 +66,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
     public FiltersPanel() {
         initComponents();
+        startCalendarButton.addPropertyChangeListener(this::startPopupChanged);
+        endCalendarButton.addPropertyChangeListener(this::endPopupChanged);
+
         updateAndApplyFilters();
     }
 
@@ -80,6 +93,42 @@ final public class FiltersPanel extends javax.swing.JPanel {
         em = ExplorerManager.find(this);
     }
 
+    private void startPopupChanged(java.beans.PropertyChangeEvent evt) {
+        if (evt.getNewValue() instanceof Date) {
+            setStartDate((Date) evt.getNewValue());
+        }
+    }
+
+    /**
+     *
+     * @param newStartDate the value of newStartDate
+     */
+    private void setStartDate(final Date newStartDate) {
+        startDateTextField.setValue(newStartDate);
+        startCalendarButton.setTargetDate(newStartDate);
+    }
+
+    private void endPopupChanged(java.beans.PropertyChangeEvent evt) {
+        if (evt.getNewValue() instanceof Date) {
+            setEndDate((Date) evt.getNewValue());
+        }
+    }
+
+    /**
+     *
+     * @param newEndDate the value of newEndDate
+     */
+    private void setEndDate(final Date newEndDate) {
+        endDateTextField.setValue(newEndDate);
+        endCalendarButton.setTargetDate(newEndDate);
+    }
+
+    /**
+     * Validate and set the datetime field on the screen given a datetime
+     * string.
+     *
+     * @param date The date object
+     */
     /**
      * Populate the Account Types filter widgets
      */
@@ -187,15 +236,20 @@ final public class FiltersPanel extends javax.swing.JPanel {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addContainerGap(43, Short.MAX_VALUE)
-                        .addComponent(unCheckAllAccountTypesButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(checkAllAccountTypesButton))
-                    .addComponent(accountTypesLabel)
-                    .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
+                        .addComponent(accountTypesLabel)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGap(0, 32, Short.MAX_VALUE)
+                                .addComponent(unCheckAllAccountTypesButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(checkAllAccountTypesButton)))))
                 .addGap(0, 0, 0))
         );
         jPanel2Layout.setVerticalGroup(
@@ -203,7 +257,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(accountTypesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
+                .addComponent(accountTypePane, javax.swing.GroupLayout.DEFAULT_SIZE, 174, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllAccountTypesButton)
@@ -238,12 +292,15 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addComponent(devicesLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(unCheckAllDevicesButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(checkAllDevicesButton))
+                .addGap(8, 8, 8)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(0, 32, Short.MAX_VALUE)
+                        .addComponent(unCheckAllDevicesButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(checkAllDevicesButton))
+                    .addComponent(devicesPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -251,7 +308,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addComponent(devicesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+                .addComponent(devicesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllDevicesButton)
@@ -259,19 +316,97 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0))
         );
 
+        dateRangeLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/calendar.png"))); // NOI18N
+        dateRangeLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.dateRangeLabel.text")); // NOI18N
+
+        startCheckBox.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.startCheckBox.text")); // NOI18N
+        startCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                startCheckBoxStateChanged(evt);
+            }
+        });
+
+        endCheckBox.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.endCheckBox.text")); // NOI18N
+        endCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                endCheckBoxStateChanged(evt);
+            }
+        });
+
+        startCalendarButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.startCalendarButton.text")); // NOI18N
+        startCalendarButton.setEnabled(false);
+
+        endCalendarButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.endCalendarButton.text")); // NOI18N
+        endCalendarButton.setEnabled(false);
+
+        endDateTextField.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.endDateTextField.text")); // NOI18N
+        endDateTextField.setEnabled(false);
+        endDateTextField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                endDateTextFieldFocusLost(evt);
+            }
+        });
+
+        startDateTextField.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.startDateTextField.text")); // NOI18N
+        startDateTextField.setEnabled(false);
+        startDateTextField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                startDateTextFieldFocusLost(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addComponent(dateRangeLabel)
+                .addContainerGap())
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(endCheckBox)
+                    .addComponent(startCheckBox))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(endDateTextField)
+                    .addComponent(startDateTextField))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(startCalendarButton, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+                    .addComponent(endCalendarButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addComponent(dateRangeLabel)
+                .addGap(5, 5, 5)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(startCheckBox)
+                    .addComponent(startCalendarButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(startDateTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(endCheckBox)
+                    .addComponent(endCalendarButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(endDateTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(filtersTitleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -283,9 +418,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
                     .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -388,6 +525,56 @@ final public class FiltersPanel extends javax.swing.JPanel {
         setAllDevicesSelected(true);
     }//GEN-LAST:event_checkAllDevicesButtonActionPerformed
 
+    private void endDateTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_endDateTextFieldFocusLost
+        String endDateString = this.endDateTextField.getText();
+        if (endDateString.isEmpty() == false) {
+            try {
+                Date fromDate = DATE_FORMAT.parse(endDateString);
+                endCalendarButton.setTargetDate(fromDate);
+            } catch (ParseException ex) {
+                // for now, no need to show the error message to the user here
+            }
+        } else {
+            endCheckBox.setSelected(false);
+        }
+    }//GEN-LAST:event_endDateTextFieldFocusLost
+
+    private void startDateTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_startDateTextFieldFocusLost
+        String startDateString = this.startDateTextField.getText();
+        if (startDateString.isEmpty() == false) {
+            try {
+                Date fromDate = DATE_FORMAT.parse(startDateString);
+                startCalendarButton.setTargetDate(fromDate);
+            } catch (ParseException ex) {
+                // for now, no need to show the error message to the user here
+            }
+        } else {
+            startCheckBox.setSelected(false);
+        }
+    }//GEN-LAST:event_startDateTextFieldFocusLost
+
+    private void startCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startCheckBoxStateChanged
+         boolean selected = startCheckBox.isSelected();
+        startCalendarButton.setEnabled(selected);
+        startDateTextField.setEnabled(selected);
+
+        if (selected && startDateTextField.getText().isEmpty()) {
+            final Instant threeWeeksAgoInstant =
+            LocalDate.now().minusWeeks(3).atStartOfDay(ZoneId.systemDefault()).toInstant();
+            setStartDate(Date.from(threeWeeksAgoInstant));
+        }
+    }//GEN-LAST:event_startCheckBoxStateChanged
+
+    private void endCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_endCheckBoxStateChanged
+    boolean selected = endCheckBox.isSelected();
+        endCalendarButton.setEnabled(selected);
+        endDateTextField.setEnabled(selected);
+
+        if (selected && endDateTextField.getText().isEmpty()) {
+            setEndDate(new Date());
+        }
+    }//GEN-LAST:event_endCheckBoxStateChanged
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private final javax.swing.JPanel accountTypePane = new javax.swing.JPanel();
@@ -395,13 +582,21 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JButton applyFiltersButton = new javax.swing.JButton();
     private final javax.swing.JButton checkAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton checkAllDevicesButton = new javax.swing.JButton();
+    private final javax.swing.JLabel dateRangeLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel devicesLabel = new javax.swing.JLabel();
     private final javax.swing.JPanel devicesPane = new javax.swing.JPanel();
+    private final org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton endCalendarButton = new org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton();
+    private final javax.swing.JCheckBox endCheckBox = new javax.swing.JCheckBox();
+    private final javax.swing.JFormattedTextField endDateTextField = new JFormattedTextField(this.DATE_FORMAT);
     private final javax.swing.JLabel filtersTitleLabel = new javax.swing.JLabel();
     private final javax.swing.JList<String> jList1 = new javax.swing.JList<>();
     private final javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
+    private final javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
     private final javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
+    private final org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton startCalendarButton = new org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton();
+    private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
+    private final javax.swing.JFormattedTextField startDateTextField = new JFormattedTextField(this.DATE_FORMAT);
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
