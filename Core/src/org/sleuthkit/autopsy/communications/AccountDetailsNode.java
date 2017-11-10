@@ -18,34 +18,33 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * 'Root' Node for the Account/Messages area. Has children which are all the
+ * relationships of all the accounts in this node.
+ *
+ */
 class AccountDetailsNode extends AbstractNode {
 
     private final static Logger logger = Logger.getLogger(AccountDetailsNode.class.getName());
-    private final CommunicationsFilter filter; //TODO: Use this
 
     AccountDetailsNode(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter filter, CommunicationsManager commsManager) {
         super(new AccountRelationshipChildren(accountDeviceInstances, commsManager, filter));
-        this.filter = filter;
     }
 
     /**
-     * Children object for the relationships that the account is a member of.
+     * Children object for the relationships that the accounts are part of.
      */
     private static class AccountRelationshipChildren extends Children.Keys<BlackboardArtifact> {
 
@@ -61,22 +60,16 @@ class AccountDetailsNode extends AbstractNode {
 
         @Override
         protected Node[] createNodes(BlackboardArtifact key) {
-            return new Node[]{new RelationShipFilterNode(key)};
+            return new Node[]{new RelationShipNode(key)};
         }
 
         @Override
         protected void addNotify() {
-            Set<BlackboardArtifact> keys = new HashSet<>();
-           
             try {
-                Set<BlackboardArtifact> communications  = commsManager.getCommunications(accountDeviceInstances, filter);
-                keys = new HashSet<>(communications);
-            }
-            catch (TskCoreException ex) {
+                setKeys(commsManager.getCommunications(accountDeviceInstances, filter));
+            } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error loading communications for accounts. ", ex);
             }
-            
-            setKeys(keys);
         }
     }
 }
