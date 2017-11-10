@@ -47,26 +47,5 @@ class ShortDateCellRenderer extends GrayableCellRenderer {
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
     }
-
-    void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
-        if (table.isEnabled()) {
-            /*
-             * The table is enabled, make the foreground and background the
-             * normal selected or unselected color.
-             */
-            if (isSelected) {
-                setBackground(table.getSelectionBackground());
-                setForeground(table.getSelectionForeground());
-            } else {
-                setBackground(table.getBackground());
-                setForeground(table.getForeground());
-            }
-        } else {
-            /*
-             * The table is disabled, make the foreground and background gray.
-             */
-            setBackground(Color.lightGray);
-            setForeground(Color.darkGray);
-        }
-    }
+    
 }

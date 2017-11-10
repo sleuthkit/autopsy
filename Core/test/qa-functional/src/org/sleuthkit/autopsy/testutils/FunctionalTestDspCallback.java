@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.Content;
  * thread.
  */
 @Immutable
-public class UnitTestDspCallback extends DataSourceProcessorCallback {
+public class FunctionalTestDspCallback extends DataSourceProcessorCallback {
 
     private final Object monitor;
     private final List<String> errorMessages = new ArrayList<>();
@@ -46,7 +46,7 @@ public class UnitTestDspCallback extends DataSourceProcessorCallback {
      * @param monitor A monitor for the callback to signal when the data source
      *                processor completes its processing.
      */
-    UnitTestDspCallback(Object monitor) {
+    FunctionalTestDspCallback(Object monitor) {
         this.monitor = monitor;
     }
 

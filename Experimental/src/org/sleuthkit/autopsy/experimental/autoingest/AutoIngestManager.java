@@ -498,6 +498,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         SYS_LOGGER.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
         InputDirScanner scanner = new InputDirScanner();
+
         scanner.scan();
         SYS_LOGGER.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
     }
@@ -553,10 +554,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (!prioritizedJobs.isEmpty()) {
                 ++maxPriority;
                 for (AutoIngestJob job : prioritizedJobs) {
+                    int oldPriority = job.getPriority();
+                    job.setPriority(maxPriority);
                     try {
                         this.updateCoordinationServiceManifestNode(job);
-                        job.setPriority(maxPriority);
                     } catch (CoordinationServiceException | InterruptedException ex) {
+                        job.setPriority(oldPriority);
                         throw new AutoIngestManagerException("Error updating case priority", ex);
                     }
                 }
@@ -607,12 +610,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
              */
             if (null != prioritizedJob) {
                 ++maxPriority;
+                int oldPriority = prioritizedJob.getPriority();
+                prioritizedJob.setPriority(maxPriority);
                 try {
                     this.updateCoordinationServiceManifestNode(prioritizedJob);
                 } catch (CoordinationServiceException | InterruptedException ex) {
+                    prioritizedJob.setPriority(oldPriority);
                     throw new AutoIngestManagerException("Error updating job priority", ex);
                 }
-                prioritizedJob.setPriority(maxPriority);
             }
 
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
@@ -1237,10 +1242,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @param manifest    The manifest for upgrading the node.
          * @param jobNodeData The auto ingest job node data.
          *
-         * @throws InterruptedException if the thread running the input
-         *                              directory scan task is interrupted while
-         *                              blocked, i.e., if auto ingest is
-         *                              shutting down.
+         * @throws InterruptedException   if the thread running the input
+         *                                directory scan task is interrupted
+         *                                while blocked, i.e., if auto ingest is
+         *                                shutting down.
+         * @throws AutoIngestJobException if there is an issue creating a new
+         *                                AutoIngestJob object.
          */
         private void doRecoveryIfCrashed(Manifest manifest, AutoIngestJobNodeData jobNodeData) throws InterruptedException, AutoIngestJobException {
             /*
@@ -1253,49 +1260,35 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (null != manifestLock) {
                     SYS_LOGGER.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
                     try {
+                        Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
+
                         /*
                          * Create the recovery job.
                          */
                         AutoIngestJob job = new AutoIngestJob(jobNodeData);
                         int numberOfCrashes = job.getNumberOfCrashes();
-                        ++numberOfCrashes;
-                        job.setNumberOfCrashes(numberOfCrashes);
-                        job.setCompletedDate(new Date(0));
-                        Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
+                        if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                            ++numberOfCrashes;
+                            job.setNumberOfCrashes(numberOfCrashes);
+                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                                job.setCompletedDate(new Date(0));
+                            } else {
+                                job.setCompletedDate(Date.from(Instant.now()));
+                            }
+                        }
+
                         if (null != caseDirectoryPath) {
                             job.setCaseDirectoryPath(caseDirectoryPath);
                             job.setErrorsOccurred(true);
-                        } else {
-                            job.setErrorsOccurred(false);
-                        }
-
-                        /*
-                         * Update the coordination service manifest node for the
-                         * job. If this fails, leave the recovery to another
-                         * host.
-                         */
-                        try {
-                            updateCoordinationServiceManifestNode(job);
-                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                                newPendingJobsList.add(job);
-                            } else {
-                                newCompletedJobsList.add(new AutoIngestJob(jobNodeData));
-                            }
-                        } catch (CoordinationServiceException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
-                            return;
-                        }
-
-                        /*
-                         * Update the case node data and do the logging.
-                         */
-                        if (null != caseDirectoryPath) {
                             try {
                                 setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             } catch (CaseNodeData.InvalidDataException ex) {
                                 SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
                             }
+                        } else {
+                            job.setErrorsOccurred(false);
                         }
+
                         if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
                             job.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
                             if (null != caseDirectoryPath) {
@@ -1309,11 +1302,30 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
                             if (null != caseDirectoryPath) {
                                 try {
-                                    new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), jobNodeData.getCaseDirectoryPath()).logCrashRecoveryNoRetry();
+                                    new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
                                 } catch (AutoIngestJobLoggerException ex) {
                                     SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
                                 }
                             }
+                        }
+
+                        /*
+                         * Update the coordination service node for the job. If
+                         * this fails, leave the recovery to another host.
+                         */
+                        try {
+                            updateCoordinationServiceManifestNode(job);
+                        } catch (CoordinationServiceException ex) {
+                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
+                            return;
+                        }
+
+                        jobNodeData = new AutoIngestJobNodeData(job);
+
+                        if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                            newPendingJobsList.add(job);
+                        } else {
+                            newCompletedJobsList.add(new AutoIngestJob(jobNodeData));
                         }
 
                     } finally {
