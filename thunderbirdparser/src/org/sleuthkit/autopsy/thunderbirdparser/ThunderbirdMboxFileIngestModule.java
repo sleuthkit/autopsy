@@ -465,7 +465,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             bbart.addAttributes(bbattributes);
 
             // Add account relationships
-            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart);
+            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart, dateL);
             
             try {
                 // index the artifact for keyword search
