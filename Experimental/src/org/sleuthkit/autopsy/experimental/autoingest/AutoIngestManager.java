@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.CaseNodeData;
+import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
@@ -867,9 +867,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     /**
      * Sets the coordination service manifest node.
      *
-     * Note that a new auto ingest job node data object will be created from
-     * the job passed in. Thus, if the data version of the node has changed,
-     * the node will be "upgraded" as well as updated.
+     * Note that a new auto ingest job node data object will be created from the
+     * job passed in. Thus, if the data version of the node has changed, the
+     * node will be "upgraded" as well as updated.
      *
      * @param job The auto ingest job.
      */
@@ -879,14 +879,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         byte[] rawData = nodeData.toArray();
         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, rawData);
     }
-    
+
     /**
-     * Sets the coordination service case node.
+     * Sets the error flag for case node data given a case directory path.
      *
-     * @param caseNodeData The case node data.
-     * @param caseDirectoryPath The case directory.
+     * @param caseDirectoryPath The case directory path.
+     *
+     * @throws CoordinationService.CoordinationServiceException
+     * @throws InterruptedException
+     * @throws CaseNodeData.InvalidDataException
      */
-    void updateCoordinationServiceCaseNode(CaseNodeData caseNodeData, Path caseDirectoryPath) throws CoordinationServiceException, InterruptedException {
+    private void setCaseNodeDataErrorsOccurred(Path caseDirectoryPath) throws CoordinationServiceException, InterruptedException, CaseNodeData.InvalidDataException {
+        CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
+        caseNodeData.setErrorsOccurred(true);
         byte[] rawData = caseNodeData.toArray();
         coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString(), rawData);
     }
@@ -1052,8 +1057,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
                 if (null != manifest) {
                     /*
-                 * Update the mapping of case names to manifest paths that is
-                 * used for case deletion.
+                     * Update the mapping of case names to manifest paths that
+                     * is used for case deletion.
                      */
                     String caseName = manifest.getCaseName();
                     Path manifestPath = manifest.getFilePath();
@@ -1067,8 +1072,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     }
 
                     /*
-                 * Add a job to the pending jobs queue, the completed jobs list,
-                 * or do crashed job recovery, as required.
+                     * Add a job to the pending jobs queue, the completed jobs
+                     * list, or do crashed job recovery, as required.
                      */
                     try {
                         byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
@@ -1088,7 +1093,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                         break;
                                     case DELETED:
                                         /*
-                                     * Ignore jobs marked as "deleted."
+                                         * Ignore jobs marked as "deleted."
                                          */
                                         break;
                                     default:
@@ -1198,8 +1203,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void addNewPendingJob(Manifest manifest) throws InterruptedException, AutoIngestJobException {
             /*
              * Create the coordination service manifest node data for the job.
-             * Note that getting the lock will create the node for the job
-             * (with no data) if it does not already exist.
+             * Note that getting the lock will create the node for the job (with
+             * no data) if it does not already exist.
              *
              * An exclusive lock is obtained before creating the node data
              * because another host may have already found the job, obtained an
@@ -1229,7 +1234,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * the node that was processing the job crashed and the processing
          * status was not updated.
          *
-         * @param manifest The manifest for upgrading the node.
+         * @param manifest    The manifest for upgrading the node.
          * @param jobNodeData The auto ingest job node data.
          *
          * @throws InterruptedException if the thread running the input
@@ -1265,9 +1270,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
 
                         /*
-                         * Update the coordination service manifest node for
-                         * the job. If this fails, leave the recovery to
-                         * another host.
+                         * Update the coordination service manifest node for the
+                         * job. If this fails, leave the recovery to another
+                         * host.
                          */
                         try {
                             updateCoordinationServiceManifestNode(job);
@@ -1286,9 +1291,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                          */
                         if (null != caseDirectoryPath) {
                             try {
-                                CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                                caseNodeData.setErrorsOccurred(true);
-                                updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             } catch (CaseNodeData.InvalidDataException ex) {
                                 SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
                             }
@@ -1367,11 +1370,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
                     /*
                      * Try to upgrade/update the coordination service manifest
-                     * node data for the job. It is possible that two hosts
-                     * will both try to obtain the lock to do the upgrade
-                     * operation at the same time. If this happens, the host
-                     * that is holding the lock will complete the upgrade
-                     * operation.
+                     * node data for the job. It is possible that two hosts will
+                     * both try to obtain the lock to do the upgrade operation
+                     * at the same time. If this happens, the host that is
+                     * holding the lock will complete the upgrade operation.
                      */
                     try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
                         if (null != manifestLock) {
@@ -1953,9 +1955,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (currentJob.isCanceled()) {
                     Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
                     if (null != caseDirectoryPath) {
-                        CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                        caseNodeData.setErrorsOccurred(true);
-                        updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                         AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, currentJob.getManifest().getDataSourceFileName(), caseDirectoryPath);
                         jobLogger.logJobCancelled();
                     }
@@ -2280,9 +2280,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (!dataSource.exists()) {
                 SYS_LOGGER.log(Level.SEVERE, "Missing data source for {0}", manifestPath);
                 currentJob.setErrorsOccurred(true);
-                CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                caseNodeData.setErrorsOccurred(true);
-                updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logMissingDataSource();
                 return null;
             }
@@ -2330,9 +2328,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 // did we find a data source processor that can process the data source
                 if (validDataSourceProcessorsMap.isEmpty()) {
                     // This should never happen. We should add all unsupported data sources as logical files.
-                    CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                    caseNodeData.setErrorsOccurred(true);
-                    updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                    setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                     currentJob.setErrorsOccurred(true);
                     jobLogger.logFailedToIdentifyDataSource();
                     SYS_LOGGER.log(Level.WARNING, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
@@ -2358,9 +2354,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             // Log that the current DSP failed and set the error flag. We consider it an error
                             // if a DSP fails even if a later one succeeds since we expected to be able to process
                             // the data source which each DSP on the list.
-                            CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                            caseNodeData.setErrorsOccurred(true);
-                            updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             currentJob.setErrorsOccurred(true);
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
                             SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
@@ -2404,9 +2398,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
                             currentJob.setErrorsOccurred(true);
-                            CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                            caseNodeData.setErrorsOccurred(true);
-                            updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
@@ -2418,9 +2410,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
                             currentJob.setErrorsOccurred(true);
-                            CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                            caseNodeData.setErrorsOccurred(true);
-                            updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
@@ -2430,9 +2420,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                         }
                         currentJob.setErrorsOccurred(true);
-                        CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                        caseNodeData.setErrorsOccurred(true);
-                        updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                         jobLogger.logFailedToAddDataSource();
                         break;
                 }
@@ -2446,9 +2434,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  */
                 SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
                 currentJob.setErrorsOccurred(true);
-                CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                caseNodeData.setErrorsOccurred(true);
-                updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logDataSourceProcessorCancelled();
             }
         }
@@ -2502,9 +2488,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                     if (!cancelledModules.isEmpty()) {
                                         SYS_LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
                                         currentJob.setErrorsOccurred(true);
-                                        CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                                        caseNodeData.setErrorsOccurred(true);
-                                        updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                                         for (String module : snapshot.getCancelledDataSourceIngestModules()) {
                                             SYS_LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
                                             jobLogger.logIngestModuleCancelled(module);
@@ -2514,9 +2498,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 } else {
                                     currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
                                     currentJob.setErrorsOccurred(true);
-                                    CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                                    caseNodeData.setErrorsOccurred(true);
-                                    updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                                    setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                                     jobLogger.logAnalysisCancelled();
                                     CancellationReason cancellationReason = snapshot.getCancellationReason();
                                     if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
@@ -2529,17 +2511,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 SYS_LOGGER.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), manifestPath), error.getThrowable());
                             }
                             currentJob.setErrorsOccurred(true);
-                            CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                            caseNodeData.setErrorsOccurred(true);
-                            updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logIngestModuleStartupErrors();
                             throw new AnalysisStartupException(String.format("Error(s) during ingest module startup for %s", manifestPath));
                         } else {
                             SYS_LOGGER.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", manifestPath), ingestJobStartResult.getStartupException());
                             currentJob.setErrorsOccurred(true);
-                            CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                            caseNodeData.setErrorsOccurred(true);
-                            updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logAnalysisStartupError();
                             throw new AnalysisStartupException("Ingest manager error starting job", ingestJobStartResult.getStartupException());
                         }
@@ -2548,9 +2526,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             SYS_LOGGER.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
                         }
                         currentJob.setErrorsOccurred(true);
-                        CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                        caseNodeData.setErrorsOccurred(true);
-                        updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                         jobLogger.logIngestJobSettingsErrors();
                         throw new AnalysisStartupException("Error(s) in ingest job settings");
                     }
@@ -2593,9 +2569,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             } catch (FileExportException ex) {
                 SYS_LOGGER.log(Level.SEVERE, String.format("Error doing file export for %s", manifestPath), ex);
                 currentJob.setErrorsOccurred(true);
-                CaseNodeData caseNodeData = new CaseNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString()));
-                caseNodeData.setErrorsOccurred(true);
-                updateCoordinationServiceCaseNode(caseNodeData, caseDirectoryPath);
+                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logFileExportError();
             }
         }
@@ -2938,6 +2912,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         PARTIALLY_DELETED,
         FULLY_DELETED
     }
+
     static final class AutoIngestManagerException extends Exception {
 
         private static final long serialVersionUID = 1L;
