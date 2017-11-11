@@ -303,9 +303,7 @@
             </Container>
             <Component class="javax.swing.JToggleButton" name="showImagesToggleButton">
               <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/contentviewers/Bundle.properties" key="MessageContentViewer.showImagesToggleButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
+                <Property name="text" type="java.lang.String" value="Show Images"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showImagesToggleButtonActionPerformed"/>
@@ -357,10 +355,7 @@
                               <Component id="viewInNewWindowButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="1" attributes="0">
-                              <Component id="attachmentsScrollPane" pref="647" max="32767" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="attachmentsScrollPane" alignment="1" pref="647" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>

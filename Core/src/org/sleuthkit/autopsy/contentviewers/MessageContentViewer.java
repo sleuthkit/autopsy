@@ -252,7 +252,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         htmlbodyTextPane.setEditable(false);
         htmlScrollPane.setViewportView(htmlbodyTextPane);
 
-        org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.showImagesToggleButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, "Show Images");
         showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 showImagesToggleButtonActionPerformed(evt);
@@ -304,9 +304,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, attachmentsPanelLayout.createSequentialGroup()
                         .addComponent(viewInNewWindowButton)
                         .addGap(3, 3, 3))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, attachmentsPanelLayout.createSequentialGroup()
-                        .addComponent(attachmentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)
-                        .addGap(0, 0, 0))))
+                    .addComponent(attachmentsScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)))
         );
         attachmentsPanelLayout.setVerticalGroup(
             attachmentsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -343,7 +341,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }// </editor-fold>//GEN-END:initComponents
 
     @NbBundle.Messages({
-        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images"})
+        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images",
+        "MessageContentViewer.showImagesToggleButton.text=Show Images"})
     private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
         try {
             String htmlText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_HTML);
