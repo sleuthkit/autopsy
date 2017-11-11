@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.text.JTextComponent;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.explorer.ExplorerManager;
@@ -517,7 +518,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
             configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
 
-            
             configureAttachments();
 
         } catch (TskCoreException ex) {
@@ -532,7 +532,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .map(AbstractFile.class::cast)
                 .collect(Collectors.toSet());
         final int numberOfAttachments = attachments.size();
-        
+
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
         msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
         drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
@@ -635,9 +635,9 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
             ss.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
             ss.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
-            ss.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", file.getMIMEType()));
+            ss.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
             ss.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
-            
+
             addTagProperty(ss);
             return s;
         }
