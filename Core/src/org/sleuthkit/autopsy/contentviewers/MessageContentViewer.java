@@ -94,7 +94,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     public MessageContentViewer() {
         initComponents();
         drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, null);
-
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
@@ -346,7 +345,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
         try {
             String htmlText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_HTML);
-            if (!htmlText.isEmpty()) {
+            if (false == htmlText.isEmpty()) {
                 if (showImagesToggleButton.isSelected()) {
                     showImagesToggleButton.setText(Bundle.MessageContentViewer_showImagesToggleButton_hide_text());
                     this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
@@ -457,6 +456,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         rtfbodyTextPane.setText("");
         htmlbodyTextPane.setText("");
         textbodyTextArea.setText("");
+        drp.setNode(null);
         msgbodyTabbedPane.setEnabled(false);
     }
 
@@ -464,8 +464,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     public boolean isSupported(Node node) {
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         return ((artifact != null)
-                && ((artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
-                || (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())));
+                && ((artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID())
+                || (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID())));
     }
 
     @Override
@@ -476,53 +476,39 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return 0;
     }
 
-    void configureTextArea(BlackboardAttribute.ATTRIBUTE_TYPE type, int index) throws TskCoreException {
+    /**
+     * Configure the text area at the given index to show the content of the
+     * given type.
+     *
+     * @param type  The ATTRIBUT_TYPE to show in the indexed tab.
+     * @param index The index of the text area to configure.
+     *
+     * @throws TskCoreException
+     */
+    private void configureTextArea(BlackboardAttribute.ATTRIBUTE_TYPE type, int index) throws TskCoreException {
         String attributeText = getAttributeValueSafe(artifact, type);
-        if (!attributeText.isEmpty()) {
-            attributeText = (index == HTML_TAB_INDEX)
-                    ? wrapInHtmlBody(cleanseHTML(attributeText))
-                    : attributeText;
-            final JTextComponent textComponent = textAreas.get(index);
-            textComponent.setText(attributeText);
-            textComponent.setCaretPosition(0);
-            msgbodyTabbedPane.setEnabledAt(index, true);
-            msgbodyTabbedPane.setSelectedIndex(index);
-        } else {
-            msgbodyTabbedPane.setEnabledAt(index, false);
+
+        if (index == HTML_TAB_INDEX) {
+            //special case for HTML, we need to 'cleanse' it
+            attributeText = wrapInHtmlBody(cleanseHTML(attributeText));
         }
+        JTextComponent textComponent = textAreas.get(index);
+        textComponent.setText(attributeText);
+        final boolean hasText = attributeText.length() > 0;
+
+        if (hasText) {
+            textComponent.setCaretPosition(0); //make sure we start at the top
+            msgbodyTabbedPane.setSelectedIndex(index);
+        }
+        msgbodyTabbedPane.setEnabledAt(index, hasText);
     }
 
-    private void displayEmailMsg() {
+    private void enableCommonFields() {
         msgbodyTabbedPane.setEnabled(true);
         fromLabel.setEnabled(true);
         toLabel.setEnabled(true);
-        ccLabel.setEnabled(true);
         subjectLabel.setEnabled(true);
         datetimeText.setEnabled(true);
-
-        directionText.setEnabled(false);
-
-        showImagesToggleButton.setText("Show Images");
-        showImagesToggleButton.setSelected(false);
-
-        try {
-            this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
-            this.toText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
-            this.directionText.setText("");
-            this.ccText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
-            this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
-            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
-
-            configureTextArea(TSK_HEADERS, HDR_TAB_INDEX);
-            configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
-            configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
-            configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
-
-            configureAttachments();
-
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
-        }
     }
 
     private void configureAttachments() throws TskCoreException {
@@ -543,14 +529,37 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         return "<html><body>" + htmlText + "</body></html>";
     }
 
-    private void displayMsg() {
-        msgbodyTabbedPane.setEnabled(true);
-        fromLabel.setEnabled(true);
-        toLabel.setEnabled(true);
-        subjectLabel.setEnabled(true);
-        directionText.setEnabled(true);
-        datetimeText.setEnabled(true);
+    private void displayEmailMsg() {
+        enableCommonFields();
 
+        directionText.setEnabled(false);
+        ccLabel.setEnabled(true);
+
+        showImagesToggleButton.setText("Show Images");
+        showImagesToggleButton.setSelected(false);
+
+        try {
+            this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
+            this.toText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
+            this.directionText.setText("");
+            this.ccText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
+            this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
+            this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
+
+            configureTextArea(TSK_HEADERS, HDR_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_PLAIN, TEXT_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_HTML, HTML_TAB_INDEX);
+            configureTextArea(TSK_EMAIL_CONTENT_RTF, RTF_TAB_INDEX);
+            configureAttachments();
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
+        }
+    }
+
+    private void displayMsg() {
+        enableCommonFields();
+
+        directionText.setEnabled(true);
         ccLabel.setEnabled(false);
 
         try {
@@ -572,7 +581,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         }
     }
 
-    String getAttributeValueSafe(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException {
+    private static String getAttributeValueSafe(BlackboardArtifact artifact, BlackboardAttribute.ATTRIBUTE_TYPE type) throws TskCoreException {
         return Optional.ofNullable(artifact.getAttribute(new BlackboardAttribute.Type(type)))
                 .map(BlackboardAttribute::getDisplayString)
                 .orElse("");
@@ -597,10 +606,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     private static class AttachmentsChildren extends Children.Keys<AbstractFile> {
 
-        private final Set<AbstractFile> files;
+        private final Set<AbstractFile> attachments;
 
-        AttachmentsChildren(Set<AbstractFile> collect) {
-            this.files = collect;
+        AttachmentsChildren(Set<AbstractFile> attachments) {
+            this.attachments = attachments;
         }
 
         @Override
@@ -611,17 +620,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         @Override
         protected void addNotify() {
             super.addNotify();
-            setKeys(files);
+            setKeys(attachments);
         }
     }
 
+    /**
+     * Extension of FileNode customized for viewing attachments in the
+     * MessageContentViewer. It overrides createSheet() to customize what
+     * properties are shown in the table, and could also override getActions(),
+     * getPreferedAction(), etc.
+     */
     private static class AttachmentNode extends FileNode {
-
-        private final AbstractFile file;
 
         AttachmentNode(AbstractFile file) {
             super(file, true);
-            this.file = file;
         }
 
         @Override
@@ -632,7 +644,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-
+            AbstractFile file = getContent();
             ss.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
             ss.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             ss.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
@@ -641,6 +653,5 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             addTagProperty(ss);
             return s;
         }
-
     }
 }
