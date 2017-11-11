@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.communications;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -62,9 +61,11 @@ public class RelationShipNode extends BlackboardArtifactNode {
         }
 
         ss.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
+
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
         if (null != fromID) {
+            //Consider refactoring this to reduce boilerplate
             switch (fromID) {
                 case TSK_EMAIL_MSG:
                     ss.put(new NodeProperty<>("From", "From", "From",
@@ -75,14 +76,12 @@ public class RelationShipNode extends BlackboardArtifactNode {
                             getAttributeDisplayString(artifact, TSK_DATETIME_SENT)));
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
-                     {
-                        try {
-                            ss.put(new NodeProperty<>("at", "at", "at",
-                                    artifact.getChildrenCount() > 0));
-                        } catch (TskCoreException ex) {
-                            Exceptions.printStackTrace(ex);
-                        }
+                    try {
+                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount() > 0));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
                     }
+
                     break;
                 case TSK_MESSAGE:
                     ss.put(new NodeProperty<>("From", "From", "From",
@@ -93,6 +92,11 @@ public class RelationShipNode extends BlackboardArtifactNode {
                             getAttributeDisplayString(artifact, TSK_DATETIME)));
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
+                    try {
+                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount() > 0));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
+                    }
                     break;
                 case TSK_CALLLOG:
                     ss.put(new NodeProperty<>("From", "From", "From",
