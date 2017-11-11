@@ -84,7 +84,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      * Artifact currently being displayed
      */
     private BlackboardArtifact artifact;
-    private DataResultPanel drp;
+    private final DataResultPanel drp;
     private final ExplorerManager drpExplorerManager;
 
     /**
@@ -95,7 +95,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, null);
 
         attachmentsScrollPane.setViewportView(drp);
-        msgbodyTabbedPane.setEnabledAt(4, true);
+        msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
         textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
 
@@ -107,7 +107,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         drpExplorerManager = drp.getExplorerManager();
         drpExplorerManager.addPropertyChangeListener(evt
                 -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
-
     }
 
     /**
@@ -361,7 +360,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     }//GEN-LAST:event_showImagesToggleButtonActionPerformed
 
     private void viewInNewWindowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInNewWindowButtonActionPerformed
-
         new NewWindowViewAction("View in new window", drpExplorerManager.getSelectedNodes()[0]).actionPerformed(evt);
     }//GEN-LAST:event_viewInNewWindowButtonActionPerformed
 
@@ -408,7 +406,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         }
 
         if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
-
             displayMsg();
         } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
             displayEmailMsg();
@@ -536,8 +533,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .collect(Collectors.toSet());
         final int numberOfAttachments = attachments.size();
         
-        msgbodyTabbedPane.setEnabledAt(4, numberOfAttachments > 0);
-        msgbodyTabbedPane.setTitleAt(4, "Attachments (" + numberOfAttachments + ")");
+        msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
+        msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
         drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
                 new AttachmentsChildren(attachments)), null), true));
     }
