@@ -238,7 +238,7 @@ public final class UserPreferences {
     }
 
     public static boolean getIsMultiUserModeEnabled() {
-        if (!IS_WINDOWS_OS) {
+        if (/*!IS_WINDOWS_OS*/ false) {
             return false;
         }
         return preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
