@@ -240,9 +240,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param resultViewer The result viewer.
      */
     public void addResultViewer(DataResultViewer resultViewer) {
-        if (null != contentView) {
-            resultViewer.setContentViewer(contentView);
-        }
         resultViewers.add(resultViewer);
         dataResultTabbedPanel.addTab(resultViewer.getTitle(), resultViewer.getComponent());
     }
