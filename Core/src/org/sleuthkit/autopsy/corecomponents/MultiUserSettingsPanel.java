@@ -124,7 +124,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         addDocumentListeners(textBoxes, textBoxChangedListener);
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false));
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false));
-        if (!isWindowsOS) {
+        if (/*!isWindowsOS*/ false) {
             cbEnableMultiUser.setEnabled(false);
             cbEnableMultiUser.setSelected(false);
         }
@@ -491,7 +491,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
 
     private void cbEnableMultiUserItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableMultiUserItemStateChanged
         if (!cbEnableMultiUser.isSelected()) {
-            if (!isWindowsOS) {
+            if (/*!isWindowsOS*/ false) {
                 tbOops.setText(NON_WINDOWS_OS_MSG);
             } else {
                 tbOops.setText("");
@@ -684,7 +684,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
     }
 
     void store() {
-        if (!isWindowsOS) {
+        if (/*!isWindowsOS*/ false) {
             return;
         }
 
@@ -741,7 +741,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
      * @return true if it's okay, false otherwise.
      */
     boolean valid() {
-        if (!isWindowsOS) {
+        if (/*!isWindowsOS*/ false) {
             tbOops.setText(NON_WINDOWS_OS_MSG);
         } else {
             tbOops.setText("");
