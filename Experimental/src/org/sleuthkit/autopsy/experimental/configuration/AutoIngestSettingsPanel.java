@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.configuration;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
@@ -513,7 +514,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }
 
     private void displayIngestJobSettingsPanel() {
-
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        
         IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
         showWarnings(ingestJobSettings);
         IngestJobSettingsPanel ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
@@ -526,6 +528,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             ingestJobSettings.save();
             showWarnings(ingestJobSettings);
         }
+        
+        this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
