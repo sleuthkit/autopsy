@@ -150,11 +150,11 @@ public class EamGlobalSet {
      * Return the FileKnown status as a KnownFilesType
      * @return KNOWN or KNOWN_BAD
      */
-    public HashDbManager.HashDb.KnownFilesType getKnownStatus(){
+    public HashDbManager.HashDatabase.KnownFilesType getKnownStatus(){
         if(fileKnownStatus.equals(TskData.FileKnown.BAD)){
-            return HashDbManager.HashDb.KnownFilesType.KNOWN_BAD;
+            return HashDbManager.HashDatabase.KnownFilesType.KNOWN_BAD;
         }
-        return HashDbManager.HashDb.KnownFilesType.KNOWN;
+        return HashDbManager.HashDatabase.KnownFilesType.KNOWN;
     }
 
     /**

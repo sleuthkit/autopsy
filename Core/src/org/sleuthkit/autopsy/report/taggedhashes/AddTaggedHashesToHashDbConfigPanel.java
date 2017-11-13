@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettingsPanel;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class are used to configure the report module plug in that
@@ -52,7 +52,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private final Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
     private final TagNamesListModel tagsNamesListModel = new TagNamesListModel();
     private final TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
-    private HashDatabase selectedHashSet = null;
+    private HashDb selectedHashSet = null;
 
     AddTaggedHashesToHashDbConfigPanel() {
         initComponents();
@@ -107,9 +107,9 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
         // Get the updateable hash databases and add their hash set names to the
         // JComboBox component.
-        List<HashDatabase> updateableHashSets = HashDbManager.getInstance().getUpdateableHashDatabases();
+        List<HashDb> updateableHashSets = HashDbManager.getInstance().getUpdateableHashSets();
         if (!updateableHashSets.isEmpty()) {
-            for (HashDatabase hashDb : updateableHashSets) {
+            for (HashDb hashDb : updateableHashSets) {
                 hashSetsComboBox.addItem(hashDb);
             }
             hashSetsComboBox.setEnabled(true);
@@ -138,7 +138,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
      *
      * @return A HashDb object representing the database or null.
      */
-    HashDatabase getSelectedHashDatabase() {
+    HashDb getSelectedHashDatabase() {
         return selectedHashSet;
     }
 
@@ -286,7 +286,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void hashSetsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetsComboBoxActionPerformed
-        selectedHashSet = (HashDatabase)hashSetsComboBox.getSelectedItem();
+        selectedHashSet = (HashDb)hashSetsComboBox.getSelectedItem();
     }//GEN-LAST:event_hashSetsComboBoxActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
@@ -311,7 +311,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton configureHashDatabasesButton;
     private javax.swing.JButton deselectAllButton;
-    private javax.swing.JComboBox<HashDatabase> hashSetsComboBox;
+    private javax.swing.JComboBox<HashDb> hashSetsComboBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;

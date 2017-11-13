@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -1017,15 +1017,17 @@ public class SharedConfiguration {
                     // If a copy of the database is loaded, close it before deleting and copying.
                     if (localDb.exists()) {
                         List<HashDbManager.HashDb> hashDbs = HashDbManager.getInstance().getAllHashSets();
-                        HashDbManager.HashDb matchingDb = null;
+                        HashDbManager.HashDatabase matchingDb = null;
                         for (HashDbManager.HashDb db : hashDbs) {
-                            try {
-                                if (localDb.getAbsolutePath().equals(db.getDatabasePath()) || localDb.getAbsolutePath().equals(db.getIndexPath())) {
-                                    matchingDb = db;
-                                    break;
+                            if(db instanceof HashDbManager.HashDatabase){
+                                try {
+                                    if (localDb.getAbsolutePath().equals(db.getDatabasePath()) || localDb.getAbsolutePath().equals(db.getIndexPath())) {
+                                        matchingDb = (HashDbManager.HashDatabase)db;
+                                        break;
+                                    }
+                                } catch (TskCoreException ex) {
+                                    throw new SharedConfigurationException(String.format("Error getting hash database path info for %s", localDb.getParentFile().getAbsolutePath()), ex);
                                 }
-                            } catch (TskCoreException ex) {
-                                throw new SharedConfigurationException(String.format("Error getting hash database path info for %s", localDb.getParentFile().getAbsolutePath()), ex);
                             }
                         }
 
@@ -1122,11 +1124,13 @@ public class SharedConfiguration {
         try {
             HashDbManager hashDbManager = HashDbManager.getInstance();
             hashDbManager.loadLastSavedConfiguration();
-            for (HashDb hashDb : hashDbManager.getAllHashSets()) {
-                if (hashDb.hasIndexOnly()) {
-                    results.add(hashDb.getIndexPath());
-                } else {
-                    results.add(hashDb.getDatabasePath());
+            for (HashDbManager.HashDb hashDb : hashDbManager.getAllHashSets()) {
+                if(hashDb instanceof HashDatabase){
+                    if (hashDb.hasIndexOnly()) {
+                        results.add(hashDb.getIndexPath());
+                    } else {
+                        results.add(hashDb.getDatabasePath());
+                    }
                 }
             }
         } catch (TskCoreException ex) {

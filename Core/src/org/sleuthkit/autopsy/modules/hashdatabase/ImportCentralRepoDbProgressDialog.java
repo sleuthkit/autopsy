@@ -77,7 +77,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     }
     
     void importFile(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDatabase.KnownFilesType knownFilesType,
             boolean readOnly, String importFileName){          
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));       
         
@@ -92,7 +92,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         this.setVisible(true);
     }
     
-    HashDbManager.HashDatabase getDatabase(){
+    HashDbManager.HashDb getDatabase(){
         if(worker != null){
             return worker.getDatabase();
         }
@@ -128,7 +128,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         void addPropertyChangeListener(PropertyChangeListener dialog);
         int getProgressPercentage();
         long getLinesProcessed();
-        HashDbManager.HashDatabase getDatabase();
+        HashDbManager.HashDb getDatabase();
     }
     
     class ImportIDXWorker extends SwingWorker<Void,Void> implements CentralRepoImportWorker{
@@ -139,7 +139,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final int orgId;
         private final boolean searchDuringIngest;
         private final boolean sendIngestMessages;
-        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
+        private final HashDbManager.HashDatabase.KnownFilesType knownFilesType;
         private final boolean readOnly;
         private final File importFile;
         private final long totalLines;
@@ -148,7 +148,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final AtomicLong numLines = new AtomicLong();
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDatabase.KnownFilesType knownFilesType,
             boolean readOnly, File importFile){
             
             this.hashSetName = hashSetName;
@@ -176,7 +176,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         }
         
         @Override 
-        public HashDbManager.HashDatabase getDatabase(){
+        public HashDbManager.HashDb getDatabase(){
             return newHashDb;
         }
         
@@ -194,7 +194,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         protected Void doInBackground() throws Exception {
 
             TskData.FileKnown knownStatus;
-            if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
+            if (knownFilesType.equals(HashDbManager.HashDatabase.KnownFilesType.KNOWN)) {
                 knownStatus = TskData.FileKnown.KNOWN;
             } else {
                 knownStatus = TskData.FileKnown.BAD;

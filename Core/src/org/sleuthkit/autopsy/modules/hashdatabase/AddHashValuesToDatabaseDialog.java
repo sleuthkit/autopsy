@@ -32,7 +32,7 @@ import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.datamodel.HashEntry;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  *
@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
  */
 public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
 
-    HashDatabase hashDb;
+    HashDb hashDb;
     Pattern md5Pattern = Pattern.compile("^[a-fA-F0-9]{32}$");
     List<HashEntry> hashes = new ArrayList<>();
     List<String> invalidHashes = new ArrayList<>();
@@ -49,7 +49,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
      * Displays a dialog that allows a user to add hash values to the selected
      * database.
      */
-    AddHashValuesToDatabaseDialog(HashDatabase hashDb) {
+    AddHashValuesToDatabaseDialog(HashDb hashDb) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.JDialog.Title", hashDb.getHashSetName()),
                 true);

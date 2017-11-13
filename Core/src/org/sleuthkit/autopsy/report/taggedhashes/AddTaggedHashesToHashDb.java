@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class plug in to the reporting infrastructure to provide a
@@ -69,7 +69,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         progressPanel.start();
         progressPanel.updateStatusLabel("Adding hashes...");
 
-        HashDatabase hashSet = configPanel.getSelectedHashDatabase();
+        HashDb hashSet = configPanel.getSelectedHashDatabase();
         if (hashSet != null) {
             progressPanel.updateStatusLabel("Adding hashes to " + hashSet.getHashSetName() + " hash set...");
 

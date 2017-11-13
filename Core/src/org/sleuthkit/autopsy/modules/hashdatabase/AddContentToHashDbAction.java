@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this Action allow users to content to a hash database.
@@ -106,9 +106,9 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             // Get the current set of updateable hash databases and add each
             // one to the menu as a separate menu item. Selecting a hash database
             // adds the selected files to the selected database.
-            final List<HashDatabase> hashDatabases = HashDbManager.getInstance().getUpdateableHashDatabases();
+            final List<HashDb> hashDatabases = HashDbManager.getInstance().getUpdateableHashSets();
             if (!hashDatabases.isEmpty()) {
-                for (final HashDatabase database : hashDatabases) {
+                for (final HashDb database : hashDatabases) {
                     JMenuItem databaseItem = add(database.getHashSetName());
                     databaseItem.addActionListener(new ActionListener() {
                         @Override
@@ -134,7 +134,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             newHashSetItem.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
+                    HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
                     if (null != hashDb) {
                         addFilesToHashSet(selectedFiles, hashDb);
                     }
@@ -143,7 +143,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             add(newHashSetItem);
         }
 
-        private void addFilesToHashSet(final Collection<? extends AbstractFile> files, HashDatabase hashSet) {
+        private void addFilesToHashSet(final Collection<? extends AbstractFile> files, HashDb hashSet) {
             for (AbstractFile file : files) {
                 String md5Hash = file.getMd5Hash();
                 if (null != md5Hash) {
