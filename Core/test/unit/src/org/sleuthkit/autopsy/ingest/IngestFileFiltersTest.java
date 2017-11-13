@@ -15,15 +15,37 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-package org.sleuthkit.autopsy.casemodule;
+ */package org.sleuthkit.autopsy.ingest;
 
-import javax.swing.JDialog;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * Interface for startup window implementations
- */
-public interface AutoIngestCasePanelInterface {
+public class IngestFileFiltersTest {
     
-    public void addWindowStateListener(JDialog parent);
+    public IngestFileFiltersTest() {
+    }
+    
+    @BeforeClass
+    public static void setUpClass() {
+    }
+    
+    @AfterClass
+    public static void tearDownClass() {
+    }
+    
+    @Before
+    public void setUp() {
+    }
+    
+    @After
+    public void tearDown() {
+    }
+
+    @Test
+    public void testFilters() {
+        System.out.println("Test filter");
+    }
 }
