@@ -106,7 +106,6 @@
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.pendingTable.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
-            <Property name="autoResizeMode" type="int" value="4"/>
             <Property name="rowHeight" type="int" value="20" postCode="pendingTable.setSelectionModel(new DefaultListSelectionModel() {&#xa;    private static final long serialVersionUID = 1L;&#xa;    @Override&#xa;    public void setSelectionInterval(int index0, int index1) {&#xa;        if (index0 == pendingTable.getSelectedRow()) {&#xa;            pendingTable.clearSelection();&#xa;        } else {&#xa;            super.setSelectionInterval(index0, index1);&#xa;        }&#xa;    }&#xa;});"/>
             <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
               <JTableSelectionModel selectionMode="0"/>
@@ -130,7 +129,6 @@
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.runningTable.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
-            <Property name="autoResizeMode" type="int" value="4"/>
             <Property name="rowHeight" type="int" value="20" postCode="runningTable.setSelectionModel(new DefaultListSelectionModel() {&#xa;    private static final long serialVersionUID = 1L;&#xa;    @Override&#xa;    public void setSelectionInterval(int index0, int index1) {&#xa;        if (index0 == runningTable.getSelectedRow()) {&#xa;            runningTable.clearSelection();&#xa;        } else {&#xa;            super.setSelectionInterval(index0, index1);&#xa;        }&#xa;    }&#xa;});"/>
             <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
               <JTableSelectionModel selectionMode="0"/>
@@ -154,7 +152,6 @@
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.completedTable.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
-            <Property name="autoResizeMode" type="int" value="4"/>
             <Property name="rowHeight" type="int" value="20" postCode="completedTable.setSelectionModel(new DefaultListSelectionModel() {&#xa;    private static final long serialVersionUID = 1L;&#xa;    @Override&#xa;    public void setSelectionInterval(int index0, int index1) {&#xa;        if (index0 == completedTable.getSelectedRow()) {&#xa;            completedTable.clearSelection();&#xa;        } else {&#xa;            super.setSelectionInterval(index0, index1);&#xa;        }&#xa;    }&#xa;});"/>
             <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
               <JTableSelectionModel selectionMode="0"/>
