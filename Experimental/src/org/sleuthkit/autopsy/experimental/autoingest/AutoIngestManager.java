@@ -2807,7 +2807,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     }
                 }
 
-            } catch (Exception ex) {
+            } catch (CoordinationServiceException | InterruptedException ex) {
                 SYS_LOGGER.log(Level.SEVERE, "Unexpected exception in PeriodicJobStatusEventTask", ex); //NON-NLS
             }
         }
