@@ -14,6 +14,7 @@
         
         <!-- for file search -->
         <dependency conf="autopsy_core->*" org="org.jbundle.thin.base.screen" name="jcalendarbutton" rev="1.4.6"/>
+        <dependency conf="autopsy_core->*" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="4.3.1"/>
         
         <!-- commmon -->
         <dependency org="com.google.guava" name="guava" rev="19.0"/>

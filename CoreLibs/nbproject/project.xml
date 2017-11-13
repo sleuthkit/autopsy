@@ -37,6 +37,9 @@
                 <package>com.apple.eawt</package>
                 <package>com.apple.eawt.event</package>
                 <package>com.apple.eio</package>
+                <package>com.github.lgooddatepicker.datepicker</package>
+                <package>com.github.lgooddatepicker.datetimepicker</package>
+                <package>com.github.lgooddatepicker.timepicker</package>
                 <package>com.github.mustachejava</package>
                 <package>com.github.mustachejava.codes</package>
                 <package>com.github.mustachejava.functions</package>
@@ -722,6 +725,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-4.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/LGoodDatePicker-4.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.6.0.jar</runtime-relative-path>
