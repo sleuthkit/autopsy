@@ -31,8 +31,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.datamodel.HashEntry;
 
 /**
  *
