@@ -147,7 +147,6 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException
      */
-    @Deprecated
     public synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         hashDb = this.addExistingHashDatabaseNoSave(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
@@ -155,12 +154,7 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
 
-    @Deprecated
     synchronized HashDb addExistingHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
-        return (HashDb)addExistingFileTypeHashDatabase(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
-    }
-    
-    synchronized HashDatabase addExistingFileTypeHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         try {
             if (!new File(path).exists()) {
@@ -175,7 +169,7 @@ public class HashDbManager implements PropertyChangeListener {
                 throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.duplicateHashSetNameExceptionMsg", hashSetName));
             }
 
-            hashDb = addFileTypeHashDatabase(SleuthkitJNI.openHashDatabase(path), hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
+            hashDb = addFileHashDatabase(SleuthkitJNI.openHashDatabase(path), hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
         } catch (TskCoreException ex) {
             throw new HashDbManagerException(ex.getMessage());
         }
@@ -200,7 +194,6 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException
      */
-    @Deprecated
     public synchronized HashDb addNewHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
             HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
 
@@ -212,13 +205,7 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
 
-    @Deprecated
     public synchronized HashDb addNewHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
-            HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
-        return (HashDb)addNewFileTypeHashDatabase(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
-    }
-    
-    public synchronized HashDatabase addNewFileTypeHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages,
             HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         try {
@@ -239,14 +226,14 @@ public class HashDbManager implements PropertyChangeListener {
                 throw new HashDbManagerException(NbBundle.getMessage(HashDbManager.class, "HashDbManager.duplicateHashSetNameExceptionMsg", hashSetName));
             }
 
-            hashDb = addFileTypeHashDatabase(SleuthkitJNI.createHashDatabase(path), hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
+            hashDb = addFileHashDatabase(SleuthkitJNI.createHashDatabase(path), hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
         } catch (TskCoreException ex) {
             throw new HashDbManagerException(ex.getMessage());
         }
         return hashDb;
     }
     
-    private HashDb addFileTypeHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
+    private HashDb addFileHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
         // Wrap an object around the handle.
         HashDb hashDb = new HashDb(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
 
@@ -281,7 +268,7 @@ public class HashDbManager implements PropertyChangeListener {
         return hashDb;
     }
     
-    public CentralRepoHashDb addExistingCentralRepoHashSet(String hashSetName, String version, int referenceSetID, 
+    CentralRepoHashDb addExistingCentralRepoHashSet(String hashSetName, String version, int referenceSetID, 
             boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType, 
             boolean readOnly) throws TskCoreException{
         
@@ -414,23 +401,22 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     /**
-     * Gets all of the hash databases used to classify files as known or known
-     * bad.
+     * Gets all of the HashDbs used to classify files as known or known
+     * bad. Will not return central repository databases.
      *
      * @return A list, possibly empty, of hash databases.
      */
-    @Deprecated
     public synchronized List<HashDb> getAllHashSets() {
-        return getAllFileTypeHashSets();
+        return getAllFileHashSets();
     }
     
     /**
-     * Gets all of the file type hash databases used to classify files as known or known
+     * Gets all of the file hash databases used to classify files as known or known
      * bad.
      *
      * @return A list, possibly empty, of hash databases.
      */
-    public synchronized List<HashDb> getAllFileTypeHashSets() {
+    synchronized List<HashDb> getAllFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((thisSet) -> (thisSet instanceof HashDb)).forEach((thisSet) -> {
             hashDbs.add((HashDb)thisSet);
@@ -440,28 +426,21 @@ public class HashDbManager implements PropertyChangeListener {
     
     /**
      * Gets all of the hash databases used to classify files as known or known
-     * bad.
+     * bad. Will add any new central repository databases to the list before
+     * returning it.
      *
      * @return A list, possibly empty, of hash databases.
      */
-    public synchronized List<HashDatabase> getAllHashDatabases(){
-        List<HashDatabase> hashDbs = new ArrayList<>();
-        hashDbs.addAll(this.hashSets);
-        return hashDbs;
-    }
-    
-    /**
-     * Adds any new central repository databases to the list of hashes
-     * before returning a copy of the hash set list
-     * @return A list, possibly empty, of hash databases.
-     */
-    public synchronized List<HashDatabase> refreshAndGetAllHashDatabases(){
+    synchronized List<HashDatabase> getAllHashDatabases(){
         try{
             updateHashSetsFromCentralRepository();
         } catch (TskCoreException ex){
             Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
         }
-        return getAllHashDatabases();
+        
+        List<HashDatabase> hashDbs = new ArrayList<>();
+        hashDbs.addAll(this.hashSets);
+        return hashDbs;
     }
 
     /**
@@ -469,7 +448,6 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @return A list, possibly empty, of hash databases.
      */
-    @Deprecated
     public synchronized List<HashDb> getKnownFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((thisSet) -> ((thisSet instanceof HashDb) && (thisSet.getKnownFilesType() == HashDb.KnownFilesType.KNOWN))).forEach((thisSet) -> {
@@ -483,7 +461,7 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @return A list, possibly empty, of hash databases.
      */
-    public synchronized List<HashDatabase> getKnownFileHashDatabases() {
+    synchronized List<HashDatabase> getKnownFileHashDatabases() {
         List<HashDatabase> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN)).forEach((db) -> {
             hashDbs.add(db);
@@ -496,7 +474,6 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @return A list, possibly empty, of hash databases.
      */
-    @Deprecated
     public synchronized List<HashDb> getKnownBadFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((thisSet) -> ((thisSet instanceof HashDb) && (thisSet.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD))).forEach((thisSet) -> {
@@ -510,7 +487,7 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @return A list, possibly empty, of hash databases.
      */
-    public synchronized List<HashDatabase> getNotableFileHashDatabases() {
+    synchronized List<HashDatabase> getNotableFileHashDatabases() {
         List<HashDatabase> hashDbs = new ArrayList<>();
         this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD)).forEach((db) -> {
             hashDbs.add(db);
@@ -523,7 +500,6 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @return A list, possibly empty, of hash databases.
      */
-    @Deprecated
     public synchronized List<HashDb> getUpdateableHashSets() {
         List<HashDb> updateableDbs = new ArrayList<>();
         List<HashDatabase> updateableHashSets = getUpdateableHashSets(this.hashSets);
@@ -625,7 +601,7 @@ public class HashDbManager implements PropertyChangeListener {
                 if(hashDbInfo.isFileDatabaseType()){
                     String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
                     if (dbPath != null) {
-                        addFileTypeHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDbInfo.getHashSetName(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
+                        addFileHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDbInfo.getHashSetName(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
                     } else {
                         logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDbInfo.getHashSetName()));
                         allDatabasesLoadedCorrectly = false;

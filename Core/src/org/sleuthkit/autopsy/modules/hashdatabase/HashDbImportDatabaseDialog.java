@@ -514,7 +514,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         if(fileTypeRadioButton.isSelected()){
 
             try {
-                selectedHashDb = HashDbManager.getInstance().addExistingFileTypeHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+                selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseNoSave(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
             } catch (HashDbManagerException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
                 JOptionPane.showMessageDialog(this,

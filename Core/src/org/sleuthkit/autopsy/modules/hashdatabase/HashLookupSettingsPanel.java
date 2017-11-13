@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -306,16 +305,13 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     public void saveSettings() {       
         //Checking for for any unindexed databases
         List<HashDb> unindexed = new ArrayList<>();
-        for (HashDatabase hashSet : hashSetManager.getAllHashDatabases()) {
-            if(hashSet instanceof HashDb){
-                HashDb db = (HashDb)hashSet;
-                try {
-                    if (!db.hasIndex()) {
-                        unindexed.add(db);
-                    }
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+        for (HashDb db : hashSetManager.getAllFileHashSets()) {
+            try {
+                if (!db.hasIndex()) {
+                    unindexed.add(db);
                 }
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
             }
         }
 
@@ -550,7 +546,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
 
         void refreshModel() {
-            hashSets = HashDbManager.getInstance().refreshAndGetAllHashDatabases();
+            hashSets = HashDbManager.getInstance().getAllHashDatabases();
             refreshDisplay();
         }
 
