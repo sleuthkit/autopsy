@@ -48,18 +48,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  * changes into queries against the CommunicationsManager.
  */
 final public class FiltersPanel extends javax.swing.JPanel {
-    
+
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
 //    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
     private ExplorerManager em;
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
-    
+
     public FiltersPanel() {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
@@ -76,10 +76,10 @@ final public class FiltersPanel extends javax.swing.JPanel {
         if (em != null) {
             applyFilters();
         }
-        
+
         dateRangeLabel.setText("Date Range ( " + (UserPreferences.displayTimesInLocalTime() ? ZoneId.systemDefault().getId() : ZoneOffset.UTC.getId()) + "):");
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
@@ -378,16 +378,16 @@ final public class FiltersPanel extends javax.swing.JPanel {
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
         commsFilter.addAndFilter(getDateRangeFilter());
-        
+
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            
+
             List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
                     commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)
                             .stream()
                             .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
                             .collect(Collectors.toList());
-            
+
             em.setRootContext(new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
@@ -417,13 +417,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .map(entry -> entry.getKey()).collect(Collectors.toSet()));
         return accountTypeFilter;
     }
-    
+
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = UserPreferences.displayTimesInLocalTime() ? ZoneId.systemDefault() : ZoneOffset.UTC;
         long start = startDatePicker.isEnabled() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
-
-        //need to go to next day since atStartOfDay() is going to shift back to midnight
-        long end = endDatePicker.isEnabled() ? endDatePicker.getDate().plusDays(1).atStartOfDay(zone).toEpochSecond() : 0;
+        long end = endDatePicker.isEnabled() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
         return new DateRangeFilter(start, end);
     }
 
