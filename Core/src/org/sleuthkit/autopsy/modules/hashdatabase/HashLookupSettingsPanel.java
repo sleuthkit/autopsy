@@ -259,13 +259,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         //Checking for for any unindexed databases
         List<HashDb> unindexed = new ArrayList<>();
         for (HashDb hashSet : hashSetManager.getAllHashSets()) {
-            try {
+            unindexed.add(hashSet);
+            /*try {
                 if (!hashSet.hasIndex()) {
                     unindexed.add(hashSet);
                 }
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
-            }
+            }*/
         }
 
         //If unindexed ones are found, show a popup box that will either index them, or remove them.
