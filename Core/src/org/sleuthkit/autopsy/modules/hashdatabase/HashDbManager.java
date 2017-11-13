@@ -147,14 +147,14 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @throws HashDbManagerException
      */
-    public synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDatabase.KnownFilesType knownFilesType) throws HashDbManagerException {
+    public synchronized HashDb addExistingHashDatabase(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         hashDb = this.addExistingHashDatabaseNoSave(hashSetName, path, searchDuringIngest, sendIngestMessages, knownFilesType);
         this.save();
         return hashDb;
     }
 
-    synchronized HashDb addExistingHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDatabase.KnownFilesType knownFilesType) throws HashDbManagerException {
+    synchronized HashDb addExistingHashDatabaseNoSave(String hashSetName, String path, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws HashDbManagerException {
         HashDb hashDb = null;
         try {
             if (!new File(path).exists()) {
@@ -407,7 +407,7 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @return A list, possibly empty, of hash databases.
      */
-    public synchronized List<HashDb> getAllHashSets(){
+    public synchronized List<HashDb> getAllHashSets() {
         try{
             updateHashSetsFromCentralRepository();
         } catch (TskCoreException ex){
