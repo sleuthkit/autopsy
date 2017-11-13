@@ -1579,11 +1579,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.DeletionFailed=Deletion failed for job"
     })
     private void bnDeleteCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeleteCaseActionPerformed
-        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
+        if (completedTable.getModel().getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
             return;
         }
 
-        String caseName = (String) completedTable.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal());
+        String caseName = (String) completedTable.getModel().getValueAt(completedTable.convertRowIndexToModel(completedTable.getSelectedRow()), JobsTableModelColumns.CASE.ordinal());
         Object[] options = {
             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.Delete"),
             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DoNotDelete")
@@ -1600,8 +1600,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         if (reply == JOptionPane.YES_OPTION) {
             bnDeleteCase.setEnabled(false);
             bnShowCaseLog.setEnabled(false);
-            if (completedTableModel.getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
-                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
+            if (completedTable.getModel().getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
+                Path caseDirectoryPath = (Path) completedTable.getModel().getValueAt(completedTable.convertRowIndexToModel(completedTable.getSelectedRow()), JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
                 completedTable.clearSelection();
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 CaseDeletionResult result = manager.deleteCase(caseName, caseDirectoryPath);
@@ -1747,9 +1747,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      */
     @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+        if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+
+            String caseName = (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.CASE.ordinal())).toString();
             try {
                 manager.prioritizeCase(caseName);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
@@ -1775,9 +1776,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     })
     private void bnShowCaseLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowCaseLogActionPerformed
         try {
-            int selectedRow = completedTable.getSelectedRow();
+            int selectedRow = completedTable.convertRowIndexToModel(completedTable.getSelectedRow());
             if (selectedRow != -1) {
-                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(selectedRow, JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
+                Path caseDirectoryPath = (Path) completedTable.getModel().getValueAt(selectedRow, JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
                 if (null != caseDirectoryPath) {
                     Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
                     if (pathToLog.toFile().exists()) {
@@ -1806,9 +1807,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
     @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})
     private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+        if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
+            Path manifestFilePath = (Path) (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
             try {
                 manager.prioritizeJob(manifestFilePath);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
@@ -1835,11 +1836,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     }//GEN-LAST:event_bnOpenLogDirActionPerformed
 
     private void bnReprocessJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnReprocessJobActionPerformed
-        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
+        if (completedTable.getModel().getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
             return;
         }
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        Path manifestPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
+        Path manifestPath = (Path) completedTable.getModel().getValueAt(completedTable.convertRowIndexToModel(completedTable.getSelectedRow()), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
         manager.reprocessJob(manifestPath);
         refreshTables();
         AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
