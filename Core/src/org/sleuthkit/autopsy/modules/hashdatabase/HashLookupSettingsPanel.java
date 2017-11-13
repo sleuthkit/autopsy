@@ -305,13 +305,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     public void saveSettings() {       
         //Checking for for any unindexed databases
         List<HashDatabase> unindexed = new ArrayList<>();
-        for (HashDatabase db : hashSetManager.getAllFileHashSets()) {
-            try {
-                if (!db.hasIndex()) {
-                    unindexed.add(db);
+        for (HashDb db : hashSetManager.getAllHashSets()) {
+            if(db instanceof HashDatabase){
+                try {
+                    HashDatabase hashDatabase = (HashDatabase)db;
+                    if (!hashDatabase.hasIndex()) {
+                        unindexed.add(hashDatabase);
+                    }
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
             }
         }
 
