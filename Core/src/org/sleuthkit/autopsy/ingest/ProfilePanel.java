@@ -177,7 +177,29 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
-        ingestSettingsPanel.addPropertyChangeListener(l);
+        super.addPropertyChangeListener(l);
+        /*
+         * There is at least one look and feel library that follows the bad
+         * practice of calling overrideable methods in a constructor, e.g.:
+         *
+         * at
+         * javax.swing.plaf.synth.SynthPanelUI.installListeners(SynthPanelUI.java:83)
+         * at
+         * javax.swing.plaf.synth.SynthPanelUI.installUI(SynthPanelUI.java:63)
+         * at javax.swing.JComponent.setUI(JComponent.java:666) at
+         * javax.swing.JPanel.setUI(JPanel.java:153) at
+         * javax.swing.JPanel.updateUI(JPanel.java:126) at
+         * javax.swing.JPanel.<init>(JPanel.java:86) at
+         * javax.swing.JPanel.<init>(JPanel.java:109) at
+         * javax.swing.JPanel.<init>(JPanel.java:117)
+         *
+         * When this happens, the following child components of this JPanel
+         * subclass have not been constructed yet, since this panel's
+         * constructor has not been called yet.
+         */
+        if (null != ingestSettingsPanel) {
+            ingestSettingsPanel.addPropertyChangeListener(l);
+        }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
