@@ -692,11 +692,6 @@ public class HashDbManager implements PropertyChangeListener {
             INDEXING_DONE
         }
         
-        enum DatabaseType{
-            FILE,
-            CENTRAL_REPOSITORY
-        };
-        
         public String getHashSetName();
         
         public String getDisplayName();
@@ -709,11 +704,11 @@ public class HashDbManager implements PropertyChangeListener {
         
         public boolean getDefaultSearchDuringIngest();
 		
-        void setSearchDuringIngest(boolean useForIngest);
+        public void setSearchDuringIngest(boolean useForIngest);
 
         public boolean getSendIngestMessages();
 
-        void setSendIngestMessages(boolean showInboxMessages);
+        public void setSendIngestMessages(boolean showInboxMessages);
 
         /**
          * Indicates whether the hash database accepts updates.
@@ -750,8 +745,6 @@ public class HashDbManager implements PropertyChangeListener {
          */
         public boolean isValid() throws TskCoreException;
         
-        public int getHandle();
-        
         public String getIndexPath() throws TskCoreException;
         
         public boolean hasIndexOnly() throws TskCoreException;
@@ -762,13 +755,10 @@ public class HashDbManager implements PropertyChangeListener {
         
         public void removePropertyChangeListener(PropertyChangeListener pcl);
         
-        void close() throws TskCoreException;
+        public void close() throws TskCoreException;
         
         @Override
         public String toString();
-        
-        DatabaseType getDatabaseType();
-        
         
     }
 
@@ -817,8 +807,7 @@ public class HashDbManager implements PropertyChangeListener {
             propertyChangeSupport.removePropertyChangeListener(pcl);
         }
         
-        @Override
-        public int getHandle(){
+        int getHandle(){
             return handle;
         }
 
@@ -840,12 +829,8 @@ public class HashDbManager implements PropertyChangeListener {
         public void setIndexing(boolean indexing){
             this.indexing = indexing; 
         }
-        
-        @Override
-        public DatabaseType getDatabaseType(){
-            return DatabaseType.FILE;
-        }
 
+        @Override
         public String getIndexPath() throws TskCoreException {
             return SleuthkitJNI.getHashDatabaseIndexPath(handle);
         }
@@ -996,7 +981,7 @@ public class HashDbManager implements PropertyChangeListener {
             return hasIndex();
         }
 
-        public boolean hasIndex() throws TskCoreException {
+        boolean hasIndex() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);
         }
 
@@ -1005,11 +990,11 @@ public class HashDbManager implements PropertyChangeListener {
             return SleuthkitJNI.hashDatabaseIsIndexOnly(handle);
         }
 
-        public boolean canBeReIndexed() throws TskCoreException {
+        boolean canBeReIndexed() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseCanBeReindexed(handle);
         }
 
-        public boolean isIndexing() {
+        boolean isIndexing() {
             return indexing;
         }
         
@@ -1118,11 +1103,6 @@ public class HashDbManager implements PropertyChangeListener {
         }
         
         @Override
-        public int getHandle(){
-            return 0;
-        }
-        
-        @Override
         public boolean hasIndexOnly() throws TskCoreException{
             return true;
         }
@@ -1137,26 +1117,21 @@ public class HashDbManager implements PropertyChangeListener {
             return getHashSetName() + " " + getVersion();
         }
         
-        public String getVersion(){
+        String getVersion(){
             return version;
         }
         
-        public String getOrgName(){
+        String getOrgName(){
             return orgName;
         }
         
-        public int getReferenceSetID(){
+        int getReferenceSetID(){
             return referenceSetID;
         }
 
         @Override
         public String getDatabasePath() throws TskCoreException {
             return "";
-        }
-        
-        @Override
-        public DatabaseType getDatabaseType(){
-            return DatabaseType.CENTRAL_REPOSITORY;
         }
 
         @Override
@@ -1311,7 +1286,6 @@ public class HashDbManager implements PropertyChangeListener {
          * Returns whether this database can be enabled.
          * 
          * @return true if is valid, false otherwise
-         * @throws TskCoreException 
          */
         @Override
         public boolean isValid() {

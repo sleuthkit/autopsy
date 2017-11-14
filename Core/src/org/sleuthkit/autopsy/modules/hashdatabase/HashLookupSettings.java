@@ -36,8 +36,8 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.DatabaseType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -297,6 +297,11 @@ final class HashLookupSettings implements Serializable {
      */
     static final class HashDbInfo implements Serializable {
         
+        enum DatabaseType{
+            FILE,
+            CENTRAL_REPOSITORY
+        };
+        
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
         private final HashDbManager.HashDatabase.KnownFilesType knownFilesType;
@@ -466,7 +471,8 @@ final class HashLookupSettings implements Serializable {
                 return false;
             }
             
-            if( ! this.dbType.equals(hashDb.getDatabaseType())){
+            if((this.dbType == DatabaseType.CENTRAL_REPOSITORY) && (! (hashDb instanceof CentralRepoHashDb))
+                    || (this.dbType == DatabaseType.FILE) && (! (hashDb instanceof HashDatabase))){
                 return false;
             }
             
@@ -474,19 +480,15 @@ final class HashLookupSettings implements Serializable {
                 return false;
             }
             
-            if(this.dbType.equals(DatabaseType.FILE)){
-                // FILE types will always have unique names, so no more testing required
-                return true;                        
-            }
-            
-            // Central repo tests
-            CentralRepoHashDb crDb = (CentralRepoHashDb) hashDb;
-            if(this.referenceSetID != crDb.getReferenceSetID()){
-                return false;
-            }
-            
-            if(! version.equals(crDb.getVersion())){
-                return false;
+            if(hashDb instanceof CentralRepoHashDb){
+                CentralRepoHashDb crDb = (CentralRepoHashDb) hashDb;
+                if(this.referenceSetID != crDb.getReferenceSetID()){
+                    return false;
+                }
+
+                if(! version.equals(crDb.getVersion())){
+                    return false;
+                }
             }
             
             return true;
