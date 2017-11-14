@@ -85,12 +85,12 @@ public interface DataResultViewer {
 
     /**
      * Set a custom content viewer to respond to selection events from this
-     * result viewer. If not set, the default content viewer is user
+     * result viewer. If not set, the default content viewer is used
      *
      * @param contentViewer content viewer to respond to selection events from
      *                      this viewer
      *
-     * @deprecated All implementations of this method are now no-ops.
+     * @deprecated All implementations of this in the standard DataResultViewers are now no-ops.
      */
     @Deprecated
     public void setContentViewer(DataContent contentViewer);
