@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceIn
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -40,7 +39,6 @@ import org.sleuthkit.datamodel.CommunicationsManager;
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(MessageBrowser.class.getName());
 
     private final DataResultPanel messagesResultPanel;
     private final ExplorerManager explorerManager = new ExplorerManager();

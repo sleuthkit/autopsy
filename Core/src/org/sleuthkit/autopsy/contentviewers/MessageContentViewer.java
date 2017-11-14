@@ -79,6 +79,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static final int HTML_TAB_INDEX = 2;
     private static final int RTF_TAB_INDEX = 3;
     private static final int ATTM_TAB_INDEX = 4;
+
     private final List<JTextComponent> textAreas;
 
     /**
