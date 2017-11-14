@@ -29,30 +29,27 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * Displays auto ingest metrics for a cluster.
+ * Display basic metrics for a cluster.
  */
 final class AutoIngestMetricsDialog extends javax.swing.JDialog {
     
-    private final AutoIngestMetricsCollector autoIngestMetricsCollector;
+    private final AutoIngestMonitor autoIngestMonitor;
 
     /**
-     * Creates an instance of AutoIngestMetricsDialog
+     * Creates new form AutoIngestMetricsDialog
      * 
      * @param parent The parent container.
+     * @param autoIngestMonitor The auto ingest monitor.
      */
     @Messages({
         "AutoIngestMetricsDialog.title.text=Auto Ingest Cluster Metrics",
         "AutoIngestMetricsDialog.initReportText=Select a date below and click the 'Get Metrics Since...' button to generate\na metrics report."
     })
-    AutoIngestMetricsDialog(Container parent) throws AutoIngestMetricsDialogException {
+    AutoIngestMetricsDialog(Container parent, AutoIngestMonitor autoIngestMonitor) {
         super((Window) parent, NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.title.text"), ModalityType.MODELESS);
-        try {
-            autoIngestMetricsCollector = new AutoIngestMetricsCollector();
-        } catch (AutoIngestMetricsCollector.AutoIngestMetricsCollectorException ex) {
-            throw new AutoIngestMetricsDialogException("Error starting up the auto ingest metrics dialog.", ex);
-        }
         initComponents();
         reportTextArea.setText(NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.initReportText"));
+        this.autoIngestMonitor = autoIngestMonitor;
         setModal(true);
         setSize(getPreferredSize());
         setLocationRelativeTo(parent);
@@ -67,7 +64,7 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
             return;
         }
         
-        AutoIngestMetricsCollector.MetricsSnapshot metricsSnapshot = autoIngestMetricsCollector.queryCoordinationServiceForMetrics();
+        AutoIngestMonitor.MetricsSnapshot metricsSnapshot = autoIngestMonitor.getMetricsSnapshot();
         Object[] completedJobDates = metricsSnapshot.getCompletedJobDates().toArray();
         int count = 0;
         long pickedDate = datePicker.getDate().atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000;
@@ -84,37 +81,6 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
                 dateFormatter.format(Date.valueOf(datePicker.getDate())),
                 count
         ));
-    }
-    
-    /**
-     * Exception type thrown when there is an error completing an auto ingest
-     * metrics dialog operation.
-     */
-    static final class AutoIngestMetricsDialogException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        /**
-         * Constructs an instance of the exception type thrown when there is an
-         * error completing an auto ingest metrics dialog operation.
-         *
-         * @param message The exception message.
-         */
-        private AutoIngestMetricsDialogException(String message) {
-            super(message);
-        }
-
-        /**
-         * Constructs an instance of the exception type thrown when there is an
-         * error completing an auto ingest metrics dialog operation.
-         *
-         * @param message The exception message.
-         * @param cause   A Throwable cause for the error.
-         */
-        private AutoIngestMetricsDialogException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
     }
 
     /**
