@@ -77,7 +77,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     }
     
     void importFile(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDatabase.KnownFilesType knownFilesType,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType,
             boolean readOnly, String importFileName){          
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));       
         
@@ -139,16 +139,16 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final int orgId;
         private final boolean searchDuringIngest;
         private final boolean sendIngestMessages;
-        private final HashDbManager.HashDatabase.KnownFilesType knownFilesType;
+        private final HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType;
         private final boolean readOnly;
         private final File importFile;
         private final long totalLines;
         private int referenceSetID = -1;
-        private HashDbManager.CentralRepoHashDb newHashDb = null;
+        private HashDbManager.CentralRepoHashSet newHashDb = null;
         private final AtomicLong numLines = new AtomicLong();
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDatabase.KnownFilesType knownFilesType,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType,
             boolean readOnly, File importFile){
             
             this.hashSetName = hashSetName;
@@ -194,7 +194,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         protected Void doInBackground() throws Exception {
 
             TskData.FileKnown knownStatus;
-            if (knownFilesType.equals(HashDbManager.HashDatabase.KnownFilesType.KNOWN)) {
+            if (knownFilesType.equals(HashDbManager.SleuthkitHashSet.KnownFilesType.KNOWN)) {
                 knownStatus = TskData.FileKnown.KNOWN;
             } else {
                 knownStatus = TskData.FileKnown.BAD;
