@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.coordinationservice;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An object that converts case data for a case directory coordination service
@@ -31,6 +33,7 @@ public final class CaseNodeData {
     
     private int version;
     private boolean errorsOccurred;
+    private List<Long> dataSourceSizeList;
 
     /**
      * Gets the current version of the case directory coordination service node
@@ -56,6 +59,7 @@ public final class CaseNodeData {
         if(nodeData == null || nodeData.length == 0) {
             this.version = CURRENT_VERSION;
             this.errorsOccurred = false;
+            this.dataSourceSizeList = new ArrayList<>(0);
         } else {
             /*
              * Get fields from node data.
@@ -72,11 +76,26 @@ public final class CaseNodeData {
                      */
                     byte flags = buffer.get();
                     this.errorsOccurred = (flags < 0);
+                    
+                    short nDataSources = buffer.getShort();
+                    this.dataSourceSizeList = new ArrayList<>(0);
+                    for(int i=0; i < nDataSources; i++) {
+                        this.dataSourceSizeList.add(buffer.getLong());
+                    }
                 }
             } catch (BufferUnderflowException ex) {
                 throw new InvalidDataException("Node data is incomplete", ex);
             }
         }
+    }
+
+    /**
+     * Gets the node data version number.
+     *
+     * @return The version number.
+     */
+    public int getVersion() {
+        return this.version;
     }
 
     /**
@@ -96,14 +115,14 @@ public final class CaseNodeData {
     public void setErrorsOccurred(boolean errorsOccurred) {
         this.errorsOccurred = errorsOccurred;
     }
-
+    
     /**
-     * Gets the node data version number.
-     *
-     * @return The version number.
+     * Gets the data source size list.
+     * 
+     * @return The data source size list.
      */
-    public int getVersion() {
-        return this.version;
+    public List<Long> getDataSourceSizeList() {
+        return this.dataSourceSizeList;
     }
     
     /**
@@ -113,10 +132,16 @@ public final class CaseNodeData {
      * @return The node data as a byte array.
      */
     public byte[] toArray() {
-        ByteBuffer buffer = ByteBuffer.allocate(5);
+        int bufferSize = 7 + (this.dataSourceSizeList.size() << 3);
+        ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
         
         buffer.putInt(this.version);
         buffer.put((byte)(this.errorsOccurred ? 0x80 : 0));
+        
+        buffer.putShort((short)this.dataSourceSizeList.size());
+        for (Long size : this.dataSourceSizeList) {
+            buffer.putLong(size);
+        }
         
         // Prepare the array
         byte[] array = new byte[buffer.position()];
