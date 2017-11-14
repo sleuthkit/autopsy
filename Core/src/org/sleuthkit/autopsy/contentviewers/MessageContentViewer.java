@@ -488,19 +488,19 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private void configureTextArea(BlackboardAttribute.ATTRIBUTE_TYPE type, int index) throws TskCoreException {
         String attributeText = getAttributeValueSafe(artifact, type);
 
-        if (index == HTML_TAB_INDEX) {
+        if (index == HTML_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
             //special case for HTML, we need to 'cleanse' it
             attributeText = wrapInHtmlBody(cleanseHTML(attributeText));
         }
         JTextComponent textComponent = textAreas.get(index);
         textComponent.setText(attributeText);
+        textComponent.setCaretPosition(0); //make sure we start at the top
         final boolean hasText = attributeText.length() > 0;
 
+        msgbodyTabbedPane.setEnabledAt(index, hasText);
         if (hasText) {
-            textComponent.setCaretPosition(0); //make sure we start at the top
             msgbodyTabbedPane.setSelectedIndex(index);
         }
-        msgbodyTabbedPane.setEnabledAt(index, hasText);
     }
 
     private void enableCommonFields() {
