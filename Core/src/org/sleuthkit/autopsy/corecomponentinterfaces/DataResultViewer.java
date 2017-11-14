@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,9 @@ public interface DataResultViewer {
      *
      * @param contentViewer content viewer to respond to selection events from
      *                      this viewer
+     *
+     * @deprecated All implementations of this method are now no-ops.
      */
-    @Deprecated 
+    @Deprecated
     public void setContentViewer(DataContent contentViewer);
 }
