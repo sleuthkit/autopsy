@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.DefaultListModel;
@@ -28,6 +29,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -40,11 +42,11 @@ import org.sleuthkit.datamodel.TskData;
 final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String DEFAULT_DESCRIPTION = "";
     private static final TagName.HTML_COLOR DEFAULT_COLOR = TagName.HTML_COLOR.NONE;
     private final DefaultListModel<TagNameDefinition> tagTypesListModel;
     private Set<TagNameDefinition> tagTypes;
     private IngestJobEventPropertyChangeListener ingestJobEventsListener;
+    private Set<TagPair> updatedStatusTags;
 
     /**
      * Creates new form TagOptionsPanel
@@ -52,6 +54,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     TagOptionsPanel() {
         tagTypesListModel = new DefaultListModel<>();
         tagTypes = new TreeSet<>(TagNameDefinition.getTagNameDefinitions());
+        updatedStatusTags = new HashSet<>();
         initComponents();
         customizeComponents();
     }
@@ -295,12 +298,15 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message=Tag name must be unique. A tag with this name already exists.",
+                "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title=Duplicate Tag Name"})
+
     private void newTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagNameButtonActionPerformed
         TagNameDialog dialog = new TagNameDialog();
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == TagNameDialog.BUTTON_PRESSED.OK) {
             TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
-            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), DEFAULT_DESCRIPTION, DEFAULT_COLOR, status);
+            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
              */
@@ -312,8 +318,8 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagOptionsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.message"),
-                        NbBundle.getMessage(TagOptionsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.title"),
+                        NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message"),
+                        NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);
             }
         }
@@ -337,15 +343,15 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
-             */            
+             */
             tagTypes.remove(originalTagName);
             tagTypes.add(newTagType);
             updateTagNamesListModel();
             tagNamesList.setSelectedValue(newTagType, true);
             updatePanel();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()){
-                Case.getCurrentCase().notifyTagStatusChanged(originalTagName,newTagType);
+            if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()) {
+                updatedStatusTags.add(new TagPair(originalTagName, newTagType));
             }
         }
     }//GEN-LAST:event_editTagNameButtonActionPerformed
@@ -398,6 +404,18 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     @Override
     public void store() {
         TagNameDefinition.setTagNameDefinitions(tagTypes);
+        sendStatusChangedEvents();
+    }
+
+    void cancelChanges() {
+        updatedStatusTags.clear();
+    }
+
+    private void sendStatusChangedEvents() {
+        for (TagPair modifiedTag : updatedStatusTags) {
+            Case.getCurrentCase().notifyTagStatusChanged(modifiedTag.getOldValue(), modifiedTag.getNewValue());
+        }
+        updatedStatusTags.clear();
     }
 
     /**
@@ -438,6 +456,42 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     protected void finalize() throws Throwable {
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventsListener);
         super.finalize();
+    }
+
+    private class TagPair implements Comparable<TagPair> {
+
+        private TagNameDefinition oldValue;
+        private TagNameDefinition newValue;
+
+        private TagPair(TagNameDefinition oldV, TagNameDefinition newV) {
+            oldValue = oldV;
+            newValue = newV;
+        }
+
+        private TagNameDefinition getOldValue() {
+            return oldValue;
+        }
+
+        private TagNameDefinition getNewValue() {
+            return newValue;
+        }
+
+        /**
+         * Compares this tag name definition with the specified tag name
+         * definition for order.
+         *
+         * @param other The tag name definition to which to compare this tag
+         *              name definition.
+         *
+         * @return Negative integer, zero, or a positive integer to indicate
+         *         that this tag name definition is less than, equal to, or
+         *         greater than the specified tag name definition.
+         */
+        @Override
+        public int compareTo(TagPair other) {
+            return this.getNewValue().compareTo(other.getNewValue());
+        }
+
     }
 
     /**

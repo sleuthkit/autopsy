@@ -57,7 +57,6 @@ public final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param color       The color for the tag name.
      * @param knownStatus The status denoted by the tag.
      */
-
     public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
 
         this.displayName = displayName;
@@ -92,7 +91,6 @@ public final class TagNameDefinition implements Comparable<TagNameDefinition> {
     TagName.HTML_COLOR getColor() {
         return color;
     }
-
 
     public TskData.FileKnown getKnownStatus() {
         return knownStatusDenoted;
@@ -139,8 +137,9 @@ public final class TagNameDefinition implements Comparable<TagNameDefinition> {
         if (!(obj instanceof TagNameDefinition)) {
             return false;
         }
-        TagNameDefinition thatTagName = (TagNameDefinition) obj;
-        return this.getDisplayName().equals(thatTagName.getDisplayName());
+        boolean sameName = this.getDisplayName().equals(((TagNameDefinition) obj).getDisplayName());
+        boolean sameStatus = this.getKnownStatus().equals(((TagNameDefinition) obj).getKnownStatus());
+        return sameName && sameStatus;
     }
 
     /**

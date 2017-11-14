@@ -100,10 +100,9 @@ final class CaseEventListener implements PropertyChangeListener {
             }
             break;
             case TAG_STATUS_CHANGED: {
-                //WJS-TODO actaully do stuff when event is seen.
                 jobProcessingExecutor.submit(new TagStatusChangeTask(dbManager, evt));
             }
-
+            break;
             case CURRENT_CASE: {
                 jobProcessingExecutor.submit(new CurrentCaseTask(dbManager, evt));
             }
@@ -318,12 +317,9 @@ final class CaseEventListener implements PropertyChangeListener {
             TskData.FileKnown status = ((TagNameDefinition) event.getNewValue()).getKnownStatus();
             /**
              * Set knownBad status for all files/artifacts in the given case
-             * that are tagged with the given tag name. Files/artifacts that are
-             * not already in the database will be added.
-             *
-             * @param tagName The name of the tag to search for
-             * @param curCase The case to search in
+             * that are tagged with the given tag name.
              */
+            System.out.println("TAG " + ((TagNameDefinition) event.getNewValue()).getDisplayName() + " event FROM " + ((TagNameDefinition) event.getOldValue()).getKnownStatus().toString() + " TO " + status.toString());
             try {
                 TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(((TagNameDefinition) event.getNewValue()).getDisplayName());
                 // First find any matching artifacts
@@ -332,50 +328,54 @@ final class CaseEventListener implements PropertyChangeListener {
                 for (BlackboardArtifactTag bbTag : artifactTags) {
                     List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
                     for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                        boolean hasOtherBadTags = false;
                         if (status == TskData.FileKnown.UNKNOWN) {
                             Content content = bbTag.getContent();
-                            BlackboardArtifact bbArtifact = bbTag.getArtifact();
-                            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-                            List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
-                            if (!(tags.stream()
-                                    .map(tag -> tag.getName().getDisplayName())
-                                    .filter(notableTags::contains)
-                                    .collect(Collectors.toList())
-                                    .isEmpty())) {   // There are more bad tags on the object
-                                break;
-                            }
                             if ((content instanceof AbstractFile) && (((AbstractFile) content).getKnown() == TskData.FileKnown.KNOWN)) {
                                 break;
                             }
+                            BlackboardArtifact bbArtifact = bbTag.getArtifact();
+                            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                            List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
+                            for (BlackboardArtifactTag t : tags) {
+                                if (t.getName().equals(tagName)) {
+                                    continue;
+                                }
+                                if (notableTags.contains(t.getName().getDisplayName())) {
+                                    hasOtherBadTags = true;
+                                    break;
+                                }
+                            }
                         }
-                        System.out.println(
-                                "TAG " + ((TagNameDefinition) event.getNewValue()).getDisplayName() + " event FROM " + ((TagNameDefinition) event.getOldValue()).getKnownStatus() + " TO " + ((TagNameDefinition) event.getNewValue()).getKnownStatus());
-                        EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, status);
+                        if (!hasOtherBadTags) {
+                            EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, status);
+                        }
                     }
                 }
-
                 // Now search for files
                 List<ContentTag> fileTags = Case.getCurrentCase().getSleuthkitCase().getContentTagsByTagName(tagName);
                 for (ContentTag contentTag : fileTags) {
+                    boolean hasOtherBadTags = false;
                     if (status == TskData.FileKnown.UNKNOWN) {
                         Content content = contentTag.getContent();
                         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
                         List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
-                        if (!(tags.stream()
-                                .map(tag -> tag.getName().getDisplayName())
-                                .filter(notableTags::contains)
-                                .collect(Collectors.toList())
-                                .isEmpty())) {   // There are more bad tags on the object
-                            continue;
+                        for (ContentTag t : tags) {
+                            if (t.getName().equals(tagName)) {
+                                continue;
+                            }
+                            if (notableTags.contains(t.getName().getDisplayName())) {
+                                hasOtherBadTags = true;
+                                break;
+                            }
                         }
                     }
-                    System.out.println("MAKING ARTIFACT");
-                    final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(),
-                            TskData.FileKnown.BAD, "");
-                    if (eamArtifact != null) {
-                        EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, status);
-                        System.out.println(
-                                "TAG " + ((TagNameDefinition) event.getNewValue()).getDisplayName() + " event FROM " + ((TagNameDefinition) event.getOldValue()).getKnownStatus() + " TO " + ((TagNameDefinition) event.getNewValue()).getKnownStatus());
+                    if (!hasOtherBadTags) {
+                        final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(),
+                                status, "");
+                        if (eamArtifact != null) {
+                            EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, status);
+                        }
                     }
                 }
             } catch (TskCoreException ex) {
