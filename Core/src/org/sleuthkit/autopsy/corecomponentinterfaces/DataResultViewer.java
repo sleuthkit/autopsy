@@ -90,5 +90,6 @@ public interface DataResultViewer {
      * @param contentViewer content viewer to respond to selection events from
      *                      this viewer
      */
+    @Deprecated 
     public void setContentViewer(DataContent contentViewer);
 }

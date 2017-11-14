@@ -65,7 +65,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  * normally docked into the lower right hand side of the main window, underneath
  * the results view. A custom content view may be specified instead.
  */
-public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
+public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private static final int NO_TAB_SELECTED = -1;
@@ -163,25 +163,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * Constructs a Swing JPanel with a JTabbedPane child component that
      * contains result viewers (implementations of the DataResultViewer
      * interface).
-     */
-    private DataResultPanel() {
-        this.isMain = true;
-        initComponents();
-    }
-
-    /**
-     * Constructs a Swing JPanel with a JTabbedPane child component that
-     * contains result viewers (implementations of the DataResultViewer
-     * interface).
      *
      * @param title  The title for the panel.
      * @param isMain True if the DataResultPanel being constructed is the "main"
      *               DataResultPanel.
      */
     DataResultPanel(String title, boolean isMain) {
-        this();
+        this(isMain, Lookup.getDefault().lookup(DataContent.class));
+    }
+
+    private DataResultPanel(boolean isMain, DataContent contentView) {
         this.isMain = isMain;
-        this.contentView = Lookup.getDefault().lookup(DataContent.class);
+        this.contentView = contentView;
+        initComponents();
     }
 
     /**
@@ -194,8 +188,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *                          content view.
      */
     DataResultPanel(String title, DataContent customContentView) {
-        this(title, false);
-        this.contentView = customContentView;
+        this(false, customContentView);
     }
 
     /**
@@ -247,9 +240,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param resultViewer The result viewer.
      */
     public void addResultViewer(DataResultViewer resultViewer) {
-        if (null != contentView) {
-            resultViewer.setContentViewer(contentView);
-        }
         resultViewers.add(resultViewer);
         dataResultTabbedPanel.addTab(resultViewer.getTitle(), resultViewer.getComponent());
     }
@@ -526,6 +516,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.removeAll();
             this.setVisible(false);
         }
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
     }
 
     /**
