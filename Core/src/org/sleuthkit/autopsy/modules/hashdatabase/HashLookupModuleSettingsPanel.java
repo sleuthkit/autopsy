@@ -58,8 +58,8 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         } catch (TskCoreException ex){
             Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error updating central repository hash sets", ex); //NON-NLS
         }
-        initializeHashSetModels(settings, hashDbManager.getKnownFileHashSets(), knownHashSetModels);
-        initializeHashSetModels(settings, hashDbManager.getKnownBadFileHashSets(), knownBadHashSetModels);
+        initializeHashSetModels(settings, validSetsOnly(hashDbManager.getKnownFileHashSets()), knownHashSetModels);
+        initializeHashSetModels(settings, validSetsOnly(hashDbManager.getKnownBadFileHashSets()), knownBadHashSetModels);
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings, List<HashDb> hashDbs, List<HashSetModel> hashSetModels) {
@@ -130,8 +130,22 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void updateHashSetModels() {
-        updateHashSetModels(hashDbManager.getKnownFileHashSets(), knownHashSetModels);
-        updateHashSetModels(hashDbManager.getKnownBadFileHashSets(), knownBadHashSetModels);
+        updateHashSetModels(validSetsOnly(hashDbManager.getKnownFileHashSets()), knownHashSetModels);
+        updateHashSetModels(validSetsOnly(hashDbManager.getKnownBadFileHashSets()), knownBadHashSetModels);
+    }
+    
+    private List<HashDb> validSetsOnly(List<HashDb> hashDbs){
+        List<HashDb> validDbs = new ArrayList<>();
+        for(HashDb db:hashDbs){
+            try{
+                if(db.isValid()){
+                    validDbs.add(db);
+                }
+            } catch (TskCoreException ex){
+                Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error checking validity for hash set (name = " + db.getHashSetName() + ")", ex); //NON-NLS
+            }
+        }
+        return validDbs;
     }
 
     void updateHashSetModels(List<HashDb> hashDbs, List<HashSetModel> hashSetModels) {
