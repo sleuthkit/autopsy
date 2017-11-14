@@ -29,8 +29,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -52,7 +50,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     MessageBrowser() {
         initComponents();
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
-       
+
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
 
@@ -102,8 +100,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                 }
             }
         });
-         messagesResultPanel.addResultViewer(new DataResultViewerTable(internalExplorerManager,"Messages"));
-     
+        messagesResultPanel.addResultViewer(new DataResultViewerTable(internalExplorerManager, "Messages"));
+
         messagesResultPanel.open();
     }
 

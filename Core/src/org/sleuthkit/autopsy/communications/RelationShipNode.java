@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -35,6 +39,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMA
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -117,6 +122,9 @@ public class RelationShipNode extends BlackboardArtifactNode {
             BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attributeType.getTypeID())));
             if (attribute == null) {
                 return "";
+            } else if (attributeType.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                ZoneId zone = UserPreferences.displayTimesInLocalTime() ? ZoneOffset.systemDefault() : ZoneOffset.UTC;
+                return TimeUtilities.epochToTime(attribute.getValueLong(), TimeZone.getTimeZone(zone));
             } else {
                 return attribute.getDisplayString();
             }
