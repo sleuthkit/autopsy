@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AccountInstance;
+import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -406,11 +406,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String senderAddress;
         senderAddressList.addAll(findEmailAddresess(from));
         
-        AccountInstance senderAccountInstance = null;        
+        AccountFileInstance senderAccountInstance = null;        
         if (senderAddressList.size() == 1) {
             senderAddress = senderAddressList.get(0);
             try {
-                senderAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
+                senderAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
             }
             catch(TskCoreException ex) {
                  logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
@@ -425,11 +425,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         recipientAddresses.addAll(findEmailAddresess(cc));
         recipientAddresses.addAll(findEmailAddresess(bcc));
         
-        List<AccountInstance> recipientAccountInstances = new ArrayList<>();
+        List<AccountFileInstance> recipientAccountInstances = new ArrayList<>();
         recipientAddresses.forEach((addr) -> {
             try {
-                AccountInstance recipientAccountInstance = 
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.EMAIL, addr,
+                AccountFileInstance recipientAccountInstance = 
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, addr,
                         EmailParserModuleFactory.getModuleName(), abstractFile);
                 recipientAccountInstances.add(recipientAccountInstance);
             }
