@@ -40,6 +40,7 @@
                 <package>com.github.lgooddatepicker.datepicker</package>
                 <package>com.github.lgooddatepicker.datetimepicker</package>
                 <package>com.github.lgooddatepicker.timepicker</package>
+                <package>com.github.lgooddatepicker.zinternaltools</package>
                 <package>com.github.mustachejava</package>
                 <package>com.github.mustachejava.codes</package>
                 <package>com.github.mustachejava.functions</package>
