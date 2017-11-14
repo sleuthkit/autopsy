@@ -77,7 +77,7 @@ public class RelationShipNode extends BlackboardArtifactNode {
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
                     try {
-                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount() > 0));
+                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
                     }
@@ -93,7 +93,7 @@ public class RelationShipNode extends BlackboardArtifactNode {
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
                     try {
-                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount() > 0));
+                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
                     }
