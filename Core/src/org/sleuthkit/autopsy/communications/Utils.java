@@ -18,14 +18,22 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Account;
 
 /**
  * Utility class with helpers for dealing with accounts.
  */
-class AccountUtils {
+class Utils {
 
-    private AccountUtils() {
+    static ZoneId getUserPreferredZoneId() {
+        ZoneId zone = UserPreferences.displayTimesInLocalTime() ? ZoneOffset.systemDefault() : ZoneOffset.UTC;
+        return zone;
+    }
+
+    private Utils() {
     }
 
     /**

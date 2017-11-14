@@ -89,7 +89,7 @@ class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
             this.commsManager = commsManager;
             this.filter = accountDeviceInstanceKey.getCommunicationsFilter();
             setName(accountDeviceInstance.getAccount().getAccountUniqueID());
-            setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + AccountUtils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
+            setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + Utils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
         }
 
         public AccountDeviceInstance getAccountDeviceInstance() {

@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.communications;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ import javax.swing.JCheckBox;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
@@ -77,7 +75,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             applyFilters();
         }
 
-        dateRangeLabel.setText("Date Range ( " + (UserPreferences.displayTimesInLocalTime() ? ZoneId.systemDefault().getId() : ZoneOffset.UTC.getId()) + "):");
+        dateRangeLabel.setText("Date Range ( " + (Utils.getUserPreferredZoneId().getId() + "):");
     }
 
     @Override
@@ -111,7 +109,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                             final JCheckBox jCheckBox = new JCheckBox(
                                     "<html><table cellpadding=0><tr><td><img src=\""
                                     + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                                            + AccountUtils.getIconFileName(type))
+                                            + Utils.getIconFileName(type))
                                     + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
                                     true
                             );
@@ -419,7 +417,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
     }
 
     private DateRangeFilter getDateRangeFilter() {
-        ZoneId zone = UserPreferences.displayTimesInLocalTime() ? ZoneId.systemDefault() : ZoneOffset.UTC;
+        ZoneId zone = Utils.getUserPreferredZoneId();
         long start = startDatePicker.isEnabled() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
         long end = endDatePicker.isEnabled() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
         return new DateRangeFilter(start, end);
