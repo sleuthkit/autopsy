@@ -80,8 +80,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataContent contentView;
 
     /**
-     * Constructs and opens a Swing JPanel with a JTabbedPane child component.
-     * The tabbed pane contains result viewers.
+     * Constructs and opens a DataResultPanel with the given initial data, and
+     * the default DataContent.
      *
      * @param title        The title for the panel.
      * @param pathText     Descriptive text about the source of the nodes
@@ -99,8 +99,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Constructs and opens a Swing JPanel with a JTabbedPane child component.
-     * The tabbed pane contains result viewers.
+     * Constructs and opens a DataResultPanel with the given initial data, and a
+     * custom DataContent.
      *
      * @param title             The title for the panel.
      * @param pathText          Descriptive text about the source of the nodes
@@ -120,9 +120,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Constructs a Swing JPanel with a JTabbedPane child component. The tabbed
-     * pane contains result viewers. The panel is NOT opened; the client of this
-     * method must call open on the panel that is returned.
+     * Constructs a DataResultPanel with the given initial data, and a custom
+     * DataContent. The panel is NOT opened; the client of this method must call
+     * open on the panel that is returned.
      *
      * @param title             The title for the panel.
      * @param pathText          Descriptive text about the source of the nodes
@@ -160,9 +160,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Constructs a Swing JPanel with a JTabbedPane child component that
-     * contains result viewers (implementations of the DataResultViewer
-     * interface).
+     * Constructs a DataResultPanel with the default DataContent
      *
      * @param title  The title for the panel.
      * @param isMain True if the DataResultPanel being constructed is the "main"
@@ -170,6 +168,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(String title, boolean isMain) {
         this(isMain, Lookup.getDefault().lookup(DataContent.class));
+        setTitle(title);
     }
 
     private DataResultPanel(boolean isMain, DataContent contentView) {
@@ -179,9 +178,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Constructs a Swing JPanel with a JTabbedPane child component that
-     * contains result viewers (implementations of the DataResultViewer
-     * interface).
+     * Constructs a DataResultPanel with the a custom DataContent.
      *
      * @param title             The title for the panel.
      * @param customContentView A content view to use in place of the default

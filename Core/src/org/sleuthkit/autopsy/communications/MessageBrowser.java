@@ -50,6 +50,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
 
     MessageBrowser() {
         initComponents();
+        //create an uninitialized DataResultPanel so we can control the ResultViewers that get added.
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
 
         splitPane.setTopComponent(messagesResultPanel);
@@ -91,6 +92,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
             }
         });
 
+        //add the required result viewers and THEN open the panel
         if (messagesResultPanel.getViewers().contains(dataResultViewerTable) == false) {
             messagesResultPanel.addResultViewer(dataResultViewerTable);
         }
