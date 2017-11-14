@@ -18,93 +18,88 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.collect.Iterables;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
-import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 
 /**
  * The right hand side of the CVT. Has a DataResultPanel to show messages and
- * account details, and a Content viewer to show individual
+ * other account details, and a ContentViewer to show individual
  */
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
-    private static final Logger logger = Logger.getLogger(MessageBrowser.class.getName());
-
     private static final long serialVersionUID = 1L;
 
-    private ExplorerManager parentExplorereManager;
     private final DataResultPanel messagesResultPanel;
-    private ExplorerManager internalExplorerManager;
+    private final ExplorerManager explorerManager = new ExplorerManager();
+    private final DataResultViewerTable dataResultViewerTable = new DataResultViewerTable(explorerManager, "Messages");
+
+    ;
 
     MessageBrowser() {
         initComponents();
+        //create an uninitialized DataResultPanel so we can control the ResultViewers that get added.
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
-       
+
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
-
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
-        this.parentExplorereManager = ExplorerManager.find(this);
-
-        internalExplorerManager = new ExplorerManager();
-
+        ExplorerManager parentExplorereManager = ExplorerManager.find(this);
         parentExplorereManager.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] selectedNodes = parentExplorereManager.getSelectedNodes();
                 if (selectedNodes.length == 0) {
+                    //reset panel when there is no selection
                     messagesResultPanel.setNode(null);
                     messagesResultPanel.setPath("");
+                    messagesResultPanel.setNumMatches(0);
                 } else {
-                    Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
-                    CommunicationsFilter filter = null;
-                    CommunicationsManager commsManager = null;
-                    for (Node n : selectedNodes) {
-                        if (n instanceof AccountDeviceInstanceNode) {
-                            final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) n;
-                            accountDeviceInstances.add(adiNode.getAccountDeviceInstance());
-                            if (commsManager == null) {
-                                commsManager = adiNode.getCommsManager();
-                            }
-                            if (filter == null) {
-                                filter = adiNode.getFilter();
-                            } else if (filter != adiNode.getFilter()) {
-                                ///this should never happen...
-                                logger.log(Level.WARNING, "Not all AccountDeviceInstanceNodes have the same filter. Using the first.");
-                            }
-                        } else {
-                            ///this should never happen...
-                            logger.log(Level.WARNING, "Unexpected Node encountered: " + n.toString());
-                        }
-                    }
-                    messagesResultPanel.setNode(new TableFilterNode(new AccountDetailsNode(accountDeviceInstances, filter, commsManager), true));
-                    if (accountDeviceInstances.size() == 1) {
-                        messagesResultPanel.setPath(Iterables.getOnlyElement(accountDeviceInstances).getAccount().getAccountUniqueID());
+                    AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
+                    CommunicationsFilter filter = adiNode.getFilter();
+                    CommunicationsManager commsManager = adiNode.getCommsManager();
+                    final Set<AccountDeviceInstance> collect;
+
+                    if (selectedNodes.length == 1) {
+                        final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
+                        collect = Collections.singleton(accountDeviceInstance);
+                        messagesResultPanel.setPath(accountDeviceInstance.getAccount().getAccountUniqueID());
                     } else {
-                        messagesResultPanel.setPath(accountDeviceInstances.size() + " accounts");
+                        collect = Stream.of(selectedNodes)
+                                .map(node -> (AccountDeviceInstanceNode) node)
+                                .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
+                                .collect(Collectors.toSet());
+                        messagesResultPanel.setPath(selectedNodes.length + " accounts");
                     }
+                    messagesResultPanel.setNode(new TableFilterNode(
+                            new AccountDetailsNode(collect, filter, commsManager), true));
                 }
             }
         });
-         messagesResultPanel.addResultViewer(new DataResultViewerTable(internalExplorerManager,"Messages"));
-     
+
+        //add the required result viewers and THEN open the panel
+        if (messagesResultPanel.getViewers().contains(dataResultViewerTable) == false) {
+            messagesResultPanel.addResultViewer(dataResultViewerTable);
+        }
         messagesResultPanel.open();
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
     }
 
     /**
@@ -148,8 +143,4 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return internalExplorerManager;
-    }
 }

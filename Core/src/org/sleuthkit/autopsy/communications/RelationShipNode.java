@@ -53,7 +53,6 @@ public class RelationShipNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
-
         Sheet s = new Sheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
         if (ss == null) {
@@ -62,9 +61,11 @@ public class RelationShipNode extends BlackboardArtifactNode {
         }
 
         ss.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
+
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
         if (null != fromID) {
+            //Consider refactoring this to reduce boilerplate
             switch (fromID) {
                 case TSK_EMAIL_MSG:
                     ss.put(new NodeProperty<>("From", "From", "From",
@@ -75,6 +76,12 @@ public class RelationShipNode extends BlackboardArtifactNode {
                             getAttributeDisplayString(artifact, TSK_DATETIME_SENT)));
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
+                    try {
+                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
+                    }
+
                     break;
                 case TSK_MESSAGE:
                     ss.put(new NodeProperty<>("From", "From", "From",
@@ -85,6 +92,11 @@ public class RelationShipNode extends BlackboardArtifactNode {
                             getAttributeDisplayString(artifact, TSK_DATETIME)));
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
+                    try {
+                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
+                    }
                     break;
                 case TSK_CALLLOG:
                     ss.put(new NodeProperty<>("From", "From", "From",

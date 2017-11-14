@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 
 /**
- * Extend MessageContentViewer so that it implements DataContent and can be set
+ * Extends MessageContentViewer so that it implements DataContent and can be set
  * as the only ContentViewer for a DataResultPanel
  */
 public class MessageDataContent extends MessageContentViewer implements DataContent {
@@ -34,5 +34,4 @@ public class MessageDataContent extends MessageContentViewer implements DataCont
     public void propertyChange(PropertyChangeEvent evt) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
 }
