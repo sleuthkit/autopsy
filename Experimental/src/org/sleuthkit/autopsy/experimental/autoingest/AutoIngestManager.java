@@ -2229,7 +2229,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
-            DataSource dataSource = identifyDataSource();
+            AutoIngestDataSource dataSource = identifyDataSource();
             if (null == dataSource) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
@@ -2280,7 +2280,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      interrupted while blocked, i.e.,
          *                                      if auto ingest is shutting down.
          */
-        private DataSource identifyDataSource() throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private AutoIngestDataSource identifyDataSource() throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
@@ -2297,7 +2297,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return null;
             }
             String deviceId = manifest.getDeviceId();
-            return new DataSource(deviceId, dataSourcePath);
+            return new AutoIngestDataSource(deviceId, dataSourcePath);
         }
 
         /**
@@ -2314,7 +2314,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestJobLoggerException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestJobLoggerException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
@@ -2393,7 +2393,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void logDataSourceProcessorResult(DataSource dataSource) throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void logDataSourceProcessorResult(AutoIngestDataSource dataSource) throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
@@ -2463,7 +2463,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void analyze(DataSource dataSource) throws AnalysisStartupException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", manifestPath);
@@ -2560,7 +2560,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void exportFiles(DataSource dataSource) throws FileExportException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void exportFiles(AutoIngestDataSource dataSource) throws FileExportException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Exporting files for {0}", manifestPath);

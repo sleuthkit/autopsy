@@ -172,7 +172,7 @@ class AddArchiveTask implements Runnable {
                         try {
                             UUID taskId = UUID.randomUUID();
                             currentCase.notifyAddingDataSource(taskId);
-                            DataSource internalDataSource = new DataSource(deviceId, newFilePath);
+                            AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
                             DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
                             selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
                             archiveDspLock.wait();
@@ -224,7 +224,7 @@ class AddArchiveTask implements Runnable {
                 synchronized (archiveDspLock) {
                     UUID taskId = UUID.randomUUID();
                     currentCase.notifyAddingDataSource(taskId);
-                    DataSource internalDataSource = new DataSource(deviceId, destinationFolder);
+                    AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, destinationFolder);
                     DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
 
                     // folder where archive was extracted to
