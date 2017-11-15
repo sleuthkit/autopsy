@@ -266,7 +266,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, description, color, knownStatus,TskData.FileKnown.UNKNOWN);
+        return addTagName(displayName, description, color, TskData.FileKnown.UNKNOWN);
     }
 
     /**
