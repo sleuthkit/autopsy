@@ -288,7 +288,7 @@ public class TagsManager implements Closeable {
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         try {
-            TagName tagName = caseDb.addTagName(displayName, description, color);
+            TagName tagName = caseDb.addTagName(displayName, description, color, knownStatus);
             Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
             customTypes.add(new TagNameDefiniton(displayName, description, color, knownStatus));
             TagNameDefiniton.setTagNameDefinitions(customTypes);
