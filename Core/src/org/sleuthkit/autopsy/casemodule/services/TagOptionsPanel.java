@@ -299,7 +299,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == TagNameDialog.BUTTON_PRESSED.OK) {
             TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
-            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), DEFAULT_DESCRIPTION, DEFAULT_COLOR, status);
+            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
              */
