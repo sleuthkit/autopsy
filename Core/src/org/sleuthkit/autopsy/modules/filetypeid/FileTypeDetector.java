@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
@@ -360,8 +361,9 @@ public class FileTypeDetector {
                 if (fileType.createInterestingFileHit()) {
                     BlackboardArtifact artifact;
                     artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName());
-                    artifact.addAttribute(setNameAttribute);
+                    attributes.add(setNameAttribute);
 
                     /*
                      * Use the MIME type as the category attribute, i.e., the
@@ -369,8 +371,9 @@ public class FileTypeDetector {
                      * files set.
                      */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
-                    artifact.addAttribute(ruleNameAttribute);
+                    attributes.add(ruleNameAttribute);
 
+                    artifact.addAttributes(attributes);
                     /*
                      * Index the artifact for keyword search.
                      */
