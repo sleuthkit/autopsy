@@ -1251,13 +1251,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
     
     /**
-     * Remove a reference set and all hashes contained in it.
+     * Remove a reference set and all entries contained in it.
      * @param referenceSetID
      * @throws EamDbException 
      */
     @Override
     public void deleteReferenceSet(int referenceSetID) throws EamDbException{ 
-        deleteReferenceSetFiles(referenceSetID);
+        deleteReferenceSetEntries(referenceSetID);
         deleteReferenceSetEntry(referenceSetID);
     }  
     
@@ -1285,16 +1285,18 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
     
     /**
-     * Remove all entries for this reference set from the reference_file table
+     * Remove all entries for this reference set from the reference tables
+     * (Currently only removes entries from the files table)
      * @param referenceSetID
      * @throws EamDbException 
      */
-    private void deleteReferenceSetFiles(int referenceSetID) throws EamDbException{
+    private void deleteReferenceSetEntries(int referenceSetID) throws EamDbException{
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
         String sql = "DELETE FROM %s WHERE reference_set_id=?";
         
+        // When other reference types are added, this will need to loop over all the tables
         String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
 
         try {
@@ -1312,29 +1314,43 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Check whether the given reference set exists in the central repository.
      * @param referenceSetID
-     * @param hashSetName
+     * @param setName
      * @param version
      * @return true if a matching entry exists in the central repository
      * @throws EamDbException
      */
     @Override
-    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException{
+    public boolean referenceSetIsValid(int referenceSetID, String setName, String version) throws EamDbException{
         EamGlobalSet refSet = this.getReferenceSetByID(referenceSetID);
         if(refSet == null){
             return false;
         }
         
-        return(refSet.getSetName().equals(hashSetName) && refSet.getVersion().equals(version));
+        return(refSet.getSetName().equals(setName) && refSet.getVersion().equals(version));
     }
-    
+       
     /**
-     * Check if the given hash is in a specific reference set
+     * Check if the given file hash is in this reference set.
+     * Only searches the reference_files table.
      * @param hash
      * @param referenceSetID
      * @return true if the hash is found in the reference set
+     * @throws EamDbException 
      */
     @Override
-    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
+        return isValueInReferenceSet(hash, referenceSetID, CorrelationAttribute.FILES_TYPE_ID);
+    }    
+    
+    /**
+     * Check if the given value is in a specific reference set
+     * @param value
+     * @param referenceSetID
+     * @param correlationTypeID 
+     * @return true if the hash is found in the reference set
+     */
+    @Override
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException{
 
         Connection conn = connect();
 
@@ -1343,11 +1359,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
         ResultSet resultSet = null;
         String sql = "SELECT count(*) FROM %s WHERE value=? AND reference_set_id=?";
         
-        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(correlationTypeID));
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
-            preparedStatement.setString(1, hash);
+            preparedStatement.setString(1, value);
             preparedStatement.setInt(2, referenceSetID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();

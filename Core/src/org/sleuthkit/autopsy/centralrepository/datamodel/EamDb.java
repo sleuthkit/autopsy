@@ -380,12 +380,23 @@ public interface EamDb {
     public boolean referenceSetExists(String hashSetName, String version) throws EamDbException;
     
     /**
-     * Check if the given hash is in a specific reference set
+     * Check if the given file hash is in this reference set.
+     * Only searches the reference_files table.
      * @param hash
      * @param referenceSetID
      * @return true if the hash is found in the reference set
+     * @throws EamDbException 
      */
-    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
+    
+    /**
+     * Check if the given value is in a specific reference set
+     * @param value
+     * @param referenceSetID
+     * @param correlationTypeID 
+     * @return true if the hash is found in the reference set
+     */
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException;    
     
     /**
      * Is the artifact known as bad according to the reference entries?

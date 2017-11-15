@@ -657,10 +657,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return true if the hash is found in the reference set
      */
     @Override
-    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.isHashInReferenceSet(hash, referenceSetID);
+            return super.isValueInReferenceSet(value, referenceSetID, correlationTypeID);
         } finally {
             releaseSharedLock();
         }          

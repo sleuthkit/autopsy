@@ -1240,7 +1240,7 @@ public class HashDbManager implements PropertyChangeListener {
                 AbstractFile file = (AbstractFile) content;
                 if (null != file.getMd5Hash()) {
                     try{
-                        return EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.referenceSetID);
+                        return EamDb.getInstance().isFileHashInReferenceSet(file.getMd5Hash(), this.referenceSetID);
                     } catch (EamDbException ex){
                         Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup", ex); //NON-NLS
                         throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
@@ -1268,7 +1268,7 @@ public class HashDbManager implements PropertyChangeListener {
                 AbstractFile file = (AbstractFile) content;
                 if (null != file.getMd5Hash()) {
                     try{
-                        if(EamDb.getInstance().isHashInReferenceSet(file.getMd5Hash(), this.referenceSetID)){
+                        if(EamDb.getInstance().isFileHashInReferenceSet(file.getMd5Hash(), this.referenceSetID)){
                             // Make a bare-bones HashHitInfo for now
                             result = new HashHitInfo(file.getMd5Hash(), "", "");
                         }
