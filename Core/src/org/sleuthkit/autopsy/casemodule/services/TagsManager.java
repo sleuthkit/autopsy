@@ -119,8 +119,7 @@ public class TagsManager implements Closeable {
      *
      * @param caseDb The case database.
      */
-    TagsManager(SleuthkitCase caseDb
-    ) {
+    TagsManager(SleuthkitCase caseDb) {
         this.caseDb = caseDb;
     }
 
@@ -237,11 +236,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
-        TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
-        if (getNotableTagDisplayNames().contains(displayName)) {
-            knownStatus = TskData.FileKnown.BAD;
-        }
-        return addTagName(displayName, description, color, knownStatus);
+        return addTagName(displayName, description, color, knownStatus,TskData.FileKnown.UNKNOWN);
     }
 
     /**

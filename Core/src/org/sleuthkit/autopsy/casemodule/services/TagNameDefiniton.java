@@ -85,13 +85,14 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     TagName.HTML_COLOR getColor() {
         return color;
     }
-    
+
     /**
-     * 
+     *
      */
-    boolean isNotable(){
+    boolean isNotable() {
         return knownStatusDenoted == TskData.FileKnown.BAD;
     }
+
     /**
      * Compares this tag name definition with the specified tag name definition
      * for order.
@@ -164,28 +165,28 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
         Set<TagNameDefiniton> tagNames = new HashSet<>();
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
-            List<String> badTags = null;
+            List<String> notableTags = null;
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
             for (String tagNameTuple : tagNameTuples) {
                 String[] tagNameAttributes = tagNameTuple.split(",");
-                if (tagNameAttributes.length == 3) {
-                    if (badTags == null) {
+                if (tagNameAttributes.length == 3) { //Upgrade case Tags.properties does not contain any tag definitions with knownStatus
+                    if (notableTags == null) {
                         String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-                        if (badTagsStr == null) {
+                        if (badTagsStr == null) { //if a badtags list could not be read from a central repository properties file use the defualt bad tags
                             badTagsStr = STANDARD_NOTABLE_TAG_DISPLAY_NAMES;
                         }
-                        if (badTagsStr.isEmpty()) {
-                            badTags = new ArrayList<>();
+                        if (badTagsStr.isEmpty()) { //if a badtags list is empty the user has saved all tags as non-notable so we will have all tags non-notable
+                            notableTags = new ArrayList<>();
                         } else {
-                            badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
+                            notableTags = new ArrayList<>(Arrays.asList(badTagsStr.split(","))); //if the badtags list was present and had contents use the contents as the current notable tags list
                         }
                     }
-                    if (badTags.contains(tagNameAttributes[0])) {
+                    if (notableTags.contains(tagNameAttributes[0])) { //if the name attribute is in the notable tags list add the tag as a notable tag
                         tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.BAD));
-                    } else {
+                    } else { //otherwise add the tag as a default knownStatus tag
                         tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
                     }
-                } else if (tagNameAttributes.length == 4) {
+                } else if (tagNameAttributes.length == 4) { //if there are 4 attributes its a current list we can use the values present
                     tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.valueOf(tagNameAttributes[3])));
                 }
 
@@ -194,7 +195,6 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
         return tagNames;
     }
 
-    
     /**
      * Sets the tag name definitions in the tag settings file.
      *
