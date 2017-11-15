@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A per case Autopsy service that manages the addition of content and artifact
@@ -45,9 +46,40 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
-    @NbBundle.Messages("TagsManager.predefTagNames.bookmark.text=Bookmark")
-    private static final Set<String> STANDARD_TAG_DISPLAY_NAMES = new HashSet<>(Arrays.asList(Bundle.TagsManager_predefTagNames_bookmark_text()));
+    @NbBundle.Messages({"TagsManager.predefTagNames.bookmark.text=Bookmark",
+        "TagsManager.predefTagNames.followUp.text=Follow Up",
+        "TagsManager.predefTagNames.notableItem.text=Notable Item"})
+    private static final String FOLLOW_UP = Bundle.TagsManager_predefTagNames_followUp_text();
+    private static final String BOOKMARK = Bundle.TagsManager_predefTagNames_bookmark_text();
+    private static final String NOTABLE_ITEM = Bundle.TagsManager_predefTagNames_notableItem_text();
     private final SleuthkitCase caseDb;
+
+    /**
+     * Get the text for the Follow Up tag.
+     * 
+     * @return FOLLOW_UP 
+     */
+    public static String getFollowUpText() {
+        return FOLLOW_UP;
+    }
+
+    /**
+     *  Get the text for the Bookmark tag.
+     * 
+     * @return BOOKMARK 
+     */
+    public static String getBookmarkText() {
+        return BOOKMARK;
+    }
+
+    /**
+     * Get the text for the Notable Item tag.
+     * 
+     * @return NOTABLE_ITEM
+     */
+    static String getNotableItemText() {
+        return NOTABLE_ITEM;
+    }
 
     /**
      * Tests whether or not a given tag display name contains an illegal
@@ -83,11 +115,11 @@ public class TagsManager implements Closeable {
      *                          querying the case database for tag types.
      */
     public static Set<String> getTagDisplayNames() throws TskCoreException {
-        Set<String> tagDisplayNames = new HashSet<>(STANDARD_TAG_DISPLAY_NAMES);
-        Set<TagNameDefiniton> customNames = TagNameDefiniton.getTagNameDefinitions();
+        Set<String> tagDisplayNames = new HashSet<>();
+        Set<TagNameDefinition> customNames = TagNameDefinition.getTagNameDefinitions();
         customNames.forEach((tagType) -> {
             tagDisplayNames.add(tagType.getDisplayName());
-        });        
+        });
         try {
             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             for (TagName tagName : tagsManager.getAllTagNames()) {
@@ -97,7 +129,17 @@ public class TagsManager implements Closeable {
             /*
              * No current case, nothing more to add to the set.
              */
-        } 
+        }
+        return tagDisplayNames;
+    }
+
+    public static List<String> getNotableTagDisplayNames() {
+        List<String> tagDisplayNames = new ArrayList<>();
+        for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
+            if (tagDef.isNotable()) {
+                tagDisplayNames.add(tagDef.getDisplayName());
+            }
+        }
         return tagDisplayNames;
     }
 
@@ -161,8 +203,8 @@ public class TagsManager implements Closeable {
          * map.
          */
         Map<String, TagName> tagNames = new HashMap<>();
-        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-        for (TagNameDefiniton tagType : customTypes) {
+        Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
+        for (TagNameDefinition tagType : customTypes) {
             tagNames.put(tagType.getDisplayName(), null);
         }
         for (TagName tagName : caseDb.getAllTagNames()) {
@@ -186,7 +228,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, "", TagName.HTML_COLOR.NONE);
+        return addTagName(displayName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
     }
 
     /**
@@ -205,7 +247,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, description, TagName.HTML_COLOR.NONE);
+        return addTagName(displayName, description, TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
     }
 
     /**
@@ -224,13 +266,32 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
+        return addTagName(displayName, description, color, TskData.FileKnown.UNKNOWN);
+    }
+
+    /**
+     * Adds a tag name entry to the case database and adds a corresponding tag
+     * type to the current user's custom tag types.
+     *
+     * @param displayName The display name for the new tag type.
+     * @param description The description for the new tag type.
+     * @param color       The color to associate with the new tag type.
+     * @param knownStatus The knownStatus to be used for the tag when
+     *                    correlating on the tagged item
+     *
+     * @return A TagName object that can be used to add instances of the tag
+     *         type to the case database.
+     *
+     * @throws TagNameAlreadyExistsException If the tag name already exists.
+     * @throws TskCoreException              If there is an error adding the tag
+     *                                       name to the case database.
+     */
+    public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         try {
             TagName tagName = caseDb.addTagName(displayName, description, color);
-            if (!STANDARD_TAG_DISPLAY_NAMES.contains(displayName)) {
-                Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-                customTypes.add(new TagNameDefiniton(displayName, description, color));
-                TagNameDefiniton.setTagNameDefinitions(customTypes);
-            }
+            Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
+            customTypes.add(new TagNameDefinition(displayName, description, color, knownStatus));
+            TagNameDefinition.setTagNameDefinitions(customTypes);
             return tagName;
         } catch (TskCoreException ex) {
             List<TagName> existingTagNames = caseDb.getAllTagNames();

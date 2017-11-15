@@ -1,20 +1,20 @@
 /*
-* Autopsy Forensic Browser
-*
-* Copyright 2011-2016 Basis Technology Corp.
-* Contact: carrier <at> sleuthkit <dot> org
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
@@ -28,11 +28,14 @@ import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 
-final class NewTagNameDialog extends javax.swing.JDialog {
+final class TagNameDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private String userTagDisplayName;
+    private String userTagDescription;
+    private boolean userTagIsNotable;
     private BUTTON_PRESSED result;
 
     enum BUTTON_PRESSED {
@@ -42,10 +45,22 @@ final class NewTagNameDialog extends javax.swing.JDialog {
     /**
      * Creates a new NewUserTagNameDialog dialog.
      */
-    NewTagNameDialog() {
-        super(new JFrame(NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.title.text")),
-                NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.title.text"), true);
+    TagNameDialog() {
+        super(new JFrame(NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.title.text")),
+                NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.title.text"), true);
         initComponents();
+        this.display();
+    }
+
+    @Messages({"TagNameDialog.editTitle.text=Edit Tag"})
+    TagNameDialog(TagNameDefinition tagNameToEdit) {
+        super(new JFrame(NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.editTitle.text")),
+                NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.editTitle.text"), true);
+        initComponents();
+        tagNameTextField.setText(tagNameToEdit.getDisplayName());
+        descriptionTextArea.setText(tagNameToEdit.getDescription());
+        notableCheckbox.setSelected(tagNameToEdit.isNotable());
+        tagNameTextField.setEnabled(false);
         this.display();
     }
 
@@ -56,7 +71,7 @@ final class NewTagNameDialog extends javax.swing.JDialog {
         setLayout(new BorderLayout());
 
         /*
-         * Center the dialog 
+         * Center the dialog
          */
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         int width = this.getSize().width;
@@ -81,14 +96,17 @@ final class NewTagNameDialog extends javax.swing.JDialog {
             public void changedUpdate(DocumentEvent e) {
                 fire();
             }
+
             @Override
             public void removeUpdate(DocumentEvent e) {
                 fire();
             }
+
             @Override
             public void insertUpdate(DocumentEvent e) {
                 fire();
             }
+
             private void fire() {
                 enableOkButton();
             }
@@ -105,6 +123,7 @@ final class NewTagNameDialog extends javax.swing.JDialog {
 
     /**
      * Called when a button is pressed or when the dialog is closed.
+     *
      * @param okPressed whether the OK button was pressed.
      */
     private void doButtonAction(boolean okPressed) {
@@ -112,38 +131,50 @@ final class NewTagNameDialog extends javax.swing.JDialog {
             String newTagDisplayName = tagNameTextField.getText().trim();
             if (newTagDisplayName.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameEmpty.message"),
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameEmpty.title"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (TagsManager.containsIllegalCharacters(newTagDisplayName)) {
+            
+            //if a tag name contains illegal characters and is not the name of one of the standard tags
+            if (TagsManager.containsIllegalCharacters(newTagDisplayName) && !TagNameDefinition.STANDARD_TAG_DISPLAY_NAMES.contains(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
-                        NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            userTagDescription = descriptionTextArea.getText();
             userTagDisplayName = newTagDisplayName;
+            userTagIsNotable = notableCheckbox.isSelected();
             result = BUTTON_PRESSED.OK;
         } else {
             result = BUTTON_PRESSED.CANCEL;
         }
-            setVisible(false);
+        setVisible(false);
     }
 
     /**
      * Returns the tag name entered by the user.
-     * 
-     * @return a new user tag name 
+     *
+     * @return a new user tag name
      */
     String getTagName() {
         return userTagDisplayName;
     }
 
+    String getTagDesciption() {
+        return userTagDescription;
+    }
+
+    boolean isTagNotable() {
+        return userTagIsNotable;
+    }
+
     /**
      * Returns information about which button was pressed.
-     * 
+     *
      * @return BUTTON_PRESSED (OK, CANCEL)
      */
     BUTTON_PRESSED getResult() {
@@ -151,9 +182,9 @@ final class NewTagNameDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Enable the OK button if the tag name text field is not empty.
-     * Sets the enter button as default, so user can press enter to activate
-     * an okButton press and add the tag name.
+     * Enable the OK button if the tag name text field is not empty. Sets the
+     * enter button as default, so user can press enter to activate an okButton
+     * press and add the tag name.
      */
     private void enableOkButton() {
         okButton.setEnabled(!tagNameTextField.getText().isEmpty());
@@ -173,26 +204,39 @@ final class NewTagNameDialog extends javax.swing.JDialog {
         tagNameTextField = new javax.swing.JTextField();
         cancelButton = new javax.swing.JButton();
         okButton = new javax.swing.JButton();
+        descriptionScrollPane = new javax.swing.JScrollPane();
+        descriptionTextArea = new javax.swing.JTextArea();
+        descriptionLabel = new javax.swing.JLabel();
+        notableCheckbox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(newTagNameLabel, org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.newTagNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newTagNameLabel, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.newTagNameLabel.text")); // NOI18N
 
-        tagNameTextField.setText(org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.tagNameTextField.text")); // NOI18N
+        tagNameTextField.setText(org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.tagNameTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
+
+        descriptionTextArea.setColumns(20);
+        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        descriptionTextArea.setRows(5);
+        descriptionScrollPane.setViewportView(descriptionTextArea);
+
+        org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.descriptionLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(notableCheckbox, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.notableCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -201,13 +245,19 @@ final class NewTagNameDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tagNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)
+                    .addComponent(tagNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
-                    .addComponent(newTagNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(newTagNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(descriptionScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(notableCheckbox)
+                            .addComponent(descriptionLabel))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -217,13 +267,16 @@ final class NewTagNameDialog extends javax.swing.JDialog {
                 .addComponent(newTagNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tagNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(50, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descriptionLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(notableCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 42, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(okButton))
-                .addContainerGap())
+                    .addComponent(okButton)))
         );
 
         pack();
@@ -240,7 +293,11 @@ final class NewTagNameDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
+    private javax.swing.JLabel descriptionLabel;
+    private javax.swing.JScrollPane descriptionScrollPane;
+    private javax.swing.JTextArea descriptionTextArea;
     private javax.swing.JLabel newTagNameLabel;
+    private javax.swing.JCheckBox notableCheckbox;
     private javax.swing.JButton okButton;
     private javax.swing.JTextField tagNameTextField;
     // End of variables declaration//GEN-END:variables
