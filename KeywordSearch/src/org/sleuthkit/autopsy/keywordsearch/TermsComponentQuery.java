@@ -381,7 +381,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
                 if (hit.isArtifactHit()) {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContentID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getSolrObjectId())); //NON-NLS
                 }
                 return null;
             }

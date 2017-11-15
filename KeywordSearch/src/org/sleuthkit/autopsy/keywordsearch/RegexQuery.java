@@ -226,6 +226,8 @@ final class RegexQuery implements KeywordSearchQuery {
 
     private List<KeywordHit> createKeywordHits(SolrDocument solrDoc) throws TskCoreException {
 
+        final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
+
         List<KeywordHit> hits = new ArrayList<>();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         final Integer chunkSize = (Integer) solrDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
@@ -273,6 +275,23 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
+                    /**
+                     * The use of String interning is an optimization to ensure
+                     * that we reuse the same keyword hit String object across
+                     * all hits. Even though we benefit from G1GC String
+                     * deduplication, the overhead associated with creating a
+                     * new String object for every KeywordHit can be significant
+                     * when the number of hits gets large.
+                     */
+                    hit = hit.intern();
+
+                    // We will only create one KeywordHit instance per document for
+                    // a given hit.
+                    if (keywordsFoundInThisDocument.containsKey(hit)) {
+                        continue;
+                    }
+                    keywordsFoundInThisDocument.put(hit, hit);
+
                     if (artifactAttributeType == null) {
                         hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                     } else {
@@ -303,7 +322,7 @@ final class RegexQuery implements KeywordSearchQuery {
                                         final String group = ccnMatcher.group("ccn");
                                         if (CreditCardValidator.isValidCCN(group)) {
                                             hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
-                                        };
+                                        }
                                     }
                                 }
 
@@ -316,8 +335,6 @@ final class RegexQuery implements KeywordSearchQuery {
                 }
 
             }
-        } catch (TskCoreException ex) {
-            throw ex;
         } catch (Throwable error) {
             /*
              * NOTE: Matcher.find() is known to throw StackOverflowError in rare
@@ -463,7 +480,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 if (hit.isArtifactHit()) {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getSolrObjectId())); //NON-NLS
                 }
                 return null;
             }
