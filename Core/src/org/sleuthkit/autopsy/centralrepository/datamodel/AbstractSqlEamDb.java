@@ -1347,7 +1347,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param value
      * @param referenceSetID
      * @param correlationTypeID 
-     * @return true if the hash is found in the reference set
+     * @return true if the value is found in the reference set
      */
     @Override
     public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException{
