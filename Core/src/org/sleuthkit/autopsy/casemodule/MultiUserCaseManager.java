@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -40,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class MultiUserCaseManager {
 
     private static final Logger LOGGER = Logger.getLogger(MultiUserCaseManager.class.getName());
-    private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
+    private static final String ALERT_FILE_NAME = "autoingest.alert";
     private static MultiUserCaseManager instance;
     private CoordinationService coordinationService;
 
@@ -82,19 +83,74 @@ final class MultiUserCaseManager {
         List<MultiUserCase> cases = new ArrayList<>();
         List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
         for (String node : nodeList) {
-                Path casePath = Paths.get(node);
-                File caseFolder = casePath.toFile();
-                if(caseFolder.exists()) {
-                        File[] autFiles = caseFolder.listFiles((dir, name) -> name.toLowerCase().endsWith(".aut"));
-                        if(autFiles != null && autFiles.length > 0) {
-                            try {
-                                CaseMetadata caseMetadata = new CaseMetadata(Paths.get(autFiles[0].getAbsolutePath()));
-                                cases.add(new MultiUserCase(casePath, caseMetadata));
-                            } catch (CaseMetadata.CaseMetadataException | MultiUserCase.MultiUserCaseException ex) {
-                                LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFiles[0].getAbsolutePath()), ex);
+            Path casePath = Paths.get(node);
+            File caseFolder = casePath.toFile();
+            if (caseFolder.exists()) {
+                /*
+                 * Search for '*.aut' and 'autoingest.alert' files.
+                 */
+                File[] fileArray = caseFolder.listFiles();
+                if (fileArray == null) {
+                    continue;
+                }
+                String autFilePath = null;
+                boolean alertFileFound = false;
+                for (File file : fileArray) {
+                    String name = file.getName().toLowerCase();
+                    if (autFilePath == null && name.endsWith(".aut")) {
+                        autFilePath = file.getAbsolutePath();
+                        if (!alertFileFound) {
+                            continue;
+                        }
+                    }
+                    if (!alertFileFound && name.endsWith(ALERT_FILE_NAME)) {
+                        alertFileFound = true;
+                    }
+                    if (autFilePath != null && alertFileFound) {
+                        break;
+                    }
+                }
+
+                if (autFilePath != null) {
+                    try {
+                        CaseStatus caseStatus;
+                        if (alertFileFound) {
+                            /*
+                             * When an alert file exists, ignore the node data
+                             * and use the ALERT status.
+                             */
+                            caseStatus = CaseStatus.ALERT;
+                        } else {
+                            byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, node);
+                            if (rawData != null && rawData.length > 0) {
+                                /*
+                                 * When node data exists, use the status stored
+                                 * in the node data.
+                                 */
+                                CaseNodeData caseNodeData = new CaseNodeData(rawData);
+                                if (caseNodeData.getErrorsOccurred()) {
+                                    caseStatus = CaseStatus.ALERT;
+                                } else {
+                                    caseStatus = CaseStatus.OK;
+                                }
+                            } else {
+                                /*
+                                 * When no node data is available, use the 'OK'
+                                 * status to avoid confusing the end-user.
+                                 */
+                                caseStatus = CaseStatus.OK;
                             }
                         }
+
+                        CaseMetadata caseMetadata = new CaseMetadata(Paths.get(autFilePath));
+                        cases.add(new MultiUserCase(casePath, caseMetadata, caseStatus));
+                    } catch (CaseMetadata.CaseMetadataException | MultiUserCase.MultiUserCaseException ex) {
+                        LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
+                    } catch (InterruptedException | CaseNodeData.InvalidDataException ex) {
+                        LOGGER.log(Level.SEVERE, String.format("Error reading case node data for '%s'.", node), ex);
+                    }
                 }
+            }
         }
         return cases;
     }
@@ -112,7 +168,7 @@ final class MultiUserCaseManager {
          */
         Case.openAsCurrentCase(caseMetadataFilePath.toString());
     }
-    
+
     /**
      * Exception type thrown when there is an error completing a multi-user case
      * manager operation.
@@ -143,7 +199,7 @@ final class MultiUserCaseManager {
         }
 
     }
-    
+
     /**
      * A representation of a multi-user case.
      */
@@ -154,21 +210,22 @@ final class MultiUserCaseManager {
         private final String metadataFileName;
         private final Date createDate;
         private final Date lastAccessedDate;
+        private CaseStatus status;
 
         /**
          * Constructs a representation of a multi-user case
          *
          * @param caseDirectoryPath The case directory path.
-         * @param caseMetadata The case metadata.
-         * 
-         * @throws MultiUserCaseException             If no case metadata (.aut)
-         *                                            file is found in the case
-         *                                            directory.
+         * @param caseMetadata      The case metadata.
+         *
+         * @throws MultiUserCaseException If no case metadata (.aut) file is
+         *                                found in the case directory.
          */
-        MultiUserCase(Path caseDirectoryPath, CaseMetadata caseMetadata) throws MultiUserCaseException {
+        MultiUserCase(Path caseDirectoryPath, CaseMetadata caseMetadata, CaseStatus status) throws MultiUserCaseException {
             this.caseDirectoryPath = caseDirectoryPath;
             caseDisplayName = caseMetadata.getCaseDisplayName();
             metadataFileName = caseMetadata.getFilePath().getFileName().toString();
+            this.status = status;
             BasicFileAttributes fileAttrs = null;
             try {
                 fileAttrs = Files.readAttributes(Paths.get(caseDirectoryPath.toString(), metadataFileName), BasicFileAttributes.class);
@@ -194,8 +251,8 @@ final class MultiUserCaseManager {
         }
 
         /**
-         * Gets the case display name. This may differ from the name supplied to the
-         * directory or metadata file names if a case has been renamed.
+         * Gets the case display name. This may differ from the name supplied to
+         * the directory or metadata file names if a case has been renamed.
          *
          * @return The case display name.
          */
@@ -204,8 +261,8 @@ final class MultiUserCaseManager {
         }
 
         /**
-         * Gets the creation date for the case, defined as the create time of the
-         * case metadata file.
+         * Gets the creation date for the case, defined as the create time of
+         * the case metadata file.
          *
          * @return The case creation date.
          */
@@ -214,8 +271,8 @@ final class MultiUserCaseManager {
         }
 
         /**
-         * Gets the last accessed date for the case, defined as the last accessed
-         * time of the case metadata file.
+         * Gets the last accessed date for the case, defined as the last
+         * accessed time of the case metadata file.
          *
          * @return The last accessed date.
          */
@@ -225,7 +282,7 @@ final class MultiUserCaseManager {
 
         /**
          * Gets metadata (.aut) file name.
-         * 
+         *
          * @return The metadata file name.
          */
         String getMetadataFileName() {
@@ -233,17 +290,12 @@ final class MultiUserCaseManager {
         }
 
         /**
-         * Gets the status of this case based on the auto ingest result file in the
-         * case directory.
+         * Gets the status of this case.
          *
          * @return See CaseStatus enum definition.
          */
         CaseStatus getStatus() {
-            if(caseDirectoryPath.resolve("autoingest.alert").toFile().exists()) {
-                return CaseStatus.ALERT;
-            } else {
-                return CaseStatus.OK;
-            }
+            return status;
         }
 
         /**
@@ -252,7 +304,7 @@ final class MultiUserCaseManager {
          * @param caseDirectoryPath The case directory path.
          *
          * @return Case metadata.
-         * 
+         *
          * @throws CaseMetadata.CaseMetadataException If the CaseMetadata object
          *                                            cannot be constructed.
          * @throws MultiUserCaseException             If no case metadata (.aut)
@@ -276,7 +328,7 @@ final class MultiUserCaseManager {
                     }
                 }
 
-                if(autFile == null || !autFile.isFile()) {
+                if (autFile == null || !autFile.isFile()) {
                     throw new MultiUserCaseException(String.format("No case metadata (.aut) file found in the case directory '%s'.", caseDirectoryPath.toString()));
                 }
 
@@ -334,14 +386,15 @@ final class MultiUserCaseManager {
         static class LastAccessedDateDescendingComparator implements Comparator<MultiUserCase> {
 
             /**
-             * Compares two MultiUserCase objects for order based on last accessed
-             * date (descending).
+             * Compares two MultiUserCase objects for order based on last
+             * accessed date (descending).
              *
              * @param object      The first MultiUserCase object
              * @param otherObject The second MultiUserCase object.
              *
-             * @return A negative integer, zero, or a positive integer as the first
-             *         argument is less than, equal to, or greater than the second.
+             * @return A negative integer, zero, or a positive integer as the
+             *         first argument is less than, equal to, or greater than
+             *         the second.
              */
             @Override
             public int compare(MultiUserCase object, MultiUserCase otherObject) {
@@ -357,8 +410,8 @@ final class MultiUserCaseManager {
             private static final long serialVersionUID = 1L;
 
             /**
-             * Constructs an exception to throw when there is a problem creating a
-             * multi-user case.
+             * Constructs an exception to throw when there is a problem creating
+             * a multi-user case.
              *
              * @param message The exception message.
              */
@@ -367,11 +420,12 @@ final class MultiUserCaseManager {
             }
 
             /**
-             * Constructs an exception to throw when there is a problem creating a
-             * multi-user case.
+             * Constructs an exception to throw when there is a problem creating
+             * a multi-user case.
              *
              * @param message The exception message.
-             * @param cause   The cause of the exception, if it was an exception.
+             * @param cause   The cause of the exception, if it was an
+             *                exception.
              */
             private MultiUserCaseException(String message, Throwable cause) {
                 super(message, cause);
