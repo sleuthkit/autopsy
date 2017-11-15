@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.Content;
 class AddDataSourceCallback extends DataSourceProcessorCallback {
 
     private final Case caseForJob;
-    private final DataSource dataSourceInfo;
+    private final AutoIngestDataSource dataSourceInfo;
     private final UUID taskId;
     private final Object lock;
 
@@ -48,7 +48,7 @@ class AddDataSourceCallback extends DataSourceProcessorCallback {
      * @param dataSourceInfo The data source
      * @param taskId The task id to associate with ingest job events.
      */
-    AddDataSourceCallback(Case caseForJob, DataSource dataSourceInfo, UUID taskId, Object lock) {
+    AddDataSourceCallback(Case caseForJob, AutoIngestDataSource dataSourceInfo, UUID taskId, Object lock) {
         this.caseForJob = caseForJob;
         this.dataSourceInfo = dataSourceInfo;
         this.taskId = taskId;

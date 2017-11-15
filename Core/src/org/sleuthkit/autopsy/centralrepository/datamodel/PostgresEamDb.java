@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -185,16 +184,6 @@ public class PostgresEamDb extends AbstractSqlEamDb {
     @Override
     protected String getConflictClause() {
         return CONFLICT_CLAUSE;
-    }
-
-    @Override
-    public List<String> getBadTags() {
-        return dbSettings.getBadTags();
-    }
-
-    @Override
-    public void setBadTags(List<String> badTags) {
-        dbSettings.setBadTags(badTags);
     }
 
 }

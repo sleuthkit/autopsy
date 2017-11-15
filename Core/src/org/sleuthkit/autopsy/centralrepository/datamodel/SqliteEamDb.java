@@ -200,16 +200,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         return "";
     }
 
-    @Override
-    public List<String> getBadTags() {
-        return dbSettings.getBadTags();
-    }
-
-    @Override
-    public void setBadTags(List<String> badTags) {
-        dbSettings.setBadTags(badTags);
-    }
-    
+   
     /**
      * Add a new name/value pair in the db_info table.
      *
