@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.autopsy.datamodel.tags.Category;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -37,8 +38,11 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
-    private static final String STANDARD_NOTABLE_TAG_DISPLAY_NAMES = "Evidence,Notable Item,"
-            + "CAT-1: Child Exploitation (Illegal),CAT-2: Child Exploitation (Non-Illegal/Age Difficult),CAT-3: Child Exploitive"; // NON-NLS
+    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getNotableItemText(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
+    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getBookmarkText(), TagsManager.getFollowUpText(),
+            TagsManager.getNotableItemText(), Category.ONE.getDisplayName(),
+            Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
+            Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
@@ -46,11 +50,12 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     /**
      * Constructs a tag name definition consisting of a display name,
-     * description and color.
+     * description, color and knownStatus.
      *
      * @param displayName The display name for the tag name.
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
+     * @param knownStatus The status denoted by the tag.
      */
     TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
@@ -87,7 +92,10 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     }
 
     /**
+     * Whether or not the status that this tag implies is the Notable status
      *
+     * @return true if the Notable status is implied by this tag, false
+     *         otherwise.
      */
     boolean isNotable() {
         return knownStatusDenoted == TskData.FileKnown.BAD;
@@ -157,39 +165,44 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     }
 
     /**
-     * Gets tag name definitions from the tag settings file.
+     * Gets tag name definitions from the tag settings file as well as the
+     * default tag name definitions.
      *
      * @return A set of tag name definition objects.
      */
     static synchronized Set<TagNameDefiniton> getTagNameDefinitions() {
         Set<TagNameDefiniton> tagNames = new HashSet<>();
+        List<String> standardTags = new ArrayList<>(STANDARD_TAG_DISPLAY_NAMES);  //modifiable copy of default tags list for us to keep track of which ones already exist
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
-            List<String> notableTags = null;
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
-            for (String tagNameTuple : tagNameTuples) {
-                String[] tagNameAttributes = tagNameTuple.split(",");
-                if (tagNameAttributes.length == 3) { //Upgrade case Tags.properties does not contain any tag definitions with knownStatus
-                    if (notableTags == null) {
-                        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-                        if (badTagsStr == null) { //if a badtags list could not be read from a central repository properties file use the defualt bad tags
-                            badTagsStr = STANDARD_NOTABLE_TAG_DISPLAY_NAMES;
-                        }
-                        if (badTagsStr.isEmpty()) { //if a badtags list is empty the user has saved all tags as non-notable so we will have all tags non-notable
-                            notableTags = new ArrayList<>();
-                        } else {
-                            notableTags = new ArrayList<>(Arrays.asList(badTagsStr.split(","))); //if the badtags list was present and had contents use the contents as the current notable tags list
-                        }
-                    }
-                    if (notableTags.contains(tagNameAttributes[0])) { //if the name attribute is in the notable tags list add the tag as a notable tag
+            List<String> notableTags = new ArrayList<>();
+            String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+            if (badTagsStr == null || badTagsStr.isEmpty()) {  //if there were no bad tags in the central repo properties file use the default list
+                notableTags.addAll(STANDARD_NOTABLE_TAG_DISPLAY_NAMES);
+            } else {  //otherwise use the list that was in the central repository properties file
+                notableTags.addAll(Arrays.asList(badTagsStr.split(",")));
+            }
+            for (String tagNameTuple : tagNameTuples) { //for each tag listed in the tags properties file
+                String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
+                if (tagNameAttributes.length == 3) {  //if there are only 3 attributes so Tags.properties does not contain any tag definitions with knownStatus
+                    standardTags.remove(tagNameAttributes[0]);  //remove tag from default tags we need to create still
+                    if (notableTags.contains(tagNameAttributes[0])) { //if tag should be notable mark create it as such
                         tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.BAD));
-                    } else { //otherwise add the tag as a default knownStatus tag
+                    } else {  //otherwise create it as unknown
                         tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
                     }
-                } else if (tagNameAttributes.length == 4) { //if there are 4 attributes its a current list we can use the values present
+                } else if (tagNameAttributes.length == 4) {  //if there are 4 attributes its a current list we can use the values present
+                    standardTags.remove(tagNameAttributes[0]); //remove tag from default tags we need to create still
                     tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1], TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.valueOf(tagNameAttributes[3])));
                 }
-
+            }
+        }
+        for (String standardTagName : standardTags) {  //create standard tags which should always exist which were not already created for whatever reason, such as upgrade
+            if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
+                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
+            } else {
+                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN)); 
             }
         }
         return tagNames;
