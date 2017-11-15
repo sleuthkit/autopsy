@@ -187,7 +187,8 @@ public class FileTypeDetector {
      *                          writing the result to the case database.
      */
     public String getFileType(AbstractFile file) throws TskCoreException {
-        return detect(file, true);
+        return file.getMIMEType();
+        //return detect(file, true);
     }
 
     /**
@@ -222,7 +223,7 @@ public class FileTypeDetector {
      * @throws TskCoreException If there is a problem writing the result to the
      *                          case database.
      */
-    private String detect(AbstractFile file, boolean addToCaseDb) throws TskCoreException {
+    public String detect(AbstractFile file, boolean addToCaseDb) throws TskCoreException {
         /*
          * Check to see if the file has already been typed. This is the "check"
          * part of a check-then-act race condition (see note below).
@@ -322,7 +323,7 @@ public class FileTypeDetector {
             /*
              * Add the MIME type to the files table in the case database.
              */
-            Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
+            //Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
         }
 
         return mimeType;
