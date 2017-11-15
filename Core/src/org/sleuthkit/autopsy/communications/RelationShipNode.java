@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
@@ -35,6 +36,8 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMA
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
+import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -129,6 +132,9 @@ public class RelationShipNode extends BlackboardArtifactNode {
             BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attributeType.getTypeID())));
             if (attribute == null) {
                 return "";
+            } else if (attributeType.getValueType() == DATETIME) {
+                return TimeUtilities.epochToTime(attribute.getValueLong(),
+                        TimeZone.getTimeZone(Utils.getUserPreferredZoneId()));
             } else {
                 return attribute.getDisplayString();
             }
@@ -137,4 +143,5 @@ public class RelationShipNode extends BlackboardArtifactNode {
             return "";
         }
     }
+
 }
