@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
@@ -30,8 +32,8 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.
  * A utility class to find Data Source Processors
  */
 class DataSourceProcessorUtility {
-    
-    private DataSourceProcessorUtility() {        
+
+    private DataSourceProcessorUtility() {
     }
 
     /**
@@ -45,11 +47,7 @@ class DataSourceProcessorUtility {
      * @throws
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
-    static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessor(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
-
-        // lookup all AutomatedIngestDataSourceProcessors 
-        Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
-
+    static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessorForFile(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
         Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = new HashMap<>();
         for (AutoIngestDataSourceProcessor processor : processorCandidates) {
             int confidence = processor.canProcess(dataSourcePath);
@@ -59,5 +57,65 @@ class DataSourceProcessorUtility {
         }
 
         return validDataSourceProcessorsMap;
+    }
+    
+    /**
+     * A utility method to find all Data Source Processors (DSP) that are able
+     * to process the input data source. Only the DSPs that implement
+     * AutoIngestDataSourceProcessor interface are used. Returns ordered list of
+     * data source processors. DSPs are ordered in descending order from highest
+     * confidence to lowest.
+     *
+     * @param dataSourcePath Full path to the data source
+     *
+     * @return Ordered list of data source processors. DSPs are ordered in
+     *         descending order from highest confidence to lowest.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        // lookup all AutomatedIngestDataSourceProcessors 
+        Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
+        return getOrderedListOfDataSourceProcessors(dataSourcePath, processorCandidates);
+    }
+    
+    /**
+     * A utility method to find all Data Source Processors (DSP) that are able
+     * to process the input data source. Only the DSPs that implement
+     * AutoIngestDataSourceProcessor interface are used. Returns ordered list of
+     * data source processors. DSPs are ordered in descending order from highest
+     * confidence to lowest.
+     *
+     * @param dataSourcePath      Full path to the data source
+     * @param processorCandidates Collection of AutoIngestDataSourceProcessor objects to use
+     *
+     * @return Ordered list of data source processors. DSPs are ordered in
+     *         descending order from highest confidence to lowest.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
+        Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = getDataSourceProcessorForFile(dataSourcePath, processorCandidates);
+        return orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
+    }   
+
+
+    /**
+     * A utility method to get an ordered list of data source processors. DSPs
+     * are ordered in descending order from highest confidence to lowest.
+     *
+     * @param validDataSourceProcessorsMap Hash map of all DSPs that can process
+     * the data source along with their confidence score
+     * @return Ordered list of data source processors
+     */
+    static List<AutoIngestDataSourceProcessor> orderDataSourceProcessorsByConfidence(Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap) {
+        List<AutoIngestDataSourceProcessor> validDataSourceProcessors = validDataSourceProcessorsMap.entrySet().stream()
+                .sorted(Map.Entry.<AutoIngestDataSourceProcessor, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        return validDataSourceProcessors;
     }
 }
