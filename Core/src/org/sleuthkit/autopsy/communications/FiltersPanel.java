@@ -75,7 +75,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             applyFilters();
         }
 
-        dateRangeLabel.setText("Date Range ( " + (Utils.getUserPreferredZoneId().getId() + "):");
+        dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().getId() + "):");
     }
 
     @Override
