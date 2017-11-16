@@ -667,17 +667,18 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }
     
     /**
-     * Check whether a reference set with the given name/version is in the central repo
-     * @param hashSetName
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
      * @param version
      * @return true if a matching set is found
      * @throws EamDbException 
      */
     @Override
-    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException {
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.referenceSetExists(hashSetName, version);
+            return super.referenceSetExists(referenceSetName, version);
         } finally {
             releaseSharedLock();
         }  

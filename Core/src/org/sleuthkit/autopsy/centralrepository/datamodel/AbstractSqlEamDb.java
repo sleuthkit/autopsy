@@ -34,7 +34,6 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1312,7 +1311,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
     
     /**
-     * Check whether the given reference set exists in the central repository.
+     * Check whether a reference set with the given parameters exists in the central repository.
+     * Used to check whether reference sets saved in the settings are still present.
      * @param referenceSetID
      * @param setName
      * @param version
@@ -1773,14 +1773,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
     
     /**
-     * Check whether a reference set with the given name/version is in the central repo
-     * @param hashSetName
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
      * @param version
      * @return true if a matching set is found
      * @throws EamDbException 
      */
     @Override
-    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException{
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException{
         Connection conn = connect();
 
         PreparedStatement preparedStatement1 = null;
@@ -1789,7 +1790,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement1 = conn.prepareStatement(sql1);
-            preparedStatement1.setString(1, hashSetName);
+            preparedStatement1.setString(1, referenceSetName);
             preparedStatement1.setString(2, version);
             resultSet = preparedStatement1.executeQuery();
             return (resultSet.next());

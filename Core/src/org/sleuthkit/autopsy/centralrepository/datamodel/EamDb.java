@@ -361,23 +361,25 @@ public interface EamDb {
     public void deleteReferenceSet(int referenceSetID) throws EamDbException;
     
     /**
-     * Check whether the given reference set exists in the central repository.
+     * Check whether a reference set with the given parameters exists in the central repository.
+     * Used to check whether reference sets saved in the settings are still present.
      * @param referenceSetID
-     * @param hashSetName
+     * @param referenceSetName
      * @param version
      * @return true if a matching entry exists in the central repository
      * @throws EamDbException
      */
-    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException;
+    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws EamDbException;
     
     /**
-     * Check whether a reference set with the given name/version is in the central repo
-     * @param hashSetName
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
      * @param version
      * @return true if a matching set is found
      * @throws EamDbException 
      */
-    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException;
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException;
     
     /**
      * Check if the given file hash is in this reference set.
