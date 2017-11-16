@@ -28,6 +28,7 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -119,17 +120,19 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                         name = resultSet.getString("name") # name of person dialed or called. None if unregistered
 
                         try:
+                            attributes = ArrayList<>()
                             artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) # create a call log and then add attributes from result set.
                             if direction == CallLogAnalyzer.OUTGOING:
-                                artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, general.MODULE_NAME, number))
+                                attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, general.MODULE_NAME, number))
                             else: # Covers INCOMING and MISSED
-                                artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, general.MODULE_NAME, number))
+                                attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, general.MODULE_NAME, number))
 
-                            artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START, general.MODULE_NAME, date))
-                            artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END, general.MODULE_NAME, duration + date))
-                            artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, directionString))
-                            artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
+                            attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_START, general.MODULE_NAME, date))
+                            attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_END, general.MODULE_NAME, duration + date))
+                            attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, directionString))
+                            attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
 
+                            artifact.addAttributes(attributes)
                             bbartifacts.append(artifact)
 
                             try:
