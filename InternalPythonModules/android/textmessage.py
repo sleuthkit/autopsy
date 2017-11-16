@@ -66,7 +66,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             deviceID = ds.getDeviceId()
 
             global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "mmssms.db")
             for abstractFile in absFiles:
@@ -118,7 +118,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "SMS Message"))
 
                 # Create an account
-                msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
+                msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact, date);
