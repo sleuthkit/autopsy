@@ -18,20 +18,30 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.TextStyle;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.sleuthkit.autopsy.casemodule.Case;
+import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.COMPLETED;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -50,32 +60,61 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
-//    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
     private ExplorerManager em;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
+    private final PropertyChangeListener ingestListener;
 
     public FiltersPanel() {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
-        updateAndApplyFilters();
+        setPreferredTimeZone();
+
+        updateFilters();
+        setAllAccountTypesSelected(true);
+        setAllDevicesSelected(true);
+        UserPreferences.addChangeListener(preferenceChangeEvent -> {
+            if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
+                setPreferredTimeZone();
+            }
+        });
+
+        this.ingestListener = pce -> {
+            String eventType = pce.getPropertyName();
+            if (eventType.equals(DATA_ADDED.toString())) {
+                updateFilters();
+                applyFiltersButton.setText("Refresh");
+                applyFiltersButton.setIcon(new ImageIcon("org/sleuthkit/autopsy/communications/images/reload.png"));
+            } else if (eventType.equals(COMPLETED.toString())) {
+            } else if (eventType.equals(CANCELLED.toString())) {
+
+            } else if (eventType.equals(CURRENT_CASE.toString())) {
+            }
+        };
+
     }
 
     /**
      * Update the filter widgets, and apply them.
      */
     void updateAndApplyFilters() {
-        updateAccountTypeFilter();
-        updateDeviceFilter();
+        updateFilters();
         if (em != null) {
             applyFilters();
         }
+}
 
-        dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().getId() + "):");
+    private void setPreferredTimeZone() {
+        dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().getDisplayName(TextStyle.NARROW, Locale.getDefault()) + "):");
+    }
+
+    void updateFilters() {
+        updateAccountTypeFilter();
+        updateDeviceFilter();
     }
 
     @Override
@@ -86,6 +125,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
          * till this FiltersPanel is actaully added to a parent.
          */
         em = ExplorerManager.find(this);
+        IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
+
     }
 
     /**
@@ -111,7 +152,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                                     + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                                             + Utils.getIconFileName(type))
                                     + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                                    true
+                                    false
                             );
                             accountTypePane.add(jCheckBox);
                             return jCheckBox;
@@ -129,7 +170,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             final List<DataSource> dataSources = Case.getCurrentCase().getSleuthkitCase().getDataSources();
             dataSources.forEach(
                     dataSource -> devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
-                        final JCheckBox jCheckBox = new JCheckBox(dataSource.getDeviceId(), true);
+                        final JCheckBox jCheckBox = new JCheckBox(dataSource.getDeviceId(), false);
                         devicesPane.add(jCheckBox);
                         return jCheckBox;
                     })
@@ -216,7 +257,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(accountTypesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllAccountTypesButton)
@@ -258,7 +299,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(0, 101, Short.MAX_VALUE)
+                        .addGap(0, 121, Short.MAX_VALUE)
                         .addComponent(unCheckAllDevicesButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(checkAllDevicesButton))
@@ -270,7 +311,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addComponent(devicesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(checkAllDevicesButton)
@@ -303,13 +344,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                    .addComponent(endCheckBox)
-                    .addGap(18, 18, Short.MAX_VALUE)
-                    .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, 0))
-                .addComponent(dateRangeLabel))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addComponent(endCheckBox)
+                .addGap(18, 18, Short.MAX_VALUE)
+                .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(dateRangeLabel)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(startCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -334,7 +373,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
+                .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -343,12 +382,12 @@ final public class FiltersPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filtersTitleLabel)
                     .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -358,7 +397,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -389,6 +428,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
+        
+        
+        applyFiltersButton.setText("Apply");
+        applyFiltersButton.setIcon(new ImageIcon("org/sleuthkit/autopsy/communications/images/control-double.png"));
+    
     }
 
     /**
