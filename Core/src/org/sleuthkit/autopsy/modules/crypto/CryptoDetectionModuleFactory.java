@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 @Messages({
     "CryptoDetectionFileIngestModule.moduleName.text=Crypto Detection",
-    "CryptoDetectionFileIngestModule.getDesc.text=Looks for files that are encrypted and have an entropy greater than 7.5."
+    "CryptoDetectionFileIngestModule.getDesc.text=Looks for large files with high entropy."
 })
 public class CryptoDetectionModuleFactory extends IngestModuleFactoryAdapter {
 
