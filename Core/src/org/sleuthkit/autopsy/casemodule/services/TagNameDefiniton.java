@@ -43,13 +43,13 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
 
     @NbBundle.Messages({"TagNameDefiniton.predefTagNames.bookmark.text=Bookmark",
         "TagNameDefiniton.predefTagNames.followUp.text=Follow Up",
-        "TagNameDefiniion.predefTagNames.notableItem.text=Notable Item"})
+        "TagNameDefiniton.predefTagNames.notableItem.text=Notable Item"})
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
 
-    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefiniion_predefTagNames_notableItem_text(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
+    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefiniton_predefTagNames_notableItem_text(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
     private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefiniton_predefTagNames_bookmark_text(), Bundle.TagNameDefiniton_predefTagNames_followUp_text(),
-            Bundle.TagNameDefiniion_predefTagNames_notableItem_text(), Category.ONE.getDisplayName(),
+            Bundle.TagNameDefiniton_predefTagNames_notableItem_text(), Category.ONE.getDisplayName(),
             Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
             Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
     private final String displayName;
