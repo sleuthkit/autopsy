@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -63,8 +63,8 @@ public class HashDbIngestModule implements FileIngestModule {
     private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
-    private List<HashDb> knownBadHashSets = new ArrayList<>();
-    private List<HashDb> knownHashSets = new ArrayList<>();
+    private List<HashDatabase> knownBadHashSets = new ArrayList<>();
+    private List<HashDatabase> knownHashSets = new ArrayList<>();
     private long jobId;
     private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -96,8 +96,8 @@ public class HashDbIngestModule implements FileIngestModule {
         if (!hashDbManager.verifyAllDatabasesLoadedCorrectly()) {
             throw new IngestModuleException("Could not load all hash databases");
         }
-        updateEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
-        updateEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);
+        updateEnabledHashSets(hashDbManager.getNotableFileHashDatabases(), knownBadHashSets);
+        updateEnabledHashSets(hashDbManager.getKnownFileHashDatabases(), knownHashSets);
 
         if (refCounter.incrementAndGet(jobId) == 1) {
             // initialize job totals
@@ -126,12 +126,12 @@ public class HashDbIngestModule implements FileIngestModule {
      * @param allHashSets     List of all hashsets from DB manager
      * @param enabledHashSets List of enabled ones to return.
      */
-    private void updateEnabledHashSets(List<HashDb> allHashSets, List<HashDb> enabledHashSets) {
+    private void updateEnabledHashSets(List<HashDatabase> allHashSets, List<HashDatabase> enabledHashSets) {
         enabledHashSets.clear();
-        for (HashDb db : allHashSets) {
-            if (settings.isHashSetEnabled(db.getHashSetName())) {
+        for (HashDatabase db : allHashSets) {
+            if (settings.isHashSetEnabled(db)) {
                 try {
-                    if (db.hasIndex()) {
+                    if (db.isValid()) {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
@@ -196,7 +196,7 @@ public class HashDbIngestModule implements FileIngestModule {
         // look up in notable first
         boolean foundBad = false;
         ProcessResult ret = ProcessResult.OK;
-        for (HashDb db : knownBadHashSets) {
+        for (HashDatabase db : knownBadHashSets) {
             try {
                 long lookupstart = System.currentTimeMillis();
                 HashHitInfo hashInfo = db.lookupMD5(file);
@@ -257,7 +257,7 @@ public class HashDbIngestModule implements FileIngestModule {
         // Any hit is sufficient to classify it as known, and there is no need to create 
         // a hit artifact or send a message to the application inbox.
         if (!foundBad) {
-            for (HashDb db : knownHashSets) {
+            for (HashDatabase db : knownHashSets) {
                 try {
                     long lookupstart = System.currentTimeMillis();
                     if (db.lookupMD5Quick(file)) {
@@ -359,7 +359,7 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     private static synchronized void postSummary(long jobId,
-            List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
+            List<HashDatabase> knownBadHashSets, List<HashDatabase> knownHashSets) {
         IngestJobTotals jobTotals = getTotalsForIngestJobs(jobId);
         totalsForIngestJobs.remove(jobId);
 
@@ -384,7 +384,7 @@ public class HashDbIngestModule implements FileIngestModule {
             detailsSb.append("<p>") //NON-NLS
                     .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed"))
                     .append("</p>\n<ul>"); //NON-NLS
-            for (HashDb db : knownBadHashSets) {
+            for (HashDatabase db : knownBadHashSets) {
                 detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n"); //NON-NLS
             }
 

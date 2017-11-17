@@ -33,9 +33,9 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  * Instances of this class allow a user to create a new hash database and add it
@@ -47,7 +47,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private static final String DEFAULT_FILE_NAME = NbBundle
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
     private JFileChooser fileChooser = null;
-    private HashDb newHashDb = null;
+    private HashDatabase newHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Path";
 
     /**
@@ -67,7 +67,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
      *
      * @return A HashDb object or null.
      */
-    HashDb getHashDatabase() {
+    HashDatabase getHashDatabase() {
         return newHashDb;
     }
 
@@ -338,7 +338,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
         try {
-            newHashDb = HashDbManager.getInstance().addNewHashDatabaseNoSave(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
+            newHashDb = HashDbManager.getInstance().addNewFileTypeHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
         } catch (IOException ex) {
             Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
