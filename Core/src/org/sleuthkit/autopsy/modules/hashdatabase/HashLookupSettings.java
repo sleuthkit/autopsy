@@ -202,7 +202,7 @@ final class HashLookupSettings implements Serializable {
 
                 // Handle legacy known files types.
                 if (knownFilesType.equals("NSRL")) { //NON-NLS
-                    knownFilesType = HashDbManager.SleuthkitHashSet.KnownFilesType.KNOWN.toString();
+                    knownFilesType = HashDbManager.HashDb.KnownFilesType.KNOWN.toString();
                     updatedSchema = true;
                 }
 
@@ -236,7 +236,7 @@ final class HashLookupSettings implements Serializable {
                 } else {
                     throw new HashLookupSettingsException(String.format(elementErrorMessage, PATH_ELEMENT));
                 }
-                hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.SleuthkitHashSet.KnownFilesType.valueOf(knownFilesType),
+                hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.HashDb.KnownFilesType.valueOf(knownFilesType),
                         searchDuringIngestFlag, sendIngestMessagesFlag, dbPath));
                 hashSetNames.add(hashSetName);
             }
@@ -304,7 +304,7 @@ final class HashLookupSettings implements Serializable {
         
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
-        private final HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType;
+        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
         private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final String path;
@@ -323,7 +323,7 @@ final class HashLookupSettings implements Serializable {
          * @param sendIngestMessages Whether or not ingest messages are sent
          * @param path               The path to the db
          */
-        HashDbInfo(String hashSetName, HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
+        HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
             this.hashSetName = hashSetName;
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
@@ -335,7 +335,7 @@ final class HashLookupSettings implements Serializable {
             this.dbType = DatabaseType.FILE;
         }
         
-        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
             this.hashSetName = hashSetName;
             this.version = version;
             this.referenceSetID = referenceSetID;
@@ -407,7 +407,7 @@ final class HashLookupSettings implements Serializable {
          *
          * @return The known files type setting.
          */
-        HashDbManager.SleuthkitHashSet.KnownFilesType getKnownFilesType() {
+        HashDbManager.HashDb.KnownFilesType getKnownFilesType() {
             return knownFilesType;
         }
 

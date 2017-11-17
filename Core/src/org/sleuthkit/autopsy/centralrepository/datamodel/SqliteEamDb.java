@@ -636,7 +636,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
-     * Remove a reference set and all hashes contained in it.
+     * Remove a reference set and all values contained in it.
      * @param referenceSetID
      * @throws EamDbException 
      */
@@ -693,10 +693,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
         try{
             acquireSharedLock();
-            return super.isArtifactlKnownBadByReference(aType, value);
+            return super.isArtifactKnownBadByReference(aType, value);
         } finally {
             releaseSharedLock();
         }      
@@ -786,10 +786,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         try{
             acquireExclusiveLock();
-            return super.newReferencelSet(eamGlobalSet);
+            return super.newReferenceSet(eamGlobalSet);
         } finally {
             releaseExclusiveLock();
         }     

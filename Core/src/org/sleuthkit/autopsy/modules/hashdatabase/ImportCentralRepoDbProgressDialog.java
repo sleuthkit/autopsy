@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -77,7 +78,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
     }
     
     void importFile(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
             boolean readOnly, String importFileName){          
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));       
         
@@ -139,7 +140,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final int orgId;
         private final boolean searchDuringIngest;
         private final boolean sendIngestMessages;
-        private final HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType;
+        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
         private final boolean readOnly;
         private final File importFile;
         private final long totalLines;
@@ -148,7 +149,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         private final AtomicLong numLines = new AtomicLong();
         
         ImportIDXWorker(String hashSetName, String version, int orgId,
-            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.SleuthkitHashSet.KnownFilesType knownFilesType,
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDbManager.HashDb.KnownFilesType knownFilesType,
             boolean readOnly, File importFile){
             
             this.hashSetName = hashSetName;
@@ -194,14 +195,14 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         protected Void doInBackground() throws Exception {
 
             TskData.FileKnown knownStatus;
-            if (knownFilesType.equals(HashDbManager.SleuthkitHashSet.KnownFilesType.KNOWN)) {
+            if (knownFilesType.equals(HashDbManager.HashDb.KnownFilesType.KNOWN)) {
                 knownStatus = TskData.FileKnown.KNOWN;
             } else {
                 knownStatus = TskData.FileKnown.BAD;
             }
             
             // Create an empty hashset in the central repository
-            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, readOnly));
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type

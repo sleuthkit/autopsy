@@ -354,7 +354,7 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
-     * Remove a reference set and all hashes contained in it.
+     * Remove a reference set and all values contained in it.
      * @param referenceSetID
      * @throws EamDbException 
      */
@@ -408,7 +408,7 @@ public interface EamDb {
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
+    boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Add a new organization
@@ -477,20 +477,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
-
-    /**
-     * Add a new reference set
-     * 
-     * @param orgID
-     * @param setName
-     * @param version
-     * @param importDate
-     * @return the reference set ID of the newly created set
-     * @throws EamDbException 
-     */
-    int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
-            boolean isReadOnly) throws EamDbException;   
+    int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException;
 
     /**
      * Get a global set by ID
