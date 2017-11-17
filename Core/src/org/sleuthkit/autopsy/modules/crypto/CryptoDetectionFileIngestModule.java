@@ -137,6 +137,10 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
      *                     InputStream.
      */
     private double calculateEntropy(AbstractFile file) throws IOException {
+        /*
+         * Logic in this method is based on
+         * https://github.com/willjasen/entropy/blob/master/entropy.java
+         */
         InputStream in = null;
         BufferedInputStream bin = null;
 
@@ -200,6 +204,11 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
      */
     private boolean isFileSupported(AbstractFile file) {
         boolean supported = false;
+        
+        /*
+         * Criteria for the checks in this method are partially based on
+         * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
+         */
 
         /*
          * Qualify the file type.
@@ -216,7 +225,7 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
                  * Qualify the size.
                  */
                 long contentSize = file.getSize();
-                if (contentSize >= 0x500000 && (contentSize & 511) == 0) {
+                if (contentSize >= 5242880 && (contentSize % 512) == 0) {
                     /*
                      * Qualify the MIME type.
                      */
