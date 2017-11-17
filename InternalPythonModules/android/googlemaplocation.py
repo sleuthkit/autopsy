@@ -109,7 +109,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION, general.MODULE_NAME, dest_address))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, general.MODULE_NAME, "Google Maps History"))
 
-                aritfact.addAttributes(attributes)
+                artifact.addAttributes(attributes)
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()
