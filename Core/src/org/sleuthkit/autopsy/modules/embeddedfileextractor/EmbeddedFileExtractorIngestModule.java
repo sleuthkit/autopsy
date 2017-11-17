@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,66 +19,57 @@
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
-import java.util.logging.Level;
+import java.nio.file.Paths;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.autopsy.modules.embeddedfileextractor.ImageExtractor.SupportedImageExtractionFormats;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 
 /**
- * Embedded File Extractor ingest module extracts embedded files from supported
- * archives and documents, adds extracted embedded DerivedFiles, reschedules
- * extracted DerivedFiles for ingest.
+ * A file level ingest module that extracts embedded files from supported
+ * archive and document formats.
  */
 @NbBundle.Messages({
     "CannotCreateOutputFolder=Unable to create output folder.",
     "CannotRunFileTypeDetection=Unable to run file type detection.",
     "UnableToInitializeLibraries=Unable to initialize 7Zip libraries."
 })
-public final class EmbeddedFileExtractorIngestModule implements FileIngestModule {
+public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
-    private static final Logger logger = Logger.getLogger(EmbeddedFileExtractorIngestModule.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
-
-    private IngestJobContext context;
-    private long jobId;
-    private final static IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-
     private String moduleDirRelative;
     private String moduleDirAbsolute;
-
-    private boolean archivextraction;
-    private boolean imageExtraction;
     private ImageExtractor imageExtractor;
     private SevenZipExtractor archiveExtractor;
-    SupportedImageExtractionFormats abstractFileExtractionFormat;
-    FileTypeDetector fileTypeDetector;
+    private FileTypeDetector fileTypeDetector;
 
+    /**
+     * Constructs a file level ingest module that extracts embedded files from
+     * supported archive and document formats.
+     */
     EmbeddedFileExtractorIngestModule() {
     }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        this.context = context;
-        jobId = context.getJobId();
-
+        /*
+         * Construct absolute and relative paths to the output directory. The
+         * relative path is relative to the case folder, and will be used in the
+         * case database for extracted (derived) file paths. The absolute path
+         * is used to write the extracted (derived) files to local storage.
+         */
         final Case currentCase = Case.getCurrentCase();
+        moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+        moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
 
-        moduleDirRelative = currentCase.getModuleOutputDirectoryRelativePath() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //relative to the case, to store in db
-        moduleDirAbsolute = currentCase.getModuleDirectory() + File.separator + EmbeddedFileExtractorModuleFactory.getModuleName(); //absolute, to extract to
-
-        // initialize the folder where the embedded files are extracted.
+        /*
+         * Create the output directory.
+         */
         File extractionDirectory = new File(moduleDirAbsolute);
         if (!extractionDirectory.exists()) {
             try {
@@ -88,71 +79,77 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
             }
         }
 
-        // initialize the filetypedetector
+        /*
+         * Construct a file type detector.
+         */
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
 
-        // initialize the extraction modules.
+        /*
+         * Construct a 7Zip file extractor for processing archive files.
+         */
         try {
             this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (SevenZipNativeInitializationException ex) {
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
 
+        /*
+         * Construct an embedded images extractor for processing Microsoft
+         * Office documents.
+         */
         this.imageExtractor = new ImageExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-        // skip the unallocated blocks
-        if ((abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) ||
-                (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
+        /*
+         * Skip unallocated space files.
+         */
+        if ((abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS))
+                || (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
             return ProcessResult.OK;
         }
 
-        // skip known files
+        /*
+         * Skip known files.
+         */
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
         }
 
-        // check if the file is supported by either of the two embedded file extractors.
-        this.archivextraction = archiveExtractor.isSevenZipExtractionSupported(abstractFile);
-        this.imageExtraction = imageExtractor.isImageExtractionSupported(abstractFile);
-
-        if (!abstractFile.isFile() && (!this.archivextraction || !this.imageExtraction)) {
+        /*
+         * Skip directories, etc.
+         */
+        if (!abstractFile.isFile()) {
             return ProcessResult.OK;
         }
 
-        // call the archive extractor if archiveExtraction flag is set.
-        if (this.archivextraction) {
+        /*
+         * Attempt embedded file extraction for the file if it is a supported
+         * type/format.
+         */
+        if (archiveExtractor.isSevenZipExtractionSupported(abstractFile)) {
             archiveExtractor.unpack(abstractFile);
-        }
-
-        // calling the image extractor if imageExtraction flag set.
-        if (this.imageExtraction) {
+        } else if (imageExtractor.isImageExtractionSupported(abstractFile)) {
             imageExtractor.extractImage(abstractFile);
         }
-
         return ProcessResult.OK;
     }
 
-    @Override
-    public void shutDown() {
-        // We don't need the value, but for cleanliness and consistency
-        refCounter.decrementAndGet(jobId);
+    /**
+     * Creates a unique name for a file by concatentating the file name and the
+     * file object id.
+     *
+     * @param file The file.
+     *
+     * @return The unique file name.
+     */
+    static String getUniqueName(AbstractFile file) {
+        return file.getName() + "_" + file.getId();
     }
 
-    /**
-     * Get local relative path to the unpacked archive root
-     *
-     * @param archiveFile
-     *
-     * @return
-     */
-    static String getUniqueName(AbstractFile archiveFile) {
-        return archiveFile.getName() + "_" + archiveFile.getId();
-    }
 }
