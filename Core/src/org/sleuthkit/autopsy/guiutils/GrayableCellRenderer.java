@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -28,11 +28,11 @@ import javax.swing.table.DefaultTableCellRenderer;
  * A JTable cell renderer that left-aligns cell content and grays out the cell
  * if the table is disabled.
  */
-class GrayableCellRenderer extends DefaultTableCellRenderer {
+public class GrayableCellRenderer extends DefaultTableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
-    GrayableCellRenderer() {
+    public GrayableCellRenderer() {
         setHorizontalAlignment(LEFT);
     }
 
@@ -45,7 +45,7 @@ class GrayableCellRenderer extends DefaultTableCellRenderer {
         return this;
     }
 
-    void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
+    public void grayCellIfTableNotEnabled(JTable table, boolean isSelected) {
         if (table.isEnabled()) {
             /*
              * The table is enabled, make the foreground and background the

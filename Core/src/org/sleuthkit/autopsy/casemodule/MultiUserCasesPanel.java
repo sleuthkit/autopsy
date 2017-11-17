@@ -16,52 +16,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Cursor;
 import java.awt.Desktop;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingWorker;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
-import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import javax.swing.table.TableRowSorter;
+import org.sleuthkit.autopsy.casemodule.MultiUserCaseManager.MultiUserCase;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.guiutils.LongDateCellRenderer;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.casemodule.AutoIngestCasePanelInterface;
-import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.experimental.configuration.StartupWindow;
+import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
+import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-@ServiceProvider(service = AutoIngestCasePanelInterface.class)
-public final class AutoIngestCasePanel extends JPanel implements AutoIngestCasePanelInterface {
+final class MultiUserCasesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(AutoIngestCasePanel.class.getName());
-    private static final AutoIngestCase.LastAccessedDateDescendingComparator reverseDateModifiedComparator = new AutoIngestCase.LastAccessedDateDescendingComparator();
+    private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
+    private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
+    private static final MultiUserCaseManager.MultiUserCase.LastAccessedDateDescendingComparator REVERSE_DATE_MODIFIED_COMPARATOR = new MultiUserCaseManager.MultiUserCase.LastAccessedDateDescendingComparator();
     private static final int CASE_COL_MIN_WIDTH = 30;
     private static final int CASE_COL_MAX_WIDTH = 2000;
     private static final int CASE_COL_PREFERRED_WIDTH = 300;
@@ -71,9 +61,6 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
     private static final int STATUS_COL_MIN_WIDTH = 55;
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
-    private static final int MILLIS_TO_WAIT_BEFORE_STARTING = 500;
-    private static final int MILLIS_TO_WAIT_BETWEEN_UPDATES = 300000;
-    private ScheduledThreadPoolExecutor casesTableRefreshExecutor;
 
     /*
      * The JTable table model for the cases table presented by this view is
@@ -82,11 +69,12 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
      * TODO (RC): Consider unifying this stuff in an enum as in
      * AutoIngestDashboard to make it less error prone.
      */
-    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.CaseHeaderText");
-    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
-    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
-    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
-    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
+    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CaseHeaderText");
+    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
+    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
+    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
+    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
+    private static final String METADATA_FILE_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.MetadataFileHeaderText");
 
     enum COLUMN_HEADERS {
 
@@ -94,51 +82,20 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         CREATEDTIME,
         COMPLETEDTIME,
         STATUS_ICON,
-        OUTPUTFOLDER
+        OUTPUTFOLDER,
+        METADATA_FILE
     }
-    private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER};
+    private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER, METADATA_FILE_HEADER};
     private DefaultTableModel caseTableModel;
     private Path currentlySelectedCase = null;
-    
-    public AutoIngestCasePanel() {
-        init(null);
-    }
-    
-    @Override
-    public void addWindowStateListener(JDialog parent) {
-        /*
-         * Add a window state listener that starts and stops refreshing of the
-         * cases table.
-         */
-        parent.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                stopCasesTableRefreshes();
-            }
-
-            @Override
-            public void windowActivated(WindowEvent e) {
-                startCasesTableRefreshes();
-            }
-
-            @Override
-            public void windowClosed(WindowEvent e) {
-                stopCasesTableRefreshes();
-            }
-        });
-    }
+    private JDialog parentDialog;
 
     /**
      * Constructs a panel that allows a user to open cases created by automated
      * ingest.
-     *
-     * @param parent The parent dialog for this panel.
      */
-    public AutoIngestCasePanel(JDialog parent) {
-        init(parent);
-    }
-    
-    public void init(JDialog parent) {
+    MultiUserCasesPanel(JDialog parentDialog) {
+        this.parentDialog = parentDialog;
         caseTableModel = new DefaultTableModel(columnNames, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -146,6 +103,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
+
             @Override
             public Class<?> getColumnClass(int col) {
                 if (this.getColumnName(col).equals(CREATEDTIME_HEADER) || this.getColumnName(col).equals(COMPLETEDTIME_HEADER)) {
@@ -184,13 +142,15 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         theColumn.setWidth(TIME_COL_PREFERRED_WIDTH);
 
         theColumn = casesTable.getColumn(STATUS_ICON_HEADER);
-        theColumn.setCellRenderer(new CaseStatusIconCellRenderer());
+        theColumn.setCellRenderer(new StatusIconCellRenderer());
         theColumn.setMinWidth(STATUS_COL_MIN_WIDTH);
         theColumn.setMaxWidth(STATUS_COL_MAX_WIDTH);
         theColumn.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
         theColumn.setWidth(STATUS_COL_PREFERRED_WIDTH);
 
         casesTable.removeColumn(casesTable.getColumn(OUTPUT_FOLDER_HEADER));
+        casesTable.removeColumn(casesTable.getColumn(METADATA_FILE_HEADER));
+        casesTable.setRowSorter(new RowSorter<>(caseTableModel));
 
         /*
          * Listen for row selection changes and set button state for the current
@@ -203,75 +163,39 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
             }
             setButtons();
         });
-
-        /*
-         * Add a window state listener that starts and stops refreshing of the
-         * cases table.
-         */
-        if (parent != null) {
-            parent.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    stopCasesTableRefreshes();
-                }
-
-                @Override
-                public void windowActivated(WindowEvent e) {
-                    startCasesTableRefreshes();
-                }
-
-                @Override
-                public void windowClosed(WindowEvent e) {
-                    stopCasesTableRefreshes();
-                }
-            });
-        }
-    }
-
-    /**
-     * Start doing periodic refreshes of the cases table.
-     */
-    private void startCasesTableRefreshes() {
-        if (null == casesTableRefreshExecutor) {
-            casesTableRefreshExecutor = new ScheduledThreadPoolExecutor(1);
-            this.casesTableRefreshExecutor.scheduleAtFixedRate(() -> {
-                refreshCasesTable();
-            }, MILLIS_TO_WAIT_BEFORE_STARTING, MILLIS_TO_WAIT_BETWEEN_UPDATES, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    /**
-     * Stop doing periodic refreshes of the cases table.
-     */
-    private void stopCasesTableRefreshes() {
-        if (null != casesTableRefreshExecutor) {
-            casesTableRefreshExecutor.shutdown();
-        }
-        this.casesTableRefreshExecutor = null;
-    }
-
-    /*
-     * Updates the view presented by the panel.
-     */
-    public void updateView() {
-        Thread thread = new Thread(() -> {
-            refreshCasesTable();
-        });
-        thread.start();
     }
 
     /**
      * Gets the list of cases known to the review mode cases manager and
      * refreshes the cases table.
      */
-    private void refreshCasesTable() {
+    void refresh() {
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
         try {
             currentlySelectedCase = getSelectedCase();
-            AutoIngestCaseManager manager = AutoIngestCaseManager.getInstance();
-            List<AutoIngestCase> theModel = manager.getCases();
-            EventQueue.invokeLater(new CaseTableRefreshTask(theModel));
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unexpected exception in refreshCasesTable", ex); //NON-NLS
+            MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
+            List<MultiUserCase> cases = manager.getCases();
+            cases.sort(REVERSE_DATE_MODIFIED_COMPARATOR);
+            caseTableModel.setRowCount(0);
+            long now = new Date().getTime();
+            for (MultiUserCase autoIngestCase : cases) {
+                if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
+                    caseTableModel.addRow(new Object[]{
+                        autoIngestCase.getCaseDisplayName(),
+                        autoIngestCase.getCreationDate(),
+                        autoIngestCase.getLastAccessedDate(),
+                        (MultiUserCaseManager.CaseStatus.OK != autoIngestCase.getStatus()) ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK,
+                        autoIngestCase.getCaseDirectoryPath().toString(),
+                        autoIngestCase.getMetadataFileName()});
+                }
+            }
+            setSelectedCase(currentlySelectedCase);
+            setButtons();
+        } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
+        } finally {
+            setCursor(null);
         }
     }
 
@@ -320,103 +244,108 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
      * in the cases table.
      */
     private void setButtons() {
-        boolean enabled = casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount();
-        bnOpen.setEnabled(enabled);
-        bnShowLog.setEnabled(enabled);
+        boolean openEnabled = casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount();
+        bnOpen.setEnabled(openEnabled);
+
+        Path pathToLog = getSelectedCaseLogFilePath();
+        boolean showLogEnabled = openEnabled && pathToLog != null && pathToLog.toFile().exists();
+        bnShowLog.setEnabled(showLogEnabled);
     }
 
     /**
-     * Opens a case.
+     * Retrieves the log file path for the selected case in the cases table.
+     *
+     * @return The case log path.
+     */
+    private Path getSelectedCaseLogFilePath() {
+        Path retValue = null;
+
+        int selectedRow = casesTable.getSelectedRow();
+        int rowCount = casesTable.getRowCount();
+        if (selectedRow >= 0 && selectedRow < rowCount) {
+            String caseDirectory = (String) caseTableModel.getValueAt(casesTable.convertRowIndexToModel(selectedRow), COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
+            retValue = Paths.get(caseDirectory, LOG_FILE_NAME);
+        }
+
+        return retValue;
+    }
+
+    /**
+     * Open a case.
      *
      * @param caseMetadataFilePath The path to the case metadata file.
      */
     private void openCase(Path caseMetadataFilePath) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                AutoIngestCaseManager.getInstance().openCase(caseMetadataFilePath);
-                stopCasesTableRefreshes();
-                StartupWindowProvider.getInstance().close();
-                CueBannerPanel.closeAutoIngestCasesWindow();
-                return null;
+        try {
+            StartupWindowProvider.getInstance().close();
+            if (parentDialog != null) {
+                parentDialog.setVisible(false);
             }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                        MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
-                    }
-                    StartupWindowProvider.getInstance().open();
-                } finally {
-                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                }
+            MultiUserCaseManager.getInstance().openCase(caseMetadataFilePath);
+        } catch (CaseActionException | MultiUserCaseManager.MultiUserCaseManagerException ex) {
+            if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
+                MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
             }
-        }.execute();
+            StartupWindowProvider.getInstance().open();
+        } finally {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
     }
 
     /**
-     * A task that refreshes the cases table using a list of auto ingest cases.
+     * Indicates whether or not a time satisfies a time filter defined by this
+     * panel's time filter radio buttons.
+     *
+     * @param currentTime The current date and time in milliseconds from the
+     *                    Unix epoch.
+     * @param inputTime   The date and time to be tested as milliseconds from
+     *                    the Unix epoch.
      */
-    private class CaseTableRefreshTask implements Runnable {
+    private boolean passesTimeFilter(long currentTime, long inputTime) {
+        long numberOfUnits = 10;
+        long multiplier = 1;
+        if (rbAllCases.isSelected()) {
+            return true;
+        } else if (rbMonths.isSelected()) {
+            multiplier = 31;
+        } else if (rbWeeks.isSelected()) {
+            multiplier = 7;
+        } else if (rbDays.isSelected()) {
+            multiplier = 1;
+        }
+        return ((currentTime - inputTime) / (1000 * 60 * 60 * 24)) < (numberOfUnits * multiplier);
+    }
 
-        private final List<AutoIngestCase> cases;
+    /**
+     * RowSorter which makes columns whose type is Date to be sorted first in
+     * Descending order then in Ascending order
+     */
+    private static class RowSorter<M extends DefaultTableModel> extends TableRowSorter<M> {
 
-        CaseTableRefreshTask(List<AutoIngestCase> cases) {
-            setButtons();
-            this.cases = cases;
+        RowSorter(M tModel) {
+            super(tModel);
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
-        public void run() {
-            cases.sort(reverseDateModifiedComparator);
-            caseTableModel.setRowCount(0);
-            long now = new Date().getTime();
-            for (AutoIngestCase autoIngestCase : cases) {
-                if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
-                    caseTableModel.addRow(new Object[]{
-                        autoIngestCase.getCaseName(),
-                        autoIngestCase.getCreationDate(),
-                        autoIngestCase.getLastAccessedDate(),
-                        (AutoIngestCase.CaseStatus.OK != autoIngestCase.getStatus()),
-                        autoIngestCase.getCaseDirectoryPath().toString()});
+        public void toggleSortOrder(int column) {
+            if (!this.getModel().getColumnClass(column).equals(Date.class)) {
+                super.toggleSortOrder(column);  //if it isn't a date column perform the regular sorting
+            } else {
+                ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>(getSortKeys());
+                if (sortKeys.isEmpty() || sortKeys.get(0).getColumn() != column) {  //sort descending
+                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
+                } else if (sortKeys.get(0).getSortOrder() == SortOrder.ASCENDING) {
+                    sortKeys.removeIf(key -> key.getColumn() == column);
+                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
+                } else {
+                    sortKeys.removeIf(key -> key.getColumn() == column);
+                    sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.ASCENDING));
                 }
+                setSortKeys(sortKeys);
             }
-            setSelectedCase(currentlySelectedCase);
         }
-
-        /**
-         * Indicates whether or not a time satisfies a time filter defined by
-         * this panel's time filter radio buttons.
-         *
-         * @param currentTime The current date and time in milliseconds from the
-         *                    Unix epoch.
-         * @param inputTime   The date and time to be tested as milliseconds
-         *                    from the Unix epoch.
-         */
-        private boolean passesTimeFilter(long currentTime, long inputTime) {
-            long numberOfUnits = 10;
-            long multiplier = 1;
-            if (rbAllCases.isSelected()) {
-                return true;
-            } else if (rbMonths.isSelected()) {
-                multiplier = 31;
-            } else if (rbWeeks.isSelected()) {
-                multiplier = 7;
-            } else if (rbDays.isSelected()) {
-                multiplier = 1;
-            }
-            return ((currentTime - inputTime) / (1000 * 60 * 60 * 24)) < (numberOfUnits * multiplier);
-        }
-
     }
 
     /**
@@ -443,7 +372,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
 
         setName("Completed Cases"); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnOpen.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnOpen.text")); // NOI18N
         bnOpen.setEnabled(false);
         bnOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -451,9 +380,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
             }
         });
 
-        casesTable.setAutoCreateRowSorter(true);
         casesTable.setModel(caseTableModel);
-        casesTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         casesTable.setRowHeight(20);
         casesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         casesTable.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -463,7 +390,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         });
         scrollPaneTable.setViewportView(casesTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnRefresh.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnRefresh.text")); // NOI18N
         bnRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnRefreshActionPerformed(evt);
@@ -472,7 +399,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
 
         rbGroupHistoryLength.add(rbAllCases);
         rbAllCases.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(rbAllCases, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbAllCases.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbAllCases, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbAllCases.text")); // NOI18N
         rbAllCases.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbAllCasesItemStateChanged(evt);
@@ -494,8 +421,8 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
                 .addComponent(rbAllCases))
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.text")); // NOI18N
-        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnShowLog.text")); // NOI18N
+        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnShowLog.toolTipText")); // NOI18N
         bnShowLog.setEnabled(false);
         bnShowLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -504,7 +431,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         });
 
         rbGroupHistoryLength.add(rbDays);
-        org.openide.awt.Mnemonics.setLocalizedText(rbDays, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbDays.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbDays, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbDays.text")); // NOI18N
         rbDays.setName(""); // NOI18N
         rbDays.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -513,7 +440,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         });
 
         rbGroupHistoryLength.add(rbWeeks);
-        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbWeeks.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbWeeks.text")); // NOI18N
         rbWeeks.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbWeeksItemStateChanged(evt);
@@ -521,7 +448,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         });
 
         rbGroupHistoryLength.add(rbMonths);
-        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbMonths.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbMonths.text")); // NOI18N
         rbMonths.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbMonthsItemStateChanged(evt);
@@ -529,7 +456,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
         });
 
         rbGroupLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbGroupLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbGroupLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -556,7 +483,7 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(bnRefresh)
                         .addGap(4, 4, 4))
-                    .addComponent(scrollPaneTable, javax.swing.GroupLayout.DEFAULT_SIZE, 1007, Short.MAX_VALUE))
+                    .addComponent(scrollPaneTable))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -588,10 +515,12 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
      */
     private void bnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenActionPerformed
         int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
-        Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(modelRow,
-                COLUMN_HEADERS.OUTPUTFOLDER.ordinal()),
-                caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
-        openCase(caseMetadataFilePath);
+        String caseDirectory = (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
+        Path caseMetadataFilePath = Paths.get(caseDirectory, (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.METADATA_FILE.ordinal()));
+
+        new Thread(() -> {
+            openCase(caseMetadataFilePath);
+        }).start();
     }//GEN-LAST:event_bnOpenActionPerformed
 
     /**
@@ -599,53 +528,50 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
      *
      * @param evt -- The event that caused this to be called
      */
-    private void bnRefreshActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_bnRefreshActionPerformed
-    {//GEN-HEADEREND:event_bnRefreshActionPerformed
-        updateView();
-    }//GEN-LAST:event_bnRefreshActionPerformed
+    private void bnRefreshActionPerformed(java.awt.event.ActionEvent evt) {
+        refresh();
+    }
 
-    private void rbDaysItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_rbDaysItemStateChanged
+    private void rbDaysItemStateChanged(java.awt.event.ItemEvent evt) {
         if (rbDays.isSelected()) {
-            updateView();
+            refresh();
         }
-    }//GEN-LAST:event_rbDaysItemStateChanged
+    }
 
     private void rbAllCasesItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_rbAllCasesItemStateChanged
         if (rbAllCases.isSelected()) {
-            updateView();
+            refresh();
         }
     }//GEN-LAST:event_rbAllCasesItemStateChanged
 
     private void rbMonthsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_rbMonthsItemStateChanged
         if (rbMonths.isSelected()) {
-            updateView();
+            refresh();
         }
     }//GEN-LAST:event_rbMonthsItemStateChanged
 
     private void rbWeeksItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_rbWeeksItemStateChanged
         if (rbWeeks.isSelected()) {
-            updateView();
+            refresh();
         }
     }//GEN-LAST:event_rbWeeksItemStateChanged
 
     private void bnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowLogActionPerformed
-        int selectedRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
-        int rowCount = casesTable.getRowCount();
-        if (selectedRow >= 0 && selectedRow < rowCount) {
-            String thePath = (String) caseTableModel.getValueAt(selectedRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
-            Path pathToLog = AutoIngestJobLogger.getLogPath(Paths.get(thePath));
+        Path pathToLog = getSelectedCaseLogFilePath();
+        if (pathToLog != null) {
             try {
                 if (pathToLog.toFile().exists()) {
                     Desktop.getDesktop().edit(pathToLog.toFile());
+
                 } else {
-                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.cannotFindLog"),
-                            org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotFindLog"),
+                            org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error attempting to open case auto ingest log file %s", pathToLog), ex);
+                LOGGER.log(Level.SEVERE, String.format("Error attempting to open case auto ingest log file %s", pathToLog), ex);
                 JOptionPane.showMessageDialog(this,
-                        org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.cannotOpenLog"),
-                        org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.unableToShowLogFile"),
+                        org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotOpenLog"),
+                        org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"),
                         JOptionPane.PLAIN_MESSAGE);
             }
         }
@@ -654,9 +580,8 @@ public final class AutoIngestCasePanel extends JPanel implements AutoIngestCaseP
     private void casesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_casesTableMouseClicked
         if (evt.getClickCount() == 2) {
             int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
-            Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(modelRow,
-                    COLUMN_HEADERS.OUTPUTFOLDER.ordinal()),
-                    caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
+            String caseDirectory = (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
+            Path caseMetadataFilePath = Paths.get(caseDirectory, (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.METADATA_FILE.ordinal()));
             openCase(caseMetadataFilePath);
         }
     }//GEN-LAST:event_casesTableMouseClicked

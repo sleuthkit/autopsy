@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.casemodule.SingleUserCaseConverter;
 import org.sleuthkit.autopsy.casemodule.SingleUserCaseConverter.ImportCaseData;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 public class SingleUserCaseImporter implements Runnable {
 

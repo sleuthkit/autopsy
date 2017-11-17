@@ -362,38 +362,51 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
-     * Remove a reference set and all hashes contained in it.
+     * Remove a reference set and all values contained in it.
      * @param referenceSetID
      * @throws EamDbException 
      */
     public void deleteReferenceSet(int referenceSetID) throws EamDbException;
     
     /**
-     * Check whether the given reference set exists in the central repository.
+     * Check whether a reference set with the given parameters exists in the central repository.
+     * Used to check whether reference sets saved in the settings are still present.
      * @param referenceSetID
-     * @param hashSetName
+     * @param referenceSetName
      * @param version
      * @return true if a matching entry exists in the central repository
      * @throws EamDbException
      */
-    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException;
+    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws EamDbException;
     
     /**
-     * Check whether a reference set with the given name/version is in the central repo
-     * @param hashSetName
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
      * @param version
      * @return true if a matching set is found
      * @throws EamDbException 
      */
-    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException;
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException;
     
     /**
-     * Check if the given hash is in a specific reference set
+     * Check if the given file hash is in this reference set.
+     * Only searches the reference_files table.
      * @param hash
      * @param referenceSetID
      * @return true if the hash is found in the reference set
+     * @throws EamDbException 
      */
-    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
+    
+    /**
+     * Check if the given value is in a specific reference set
+     * @param value
+     * @param referenceSetID
+     * @param correlationTypeID 
+     * @return true if the hash is found in the reference set
+     */
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException;    
     
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -403,7 +416,7 @@ public interface EamDb {
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
+    boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Add a new organization
@@ -472,20 +485,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
-
-    /**
-     * Add a new reference set
-     * 
-     * @param orgID
-     * @param setName
-     * @param version
-     * @param importDate
-     * @return the reference set ID of the newly created set
-     * @throws EamDbException 
-     */
-    int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
-            boolean isReadOnly) throws EamDbException;   
+    int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException;
 
     /**
      * Get a global set by ID
