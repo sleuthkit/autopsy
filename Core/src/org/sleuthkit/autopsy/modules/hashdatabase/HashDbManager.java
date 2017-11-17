@@ -1281,7 +1281,7 @@ public class HashDbManager implements PropertyChangeListener {
                 EamDb.getInstance().bulkInsertReferenceTypeEntries(globalFileInstances, 
                         EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
             } catch (EamDbException ex){
-                throw new TskCoreException("Error adding hashes", ex);
+                throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
             }
         }
 
