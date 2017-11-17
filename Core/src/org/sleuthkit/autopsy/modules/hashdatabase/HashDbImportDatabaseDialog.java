@@ -23,7 +23,9 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -31,12 +33,17 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.AddNewOrganizationDialog;
+import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -47,8 +54,10 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
-    private HashDb selectedHashDb = null;
+    private HashDatabase selectedHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
+    private EamOrganization selectedOrg = null;
+    private List<EamOrganization> orgs = null;
 
     /**
      * Displays a dialog that allows a user to select an existing hash database
@@ -59,8 +68,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
                 true);
-        initFileChooser();
         initComponents();
+        enableComponents();
+        initFileChooser();
         display();
     }
 
@@ -69,18 +79,31 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
      *
      * @return A HashDb object or null.
      */
-    HashDb getHashDatabase() {
+    HashDatabase getHashDatabase() {
         return selectedHashDb;
     }
 
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
-        fileChooser.setFileFilter(filter);
+        updateFileChooserFilter();
         fileChooser.setMultiSelectionEnabled(false);
+    }
+    
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.kdb, .idx or .hash)"})
+    private void updateFileChooserFilter() {
+        fileChooser.resetChoosableFileFilters();
+        if(centralRepoRadioButton.isSelected()){
+            String[] EXTENSION = new String[]{"kdb", "idx", "hash", "Hash"}; //NON-NLS
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.centralRepoExtFilter.text"), EXTENSION);
+            fileChooser.setFileFilter(filter);  
+        } else {
+            String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
+            fileChooser.setFileFilter(filter);            
+        }
     }
 
     private void display() {
@@ -96,6 +119,45 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
         return shortenedPath;
     }
+    
+    private void enableComponents(){
+        
+        
+        if(! EamDb.isEnabled()){
+            centralRepoRadioButton.setEnabled(false);
+            fileTypeRadioButton.setSelected(true);
+        } else {
+            populateCombobox();
+        }
+        
+        boolean isFileType = fileTypeRadioButton.isSelected();
+
+        // Central repo only
+        lbVersion.setEnabled(! isFileType);
+        versionTextField.setEnabled(! isFileType);
+        lbOrg.setEnabled(! isFileType);
+        orgButton.setEnabled(! isFileType);
+        orgComboBox.setEnabled(! isFileType);
+        readOnlyCheckbox.setEnabled(! isFileType);
+    }
+    
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.populateOrgsError.message=Failure loading organizations."})
+    private void populateCombobox() {
+        orgComboBox.removeAllItems();
+        try {
+            EamDb dbManager = EamDb.getInstance();
+            orgs = dbManager.getOrganizations();
+            orgs.forEach((org) -> {
+                orgComboBox.addItem(org.getName());
+            });
+            if (!orgs.isEmpty()) {
+                selectedOrg = orgs.get(0);
+            }
+        } catch (EamDbException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.HashDbImportDatabaseDialog_populateOrgsError_message());
+            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Failure loading organizations", ex);
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -107,6 +169,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
+        storageTypeButtonGroup = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         databasePathTextField = new javax.swing.JTextField();
@@ -118,6 +181,15 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
         sendIngestMessagesCheckbox = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
+        lbVersion = new javax.swing.JLabel();
+        versionTextField = new javax.swing.JTextField();
+        lbOrg = new javax.swing.JLabel();
+        orgComboBox = new javax.swing.JComboBox<>();
+        orgButton = new javax.swing.JButton();
+        readOnlyCheckbox = new javax.swing.JCheckBox();
+        fileTypeRadioButton = new javax.swing.JRadioButton();
+        centralRepoRadioButton = new javax.swing.JRadioButton();
+        jLabel4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -178,6 +250,47 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.jLabel3.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(lbVersion, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.lbVersion.text")); // NOI18N
+
+        versionTextField.setText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.versionTextField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbOrg, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.lbOrg.text")); // NOI18N
+
+        orgComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                orgComboBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(orgButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.orgButton.text")); // NOI18N
+        orgButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                orgButtonActionPerformed(evt);
+            }
+        });
+
+        readOnlyCheckbox.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(readOnlyCheckbox, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.readOnlyCheckbox.text")); // NOI18N
+
+        storageTypeButtonGroup.add(fileTypeRadioButton);
+        fileTypeRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(fileTypeRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.fileTypeRadioButton.text")); // NOI18N
+        fileTypeRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileTypeRadioButtonActionPerformed(evt);
+            }
+        });
+
+        storageTypeButtonGroup.add(centralRepoRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(centralRepoRadioButton, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.centralRepoRadioButton.text")); // NOI18N
+        centralRepoRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                centralRepoRadioButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.jLabel4.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -186,20 +299,37 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(0, 325, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
-                    .addGroup(layout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(jLabel1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lbOrg)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(hashSetNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 303, Short.MAX_VALUE))
+                                .addComponent(orgComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(orgButton))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(jLabel3)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel1)
+                                    .addComponent(lbVersion))
+                                .addGap(2, 2, 2)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(versionTextField)
+                                    .addComponent(hashSetNameTextField)))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel4))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(databasePathTextField)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(fileTypeRadioButton)
+                                        .addGap(26, 26, 26)
+                                        .addComponent(centralRepoRadioButton))
+                                    .addComponent(databasePathTextField))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(openButton))
                     .addGroup(layout.createSequentialGroup()
@@ -210,7 +340,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(knownRadioButton)
                                     .addComponent(knownBadRadioButton)))
-                            .addComponent(sendIngestMessagesCheckbox))
+                            .addComponent(sendIngestMessagesCheckbox)
+                            .addComponent(readOnlyCheckbox))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -222,6 +353,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(fileTypeRadioButton)
+                    .addComponent(centralRepoRadioButton)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(openButton)
                     .addComponent(databasePathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3))
@@ -229,23 +365,30 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(hashSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 119, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(okButton)
-                            .addComponent(cancelButton))
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(knownRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(knownBadRadioButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(sendIngestMessagesCheckbox)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(versionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbVersion))
+                .addGap(9, 9, 9)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(orgButton)
+                    .addComponent(orgComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbOrg))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(knownRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(knownBadRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(readOnlyCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sendIngestMessagesCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(okButton)
+                    .addComponent(cancelButton))
+                .addContainerGap())
         );
 
         pack();
@@ -262,6 +405,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             hashDbFolder.mkdir();
         }
         fileChooser.setCurrentDirectory(hashDbFolder);
+        updateFileChooserFilter();
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
@@ -296,6 +440,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=A version must be entered",
+        "HashDbImportDatabaseDialog.missingOrg=An organization must be selected",
+        "HashDbImportDatabaseDialog.duplicateName=A hashset with this name and version already exists",
+        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository"
+    })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
@@ -309,6 +458,28 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
+        if(centralRepoRadioButton.isSelected()){
+            if(versionTextField.getText().isEmpty()){
+                JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.missingVersion"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            if(selectedOrg == null){
+                JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.missingOrg"),
+                    NbBundle.getMessage(this.getClass(),
+                            "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }        
 
         if (selectedFilePath.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -338,18 +509,50 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
 
         String errorMessage = NbBundle.getMessage(this.getClass(),
-                "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
-                selectedFilePath);
-        try {
-            selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseNoSave(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
-        } catch (HashDbManagerException ex) {
-            Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "HashDbImportDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
+            "HashDbImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
+            selectedFilePath);
+        if(fileTypeRadioButton.isSelected()){
+
+            try {
+                selectedHashDb = HashDbManager.getInstance().addExistingFileTypeHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+            } catch (HashDbManagerException ex) {
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+                JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.importHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } else {
+            
+            // Check if a hash set with the same name/version already exists
+            try{
+                if(EamDb.getInstance().referenceSetExists(hashSetNameTextField.getText(), versionTextField.getText())){
+                    JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.duplicateName"),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.importHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (EamDbException ex){
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error looking up reference set", ex);
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.databaseLookupError"),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbImportDatabaseDialog.importHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;                
+            }
+            
+            ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
+            progressDialog.importFile(hashSetNameTextField.getText(), versionTextField.getText(), 
+                selectedOrg.getOrgID(), true, sendIngestMessagesCheckbox.isSelected(), type, 
+                this.readOnlyCheckbox.isSelected(), selectedFilePath);
+            selectedHashDb = progressDialog.getDatabase();
         }
 
         dispose();
@@ -359,18 +562,58 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         // TODO add your handling code here:
     }//GEN-LAST:event_sendIngestMessagesCheckboxActionPerformed
 
+    private void fileTypeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileTypeRadioButtonActionPerformed
+        enableComponents();
+    }//GEN-LAST:event_fileTypeRadioButtonActionPerformed
+
+    private void centralRepoRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centralRepoRadioButtonActionPerformed
+        enableComponents();
+    }//GEN-LAST:event_centralRepoRadioButtonActionPerformed
+
+    private void orgButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgButtonActionPerformed
+        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
+        // update the combobox options
+        if (dialog.isChanged()) {
+            populateCombobox();
+        } 
+    }//GEN-LAST:event_orgButtonActionPerformed
+
+    private void orgComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgComboBoxActionPerformed
+        //JComboBox<String> cb = (JComboBox<String>)evt.getSource();
+        //String orgName = (String)cb.getSelectedItem();
+        
+        if (null == orgComboBox.getSelectedItem()) return;
+        String orgName = this.orgComboBox.getSelectedItem().toString();
+        for (EamOrganization org : orgs) {
+            if (org.getName().equals(orgName)) {
+                selectedOrg = org;
+                return;
+            }
+        }
+    }//GEN-LAST:event_orgComboBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
+    private javax.swing.JRadioButton centralRepoRadioButton;
     private javax.swing.JTextField databasePathTextField;
+    private javax.swing.JRadioButton fileTypeRadioButton;
     private javax.swing.JTextField hashSetNameTextField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JRadioButton knownBadRadioButton;
     private javax.swing.JRadioButton knownRadioButton;
+    private javax.swing.JLabel lbOrg;
+    private javax.swing.JLabel lbVersion;
     private javax.swing.JButton okButton;
     private javax.swing.JButton openButton;
+    private javax.swing.JButton orgButton;
+    private javax.swing.JComboBox<String> orgComboBox;
+    private javax.swing.JCheckBox readOnlyCheckbox;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
+    private javax.swing.ButtonGroup storageTypeButtonGroup;
+    private javax.swing.JTextField versionTextField;
     // End of variables declaration//GEN-END:variables
 }

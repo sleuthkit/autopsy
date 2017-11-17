@@ -354,6 +354,40 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
+     * Remove a reference set and all hashes contained in it.
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException;
+    
+    /**
+     * Check whether the given reference set exists in the central repository.
+     * @param referenceSetID
+     * @param hashSetName
+     * @param version
+     * @return true if a matching entry exists in the central repository
+     * @throws EamDbException
+     */
+    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException;
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo
+     * @param hashSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException 
+     */
+    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException;
+    
+    /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
+     */
+    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -395,6 +429,14 @@ public interface EamDb {
     EamOrganization getOrganizationByID(int orgID) throws EamDbException;
 
     /**
+     * Get the organization associated with the given reference set.
+     * @param referenceSetID ID of the reference set
+     * @return The organization object
+     * @throws EamDbException 
+     */
+    EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException;
+
+    /**
      * Update an existing organization.
      *
      * @param updatedOrganization the values the Organization with the same ID
@@ -413,7 +455,6 @@ public interface EamDb {
      */
     void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException;
     
-    
     /**
      * Add a new Global Set
      *
@@ -426,6 +467,19 @@ public interface EamDb {
     int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
 
     /**
+     * Add a new reference set
+     * 
+     * @param orgID
+     * @param setName
+     * @param version
+     * @param importDate
+     * @return the reference set ID of the newly created set
+     * @throws EamDbException 
+     */
+    int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
+            boolean isReadOnly) throws EamDbException;   
+
+    /**
      * Get a global set by ID
      *
      * @param globalSetID The ID to look up
@@ -435,6 +489,15 @@ public interface EamDb {
      * @throws EamDbException
      */
     EamGlobalSet getReferenceSetByID(int globalSetID) throws EamDbException;
+    
+    /**
+     * Get all reference sets
+     *
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    List<EamGlobalSet> getAllReferenceSets() throws EamDbException;    
 
     /**
      * Add a new reference instance
