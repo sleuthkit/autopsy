@@ -1016,7 +1016,7 @@ public class SharedConfiguration {
 
                     // If a copy of the database is loaded, close it before deleting and copying.
                     if (localDb.exists()) {
-                        List<HashDbManager.HashDb> hashDbs = HashDbManager.getInstance().getAllHashSets();
+                        List<HashDbManager.HashDb> hashDbs = HashDbManager.getInstance().getAllFileTypeHashSets();
                         HashDbManager.HashDb matchingDb = null;
                         for (HashDbManager.HashDb db : hashDbs) {
                             try {
@@ -1122,7 +1122,7 @@ public class SharedConfiguration {
         try {
             HashDbManager hashDbManager = HashDbManager.getInstance();
             hashDbManager.loadLastSavedConfiguration();
-            for (HashDb hashDb : hashDbManager.getAllHashSets()) {
+            for (HashDb hashDb : hashDbManager.getAllFileTypeHashSets()) {
                 if (hashDb.hasIndexOnly()) {
                     results.add(hashDb.getIndexPath());
                 } else {
