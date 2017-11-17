@@ -22,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -75,8 +76,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
         setPreferredTimeZone();
 
         updateFilters();
-        setAllAccountTypesSelected(true);
-        setAllDevicesSelected(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
                 setPreferredTimeZone();
@@ -91,7 +90,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 applyFiltersButton.setIcon(new ImageIcon("org/sleuthkit/autopsy/communications/images/reload.png"));
             } else if (eventType.equals(COMPLETED.toString())) {
             } else if (eventType.equals(CANCELLED.toString())) {
-
             } else if (eventType.equals(CURRENT_CASE.toString())) {
             }
         };
@@ -106,7 +104,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         if (em != null) {
             applyFilters();
         }
-}
+    }
 
     private void setPreferredTimeZone() {
         dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().getDisplayName(TextStyle.NARROW, Locale.getDefault()) + "):");
@@ -125,8 +123,17 @@ final public class FiltersPanel extends javax.swing.JPanel {
          * till this FiltersPanel is actaully added to a parent.
          */
         em = ExplorerManager.find(this);
-        IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
+        IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
+        Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
+            devicesMap.clear();
+            devicesPane.removeAll();
+        });
+    }
 
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
     }
 
     /**
@@ -152,7 +159,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                                     + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                                             + Utils.getIconFileName(type))
                                     + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                                    false
+                                    true
                             );
                             accountTypePane.add(jCheckBox);
                             return jCheckBox;
@@ -167,14 +174,16 @@ final public class FiltersPanel extends javax.swing.JPanel {
      */
     private void updateDeviceFilter() {
         try {
-            final List<DataSource> dataSources = Case.getCurrentCase().getSleuthkitCase().getDataSources();
-            dataSources.forEach(
-                    dataSource -> devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
-                        final JCheckBox jCheckBox = new JCheckBox(dataSource.getDeviceId(), false);
-                        devicesPane.add(jCheckBox);
-                        return jCheckBox;
-                    })
-            );
+            Case.getCurrentCase()
+                    .getSleuthkitCase()
+                    .getDataSources().stream().map(DataSource::getDeviceId)
+                    .forEach(
+                            deviceID -> devicesMap.computeIfAbsent(deviceID, ds -> {
+                                final JCheckBox jCheckBox = new JCheckBox(deviceID, false);
+                                devicesPane.add(jCheckBox);
+                                return jCheckBox;
+                            }));
+
         } catch (IllegalStateException ex) {
             logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
         } catch (TskCoreException tskCoreException) {
@@ -190,13 +199,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jScrollPane1.setViewportView(jList1);
 
         applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/control-double.png"))); // NOI18N
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
@@ -428,11 +430,10 @@ final public class FiltersPanel extends javax.swing.JPanel {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
-        
-        
+
         applyFiltersButton.setText("Apply");
         applyFiltersButton.setIcon(new ImageIcon("org/sleuthkit/autopsy/communications/images/control-double.png"));
-    
+
     }
 
     /**
@@ -534,11 +535,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JCheckBox endCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.datepicker.DatePicker endDatePicker = new com.github.lgooddatepicker.datepicker.DatePicker();
     private final javax.swing.JLabel filtersTitleLabel = new javax.swing.JLabel();
-    private final javax.swing.JList<String> jList1 = new javax.swing.JList<>();
     private final javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
-    private final javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
     private final javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
     private final javax.swing.JScrollPane jScrollPane3 = new javax.swing.JScrollPane();
     private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
