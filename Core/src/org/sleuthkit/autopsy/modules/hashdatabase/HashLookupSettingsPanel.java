@@ -45,8 +45,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SleuthkitHashSet;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashSet;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
@@ -180,8 +180,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             addHashesToDatabaseButton.setEnabled(false);
         }
 
-        if(db instanceof HashDatabase){
-            HashDatabase hashDb = (HashDatabase)db;
+        if(db instanceof SleuthkitHashSet){
+            SleuthkitHashSet hashDb = (SleuthkitHashSet)db;
             
             // Disable the central repo fields
             hashDbVersionLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
@@ -253,7 +253,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             indexButton.setEnabled(false);
             deleteDatabaseButton.setEnabled(false);
             
-            CentralRepoHashDb crDb = (CentralRepoHashDb)db;
+            CentralRepoHashSet crDb = (CentralRepoHashSet)db;
 
             hashDbVersionLabel.setText(crDb.getVersion());
             hashDbOrgLabel.setText(crDb.getOrgName());
@@ -304,11 +304,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
     public void saveSettings() {       
         //Checking for for any unindexed databases
-        List<HashDatabase> unindexed = new ArrayList<>();
+        List<SleuthkitHashSet> unindexed = new ArrayList<>();
         for (HashDb db : hashSetManager.getAllHashSets()) {
-            if(db instanceof HashDatabase){
+            if(db instanceof SleuthkitHashSet){
                 try {
-                    HashDatabase hashDatabase = (HashDatabase)db;
+                    SleuthkitHashSet hashDatabase = (SleuthkitHashSet)db;
                     if (!hashDatabase.hasIndex()) {
                         unindexed.add(hashDatabase);
                     }
@@ -373,8 +373,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     @Messages({"# {0} - hash lookup name", "HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}"})
-    void removeThese(List<HashDatabase> toRemove) {
-        for (HashDatabase hashDb : toRemove) {
+    void removeThese(List<SleuthkitHashSet> toRemove) {
+        for (SleuthkitHashSet hashDb : toRemove) {
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
             } catch (HashDbManager.HashDbManagerException ex) {
@@ -392,7 +392,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
-    private void showInvalidIndex(boolean plural, List<HashDatabase> unindexed) {
+    private void showInvalidIndex(boolean plural, List<SleuthkitHashSet> unindexed) {
         String total = "";
         String message;
         for (HashDb hdb : unindexed) {
@@ -937,15 +937,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
         final HashDb hashDatabase = ((HashSetTable) hashSetTable).getSelection();
         assert hashDatabase != null;
-        assert hashDatabase instanceof HashDatabase;
+        assert hashDatabase instanceof SleuthkitHashSet;
 
         // Add a listener for the INDEXING_DONE event. This listener will update
         // the UI.
-        HashDatabase hashDb = (HashDatabase)hashDatabase;
+        SleuthkitHashSet hashDb = (SleuthkitHashSet)hashDatabase;
         hashDb.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(HashDatabase.Event.INDEXING_DONE.toString())) {
+                if (evt.getPropertyName().equals(SleuthkitHashSet.Event.INDEXING_DONE.toString())) {
                     HashDb selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
                     if (selectedHashDb != null && hashDb != null && hashDb.equals(selectedHashDb)) {
                         updateComponents();
@@ -969,8 +969,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed
         HashDb hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
-            if(hashDb instanceof CentralRepoHashDb){
-                int newReferenceSetID = ((CentralRepoHashDb)hashDb).getReferenceSetID();
+            if(hashDb instanceof CentralRepoHashSet){
+                int newReferenceSetID = ((CentralRepoHashSet)hashDb).getReferenceSetID();
                 newReferenceSetIDs.add(newReferenceSetID);
             }
             

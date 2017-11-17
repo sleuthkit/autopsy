@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.time.LocalDate;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -60,6 +59,26 @@ public class EamGlobalSet {
             boolean isReadOnly,
             LocalDate importDate) {
         this(-1, orgID, setName, version, knownStatus, isReadOnly, importDate);
+    }
+    
+    /**
+     * Create a new EamGlobalSet object.
+     * This is intended to be used when creating a new global set as the 
+     * globalSetID will be unknown to start.
+     * importDate will be automatically set to the current time.
+     * @param orgID
+     * @param setName
+     * @param version
+     * @param knownStatus
+     * @param isReadOnly 
+     */
+    public EamGlobalSet(
+            int orgID,
+            String setName,
+            String version,
+            TskData.FileKnown knownStatus,
+            boolean isReadOnly) {
+        this(-1, orgID, setName, version, knownStatus, isReadOnly, LocalDate.now());
     }
 
     /**
@@ -144,17 +163,6 @@ public class EamGlobalSet {
      */
     public void setFileKnownStatus(TskData.FileKnown fileKnownStatus) {
         this.fileKnownStatus = fileKnownStatus;
-    }
-    
-    /**
-     * Return the FileKnown status as a KnownFilesType
-     * @return KNOWN or KNOWN_BAD
-     */
-    public HashDbManager.HashDatabase.KnownFilesType getKnownStatus(){
-        if(fileKnownStatus.equals(TskData.FileKnown.BAD)){
-            return HashDbManager.HashDatabase.KnownFilesType.KNOWN_BAD;
-        }
-        return HashDbManager.HashDatabase.KnownFilesType.KNOWN;
     }
 
     /**

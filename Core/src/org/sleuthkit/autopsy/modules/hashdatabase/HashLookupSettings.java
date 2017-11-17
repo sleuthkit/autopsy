@@ -36,8 +36,8 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.DatabaseType;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashSet;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SleuthkitHashSet;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -202,7 +202,7 @@ final class HashLookupSettings implements Serializable {
 
                 // Handle legacy known files types.
                 if (knownFilesType.equals("NSRL")) { //NON-NLS
-                    knownFilesType = HashDbManager.HashDatabase.KnownFilesType.KNOWN.toString();
+                    knownFilesType = HashDbManager.HashDb.KnownFilesType.KNOWN.toString();
                     updatedSchema = true;
                 }
 
@@ -236,7 +236,7 @@ final class HashLookupSettings implements Serializable {
                 } else {
                     throw new HashLookupSettingsException(String.format(elementErrorMessage, PATH_ELEMENT));
                 }
-                hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.HashDatabase.KnownFilesType.valueOf(knownFilesType),
+                hashDbInfoList.add(new HashDbInfo(hashSetName, HashDbManager.HashDb.KnownFilesType.valueOf(knownFilesType),
                         searchDuringIngestFlag, sendIngestMessagesFlag, dbPath));
                 hashSetNames.add(hashSetName);
             }
@@ -297,9 +297,14 @@ final class HashLookupSettings implements Serializable {
      */
     static final class HashDbInfo implements Serializable {
         
+        enum DatabaseType{
+            FILE,
+            CENTRAL_REPOSITORY
+        };
+        
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
-        private final HashDbManager.HashDatabase.KnownFilesType knownFilesType;
+        private final HashDbManager.HashDb.KnownFilesType knownFilesType;
         private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final String path;
@@ -318,7 +323,7 @@ final class HashLookupSettings implements Serializable {
          * @param sendIngestMessages Whether or not ingest messages are sent
          * @param path               The path to the db
          */
-        HashDbInfo(String hashSetName, HashDbManager.HashDatabase.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
+        HashDbInfo(String hashSetName, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean searchDuringIngest, boolean sendIngestMessages, String path) {
             this.hashSetName = hashSetName;
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
@@ -330,7 +335,7 @@ final class HashLookupSettings implements Serializable {
             this.dbType = DatabaseType.FILE;
         }
         
-        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDatabase.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
+        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
             this.hashSetName = hashSetName;
             this.version = version;
             this.referenceSetID = referenceSetID;
@@ -343,8 +348,8 @@ final class HashLookupSettings implements Serializable {
         }
         
         HashDbInfo(HashDbManager.HashDb db) throws TskCoreException{
-            if(db instanceof HashDbManager.HashDatabase){
-                HashDbManager.HashDatabase fileTypeDb = (HashDbManager.HashDatabase)db;
+            if(db instanceof HashDbManager.SleuthkitHashSet){
+                HashDbManager.SleuthkitHashSet fileTypeDb = (HashDbManager.SleuthkitHashSet)db;
                 this.hashSetName = fileTypeDb.getHashSetName();
                 this.knownFilesType = fileTypeDb.getKnownFilesType();
                 this.searchDuringIngest = fileTypeDb.getSearchDuringIngest();
@@ -359,7 +364,7 @@ final class HashLookupSettings implements Serializable {
                     this.path = fileTypeDb.getDatabasePath();
                 }
             } else {
-                HashDbManager.CentralRepoHashDb centralRepoDb = (HashDbManager.CentralRepoHashDb)db;
+                HashDbManager.CentralRepoHashSet centralRepoDb = (HashDbManager.CentralRepoHashSet)db;
                 this.hashSetName = centralRepoDb.getHashSetName();
                 this.version = centralRepoDb.getVersion();
                 this.knownFilesType = centralRepoDb.getKnownFilesType();
@@ -402,7 +407,7 @@ final class HashLookupSettings implements Serializable {
          *
          * @return The known files type setting.
          */
-        HashDbManager.HashDatabase.KnownFilesType getKnownFilesType() {
+        HashDbManager.HashDb.KnownFilesType getKnownFilesType() {
             return knownFilesType;
         }
 
@@ -466,7 +471,8 @@ final class HashLookupSettings implements Serializable {
                 return false;
             }
             
-            if( ! this.dbType.equals(hashDb.getDatabaseType())){
+            if((this.dbType == DatabaseType.CENTRAL_REPOSITORY) && (! (hashDb instanceof CentralRepoHashSet))
+                    || (this.dbType == DatabaseType.FILE) && (! (hashDb instanceof SleuthkitHashSet))){
                 return false;
             }
             
@@ -474,19 +480,15 @@ final class HashLookupSettings implements Serializable {
                 return false;
             }
             
-            if(this.dbType.equals(DatabaseType.FILE)){
-                // FILE types will always have unique names, so no more testing required
-                return true;                        
-            }
-            
-            // Central repo tests
-            CentralRepoHashDb crDb = (CentralRepoHashDb) hashDb;
-            if(this.referenceSetID != crDb.getReferenceSetID()){
-                return false;
-            }
-            
-            if(! version.equals(crDb.getVersion())){
-                return false;
+            if(hashDb instanceof CentralRepoHashSet){
+                CentralRepoHashSet crDb = (CentralRepoHashSet) hashDb;
+                if(this.referenceSetID != crDb.getReferenceSetID()){
+                    return false;
+                }
+
+                if(! version.equals(crDb.getVersion())){
+                    return false;
+                }
             }
             
             return true;
