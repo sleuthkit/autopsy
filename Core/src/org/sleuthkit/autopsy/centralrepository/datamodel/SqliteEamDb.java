@@ -636,6 +636,54 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Remove a reference set and all hashes contained in it.
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    @Override
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException{
+        try{
+            acquireExclusiveLock();
+            super.deleteReferenceSet(referenceSetID);
+        } finally {
+            releaseExclusiveLock();
+        }   
+    }    
+    
+    /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
+     */
+    @Override
+    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
+        try{
+            acquireSharedLock();
+            return super.isHashInReferenceSet(hash, referenceSetID);
+        } finally {
+            releaseSharedLock();
+        }          
+    }
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo
+     * @param hashSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException 
+     */
+    @Override
+    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.referenceSetExists(hashSetName, version);
+        } finally {
+            releaseSharedLock();
+        }  
+    }
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -766,6 +814,23 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Get all reference sets
+     *
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+        try{
+            acquireSharedLock();
+            return super.getAllReferenceSets();
+        } finally {
+            releaseSharedLock();
+        } 
+    }
+    
+    /**
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
@@ -782,7 +847,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseExclusiveLock();
         }  
-    }    
+    }  
     
     /**
      * Insert the bulk collection of Reference Type Instances

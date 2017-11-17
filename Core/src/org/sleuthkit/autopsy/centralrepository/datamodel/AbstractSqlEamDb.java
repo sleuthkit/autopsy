@@ -37,7 +37,6 @@ import java.util.Set;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 
@@ -1250,6 +1249,119 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return caseNames.stream().collect(Collectors.toList());
     }
+    
+    /**
+     * Remove a reference set and all hashes contained in it.
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    @Override
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException{ 
+        deleteReferenceSetFiles(referenceSetID);
+        deleteReferenceSetEntry(referenceSetID);
+    }  
+    
+    /**
+     * Remove the entry for this set from the reference_sets table
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    private void deleteReferenceSetEntry(int referenceSetID) throws EamDbException{
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "DELETE FROM reference_sets WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, referenceSetID);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting reference set", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }                
+    }
+    
+    /**
+     * Remove all entries for this reference set from the reference_file table
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    private void deleteReferenceSetFiles(int referenceSetID) throws EamDbException{
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "DELETE FROM %s WHERE reference_set_id=?";
+        
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setInt(1, referenceSetID);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting files from reference set", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }                
+    }
+    
+    /**
+     * Check whether the given reference set exists in the central repository.
+     * @param referenceSetID
+     * @param hashSetName
+     * @param version
+     * @return true if a matching entry exists in the central repository
+     * @throws EamDbException
+     */
+    @Override
+    public boolean referenceSetIsValid(int referenceSetID, String hashSetName, String version) throws EamDbException{
+        EamGlobalSet refSet = this.getReferenceSetByID(referenceSetID);
+        if(refSet == null){
+            return false;
+        }
+        
+        return(refSet.getSetName().equals(hashSetName) && refSet.getVersion().equals(version));
+    }
+    
+    /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
+     */
+    @Override
+    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
+
+        Connection conn = connect();
+
+        Long matchingInstances = 0L;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql = "SELECT count(*) FROM %s WHERE value=? AND reference_set_id=?";
+        
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setString(1, hash);
+            preparedStatement.setInt(2, referenceSetID);
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            matchingInstances = resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error determining if file is in reference set.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return 0 < matchingInstances;
+    }
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -1396,6 +1508,43 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
+    
+    /**
+     * Get the organization associated with the given reference set.
+     * @param referenceSetID ID of the reference set
+     * @return The organization object
+     * @throws EamDbException 
+     */
+    @Override
+    public EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException{
+
+        EamGlobalSet globalSet = getReferenceSetByID(referenceSetID);
+        return (getOrganizationByID(globalSet.getOrgID()));
+    }
+    
+    /**
+     * Add a new reference set
+     * 
+     * @param orgID
+     * @param setName
+     * @param version
+     * @param importDate
+     * @return the reference set ID of the newly created set
+     * @throws EamDbException 
+     */
+    @Override
+    public int newReferenceSet(int orgID, String setName, String version, TskData.FileKnown knownStatus,
+            boolean isReadOnly) throws EamDbException {
+        EamDb dbManager = EamDb.getInstance();
+        EamGlobalSet eamGlobalSet = new EamGlobalSet(
+            orgID,
+            setName,
+            version,
+            knownStatus,
+            isReadOnly,
+            LocalDate.now());
+        return dbManager.newReferencelSet(eamGlobalSet);
+    } 
 
     /**
      * Update an existing organization.
@@ -1475,7 +1624,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, import_date) VALUES (?, ?, ?, ?)";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, import_date) VALUES (?, ?, ?, ?, ?, ?)";
         String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
@@ -1483,7 +1632,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement1.setInt(1, eamGlobalSet.getOrgID());
             preparedStatement1.setString(2, eamGlobalSet.getSetName());
             preparedStatement1.setString(3, eamGlobalSet.getVersion());
-            preparedStatement1.setString(4, eamGlobalSet.getImportDate().toString());
+            preparedStatement1.setInt(4, eamGlobalSet.getFileKnownStatus().getFileKnownValue());
+            preparedStatement1.setBoolean(5, eamGlobalSet.isReadOnly());
+            preparedStatement1.setString(6, eamGlobalSet.getImportDate().toString());
 
             preparedStatement1.executeUpdate();
 
@@ -1539,6 +1690,39 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
+    
+    /**
+     * Get all reference sets
+     *
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+        List<EamGlobalSet> results = new ArrayList<>();
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement1 = null;
+        ResultSet resultSet = null;
+        String sql1 = "SELECT * FROM reference_sets";
+
+        try {
+            preparedStatement1 = conn.prepareStatement(sql1);
+            resultSet = preparedStatement1.executeQuery();
+            while (resultSet.next()) {
+                results.add(getEamGlobalSetFromResultSet(resultSet));
+            }
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting reference sets.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+        return results;
+    }
 
     /**
      * Add a new reference instance
@@ -1570,6 +1754,37 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
+    }
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo
+     * @param hashSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException 
+     */
+    @Override
+    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException{
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement1 = null;
+        ResultSet resultSet = null;
+        String sql1 = "SELECT * FROM reference_sets WHERE set_name=? AND version=?";
+
+        try {
+            preparedStatement1 = conn.prepareStatement(sql1);
+            preparedStatement1.setString(1, hashSetName);
+            preparedStatement1.setString(2, version);
+            resultSet = preparedStatement1.executeQuery();
+            return (resultSet.next());
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }        
     }
 
     /**
@@ -2001,6 +2216,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("org_id"),
                 resultSet.getString("set_name"),
                 resultSet.getString("version"),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
+                resultSet.getBoolean("read_only"),
                 LocalDate.parse(resultSet.getString("import_date"))
         );
 

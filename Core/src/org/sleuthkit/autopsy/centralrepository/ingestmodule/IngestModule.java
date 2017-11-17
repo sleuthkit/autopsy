@@ -121,16 +121,6 @@ class IngestModule implements FileIngestModule {
             }
         }
 
-        // Make a TSK_HASHSET_HIT blackboard artifact for global notable files
-        try {
-            if (dbManager.isArtifactlKnownBadByReference(filesType, md5)) {
-                postCorrelatedHashHitToBlackboard(af);
-            }
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error retrieving global known status.", ex); // NON-NLS
-            return ProcessResult.ERROR;
-        }
-
         try {
             CorrelationAttribute eamArtifact = new CorrelationAttribute(filesType, md5);
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
@@ -287,33 +277,6 @@ class IngestModule implements FileIngestModule {
                     Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
             tifArtifact.addAttribute(att2);
-
-            try {
-                // index the artifact for keyword search
-                blackboard.indexArtifact(tifArtifact);
-            } catch (Blackboard.BlackboardException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
-            }
-
-            // send inbox message
-            sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash());
-
-            // fire event to notify UI of this new artifact
-            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
-        } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
-        }
-    }
-
-    private void postCorrelatedHashHitToBlackboard(AbstractFile abstractFile) {
-        try {
-            String MODULE_NAME = IngestModuleFactory.getModuleName();
-            BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
-            BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevCaseComment_text());
-            tifArtifact.addAttribute(att);
 
             try {
                 // index the artifact for keyword search

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +36,9 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase.DatabaseType;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -69,40 +73,17 @@ final class HashLookupSettings implements Serializable {
     HashLookupSettings(List<HashDbInfo> hashDbInfoList) {
         this.hashDbInfoList = hashDbInfoList;
     }
-
-    /**
-     * Constructs a settings object to be serialized for hash lookups
-     *
-     * @param knownHashSets    The list known hash sets for the settings.
-     * @param knownBadHashSets The list of notable hash sets for the settings.
-     */
-    HashLookupSettings(List<HashDbManager.HashDb> knownHashSets, List<HashDbManager.HashDb> knownBadHashSets) throws HashLookupSettingsException {
-        hashDbInfoList = new ArrayList<>();
-        this.addHashesToList(knownHashSets);
-        this.addHashesToList(knownBadHashSets);
-    }
-
-    /**
-     * Adds each HashDb to the settings.
-     *
-     * @param hashSetList The list of HashDb to add to the settings
-     *
-     * @throws * pacannot be obtained
-     */
-    private void addHashesToList(List<HashDbManager.HashDb> hashSetList) throws HashLookupSettingsException {
-        for (HashDbManager.HashDb hashDb : hashSetList) {
-            try {
-                String dbPath;
-                if (hashDb.hasIndexOnly()) {
-                    dbPath = hashDb.getIndexPath();
-                } else {
-                    dbPath = hashDb.getDatabasePath();
-                }
-                hashDbInfoList.add(new HashDbInfo(hashDb.getHashSetName(), hashDb.getKnownFilesType(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), dbPath));
-            } catch (TskCoreException ex) {
-                throw new HashLookupSettingsException("Couldn't add hash database named: " + hashDb.getHashSetName(), ex);
+    
+    static List<HashDbInfo> convertHashSetList(List<HashDbManager.HashDatabase> hashSets) throws HashLookupSettingsException{
+        List<HashDbInfo> dbInfoList = new ArrayList<>();
+        for(HashDbManager.HashDatabase db:hashSets){
+            try{
+                dbInfoList.add(new HashDbInfo(db));
+            } catch (TskCoreException ex){
+                logger.log(Level.SEVERE, "Could not load database settings for {0}", db.getHashSetName());
             }
         }
+        return dbInfoList;
     }
 
     /**
@@ -299,11 +280,12 @@ final class HashLookupSettings implements Serializable {
      * @return Whether or not the settings were written successfully
      */
     static boolean writeSettings(HashLookupSettings settings) {
+        
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
             out.writeObject(settings);
             return true;
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Could not wtite hash database settings.");
+            logger.log(Level.SEVERE, "Could not write hash database settings.");
             return false;
         }
     }
@@ -314,16 +296,20 @@ final class HashLookupSettings implements Serializable {
      * hash lookups.
      */
     static final class HashDbInfo implements Serializable {
-
+        
         private static final long serialVersionUID = 1L;
         private final String hashSetName;
         private final HashDbManager.HashDb.KnownFilesType knownFilesType;
-        private final boolean searchDuringIngest;
+        private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private final String path;
+        private final String version;
+        private final boolean readOnly;
+        private final int referenceSetID;
+        private DatabaseType dbType;
 
         /**
-         * Constructs a HashDbInfo object
+         * Constructs a HashDbInfo object for files type
          *
          * @param hashSetName        The name of the hash set
          * @param knownFilesType     The known files type
@@ -338,6 +324,52 @@ final class HashLookupSettings implements Serializable {
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.path = path;
+            this.referenceSetID = -1;
+            this.version = "";
+            this.readOnly = false;
+            this.dbType = DatabaseType.FILE;
+        }
+        
+        HashDbInfo(String hashSetName, String version, int referenceSetID, HashDbManager.HashDb.KnownFilesType knownFilesType, boolean readOnly, boolean searchDuringIngest, boolean sendIngestMessages){
+            this.hashSetName = hashSetName;
+            this.version = version;
+            this.referenceSetID = referenceSetID;
+            this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
+            this.searchDuringIngest = searchDuringIngest;
+            this.sendIngestMessages = sendIngestMessages;
+            this.path = "";
+            dbType = DatabaseType.CENTRAL_REPOSITORY;            
+        }
+        
+        HashDbInfo(HashDbManager.HashDatabase db) throws TskCoreException{
+            if(db instanceof HashDbManager.HashDb){
+                HashDbManager.HashDb fileTypeDb = (HashDbManager.HashDb)db;
+                this.hashSetName = fileTypeDb.getHashSetName();
+                this.knownFilesType = fileTypeDb.getKnownFilesType();
+                this.searchDuringIngest = fileTypeDb.getSearchDuringIngest();
+                this.sendIngestMessages = fileTypeDb.getSendIngestMessages();
+                this.referenceSetID = -1;
+                this.version = "";
+                this.readOnly = false;
+                this.dbType = DatabaseType.FILE;
+                if (fileTypeDb.hasIndexOnly()) {
+                    this.path = fileTypeDb.getIndexPath();
+                } else {
+                    this.path = fileTypeDb.getDatabasePath();
+                }
+            } else {
+                HashDbManager.CentralRepoHashDb centralRepoDb = (HashDbManager.CentralRepoHashDb)db;
+                this.hashSetName = centralRepoDb.getHashSetName();
+                this.version = centralRepoDb.getVersion();
+                this.knownFilesType = centralRepoDb.getKnownFilesType();
+                this.readOnly = ! centralRepoDb.isUpdateable();
+                this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
+                this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
+                this.path = "";
+                this.referenceSetID = centralRepoDb.getReferenceSetID();
+                this.dbType = DatabaseType.CENTRAL_REPOSITORY;
+            }
         }
 
         /**
@@ -347,6 +379,22 @@ final class HashLookupSettings implements Serializable {
          */
         String getHashSetName() {
             return hashSetName;
+        }
+        
+        /**
+         * Get the version for the hash set
+         * @return version
+         */
+        String getVersion(){
+            return version;
+        }
+        
+        /**
+         * Get whether the hash set is read only (only applies to central repo)
+         * @return readOnly
+         */
+        boolean isReadOnly(){
+            return readOnly;
         }
 
         /**
@@ -366,6 +414,14 @@ final class HashLookupSettings implements Serializable {
         boolean getSearchDuringIngest() {
             return searchDuringIngest;
         }
+        
+        /**
+         * Sets the search during ingest setting.
+         *
+         */
+        void setSearchDuringIngest(boolean searchDuringIngest) {
+            this.searchDuringIngest = searchDuringIngest;
+        }
 
         /**
          * Gets the send ingest messages setting.
@@ -383,6 +439,114 @@ final class HashLookupSettings implements Serializable {
          */
         String getPath() {
             return path;
+        }
+        
+        int getReferenceSetID(){
+            return referenceSetID;
+        }
+        
+        /**
+         * Returns whether the database is a normal file type.
+         * @return true if database is type FILE
+         */
+        boolean isFileDatabaseType(){
+            return dbType == DatabaseType.FILE;
+        }
+        
+        boolean isCentralRepoDatabaseType(){
+            return dbType == DatabaseType.CENTRAL_REPOSITORY;
+        }
+        
+        boolean matches(HashDatabase hashDb){
+            if(hashDb == null){
+                return false;
+            }
+            
+            if( ! this.knownFilesType.equals(hashDb.getKnownFilesType())){
+                return false;
+            }
+            
+            if( ! this.dbType.equals(hashDb.getDatabaseType())){
+                return false;
+            }
+            
+            if( ! this.hashSetName.equals(hashDb.getHashSetName())){
+                return false;
+            }
+            
+            if(this.dbType.equals(DatabaseType.FILE)){
+                // FILE types will always have unique names, so no more testing required
+                return true;                        
+            }
+            
+            // Central repo tests
+            CentralRepoHashDb crDb = (CentralRepoHashDb) hashDb;
+            if(this.referenceSetID != crDb.getReferenceSetID()){
+                return false;
+            }
+            
+            if(! version.equals(crDb.getVersion())){
+                return false;
+            }
+            
+            return true;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            
+            final HashDbInfo other = (HashDbInfo) obj;
+            
+            if(! this.dbType.equals(other.dbType)){
+                return false;
+            }
+            
+            if(this.dbType.equals(DatabaseType.FILE)){
+                // For files, we expect the name and known type to match
+                return (this.hashSetName.equals(other.hashSetName)
+                        && this.knownFilesType.equals(other.knownFilesType));
+            } else {
+                // For central repo, the name, index, and known files type should match
+                return (this.hashSetName.equals(other.hashSetName)
+                        && (this.referenceSetID == other.referenceSetID)
+                        && this.knownFilesType.equals(other.knownFilesType));
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 89 * hash + Objects.hashCode(this.hashSetName);
+            hash = 89 * hash + Objects.hashCode(this.knownFilesType);
+            hash = 89 * hash + Objects.hashCode(this.dbType);
+            if(this.dbType.equals(DatabaseType.CENTRAL_REPOSITORY)){
+                hash = 89 * hash + this.referenceSetID;
+            }
+            
+            return hash;
+        }
+        
+        /**
+         * This overrides the default deserialization code so we can 
+         * properly set the dbType enum given an old settings file.
+         * @param stream
+         * @throws IOException
+         * @throws ClassNotFoundException 
+         */
+        private void readObject(java.io.ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+            stream.defaultReadObject();
+            
+            if(dbType == null){
+                dbType = DatabaseType.FILE;
+            }
         }
     }
 

@@ -27,7 +27,6 @@ import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -35,6 +34,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 
 /**
  * Instances of this class plug in to the reporting infrastructure to provide a
@@ -69,7 +69,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         progressPanel.start();
         progressPanel.updateStatusLabel("Adding hashes...");
 
-        HashDb hashSet = configPanel.getSelectedHashDatabase();
+        HashDatabase hashSet = configPanel.getSelectedHashDatabase();
         if (hashSet != null) {
             progressPanel.updateStatusLabel("Adding hashes to " + hashSet.getHashSetName() + " hash set...");
 
