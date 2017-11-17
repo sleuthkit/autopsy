@@ -318,20 +318,28 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
 
-        //If unindexed ones are found, show a popup box that will either index them, or remove them.
-        if (unindexed.size() == 1) {
-            showInvalidIndex(false, unindexed);
-        } else if (unindexed.size() > 1) {
-            showInvalidIndex(true, unindexed);
-        }
-        
-        try {
-            hashSetManager.save();
-            newReferenceSetIDs.clear();
-        } catch (HashDbManager.HashDbManagerException ex) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+        // If there are unindexed databases, give the user the option to index them now. This
+        // needs to be on the EDT, and will save the hash settings after completing
+        if(! unindexed.isEmpty()){
+            SwingUtilities.invokeLater(new Runnable(){
+                @Override
+                public void run(){
+                    //If unindexed ones are found, show a popup box that will either index them, or remove them.
+                    if (unindexed.size() == 1) {
+                        showInvalidIndex(false, unindexed);
+                    } else if (unindexed.size() > 1) {
+                        showInvalidIndex(true, unindexed);
+                    }
+                }
             });
+        } else {
+            try {
+                hashSetManager.save();
+            } catch (HashDbManager.HashDbManagerException ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+                });
+            }
         }
     }
 
@@ -418,6 +426,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
                     "HashDbConfigPanel.allUnindexedDbsRmFromListMsg"));
             removeThese(unindexed);
+        }
+        try {
+            hashSetManager.save();
+        } catch (HashDbManager.HashDbManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
