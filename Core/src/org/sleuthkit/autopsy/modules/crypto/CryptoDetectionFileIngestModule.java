@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 final class CryptoDetectionFileIngestModule implements FileIngestModule {
 
-    private static final double ENTROPY_FACTOR = 1.4426950408889634073599246810019; // (1 / log(2))
+    private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
 
     private static final Logger LOGGER = Logger.getLogger(CryptoDetectionFileIngestModule.class.getName());
     private final IngestServices SERVICES = IngestServices.getInstance();
@@ -152,13 +152,10 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
              * Determine the number of times each byte value appears.
              */
             int[] byteOccurences = new int[256];
-            int mostRecentByte = 0;
             int readByte;
             while ((readByte = bin.read()) != -1) {
                 byteOccurences[readByte]++;
-                mostRecentByte = readByte;
             }
-            byteOccurences[mostRecentByte]--;
 
             /*
              * Calculate the entropy based on the byte occurence counts.
@@ -168,7 +165,7 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
             for (int i = 0; i < 256; i++) {
                 if (byteOccurences[i] > 0) {
                     double byteProbability = (double) byteOccurences[i] / (double) dataLength;
-                    entropy += (byteProbability * Math.log(byteProbability) * ENTROPY_FACTOR);
+                    entropy += (byteProbability * Math.log(byteProbability) * ONE_OVER_LOG2);
                 }
             }
 
@@ -203,20 +200,20 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
      * @return True if the AbstractFile qualifies.
      */
     private boolean isFileSupported(AbstractFile file) {
-        boolean supported = false;
-        
         /*
          * Criteria for the checks in this method are partially based on
          * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
          */
 
+        boolean supported = false;
+
         /*
          * Qualify the file type.
          */
-        if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) &&
-                !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) &&
-                !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR) &&
-                !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)) {
+        if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)) {
             /*
              * Qualify the file against hash databases.
              */
