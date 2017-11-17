@@ -135,7 +135,7 @@ public class HashDbIngestModule implements FileIngestModule {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting index status for " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName()+ " hash database", ex); //NON-NLS
                 }
             }
         }
@@ -218,7 +218,7 @@ public class HashDbIngestModule implements FileIngestModule {
                                         name)));
                         ret = ProcessResult.ERROR;
                     }
-                    String hashSetName = db.getHashSetName();
+                    String hashSetName = db.getDisplayName();
 
                     String comment = "";
                     ArrayList<String> comments = hashInfo.getComments();

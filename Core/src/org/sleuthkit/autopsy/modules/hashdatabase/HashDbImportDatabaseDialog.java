@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -132,8 +131,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         boolean isFileType = fileTypeRadioButton.isSelected();
 
         // Central repo only
-        lbVersion.setEnabled(! isFileType);
-        versionTextField.setEnabled(! isFileType);
+        lbVersion.setEnabled((! isFileType) && (readOnlyCheckbox.isSelected()));
+        versionTextField.setEnabled((! isFileType) && (readOnlyCheckbox.isSelected()));
+        
         lbOrg.setEnabled(! isFileType);
         orgButton.setEnabled(! isFileType);
         orgComboBox.setEnabled(! isFileType);
@@ -270,6 +270,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
         readOnlyCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(readOnlyCheckbox, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.readOnlyCheckbox.text")); // NOI18N
+        readOnlyCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                readOnlyCheckboxActionPerformed(evt);
+            }
+        });
 
         storageTypeButtonGroup.add(fileTypeRadioButton);
         fileTypeRadioButton.setSelected(true);
@@ -547,10 +552,17 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 return;                
             }
             
+            String version;
+            if(readOnlyCheckbox.isSelected()){
+                version = versionTextField.getText();
+            } else {
+                // Editable databases don't have a version
+                version = EamDb.getDefaultVersion();
+            }
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
-            progressDialog.importFile(hashSetNameTextField.getText(), versionTextField.getText(), 
+            progressDialog.importFile(hashSetNameTextField.getText(), version, 
                 selectedOrg.getOrgID(), true, sendIngestMessagesCheckbox.isSelected(), type, 
-                this.readOnlyCheckbox.isSelected(), selectedFilePath);
+                readOnlyCheckbox.isSelected(), selectedFilePath);
             selectedHashDb = progressDialog.getDatabase();
         }
 
@@ -578,9 +590,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_orgButtonActionPerformed
 
     private void orgComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orgComboBoxActionPerformed
-        //JComboBox<String> cb = (JComboBox<String>)evt.getSource();
-        //String orgName = (String)cb.getSelectedItem();
-        
         if (null == orgComboBox.getSelectedItem()) return;
         String orgName = this.orgComboBox.getSelectedItem().toString();
         for (EamOrganization org : orgs) {
@@ -590,6 +599,10 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_orgComboBoxActionPerformed
+
+    private void readOnlyCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readOnlyCheckboxActionPerformed
+        enableComponents();
+    }//GEN-LAST:event_readOnlyCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;

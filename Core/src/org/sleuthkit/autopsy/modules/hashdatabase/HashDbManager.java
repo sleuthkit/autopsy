@@ -38,8 +38,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1135,8 +1137,12 @@ public class HashDbManager implements PropertyChangeListener {
         }
         
         @Override
-        String getDisplayName(){
-            return getHashSetName() + " " + getVersion();
+        public String getDisplayName(){
+            if(! getVersion().isEmpty()){
+                return getHashSetName() + " " + getVersion() + " (remote)";
+            } else {
+                return getHashSetName() + " (remote)";
+            }
         }
         
         String getVersion(){
@@ -1201,9 +1207,7 @@ public class HashDbManager implements PropertyChangeListener {
          */
         @Override
         public boolean isUpdateable() throws TskCoreException {
-            return false;
-            // TEMP this will change as soon as adding to the database is supported 
-            // return (! readOnly);
+            return (! readOnly);
         }
 
         /**
@@ -1231,7 +1235,26 @@ public class HashDbManager implements PropertyChangeListener {
          */
         @Override
         public void addHashes(Content content, String comment) throws TskCoreException {
-            
+            // This only works for AbstractFiles and MD5 hashes at present. 
+            assert content instanceof AbstractFile;
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) content;
+                if (null != file.getMd5Hash()) {
+                    TskData.FileKnown type;
+                    if(knownFilesType.equals(HashDb.KnownFilesType.KNOWN_BAD)){
+                        type = TskData.FileKnown.BAD;
+                    } else {
+                        type = TskData.FileKnown.KNOWN;
+                    }
+                    EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
+                        type, comment);
+                    try{
+                        EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+                    } catch (EamDbException ex){
+                        throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
+                    }
+                }
+            }
         }
 
         /**
@@ -1243,7 +1266,23 @@ public class HashDbManager implements PropertyChangeListener {
          */
         @Override
         public void addHashes(List<HashEntry> hashes) throws TskCoreException {
+            Set<EamGlobalFileInstance> globalFileInstances = new HashSet<>();
+            for(HashEntry hashEntry:hashes){
+                TskData.FileKnown type;
+                if(knownFilesType.equals(HashDb.KnownFilesType.KNOWN_BAD)){
+                    type = TskData.FileKnown.BAD;
+                } else {
+                    type = TskData.FileKnown.KNOWN;
+                }               
+                globalFileInstances.add(new EamGlobalFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
+            }
             
+            try{
+                EamDb.getInstance().bulkInsertReferenceTypeEntries(globalFileInstances, 
+                        EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+            } catch (EamDbException ex){
+                throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
+            }
         }
 
         /**
@@ -1331,7 +1370,7 @@ public class HashDbManager implements PropertyChangeListener {
         
         @Override
         public String toString(){
-            return getHashSetName();
+            return getDisplayName();
         }
         
 
