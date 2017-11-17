@@ -1122,7 +1122,7 @@ public class SharedConfiguration {
         try {
             HashDbManager hashDbManager = HashDbManager.getInstance();
             hashDbManager.loadLastSavedConfiguration();
-            for (HashDb hashDb : hashDbManager.getAllHashSets()) {
+            for (HashDbManager.HashDb hashDb : hashDbManager.getAllHashSets()) {
                 if (hashDb.hasIndexOnly()) {
                     results.add(hashDb.getIndexPath());
                 } else {

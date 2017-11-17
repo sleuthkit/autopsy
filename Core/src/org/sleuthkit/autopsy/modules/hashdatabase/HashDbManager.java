@@ -38,6 +38,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -49,6 +52,7 @@ import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
@@ -58,8 +62,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     private static final String HASH_DATABASE_FILE_EXTENSON = "kdb"; //NON-NLS
     private static HashDbManager instance = null;
-    private List<HashDb> knownHashSets = new ArrayList<>();
-    private List<HashDb> knownBadHashSets = new ArrayList<>();
+    private List<HashDb> hashSets = new ArrayList<>();
     private Set<String> hashSetNames = new HashSet<>();
     private Set<String> hashSetPaths = new HashSet<>();
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
@@ -230,10 +233,10 @@ public class HashDbManager implements PropertyChangeListener {
         }
         return hashDb;
     }
-
-    private HashDb addHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
+    
+    private SleuthkitHashSet addHashDatabase(int handle, String hashSetName, boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType) throws TskCoreException {
         // Wrap an object around the handle.
-        HashDb hashDb = new HashDb(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
+        SleuthkitHashSet hashDb = new SleuthkitHashSet(handle, hashSetName, searchDuringIngest, sendIngestMessages, knownFilesType);
 
         // Get the indentity data before updating the collections since the 
         // accessor methods may throw. 
@@ -250,12 +253,8 @@ public class HashDbManager implements PropertyChangeListener {
             hashSetPaths.add(indexPath);
         }
 
-        // Add the hash database to the appropriate collection for its type.
-        if (hashDb.getKnownFilesType() == HashDb.KnownFilesType.KNOWN) {
-            knownHashSets.add(hashDb);
-        } else {
-            knownBadHashSets.add(hashDb);
-        }
+        // Add the hash database to the collection
+        hashSets.add(hashDb);
 
         // Let any external listeners know that there's a new set   
         try {
@@ -269,8 +268,40 @@ public class HashDbManager implements PropertyChangeListener {
         }
         return hashDb;
     }
+    
+    CentralRepoHashSet addExistingCentralRepoHashSet(String hashSetName, String version, int referenceSetID, 
+            boolean searchDuringIngest, boolean sendIngestMessages, HashDb.KnownFilesType knownFilesType, 
+            boolean readOnly) throws TskCoreException{
+        
+        if(! EamDb.isEnabled()){
+            throw new TskCoreException("Could not load central repository database " + hashSetName + " - central repository is not enabled");
+        }
+        
+        CentralRepoHashSet db = new CentralRepoHashSet(hashSetName, version, referenceSetID, searchDuringIngest,
+            sendIngestMessages, knownFilesType, readOnly);
+        
+        if(! db.isValid()){
+            throw new TskCoreException("Error finding database " + hashSetName + " in central repository");
+        }
+        
+        // Add the hash database to the collection
+        hashSets.add(db);
 
-    synchronized void indexHashDatabase(HashDb hashDb) {
+        // Let any external listeners know that there's a new set   
+        try {
+            changeSupport.firePropertyChange(SetEvt.DB_ADDED.toString(), null, hashSetName);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
+            MessageNotifyUtil.Notify.show(
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.moduleErrorListeningToUpdatesMsg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
+        return db;        
+        
+    }
+
+    synchronized void indexHashDatabase(SleuthkitHashSet hashDb) {
         hashDb.addPropertyChangeListener(this);
         HashDbIndexer creator = new HashDbIndexer(hashDb);
         creator.execute();
@@ -278,8 +309,8 @@ public class HashDbManager implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-        if (event.getPropertyName().equals(HashDb.Event.INDEXING_DONE.name())) {
-            HashDb hashDb = (HashDb) event.getNewValue();
+        if (event.getPropertyName().equals(SleuthkitHashSet.Event.INDEXING_DONE.name())) {
+            SleuthkitHashSet hashDb = (SleuthkitHashSet) event.getNewValue();
             if (null != hashDb) {
                 try {
                     String indexPath = hashDb.getIndexPath();
@@ -317,27 +348,35 @@ public class HashDbManager implements PropertyChangeListener {
         // hash set names are used, before undertaking These operations will succeed and constitute
         // a mostly effective removal, even if the subsequent operations fail.
         String hashSetName = hashDb.getHashSetName();
-        knownHashSets.remove(hashDb);
-        knownBadHashSets.remove(hashDb);
         hashSetNames.remove(hashSetName);
+        hashSets.remove(hashDb);
 
         // Now undertake the operations that could throw.
-        try {
-            hashSetPaths.remove(hashDb.getIndexPath());
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
-        }
-        try {
-            if (!hashDb.hasIndexOnly()) {
-                hashSetPaths.remove(hashDb.getDatabasePath());
+        
+        // Indexing is only relevanet for sleuthkit hashsets
+        if(hashDb instanceof SleuthkitHashSet){
+            SleuthkitHashSet hashDatabase = (SleuthkitHashSet)hashDb;
+            try {
+                if(hashDatabase.hasIndex()){
+                    hashSetPaths.remove(hashDatabase.getIndexPath());
+                }
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDatabase.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
+            }        
+
+            try {
+                if (!hashDatabase.hasIndexOnly()) {
+                    hashSetPaths.remove(hashDatabase.getDatabasePath());
+                }
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting database path of " + hashDatabase.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
             }
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting database path of " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
-        }
-        try {
-            hashDb.close();
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
+        
+            try {
+                hashDatabase.close();
+            } catch (TskCoreException ex) {
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
+            }
         }
 
         // Let any external listeners know that a set has been deleted
@@ -354,24 +393,30 @@ public class HashDbManager implements PropertyChangeListener {
 
     void save() throws HashDbManagerException {
         try {
-            if (!HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets))) {
+            if (!HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)))) {
                 throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
             }
         } catch (HashLookupSettings.HashLookupSettingsException ex) {
             throw new HashDbManagerException(NbBundle.getMessage(this.getClass(), "HashDbManager.saveErrorExceptionMsg"));
         }
     }
-
+    
     /**
      * Gets all of the hash databases used to classify files as known or known
-     * bad.
+     * bad. Will add any new central repository databases to the list before
+     * returning it.
      *
      * @return A list, possibly empty, of hash databases.
      */
     public synchronized List<HashDb> getAllHashSets() {
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
+        
         List<HashDb> hashDbs = new ArrayList<>();
-        hashDbs.addAll(knownHashSets);
-        hashDbs.addAll(knownBadHashSets);
+        hashDbs.addAll(this.hashSets);
         return hashDbs;
     }
 
@@ -382,7 +427,14 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized List<HashDb> getKnownFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
-        hashDbs.addAll(knownHashSets);
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
+        this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN)).forEach((db) -> {
+            hashDbs.add(db);
+        });
         return hashDbs;
     }
 
@@ -393,7 +445,14 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized List<HashDb> getKnownBadFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
-        hashDbs.addAll(knownBadHashSets);
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
+        this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD)).forEach((db) -> {
+            hashDbs.add(db);
+        });
         return hashDbs;
     }
 
@@ -403,13 +462,16 @@ public class HashDbManager implements PropertyChangeListener {
      * @return A list, possibly empty, of hash databases.
      */
     public synchronized List<HashDb> getUpdateableHashSets() {
-        List<HashDb> updateableDbs = getUpdateableHashSets(knownHashSets);
-        updateableDbs.addAll(getUpdateableHashSets(knownBadHashSets));
-        return updateableDbs;
+        return getUpdateableHashSets(this.hashSets);
     }
 
     private List<HashDb> getUpdateableHashSets(List<HashDb> hashDbs) {
         ArrayList<HashDb> updateableDbs = new ArrayList<>();
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
         for (HashDb db : hashDbs) {
             try {
                 if (db.isUpdateable()) {
@@ -421,14 +483,41 @@ public class HashDbManager implements PropertyChangeListener {
         }
         return updateableDbs;
     }
+    
+    private List<HashDbInfo> getCentralRepoHashSetsFromDatabase(){
+        List<HashDbInfo> crHashSets = new ArrayList<>();
+        if(EamDb.isEnabled()){
+            try{
+                List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets();
+                for(EamGlobalSet globalSet:crSets){
+                    
+                    // Defaults for fields not stored in the central repository:
+                    //   searchDuringIngest: false
+                    //   sendIngestMessages: true if the hash set is notable
+                    boolean sendIngestMessages = convertFileKnown(globalSet.getFileKnownStatus()).equals(HashDb.KnownFilesType.KNOWN_BAD);
+                    crHashSets.add(new HashDbInfo(globalSet.getSetName(), globalSet.getVersion(),
+                        globalSet.getGlobalSetID(), convertFileKnown(globalSet.getFileKnownStatus()), globalSet.isReadOnly(), false, sendIngestMessages));
+               }
+            } catch (EamDbException ex){
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+            }
+        }
+        return crHashSets;
+    }
+    
+    private static HashDb.KnownFilesType convertFileKnown(TskData.FileKnown fileKnown){
+        if(fileKnown.equals(TskData.FileKnown.BAD)){
+            return HashDb.KnownFilesType.KNOWN_BAD;
+        }
+        return HashDb.KnownFilesType.KNOWN;
+    }
 
     /**
      * Restores the last saved hash sets configuration. This supports
      * cancellation of configuration panels.
      */
     public synchronized void loadLastSavedConfiguration() {
-        closeHashDatabases(knownHashSets);
-        closeHashDatabases(knownBadHashSets);
+        closeHashDatabases(this.hashSets);
         hashSetNames.clear();
         hashSetPaths.clear();
 
@@ -437,10 +526,12 @@ public class HashDbManager implements PropertyChangeListener {
 
     private void closeHashDatabases(List<HashDb> hashDatabases) {
         for (HashDb database : hashDatabases) {
-            try {
-                database.close();
-            } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash database", ex); //NON-NLS
+            if(database instanceof SleuthkitHashSet){
+                try {
+                    ((SleuthkitHashSet)database).close();
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash database", ex); //NON-NLS
+                }
             }
         }
         hashDatabases.clear();
@@ -461,24 +552,48 @@ public class HashDbManager implements PropertyChangeListener {
      *
      * @param settings The settings to configure.
      */
-    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
+    @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}",
+            "HashDbManager.centralRepoLoadError.message=Error loading central repository hash sets"})
     private void configureSettings(HashLookupSettings settings) {
         allDatabasesLoadedCorrectly = true;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
-        for (HashDbInfo hashDb : hashDbInfoList) {
+        for (HashDbInfo hashDbInfo : hashDbInfoList) {
             try {
-                String dbPath = this.getValidFilePath(hashDb.getHashSetName(), hashDb.getPath());
-                if (dbPath != null) {
-                    addHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDb.getHashSetName(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
+                if(hashDbInfo.isFileDatabaseType()){
+                    String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
+                    if (dbPath != null) {
+                        addHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDbInfo.getHashSetName(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
+                    } else {
+                        logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDbInfo.getHashSetName()));
+                        allDatabasesLoadedCorrectly = false;
+                    }
                 } else {
-                    logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDb.getHashSetName()));
-                    allDatabasesLoadedCorrectly = false;
+                    if(EamDb.isEnabled()){
+                        addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                                hashDbInfo.getReferenceSetID(), 
+                                hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), 
+                                hashDbInfo.getKnownFilesType(), hashDbInfo.isReadOnly());
+                    }
                 }
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
-                                "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
+                                "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
+                        JOptionPane.ERROR_MESSAGE);
+                allDatabasesLoadedCorrectly = false;
+            }
+        }
+        
+        if(EamDb.isEnabled()){
+            try{
+                updateHashSetsFromCentralRepository();
+            } catch (TskCoreException ex){
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                
+                JOptionPane.showMessageDialog(null,
+                        Bundle.HashDbManager_centralRepoLoadError_message(),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
                 allDatabasesLoadedCorrectly = false;
@@ -494,13 +609,36 @@ public class HashDbManager implements PropertyChangeListener {
         will load without errors and the user may think that the problem was solved.*/
         if (!allDatabasesLoadedCorrectly && RuntimeProperties.runningWithGUI()) {
             try {
-                HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
+                HashLookupSettings.writeSettings(new HashLookupSettings(HashLookupSettings.convertHashSetList(this.hashSets)));
                 allDatabasesLoadedCorrectly = true;
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
                 allDatabasesLoadedCorrectly = false;
                 logger.log(Level.SEVERE, "Could not overwrite hash database settings.", ex);
             }
         }
+    }
+    
+    private void updateHashSetsFromCentralRepository() throws TskCoreException {
+        if(EamDb.isEnabled()){
+            List<HashDbInfo> crHashDbInfoList = getCentralRepoHashSetsFromDatabase();
+            for(HashDbInfo hashDbInfo : crHashDbInfoList) {
+                if(hashDbInfoIsNew(hashDbInfo)){
+                    addExistingCentralRepoHashSet(hashDbInfo.getHashSetName(), hashDbInfo.getVersion(), 
+                                hashDbInfo.getReferenceSetID(), 
+                                hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType(),
+                                hashDbInfo.isReadOnly());   
+                }
+            }
+        }
+    }
+        
+    private boolean hashDbInfoIsNew(HashDbInfo dbInfo){
+        for(HashDb db:this.hashSets){
+            if(dbInfo.matches(db)){
+                return false;
+            }
+        }
+        return true;
     }
 
     private String getValidFilePath(String hashSetName, String configuredPath) {
@@ -549,13 +687,9 @@ public class HashDbManager implements PropertyChangeListener {
         }
         return filePath;
     }
-
-    /**
-     * Instances of this class represent hash databases used to classify files
-     * as known or know bad.
-     */
-    public static class HashDb {
-
+    
+    public static abstract class HashDb {
+        
         /**
          * Indicates how files with hashes stored in a particular hash database
          * object should be classified.
@@ -582,16 +716,91 @@ public class HashDbManager implements PropertyChangeListener {
 
             INDEXING_DONE
         }
+        
+        public abstract String getHashSetName();
+        
+        abstract String getDisplayName();
+
+        public abstract String getDatabasePath() throws TskCoreException;
+
+        public abstract HashDb.KnownFilesType getKnownFilesType();
+
+        public abstract boolean getSearchDuringIngest();
+        
+        abstract boolean getDefaultSearchDuringIngest();
+		
+        abstract void setSearchDuringIngest(boolean useForIngest);
+
+        public abstract boolean getSendIngestMessages();
+
+        abstract void setSendIngestMessages(boolean showInboxMessages);
+
+        /**
+         * Indicates whether the hash database accepts updates.
+         *
+         * @return True if the database accepts updates, false otherwise.
+         *
+         * @throws org.sleuthkit.datamodel.TskCoreException
+         */
+        public abstract boolean isUpdateable() throws TskCoreException;
+
+        /**
+         * Adds hashes of content (if calculated) to the hash database.
+         *
+         * @param content The content for which the calculated hashes, if any,
+         *                are to be added to the hash database.
+         *
+         * @throws TskCoreException
+         */
+        public abstract void addHashes(Content content) throws TskCoreException;
+
+        public abstract void addHashes(Content content, String comment) throws TskCoreException;
+
+        public abstract void addHashes(List<HashEntry> hashes) throws TskCoreException;
+
+        public abstract boolean lookupMD5Quick(Content content) throws TskCoreException;
+
+        public abstract HashHitInfo lookupMD5(Content content) throws TskCoreException;
+        
+        /**
+         * Returns whether this database can be enabled.
+         * For file type, this is the same as checking that it has an index
+         * @return true if is valid, false otherwise
+         * @throws TskCoreException 
+         */
+        abstract boolean isValid() throws TskCoreException;
+        
+        public abstract String getIndexPath() throws TskCoreException;
+        
+        public abstract boolean hasIndexOnly() throws TskCoreException;
+        
+        public abstract void firePropertyChange(String propertyName, Object oldValue, Object newValue);
+        
+        public abstract void addPropertyChangeListener(PropertyChangeListener pcl);
+        
+        public abstract void removePropertyChangeListener(PropertyChangeListener pcl);
+        
+        @Override
+        public abstract String toString();
+        
+    }
+
+    /**
+     * Instances of this class represent hash databases used to classify files
+     * as known or know bad.
+     */
+    class SleuthkitHashSet extends HashDb{
+        
         private static final long serialVersionUID = 1L;
         private final int handle;
         private final String hashSetName;
         private boolean searchDuringIngest;
         private boolean sendIngestMessages;
-        private final KnownFilesType knownFilesType;
+        private final HashDb.KnownFilesType knownFilesType;  
         private boolean indexing;
         private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
-        private HashDb(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) {
+        private SleuthkitHashSet(int handle, String hashSetName, boolean useForIngest, boolean sendHitMessages, KnownFilesType knownFilesType) {
             this.handle = handle;
             this.hashSetName = hashSetName;
             this.searchDuringIngest = useForIngest;
@@ -602,9 +811,11 @@ public class HashDbManager implements PropertyChangeListener {
 
         /**
          * Adds a listener for the events defined in HashDb.Event.
+         * Listeners are used during indexing.
          *
          * @param pcl
          */
+        @Override
         public void addPropertyChangeListener(PropertyChangeListener pcl) {
             propertyChangeSupport.addPropertyChangeListener(pcl);
         }
@@ -614,38 +825,66 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @param pcl
          */
+        @Override
         public void removePropertyChangeListener(PropertyChangeListener pcl) {
             propertyChangeSupport.removePropertyChangeListener(pcl);
         }
+        
+        int getHandle(){
+            return handle;
+        }
 
+        @Override
         public String getHashSetName() {
             return hashSetName;
         }
+        
+        @Override
+        String getDisplayName(){
+            return getHashSetName();
+        }
 
+        @Override
         public String getDatabasePath() throws TskCoreException {
             return SleuthkitJNI.getHashDatabasePath(handle);
         }
+        
+        public void setIndexing(boolean indexing){
+            this.indexing = indexing; 
+        }
 
+        @Override
         public String getIndexPath() throws TskCoreException {
             return SleuthkitJNI.getHashDatabaseIndexPath(handle);
         }
 
+        @Override
         public KnownFilesType getKnownFilesType() {
             return knownFilesType;
         }
 
+        @Override
         public boolean getSearchDuringIngest() {
             return searchDuringIngest;
         }
+        
+        @Override
+        boolean getDefaultSearchDuringIngest(){
+            // File type hash sets are on by default
+            return true;
+        }
 
+        @Override
         void setSearchDuringIngest(boolean useForIngest) {
             this.searchDuringIngest = useForIngest;
         }
 
+        @Override
         public boolean getSendIngestMessages() {
             return sendIngestMessages;
         }
 
+        @Override
         void setSendIngestMessages(boolean showInboxMessages) {
             this.sendIngestMessages = showInboxMessages;
         }
@@ -657,6 +896,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws org.sleuthkit.datamodel.TskCoreException
          */
+        @Override
         public boolean isUpdateable() throws TskCoreException {
             return SleuthkitJNI.isUpdateableHashDatabase(this.handle);
         }
@@ -669,6 +909,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws TskCoreException
          */
+        @Override
         public void addHashes(Content content) throws TskCoreException {
             addHashes(content, null);
         }
@@ -683,6 +924,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws TskCoreException
          */
+        @Override
         public void addHashes(Content content, String comment) throws TskCoreException {
             // This only works for AbstractFiles and MD5 hashes at present. 
             assert content instanceof AbstractFile;
@@ -701,6 +943,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws TskCoreException
          */
+        @Override
         public void addHashes(List<HashEntry> hashes) throws TskCoreException {
             SleuthkitJNI.addToHashDatabase(hashes, handle);
         }
@@ -714,6 +957,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws TskCoreException
          */
+        @Override
         public boolean lookupMD5Quick(Content content) throws TskCoreException {
             boolean result = false;
             assert content instanceof AbstractFile;
@@ -735,6 +979,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws TskCoreException
          */
+        @Override
         public HashHitInfo lookupMD5(Content content) throws TskCoreException {
             HashHitInfo result = null;
             // This only works for AbstractFiles and MD5 hashes at present. 
@@ -747,11 +992,23 @@ public class HashDbManager implements PropertyChangeListener {
             }
             return result;
         }
+        
+        /**
+         * Returns whether this database can be enabled.
+         * For file type, this is the same as checking that it has an index
+         * @return true if is valid, false otherwise
+         * @throws TskCoreException 
+         */
+        @Override
+        boolean isValid() throws TskCoreException {
+            return hasIndex();
+        }
 
         boolean hasIndex() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseHasLookupIndex(handle);
         }
 
+        @Override
         public boolean hasIndexOnly() throws TskCoreException {
             return SleuthkitJNI.hashDatabaseIsIndexOnly(handle);
         }
@@ -763,10 +1020,21 @@ public class HashDbManager implements PropertyChangeListener {
         boolean isIndexing() {
             return indexing;
         }
+        
+        @Override
+        public void firePropertyChange(String propertyName, Object oldValue, Object newValue){
+            this.propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
 
         private void close() throws TskCoreException {
             SleuthkitJNI.closeHashDatabase(handle);
         }
+        
+        @Override
+        public String toString(){
+            return getHashSetName();
+        }
+        
 
         @Override
         public int hashCode() {
@@ -786,14 +1054,8 @@ public class HashDbManager implements PropertyChangeListener {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final HashDb other = (HashDb) obj;
+            final SleuthkitHashSet other = (SleuthkitHashSet) obj;
             if (!Objects.equals(this.hashSetName, other.hashSetName)) {
-                return false;
-            }
-            if (this.searchDuringIngest != other.searchDuringIngest) {
-                return false;
-            }
-            if (this.sendIngestMessages != other.sendIngestMessages) {
                 return false;
             }
             if (this.knownFilesType != other.knownFilesType) {
@@ -804,30 +1066,330 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     /**
+     * Instances of this class represent hash databases used to classify files
+     * as known or know bad.
+     */
+    class CentralRepoHashSet extends HashDb{
+
+        private static final long serialVersionUID = 1L;
+        private final String hashSetName;
+        private boolean searchDuringIngest;
+        private boolean sendIngestMessages;
+        private final HashDb.KnownFilesType knownFilesType;  
+        private final int referenceSetID;
+        private final String version;
+        private String orgName;
+        private final boolean readOnly;
+        private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
+        @Messages({"HashDbManager.CentralRepoHashDb.orgError=Error loading organization"})
+        private CentralRepoHashSet(String hashSetName, String version, int referenceSetID, 
+                boolean useForIngest, boolean sendHitMessages, HashDb.KnownFilesType knownFilesType, 
+                boolean readOnly)
+                throws TskCoreException{
+            this.hashSetName = hashSetName;
+            this.version = version;
+            this.referenceSetID = referenceSetID;
+            this.searchDuringIngest = useForIngest;
+            this.sendIngestMessages = sendHitMessages;
+            this.knownFilesType = knownFilesType;
+            this.readOnly = readOnly;
+            
+            try{
+                orgName = EamDb.getInstance().getReferenceSetOrganization(referenceSetID).getName();
+            } catch (EamDbException ex){
+                Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error looking up central repository organization for reference set " + referenceSetID, ex); //NON-NLS
+                orgName = Bundle.HashDbManager_CentralRepoHashDb_orgError();
+            }
+        }
+
+        /**
+         * Adds a listener for the events defined in HashDb.Event.
+         * Listeners are used during indexing.
+         *
+         * @param pcl
+         */
+        @Override
+        public void addPropertyChangeListener(PropertyChangeListener pcl) {
+            propertyChangeSupport.addPropertyChangeListener(pcl);
+        }
+
+        /**
+         * Removes a listener for the events defined in HashDb.Event.
+         *
+         * @param pcl
+         */
+        @Override
+        public void removePropertyChangeListener(PropertyChangeListener pcl) {
+            propertyChangeSupport.removePropertyChangeListener(pcl);
+        }
+        
+        @Override
+        public boolean hasIndexOnly() throws TskCoreException{
+            return true;
+        }
+
+        @Override
+        public String getHashSetName() {
+            return hashSetName;
+        }
+        
+        @Override
+        String getDisplayName(){
+            return getHashSetName() + " " + getVersion();
+        }
+        
+        String getVersion(){
+            return version;
+        }
+        
+        String getOrgName(){
+            return orgName;
+        }
+        
+        int getReferenceSetID(){
+            return referenceSetID;
+        }
+
+        @Override
+        public String getDatabasePath() throws TskCoreException {
+            return "";
+        }
+
+        @Override
+        public String getIndexPath() throws TskCoreException {
+            return "";
+        }
+
+        @Override
+        public HashDb.KnownFilesType getKnownFilesType() {
+            return knownFilesType;
+        }
+
+        @Override
+        public boolean getSearchDuringIngest() {
+            return searchDuringIngest;
+        }
+        
+        @Override
+        boolean getDefaultSearchDuringIngest(){
+            // Central repo hash sets are off by default
+            return false;
+        }
+
+        @Override
+        void setSearchDuringIngest(boolean useForIngest) {
+            this.searchDuringIngest = useForIngest;
+        }
+
+        @Override
+        public boolean getSendIngestMessages() {
+            return sendIngestMessages;
+        }
+
+        @Override
+        void setSendIngestMessages(boolean showInboxMessages) {
+            this.sendIngestMessages = showInboxMessages;
+        }
+
+        /**
+         * Indicates whether the hash database accepts updates.
+         *
+         * @return True if the database accepts updates, false otherwise.
+         *
+         * @throws org.sleuthkit.datamodel.TskCoreException
+         */
+        @Override
+        public boolean isUpdateable() throws TskCoreException {
+            return false;
+            // TEMP this will change as soon as adding to the database is supported 
+            // return (! readOnly);
+        }
+
+        /**
+         * Adds hashes of content (if calculated) to the hash database.
+         *
+         * @param content The content for which the calculated hashes, if any,
+         *                are to be added to the hash database.
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public void addHashes(Content content) throws TskCoreException {
+            addHashes(content, null);
+        }
+
+        /**
+         * Adds hashes of content (if calculated) to the hash database.
+         *
+         * @param content The content for which the calculated hashes, if any,
+         *                are to be added to the hash database.
+         * @param comment A comment to associate with the hashes, e.g., the name
+         *                of the case in which the content was encountered.
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public void addHashes(Content content, String comment) throws TskCoreException {
+            
+        }
+
+        /**
+         * Adds a list of hashes to the hash database at once
+         *
+         * @param hashes List of hashes
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public void addHashes(List<HashEntry> hashes) throws TskCoreException {
+            
+        }
+
+        /**
+         * Perform a basic boolean lookup of the file's hash.
+         *
+         * @param content
+         *
+         * @return True if file's MD5 is in the hash database
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public boolean lookupMD5Quick(Content content) throws TskCoreException {
+            // This only works for AbstractFiles and MD5 hashes 
+            assert content instanceof AbstractFile;
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) content;
+                if (null != file.getMd5Hash()) {
+                    try{
+                        return EamDb.getInstance().isFileHashInReferenceSet(file.getMd5Hash(), this.referenceSetID);
+                    } catch (EamDbException ex){
+                        Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup for hash "
+                                + file.getMd5Hash() + " in reference set " + referenceSetID, ex); //NON-NLS
+                        throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Lookup hash value in DB and provide details on file.
+         *
+         * @param content
+         *
+         * @return null if file is not in database.
+         *
+         * @throws TskCoreException
+         */
+        @Override
+        public HashHitInfo lookupMD5(Content content) throws TskCoreException {
+            HashHitInfo result = null;
+            // This only works for AbstractFiles and MD5 hashes 
+            assert content instanceof AbstractFile;
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) content;
+                if (null != file.getMd5Hash()) {
+                    try{
+                        if(EamDb.getInstance().isFileHashInReferenceSet(file.getMd5Hash(), this.referenceSetID)){
+                            // Make a bare-bones HashHitInfo for now
+                            result = new HashHitInfo(file.getMd5Hash(), "", "");
+                        }
+                    } catch (EamDbException ex){
+                        Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup for hash "
+                                + file.getMd5Hash() + " in reference set " + referenceSetID, ex); //NON-NLS
+                        throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
+                    }
+                }
+            }
+            return result;
+        }
+        
+        /**
+         * Returns whether this database can be enabled.
+         * 
+         * @return true if is valid, false otherwise
+         */
+        @Override
+        boolean isValid() {
+            if(! EamDb.isEnabled()) {
+                return false;
+            }
+            try{
+                return EamDb.getInstance().referenceSetIsValid(this.referenceSetID, this.hashSetName, this.version);
+            } catch (EamDbException ex){
+                Logger.getLogger(CentralRepoHashSet.class.getName()).log(Level.SEVERE, "Error validating hash database " + hashSetName, ex); //NON-NLS
+                return false;
+            }
+        }
+        
+        @Override
+        public void firePropertyChange(String propertyName, Object oldValue, Object newValue){
+            this.propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
+        
+        @Override
+        public String toString(){
+            return getHashSetName();
+        }
+        
+
+        @Override
+        public int hashCode() {
+            int code = 23;
+            code = 47 * code + Objects.hashCode(this.hashSetName);
+            code = 47 * code + Objects.hashCode(this.version);
+            code = 47 * code + Integer.hashCode(this.referenceSetID);
+            code = 47 * code + Objects.hashCode(this.knownFilesType);
+            return code;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final CentralRepoHashSet other = (CentralRepoHashSet) obj;
+            if (!Objects.equals(this.hashSetName, other.hashSetName)) {
+                return false;
+            }
+            if (!Objects.equals(this.version, other.version)) {
+                return false;
+            }
+            if (this.knownFilesType != other.knownFilesType) {
+                return false;
+            }
+            return true;
+        }
+    }    
+    
+    /**
      * Worker thread to make an index of a database
      */
     private class HashDbIndexer extends SwingWorker<Object, Void> {
 
         private ProgressHandle progress = null;
-        private HashDb hashDb = null;
+        private SleuthkitHashSet hashDb = null;
 
-        HashDbIndexer(HashDb hashDb) {
+        HashDbIndexer(SleuthkitHashSet hashDb) {
             this.hashDb = hashDb;
         }
 
-        ;
-
         @Override
         protected Object doInBackground() {
-            hashDb.indexing = true;
+            hashDb.setIndexing(true);
             progress = ProgressHandle.createHandle(
-                    NbBundle.getMessage(this.getClass(), "HashDbManager.progress.indexingHashSet", hashDb.hashSetName));
+                    NbBundle.getMessage(this.getClass(), "HashDbManager.progress.indexingHashSet", hashDb.getHashSetName()));
             progress.start();
             progress.switchToIndeterminate();
             try {
-                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.handle);
+                SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.getHandle());
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDb.class.getName()).log(Level.SEVERE, "Error indexing hash database", ex); //NON-NLS
+                Logger.getLogger(HashDbIndexer.class.getName()).log(Level.SEVERE, "Error indexing hash set " + hashDb.getHashSetName(), ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbManager.dlgMsg.errorIndexingHashSet",
@@ -840,7 +1402,7 @@ public class HashDbManager implements PropertyChangeListener {
 
         @Override
         protected void done() {
-            hashDb.indexing = false;
+            hashDb.setIndexing(false);
             progress.finish();
 
             // see if we got any errors
@@ -857,8 +1419,8 @@ public class HashDbManager implements PropertyChangeListener {
             }
 
             try {
-                hashDb.propertyChangeSupport.firePropertyChange(HashDb.Event.INDEXING_DONE.toString(), null, hashDb);
-                hashDb.propertyChangeSupport.firePropertyChange(HashDbManager.SetEvt.DB_INDEXED.toString(), null, hashDb.getHashSetName());
+                hashDb.firePropertyChange(SleuthkitHashSet.Event.INDEXING_DONE.toString(), null, hashDb);
+                hashDb.firePropertyChange(HashDbManager.SetEvt.DB_INDEXED.toString(), null, hashDb.getHashSetName());
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "HashDbManager listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
