@@ -180,7 +180,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     private TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
-            tagName = caseDb.addTagName(displayName, description, color, knownStatusDenoted);
+            tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatusDenoted);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }
