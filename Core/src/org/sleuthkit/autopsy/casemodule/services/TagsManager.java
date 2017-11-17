@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -46,40 +45,8 @@ import org.sleuthkit.datamodel.TskData;
 public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
-    @NbBundle.Messages({"TagsManager.predefTagNames.bookmark.text=Bookmark",
-        "TagsManager.predefTagNames.followUp.text=Follow Up",
-        "TagsManager.predefTagNames.notableItem.text=Notable Item"})
-    private static final String FOLLOW_UP = Bundle.TagsManager_predefTagNames_followUp_text();
-    private static final String BOOKMARK = Bundle.TagsManager_predefTagNames_bookmark_text();
-    private static final String NOTABLE_ITEM = Bundle.TagsManager_predefTagNames_notableItem_text();
+
     private final SleuthkitCase caseDb;
-
-    /**
-     * Get the text for the Follow Up tag.
-     * 
-     * @return FOLLOW_UP 
-     */
-    public static String getFollowUpText() {
-        return FOLLOW_UP;
-    }
-
-    /**
-     *  Get the text for the Bookmark tag.
-     * 
-     * @return BOOKMARK 
-     */
-    public static String getBookmarkText() {
-        return BOOKMARK;
-    }
-
-    /**
-     * Get the text for the Notable Item tag.
-     * 
-     * @return NOTABLE_ITEM
-     */
-    static String getNotableItemText() {
-        return NOTABLE_ITEM;
-    }
 
     /**
      * Tests whether or not a given tag display name contains an illegal

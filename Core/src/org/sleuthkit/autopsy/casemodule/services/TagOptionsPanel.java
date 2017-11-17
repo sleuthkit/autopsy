@@ -442,7 +442,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         boolean isSelected = tagNamesList.getSelectedIndex() != -1;
         boolean enableEdit = !ingestIsRunning && isSelected;
         editTagNameButton.setEnabled(enableEdit);
-        boolean enableDelete = enableEdit && !TagNameDefinition.STANDARD_TAG_DISPLAY_NAMES.contains(tagNamesList.getSelectedValue().getDisplayName());
+        boolean enableDelete = enableEdit && !TagNameDefinition.getStandardTagNames().contains(tagNamesList.getSelectedValue().getDisplayName());
         deleteTagNameButton.setEnabled(enableDelete);
         if (isSelected) {
 
