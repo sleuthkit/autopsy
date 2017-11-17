@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -48,8 +49,8 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
 
     private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
 
-    private static final Logger LOGGER = Logger.getLogger(CryptoDetectionFileIngestModule.class.getName());
     private final IngestServices SERVICES = IngestServices.getInstance();
+    private final Logger LOGGER = SERVICES.getLogger(CryptoDetectionModuleFactory.getModuleName());
     private long jobId;
     private static final IngestModuleReferenceCounter REF_COUNTER = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
@@ -106,13 +107,26 @@ final class CryptoDetectionFileIngestModule implements FileIngestModule {
                     blackboard.indexArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error("Failed to index encryption detected artifact for keyword search.", artifact.getDisplayName());
+                    MessageNotifyUtil.Notify.show("Failed to index encryption detected artifact for keyword search.", artifact.getDisplayName(), MessageNotifyUtil.MessageType.ERROR);
                 }
 
                 /*
                  * Send an event to update the view with the new result.
                  */
                 SERVICES.fireModuleDataEvent(new ModuleDataEvent(CryptoDetectionModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Collections.singletonList(artifact)));
+
+                /*
+                 * Make an ingest inbox message.
+                 */
+                StringBuilder detailsSb = new StringBuilder();
+                detailsSb.append("File: " + f.getParentPath() + f.getName() + "<br/>\n");
+                detailsSb.append("Entropy: " + entropy);
+
+                SERVICES.postMessage(IngestMessage.createDataMessage(CryptoDetectionModuleFactory.getModuleName(),
+                        "Encryption Detected Match: " + f.getName(),
+                        detailsSb.toString(),
+                        f.getName(),
+                        artifact));
             }
 
             return IngestModule.ProcessResult.OK;
