@@ -62,6 +62,16 @@ final public class FiltersPanel extends javax.swing.JPanel {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
+        startDatePicker.getSettings().setVetoPolicy(
+                //no end date, or start is before end
+                startDate -> endCheckBox.isSelected() == false
+                || startDate.compareTo(endDatePicker.getDate()) <= 0
+        );
+        endDatePicker.getSettings().setVetoPolicy(
+                //no start date, or end is after start
+                endDate -> startCheckBox.isSelected() == false
+                || endDate.compareTo(startDatePicker.getDate()) >= 0
+        );
 
         updateAndApplyFilters();
     }
@@ -99,26 +109,25 @@ final public class FiltersPanel extends javax.swing.JPanel {
         //final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
-        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(
-                type -> {
-                    if (type.equals(Account.Type.CREDIT_CARD)) {
-                        //don't show a check box for credit cards
-                    } else if (type.equals(Account.Type.DEVICE)) {
-                        //don't show a check box fro device
-                    } else {
-                        accountTypeMap.computeIfAbsent(type, t -> {
-                            final JCheckBox jCheckBox = new JCheckBox(
-                                    "<html><table cellpadding=0><tr><td><img src=\""
-                                    + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                                            + Utils.getIconFileName(type))
-                                    + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                                    true
-                            );
-                            accountTypePane.add(jCheckBox);
-                            return jCheckBox;
-                        });
-                    }
-                }
+        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
+            if (type.equals(Account.Type.CREDIT_CARD)) {
+                //don't show a check box for credit cards
+            } else if (type.equals(Account.Type.DEVICE)) {
+                //don't show a check box fro device
+            } else {
+                accountTypeMap.computeIfAbsent(type, t -> {
+                    final JCheckBox jCheckBox = new JCheckBox(
+                            "<html><table cellpadding=0><tr><td><img src=\""
+                            + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                                    + Utils.getIconFileName(type))
+                            + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
+                            true
+                    );
+                    accountTypePane.add(jCheckBox);
+                    return jCheckBox;
+                });
+            }
+        }
         );
     }
 
