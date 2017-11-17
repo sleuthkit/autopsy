@@ -138,7 +138,7 @@ public class DrawableTagsManager {
     public TagName getFollowUpTagName() throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             if (Objects.isNull(followUpTagName)) {
-                followUpTagName = getTagName(TagsManager.getFollowUpText());
+                followUpTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.followUp"));
             }
             return followUpTagName;
         }
@@ -147,7 +147,7 @@ public class DrawableTagsManager {
     private Object getBookmarkTagName() throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
             if (Objects.isNull(bookmarkTagName)) {
-                bookmarkTagName = getTagName(TagsManager.getBookmarkText());
+                bookmarkTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.bookMark"));
             }
             return bookmarkTagName;
         }
