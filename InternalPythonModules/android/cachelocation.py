@@ -121,7 +121,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                 inputStream.read(tempBytes)
                 timestamp = BigInteger(tempBytes).longValue() / 1000
 
-                attributes = ArrayList<>()
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, AndroidAnalyzer.MODULE_NAME, latitude))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, AndroidAnalyzer.MODULE_NAME, longitude))

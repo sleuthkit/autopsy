@@ -163,7 +163,7 @@ class ContactsDbIngestModule(DataSourceIngestModule):
                 
                 # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
                 art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-                attributes = ArrayList<>()
+                attributes = ArrayList()
 
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, name))

@@ -88,7 +88,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 user_id = resultSet.getString("user_id") # the ID of the user who sent the message.
                 game_id = resultSet.getString("game_id") # ID of the game which the the message was sent.
 
-                attributes = ArrayList<>()
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) # create a call log and then add attributes from result set.
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, created_at))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, user_id))

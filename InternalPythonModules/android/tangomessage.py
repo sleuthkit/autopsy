@@ -95,7 +95,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                     direction = "Outgoing"
                 payload = resultSet.getString("payload")
 
-                attributes = ArrayList<>()
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) #create a call log and then add attributes from result set.
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, create_time))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, direction))

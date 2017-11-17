@@ -97,7 +97,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 source_lat = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lat"))
                 source_lng = GoogleMapLocationAnalyzer.convertGeo(resultSet.getString("source_lng"))
 
-                attributes = ArrayList<>()
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE)
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, general.MODULE_NAME, "Destination"))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, time))

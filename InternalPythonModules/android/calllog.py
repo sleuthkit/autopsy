@@ -120,7 +120,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                         name = resultSet.getString("name") # name of person dialed or called. None if unregistered
 
                         try:
-                            attributes = ArrayList<>()
+                            attributes = ArrayList()
                             artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG) # create a call log and then add attributes from result set.
                             if direction == CallLogAnalyzer.OUTGOING:
                                 attributes.add(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, general.MODULE_NAME, number))

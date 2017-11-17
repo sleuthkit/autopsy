@@ -119,7 +119,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n"
                     + "ORDER BY raw_contacts.display_name ASC;")
 
-            attributes = ArrayList<>()
+            attributes = ArrayList()
             artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
             oldName = ""
             while resultSet.next():

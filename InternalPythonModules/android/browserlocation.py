@@ -90,7 +90,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 latitude = Double.valueOf(resultSet.getString("latitude"))
                 longitude = Double.valueOf(resultSet.getString("longitude"))
 
-                attributes = ArrayList<>()
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, general.MODULE_NAME, latitude))
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, general.MODULE_NAME, longitude))

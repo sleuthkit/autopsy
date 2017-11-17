@@ -93,7 +93,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 read = resultSet.getInt("read") # may be unread = 0, read = 1
                 subject = resultSet.getString("subject") # message subject
                 body = resultSet.getString("body") # message body
-                attributes = ArrayList<>()
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); #create Message artifact and then add attributes from result set.
                 if resultSet.getString("type") == "1":
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, "Incoming"))
