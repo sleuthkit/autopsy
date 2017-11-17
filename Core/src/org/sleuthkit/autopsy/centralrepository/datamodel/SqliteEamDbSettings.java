@@ -311,6 +311,8 @@ public final class SqliteEamDbSettings {
         createReferenceSetsTable.append("org_id integer NOT NULL,");
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
+        createReferenceSetsTable.append("known_status integer NOT NULL,");
+        createReferenceSetsTable.append("read_only boolean NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
         createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createReferenceSetsTable.append("CONSTRAINT hash_set_unique UNIQUE (set_name, version)");

@@ -129,9 +129,9 @@ public class HashDbIngestModule implements FileIngestModule {
     private void updateEnabledHashSets(List<HashDb> allHashSets, List<HashDb> enabledHashSets) {
         enabledHashSets.clear();
         for (HashDb db : allHashSets) {
-            if (settings.isHashSetEnabled(db.getHashSetName())) {
+            if (settings.isHashSetEnabled(db)) {
                 try {
-                    if (db.hasIndex()) {
+                    if (db.isValid()) {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
