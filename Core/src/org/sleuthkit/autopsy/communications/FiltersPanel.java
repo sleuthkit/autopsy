@@ -18,15 +18,18 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Cursor;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
+import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -62,7 +65,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
-        updateAndApplyFilters();
+
+        applyFiltersButton.addActionListener(actionEvent -> applyFilters());
     }
 
     /**
@@ -86,6 +90,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
          * till this FiltersPanel is actaully added to a parent.
          */
         em = ExplorerManager.find(this);
+        updateAndApplyFilters();
     }
 
     /**
@@ -98,26 +103,25 @@ final public class FiltersPanel extends javax.swing.JPanel {
         //final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
-        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(
-                type -> {
-                    if (type.equals(Account.Type.CREDIT_CARD)) {
-                        //don't show a check box for credit cards
-                    } else if (type.equals(Account.Type.DEVICE)) {
-                        //don't show a check box fro device
-                    } else {
-                        accountTypeMap.computeIfAbsent(type, t -> {
-                            final JCheckBox jCheckBox = new JCheckBox(
-                                    "<html><table cellpadding=0><tr><td><img src=\""
-                                    + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                                            + Utils.getIconFileName(type))
-                                    + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
-                                    true
-                            );
-                            accountTypePane.add(jCheckBox);
-                            return jCheckBox;
-                        });
-                    }
-                }
+        Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
+            if (type.equals(Account.Type.CREDIT_CARD)) {
+                //don't show a check box for credit cards
+            } else if (type.equals(Account.Type.DEVICE)) {
+                //don't show a check box fro device
+            } else {
+                accountTypeMap.computeIfAbsent(type, t -> {
+                    final JCheckBox jCheckBox = new JCheckBox(
+                            "<html><table cellpadding=0><tr><td><img src=\""
+                            + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                                    + Utils.getIconFileName(type))
+                            + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
+                            true
+                    );
+                    accountTypePane.add(jCheckBox);
+                    return jCheckBox;
+                });
+            }
+        }
         );
     }
 
@@ -150,22 +154,10 @@ final public class FiltersPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jScrollPane1.setViewportView(jList1);
-
         applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/control-double.png"))); // NOI18N
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         applyFiltersButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         applyFiltersButton.setPreferredSize(null);
-        applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                applyFiltersButtonActionPerformed(evt);
-            }
-        });
 
         filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
@@ -341,9 +333,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                         .addComponent(filtersTitleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(0, 0, 0)))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -363,10 +353,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void applyFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyFiltersButtonActionPerformed
-        applyFilters();
-    }//GEN-LAST:event_applyFiltersButtonActionPerformed
-
     /**
      * Query for accounts using the selected filters, and send the results to
      * the AccountsBrowser via the ExplorerManager.
@@ -379,16 +365,32 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            new SwingWorker<AbstractNode, Void>() {
+                @Override
+                protected AbstractNode doInBackground() throws Exception {
+                    List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
+                            commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)
+                                    .stream()
+                                    .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
+                                    .collect(Collectors.toList());
+                    return new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager));
+                }
 
-            List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
-                    commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)
-                            .stream()
-                            .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
-                            .collect(Collectors.toList());
+                @Override
+                protected void done() {
+                    super.done(); //To change body of generated methods, choose Tools | Templates.
 
-            em.setRootContext(new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager)));
+                    setCursor(Cursor.getDefaultCursor());
+                    try {
+                        em.setRootContext(get());
+                    } catch (InterruptedException | ExecutionException ex) {
+                        logger.log(Level.SEVERE, "Error getting account device instances for filter: " + commsFilter, ex);
+                    }
+                }
+            }.execute();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
+            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
         }
     }
 
@@ -491,11 +493,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JCheckBox endCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.datepicker.DatePicker endDatePicker = new com.github.lgooddatepicker.datepicker.DatePicker();
     private final javax.swing.JLabel filtersTitleLabel = new javax.swing.JLabel();
-    private final javax.swing.JList<String> jList1 = new javax.swing.JList<>();
     private final javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
-    private final javax.swing.JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
     private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.datepicker.DatePicker startDatePicker = new com.github.lgooddatepicker.datepicker.DatePicker();
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
