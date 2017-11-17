@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -104,7 +104,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         this.setVisible(true);
     }
     
-    HashDbManager.HashDatabase getDatabase(){
+    HashDbManager.HashDb getDatabase(){
         if(worker != null){
             return worker.getDatabase();
         }
@@ -151,7 +151,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
         final File importFile;
         long totalHashes = 1;
         int referenceSetID = -1;
-        HashDbManager.CentralRepoHashDb newHashDb = null;
+        HashDbManager.CentralRepoHashSet newHashDb = null;
         final AtomicLong numLines = new AtomicLong();
         String errorString = "";
         
@@ -170,7 +170,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             this.numLines.set(0);
         }
         
-        HashDbManager.HashDatabase getDatabase(){
+        HashDbManager.CentralRepoHashSet getDatabase(){
             return newHashDb;
         }
         
@@ -277,7 +277,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, readOnly));
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type
@@ -355,7 +355,7 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             }
             
             // Create an empty hashset in the central repository
-            referenceSetID = EamDb.getInstance().newReferenceSet(orgId, hashSetName, version, knownStatus, readOnly);
+            referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, readOnly));
 
             EamDb dbManager = EamDb.getInstance();
             CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID); // get "FILES" type

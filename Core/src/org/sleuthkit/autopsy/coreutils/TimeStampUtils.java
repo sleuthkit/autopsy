@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -24,32 +24,32 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Utility methods for working with strings with the time-stamp suffixes used by
- * auto ingest.
+ * Utility methods for working with time stamps of the form
+ * 'yyyy_MM_dd_HH_mm_ss'.
  */
 public final class TimeStampUtils {
 
     /*
      * Sample time stamp suffix: 2015_02_02_12_10_31
      */
-    private static final Pattern timeStampPattern = Pattern.compile("\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}$");
+    private static final Pattern TIME_STAMP_PATTERN = Pattern.compile("\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}$");
     private static final int LENGTH_OF_DATE_TIME_STAMP = 20; // length of the above time stamp
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 
     /**
-     * Checks whether a string ends with an auto ingest time stamp.
+     * Checks whether a string ends with a time stamp.
      *
      * @param inputString The string to check.
      *
      * @return True or false.
      */
     public static boolean endsWithTimeStamp(String inputString) {
-        Matcher m = timeStampPattern.matcher(inputString);
+        Matcher m = TIME_STAMP_PATTERN.matcher(inputString);
         return m.find();
     }
 
     /**
-     * Gets the fixed length of the auto-ingest time stamp suffix.
+     * Gets the fixed length of the time stamp suffix.
      *
      * @return The length.
      */
@@ -58,16 +58,16 @@ public final class TimeStampUtils {
     }
 
     /**
-     * Creates an auto ingest time stamp suffix using the current time.
+     * Creates a time stamp suffix using the current time.
      *
      * @return The suffix.
      */
     public static String createTimeStamp() {
-        return dateFormat.format(Calendar.getInstance().getTime());
+        return DATE_FORMAT.format(Calendar.getInstance().getTime());
     }
 
     /**
-     * Removes an auto ingest timestamp suffix, if it present.
+     * Removes the time stamp suffix from a string, if present.
      *
      * @param inputString The string to trim.
      *
@@ -82,7 +82,7 @@ public final class TimeStampUtils {
     }
 
     /**
-     * Gets the auto ingest time stamp suffix from a string, if it is present.
+     * Gets the time stamp suffix from a string, if present.
      *
      * @param inputString the name to check for a timestamp
      *

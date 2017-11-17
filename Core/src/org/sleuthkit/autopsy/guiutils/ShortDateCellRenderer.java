@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.guiutils;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.text.SimpleDateFormat;
 import javax.swing.JTable;
@@ -25,16 +26,16 @@ import static javax.swing.SwingConstants.CENTER;
 
 /**
  * A JTable cell renderer that renders a date represented as a long as a
- * center-aligned, long-format date string. It also grays out the cell if the
+ * center-aligned, short-format date string. It also grays out the cell if the
  * table is disabled.
  */
-class LongDateCellRenderer extends GrayableCellRenderer {
+class ShortDateCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
-    private static final String FORMAT_STRING = "yyyy/MM/dd HH:mm:ss"; //NON-NLS
+    private static final String FORMAT_STRING = "MM/dd HH:mm"; //NON-NLS
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat(FORMAT_STRING);
 
-    public LongDateCellRenderer() {
+    public ShortDateCellRenderer() {
         setHorizontalAlignment(CENTER);
     }
 
@@ -46,4 +47,5 @@ class LongDateCellRenderer extends GrayableCellRenderer {
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
     }
+    
 }
