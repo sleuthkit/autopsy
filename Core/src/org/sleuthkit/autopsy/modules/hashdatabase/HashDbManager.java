@@ -427,6 +427,11 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized List<HashDb> getKnownFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
         this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN)).forEach((db) -> {
             hashDbs.add(db);
         });
@@ -440,6 +445,11 @@ public class HashDbManager implements PropertyChangeListener {
      */
     public synchronized List<HashDb> getKnownBadFileHashSets() {
         List<HashDb> hashDbs = new ArrayList<>();
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
         this.hashSets.stream().filter((db) -> (db.getKnownFilesType() == HashDb.KnownFilesType.KNOWN_BAD)).forEach((db) -> {
             hashDbs.add(db);
         });
@@ -457,6 +467,11 @@ public class HashDbManager implements PropertyChangeListener {
 
     private List<HashDb> getUpdateableHashSets(List<HashDb> hashDbs) {
         ArrayList<HashDb> updateableDbs = new ArrayList<>();
+        try{
+            updateHashSetsFromCentralRepository();
+        } catch (TskCoreException ex){
+            Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error loading central repository hash sets", ex); //NON-NLS
+        }
         for (HashDb db : hashDbs) {
             try {
                 if (db.isUpdateable()) {
@@ -603,7 +618,7 @@ public class HashDbManager implements PropertyChangeListener {
         }
     }
     
-    void updateHashSetsFromCentralRepository() throws TskCoreException {
+    private void updateHashSetsFromCentralRepository() throws TskCoreException {
         if(EamDb.isEnabled()){
             List<HashDbInfo> crHashDbInfoList = getCentralRepoHashSetsFromDatabase();
             for(HashDbInfo hashDbInfo : crHashDbInfoList) {
