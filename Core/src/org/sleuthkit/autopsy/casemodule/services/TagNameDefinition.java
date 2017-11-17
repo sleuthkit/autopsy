@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,9 +25,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -36,11 +41,14 @@ import org.sleuthkit.datamodel.TskData;
 @Immutable
 final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
+    @NbBundle.Messages({"TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
+        "TagNameDefinition.predefTagNames.followUp.text=Follow Up",
+        "TagNameDefinition.predefTagNames.notableItem.text=Notable Item"})
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
-    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getNotableItemText(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
-    static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(TagsManager.getBookmarkText(), TagsManager.getFollowUpText(),
-            TagsManager.getNotableItemText(), Category.ONE.getDisplayName(),
+    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), Category.ONE.getDisplayName(), Category.TWO.getDisplayName(), Category.THREE.getDisplayName());  // NON-NLS
+    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), Bundle.TagNameDefinition_predefTagNames_followUp_text(),
+            Bundle.TagNameDefinition_predefTagNames_notableItem_text(), Category.ONE.getDisplayName(),
             Category.TWO.getDisplayName(), Category.THREE.getDisplayName(),
             Category.FOUR.getDisplayName(), Category.FIVE.getDisplayName());
     private final String displayName;
@@ -63,6 +71,10 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         this.description = description;
         this.color = color;
         this.knownStatus = status;
+    }
+
+    static List<String> getStandardTagNames() {
+        return STANDARD_TAG_DISPLAY_NAMES;
     }
 
     /**
@@ -165,6 +177,16 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         return displayName + "," + description + "," + color.name() + "," + knownStatus.toString();
     }
 
+    private TagName saveToCase(SleuthkitCase caseDb) {
+        TagName tagName = null;
+        try {
+            tagName = caseDb.addTagName(displayName, description, color, knownStatus);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return tagName;
+    }
+
     /**
      * Gets tag name definitions from the tag settings file as well as the
      * default tag name definitions.
@@ -221,6 +243,10 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 setting.append(";");
             }
             setting.append(tagName.toSettingsFormat());
+            if (Case.isCaseOpen()) {
+                SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
+                tagName.saveToCase(caseDb);
+            }
         }
         ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());
     }
