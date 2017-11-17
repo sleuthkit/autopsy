@@ -65,7 +65,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         jPanel1 = new javax.swing.JPanel();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
-        splitPane.setDividerLocation(600);
+        splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.3);
 
         BrowseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
@@ -77,7 +77,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 597, Short.MAX_VALUE)
+            .addGap(0, 394, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -106,7 +106,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 756, Short.MAX_VALUE)
+                    .addComponent(splitPane)
                     .addComponent(filtersPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(5, 5, 5))
         );
