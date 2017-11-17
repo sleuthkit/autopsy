@@ -304,6 +304,7 @@
                 <package>org.sleuthkit.autopsy.corecomponents</package>
                 <package>org.sleuthkit.autopsy.coreutils</package>
                 <package>org.sleuthkit.autopsy.datamodel</package>
+                <package>org.sleuthkit.autopsy.datamodel.tags</package>
                 <package>org.sleuthkit.autopsy.datasourceprocessors</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
                 <package>org.sleuthkit.autopsy.events</package>

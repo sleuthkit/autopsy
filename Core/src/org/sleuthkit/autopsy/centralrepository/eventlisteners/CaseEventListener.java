@@ -130,7 +130,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) event;
                 final ContentTag tagAdded = tagAddedEvent.getAddedTag();
 
-                if (dbManager.getBadTags().contains(tagAdded.getName().getDisplayName())) {
+                if (TagsManager.getNotableTagDisplayNames().contains(tagAdded.getName().getDisplayName())) {
                     if (tagAdded.getContent() instanceof AbstractFile) {
                         af = (AbstractFile) tagAdded.getContent();
                         knownStatus = TskData.FileKnown.BAD;
@@ -151,7 +151,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
 
                 String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
-                if (!dbManager.getBadTags().contains(tagName)) {
+                if (!TagsManager.getNotableTagDisplayNames().contains(tagName)) {
                     // If the tag that got removed isn't on the list of central repo tags, do nothing
                     return;
                 }
@@ -164,7 +164,7 @@ final class CaseEventListener implements PropertyChangeListener {
 
                     if (tags.stream()
                             .map(tag -> tag.getName().getDisplayName())
-                            .filter(dbManager.getBadTags()::contains)
+                            .filter(TagsManager.getNotableTagDisplayNames()::contains)
                             .collect(Collectors.toList())
                             .isEmpty()) {
 
@@ -227,7 +227,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 final BlackBoardArtifactTagAddedEvent tagAddedEvent = (BlackBoardArtifactTagAddedEvent) event;
                 final BlackboardArtifactTag tagAdded = tagAddedEvent.getAddedTag();
 
-                if (dbManager.getBadTags().contains(tagAdded.getName().getDisplayName())) {
+                if (TagsManager.getNotableTagDisplayNames().contains(tagAdded.getName().getDisplayName())) {
                     content = tagAdded.getContent();
                     bbArtifact = tagAdded.getArtifact();
                     knownStatus = TskData.FileKnown.BAD;
@@ -245,7 +245,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();
 
                 String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
-                if (!dbManager.getBadTags().contains(tagName)) {
+                if (!TagsManager.getNotableTagDisplayNames().contains(tagName)) {
                     // If the tag that got removed isn't on the list of central repo tags, do nothing
                     return;
                 }
@@ -259,7 +259,7 @@ final class CaseEventListener implements PropertyChangeListener {
 
                     if (tags.stream()
                             .map(tag -> tag.getName().getDisplayName())
-                            .filter(dbManager.getBadTags()::contains)
+                            .filter(TagsManager.getNotableTagDisplayNames()::contains)
                             .collect(Collectors.toList())
                             .isEmpty()) {
 
@@ -350,37 +350,22 @@ final class CaseEventListener implements PropertyChangeListener {
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
-                try {
-                    // only add default evidence tag if case is open and it doesn't already exist in the tags list.
-                    if (Case.isCaseOpen()
-                            && Case.getCurrentCase().getServices().getTagsManager().getAllTagNames().stream()
-                                    .map(tag -> tag.getDisplayName())
-                                    .filter(tagName -> Bundle.caseeventlistener_evidencetag().equals(tagName))
-                                    .collect(Collectors.toList())
-                                    .isEmpty()) {
-                        curCase.getServices().getTagsManager().addTagName(Bundle.caseeventlistener_evidencetag());
-                    }
-                } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    LOGGER.info("Evidence tag already exists"); // NON-NLS
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error adding tag.", ex); // NON-NLS
-                }
-
+                
                 CorrelationCase curCeCase = new CorrelationCase(
-                            -1,
-                            curCase.getName(), // unique case ID
-                            EamOrganization.getDefault(),
-                            curCase.getDisplayName(),
-                            curCase.getCreatedDate(),
-                            curCase.getNumber(),
-                            curCase.getExaminer(),
-                            curCase.getExaminerEmail(),
-                            curCase.getExaminerPhone(),
-                            curCase.getCaseNotes());
+                        -1,
+                        curCase.getName(), // unique case ID
+                        EamOrganization.getDefault(),
+                        curCase.getDisplayName(),
+                        curCase.getCreatedDate(),
+                        curCase.getNumber(),
+                        curCase.getExaminer(),
+                        curCase.getExaminerEmail(),
+                        curCase.getExaminerPhone(),
+                        curCase.getCaseNotes());
 
-                    if (!EamDb.isEnabled()) {
-                        return;
-                    }
+                if (!EamDb.isEnabled()) {
+                    return;
+                }
 
                 try {
                     // NOTE: Cannot determine if the opened case is a new case or a reopened case,
