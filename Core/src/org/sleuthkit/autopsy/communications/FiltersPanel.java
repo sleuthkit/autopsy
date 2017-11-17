@@ -21,11 +21,9 @@ package org.sleuthkit.autopsy.communications;
 import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.TextStyle;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -34,6 +32,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -61,6 +60,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
+    private static final ImageIcon APPLY_ICON = new ImageIcon(FiltersPanel.class.getResource("images/tick.png"));
+    private static final ImageIcon REFRESH_ICON = new ImageIcon(FiltersPanel.class.getResource("images/arrow-circle-double-135.png"));
+
     private ExplorerManager em;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -69,25 +71,26 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
     private final PropertyChangeListener ingestListener;
 
+    @NbBundle.Messages({"refreshText=Refresh Results",
+        "applyText=Apply"})
     public FiltersPanel() {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
-        setPreferredTimeZone();
+        updateTimeZone();
 
         updateFilters();
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
-                setPreferredTimeZone();
+                updateTimeZone();
             }
         });
-
         this.ingestListener = pce -> {
             String eventType = pce.getPropertyName();
             if (eventType.equals(DATA_ADDED.toString())) {
                 updateFilters();
-                applyFiltersButton.setText("Refresh");
-                applyFiltersButton.setIcon(new ImageIcon("org/sleuthkit/autopsy/communications/images/reload.png"));
+                applyFiltersButton.setText(Bundle.refreshText());
+                applyFiltersButton.setIcon(REFRESH_ICON);
             } else if (eventType.equals(COMPLETED.toString())) {
             } else if (eventType.equals(CANCELLED.toString())) {
             } else if (eventType.equals(CURRENT_CASE.toString())) {
@@ -106,8 +109,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
         }
     }
 
-    private void setPreferredTimeZone() {
-        dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().getDisplayName(TextStyle.NARROW, Locale.getDefault()) + "):");
+    private void updateTimeZone() {
+        dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().toString() + "):");
     }
 
     void updateFilters() {
@@ -200,9 +203,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/control-double.png"))); // NOI18N
+        applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/tick.png"))); // NOI18N
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
-        applyFiltersButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         applyFiltersButton.setPreferredSize(null);
         applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -421,7 +423,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
 
             List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
-                    commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)
+                    commsManager
+                            .getAccountDeviceInstancesWithCommunications(commsFilter)
                             .stream()
                             .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
                             .collect(Collectors.toList());
@@ -431,8 +434,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
 
-        applyFiltersButton.setText("Apply");
-        applyFiltersButton.setIcon(new ImageIcon("org/sleuthkit/autopsy/communications/images/control-double.png"));
+        applyFiltersButton.setText(Bundle.applyText());
+        applyFiltersButton.setIcon(APPLY_ICON);
 
     }
 
