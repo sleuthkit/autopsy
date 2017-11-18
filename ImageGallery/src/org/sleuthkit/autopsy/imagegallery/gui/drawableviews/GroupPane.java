@@ -122,7 +122,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.RedoAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoAction;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
@@ -352,7 +352,7 @@ public class GroupPane extends BorderPane {
         return grouping.getReadOnlyProperty();
     }
     
-    private ToggleButton getToggleForCategory(Category category) {
+    private ToggleButton getToggleForCategory(DhsImageCategory category) {
         switch (category) {
             case ZERO:
                 return cat0Toggle;
@@ -397,7 +397,7 @@ public class GroupPane extends BorderPane {
         assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
         
-        for (Category cat : Category.values()) {
+        for (DhsImageCategory cat : DhsImageCategory.values()) {
             ToggleButton toggleForCategory = getToggleForCategory(cat);
             toggleForCategory.setBorder(new Border(new BorderStroke(cat.getColor(), BorderStrokeStyle.SOLID, CORNER_RADII_2, BORDER_WIDTHS_2)));
             toggleForCategory.getStyleClass().remove("radio-button");
@@ -445,13 +445,13 @@ public class GroupPane extends BorderPane {
             
         });
         
-        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(Category.FIVE, controller);
+        CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(DhsImageCategory.FIVE, controller);
         catSelectedSplitMenu.setOnAction(cat5SelectedAction);
         catSelectedSplitMenu.setText(cat5SelectedAction.getText());
         catSelectedSplitMenu.setGraphic(cat5SelectedAction.getGraphic());
         catSelectedSplitMenu.showingProperty().addListener(showing -> {
             if (catSelectedSplitMenu.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
+                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
                         cat -> GuiUtils.createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
                 catSelectedSplitMenu.getItems().setAll(categoryMenues);
             }
@@ -765,7 +765,7 @@ public class GroupPane extends BorderPane {
                 }
                 ObservableSet<Long> selected = selectionModel.getSelected();
                 if (selected.isEmpty() == false) {
-                    Category cat = keyCodeToCat(t.getCode());
+                    DhsImageCategory cat = keyCodeToCat(t.getCode());
                     if (cat != null) {
                         new CategorizeAction(controller, cat, selected).handle(null);
                     }
@@ -773,27 +773,27 @@ public class GroupPane extends BorderPane {
             }
         }
         
-        private Category keyCodeToCat(KeyCode t) {
+        private DhsImageCategory keyCodeToCat(KeyCode t) {
             if (t != null) {
                 switch (t) {
                     case NUMPAD0:
                     case DIGIT0:
-                        return Category.ZERO;
+                        return DhsImageCategory.ZERO;
                     case NUMPAD1:
                     case DIGIT1:
-                        return Category.ONE;
+                        return DhsImageCategory.ONE;
                     case NUMPAD2:
                     case DIGIT2:
-                        return Category.TWO;
+                        return DhsImageCategory.TWO;
                     case NUMPAD3:
                     case DIGIT3:
-                        return Category.THREE;
+                        return DhsImageCategory.THREE;
                     case NUMPAD4:
                     case DIGIT4:
-                        return Category.FOUR;
+                        return DhsImageCategory.FOUR;
                     case NUMPAD5:
                     case DIGIT5:
-                        return Category.FIVE;
+                        return DhsImageCategory.FIVE;
                 }
             }
             return null;

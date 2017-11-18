@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -154,13 +154,13 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
+        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
         catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
             if (catGroupMenuButton.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
+                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
                         cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }

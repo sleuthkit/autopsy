@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.lang.ref.SoftReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -85,7 +85,7 @@ public abstract class DrawableFile {
 
     private final SimpleBooleanProperty analyzed;
 
-    private final SimpleObjectProperty<Category> category = new SimpleObjectProperty<>(null);
+    private final SimpleObjectProperty<DhsImageCategory> category = new SimpleObjectProperty<>(null);
 
     private String make;
 
@@ -216,17 +216,17 @@ public abstract class DrawableFile {
         return "";
     }
 
-    public void setCategory(Category category) {
+    public void setCategory(DhsImageCategory category) {
         categoryProperty().set(category);
 
     }
 
-    public Category getCategory() {
+    public DhsImageCategory getCategory() {
         updateCategory();
         return category.get();
     }
 
-    public SimpleObjectProperty<Category> categoryProperty() {
+    public SimpleObjectProperty<DhsImageCategory> categoryProperty() {
         return category;
     }
 
@@ -238,9 +238,9 @@ public abstract class DrawableFile {
             category.set(getContentTags().stream()
                     .map(Tag::getName).filter(CategoryManager::isCategoryTagName)
                     .map(TagName::getDisplayName)
-                    .map(Category::fromDisplayName)
+                    .map(DhsImageCategory::fromDisplayName)
                     .sorted().findFirst() //sort by severity and take the first
-                    .orElse(Category.ZERO)
+                    .orElse(DhsImageCategory.ZERO)
             );
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "problem looking up category for " + this.getContentPathSafe(), ex); //NON-NLS

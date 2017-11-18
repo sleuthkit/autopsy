@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -231,7 +231,7 @@ public final class DrawableDB {
 
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
 
-            for (Category cat : Category.values()) {
+            for (DhsImageCategory cat : DhsImageCategory.values()) {
                 insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY);
             }
             initializeImageList();
@@ -1016,7 +1016,7 @@ public final class DrawableDB {
                 case MIME_TYPE:
                     return groupManager.getFileIDsWithMimeType((String) groupKey.getValue());
                 case CATEGORY:
-                    return groupManager.getFileIDsWithCategory((Category) groupKey.getValue());
+                    return groupManager.getFileIDsWithCategory((DhsImageCategory) groupKey.getValue());
                 case TAGS:
                     return groupManager.getFileIDsWithTag((TagName) groupKey.getValue());
             }
@@ -1195,7 +1195,7 @@ public final class DrawableDB {
      *
      * @return the number of the with the given category
      */
-    public long getCategoryCount(Category cat) {
+    public long getCategoryCount(DhsImageCategory cat) {
         try {
             TagName tagName = controller.getTagsManager().getTagName(cat);
             if (nonNull(tagName)) {
@@ -1233,7 +1233,7 @@ public final class DrawableDB {
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
         // get a comma seperated list of TagName ids for non zero categories
-        String catTagNameIDs = Category.getNonZeroCategories().stream()
+        String catTagNameIDs = DhsImageCategory.getNonZeroCategories().stream()
                 .map(tagsManager::getTagName)
                 .map(TagName::getId)
                 .map(Object::toString)
