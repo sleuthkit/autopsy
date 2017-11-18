@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel.tags;
+package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
@@ -38,6 +38,7 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.Bundle;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
@@ -48,7 +49,7 @@ import org.openide.util.NbBundle;
     "Category.four=CAT-4: Exemplar/Comparison (Internal Use Only)",
     "Category.five=CAT-5: Non-pertinent",
     "Category.zero=CAT-0: Uncategorized"})
-public enum Category {
+public enum DhsImageCategory {
 
     /*
      * This order of declaration is required so that Enum's compareTo method
@@ -65,22 +66,21 @@ public enum Category {
     private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
     private static final CornerRadii CORNER_RADII_4 = new CornerRadii(4);
 
-    public static ImmutableList<Category> getNonZeroCategories() {
+    public static ImmutableList<DhsImageCategory> getNonZeroCategories() {
         return nonZeroCategories;
     }
 
-    private static final ImmutableList<Category> nonZeroCategories =
-            ImmutableList.of(Category.FIVE, Category.FOUR, Category.THREE, Category.TWO, Category.ONE);
+    private static final ImmutableList<DhsImageCategory> nonZeroCategories =
+            ImmutableList.of(DhsImageCategory.FIVE, DhsImageCategory.FOUR, DhsImageCategory.THREE, DhsImageCategory.TWO, DhsImageCategory.ONE);
 
     /**
      * map from displayName to enum value
      */
-    private static final Map<String, Category> nameMap =
-            Stream.of(values()).collect(Collectors.toMap(
-                            Category::getDisplayName,
+    private static final Map<String, DhsImageCategory> nameMap =
+            Stream.of(values()).collect(Collectors.toMap(DhsImageCategory::getDisplayName,
                             Function.identity()));
 
-    public static Category fromDisplayName(String displayName) {
+    public static DhsImageCategory fromDisplayName(String displayName) {
         return nameMap.get(displayName);
     }
 
@@ -99,7 +99,7 @@ public enum Category {
     private final int id;
     private Image snapshot;
 
-    private Category(Color color, int id, String name) {
+    private DhsImageCategory(Color color, int id, String name) {
         this.color = color;
         this.displayName = name;
         this.id = id;
