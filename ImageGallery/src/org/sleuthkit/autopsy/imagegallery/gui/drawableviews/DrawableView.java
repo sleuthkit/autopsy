@@ -17,7 +17,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
@@ -38,17 +38,17 @@ public interface DrawableView {
 
     static final Border HASH_BORDER = new Border(new BorderStroke(Color.PURPLE, BorderStrokeStyle.DASHED, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Border CAT1_BORDER = new Border(new BorderStroke(Category.ONE.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    static final Border CAT1_BORDER = new Border(new BorderStroke(DhsImageCategory.ONE.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Border CAT2_BORDER = new Border(new BorderStroke(Category.TWO.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    static final Border CAT2_BORDER = new Border(new BorderStroke(DhsImageCategory.TWO.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Border CAT3_BORDER = new Border(new BorderStroke(Category.THREE.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    static final Border CAT3_BORDER = new Border(new BorderStroke(DhsImageCategory.THREE.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Border CAT4_BORDER = new Border(new BorderStroke(Category.FOUR.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    static final Border CAT4_BORDER = new Border(new BorderStroke(DhsImageCategory.FOUR.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Border CAT5_BORDER = new Border(new BorderStroke(Category.FIVE.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    static final Border CAT5_BORDER = new Border(new BorderStroke(DhsImageCategory.FIVE.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
-    static final Border CAT0_BORDER = new Border(new BorderStroke(Category.ZERO.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
+    static final Border CAT0_BORDER = new Border(new BorderStroke(DhsImageCategory.ZERO.getColor(), BorderStrokeStyle.SOLID, CAT_CORNER_RADII, CAT_BORDER_WIDTHS));
 
     Region getCategoryBorderRegion();
 
@@ -97,7 +97,7 @@ public interface DrawableView {
         }
     }
 
-    static Border getCategoryBorder(Category category) {
+    static Border getCategoryBorder(DhsImageCategory category) {
         if (category != null) {
             switch (category) {
                 case ONE:
@@ -121,14 +121,14 @@ public interface DrawableView {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    default Category updateCategory() {
+    default DhsImageCategory updateCategory() {
         if (getFile().isPresent()) {
-            final Category category = getFile().map(DrawableFile::getCategory).orElse(Category.ZERO);
-            final Border border = hasHashHit() && (category == Category.ZERO) ? HASH_BORDER : getCategoryBorder(category);
+            final DhsImageCategory category = getFile().map(DrawableFile::getCategory).orElse(DhsImageCategory.ZERO);
+            final Border border = hasHashHit() && (category == DhsImageCategory.ZERO) ? HASH_BORDER : getCategoryBorder(category);
             Platform.runLater(() -> getCategoryBorderRegion().setBorder(border));
             return category;
         } else {
-            return Category.ZERO;
+            return DhsImageCategory.ZERO;
         }
     }
 }

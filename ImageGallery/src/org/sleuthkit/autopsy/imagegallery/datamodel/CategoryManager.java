@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -80,13 +80,13 @@ public class CategoryManager {
      * the count related methods go through this cache, which loads initial
      * values from the database if needed.
      */
-    private final LoadingCache<Category, LongAdder> categoryCounts =
+    private final LoadingCache<DhsImageCategory, LongAdder> categoryCounts =
             CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
     /**
      * cached TagNames corresponding to Categories, looked up from
      * autopsyTagManager at initial request or if invalidated by case change.
      */
-    private final LoadingCache<Category, TagName> catTagNameMap =
+    private final LoadingCache<DhsImageCategory, TagName> catTagNameMap =
             CacheBuilder.newBuilder().build(CacheLoader.from(
                             cat -> getController().getTagsManager().getTagName(cat)
                     ));
@@ -119,18 +119,18 @@ public class CategoryManager {
     }
 
     /**
-     * get the number of file with the given {@link Category}
+     * get the number of file with the given {@link DhsImageCategory}
      *
      * @param cat get the number of files with Category = cat
      *
      * @return the number of files with the given Category
      */
-    synchronized public long getCategoryCount(Category cat) {
-        if (cat == Category.ZERO) {
+    synchronized public long getCategoryCount(DhsImageCategory cat) {
+        if (cat == DhsImageCategory.ZERO) {
             // Keeping track of the uncategorized files is a bit tricky while ingest
             // is going on, so always use the list of file IDs we already have along with the
             // other category counts instead of trying to track it separately.
-            long allOtherCatCount = getCategoryCount(Category.ONE) + getCategoryCount(Category.TWO) + getCategoryCount(Category.THREE) + getCategoryCount(Category.FOUR) + getCategoryCount(Category.FIVE);
+            long allOtherCatCount = getCategoryCount(DhsImageCategory.ONE) + getCategoryCount(DhsImageCategory.TWO) + getCategoryCount(DhsImageCategory.THREE) + getCategoryCount(DhsImageCategory.FOUR) + getCategoryCount(DhsImageCategory.FIVE);
             return db.getNumberOfImageFilesInList() - allOtherCatCount;
         } else {
             return categoryCounts.getUnchecked(cat).sum();
@@ -139,24 +139,24 @@ public class CategoryManager {
 
     /**
      * increment the cached value for the number of files with the given
-     * {@link Category}
+     * {@link DhsImageCategory}
      *
      * @param cat the Category to increment
      */
-    synchronized public void incrementCategoryCount(Category cat) {
-        if (cat != Category.ZERO) {
+    synchronized public void incrementCategoryCount(DhsImageCategory cat) {
+        if (cat != DhsImageCategory.ZERO) {
             categoryCounts.getUnchecked(cat).increment();
         }
     }
 
     /**
      * decrement the cached value for the number of files with the given
-     * {@link Category}
+     * {@link DhsImageCategory}
      *
      * @param cat the Category to decrement
      */
-    synchronized public void decrementCategoryCount(Category cat) {
-        if (cat != Category.ZERO) {
+    synchronized public void decrementCategoryCount(DhsImageCategory cat) {
+        if (cat != DhsImageCategory.ZERO) {
             categoryCounts.getUnchecked(cat).decrement();
         }
     }
@@ -171,7 +171,7 @@ public class CategoryManager {
      * @return a LongAdder whose value is set to the number of file with the
      *         given Category
      */
-    synchronized private LongAdder getCategoryCountHelper(Category cat) {
+    synchronized private LongAdder getCategoryCountHelper(DhsImageCategory cat) {
         LongAdder longAdder = new LongAdder();
         longAdder.decrement();
         try {
@@ -188,7 +188,7 @@ public class CategoryManager {
      *
      * @param fileIDs
      */
-    public void fireChange(Collection<Long> fileIDs, Category newCategory) {
+    public void fireChange(Collection<Long> fileIDs, DhsImageCategory newCategory) {
         categoryEventBus.post(new CategoryChangeEvent(fileIDs, newCategory));
     }
 
@@ -231,21 +231,21 @@ public class CategoryManager {
      *
      * @return the TagName used for this Category
      */
-    synchronized public TagName getTagName(Category cat) {
+    synchronized public TagName getTagName(DhsImageCategory cat) {
         return catTagNameMap.getUnchecked(cat);
 
     }
 
-    public static Category categoryFromTagName(TagName tagName) {
-        return Category.fromDisplayName(tagName.getDisplayName());
+    public static DhsImageCategory categoryFromTagName(TagName tagName) {
+        return DhsImageCategory.fromDisplayName(tagName.getDisplayName());
     }
 
     public static boolean isCategoryTagName(TagName tName) {
-        return Category.isCategoryName(tName.getDisplayName());
+        return DhsImageCategory.isCategoryName(tName.getDisplayName());
     }
 
     public static boolean isNotCategoryTagName(TagName tName) {
-        return Category.isNotCategoryName(tName.getDisplayName());
+        return DhsImageCategory.isNotCategoryName(tName.getDisplayName());
 
     }
 
@@ -270,8 +270,8 @@ public class CategoryManager {
             } catch (TskCoreException tskException) {
                 LOGGER.log(Level.SEVERE, "Failed to get content tags for content.  Unable to maintain category in a consistent state.", tskException); //NON-NLS
             }
-            Category newCat = CategoryManager.categoryFromTagName(addedTag.getName());
-            if (newCat != Category.ZERO) {
+            DhsImageCategory newCat = CategoryManager.categoryFromTagName(addedTag.getName());
+            if (newCat != DhsImageCategory.ZERO) {
                 incrementCategoryCount(newCat);
             }
 
@@ -285,8 +285,8 @@ public class CategoryManager {
         TagName tagName = deletedTagInfo.getName();
         if (isCategoryTagName(tagName)) {
 
-            Category deletedCat = CategoryManager.categoryFromTagName(tagName);
-            if (deletedCat != Category.ZERO) {
+            DhsImageCategory deletedCat = CategoryManager.categoryFromTagName(tagName);
+            if (deletedCat != DhsImageCategory.ZERO) {
                 decrementCategoryCount(deletedCat);
             }
             fireChange(Collections.singleton(deletedTagInfo.getContentID()), null);
@@ -301,15 +301,15 @@ public class CategoryManager {
     public static class CategoryChangeEvent {
 
         private final ImmutableSet<Long> fileIDs;
-        private final Category newCategory;
+        private final DhsImageCategory newCategory;
 
-        public CategoryChangeEvent(Collection<Long> fileIDs, Category newCategory) {
+        public CategoryChangeEvent(Collection<Long> fileIDs, DhsImageCategory newCategory) {
             super();
             this.fileIDs = ImmutableSet.copyOf(fileIDs);
             this.newCategory = newCategory;
         }
 
-        public Category getNewCategory() {
+        public DhsImageCategory getNewCategory() {
             return newCategory;
         }
 
