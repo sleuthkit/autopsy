@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.tags.Category;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;

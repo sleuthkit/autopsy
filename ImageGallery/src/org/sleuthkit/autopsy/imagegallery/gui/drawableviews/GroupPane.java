@@ -122,7 +122,7 @@ import org.sleuthkit.autopsy.imagegallery.actions.RedoAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoAction;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.datamodel.tags.Category;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
