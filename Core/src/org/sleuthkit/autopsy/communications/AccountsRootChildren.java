@@ -18,59 +18,56 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
+class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
 
-    private final List<AccountDeviceInstanceKey> accountDeviceInstanceKeys;
+    private static final Logger logger = Logger.getLogger(AccountsRootChildren.class.getName());
+
     private final CommunicationsManager commsManager;
+    private final CommunicationsFilter commsFilter;
 
-    AccountsRootChildren(List<AccountDeviceInstanceKey> accountDeviceInstanceKeys, CommunicationsManager commsManager) {
-        super(true);
-        this.accountDeviceInstanceKeys = accountDeviceInstanceKeys;
+    AccountsRootChildren(CommunicationsManager commsManager, CommunicationsFilter commsFilter) {
+        super();
         this.commsManager = commsManager;
+        this.commsFilter = commsFilter;
     }
 
     @Override
-    protected void removeNotify() {
-        super.removeNotify();
-        setKeys(Collections.emptySet());
+    protected boolean createKeys(List<AccountDeviceInstanceKey> list) {
+        List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
+        try {
+            for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)) {
+                long communicationsCount = commsManager.getCommunicationsCount(adi, commsFilter);
+                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount));
+            };
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "Error getting filtered account device instances", tskCoreException);
+        }
+        list.addAll(accountDeviceInstanceKeys);
+
+        return true;
     }
 
     @Override
-    protected void addNotify() {
-        super.addNotify();
-        setKeys(accountDeviceInstanceKeys);
-    }
-
-    //These are the methods for ChildFactory. I am going to keep them around but commented until we make a final descision.
-    //    @Override
-    //    protected boolean createKeys(List<Account> list) {
-    //        list.addAll(accounts);
-    //        return true;
-    //    }
-    //    
-    //    @Override
-    //    protected Node createNodeForKey(Account key) {
-    //        return new AccountDeviceInstanceNode(key);
-    //    }
-    @Override
-    protected Node[] createNodes(AccountDeviceInstanceKey key) {
-        return new Node[]{new AccountDeviceInstanceNode(key, commsManager)};
+    protected Node createNodeForKey(AccountDeviceInstanceKey key) {
+        return new AccountDeviceInstanceNode(key, commsManager);
     }
 
     /**
@@ -78,22 +75,21 @@ class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
      */
     static class AccountDeviceInstanceNode extends AbstractNode {
 
-        private static final Logger LOGGER = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
-        private final AccountDeviceInstance accountDeviceInstance;
+        private final AccountDeviceInstanceKey accountDeviceInstanceKey;
         private final CommunicationsManager commsManager;
-        private final CommunicationsFilter filter;
+        private final Account account;
 
         private AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
             super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
-            this.accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
+            this.accountDeviceInstanceKey = accountDeviceInstanceKey;
             this.commsManager = commsManager;
-            this.filter = accountDeviceInstanceKey.getCommunicationsFilter();
-            setName(accountDeviceInstance.getAccount().getAccountUniqueID());
-            setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + Utils.getIconFileName(accountDeviceInstance.getAccount().getAccountType()));
+            this.account = accountDeviceInstanceKey.getAccountDeviceInstance().getAccount();
+            setName(account.getAccountUniqueID());
+            setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + Utils.getIconFileName(account.getAccountType()));
         }
 
         public AccountDeviceInstance getAccountDeviceInstance() {
-            return accountDeviceInstance;
+            return accountDeviceInstanceKey.getAccountDeviceInstance();
         }
 
         public CommunicationsManager getCommsManager() {
@@ -101,7 +97,7 @@ class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
         }
 
         public CommunicationsFilter getFilter() {
-            return filter;
+            return accountDeviceInstanceKey.getCommunicationsFilter();
         }
 
         @Override
@@ -116,15 +112,13 @@ class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
                 properties = Sheet.createPropertiesSet();
                 s.put(properties);
             }
-            long msgCount = 0;
-            try {
-                msgCount = commsManager.getCommunicationsCount(accountDeviceInstance, filter );
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Failed to get message count for account", ex); //NON-NLS
-            }
-            properties.put(new NodeProperty<>("type", Bundle.AccountNode_accountType(), "type", accountDeviceInstance.getAccount().getAccountType().getDisplayName())); // NON-NLS
-            properties.put(new NodeProperty<>("count", Bundle.AccountNode_messageCount(), "count", msgCount)); // NON-NLS
-            properties.put(new NodeProperty<>("device", Bundle.AccountNode_device(), "device", accountDeviceInstance.getDeviceId())); // NON-NLS
+
+            properties.put(new NodeProperty<>("type", Bundle.AccountNode_accountType(), "type",
+                    account.getAccountType().getDisplayName())); // NON-NLS
+            properties.put(new NodeProperty<>("count", Bundle.AccountNode_messageCount(), "count",
+                    accountDeviceInstanceKey.getMessageCount())); // NON-NLS
+            properties.put(new NodeProperty<>("device", Bundle.AccountNode_device(), "device",
+                    accountDeviceInstanceKey.getAccountDeviceInstance().getDeviceId())); // NON-NLS
             return s;
         }
     }
