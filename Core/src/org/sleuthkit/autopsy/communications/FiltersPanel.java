@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import java.awt.Cursor;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,10 +33,12 @@ import javax.swing.JCheckBox;
 import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -53,7 +56,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
-//    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
     private ExplorerManager em;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -67,8 +69,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
         endDatePicker.setDateToToday();
         startDatePicker.getSettings().setVetoPolicy(
                 //no end date, or start is before end
-
-       
                 startDate -> endCheckBox.isSelected() == false
                 || startDate.compareTo(endDatePicker.getDate()) <= 0
         );
@@ -77,21 +77,25 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 endDate -> startCheckBox.isSelected() == false
                 || endDate.compareTo(startDatePicker.getDate()) >= 0
         );
- applyFiltersButton.addActionListener(actionEvent -> applyFilters());
 
+        applyFiltersButton.addActionListener(actionEvent -> applyFilters());
     }
 
     /**
      * Update the filter widgets, and apply them.
      */
     void updateAndApplyFilters() {
-        updateAccountTypeFilter();
-        updateDeviceFilter();
+        updateFilters();
         if (em != null) {
             applyFilters();
         }
 
         dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().getId() + "):");
+    }
+
+    private void updateFilters() {
+        updateAccountTypeFilter();
+        updateDeviceFilter();
     }
 
     @Override
@@ -312,10 +316,10 @@ final public class FiltersPanel extends javax.swing.JPanel {
                         .addComponent(startCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                         .addComponent(endCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(0, 0, 0))
         );
         jPanel4Layout.setVerticalGroup(
@@ -377,16 +381,18 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+
+            getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             new SwingWorker<AbstractNode, Void>() {
                 @Override
                 protected AbstractNode doInBackground() throws Exception {
-                    List<AccountDeviceInstanceKey> accountDeviceInstanceKeys =
-                            commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)
-                                    .stream()
-                                    .map(adi -> new AccountDeviceInstanceKey(adi, commsFilter))
-                                    .collect(Collectors.toList());
-                    return new AbstractNode(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager));
+                    List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
+                    for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)) {
+                        long communicationsCount = commsManager.getCommunicationsCount(adi, commsFilter);
+                        accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount));
+                    };
+                    return new AbstractNode(Children.create(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager), true));
                 }
 
                 @Override
@@ -394,6 +400,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                     super.done(); //To change body of generated methods, choose Tools | Templates.
 
                     setCursor(Cursor.getDefaultCursor());
+                    getRootPane().setCursor(Cursor.getDefaultCursor());
                     try {
                         em.setRootContext(get());
                     } catch (InterruptedException | ExecutionException ex) {

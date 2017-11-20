@@ -18,17 +18,23 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Cursor;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 
@@ -39,6 +45,8 @@ import org.sleuthkit.datamodel.CommunicationsManager;
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+
+    private static final Logger logger = Logger.getLogger(MessageBrowser.class.getName());
 
     private final DataResultPanel messagesResultPanel;
     private final ExplorerManager explorerManager = new ExplorerManager();
@@ -84,8 +92,29 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                                 .collect(Collectors.toSet());
                         messagesResultPanel.setPath(selectedNodes.length + " accounts");
                     }
-                    messagesResultPanel.setNode(new TableFilterNode(
-                            new AccountDetailsNode(collect, filter, commsManager), true));
+                    messagesResultPanel.setNumMatches(0);
+                    messagesResultPanel.setNode(null);
+                    getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    new SwingWorker<Set<BlackboardArtifact>, Void>() {
+                        @Override
+                        protected Set<BlackboardArtifact> doInBackground() throws Exception {
+                            return commsManager.getCommunications(collect, filter);
+                        }
+
+                        @Override
+                        protected void done() {
+                            super.done(); //To change body of generated methods, choose Tools | Templates.
+                            try {
+                                messagesResultPanel.setNode(new TableFilterNode(
+                                        new AccountDetailsNode(get(), filter, commsManager), true));
+                            } catch (InterruptedException | ExecutionException ex) {
+                                logger.log(Level.SEVERE, "Error getting relationships", ex);
+                            }
+                            getRootPane().setCursor(Cursor.getDefaultCursor());
+
+                        }
+                    }.execute();
+
                 }
             }
         });
