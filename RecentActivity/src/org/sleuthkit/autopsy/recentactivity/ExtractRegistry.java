@@ -649,14 +649,15 @@ class ExtractRegistry extends Extract {
                                             String homeDir = value;
                                             String sid = artnode.getAttribute("sid"); //NON-NLS
                                             String username = artnode.getAttribute("username"); //NON-NLS
-
                                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                            bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                                                     parentModuleName, username));
-                                            bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
                                                     parentModuleName, sid));
-                                            bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                     parentModuleName, homeDir));
+                                            
+                                            bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);
                                         } catch (TskCoreException ex) {
@@ -669,10 +670,11 @@ class ExtractRegistry extends Extract {
                                             String localPath = artnode.getAttribute("localPath"); //NON-NLS
                                             String remoteName = value;
                                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_REMOTE_DRIVE);
-                                            bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCAL_PATH,
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCAL_PATH,
                                                     parentModuleName, localPath));
-                                            bbart.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH,
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REMOTE_PATH,
                                                     parentModuleName, remoteName));
+                                            bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);
                                         } catch (TskCoreException ex) {

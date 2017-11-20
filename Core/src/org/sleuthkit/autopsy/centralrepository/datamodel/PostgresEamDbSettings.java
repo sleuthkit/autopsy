@@ -24,6 +24,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -45,6 +47,7 @@ public final class PostgresEamDbSettings {
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_USERNAME = "";
     private final String DEFAULT_PASSWORD = "";
+    private final String DEFAULT_BAD_TAGS = "Evidence"; // NON-NLS
     private final String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
     private final String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
     private final String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
@@ -56,6 +59,7 @@ public final class PostgresEamDbSettings {
     private int bulkThreshold;
     private String userName;
     private String password;
+    private List<String> badTags;
 
     public PostgresEamDbSettings() {
         loadSettings();
@@ -116,6 +120,16 @@ public final class PostgresEamDbSettings {
                 password = DEFAULT_PASSWORD;
             }
         }
+
+        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+        if (badTagsStr == null) {
+            badTagsStr = DEFAULT_BAD_TAGS;
+        }
+        if(badTagsStr.isEmpty()){
+            badTags = new ArrayList<>();
+        } else {
+            badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
+        }
     }
 
     public void saveSettings() {
@@ -129,6 +143,8 @@ public final class PostgresEamDbSettings {
         } catch (TextConverterException ex) {
             LOGGER.log(Level.SEVERE, "Failed to convert password from text to hex text.", ex);
         }
+
+        ModuleSettings.setConfigSetting("CentralRepository", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
 
     /**
@@ -354,6 +370,8 @@ public final class PostgresEamDbSettings {
         createReferenceSetsTable.append("org_id integer NOT NULL,");
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
+        createReferenceSetsTable.append("known_status integer NOT NULL,");
+        createReferenceSetsTable.append("read_only boolean NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
         createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createReferenceSetsTable.append("CONSTRAINT hash_set_unique UNIQUE (set_name, version)");
@@ -613,6 +631,20 @@ public final class PostgresEamDbSettings {
             throw new EamDbException("Invalid user password. Cannot be empty."); // NON-NLS
         }
         this.password = password;
+    }
+
+    /**
+     * @return the badTags
+     */
+    public List<String> getBadTags() {
+        return badTags;
+    }
+
+    /**
+     * @param badTags the badTags to set
+     */
+    public void setBadTags(List<String> badTags) {
+        this.badTags = badTags;
     }
 
     /**

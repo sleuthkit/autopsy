@@ -40,6 +40,7 @@ from java.lang import Class
 from java.lang import System
 from java.sql  import DriverManager, SQLException
 from java.util.logging import Level
+from java.util import ArrayList
 from java.io import File
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
@@ -162,17 +163,18 @@ class ContactsDbIngestModule(DataSourceIngestModule):
                 
                 # Make an artifact on the blackboard, TSK_CONTACT and give it attributes for each of the fields
                 art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-                
-                art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(), 
+                attributes = ArrayList()
+
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, name))
                 
-                art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), 
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, email))
 
-                art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), 
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), 
                     ContactsDbIngestModuleFactory.moduleName, phone))
-
-
+                
+                art.addAttributes(attributes)
                 try:
                     # index the artifact for keyword search
                     blackboard.indexArtifact(art)

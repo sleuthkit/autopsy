@@ -27,6 +27,7 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -118,6 +119,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n"
                     + "ORDER BY raw_contacts.display_name ASC;")
 
+            attributes = ArrayList()
             artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
             oldName = ""
             while resultSet.next():
@@ -126,14 +128,15 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 mimetype = resultSet.getString("mimetype") # either phone or email
                 if name != oldName:
                     artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
                 if mimetype == "vnd.android.cursor.item/phone_v2":
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, general.MODULE_NAME, data1))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, general.MODULE_NAME, data1))
                 else:
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
 
                 oldName = name
 
+                artifact.addAttributes(attributes)
                 bbartifacts.append(artifact)
 
                 try:
