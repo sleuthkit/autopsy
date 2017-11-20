@@ -215,13 +215,13 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 // if the Tags.Properties file is up to date parse it
                 tagNames.addAll(readCurrentTagPropertiesFile(tagNameTuples, standardTags));
             }
-            //create standard tags which should always exist which were not already created for whatever reason, such as upgrade
-            for (String standardTagName : standardTags) {
-                if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
-                    tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
-                } else {
-                    tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
-                }
+        }
+        //create standard tags which should always exist which were not already created for whatever reason, such as upgrade
+        for (String standardTagName : standardTags) {
+            if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
+                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
+            } else {
+                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
             }
         }
         return tagNames;
