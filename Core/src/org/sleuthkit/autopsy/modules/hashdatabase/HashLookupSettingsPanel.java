@@ -335,6 +335,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         } else {
             try {
                 hashSetManager.save();
+                newReferenceSetIDs.clear();
             } catch (HashDbManager.HashDbManagerException ex) {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
