@@ -66,7 +66,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
         splitPane.setDividerLocation(400);
-        splitPane.setResizeWeight(0.3);
+        splitPane.setResizeWeight(0.7);
 
         BrowseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
@@ -95,18 +95,19 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 246, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1344, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 251, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1332, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(splitPane)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(splitPane))
                     .addComponent(filtersPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(5, 5, 5))
         );
