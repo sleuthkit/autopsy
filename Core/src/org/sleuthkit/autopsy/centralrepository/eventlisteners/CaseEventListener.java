@@ -319,7 +319,7 @@ final class CaseEventListener implements PropertyChangeListener {
              * that are tagged with the given tag name.
              */
             try {
-                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get((String) event.getNewValue());
+                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(modifiedTagName);
                 // First find any matching artifacts
                 List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
                 for (BlackboardArtifactTag bbTag : artifactTags) {
@@ -382,9 +382,9 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Cannot update known status in central repository");  //NON-NLS
+                LOGGER.log(Level.SEVERE, "Cannot update known status in central repository for tag: " + modifiedTagName, ex);  //NON-NLS
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Cannot get central repository");  //NON-NLS
+                LOGGER.log(Level.SEVERE, "Cannot get central repository for tag: " + modifiedTagName, ex);  //NON-NLS
             }
         } //TAG_STATUS_CHANGED
     }
