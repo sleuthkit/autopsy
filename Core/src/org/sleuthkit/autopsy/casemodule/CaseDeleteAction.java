@@ -33,7 +33,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -45,13 +44,16 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class CaseDeleteAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(CaseDeleteAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CaseDeleteAction.class.getName());
 
     CaseDeleteAction() {
         putValue(Action.NAME, NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction"));
         this.setEnabled(false);
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
-            setEnabled(null != evt.getNewValue() && UserPreferences.getMode() != UserPreferences.SelectedMode.REVIEW);
+            /*
+             * A value of 'null' signifies that there is no case open.
+             */
+            setEnabled(null != evt.getNewValue());
         });
     }
 
@@ -93,7 +95,7 @@ final class CaseDeleteAction extends CallableSystemAction {
                         try {
                             get();
                         } catch (InterruptedException | ExecutionException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
+                            LOGGER.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
                             JOptionPane.showMessageDialog(
                                     null,
                                     Bundle.Case_deleteCaseFailureMessageBox_message(ex.getLocalizedMessage()),
@@ -108,7 +110,7 @@ final class CaseDeleteAction extends CallableSystemAction {
                 }.execute();
             }
         } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "Case delete action called with no current case", ex);
+            LOGGER.log(Level.SEVERE, "Case delete action called with no current case", ex);
         }
     }
 

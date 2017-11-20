@@ -26,8 +26,8 @@ import java.io.IOException;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Ingest job settings for the hash lookup module.
@@ -42,7 +42,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     private boolean shouldCalculateHashes = true;
     private List<HashDbInfo> databaseInfoList;
 
-    HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDatabase> hashDbList){
+    HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDb> hashDbList){
         this.shouldCalculateHashes = shouldCalculateHashes;
         try{
             databaseInfoList = HashLookupSettings.convertHashSetList(hashDbList);
@@ -76,12 +76,12 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param disabledHashSets    A list of disabled hash sets.
      */
     HashLookupModuleSettings(boolean shouldCalculateHashes,
-            List<HashDatabase> enabledHashSets,
-            List<HashDatabase> disabledHashSets) {
+            List<HashDb> enabledHashSets,
+            List<HashDb> disabledHashSets) {
         this.shouldCalculateHashes = shouldCalculateHashes;
         
         databaseInfoList = new ArrayList<>();
-        for(HashDatabase db:enabledHashSets){
+        for(HashDb db:enabledHashSets){
             try{
                 HashDbInfo dbInfo = new HashDbInfo(db);
                 dbInfo.setSearchDuringIngest(true);
@@ -90,7 +90,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
                 Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings for " + db.getHashSetName(), ex); //NON-NLS
             }
         }
-        for(HashDatabase db:disabledHashSets){
+        for(HashDb db:disabledHashSets){
             try{
                 HashDbInfo dbInfo = new HashDbInfo(db);
                 dbInfo.setSearchDuringIngest(false);
@@ -128,15 +128,15 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      *
      * @return True if the hash set is enabled, false otherwise.
      */
-    boolean isHashSetEnabled(HashDatabase db) {
+    boolean isHashSetEnabled(HashDb db) {
         for(HashDbInfo dbInfo:databaseInfoList){
             if(dbInfo.matches(db)){
                 return dbInfo.getSearchDuringIngest();
             }
         }
         
-        // We didn't find it, so use the default value
-        return db.getDefaultSearchDuringIngest();
+        // We didn't find it, so use whatever default value is in the HashDb object
+        return db.getSearchDuringIngest();
     }
 
     /**
@@ -150,7 +150,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         }
         
         try{
-            databaseInfoList = HashLookupSettings.convertHashSetList(HashDbManager.getInstance().getAllHashDatabases());
+            databaseInfoList = HashLookupSettings.convertHashSetList(HashDbManager.getInstance().getAllHashSets());
         } catch (HashLookupSettings.HashLookupSettingsException ex){
             Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error updating hash database settings.", ex); //NON-NLS
             return;

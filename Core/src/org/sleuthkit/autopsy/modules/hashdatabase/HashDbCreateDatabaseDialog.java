@@ -34,13 +34,14 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -54,7 +55,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     private static final String DEFAULT_FILE_NAME = NbBundle
             .getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.defaultFileName");
     private JFileChooser fileChooser = null;
-    private HashDatabase newHashDb = null;
+    private HashDb newHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbCreate_Path";
     private EamOrganization selectedOrg = null;
     private List<EamOrganization> orgs = null;
@@ -77,7 +78,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
      *
      * @return A HashDb object or null.
      */
-    HashDatabase getHashDatabase() {
+    HashDb getHashDatabase() {
         return newHashDb;
     }
 
@@ -474,9 +475,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
         String errorMessage = NbBundle
                 .getMessage(this.getClass(), "HashDbCreateDatabaseDialog.errMsg.hashDbCreationErr");
+
         if(fileTypeRadioButton.isSelected()){
             try {
-                newHashDb = HashDbManager.getInstance().addNewFileTypeHashDatabase(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
+                newHashDb = HashDbManager.getInstance().addNewHashDatabaseNoSave(hashSetNameTextField.getText(), fileChooser.getSelectedFile().getCanonicalPath(), true, sendIngestMessagesCheckbox.isSelected(), type);
             } catch (IOException ex) {
                 Logger.getLogger(HashDbCreateDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
                 JOptionPane.showMessageDialog(this,
@@ -519,10 +521,10 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             }
             
             try{
-                int crIndex = EamDb.getInstance().newReferenceSet(selectedOrg.getOrgID(), hashSetNameTextField.getText(),  
-                        EamDb.getDefaultVersion(), fileKnown, false);
+                int referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(selectedOrg.getOrgID(), hashSetNameTextField.getText(),  
+                        EamDb.getDefaultVersion(), fileKnown, false));
                 newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetNameTextField.getText(), 
-                        EamDb.getDefaultVersion(), crIndex, 
+                        EamDb.getDefaultVersion(), referenceSetID, 
                         true, sendIngestMessagesCheckbox.isSelected(), type, false);
             } catch (EamDbException | TskCoreException ex){
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error creating new reference set", ex);

@@ -636,7 +636,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
-     * Remove a reference set and all hashes contained in it.
+     * Remove a reference set and all values contained in it.
      * @param referenceSetID
      * @throws EamDbException 
      */
@@ -657,27 +657,28 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return true if the hash is found in the reference set
      */
     @Override
-    public boolean isHashInReferenceSet(String hash, int referenceSetID) throws EamDbException{
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.isHashInReferenceSet(hash, referenceSetID);
+            return super.isValueInReferenceSet(value, referenceSetID, correlationTypeID);
         } finally {
             releaseSharedLock();
         }          
     }
     
     /**
-     * Check whether a reference set with the given name/version is in the central repo
-     * @param hashSetName
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
      * @param version
      * @return true if a matching set is found
      * @throws EamDbException 
      */
     @Override
-    public boolean referenceSetExists(String hashSetName, String version) throws EamDbException {
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.referenceSetExists(hashSetName, version);
+            return super.referenceSetExists(referenceSetName, version);
         } finally {
             releaseSharedLock();
         }  
@@ -692,10 +693,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
         try{
             acquireSharedLock();
-            return super.isArtifactlKnownBadByReference(aType, value);
+            return super.isArtifactKnownBadByReference(aType, value);
         } finally {
             releaseSharedLock();
         }      
@@ -785,10 +786,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         try{
             acquireExclusiveLock();
-            return super.newReferencelSet(eamGlobalSet);
+            return super.newReferenceSet(eamGlobalSet);
         } finally {
             releaseExclusiveLock();
         }     

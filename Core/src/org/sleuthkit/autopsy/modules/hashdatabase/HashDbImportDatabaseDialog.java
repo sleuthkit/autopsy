@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -52,7 +52,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
     private JFileChooser fileChooser = new JFileChooser();
     private String selectedFilePath = "";
-    private HashDatabase selectedHashDb = null;
+    private HashDb selectedHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
     private EamOrganization selectedOrg = null;
     private List<EamOrganization> orgs = null;
@@ -77,7 +77,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
      *
      * @return A HashDb object or null.
      */
-    HashDatabase getHashDatabase() {
+    HashDb getHashDatabase() {
         return selectedHashDb;
     }
 
@@ -518,7 +518,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         if(fileTypeRadioButton.isSelected()){
 
             try {
-                selectedHashDb = HashDbManager.getInstance().addExistingFileTypeHashDatabase(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
+                selectedHashDb = HashDbManager.getInstance().addExistingHashDatabaseNoSave(hashSetNameTextField.getText(), selectedFilePath, true, sendIngestMessagesCheckbox.isSelected(), type);
             } catch (HashDbManagerException ex) {
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
                 JOptionPane.showMessageDialog(this,

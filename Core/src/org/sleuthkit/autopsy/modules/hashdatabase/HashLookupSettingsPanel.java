@@ -45,11 +45,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SleuthkitHashSet;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashSet;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 /**
  * Instances of this class provide a comprehensive UI for managing the hash sets
@@ -65,7 +65,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.errorGettingIndexStatusText");
     private final HashDbManager hashSetManager = HashDbManager.getInstance();
     private final HashSetTableModel hashSetTableModel = new HashSetTableModel();
-    private final List<CentralRepoHashDb> newReferenceSets = new ArrayList<>();
+    private final List<Integer> newReferenceSetIDs = new ArrayList<>();
 
     public HashLookupSettingsPanel() {
         initComponents();
@@ -108,7 +108,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     private void updateComponents() {
-        HashDatabase db = ((HashSetTable) hashSetTable).getSelection();
+        HashDb db = ((HashSetTable) hashSetTable).getSelection();
         if (db != null) {
             updateComponentsForSelection(db);
         } else {
@@ -157,7 +157,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         "HashLookupSettingsPanel.notApplicable=N/A",
         "HashLookupSettingsPanel.centralRepo=Central Repository"
     })
-    private void updateComponentsForSelection(HashDatabase db) {
+    private void updateComponentsForSelection(HashDb db) {
         boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
 
         // Update descriptive labels.        
@@ -180,8 +180,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             addHashesToDatabaseButton.setEnabled(false);
         }
 
-        if(db instanceof HashDb){
-            HashDb hashDb = (HashDb)db;
+        if(db instanceof SleuthkitHashSet){
+            SleuthkitHashSet hashDb = (SleuthkitHashSet)db;
             
             // Disable the central repo fields
             hashDbVersionLabel.setText(Bundle.HashLookupSettingsPanel_notApplicable());
@@ -253,7 +253,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             indexButton.setEnabled(false);
             deleteDatabaseButton.setEnabled(false);
             
-            CentralRepoHashDb crDb = (CentralRepoHashDb)db;
+            CentralRepoHashSet crDb = (CentralRepoHashSet)db;
 
             hashDbVersionLabel.setText(crDb.getVersion());
             hashDbOrgLabel.setText(crDb.getOrgName());
@@ -302,15 +302,19 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     @Override
     @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
-    public void saveSettings() {       
+    public void saveSettings() {     
+        // Clear out the list of new central repo hash sets. They don't need to be
+        // indexed so will all be saved on both code paths.
+        newReferenceSetIDs.clear();
+        
         //Checking for for any unindexed databases
-        List<HashDb> unindexed = new ArrayList<>();
-        for (HashDatabase hashSet : hashSetManager.getAllHashDatabases()) {
-            if(hashSet instanceof HashDb){
-                HashDb db = (HashDb)hashSet;
+        List<SleuthkitHashSet> unindexed = new ArrayList<>();
+        for (HashDb db : hashSetManager.getAllHashSets()) {
+            if(db instanceof SleuthkitHashSet){
                 try {
-                    if (!db.hasIndex()) {
-                        unindexed.add(db);
+                    SleuthkitHashSet hashDatabase = (SleuthkitHashSet)db;
+                    if (!hashDatabase.hasIndex()) {
+                        unindexed.add(hashDatabase);
                     }
                 } catch (TskCoreException ex) {
                     Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
@@ -318,21 +322,28 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
 
-        //If unindexed ones are found, show a popup box that will either index them, or remove them.
-        if (unindexed.size() == 1) {
-            showInvalidIndex(false, unindexed);
-        } else if (unindexed.size() > 1) {
-            showInvalidIndex(true, unindexed);
-        }
-        
-        try {
-            hashSetManager.save();
-            HashDbManager.getInstance().saveNewCentralRepoDatabases(newReferenceSets);
-            newReferenceSets.clear();
-        } catch (HashDbManager.HashDbManagerException ex) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+        // If there are unindexed databases, give the user the option to index them now. This
+        // needs to be on the EDT, and will save the hash settings after completing
+        if(! unindexed.isEmpty()){
+            SwingUtilities.invokeLater(new Runnable(){
+                @Override
+                public void run(){
+                    //If unindexed ones are found, show a popup box that will either index them, or remove them.
+                    if (unindexed.size() == 1) {
+                        showInvalidIndex(false, unindexed);
+                    } else if (unindexed.size() > 1) {
+                        showInvalidIndex(true, unindexed);
+                    }
+                }
             });
+        } else {
+            try {
+                hashSetManager.save();
+            } catch (HashDbManager.HashDbManagerException ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+                });
+            }
         }
     }
 
@@ -355,10 +366,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
             // Remove any new central repo hash sets from the database
-            for(CentralRepoHashDb db:newReferenceSets){
+            for(Integer referenceSetID:newReferenceSetIDs){
                 try{
                     if(EamDb.isEnabled()){
-                        EamDb.getInstance().deleteReferenceSet(db.getReferenceSetID());
+                        EamDb.getInstance().deleteReferenceSet(referenceSetID);
                     } else {
                         // This is the case where the user imported a database, then switched over to the central
                         // repo panel and disabled it before cancelling. We can't delete the database at this point.
@@ -368,15 +379,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error reverting central repository hash sets", ex); //NON-NLS
                 }
             }
-            newReferenceSets.clear();
+            newReferenceSetIDs.clear();
             
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
     }
 
     @Messages({"# {0} - hash lookup name", "HashLookupSettingsPanel.removeDatabaseFailure.message=Failed to remove hash lookup: {0}"})
-    void removeThese(List<HashDb> toRemove) {
-        for (HashDb hashDb : toRemove) {
+    void removeThese(List<SleuthkitHashSet> toRemove) {
+        for (SleuthkitHashSet hashDb : toRemove) {
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
             } catch (HashDbManager.HashDbManagerException ex) {
@@ -394,10 +405,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
-    private void showInvalidIndex(boolean plural, List<HashDb> unindexed) {
+    private void showInvalidIndex(boolean plural, List<SleuthkitHashSet> unindexed) {
         String total = "";
         String message;
-        for (HashDatabase hdb : unindexed) {
+        for (HashDb hdb : unindexed) {
             total += "\n" + hdb.getHashSetName();
         }
         if (plural) {
@@ -420,6 +431,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(),
                     "HashDbConfigPanel.allUnindexedDbsRmFromListMsg"));
             removeThese(unindexed);
+        }
+        try {
+            hashSetManager.save();
+        } catch (HashDbManager.HashDbManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -450,7 +466,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             return cellRenderer;
         }
 
-        public HashDatabase getSelection() {
+        public HashDb getSelection() {
             return hashSetTableModel.getHashSetAt(getSelectionModel().getMinSelectionIndex());
         }
 
@@ -460,7 +476,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
         
-        public void selectRowByDatabase(HashDatabase db){
+        public void selectRowByDatabase(HashDb db){
             setSelection(hashSetTableModel.getIndexByDatabase(db));
         }
 
@@ -476,7 +492,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      */
     private class HashSetTableModel extends AbstractTableModel {
 
-        List<HashDatabase> hashSets = HashDbManager.getInstance().getAllHashDatabases();
+        List<HashDb> hashSets = HashDbManager.getInstance().getAllHashSets();
 
         @Override
         public int getColumnCount() {
@@ -523,7 +539,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             return getValueAt(0, c).getClass();
         }
 
-        HashDatabase getHashSetAt(int index) {
+        HashDb getHashSetAt(int index) {
             if (!hashSets.isEmpty() && index >= 0 && index < hashSets.size()) {
                 return hashSets.get(index);
             } else {
@@ -531,7 +547,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
 
-        int getIndexByDatabase(HashDatabase db){
+        int getIndexByDatabase(HashDb db){
             for (int i = 0; i < hashSets.size(); ++i) {
                 if (hashSets.get(i).equals(db)) {
                     return i;
@@ -551,7 +567,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
 
         void refreshModel() {
-            hashSets = HashDbManager.getInstance().refreshAndGetAllHashDatabases();
+            hashSets = HashDbManager.getInstance().getAllHashSets();
             refreshDisplay();
         }
 
@@ -915,16 +931,16 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     private void addHashesToDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addHashesToDatabaseButtonActionPerformed
 
-        HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
+        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         AddHashValuesToDatabaseDialog dialog = new AddHashValuesToDatabaseDialog(hashDb);
     }//GEN-LAST:event_addHashesToDatabaseButtonActionPerformed
 
     private void createDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createDatabaseButtonActionPerformed
-        HashDatabase hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
+        HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
-            if(hashDb instanceof CentralRepoHashDb){
-                CentralRepoHashDb crDb = (CentralRepoHashDb)hashDb;
-                newReferenceSets.add(crDb);
+            if(hashDb instanceof CentralRepoHashSet){
+                int newDbIndex = ((CentralRepoHashSet)hashDb).getReferenceSetID();
+                newReferenceSetIDs.add(newDbIndex);
             }
             
             hashSetTableModel.refreshModel();
@@ -934,7 +950,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_createDatabaseButtonActionPerformed
 
     private void sendIngestMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendIngestMessagesCheckBoxActionPerformed
-        HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
+        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         if (hashDb != null) {
             hashDb.setSendIngestMessages(sendIngestMessagesCheckBox.isSelected());
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -942,18 +958,18 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_sendIngestMessagesCheckBoxActionPerformed
 
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
-        final HashDatabase hashDatabase = ((HashSetTable) hashSetTable).getSelection();
+        final HashDb hashDatabase = ((HashSetTable) hashSetTable).getSelection();
         assert hashDatabase != null;
-        assert hashDatabase instanceof HashDb;
+        assert hashDatabase instanceof SleuthkitHashSet;
 
         // Add a listener for the INDEXING_DONE event. This listener will update
         // the UI.
-        HashDb hashDb = (HashDb)hashDatabase;
+        SleuthkitHashSet hashDb = (SleuthkitHashSet)hashDatabase;
         hashDb.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(HashDb.Event.INDEXING_DONE.toString())) {
-                    HashDatabase selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
+                if (evt.getPropertyName().equals(SleuthkitHashSet.Event.INDEXING_DONE.toString())) {
+                    HashDb selectedHashDb = ((HashSetTable) hashSetTable).getSelection();
                     if (selectedHashDb != null && hashDb != null && hashDb.equals(selectedHashDb)) {
                         updateComponents();
                     }
@@ -974,11 +990,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void importDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importDatabaseButtonActionPerformed
-        HashDatabase hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
+        HashDb hashDb = new HashDbImportDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
-            if(hashDb instanceof CentralRepoHashDb){
-                CentralRepoHashDb crDb = (CentralRepoHashDb)hashDb;
-                newReferenceSets.add(crDb);
+            if(hashDb instanceof CentralRepoHashSet){
+                int newReferenceSetID = ((CentralRepoHashSet)hashDb).getReferenceSetID();
+                newReferenceSetIDs.add(newReferenceSetID);
             }
             
             hashSetTableModel.refreshModel();
@@ -995,7 +1011,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
-        HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
+        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
         if (hashDb != null) {
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
@@ -1010,7 +1026,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     private void hashSetTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_hashSetTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
-            HashDatabase hashDb = ((HashSetTable) hashSetTable).getSelection();
+            HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
             if (hashDb != null) {
                 try {
                     hashSetManager.removeHashDatabaseNoSave(hashDb);

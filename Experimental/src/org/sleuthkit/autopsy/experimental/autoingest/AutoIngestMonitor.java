@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingSta
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
  */
-public final class AutoIngestMonitor extends Observable implements PropertyChangeListener {
+final class AutoIngestMonitor extends Observable implements PropertyChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(AutoIngestMonitor.class.getName());
     private static final int NUM_COORD_SVC_QUERY_THREADS = 1;
@@ -265,11 +265,15 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     }
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unexpected interrupt while retrieving coordination service node data for '%s'", node), ex);
-                } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJob.AutoIngestJobException ex) {
+                } catch (AutoIngestJobNodeData.InvalidDataException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unable to use node data for '%s'", node), ex);
+                } catch (AutoIngestJob.AutoIngestJobException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to create a job for '%s'", node), ex);
                 }
             }
+            
             return newJobsSnapshot;
+            
         } catch (CoordinationServiceException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
             return new JobsSnapshot();

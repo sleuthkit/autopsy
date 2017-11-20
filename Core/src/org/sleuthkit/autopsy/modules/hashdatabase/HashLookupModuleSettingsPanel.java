@@ -30,8 +30,8 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDatabase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 
 
 /**
@@ -53,18 +53,13 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void initializeHashSetModels(HashLookupModuleSettings settings) {
-        try{
-            hashDbManager.updateHashSetsFromCentralRepository();
-        } catch (TskCoreException ex){
-            Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error updating central repository hash sets", ex); //NON-NLS
-        }
-        initializeHashSetModels(settings, hashDbManager.getKnownFileHashDatabases(), knownHashSetModels);
-        initializeHashSetModels(settings, hashDbManager.getNotableFileHashDatabases(), knownBadHashSetModels);
+        initializeHashSetModels(settings, validSetsOnly(hashDbManager.getKnownFileHashSets()), knownHashSetModels);
+        initializeHashSetModels(settings, validSetsOnly(hashDbManager.getKnownBadFileHashSets()), knownBadHashSetModels);
     }
 
-    private void initializeHashSetModels(HashLookupModuleSettings settings, List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
+    private void initializeHashSetModels(HashLookupModuleSettings settings, List<HashDb> hashDbs, List<HashSetModel> hashSetModels) {
         hashSetModels.clear();
-        for (HashDatabase db : hashDbs) {
+        for (HashDb db : hashDbs) {
             hashSetModels.add(new HashSetModel(db, settings.isHashSetEnabled(db), isHashDbValid(db)));
         }
     }
@@ -105,15 +100,15 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        List<HashDatabase> enabledHashSets = new ArrayList<>();
-        List<HashDatabase> disabledHashSets = new ArrayList<>();
+        List<HashDb> enabledHashSets = new ArrayList<>();
+        List<HashDb> disabledHashSets = new ArrayList<>();
         addHashSets(knownHashSetModels, enabledHashSets, disabledHashSets);
         addHashSets(knownBadHashSetModels, enabledHashSets, disabledHashSets);
         return new HashLookupModuleSettings(alwaysCalcHashesCheckbox.isSelected(),
                 enabledHashSets, disabledHashSets);
     }
 
-    private void addHashSets(List<HashSetModel> hashSetModels, List<HashDatabase> enabledHashSets, List<HashDatabase> disabledHashSets) {
+    private void addHashSets(List<HashSetModel> hashSetModels, List<HashDb> enabledHashSets, List<HashDb> disabledHashSets) {
         for (HashSetModel model : hashSetModels) {
             if (model.isEnabled() && model.isValid()) {
                 enabledHashSets.add(model.getDatabase());
@@ -130,19 +125,33 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void updateHashSetModels() {
-        updateHashSetModels(hashDbManager.getKnownFileHashDatabases(), knownHashSetModels);
-        updateHashSetModels(hashDbManager.getNotableFileHashDatabases(), knownBadHashSetModels);
+        updateHashSetModels(validSetsOnly(hashDbManager.getKnownFileHashSets()), knownHashSetModels);
+        updateHashSetModels(validSetsOnly(hashDbManager.getKnownBadFileHashSets()), knownBadHashSetModels);
+    }
+    
+    private List<HashDb> validSetsOnly(List<HashDb> hashDbs){
+        List<HashDb> validDbs = new ArrayList<>();
+        for(HashDb db:hashDbs){
+            try{
+                if(db.isValid()){
+                    validDbs.add(db);
+                }
+            } catch (TskCoreException ex){
+                Logger.getLogger(HashLookupModuleSettingsPanel.class.getName()).log(Level.SEVERE, "Error checking validity for hash set (name = " + db.getHashSetName() + ")", ex); //NON-NLS
+            }
+        }
+        return validDbs;
     }
 
-    void updateHashSetModels(List<HashDatabase> hashDbs, List<HashSetModel> hashSetModels) {
+    void updateHashSetModels(List<HashDb> hashDbs, List<HashSetModel> hashSetModels) {
         
-        List<HashDatabase> hashDatabases = new ArrayList<>(hashDbs);
+        List<HashDb> hashDatabases = new ArrayList<>(hashDbs);
         
         // Update the hash sets and detect deletions.
         List<HashSetModel> deletedHashSetModels = new ArrayList<>();
         for (HashSetModel model : hashSetModels) {
             boolean foundDatabase = false;
-            for(HashDatabase db : hashDatabases){
+            for(HashDb db : hashDatabases){
                 if(model.getDatabase().equals(db)){
                     model.setValid(isHashDbValid(db));
                     hashDatabases.remove(db);
@@ -161,7 +170,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         }
 
         // Add any new hash sets. All new sets are enabled by default.
-        for (HashDatabase db : hashDatabases) {
+        for (HashDb db : hashDatabases) {
             hashSetModels.add(new HashSetModel(db, true, isHashDbValid(db)));
         }
     }
@@ -173,7 +182,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
         knownBadHashSetsTableModel.fireTableDataChanged();
     }
 
-    private boolean isHashDbValid(HashDatabase hashDb) {
+    private boolean isHashDbValid(HashDb hashDb) {
         boolean isValid = false;
         try {
             isValid = hashDb.isValid();
@@ -185,17 +194,17 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     private static final class HashSetModel {
 
-        private final HashDatabase db;
+        private final HashDb db;
         private boolean valid;
         private boolean enabled;
 
-        HashSetModel(HashDatabase db, boolean enabled, boolean valid) {
+        HashSetModel(HashDb db, boolean enabled, boolean valid) {
             this.db = db;
             this.enabled = enabled;
             this.valid = valid;
         }
         
-        HashDatabase getDatabase(){
+        HashDb getDatabase(){
             return db;
         }
 
