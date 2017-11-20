@@ -478,10 +478,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private boolean enableButtonSubComponents(Boolean enable) {
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         pnCorrelationProperties.setEnabled(enable && !ingestRunning);
-        pnTagManagement.setEnabled(enable && !ingestRunning);
         bnManageTypes.setEnabled(enable && !ingestRunning);
-        bnManageTags.setEnabled(enable && !ingestRunning);
-        manageTagsTextArea.setEnabled(enable && !ingestRunning);
         correlationPropertiesTextArea.setEnabled(enable && !ingestRunning);
         organizationPanel.setEnabled(enable && !ingestRunning);
         organizationTextArea.setEnabled(enable && !ingestRunning);
