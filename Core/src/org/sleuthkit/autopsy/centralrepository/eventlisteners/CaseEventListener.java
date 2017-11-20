@@ -321,7 +321,7 @@ final class CaseEventListener implements PropertyChangeListener {
              * that are tagged with the given tag name.
              */
             try {
-                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(((TagName) event.getNewValue()).getDisplayName());
+                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get((String) event.getNewValue());
                 // First find any matching artifacts
                 List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
                 for (BlackboardArtifactTag bbTag : artifactTags) {
