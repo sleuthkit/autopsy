@@ -105,7 +105,10 @@ class AccountsRootChildren extends Children.Keys<AccountDeviceInstanceKey> {
         }
 
         @Override
-        @NbBundle.Messages(value = {"AccountNode.device=Device", "AccountNode.accountName=Account", "AccountNode.accountType=Type", "AccountNode.messageCount=Msg Count"})
+        @NbBundle.Messages(value = {"AccountNode.device=Device",
+            "AccountNode.accountName=Account",
+            "AccountNode.accountType=Type",
+            "AccountNode.messageCount=Msgs"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set properties = s.get(Sheet.PROPERTIES);

@@ -49,7 +49,7 @@ public final class OpenCommVisualizationToolAction extends CallableSystemAction 
     private static final long serialVersionUID = 1L;
 
     private final JButton toolbarButton = new JButton(getName(),
-            new ImageIcon(getClass().getResource("images/email_link.png"))); //NON-NLS
+            new ImageIcon(getClass().getResource("images/emblem-web24.png"))); //NON-NLS
 
     public OpenCommVisualizationToolAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());

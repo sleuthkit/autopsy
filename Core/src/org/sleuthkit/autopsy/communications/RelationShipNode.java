@@ -72,9 +72,9 @@ public class RelationShipNode extends BlackboardArtifactNode {
             switch (fromID) {
                 case TSK_EMAIL_MSG:
                     ss.put(new NodeProperty<>("From", "From", "From",
-                            getAttributeDisplayString(artifact, TSK_EMAIL_FROM)));
+                            StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_FROM), " \t\n;")));
                     ss.put(new NodeProperty<>("To", "To", "To",
-                            getAttributeDisplayString(artifact, TSK_EMAIL_TO)));
+                            StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_TO), " \t\n;")));
                     ss.put(new NodeProperty<>("Date", "Date", "Date",
                             getAttributeDisplayString(artifact, TSK_DATETIME_SENT)));
                     ss.put(new NodeProperty<>("Subject", "Subject", "Subject",

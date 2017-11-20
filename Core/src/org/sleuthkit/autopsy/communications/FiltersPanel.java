@@ -65,8 +65,20 @@ final public class FiltersPanel extends javax.swing.JPanel {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
+        startDatePicker.getSettings().setVetoPolicy(
+                //no end date, or start is before end
 
-        applyFiltersButton.addActionListener(actionEvent -> applyFilters());
+       
+                startDate -> endCheckBox.isSelected() == false
+                || startDate.compareTo(endDatePicker.getDate()) <= 0
+        );
+        endDatePicker.getSettings().setVetoPolicy(
+                //no start date, or end is after start
+                endDate -> startCheckBox.isSelected() == false
+                || endDate.compareTo(startDatePicker.getDate()) >= 0
+        );
+ applyFiltersButton.addActionListener(actionEvent -> applyFilters());
+
     }
 
     /**
@@ -491,13 +503,13 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JLabel devicesLabel = new javax.swing.JLabel();
     private final javax.swing.JPanel devicesPane = new javax.swing.JPanel();
     private final javax.swing.JCheckBox endCheckBox = new javax.swing.JCheckBox();
-    private final com.github.lgooddatepicker.datepicker.DatePicker endDatePicker = new com.github.lgooddatepicker.datepicker.DatePicker();
+    private final com.github.lgooddatepicker.components.DatePicker endDatePicker = new com.github.lgooddatepicker.components.DatePicker();
     private final javax.swing.JLabel filtersTitleLabel = new javax.swing.JLabel();
     private final javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
     private final javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
     private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
-    private final com.github.lgooddatepicker.datepicker.DatePicker startDatePicker = new com.github.lgooddatepicker.datepicker.DatePicker();
+    private final com.github.lgooddatepicker.components.DatePicker startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
