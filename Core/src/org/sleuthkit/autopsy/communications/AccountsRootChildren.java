@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -32,39 +34,34 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
 
-    private final List<AccountDeviceInstanceKey> accountDeviceInstanceKeys;
-    private final CommunicationsManager commsManager;
+    private static final Logger logger = Logger.getLogger(AccountsRootChildren.class.getName());
 
-    AccountsRootChildren(List<AccountDeviceInstanceKey> accountDeviceInstanceKeys, CommunicationsManager commsManager) {
+    private final CommunicationsManager commsManager;
+    private final CommunicationsFilter commsFilter;
+
+    AccountsRootChildren(CommunicationsManager commsManager, CommunicationsFilter commsFilter) {
         super();
-        this.accountDeviceInstanceKeys = accountDeviceInstanceKeys;
         this.commsManager = commsManager;
+        this.commsFilter = commsFilter;
     }
-//these are the methods for Children.Keys
-//    @Override
-//    protected void removeNotify() {
-//        super.removeNotify();
-//        setKeys(Collections.emptySet());
-//    }
-//
-//    @Override
-//    protected void addNotify() {
-//        super.addNotify();
-//        setKeys(accountDeviceInstanceKeys);
-//    }
-    //    @Override
-//    protected Node[] createNodes(AccountDeviceInstanceKey key) {
-//        return new Node[]{new AccountDeviceInstanceNode(key, commsManager)};
-//    }
-    
-    
-    //These are the methods for ChildFactory. I am going to keep them around but commented until we make a final descision.
+
     @Override
     protected boolean createKeys(List<AccountDeviceInstanceKey> list) {
+        List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
+        try {
+            for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)) {
+                long communicationsCount = commsManager.getCommunicationsCount(adi, commsFilter);
+                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount));
+            };
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "Error getting filtered account device instances", tskCoreException);
+        }
         list.addAll(accountDeviceInstanceKeys);
+
         return true;
     }
 
@@ -78,7 +75,6 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
      */
     static class AccountDeviceInstanceNode extends AbstractNode {
 
-        private static final Logger LOGGER = Logger.getLogger(AccountDeviceInstanceNode.class.getName());
         private final AccountDeviceInstanceKey accountDeviceInstanceKey;
         private final CommunicationsManager commsManager;
         private final Account account;

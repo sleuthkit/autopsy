@@ -20,14 +20,17 @@ package org.sleuthkit.autopsy.communications;
 
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * 'Root' Node for the Account/Messages area. Has children which are all the
@@ -38,7 +41,7 @@ class AccountDetailsNode extends AbstractNode {
 
     private final static Logger logger = Logger.getLogger(AccountDetailsNode.class.getName());
 
-    AccountDetailsNode(Set<BlackboardArtifact> accountDeviceInstances, CommunicationsFilter filter, CommunicationsManager commsManager) {
+    AccountDetailsNode(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter filter, CommunicationsManager commsManager) {
         super(Children.create(new AccountRelationshipChildren(accountDeviceInstances, commsManager, filter), true));
     }
 
@@ -47,11 +50,11 @@ class AccountDetailsNode extends AbstractNode {
      */
     private static class AccountRelationshipChildren extends ChildFactory<BlackboardArtifact> {
 
-        private final Set<BlackboardArtifact> accountDeviceInstances;
+        private final Set<AccountDeviceInstance> accountDeviceInstances;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter filter;
 
-        private AccountRelationshipChildren(Set<BlackboardArtifact> accountDeviceInstances, CommunicationsManager commsManager, CommunicationsFilter filter) {
+        private AccountRelationshipChildren(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsManager commsManager, CommunicationsFilter filter) {
             this.accountDeviceInstances = accountDeviceInstances;
             this.commsManager = commsManager;
             this.filter = filter;
@@ -59,22 +62,17 @@ class AccountDetailsNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-            list.addAll(accountDeviceInstances);
+            try {
+                list.addAll(commsManager.getCommunications(accountDeviceInstances, filter));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting communications", ex);
+            }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact t) {
-            return new RelationShipNode(t); //To change body of generated methods, choose Tools | Templates.
+            return new RelationShipNode(t);
         }
-
-//        @Override
-//        protected Node[] createNodes(BlackboardArtifact key) {
-//            return new Node[]{new RelationShipNode(key)};
-//        }
-//        @Override
-//        protected void addNotify() {
-//            setKeys(accountDeviceInstances);
-//        }
     }
 }

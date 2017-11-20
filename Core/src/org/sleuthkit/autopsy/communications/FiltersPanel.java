@@ -18,21 +18,16 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.awt.Cursor;
 import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
-import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -45,7 +40,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -69,8 +63,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
-    
-    
+
     private final PropertyChangeListener ingestListener;
 
     @NbBundle.Messages({"refreshText=Refresh Results",
@@ -123,7 +116,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private void updateTimeZone() {
         dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().toString() + "):");
     }
-
 
     private void updateFilters() {
         updateAccountTypeFilter();
@@ -433,33 +425,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-
-            getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            new SwingWorker<AbstractNode, Void>() {
-                @Override
-                protected AbstractNode doInBackground() throws Exception {
-                    List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
-                    for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)) {
-                        long communicationsCount = commsManager.getCommunicationsCount(adi, commsFilter);
-                        accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount));
-                    };
-                    return new AbstractNode(Children.create(new AccountsRootChildren(accountDeviceInstanceKeys, commsManager), true));
-                }
-
-                @Override
-                protected void done() {
-                    super.done(); //To change body of generated methods, choose Tools | Templates.
-
-                    setCursor(Cursor.getDefaultCursor());
-                    getRootPane().setCursor(Cursor.getDefaultCursor());
-                    try {
-                        em.setRootContext(get());
-                    } catch (InterruptedException | ExecutionException ex) {
-                        logger.log(Level.SEVERE, "Error getting account device instances for filter: " + commsFilter, ex);
-                    }
-                }
-            }.execute();
+            em.setRootContext(new AbstractNode(Children.create(new AccountsRootChildren(commsManager, commsFilter), true)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
         }
