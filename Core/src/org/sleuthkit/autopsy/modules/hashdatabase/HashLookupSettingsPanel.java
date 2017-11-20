@@ -318,20 +318,28 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         }
 
-        //If unindexed ones are found, show a popup box that will either index them, or remove them.
-        if (unindexed.size() == 1) {
-            showInvalidIndex(false, unindexed);
-        } else if (unindexed.size() > 1) {
-            showInvalidIndex(true, unindexed);
-        }
-        
-        try {
-            hashSetManager.save();
-            newReferenceSetIDs.clear();
-        } catch (HashDbManager.HashDbManagerException ex) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+        // If there are unindexed databases, give the user the option to index them now. This
+        // needs to be on the EDT, and will save the hash settings after completing
+        if(! unindexed.isEmpty()){
+            SwingUtilities.invokeLater(new Runnable(){
+                @Override
+                public void run(){
+                    //If unindexed ones are found, show a popup box that will either index them, or remove them.
+                    if (unindexed.size() == 1) {
+                        showInvalidIndex(false, unindexed);
+                    } else if (unindexed.size() > 1) {
+                        showInvalidIndex(true, unindexed);
+                    }
+                }
             });
+        } else {
+            try {
+                hashSetManager.save();
+            } catch (HashDbManager.HashDbManagerException ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+                });
+            }
         }
     }
 
@@ -419,6 +427,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     "HashDbConfigPanel.allUnindexedDbsRmFromListMsg"));
             removeThese(unindexed);
         }
+        try {
+            hashSetManager.save();
+        } catch (HashDbManager.HashDbManagerException ex) {
+            JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     boolean valid() {
@@ -493,7 +506,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return hashSets.get(rowIndex).getHashSetName();
+            return hashSets.get(rowIndex).getDisplayName();
         }
 
         private boolean isValid(int rowIndex) {            
@@ -920,6 +933,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     private void createDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createDatabaseButtonActionPerformed
         HashDb hashDb = new HashDbCreateDatabaseDialog().getHashDatabase();
         if (null != hashDb) {
+            if(hashDb instanceof CentralRepoHashSet){
+                int newDbIndex = ((CentralRepoHashSet)hashDb).getReferenceSetID();
+                newReferenceSetIDs.add(newDbIndex);
+            }
+            
             hashSetTableModel.refreshModel();
             ((HashSetTable) hashSetTable).selectRowByDatabase(hashDb);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
