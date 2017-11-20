@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
 
 /**
  *

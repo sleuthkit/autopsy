@@ -53,6 +53,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     private int bulkArtifactsCount;
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
+    private final List<String> badTags;
 
     /**
      * Connect to the DB and initialize it.
@@ -60,6 +61,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws UnknownHostException, EamDbException
      */
     protected AbstractSqlEamDb() throws EamDbException {
+        badTags = new ArrayList<>();
         bulkArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
 
@@ -73,6 +75,31 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Setup and create a connection to the selected database implementation
      */
     protected abstract Connection connect() throws EamDbException;
+
+    /**
+     * Get the list of tags recognized as "Bad"
+     *
+     * @return The list of bad tags
+     */
+    @Override
+    public List<String> getBadTags() {
+        synchronized (badTags) {
+            return new ArrayList<>(badTags);
+        }
+    }
+
+    /**
+     * Set the tags recognized as "Bad"
+     *
+     * @param tags The tags to consider bad
+     */
+    @Override
+    public void setBadTags(List<String> tags) {
+        synchronized (badTags) {
+            badTags.clear();
+            badTags.addAll(tags);
+        }
+    }
 
     /**
      * Add a new name/value pair in the db_info table.

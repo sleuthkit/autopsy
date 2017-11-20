@@ -1,7 +1,7 @@
 /*
 * Autopsy Forensic Browser
 *
-* Copyright 2011-2017 Basis Technology Corp.
+* Copyright 2011-2016 Basis Technology Corp.
 * Contact: carrier <at> sleuthkit <dot> org
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,9 +117,7 @@ final class NewTagNameDialog extends javax.swing.JDialog {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-           
-            //if a tag name contains illegal characters and is not the name of one of the standard tags
-            if (TagsManager.containsIllegalCharacters(newTagDisplayName) && !TagNameDefiniton.getStandardTagNames().contains(newTagDisplayName)) {
+            if (TagsManager.containsIllegalCharacters(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
                         NbBundle.getMessage(NewTagNameDialog.class, "NewTagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),

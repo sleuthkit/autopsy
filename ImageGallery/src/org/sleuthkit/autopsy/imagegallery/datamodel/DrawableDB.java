@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.tags.Category;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

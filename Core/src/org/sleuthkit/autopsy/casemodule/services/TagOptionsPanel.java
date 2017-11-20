@@ -27,7 +27,6 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * A panel to allow the user to create and delete custom tag types.
@@ -191,7 +190,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         NewTagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == NewTagNameDialog.BUTTON_PRESSED.OK) {
             String newTagDisplayName = dialog.getTagName();
-            TagNameDefiniton newTagType = new TagNameDefiniton(newTagDisplayName, DEFAULT_DESCRIPTION, DEFAULT_COLOR, TskData.FileKnown.UNKNOWN);
+            TagNameDefiniton newTagType = new TagNameDefiniton(newTagDisplayName, DEFAULT_DESCRIPTION, DEFAULT_COLOR);
             /*
              * If tag name already exists, don't add the tag name.
              */
