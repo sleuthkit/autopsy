@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
@@ -39,8 +38,6 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.COMPLETED;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountTypeFilter;
@@ -60,15 +57,14 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon APPLY_ICON = new ImageIcon(FiltersPanel.class.getResource("images/tick.png"));
-    private static final ImageIcon REFRESH_ICON = new ImageIcon(FiltersPanel.class.getResource("images/arrow-circle-double-135.png"));
-
     private ExplorerManager em;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
+    
+    
     private final PropertyChangeListener ingestListener;
 
     @NbBundle.Messages({"refreshText=Refresh Results",
@@ -77,7 +73,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         initComponents();
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
-          startDatePicker.getSettings().setVetoPolicy(
+        startDatePicker.getSettings().setVetoPolicy(
                 //no end date, or start is before end
                 startDate -> endCheckBox.isSelected() == false
                 || startDate.compareTo(endDatePicker.getDate()) <= 0
@@ -88,29 +84,24 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 || endDate.compareTo(startDatePicker.getDate()) >= 0
         );
 
-
-        
         updateTimeZone();
-
         updateFilters();
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
                 updateTimeZone();
             }
         });
+
         this.ingestListener = pce -> {
             String eventType = pce.getPropertyName();
             if (eventType.equals(DATA_ADDED.toString())) {
-      
                 updateFilters();
-                applyFiltersButton.setText(Bundle.refreshText());
-                applyFiltersButton.setIcon(REFRESH_ICON);
-            } else if (eventType.equals(COMPLETED.toString())) {
-            } else if (eventType.equals(CANCELLED.toString())) {
-            } else if (eventType.equals(CURRENT_CASE.toString())) {
+                refreshButton.setEnabled(true);
             }
         };
 
+        applyFiltersButton.addActionListener(e -> applyFilters());
+        refreshButton.addActionListener(e -> applyFilters());
     }
 
     /**
@@ -219,11 +210,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
         applyFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/tick.png"))); // NOI18N
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         applyFiltersButton.setPreferredSize(null);
-        applyFiltersButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                applyFiltersButtonActionPerformed(evt);
-            }
-        });
 
         filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
@@ -385,6 +371,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
                     .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
+        refreshButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.refreshButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -397,7 +386,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filtersTitleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(refreshButton))
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(0, 0, 0))
         );
@@ -407,7 +398,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filtersTitleLabel)
-                    .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(refreshButton))
                 .addGap(18, 18, 18)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
@@ -417,10 +409,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addContainerGap(21, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void applyFiltersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyFiltersButtonActionPerformed
-        applyFilters();
-    }//GEN-LAST:event_applyFiltersButtonActionPerformed
 
     /**
      * Query for accounts using the selected filters, and send the results to
@@ -447,9 +435,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "There was a error loading the accounts.", ex);
         }
 
-        applyFiltersButton.setText(Bundle.applyText());
-        applyFiltersButton.setIcon(APPLY_ICON);
-
+        refreshButton.setEnabled(false);
     }
 
     /**
@@ -556,6 +542,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
     private final javax.swing.JScrollPane jScrollPane2 = new javax.swing.JScrollPane();
     private final javax.swing.JScrollPane jScrollPane3 = new javax.swing.JScrollPane();
+    private final javax.swing.JButton refreshButton = new javax.swing.JButton();
     private final javax.swing.JCheckBox startCheckBox = new javax.swing.JCheckBox();
     private final com.github.lgooddatepicker.components.DatePicker startDatePicker = new com.github.lgooddatepicker.components.DatePicker();
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
