@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.datamodel.Content;
 
 @ThreadSafe
-class DataSource {
+class AutoIngestDataSource {
 
     private final String deviceId;
     private final Path path;
@@ -34,7 +34,7 @@ class DataSource {
     private List<String> errorMessages;
     private List<Content> content;
 
-    DataSource(String deviceId, Path path) {
+    AutoIngestDataSource(String deviceId, Path path) {
         this.deviceId = deviceId;
         this.path = path;
     }

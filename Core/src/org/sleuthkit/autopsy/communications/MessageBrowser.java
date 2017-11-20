@@ -114,7 +114,6 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
 
                         }
                     }.execute();
-
                 }
             }
         });

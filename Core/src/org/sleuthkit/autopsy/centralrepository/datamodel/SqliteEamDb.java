@@ -200,16 +200,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         return "";
     }
 
-    @Override
-    public List<String> getBadTags() {
-        return dbSettings.getBadTags();
-    }
-
-    @Override
-    public void setBadTags(List<String> badTags) {
-        dbSettings.setBadTags(badTags);
-    }
-    
+   
     /**
      * Add a new name/value pair in the db_info table.
      *
@@ -636,6 +627,55 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Remove a reference set and all values contained in it.
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    @Override
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException{
+        try{
+            acquireExclusiveLock();
+            super.deleteReferenceSet(referenceSetID);
+        } finally {
+            releaseExclusiveLock();
+        }   
+    }    
+    
+    /**
+     * Check if the given hash is in a specific reference set
+     * @param hash
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
+     */
+    @Override
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.isValueInReferenceSet(value, referenceSetID, correlationTypeID);
+        } finally {
+            releaseSharedLock();
+        }          
+    }
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException 
+     */
+    @Override
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.referenceSetExists(referenceSetName, version);
+        } finally {
+            releaseSharedLock();
+        }  
+    }
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -644,10 +684,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
         try{
             acquireSharedLock();
-            return super.isArtifactlKnownBadByReference(aType, value);
+            return super.isArtifactKnownBadByReference(aType, value);
         } finally {
             releaseSharedLock();
         }      
@@ -737,10 +777,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         try{
             acquireExclusiveLock();
-            return super.newReferencelSet(eamGlobalSet);
+            return super.newReferenceSet(eamGlobalSet);
         } finally {
             releaseExclusiveLock();
         }     
@@ -766,6 +806,23 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Get all reference sets
+     *
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+        try{
+            acquireSharedLock();
+            return super.getAllReferenceSets();
+        } finally {
+            releaseSharedLock();
+        } 
+    }
+    
+    /**
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
@@ -782,7 +839,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseExclusiveLock();
         }  
-    }    
+    }  
     
     /**
      * Insert the bulk collection of Reference Type Instances

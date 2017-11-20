@@ -31,7 +31,6 @@
                           <Component id="pnTagManagement" alignment="0" max="32767" attributes="0"/>
                           <Component id="pnDatabaseConfiguration" alignment="0" max="32767" attributes="0"/>
                           <Component id="cbUseCentralRepo" alignment="0" min="-2" pref="186" max="-2" attributes="0"/>
-                          <Component id="bnImportDatabase" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -55,9 +54,7 @@
               <Component id="organizationPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
               <Component id="tbOops" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-              <Component id="bnImportDatabase" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -175,22 +172,6 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbUseCentralRepoActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="bnImportDatabase">
-      <Properties>
-        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/centralrepository/images/import16.png"/>
-        </Property>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.bnImportDatabase.label" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.bnImportDatabase.actionCommand" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnImportDatabaseActionPerformed"/>
       </Events>
     </Component>
     <Container class="javax.swing.JPanel" name="pnTagManagement">
@@ -415,7 +396,7 @@
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="Organizations">
+            <TitledBorder title="&lt;GlobalSettingsPanel.organizationPanel.border.title&gt;">
               <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.organizationPanel.border.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
               <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
             </TitledBorder>
