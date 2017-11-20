@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -105,8 +106,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                         protected void done() {
                             super.done(); //To change body of generated methods, choose Tools | Templates.
                             try {
-                                messagesResultPanel.setNode(new TableFilterNode(
-                                        new AccountDetailsNode(get(), filter, commsManager), true));
+                                messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(
+                                        new AccountDetailsNode(get(), filter, commsManager), parentExplorereManager), true));
                             } catch (InterruptedException | ExecutionException ex) {
                                 logger.log(Level.SEVERE, "Error getting relationships", ex);
                             }
