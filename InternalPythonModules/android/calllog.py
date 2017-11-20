@@ -91,7 +91,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
             deviceID = ds.getDeviceId()
 
             global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "logs.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db"))
@@ -143,7 +143,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
 
                             # Create an account
-                            calllogAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.PHONE, number, general.MODULE_NAME, abstractFile);
+                            calllogAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, number, general.MODULE_NAME, abstractFile);
 
                             # create relationship between accounts
                             Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [calllogAccountInstance], artifact, date);

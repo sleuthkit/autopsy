@@ -65,7 +65,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             deviceID = ds.getDeviceId()
 
             global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "contacts.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
@@ -147,7 +147,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     acctType = Account.Type.EMAIL
 
                 # Create an account instance
-                contactAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(acctType, data1, general.MODULE_NAME, abstractFile);
+                contactAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (acctType, data1, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [contactAccountInstance], artifact, 0);

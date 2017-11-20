@@ -66,7 +66,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             deviceID = ds.getDeviceId()
 
             global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "WordsFramework")
             for abstractFile in absFiles:
@@ -112,7 +112,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Words With Friends Message"))
 
                 # Create an account
-                wwfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
+                wwfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact, created_at);
