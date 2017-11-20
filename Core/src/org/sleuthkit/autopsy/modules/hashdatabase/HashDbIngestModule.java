@@ -129,13 +129,13 @@ public class HashDbIngestModule implements FileIngestModule {
     private void updateEnabledHashSets(List<HashDb> allHashSets, List<HashDb> enabledHashSets) {
         enabledHashSets.clear();
         for (HashDb db : allHashSets) {
-            if (settings.isHashSetEnabled(db.getHashSetName())) {
+            if (settings.isHashSetEnabled(db)) {
                 try {
-                    if (db.hasIndex()) {
+                    if (db.isValid()) {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting index status for " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName()+ " hash database", ex); //NON-NLS
                 }
             }
         }
@@ -218,7 +218,7 @@ public class HashDbIngestModule implements FileIngestModule {
                                         name)));
                         ret = ProcessResult.ERROR;
                     }
-                    String hashSetName = db.getHashSetName();
+                    String hashSetName = db.getDisplayName();
 
                     String comment = "";
                     ArrayList<String> comments = hashInfo.getComments();

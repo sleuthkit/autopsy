@@ -22,7 +22,6 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettingsPanel;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+
 /**
  * Instances of this class are used to configure the report module plug in that
  * provides a convenient way to add content hashes to hash set databases.
@@ -48,12 +48,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final static String NO_DATABASES_TEXT = "No updateable hash sets";
     private List<TagName> tagNames;
     private final Map<String, Boolean> tagNameSelections = new LinkedHashMap<>();
     private final TagNamesListModel tagsNamesListModel = new TagNamesListModel();
     private final TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
-    private final Map<String, HashDb> hashSets = new HashMap<>();
     private HashDb selectedHashSet = null;
 
     AddTaggedHashesToHashDbConfigPanel() {
@@ -105,7 +103,6 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private void populateHashSetComponents() {
         // Clear the components because this method is called both during construction
         // and when the user changes the hash set configuration.
-        hashSets.clear();
         hashSetsComboBox.removeAllItems();
 
         // Get the updateable hash databases and add their hash set names to the
@@ -113,12 +110,10 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
         List<HashDb> updateableHashSets = HashDbManager.getInstance().getUpdateableHashSets();
         if (!updateableHashSets.isEmpty()) {
             for (HashDb hashDb : updateableHashSets) {
-                hashSets.put(hashDb.getHashSetName(), hashDb);
-                hashSetsComboBox.addItem(hashDb.getHashSetName());
+                hashSetsComboBox.addItem(hashDb);
             }
             hashSetsComboBox.setEnabled(true);
         } else {
-            hashSetsComboBox.addItem(NO_DATABASES_TEXT);
             hashSetsComboBox.setEnabled(false);
         }
     }
@@ -291,8 +286,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void hashSetsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hashSetsComboBoxActionPerformed
-        String key = (String)hashSetsComboBox.getSelectedItem();
-        selectedHashSet = hashSets.get(key);
+        selectedHashSet = (HashDb)hashSetsComboBox.getSelectedItem();
     }//GEN-LAST:event_hashSetsComboBoxActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
@@ -317,7 +311,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton configureHashDatabasesButton;
     private javax.swing.JButton deselectAllButton;
-    private javax.swing.JComboBox<String> hashSetsComboBox;
+    private javax.swing.JComboBox<HashDb> hashSetsComboBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;

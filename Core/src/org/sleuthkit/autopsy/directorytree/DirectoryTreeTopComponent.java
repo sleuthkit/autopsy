@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -56,13 +55,11 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
@@ -99,7 +96,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({
     "DirectoryTreeTopComponent.resultsView.title=Listing"
 })
-public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
+public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
 
     private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
@@ -851,7 +848,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return false;
     }
 
-    @Override
     public void viewArtifact(final BlackboardArtifact art) {
         int typeID = art.getArtifactTypeID();
         String typeName = art.getArtifactTypeName();
@@ -1064,28 +1060,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // Another thread is needed because we have to wait for dataResult to populate
     }
 
-    @Override
     public void viewArtifactContent(BlackboardArtifact art) {
         new ViewContextAction(
                 NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
                 new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
-    @Override
     public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
     }
 
-    void fireViewerComplete() {
-
-        try {
-            firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
-                    NbBundle.getMessage(this.getClass(),
-                            "DirectoryTreeTopComponent.moduleErr.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
-    }
 }

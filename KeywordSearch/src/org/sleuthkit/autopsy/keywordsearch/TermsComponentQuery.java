@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -344,7 +345,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      */
     @Override
     public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
-        
+
         /*
          * CCN hits are handled specially
          */
@@ -352,14 +353,14 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             createCCNAccount(content, hit, snippet, listName);
             return null;
         }
-        
+
         /*
-         * Create a "plain vanilla" keyword hit artifact with keyword and
-         * regex attributes, 
+         * Create a "plain vanilla" keyword hit artifact with keyword and regex
+         * attributes,
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        
+
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
 
@@ -370,7 +371,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
             return null;
         }
-        
 
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
@@ -396,19 +396,19 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     }
 
     private void createCCNAccount(Content content, KeywordHit hit, String snippet, String listName) {
-        
+
         if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
             LOGGER.log(Level.SEVERE, "Keyword hit is not a credit card number"); //NON-NLS
             return;
         }
-        
+
         /*
-         * Create a credit card account with attributes
-         * parsed from from the snippet for the hit and looked up based on the
-         * parsed bank identifcation number.
+         * Create a credit card account with attributes parsed from from the
+         * snippet for the hit and looked up based on the parsed bank
+         * identifcation number.
          */
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-       
+
         Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
         Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
         if (matcher.find()) {
@@ -423,7 +423,17 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             if (hit.isArtifactHit()) {
                 LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
             } else {
-                LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContentID())); //NON-NLS
+                long contentId = 0;
+                try {
+                    contentId = hit.getContentID();
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to content id from keyword hit: term = %s, snippet = '%s'", searchTerm, hit.getSnippet()), ex); //NON-NLS
+                }
+                if (contentId > 0) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), contentId)); //NON-NLS
+                } else {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s'", searchTerm, hit.getSnippet())); //NON-NLS                    
+                }
             }
             return;
         }
@@ -456,8 +466,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
 
         /*
          * If the hit is from unused or unallocated space, record the Solr
-         * document id to support showing just the chunk that contained the
-         * hit.
+         * document id to support showing just the chunk that contained the hit.
          */
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
@@ -485,7 +494,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
          * Create an account.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+            AccountFileInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content);
             ccAccountInstance.addAttributes(attributes);
             //newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccountInstance.getArtifactId());
         } catch (TskCoreException ex) {
@@ -493,6 +502,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         }
 
     }
+
     /**
      * Parses the track 2 data from the snippet for a credit card account number
      * hit and turns them into artifact attributes.
