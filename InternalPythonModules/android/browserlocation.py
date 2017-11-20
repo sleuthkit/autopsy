@@ -28,6 +28,7 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -89,14 +90,16 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 latitude = Double.valueOf(resultSet.getString("latitude"))
                 longitude = Double.valueOf(resultSet.getString("longitude"))
 
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, general.MODULE_NAME, latitude))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, general.MODULE_NAME, longitude))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, timestamp))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, general.MODULE_NAME, "Browser Location History"))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, general.MODULE_NAME, latitude))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, general.MODULE_NAME, longitude))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, timestamp))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, general.MODULE_NAME, "Browser Location History"))
                 # artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),moduleName, accuracy))
                 # NOTE: originally commented out
 
+                artifact.addAttributes(attributes);
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -296,14 +297,14 @@ public class HashDbIngestModule implements FileIngestModule {
             String MODULE_NAME = NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
 
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
-            BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, hashSetName);
-            badFile.addAttribute(att2);
-            BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, MODULE_NAME, md5Hash);
-            badFile.addAttribute(att3);
-            BlackboardAttribute att4 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, comment);
-            badFile.addAttribute(att4);
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, hashSetName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, MODULE_NAME, md5Hash));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, comment));
+
+            badFile.addAttributes(attributes);
 
             try {
                 // index the artifact for keyword search

@@ -130,17 +130,18 @@ public class IngestEventsListener {
 
         try {
             AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
-
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
             BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestEventsListener_prevTaggedSet_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
                     Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
-            tifArtifact.addAttribute(att);
-            tifArtifact.addAttribute(att2);
-            tifArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
+            attributes.add(att);
+            attributes.add(att2);
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
 
+            tifArtifact.addAttributes(attributes);
             try {
                 // index the artifact for keyword search
                 Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
