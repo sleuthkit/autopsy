@@ -99,7 +99,7 @@ final class CaseEventListener implements PropertyChangeListener {
             }
             break;
             case TAG_STATUS_CHANGED: {
-                jobProcessingExecutor.submit(new TagStatusChangeTask(dbManager, evt));
+                jobProcessingExecutor.submit(new TagStatusChangeTask(evt));
             }
             break;
             case CURRENT_CASE: {
@@ -300,11 +300,9 @@ final class CaseEventListener implements PropertyChangeListener {
 
     private final class TagStatusChangeTask implements Runnable {
 
-        private final EamDb dbManager;
         private final PropertyChangeEvent event;
 
-        private TagStatusChangeTask(EamDb db, PropertyChangeEvent evt) {
-            dbManager = db;
+        private TagStatusChangeTask(PropertyChangeEvent evt) {
             event = evt;
         }
 
@@ -328,6 +326,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
                     for (CorrelationAttribute eamArtifact : convertedArtifacts) {
                         boolean hasOtherBadTags = false;
+                        //if the new status of the tag is unknown UNKNOWN ensure we are not changing the status of BlackboardArtifact which still have other tags with a non-unknown status
                         if (status == TskData.FileKnown.UNKNOWN) {
                             Content content = bbTag.getContent();
                             if ((content instanceof AbstractFile) && (((AbstractFile) content).getKnown() == TskData.FileKnown.KNOWN)) {
@@ -337,9 +336,11 @@ final class CaseEventListener implements PropertyChangeListener {
                             TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
                             List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
                             for (BlackboardArtifactTag t : tags) {
+                                //avoid the possibility for threading issues if the tag whose status is currently changing is ever still in the tags manager with the old status
                                 if (t.getName().equals(tagName)) {
                                     continue;
                                 }
+                                //if any other tags on this artifact are Notable in status then this artifact can not have its status changed 
                                 if (notableTags.contains(t.getName().getDisplayName())) {
                                     hasOtherBadTags = true;
                                     break;
@@ -355,14 +356,17 @@ final class CaseEventListener implements PropertyChangeListener {
                 List<ContentTag> fileTags = Case.getCurrentCase().getSleuthkitCase().getContentTagsByTagName(tagName);
                 for (ContentTag contentTag : fileTags) {
                     boolean hasOtherBadTags = false;
+                    //if the new status of the tag is unknown UNKNOWN ensure we are not changing the status of files which still have other tags with a Notable status
                     if (status == TskData.FileKnown.UNKNOWN) {
                         Content content = contentTag.getContent();
                         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
                         List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
                         for (ContentTag t : tags) {
+                            //avoid the possibility for threading issues if the tag whose status is currently changing is ever still in the tags manager with the old status
                             if (t.getName().equals(tagName)) {
                                 continue;
                             }
+                            //if any other tags on this file are Notable in status then this file can not have its status changed 
                             if (notableTags.contains(t.getName().getDisplayName())) {
                                 hasOtherBadTags = true;
                                 break;
