@@ -94,6 +94,14 @@ public interface EamDb {
         return EamDbUtil.useCentralRepo()
                 && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
+    
+    /**
+     * Placeholder version to use for non-read only databases
+     * @return The version that will be stored in the database
+     */
+    static String getDefaultVersion() {
+        return "";
+    }
 
     /**
      * Add a new name/value pair in the db_info table.
@@ -340,6 +348,53 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
+     * Remove a reference set and all values contained in it.
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException;
+    
+    /**
+     * Check whether a reference set with the given parameters exists in the central repository.
+     * Used to check whether reference sets saved in the settings are still present.
+     * @param referenceSetID
+     * @param referenceSetName
+     * @param version
+     * @return true if a matching entry exists in the central repository
+     * @throws EamDbException
+     */
+    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws EamDbException;
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException 
+     */
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException;
+    
+    /**
+     * Check if the given file hash is in this reference set.
+     * Only searches the reference_files table.
+     * @param hash
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
+     * @throws EamDbException 
+     */
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
+    
+    /**
+     * Check if the given value is in a specific reference set
+     * @param value
+     * @param referenceSetID
+     * @param correlationTypeID 
+     * @return true if the hash is found in the reference set
+     */
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException;    
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -347,7 +402,7 @@ public interface EamDb {
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
+    boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Add a new organization
@@ -381,6 +436,14 @@ public interface EamDb {
     EamOrganization getOrganizationByID(int orgID) throws EamDbException;
 
     /**
+     * Get the organization associated with the given reference set.
+     * @param referenceSetID ID of the reference set
+     * @return The organization object
+     * @throws EamDbException 
+     */
+    EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException;
+
+    /**
      * Update an existing organization.
      *
      * @param updatedOrganization the values the Organization with the same ID
@@ -399,7 +462,6 @@ public interface EamDb {
      */
     void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException;
     
-    
     /**
      * Add a new Global Set
      *
@@ -409,7 +471,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
+    int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException;
 
     /**
      * Get a global set by ID
@@ -421,6 +483,15 @@ public interface EamDb {
      * @throws EamDbException
      */
     EamGlobalSet getReferenceSetByID(int globalSetID) throws EamDbException;
+    
+    /**
+     * Get all reference sets
+     *
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    List<EamGlobalSet> getAllReferenceSets() throws EamDbException;    
 
     /**
      * Add a new reference instance
@@ -432,7 +503,7 @@ public interface EamDb {
      * @throws EamDbException
      */
     void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException;
-
+    
     /**
      * Insert the bulk collection of Global File Instances
      *

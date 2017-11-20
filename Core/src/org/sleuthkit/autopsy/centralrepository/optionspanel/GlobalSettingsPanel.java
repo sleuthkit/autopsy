@@ -57,8 +57,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
         "GlobalSettingsPanel.cbUseCentralRepo.text=Use a central repository",
+        "GlobalSettingsPanel.pnTagManagement.border.title=Tags",
         "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
         "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and results between cases.",
+        "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable items. "
+        + "When these tags are used, the file or result will be recorded in the central repository. "
+        + "If that file or result is seen again in future cases, it will be flagged.",
         "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and result properties to store in the central repository for later correlation.",
         "GlobalSettingsPanel.organizationPanel.border.title=Organizations",
         "GlobalSettingsPanel.manageOrganizationButton.text=Manage Organizations",
@@ -67,9 +71,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
-
-        // The hash set functions of central repo are not being included in the current release.
-        bnImportDatabase.setVisible(false);
     }
 
     private void addIngestJobEventsListener() {
@@ -95,7 +96,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbNameValue = new javax.swing.JLabel();
         lbDbLocationValue = new javax.swing.JLabel();
         cbUseCentralRepo = new javax.swing.JCheckBox();
-        bnImportDatabase = new javax.swing.JButton();
         tbOops = new javax.swing.JTextField();
         pnCorrelationProperties = new javax.swing.JPanel();
         bnManageTypes = new javax.swing.JButton();
@@ -169,15 +169,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cbUseCentralRepoActionPerformed(evt);
-            }
-        });
-
-        bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/centralrepository/images/import16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
-        bnImportDatabase.setActionCommand(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.actionCommand")); // NOI18N
-        bnImportDatabase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnImportDatabaseActionPerformed(evt);
             }
         });
 
@@ -294,8 +285,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                             .addComponent(lbCentralRepository, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(bnImportDatabase, javax.swing.GroupLayout.Alignment.LEADING))
+                            .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
@@ -312,17 +302,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addComponent(organizationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(bnImportDatabase)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
-        store();
-        ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
-        firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
-    }//GEN-LAST:event_bnImportDatabaseActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
         store();
@@ -497,7 +479,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         pnCorrelationProperties.setEnabled(enable && !ingestRunning);
         bnManageTypes.setEnabled(enable && !ingestRunning);
-        bnImportDatabase.setEnabled(enable && !ingestRunning);
         correlationPropertiesTextArea.setEnabled(enable && !ingestRunning);
         organizationPanel.setEnabled(enable && !ingestRunning);
         organizationTextArea.setEnabled(enable && !ingestRunning);
@@ -507,7 +488,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnDbConfigure;
-    private javax.swing.JButton bnImportDatabase;
     private javax.swing.JButton bnManageTypes;
     private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
