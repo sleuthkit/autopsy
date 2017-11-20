@@ -46,7 +46,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings.HashDbInfo;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -71,8 +70,6 @@ public class HashDbManager implements PropertyChangeListener {
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     private boolean allDatabasesLoadedCorrectly = false;
-    private static final String CENTRAL_REPO_HASH_SET_SETTINGS = "CentralRepoHashSets";
-    private static final String CENTRAL_REPO_HASH_SET_LOCAL_KEY = "LocallyCreatedHashsets";
 
     /**
      * Property change event support In events: For both of these enums, the old
