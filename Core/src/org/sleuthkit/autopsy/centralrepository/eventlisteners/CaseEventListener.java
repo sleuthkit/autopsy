@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
-import org.sleuthkit.autopsy.casemodule.services.TagNameDefinition;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
@@ -314,17 +313,17 @@ final class CaseEventListener implements PropertyChangeListener {
             if (!EamDb.isEnabled()) {
                 return;
             }
-            TskData.FileKnown status = ((TagNameDefinition) event.getNewValue()).getKnownStatus();
+            String modifiedTagName = (String) event.getNewValue();
+            List<String> notableTags = TagsManager.getNotableTagDisplayNames();
+            TskData.FileKnown status = notableTags.contains(modifiedTagName) ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
             /**
              * Set knownBad status for all files/artifacts in the given case
              * that are tagged with the given tag name.
              */
-            System.out.println("TAG " + ((TagNameDefinition) event.getNewValue()).getDisplayName() + " event FROM " + ((TagNameDefinition) event.getOldValue()).getKnownStatus().toString() + " TO " + status.toString());
             try {
-                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(((TagNameDefinition) event.getNewValue()).getDisplayName());
+                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(((TagName) event.getNewValue()).getDisplayName());
                 // First find any matching artifacts
                 List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
-                List<String> notableTags = TagsManager.getNotableTagDisplayNames();
                 for (BlackboardArtifactTag bbTag : artifactTags) {
                     List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
                     for (CorrelationAttribute eamArtifact : convertedArtifacts) {
@@ -379,11 +378,10 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                 }
             } catch (TskCoreException ex) {
-                System.out.println("Cannot update ");
+                LOGGER.log(Level.SEVERE, "Cannot update known status in central repository");  //NON-NLS
             } catch (EamDbException ex) {
-                System.out.println("Cannot get CR");
+                LOGGER.log(Level.SEVERE, "Cannot get central repository");  //NON-NLS
             }
-
         } //TAG_STATUS_CHANGED
     }
 

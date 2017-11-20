@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskData;
  * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-public final class TagNameDefinition implements Comparable<TagNameDefinition> {
+final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     private static final Logger LOGGER = Logger.getLogger(TagNameDefinition.class.getName());
     @NbBundle.Messages({"TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
@@ -68,7 +68,7 @@ public final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param color       The color for the tag name.
      * @param status      The status denoted by the tag name.
      */
-    public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
+    TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
@@ -84,7 +84,7 @@ public final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return The display name.
      */
-    public String getDisplayName() {
+    String getDisplayName() {
         return displayName;
     }
 
@@ -112,7 +112,7 @@ public final class TagNameDefinition implements Comparable<TagNameDefinition> {
      *
      * @return a value of TskData.FileKnown which is associated with this tag
      */
-    public TskData.FileKnown getKnownStatus() {
+    TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 

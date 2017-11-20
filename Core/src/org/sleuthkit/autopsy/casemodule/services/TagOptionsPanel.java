@@ -46,7 +46,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private final DefaultListModel<TagNameDefinition> tagTypesListModel;
     private Set<TagNameDefinition> tagTypes;
     private IngestJobEventPropertyChangeListener ingestJobEventsListener;
-    private Set<TagPair> updatedStatusTags;
+    private Set<String> updatedStatusTags;
 
     /**
      * Creates new form TagOptionsPanel
@@ -361,7 +361,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             updatePanel();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()) {
-                updatedStatusTags.add(new TagPair(originalTagName, newTagType));
+                updatedStatusTags.add(newTagType.getDisplayName());
             }
         }
     }//GEN-LAST:event_editTagNameButtonActionPerformed
@@ -422,8 +422,8 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     }
 
     private void sendStatusChangedEvents() {
-        for (TagPair modifiedTag : updatedStatusTags) {
-            Case.getCurrentCase().notifyTagStatusChanged(modifiedTag.getOldValue(), modifiedTag.getNewValue());
+        for (String modifiedTagDisplayName : updatedStatusTags) {
+            Case.getCurrentCase().notifyTagStatusChanged(modifiedTagDisplayName);
         }
         updatedStatusTags.clear();
     }
@@ -445,7 +445,6 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         boolean enableDelete = enableEdit && !TagNameDefinition.getStandardTagNames().contains(tagNamesList.getSelectedValue().getDisplayName());
         deleteTagNameButton.setEnabled(enableDelete);
         if (isSelected) {
-
             descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
             if (tagNamesList.getSelectedValue().getKnownStatus() == TskData.FileKnown.BAD) {
                 notableYesOrNoLabel.setText("Yes");
@@ -466,42 +465,6 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     protected void finalize() throws Throwable {
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventsListener);
         super.finalize();
-    }
-
-    private class TagPair implements Comparable<TagPair> {
-
-        private TagNameDefinition oldValue;
-        private TagNameDefinition newValue;
-
-        private TagPair(TagNameDefinition oldV, TagNameDefinition newV) {
-            oldValue = oldV;
-            newValue = newV;
-        }
-
-        private TagNameDefinition getOldValue() {
-            return oldValue;
-        }
-
-        private TagNameDefinition getNewValue() {
-            return newValue;
-        }
-
-        /**
-         * Compares this tag name definition with the specified tag name
-         * definition for order.
-         *
-         * @param other The tag name definition to which to compare this tag
-         *              name definition.
-         *
-         * @return Negative integer, zero, or a positive integer to indicate
-         *         that this tag name definition is less than, equal to, or
-         *         greater than the specified tag name definition.
-         */
-        @Override
-        public int compareTo(TagPair other) {
-            return this.getNewValue().compareTo(other.getNewValue());
-        }
-
     }
 
     /**
