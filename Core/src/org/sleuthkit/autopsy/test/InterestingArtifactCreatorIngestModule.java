@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.Level;
 
 import org.openide.util.Exceptions;
@@ -77,6 +79,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
             Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
             BlackboardArtifact.Type artifactTypeBase = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAMES[randomArtIndex], ARTIFACT_DISPLAY_NAMES[randomArtIndex]);
             BlackboardArtifact artifactBase = file.newArtifact(artifactTypeBase.getTypeID());
+            Collection<BlackboardAttribute> baseAttributes = new ArrayList<>();
             String commentTxt;
             BlackboardAttribute baseAttr;
             switch (artifactBase.getArtifactTypeID()) {
@@ -84,7 +87,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
                     commentTxt = "www.placeholderWebsiteDOTCOM";
                     baseAttr = new BlackboardAttribute(
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, "Fake Web BookMark", "www.thisWebsiteIsStillFake.com");
-                    artifactBase.addAttribute(baseAttr);
+                    baseAttributes.add(baseAttr);
                     break;
                 case 9:
                     commentTxt = "fakeKeyword";
@@ -94,29 +97,32 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, "Fake Keyword Search", "Fake");
                     BlackboardAttribute keyword = new BlackboardAttribute(
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, "Fake Keyword Search", "FakeKeyword");
-                    artifactBase.addAttribute(baseAttr);
-                    artifactBase.addAttribute(set);
-                    artifactBase.addAttribute(keyword);
+                    baseAttributes.add(baseAttr);
+                    baseAttributes.add(set);
+                    baseAttributes.add(keyword);
                     break;
                 case 25:
                     commentTxt = "fake phone number from";
                     baseAttr = new BlackboardAttribute(
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, "Fake Call Log Whatever", "555-555-5555");
-                    artifactBase.addAttribute(baseAttr);
+                    baseAttributes.add(baseAttr);
                     break;
                 default:
                     commentTxt = "DEPENDENT ON ARTIFACT TYPE";
                     break;
             }
+            artifactBase.addAttributes(baseAttributes);
             BlackboardArtifact artifact = file.newArtifact(artifactType.getTypeID());
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, "ArtifactsAndTxt");
 
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, commentTxt);
             BlackboardAttribute att3 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, "");
-            artifact.addAttribute(att);
-            artifact.addAttribute(att2);
-            artifact.addAttribute(att3);
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactBase.getArtifactID()));
+            attributes.add(att);
+            attributes.add(att2);
+            attributes.add(att3);
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactBase.getArtifactID()));
+            artifact.addAttributes(attributes);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;

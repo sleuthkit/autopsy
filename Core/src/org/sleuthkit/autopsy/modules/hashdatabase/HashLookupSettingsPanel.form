@@ -94,7 +94,7 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="1" pref="1" max="-2" attributes="0"/>
                               <Component id="jScrollPane1" min="-2" pref="395" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="informationLabel" max="32767" attributes="0"/>
@@ -102,29 +102,24 @@
                                   </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" alignment="1" attributes="0">
-                                              <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="optionsSeparator" min="-2" pref="334" max="-2" attributes="0"/>
-                                          </Group>
                                           <Group type="102" attributes="0">
                                               <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" alignment="0" attributes="0">
                                                       <Group type="103" groupAlignment="0" attributes="0">
                                                           <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="indexButton" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
                                                           <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="indexLabel" alignment="0" min="-2" pref="66" max="-2" attributes="0"/>
-                                                          <Component id="indexPathLabelLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="versionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="orgLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="readOnlyLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       </Group>
-                                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                                      <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
                                                       <Group type="103" groupAlignment="0" attributes="0">
                                                           <Component id="hashDbTypeLabel" min="-2" pref="225" max="-2" attributes="0"/>
                                                           <Component id="hashDbLocationLabel" alignment="0" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="indexPathLabel" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="hashDbIndexStatusLabel" alignment="0" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="addHashesToDatabaseButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbVersionLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbOrgLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbReadOnlyLabel" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
@@ -132,22 +127,45 @@
                                                       <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
                                                       <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
                                                   </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="indexLabel" alignment="0" min="-2" pref="66" max="-2" attributes="0"/>
+                                                          <Component id="indexPathLabelLabel" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                      <EmptySpace min="-2" pref="64" max="-2" attributes="0"/>
+                                                      <Group type="103" groupAlignment="1" attributes="0">
+                                                          <Component id="indexPathLabel" min="-2" pref="225" max="-2" attributes="0"/>
+                                                          <Component id="hashDbIndexStatusLabel" min="-2" pref="225" max="-2" attributes="0"/>
+                                                      </Group>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="indexButton" min="-2" pref="120" max="-2" attributes="0"/>
+                                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                                      <Component id="addHashesToDatabaseButton" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
                                               </Group>
                                           </Group>
                                           <Group type="102" alignment="0" attributes="0">
                                               <EmptySpace min="-2" pref="70" max="-2" attributes="0"/>
                                               <Component id="informationSeparator" min="-2" pref="305" max="-2" attributes="0"/>
                                           </Group>
-                                          <Group type="102" attributes="0">
-                                              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                              <Component id="ingestWarningLabel" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
-                                              <Component id="sendIngestMessagesCheckBox" min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" alignment="1" attributes="0">
+                                                  <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="optionsSeparator" min="-2" pref="334" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
+                                                  <Component id="sendIngestMessagesCheckBox" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                                  <Component id="ingestWarningLabel" min="-2" max="-2" attributes="0"/>
+                                              </Group>
                                           </Group>
                                       </Group>
-                                      <EmptySpace min="-2" pref="50" max="-2" attributes="0"/>
+                                      <EmptySpace min="50" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -200,6 +218,21 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="versionLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="hashDbVersionLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="orgLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="hashDbOrgLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="readOnlyLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="hashDbReadOnlyLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="indexPathLabelLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="indexPathLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -208,12 +241,12 @@
                                   <Component id="indexLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="hashDbIndexStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="indexButton" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="addHashesToDatabaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="optionsLabel" min="-2" max="-2" attributes="0"/>
                                   <Component id="optionsSeparator" alignment="1" min="-2" max="-2" attributes="0"/>
@@ -581,6 +614,48 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addHashesToDatabaseButtonActionPerformed"/>
               </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="versionLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.versionLabel.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="hashDbVersionLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbVersionLabel.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="orgLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.orgLabel.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="hashDbOrgLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbOrgLabel.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="readOnlyLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.readOnlyLabel.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="hashDbReadOnlyLabel">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/hashdatabase/Bundle.properties" key="HashLookupSettingsPanel.hashDbReadOnlyLabel.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
             </Component>
           </SubComponents>
         </Container>
