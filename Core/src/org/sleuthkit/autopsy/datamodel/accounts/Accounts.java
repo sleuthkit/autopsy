@@ -1428,15 +1428,7 @@ final public class Accounts implements AutopsyVisitableItem {
             final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
             artifacts.forEach(artifact -> {
                 try {
-                    AccountFileInstance accountInstance = skCase.getCommunicationsManager().getAccountFileInstance(artifact);
-                    
-                    if (BlackboardArtifact.ReviewStatus.APPROVED == newStatus) {
-                        accountInstance.approveAccount();
-                    }
-                    else {
-                         accountInstance.rejectAccount();
-                    }
-                    
+                    skCase.setReviewStatus(artifact, newStatus);                    
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
