@@ -557,7 +557,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 version = versionTextField.getText();
             } else {
                 // Editable databases don't have a version
-                version = EamDb.getDefaultVersion();
+                version = "";
             }
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
             progressDialog.importFile(hashSetNameTextField.getText(), version, 

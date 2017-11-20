@@ -423,7 +423,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_saveAsButtonActionPerformed
 
     @NbBundle.Messages({"HashDbCreateDatabaseDialog.missingOrg=An organization must be selected",
-        "HashDbCreateDatabaseDialog.duplicateName=A hashset with this name and version already exists",
+        "HashDbCreateDatabaseDialog.duplicateName=A hashset with this name already exists",
         "HashDbCreateDatabaseDialog.databaseLookupError=Error accessing central repository",
         "HashDbCreateDatabaseDialog.databaseCreationError=Error creating new hash set"
     })
@@ -500,7 +500,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
         } else {
             // Check if a hash set with the same name/version already exists
             try{
-                if(EamDb.getInstance().referenceSetExists(hashSetNameTextField.getText(), EamDb.getDefaultVersion())){
+                if(EamDb.getInstance().referenceSetExists(hashSetNameTextField.getText(), "")){
                     JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbCreateDatabaseDialog.duplicateName"),
@@ -522,9 +522,9 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             
             try{
                 int referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(selectedOrg.getOrgID(), hashSetNameTextField.getText(),  
-                        EamDb.getDefaultVersion(), fileKnown, false));
+                        "", fileKnown, false));
                 newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetNameTextField.getText(), 
-                        EamDb.getDefaultVersion(), referenceSetID, 
+                        "", referenceSetID, 
                         true, sendIngestMessagesCheckbox.isSelected(), type, false);
             } catch (EamDbException | TskCoreException ex){
                 Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Error creating new reference set", ex);
