@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceIn
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -84,8 +85,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                                 .collect(Collectors.toSet());
                         messagesResultPanel.setPath(selectedNodes.length + " accounts");
                     }
-                    messagesResultPanel.setNode(new TableFilterNode(
-                            new AccountDetailsNode(collect, filter, commsManager), true));
+                    messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(
+                            new AccountDetailsNode(collect, filter, commsManager), parentExplorereManager), true));
                 }
             }
         });
