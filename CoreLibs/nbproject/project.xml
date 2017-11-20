@@ -683,6 +683,10 @@
                 <binary-origin>release/modules/ext/compiler-0.9.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/imageio-iff-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-iff-3.2.jar</binary-origin>
             </class-path-extension>
@@ -725,10 +729,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.6.0.jar</runtime-relative-path>
