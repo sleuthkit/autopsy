@@ -28,13 +28,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Parser for idx files
+ * Parser for idx files (*.idx)
  */
 class IdxHashSetParser implements HashSetParser {
-    private String filename;
-    private BufferedReader reader;
-    private final long totalHashes;
-    private boolean doneReading = false;
+    private final String filename;        // Name of the input file (saved for logging)
+    private BufferedReader reader;        // Input file
+    private final long totalHashes;       // Estimated number of hashes
+    private boolean doneReading = false;  // Flag for if we've hit the end of the file
     
     IdxHashSetParser(String filename) throws TskCoreException{
         this.filename = filename;

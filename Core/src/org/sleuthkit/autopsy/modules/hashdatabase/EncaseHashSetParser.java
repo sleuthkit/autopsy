@@ -24,24 +24,30 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Parser for Encase format hash sets (*.hash)
+ */
 class EncaseHashSetParser implements HashSetParser {
     private final byte[] encaseHeader = {(byte)0x48, (byte)0x41, (byte)0x53, (byte)0x48, (byte)0x0d, (byte)0x0a, (byte)0xff, (byte)0x00,
                                  (byte)0x02, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x01, (byte)0x00, (byte)0x00, (byte)0x00};
-    private InputStream inputStream;
-    private final long expectedHashCount;
-    private int totalHashesRead = 0;
+    private final String filename;         // Name of the input file (saved for logging)
+    private InputStream inputStream;       // File stream for file being imported
+    private final long expectedHashCount;  // Number of hashes we expect to read from the file
+    private int totalHashesRead = 0;       // Number of hashes that have been read
     
     /**
      * Opens the import file and parses the header.
-     * @param filename The Encase hashset
+     * If this is successful, the file will be set up to call getNextHash() to
+     * read the hash values.
+     * @param filename The Encase hash set
      * @throws TskCoreException There was an error opening/reading the file or it is not the correct format
      */
     EncaseHashSetParser(String filename) throws TskCoreException{
         try{
+            this.filename = filename;
             inputStream = new BufferedInputStream(new FileInputStream(filename));
             
             // Read in and test the 16 byte header
@@ -69,6 +75,8 @@ class EncaseHashSetParser implements HashSetParser {
             // Read in the hash set type
             byte[] typeBuffer = new byte[0x28];
             readBuffer(typeBuffer, 0x28);   
+            
+            // At this point we're past the header and ready to read in the hashes
             
         } catch (IOException ex){
             close();
@@ -124,8 +132,7 @@ class EncaseHashSetParser implements HashSetParser {
             totalHashesRead++;
             return sb.toString();
         } catch (IOException ex){
-            Logger.getLogger(EncaseHashSetParser.class.getName()).log(Level.SEVERE, "Ran out of data while reading Encase hash sets", ex);
-            throw new TskCoreException("Error reading hash", ex);
+            throw new TskCoreException("Ran out of data while reading Encase hash set " + filename, ex);
         }
     }
     
@@ -138,21 +145,20 @@ class EncaseHashSetParser implements HashSetParser {
             try{
                 inputStream.close();
             } catch (IOException ex){
-                Logger.getLogger(EncaseHashSetParser.class.getName()).log(Level.SEVERE, "Error closing Encase hash set", ex);
+                Logger.getLogger(EncaseHashSetParser.class.getName()).log(Level.SEVERE, "Error closing Encase hash set " + filename, ex);
             } finally {
                 inputStream = null;
             }
         }
     }
     
-    @NbBundle.Messages({"EncaseHashSetParser.outOfData.text=Ran out of data while parsing file"})
     private void readBuffer(byte[] buffer, int length) throws TskCoreException, IOException {
         if(inputStream == null){
             throw new TskCoreException("readBuffer called on null inputStream");
         }
         if(length != inputStream.read(buffer)){
             close();
-            throw new TskCoreException("Ran out of data unexpectedly while parsing Encase file");
+            throw new TskCoreException("Ran out of data unexpectedly while parsing Encase file " + filename);
         }
     }
 }
