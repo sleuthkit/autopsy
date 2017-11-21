@@ -40,24 +40,24 @@ import org.sleuthkit.datamodel.TskData;
  * A tag name definition consisting of a display name, description and color.
  */
 @Immutable
-final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
+final class TagNameDefinition implements Comparable<TagNameDefinition> {
 
-    private static final Logger LOGGER = Logger.getLogger(TagNameDefiniton.class.getName());
-    @NbBundle.Messages({"TagNameDefiniton.predefTagNames.bookmark.text=Bookmark",
-        "TagNameDefiniton.predefTagNames.followUp.text=Follow Up",
-        "TagNameDefiniton.predefTagNames.notableItem.text=Notable Item"})
+    private static final Logger LOGGER = Logger.getLogger(TagNameDefinition.class.getName());
+    @NbBundle.Messages({"TagNameDefinition.predefTagNames.bookmark.text=Bookmark",
+        "TagNameDefinition.predefTagNames.followUp.text=Follow Up",
+        "TagNameDefinition.predefTagNames.notableItem.text=Notable Item"})
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS    
 
-    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefiniton_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(), DhsImageCategory.TWO.getDisplayName(), DhsImageCategory.THREE.getDisplayName());  // NON-NLS
-    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefiniton_predefTagNames_bookmark_text(), Bundle.TagNameDefiniton_predefTagNames_followUp_text(),
-            Bundle.TagNameDefiniton_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(),
+    private static final List<String> STANDARD_NOTABLE_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(), DhsImageCategory.TWO.getDisplayName(), DhsImageCategory.THREE.getDisplayName());  // NON-NLS
+    private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), Bundle.TagNameDefinition_predefTagNames_followUp_text(),
+            Bundle.TagNameDefinition_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(),
             DhsImageCategory.TWO.getDisplayName(), DhsImageCategory.THREE.getDisplayName(),
             DhsImageCategory.FOUR.getDisplayName(), DhsImageCategory.FIVE.getDisplayName());
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
-    private final TskData.FileKnown knownStatusDenoted;
+    private final TskData.FileKnown knownStatus;
 
     /**
      * Constructs a tag name definition consisting of a display name,
@@ -66,13 +66,13 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      * @param displayName The display name for the tag name.
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
-     * @param knownStatus The status denoted by the tag.
+     * @param knownStatus The status denoted by the tag name.
      */
-    TagNameDefiniton(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
+    TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatusDenoted = status;
+        this.knownStatus = status;
     }
 
     static List<String> getStandardTagNames() {
@@ -107,13 +107,13 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
     }
 
     /**
-     * Whether or not the status that this tag implies is the Notable status
+     * Whether or not the status that this tag implies Notable status
      *
      * @return true if the Notable status is implied by this tag, false
      *         otherwise.
      */
     boolean isNotable() {
-        return knownStatusDenoted == TskData.FileKnown.BAD;
+        return knownStatus == TskData.FileKnown.BAD;
     }
 
     /**
@@ -128,7 +128,7 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         the specified tag name definition.
      */
     @Override
-    public int compareTo(TagNameDefiniton other) {
+    public int compareTo(TagNameDefinition other) {
         return this.getDisplayName().toLowerCase().compareTo(other.getDisplayName().toLowerCase());
     }
 
@@ -154,10 +154,10 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      */
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof TagNameDefiniton)) {
+        if (!(obj instanceof TagNameDefinition)) {
             return false;
         }
-        TagNameDefiniton thatTagName = (TagNameDefiniton) obj;
+        TagNameDefinition thatTagName = (TagNameDefinition) obj;
         return this.getDisplayName().equals(thatTagName.getDisplayName());
     }
 
@@ -176,13 +176,13 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
-        return displayName + "," + description + "," + color.name() + "," + knownStatusDenoted.toString();
+        return displayName + "," + description + "," + color.name() + "," + knownStatus.toString();
     }
 
     private TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
-            tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatusDenoted);
+            tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error updating non-file object ", ex);
         }
@@ -195,8 +195,8 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *
      * @return A set of tag name definition objects.
      */
-    static synchronized Set<TagNameDefiniton> getTagNameDefinitions() {
-        Set<TagNameDefiniton> tagNames = new HashSet<>();
+    static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
+        Set<TagNameDefinition> tagNames = new HashSet<>();
         //modifiable copy of default tags list for us to keep track of which default tags have already been created
         Set<String> standardTags = new HashSet<>(STANDARD_TAG_DISPLAY_NAMES);
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
@@ -218,9 +218,9 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
         //create standard tags which should always exist which were not already created for whatever reason, such as upgrade
         for (String standardTagName : standardTags) {
             if (STANDARD_NOTABLE_TAG_DISPLAY_NAMES.contains(standardTagName)) {
-                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
+                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
             } else {
-                tagNames.add(new TagNameDefiniton(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
+                tagNames.add(new TagNameDefinition(standardTagName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
             }
         }
         return tagNames;
@@ -238,8 +238,8 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *
      * @return tagNames a list of TagNameDefinitions
      */
-    private static Set<TagNameDefiniton> upgradeTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
-        Set<TagNameDefiniton> tagNames = new HashSet<>();
+    private static Set<TagNameDefinition> upgradeTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
+        Set<TagNameDefinition> tagNames = new HashSet<>();
         List<String> legacyNotableTags = new ArrayList<>();
         String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
         if (badTagsStr == null || badTagsStr.isEmpty()) {  //if there were no bad tags in the central repo properties file use the default list
@@ -251,10 +251,10 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
             String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
             standardTagsToBeCreated.remove(tagNameAttributes[0]); //remove the tag from the list of standard tags which have not been created
             if (legacyNotableTags.contains(tagNameAttributes[0])) { //if tag should be notable mark create it as such
-                tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1],
+                tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
                         TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.BAD));
             } else {  //otherwise create it as unknown
-                tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1],
+                tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
                         TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.UNKNOWN)); //add the default value for that tag 
             }
         }
@@ -272,12 +272,12 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *
      * @return tagNames a list of TagNameDefinitions
      */
-    private static Set<TagNameDefiniton> readCurrentTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
-        Set<TagNameDefiniton> tagNames = new HashSet<>();
+    private static Set<TagNameDefinition> readCurrentTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
+        Set<TagNameDefinition> tagNames = new HashSet<>();
         for (String tagNameTuple : tagProperties) {
             String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
             standardTagsToBeCreated.remove(tagNameAttributes[0]);  //remove the tag from the list of standard tags which have not been created
-            tagNames.add(new TagNameDefiniton(tagNameAttributes[0], tagNameAttributes[1],
+            tagNames.add(new TagNameDefinition(tagNameAttributes[0], tagNameAttributes[1],
                     TagName.HTML_COLOR.valueOf(tagNameAttributes[2]), TskData.FileKnown.valueOf(tagNameAttributes[3])));
         }
         return tagNames;
@@ -288,9 +288,9 @@ final class TagNameDefiniton implements Comparable<TagNameDefiniton> {
      *
      * @param tagNames A set of tag name definition objects.
      */
-    static synchronized void setTagNameDefinitions(Set<TagNameDefiniton> tagNames) {
+    static synchronized void setTagNameDefinitions(Set<TagNameDefinition> tagNames) {
         StringBuilder setting = new StringBuilder();
-        for (TagNameDefiniton tagName : tagNames) {
+        for (TagNameDefinition tagName : tagNames) {
             if (setting.length() != 0) {
                 setting.append(";");
             }
