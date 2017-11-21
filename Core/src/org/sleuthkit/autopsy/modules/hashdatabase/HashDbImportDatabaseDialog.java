@@ -465,7 +465,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
         
         if(centralRepoRadioButton.isSelected()){
-            if(versionTextField.getText().isEmpty()){
+            if(readOnlyCheckbox.isSelected() && versionTextField.getText().isEmpty()){
                 JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.missingVersion"),
