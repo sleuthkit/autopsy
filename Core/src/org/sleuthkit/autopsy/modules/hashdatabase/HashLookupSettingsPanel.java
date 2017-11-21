@@ -302,7 +302,11 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     @Override
     @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
-    public void saveSettings() {       
+    public void saveSettings() {     
+        // Clear out the list of new central repo hash sets. They don't need to be
+        // indexed so will all be saved on both code paths.
+        newReferenceSetIDs.clear();
+        
         //Checking for for any unindexed databases
         List<SleuthkitHashSet> unindexed = new ArrayList<>();
         for (HashDb db : hashSetManager.getAllHashSets()) {
@@ -362,10 +366,10 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
          */
         if (IngestManager.getInstance().isIngestRunning() == false) {
             // Remove any new central repo hash sets from the database
-            for(int refID:newReferenceSetIDs){
+            for(Integer referenceSetID:newReferenceSetIDs){
                 try{
                     if(EamDb.isEnabled()){
-                        EamDb.getInstance().deleteReferenceSet(refID);
+                        EamDb.getInstance().deleteReferenceSet(referenceSetID);
                     } else {
                         // This is the case where the user imported a database, then switched over to the central
                         // repo panel and disabled it before cancelling. We can't delete the database at this point.
@@ -375,6 +379,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error reverting central repository hash sets", ex); //NON-NLS
                 }
             }
+            newReferenceSetIDs.clear();
             
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
