@@ -31,7 +31,7 @@ import javax.lang.model.type.TypeKind;
  */
 final class AutoIngestJobNodeData {
 
-    private static final int CURRENT_VERSION = 1;
+    private static final int CURRENT_VERSION = 2;
     private static final int DEFAULT_PRIORITY = 0;
 
     /*
@@ -47,7 +47,7 @@ final class AutoIngestJobNodeData {
      * data. This avoids the need to continuously enlarge the buffer. Once the
      * buffer has all the necessary data, it will be resized as appropriate.
      */
-    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131629;
+    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131637;
 
     /*
      * Version 0 fields.
@@ -73,6 +73,11 @@ final class AutoIngestJobNodeData {
     private long processingStageStartDate;
     private String processingStageDetailsDescription;   // 'byte' length used in byte array
     private long processingStageDetailsStartDate;
+    
+    /*
+     * Version 2 fields.
+     */
+    private long dataSourceSize;
 
     /**
      * Gets the current version of the auto ingest job coordination service node
@@ -109,6 +114,7 @@ final class AutoIngestJobNodeData {
         setProcessingStage(job.getProcessingStage());
         setProcessingStageStartDate(job.getProcessingStageStartDate());
         setProcessingStageDetails(job.getProcessingStageDetails());
+        //DLG:
     }
 
     /**
@@ -143,6 +149,7 @@ final class AutoIngestJobNodeData {
         this.processingStageStartDate = 0L;
         this.processingStageDetailsDescription = "";
         this.processingStageDetailsStartDate = 0L;
+        this.dataSourceSize = 0L;
 
         /*
          * Get fields from node data.
@@ -177,6 +184,10 @@ final class AutoIngestJobNodeData {
                 this.processingStageDetailsDescription = getStringFromBuffer(buffer, TypeKind.BYTE);
                 this.processingStageDetailsStartDate = buffer.getLong();
                 this.processingHostName = getStringFromBuffer(buffer, TypeKind.SHORT);
+                
+                if (this.version >= 2) {
+                    this.dataSourceSize = buffer.getLong();
+                }
             }
 
         } catch (BufferUnderflowException ex) {
@@ -498,6 +509,22 @@ final class AutoIngestJobNodeData {
     void setProcessingHostName(String processingHost) {
         this.processingHostName = processingHost;
     }
+    
+    /**
+     * DLG:
+     */
+    long getDataSourceSize() {
+        return this.dataSourceSize;
+    }
+    
+    /**
+     * DLG:
+     * 
+     * @param DLG:
+     */
+    void setDataSourceSize(long dataSourceSize) {
+        this.dataSourceSize = dataSourceSize;
+    }
 
     /**
      * Gets the node data as a byte array that can be sent to the coordination
@@ -515,7 +542,7 @@ final class AutoIngestJobNodeData {
         buffer.putLong(this.completedDate);
         buffer.putInt(this.errorsOccurred ? 1 : 0);
 
-        if (this.version > 0) {
+        if (this.version >= 1) {
             // Write version
             buffer.putInt(this.version);
 
@@ -531,6 +558,10 @@ final class AutoIngestJobNodeData {
             putStringIntoBuffer(this.processingStageDetailsDescription, buffer, TypeKind.BYTE);
             buffer.putLong(this.processingStageDetailsStartDate);
             putStringIntoBuffer(processingHostName, buffer, TypeKind.SHORT);
+            
+            if (this.version >= 2) {
+                buffer.putLong(this.dataSourceSize);
+            }
         }
 
         // Prepare the array

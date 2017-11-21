@@ -2263,6 +2263,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
+            collectMetrics(/*DLG:*/);
             exportFiles(dataSource);
         }
 
@@ -2542,6 +2543,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventListener);
                 currentJob.setIngestJob(null);
             }
+        }
+        
+        /*
+         * DLG:
+         */
+        private void collectMetrics(/*DLG:*/) {
+            
+            AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(currentJob);
         }
 
         /**
