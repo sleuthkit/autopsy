@@ -22,31 +22,24 @@ import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.StringBuilder;
 import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class EncaseHashSetParser {
-    final byte[] encaseHeader = {(byte)0x48, (byte)0x41, (byte)0x53, (byte)0x48, (byte)0x0d, (byte)0x0a, (byte)0xff, (byte)0x00,
+class EncaseHashSetParser implements HashSetParser {
+    private final byte[] encaseHeader = {(byte)0x48, (byte)0x41, (byte)0x53, (byte)0x48, (byte)0x0d, (byte)0x0a, (byte)0xff, (byte)0x00,
                                  (byte)0x02, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x01, (byte)0x00, (byte)0x00, (byte)0x00};
-    InputStream inputStream;
-    final int expectedHashes;
-    int totalHashesRead = 0;
+    private InputStream inputStream;
+    private final long expectedHashCount;
+    private int totalHashesRead = 0;
     
     /**
      * Opens the import file and parses the header.
      * @param filename The Encase hashset
      * @throws TskCoreException There was an error opening/reading the file or it is not the correct format
      */
-    @NbBundle.Messages({"EncaseHashSetParser.fileOpenError.text=Error reading import file",
-        "EncaseHashSetParser.wrongFormat.text=Hashset is not Encase format"})
     EncaseHashSetParser(String filename) throws TskCoreException{
         try{
             inputStream = new BufferedInputStream(new FileInputStream(filename));
@@ -55,16 +48,14 @@ class EncaseHashSetParser {
             byte[] header = new byte[16];
             readBuffer(header, 16);
             if(! Arrays.equals(header, encaseHeader)){
-                displayError(NbBundle.getMessage(this.getClass(),
-                            "EncaseHashSetParser.wrongFormat.text"));
                 close();
                 throw new TskCoreException("File " + filename + " does not have an Encase header");
             }
             
-            // Read in the expected number of hashes
+            // Read in the expected number of hashes (little endian)
             byte[] sizeBuffer = new byte[4];
             readBuffer(sizeBuffer, 4);
-            expectedHashes = ((sizeBuffer[3] & 0xff) << 24) | ((sizeBuffer[2] & 0xff) << 16)
+            expectedHashCount = ((sizeBuffer[3] & 0xff) << 24) | ((sizeBuffer[2] & 0xff) << 16)
                             | ((sizeBuffer[1] & 0xff) << 8) | (sizeBuffer[0] & 0xff);
             
             // Read in a bunch of nulls
@@ -80,8 +71,6 @@ class EncaseHashSetParser {
             readBuffer(typeBuffer, 0x28);   
             
         } catch (IOException ex){
-            displayError(NbBundle.getMessage(this.getClass(),
-                            "EncaseHashSetParser.fileOpenError.text"));
             close();
             throw new TskCoreException("Error reading " + filename, ex);
         } catch (TskCoreException ex){
@@ -90,21 +79,34 @@ class EncaseHashSetParser {
         }
     }
     
-    int getExpectedHashes(){
-        return expectedHashes;
+    /**
+     * Get the expected number of hashes in the file.
+     * This number can be an estimate.
+     * @return The expected hash count
+     */
+    @Override
+    public long getExpectedHashCount(){
+        return expectedHashCount;
     }
     
-    synchronized boolean doneReading(){
-        if(inputStream == null){
-            return true;
-        }
-        
-        return(totalHashesRead >= expectedHashes);
+    /**
+     * Check if there are more hashes to read
+     * @return true if we've read all expected hash values, false otherwise
+     */
+    @Override
+    public boolean doneReading(){
+        return(totalHashesRead >= expectedHashCount);
     }
     
-    synchronized String getNextHash() throws TskCoreException{
+    /**
+     * Get the next hash to import
+     * @return The hash as a string, or null if the end of file was reached without error
+     * @throws TskCoreException 
+     */
+    @Override
+    public String getNextHash() throws TskCoreException{
         if(inputStream == null){
-            return null;
+            throw new TskCoreException("Attempting to read from null inputStream");
         }
         
         byte[] hashBytes = new byte[16];
@@ -122,14 +124,16 @@ class EncaseHashSetParser {
             totalHashesRead++;
             return sb.toString();
         } catch (IOException ex){
-            // Log it and return what we've got
             Logger.getLogger(EncaseHashSetParser.class.getName()).log(Level.SEVERE, "Ran out of data while reading Encase hash sets", ex);
-            close();
             throw new TskCoreException("Error reading hash", ex);
         }
     }
     
-    synchronized final void close(){
+    /**
+     * Closes the import file
+     */
+    @Override
+    public final void close(){
         if(inputStream != null){
             try{
                 inputStream.close();
@@ -142,26 +146,13 @@ class EncaseHashSetParser {
     }
     
     @NbBundle.Messages({"EncaseHashSetParser.outOfData.text=Ran out of data while parsing file"})
-    private synchronized void readBuffer(byte[] buffer, int length) throws TskCoreException, IOException {
+    private void readBuffer(byte[] buffer, int length) throws TskCoreException, IOException {
         if(inputStream == null){
             throw new TskCoreException("readBuffer called on null inputStream");
         }
         if(length != inputStream.read(buffer)){
-            displayError(NbBundle.getMessage(this.getClass(),
-                        "EncaseHashSetParser.outOfData.text"));
             close();
-            throw new TskCoreException("Ran out of data while parsing Encase file");
-        }
-    }
-    
-    @NbBundle.Messages({"EncaseHashSetParser.error.title=Error importing Encase hashset"})
-    private void displayError(String errorText){
-        if(RuntimeProperties.runningWithGUI()){
-            JOptionPane.showMessageDialog(null,
-                        errorText,
-                        NbBundle.getMessage(this.getClass(),
-                                "EncaseHashSetParser.error.title"),
-                        JOptionPane.ERROR_MESSAGE);
+            throw new TskCoreException("Ran out of data unexpectedly while parsing Encase file");
         }
     }
 }

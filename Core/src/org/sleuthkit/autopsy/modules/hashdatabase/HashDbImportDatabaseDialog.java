@@ -447,7 +447,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=A version must be entered",
         "HashDbImportDatabaseDialog.missingOrg=An organization must be selected",
         "HashDbImportDatabaseDialog.duplicateName=A hashset with this name and version already exists",
-        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository"
+        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository",
+        "HashDbImportDatabaseDialog.mustEnterHashSetNameMsg=A hash set name must be entered."
     })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
@@ -456,7 +457,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         if (hashSetNameTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
+                            "HashDbImportDatabaseDialog.mustEnterHashSetNameMsg"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
