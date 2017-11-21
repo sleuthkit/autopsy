@@ -21,27 +21,31 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 interface HashSetParser {
-    
+
     /**
      * Get the next hash to import
-     * @return The hash as a string, or null if the end of file was reached without error
-     * @throws TskCoreException 
+     *
+     * @return The hash as a string, or null if the end of file was reached
+     * without error
+     * @throws TskCoreException
      */
     String getNextHash() throws TskCoreException;
-    
+
     /**
      * Check if there are more hashes to read
+     *
      * @return true if we've read all expected hash values, false otherwise
      */
     boolean doneReading();
-    
+
     /**
-     * Get the expected number of hashes in the file.
-     * This number can be an estimate.
+     * Get the expected number of hashes in the file. This number can be an
+     * estimate.
+     *
      * @return The expected hash count
      */
     long getExpectedHashCount();
-    
+
     /**
      * Closes the import file
      */
