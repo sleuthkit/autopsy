@@ -41,6 +41,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
 
     private static final long serialVersionUID = 1L;
 
+
     private final DataResultPanel messagesResultPanel;
     private final ExplorerManager explorerManager = new ExplorerManager();
     private final DataResultViewerTable dataResultViewerTable = new DataResultViewerTable(explorerManager, "Messages");
@@ -63,30 +64,35 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         parentExplorereManager.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] selectedNodes = parentExplorereManager.getSelectedNodes();
+
+                messagesResultPanel.setNumMatches(0);
+                messagesResultPanel.setNode(null);
+
                 if (selectedNodes.length == 0) {
                     //reset panel when there is no selection
-                    messagesResultPanel.setNode(null);
                     messagesResultPanel.setPath("");
-                    messagesResultPanel.setNumMatches(0);
                 } else {
                     AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
                     CommunicationsFilter filter = adiNode.getFilter();
                     CommunicationsManager commsManager = adiNode.getCommsManager();
-                    final Set<AccountDeviceInstance> collect;
+                    final Set<AccountDeviceInstance> accountDeviceInstances;
 
                     if (selectedNodes.length == 1) {
                         final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
-                        collect = Collections.singleton(accountDeviceInstance);
+                        accountDeviceInstances = Collections.singleton(accountDeviceInstance);
                         messagesResultPanel.setPath(accountDeviceInstance.getAccount().getAccountUniqueID());
                     } else {
-                        collect = Stream.of(selectedNodes)
+                        accountDeviceInstances = Stream.of(selectedNodes)
                                 .map(node -> (AccountDeviceInstanceNode) node)
                                 .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
                                 .collect(Collectors.toSet());
                         messagesResultPanel.setPath(selectedNodes.length + " accounts");
                     }
-                    messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(
-                            new AccountDetailsNode(collect, filter, commsManager), parentExplorereManager), true));
+                    AccountDetailsNode accountDetailsNode =
+                            new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
+                    TableFilterNode wrappedNode =
+                            new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorereManager), true);
+                    messagesResultPanel.setNode(wrappedNode);
                 }
             }
         });
@@ -97,6 +103,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         }
         messagesResultPanel.open();
     }
+
+  
 
     @Override
     public ExplorerManager getExplorerManager() {

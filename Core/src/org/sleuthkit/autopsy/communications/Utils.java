@@ -28,12 +28,12 @@ import org.sleuthkit.datamodel.Account;
  */
 class Utils {
 
+    private Utils() {
+    }
+
     static ZoneId getUserPreferredZoneId() {
         ZoneId zone = UserPreferences.displayTimesInLocalTime() ? ZoneOffset.systemDefault() : ZoneOffset.UTC;
         return zone;
-    }
-
-    private Utils() {
     }
 
     /**
@@ -68,4 +68,5 @@ class Utils {
             throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
         }
     }
+
 }

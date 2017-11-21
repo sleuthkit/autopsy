@@ -23,17 +23,21 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
 
 /**
  * Key for AccountDeviceInstance node.
- * 
+ *
  * Encapsulates a AccountDeviceInstance, and CommunicationsFilter.
  */
-public class AccountDeviceInstanceKey {
+class AccountDeviceInstanceKey {
 
     private final AccountDeviceInstance accountDeviceInstance;
     private final CommunicationsFilter filter;
+    private final long messageCount;
 
-    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter) {
+   
+
+    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount) {
         this.accountDeviceInstance = accountDeviceInstance;
         this.filter = filter;
+        this.messageCount = msgCount;
     }
 
     AccountDeviceInstance getAccountDeviceInstance() {
@@ -42,5 +46,9 @@ public class AccountDeviceInstanceKey {
 
     CommunicationsFilter getCommunicationsFilter() {
         return filter;
+    }
+
+     long getMessageCount() {
+        return messageCount;
     }
 }

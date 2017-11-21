@@ -137,7 +137,9 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         super.open();
         /*
          * when the window is (re)opened make sure the filters and accounts are
-         * in a up to date and consistent state.
+         * in an up to date and consistent state.
+         * 
+         * Re-applying the filters means we will lose the selection...
          */
         filtersPane.updateAndApplyFilters();
     }
