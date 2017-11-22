@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.crypto;
+package org.sleuthkit.autopsy.modules.encryptiondetection;
 
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -32,10 +32,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 @Messages({
-    "CryptoDetectionFileIngestModule.moduleName.text=Crypto Detection",
-    "CryptoDetectionFileIngestModule.getDesc.text=Looks for large files with high entropy."
+    "EncryptionDetectionFileIngestModule.moduleName.text=Encryption Detection",
+    "EncryptionDetectionFileIngestModule.getDesc.text=Looks for large files with high entropy."
 })
-public class CryptoDetectionModuleFactory extends IngestModuleFactoryAdapter {
+public class EncryptionDetectionModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDisplayName() {
@@ -48,12 +48,12 @@ public class CryptoDetectionModuleFactory extends IngestModuleFactoryAdapter {
      * @return The module name.
      */
     static String getModuleName() {
-        return NbBundle.getMessage(CryptoDetectionFileIngestModule.class, "CryptoDetectionFileIngestModule.moduleName.text");
+        return NbBundle.getMessage(EncryptionDetectionFileIngestModule.class, "EncryptionDetectionFileIngestModule.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(CryptoDetectionFileIngestModule.class, "CryptoDetectionFileIngestModule.getDesc.text");
+        return NbBundle.getMessage(EncryptionDetectionFileIngestModule.class, "EncryptionDetectionFileIngestModule.getDesc.text");
     }
 
     @Override
@@ -68,6 +68,6 @@ public class CryptoDetectionModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new CryptoDetectionFileIngestModule();
+        return new EncryptionDetectionFileIngestModule();
     }
 }
