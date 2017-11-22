@@ -56,7 +56,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -2547,20 +2546,29 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 currentJob.setIngestJob(null);
             }
         }
-        
-        /*
-         * DLG:
+
+        /**
+         * Gather metrics to store in auto ingest job nodes. A SleuthkitCase
+         * instance is used to get the content size.
+         *
+         * @param caseDb     The SleuthkitCase instance.
+         * @param dataSource The auto ingest data source.
+         *
+         * @throws CoordinationServiceException If there's a problem retrieving
+         *                                      data from the coordination
+         *                                      service.
+         * @throws InterruptedException         If the thread calling the
+         *                                      coordination service is
+         *                                      interrupted.
          */
         private void collectMetrics(SleuthkitCase caseDb, AutoIngestDataSource dataSource) throws CoordinationServiceException, InterruptedException {
             List<Content> contentList = dataSource.getContent();
             long dataSourceSize = 0;
             for (Content content : contentList) {
-                // DLG: Why multiply Content objects?
-                // DLG: What to do if more than one?
-                dataSourceSize = ((DataSource)content).getContentSize(caseDb);
+                dataSourceSize += ((DataSource) content).getContentSize(caseDb);
             }
+            currentJob.setDataSourceSize(dataSourceSize);
             AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(currentJob);
-            nodeData.setDataSourceSize(dataSourceSize);
             String manifestNodePath = currentJob.getManifest().getFilePath().toString();
             coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
         }

@@ -114,7 +114,7 @@ final class AutoIngestJobNodeData {
         setProcessingStage(job.getProcessingStage());
         setProcessingStageStartDate(job.getProcessingStageStartDate());
         setProcessingStageDetails(job.getProcessingStageDetails());
-        //DLG:
+        setDataSourceSize(job.getDataSourceSize());
     }
 
     /**
@@ -184,10 +184,13 @@ final class AutoIngestJobNodeData {
                 this.processingStageDetailsDescription = getStringFromBuffer(buffer, TypeKind.BYTE);
                 this.processingStageDetailsStartDate = buffer.getLong();
                 this.processingHostName = getStringFromBuffer(buffer, TypeKind.SHORT);
-                
-                if (this.version >= 2) {
-                    this.dataSourceSize = buffer.getLong();
-                }
+            }
+
+            if (buffer.hasRemaining()) {
+                /*
+                 * Get version 2 fields.
+                 */
+                this.dataSourceSize = buffer.getLong();
             }
 
         } catch (BufferUnderflowException ex) {
@@ -511,16 +514,18 @@ final class AutoIngestJobNodeData {
     }
     
     /**
-     * DLG:
+     * Gets the total size of the data source.
+     * 
+     * @return The data source size.
      */
     long getDataSourceSize() {
         return this.dataSourceSize;
     }
     
     /**
-     * DLG:
+     * Sets the total size of the data source.
      * 
-     * @param DLG:
+     * @param dataSourceSize The data source size.
      */
     void setDataSourceSize(long dataSourceSize) {
         this.dataSourceSize = dataSourceSize;
