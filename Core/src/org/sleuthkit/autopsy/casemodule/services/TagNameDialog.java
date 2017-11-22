@@ -231,7 +231,7 @@ final class TagNameDialog extends javax.swing.JDialog {
 
         descriptionTextArea.setColumns(20);
         descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        descriptionTextArea.setRows(5);
+        descriptionTextArea.setRows(3);
         descriptionScrollPane.setViewportView(descriptionTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.descriptionLabel.text")); // NOI18N
