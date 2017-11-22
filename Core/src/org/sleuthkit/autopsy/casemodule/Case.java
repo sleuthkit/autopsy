@@ -364,10 +364,11 @@ public class Case {
          */
         CASE_DETAILS,
         /**
-         * The status which a Tag indicates has been changed and the new value
-         * of the TagNameDefinition is included.
+         * A tag definition has changed (e.g., description, known status). The
+         * old value of the PropertyChangeEvent is the display name of the tag
+         * definition that has changed.
          */
-        TAG_STATUS_CHANGED;
+        TAG_DEFINITION_CHANGED;
 
     };
 
@@ -1478,9 +1479,18 @@ public class Case {
         eventPublisher.publish(new ContentTagDeletedEvent(deletedTag));
     }
 
-    public void notifyTagStatusChanged(String changedTagName) {
-       eventPublisher.publish(new AutopsyEvent(Events.TAG_STATUS_CHANGED.toString(), changedTagName, changedTagName));
+    /**
+     * Notifies case event subscribers that a tag definition has changed.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param changedTagName the name of the tag definition which was changed
+     */
+    public void notifyTagDefinitionChanged(String changedTagName) {
+        //leaving new value of changedTagName as null, because we do not currently support changing the display name of a tag. 
+        eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
     }
+
     /**
      * Notifies case event subscribers that an artifact tag has been added.
      *
