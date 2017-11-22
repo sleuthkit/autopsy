@@ -728,8 +728,6 @@ public class HashDbManager implements PropertyChangeListener {
         public abstract HashDb.KnownFilesType getKnownFilesType();
 
         public abstract boolean getSearchDuringIngest();
-        
-        abstract boolean getDefaultSearchDuringIngest();
 		
         abstract void setSearchDuringIngest(boolean useForIngest);
 
@@ -868,12 +866,6 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         public boolean getSearchDuringIngest() {
             return searchDuringIngest;
-        }
-        
-        @Override
-        boolean getDefaultSearchDuringIngest(){
-            // File type hash sets are on by default
-            return true;
         }
 
         @Override
@@ -1175,12 +1167,6 @@ public class HashDbManager implements PropertyChangeListener {
         @Override
         public boolean getSearchDuringIngest() {
             return searchDuringIngest;
-        }
-        
-        @Override
-        boolean getDefaultSearchDuringIngest(){
-            // Central repo hash sets are off by default
-            return false;
         }
 
         @Override
