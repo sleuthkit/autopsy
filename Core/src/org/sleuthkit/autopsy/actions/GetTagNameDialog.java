@@ -315,7 +315,9 @@ public class GetTagNameDialog extends JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     @NbBundle.Messages({"GetTagNameDialog.tagNameAlreadyExists.message=Tag name must be unique. A tag with this name already exists.",
-        "GetTagNameDialog.tagNameAlreadyExists.title=Duplicate Tag Name"})
+        "GetTagNameDialog.tagNameAlreadyExists.title=Duplicate Tag Name",
+        "GetTagNameDialog.tagDescriptionIllegalCharacters.message=Tag descriptions may not contain commas (,) or semicolons (;)",
+        "GetTagNameDialog.tagDescriptionIllegalCharacters.title=Invalid character in tag description"})
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         String tagDisplayName = tagNameField.getText();
         String userTagDescription = descriptionTextArea.getText();
@@ -334,8 +336,8 @@ public class GetTagNameDialog extends JDialog {
         } else if (userTagDescription.contains(",")
                 || userTagDescription.contains(";")) {
               JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
-                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagDescriptionIllegalCharacters.message"),
+                    NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagDescriptionIllegalCharacters.title"),
                     JOptionPane.ERROR_MESSAGE);
         } else {
             tagName = tagNamesMap.get(tagDisplayName);
