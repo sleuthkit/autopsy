@@ -31,6 +31,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.TskData;
 
+@Messages({"TagNameDialog.descriptionLabel.text=Description:",
+    "TagNameDialog.notableCheckbox.text=Tag indicates item is notable."})
 final class TagNameDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;

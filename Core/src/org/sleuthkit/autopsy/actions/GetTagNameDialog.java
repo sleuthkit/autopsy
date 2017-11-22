@@ -36,6 +36,7 @@ import javax.swing.KeyStroke;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -44,6 +45,8 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+@Messages({"GetTagNameDialog.descriptionLabel.text=Description:",
+    "GetTagNameDialog.notableCheckbox.text=Tag indicates item is notable."})
 public class GetTagNameDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -335,7 +338,7 @@ public class GetTagNameDialog extends JDialog {
                     JOptionPane.ERROR_MESSAGE);
         } else if (userTagDescription.contains(",")
                 || userTagDescription.contains(";")) {
-              JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagDescriptionIllegalCharacters.message"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagDescriptionIllegalCharacters.title"),
                     JOptionPane.ERROR_MESSAGE);
