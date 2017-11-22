@@ -150,8 +150,8 @@ final class TagNameDialog extends javax.swing.JDialog {
             } else if (descriptionText.contains(",")
                     || descriptionText.contains(";")) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
-                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
