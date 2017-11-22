@@ -162,7 +162,6 @@ class EncaseHashSetParser implements HashSetParser {
             throw new TskCoreException("readBuffer called on null inputStream");
         }
         if (length != inputStream.read(buffer)) {
-            close();
             throw new TskCoreException("Ran out of data unexpectedly while parsing Encase file " + filename);
         }
     }

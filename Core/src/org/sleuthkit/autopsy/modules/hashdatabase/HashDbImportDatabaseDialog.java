@@ -88,11 +88,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         fileChooser.setMultiSelectionEnabled(false);
     }
     
-    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.idx or .hash only)"})
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.kdb, .idx or .hash)"})
     private void updateFileChooserFilter() {
         fileChooser.resetChoosableFileFilters();
         if(centralRepoRadioButton.isSelected()){
-            String[] EXTENSION = new String[]{"hash", "Hash", "idx"}; //NON-NLS
+            String[] EXTENSION = new String[]{"kdb", "idx", "hash", "Hash"}; //NON-NLS
             FileNameExtensionFilter filter = new FileNameExtensionFilter(
                     NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.centralRepoExtFilter.text"), EXTENSION);
             fileChooser.setFileFilter(filter);  
