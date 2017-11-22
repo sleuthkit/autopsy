@@ -31,35 +31,38 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Parser for idx files (*.idx)
  */
 class IdxHashSetParser implements HashSetParser {
+
     private final String filename;        // Name of the input file (saved for logging)
     private BufferedReader reader;        // Input file
     private final long totalHashes;       // Estimated number of hashes
     private boolean doneReading = false;  // Flag for if we've hit the end of the file
-    
-    IdxHashSetParser(String filename) throws TskCoreException{
+
+    IdxHashSetParser(String filename) throws TskCoreException {
         this.filename = filename;
-        try{
+        try {
             reader = new BufferedReader(new FileReader(filename));
-        } catch (FileNotFoundException ex){
+        } catch (FileNotFoundException ex) {
             throw new TskCoreException("Error opening file " + filename, ex);
         }
-    
+
         // Estimate the total number of hashes in the file since counting them all can be slow
         File importFile = new File(filename);
         long fileSize = importFile.length();
         totalHashes = fileSize / 0x33 + 1; // IDX file lines are generally 0x33 bytes long. We add one to prevent this from being zero
     }
-    
+
     /**
      * Get the next hash to import
-     * @return The hash as a string, or null if the end of file was reached without error
-     * @throws TskCoreException 
+     *
+     * @return The hash as a string, or null if the end of file was reached
+     * without error
+     * @throws TskCoreException
      */
     @Override
     public String getNextHash() throws TskCoreException {
         String line;
-    
-        try{
+
+        try {
             while ((line = reader.readLine()) != null) {
 
                 String[] parts = line.split("\\|");
@@ -68,45 +71,47 @@ class IdxHashSetParser implements HashSetParser {
                 if (parts.length != 2 || parts[0].length() == 41) {
                     continue;
                 }
-                
+
                 return parts[0].toLowerCase();
             }
-        } catch (IOException ex){
+        } catch (IOException ex) {
             throw new TskCoreException("Error reading file " + filename, ex);
         }
-        
+
         // We've run out of data
         doneReading = true;
         return null;
     }
-    
+
     /**
      * Check if there are more hashes to read
+     *
      * @return true if we've read all expected hash values, false otherwise
      */
     @Override
     public boolean doneReading() {
         return doneReading;
     }
-    
+
     /**
-     * Get the expected number of hashes in the file.
-     * This number can be an estimate.
+     * Get the expected number of hashes in the file. This number can be an
+     * estimate.
+     *
      * @return The expected hash count
      */
     @Override
     public long getExpectedHashCount() {
         return totalHashes;
     }
-    
+
     /**
      * Closes the import file
      */
     @Override
     public void close() {
-        try{
+        try {
             reader.close();
-        } catch (IOException ex){
+        } catch (IOException ex) {
             Logger.getLogger(IdxHashSetParser.class.getName()).log(Level.SEVERE, "Error closing file " + filename, ex);
         }
     }
