@@ -34,6 +34,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -423,6 +424,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     }
 
     // root node filters
+    @Messages({"FileTypeExtensionFilters.tskDatabaseFilter.text=Databases"})
     public static enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
 
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", //NON-NLS
@@ -437,6 +439,9 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
                 FileTypeExtensions.getArchiveExtensions()),
+        TSK_DATABASE_FILTER(3, "TSK_DATABASE_FILTER", //NON-NLS
+                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDatabaseFilter.text"),
+                FileTypeExtensions.getDatabaseExtensions()),
         TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
                 Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
