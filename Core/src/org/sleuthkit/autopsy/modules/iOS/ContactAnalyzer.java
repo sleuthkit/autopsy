@@ -28,6 +28,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -128,6 +130,7 @@ class ContactAnalyzer {
 
                 BlackboardArtifact bba;
                 bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+                Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 String name;
                 String oldName = "";
                 String mimetype; // either phone or email
@@ -137,16 +140,16 @@ class ContactAnalyzer {
                     data1 = resultSet.getString("data1"); //NON-NLS
                     mimetype = resultSet.getString("mimetype"); //NON-NLS
                     if (name.equals(oldName) == false) {
-                        bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
-                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
+                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
                     }
                     if (mimetype.equals("vnd.android.cursor.item/phone_v2")) { //NON-NLS
-                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, moduleName, data1));
+                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, moduleName, data1));
                     } else {
-                        bba.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, data1));
+                        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, data1));
                     }
                     oldName = name;
                     
+                    bba.addAttributes(attributes);
                     try {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(bba);

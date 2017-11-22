@@ -96,20 +96,6 @@ public interface EamDb {
     }
 
     /**
-     * Get the list of tags recognized as "Bad"
-     *
-     * @return The list of bad tags
-     */
-    List<String> getBadTags();
-
-    /**
-     * Set the tags recognized as "Bad"
-     *
-     * @param tags The tags to consider bad
-     */
-    void setBadTags(List<String> tags);
-
-    /**
      * Add a new name/value pair in the db_info table.
      *
      * @param name  Key to set
@@ -509,7 +495,7 @@ public interface EamDb {
      * @throws EamDbException
      */
     void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException;
-
+    
     /**
      * Insert the bulk collection of Global File Instances
      *

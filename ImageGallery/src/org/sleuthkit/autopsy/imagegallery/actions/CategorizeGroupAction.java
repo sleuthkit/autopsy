@@ -38,7 +38,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -49,7 +49,7 @@ public class CategorizeGroupAction extends CategorizeAction {
 
     private final static Logger LOGGER = Logger.getLogger(CategorizeGroupAction.class.getName());
 
-    public CategorizeGroupAction(Category newCat, ImageGalleryController controller) {
+    public CategorizeGroupAction(DhsImageCategory newCat, ImageGalleryController controller) {
         super(controller, newCat, null);
         setEventHandler(actionEvent -> {
             ObservableList<Long> fileIDs = controller.viewState().get().getGroup().getFileIDs();
@@ -58,12 +58,12 @@ public class CategorizeGroupAction extends CategorizeAction {
                 //if they have preveiously disabled the warning, just go ahead and apply categories.
                 addCatToFiles(ImmutableSet.copyOf(fileIDs));
             } else {
-                final Map<Category, Long> catCountMap = new HashMap<>();
+                final Map<DhsImageCategory, Long> catCountMap = new HashMap<>();
 
                 for (Long fileID : fileIDs) {
                     try {
-                        Category category = controller.getFileFromId(fileID).getCategory();
-                        if (false == Category.ZERO.equals(category) && newCat.equals(category) == false) {
+                        DhsImageCategory category = controller.getFileFromId(fileID).getCategory();
+                        if (false == DhsImageCategory.ZERO.equals(category) && newCat.equals(category) == false) {
                             catCountMap.merge(category, 1L, Long::sum);
                         }
                     } catch (TskCoreException ex) {
@@ -86,14 +86,14 @@ public class CategorizeGroupAction extends CategorizeAction {
         "CategorizeGroupAction.fileCountMessage={0} with {1}",
         "CategorizeGroupAction.dontShowAgain=Don't show this message again",
         "CategorizeGroupAction.fileCountHeader=Files in the following categories will have their categories overwritten: "})
-    private void showConfirmationDialog(final Map<Category, Long> catCountMap, Category newCat, ObservableList<Long> fileIDs) {
+    private void showConfirmationDialog(final Map<DhsImageCategory, Long> catCountMap, DhsImageCategory newCat, ObservableList<Long> fileIDs) {
 
         ButtonType categorizeButtonType =
                 new ButtonType(Bundle.CategorizeGroupAction_OverwriteButton_text(), ButtonBar.ButtonData.APPLY);
 
         VBox textFlow = new VBox();
 
-        for (Map.Entry<Category, Long> entry : catCountMap.entrySet()) {
+        for (Map.Entry<DhsImageCategory, Long> entry : catCountMap.entrySet()) {
             if (entry.getKey().equals(newCat) == false) {
                 if (entry.getValue() > 0) {
                     Label label = new Label(Bundle.CategorizeGroupAction_fileCountMessage(entry.getValue(), entry.getKey().getDisplayName()),
