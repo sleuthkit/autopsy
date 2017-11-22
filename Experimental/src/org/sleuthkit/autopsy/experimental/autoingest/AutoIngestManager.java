@@ -2562,12 +2562,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      interrupted.
          */
         private void collectMetrics(SleuthkitCase caseDb, AutoIngestDataSource dataSource) throws CoordinationServiceException, InterruptedException {
+            /*
+             * Get the data source size and store it in the current job.
+             */
             List<Content> contentList = dataSource.getContent();
             long dataSourceSize = 0;
             for (Content content : contentList) {
                 dataSourceSize += ((DataSource) content).getContentSize(caseDb);
             }
             currentJob.setDataSourceSize(dataSourceSize);
+            
+            /*
+             * Create node data from the current job and store it.
+             */
             AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(currentJob);
             String manifestNodePath = currentJob.getManifest().getFilePath().toString();
             coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
