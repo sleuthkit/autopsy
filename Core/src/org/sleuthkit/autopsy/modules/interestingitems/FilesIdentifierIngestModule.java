@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +122,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // blackboard.
                     String moduleName = InterestingItemsIngestModuleFactory.getModuleName();
                     BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
                     // Add a set name attribute to the artifact. This adds a 
                     // fair amount of redundant data to the attributes table 
@@ -128,13 +130,14 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     // otherwise would requires reworking the interesting files
                     // set hit artifact.
                     BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, filesSet.getName());
-                    artifact.addAttribute(setNameAttribute);
+                    attributes.add(setNameAttribute);
 
                     // Add a category attribute to the artifact to record the 
                     // interesting files set membership rule that was satisfied.
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, moduleName, ruleSatisfied);
-                    artifact.addAttribute(ruleNameAttribute);
+                    attributes.add(ruleNameAttribute);
 
+                    artifact.addAttributes(attributes);
                     try {
                         // index the artifact for keyword search
                         blackboard.indexArtifact(artifact);

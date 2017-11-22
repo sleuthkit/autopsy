@@ -28,6 +28,7 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.apache.commons.codec.binary import Base64
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
@@ -94,12 +95,14 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                     direction = "Outgoing"
                 payload = resultSet.getString("payload")
 
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) #create a call log and then add attributes from result set.
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, create_time))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, direction))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, TangoMessageAnalyzer.decodeMessage(conv_id, payload)))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Tango Message"))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, general.MODULE_NAME, create_time))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, direction))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, TangoMessageAnalyzer.decodeMessage(conv_id, payload)))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Tango Message"))
 
+                artifact.addAttributes(attributes)
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()
