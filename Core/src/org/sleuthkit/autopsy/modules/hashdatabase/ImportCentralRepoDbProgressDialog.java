@@ -220,12 +220,8 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             } else if(importFileName.toLowerCase().endsWith(".kdb")){
                 hashSetParser = new KdbHashSetParser(importFileName);
             } else {
-                if (importFileName.toLowerCase().endsWith(".hash")) {
-                    hashSetParser = new EncaseHashSetParser(importFileName);
-                } else {
-                    // We've gotten here with a format that can't be processed
-                    throw new TskCoreException("Hash set to import is an unknown format : " + importFileName);
-                }
+                // We've gotten here with a format that can't be processed
+                throw new TskCoreException("Hash set to import is an unknown format : " + importFileName);
             }
 
             try {
