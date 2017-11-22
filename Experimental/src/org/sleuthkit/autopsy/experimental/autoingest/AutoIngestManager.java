@@ -98,6 +98,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -2263,7 +2266,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
-            collectMetrics(/*DLG:*/);
+            collectMetrics(caseForJob.getSleuthkitCase(), dataSource);
             exportFiles(dataSource);
         }
 
@@ -2548,9 +2551,18 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         /*
          * DLG:
          */
-        private void collectMetrics(/*DLG:*/) {
-            
+        private void collectMetrics(SleuthkitCase caseDb, AutoIngestDataSource dataSource) throws CoordinationServiceException, InterruptedException {
+            List<Content> contentList = dataSource.getContent();
+            long dataSourceSize = 0;
+            for (Content content : contentList) {
+                // DLG: Why multiply Content objects?
+                // DLG: What to do if more than one?
+                dataSourceSize = ((DataSource)content).getContentSize(caseDb);
+            }
             AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(currentJob);
+            nodeData.setDataSourceSize(dataSourceSize);
+            String manifestNodePath = currentJob.getManifest().getFilePath().toString();
+            coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
         }
 
         /**
