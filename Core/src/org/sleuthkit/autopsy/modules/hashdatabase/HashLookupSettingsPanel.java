@@ -301,9 +301,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     @Override
     @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
-    public void saveSettings() {
-
-        // Clear out the list of unsaved hashes
+    public void saveSettings() {     
+        // Clear out the list of new central repo hash sets. They don't need to be
+        // indexed so will all be saved on both code paths.
         newReferenceSetIDs.clear();
 
         //Checking for for any unindexed databases
@@ -378,7 +378,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error reverting central repository hash sets", ex); //NON-NLS
                 }
             }
-
             HashDbManager.getInstance().loadLastSavedConfiguration();
         }
     }
