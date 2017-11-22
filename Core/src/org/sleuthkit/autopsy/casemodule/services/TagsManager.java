@@ -71,6 +71,11 @@ public class TagsManager implements Closeable {
 
     }
     @NbBundle.Messages({"TagsManager.notableTagEnding.text= (Notable)"})
+    /**
+     * Get String of text which is used to label tags as notable to the user. 
+     * 
+     * @return Bundle message TagsManager.notableTagEnding.text
+     */
     public static String getNotableTagLabel(){
         return Bundle.TagsManager_notableTagEnding_text();
     }
