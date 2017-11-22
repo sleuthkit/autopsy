@@ -88,11 +88,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         fileChooser.setMultiSelectionEnabled(false);
     }
     
-    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.idx only)"})
+    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.kdb, .idx or .hash)"})
     private void updateFileChooserFilter() {
         fileChooser.resetChoosableFileFilters();
         if(centralRepoRadioButton.isSelected()){
-            String[] EXTENSION = new String[]{"idx"}; //NON-NLS
+            String[] EXTENSION = new String[]{"kdb", "idx", "hash", "Hash"}; //NON-NLS
             FileNameExtensionFilter filter = new FileNameExtensionFilter(
                     NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.centralRepoExtFilter.text"), EXTENSION);
             fileChooser.setFileFilter(filter);  
@@ -447,7 +447,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=A version must be entered",
         "HashDbImportDatabaseDialog.missingOrg=An organization must be selected",
         "HashDbImportDatabaseDialog.duplicateName=A hashset with this name and version already exists",
-        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository"
+        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository",
+        "HashDbImportDatabaseDialog.mustEnterHashSetNameMsg=A hash set name must be entered."
     })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
@@ -456,7 +457,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         if (hashSetNameTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
+                            "HashDbImportDatabaseDialog.mustEnterHashSetNameMsg"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
@@ -464,7 +465,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
         
         if(centralRepoRadioButton.isSelected()){
-            if(versionTextField.getText().isEmpty()){
+            if(readOnlyCheckbox.isSelected() && versionTextField.getText().isEmpty()){
                 JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.missingVersion"),
@@ -557,7 +558,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 version = versionTextField.getText();
             } else {
                 // Editable databases don't have a version
-                version = EamDb.getDefaultVersion();
+                version = "";
             }
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
             progressDialog.importFile(hashSetNameTextField.getText(), version, 
