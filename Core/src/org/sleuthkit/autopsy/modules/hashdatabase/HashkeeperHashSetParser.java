@@ -34,45 +34,44 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Parser for Hashkeeper hash sets (*.hsh)
  */
 public class HashkeeperHashSetParser implements HashSetParser {
-    
+
     private String filename;
     private InputStreamReader inputStreamReader;
     private CSVParser csvParser;
     private final long expectedHashCount;  // Number of hashes we expect to read from the file
     private final Iterator<CSVRecord> recordIterator;
     private final int hashColumnIndex;     // The index of the hash column
-    
+
     HashkeeperHashSetParser(String filename) throws TskCoreException {
         this.filename = filename;
-        
-        try{
+
+        try {
             // Estimate the total number of hashes in the file
             File importFile = new File(filename);
             long fileSize = importFile.length();
             expectedHashCount = fileSize / 75 + 1; // As a rough estimate, assume 75 bytes per line. We add one to prevent this from being zero
-            
+
             // Create the parser
             inputStreamReader = new InputStreamReader(new FileInputStream(filename)); //NON-NLS
             csvParser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(inputStreamReader);
-            if( ! csvParser.getHeaderMap().keySet().contains("hash")){
+            if (!csvParser.getHeaderMap().keySet().contains("hash")) {
                 close();
                 throw new TskCoreException("Hashkeeper file format invalid - does not contain 'hash' column");
             }
-            
+
             // For efficiency, store the index of the hash column
             hashColumnIndex = csvParser.getHeaderMap().get("hash");
 
             // Make an iterator to loop over the entries
             recordIterator = csvParser.getRecords().listIterator();
-            
+
             // We're ready to use recordIterator to get each hash
-            
-        } catch (IOException ex){
+        } catch (IOException ex) {
             close();
             throw new TskCoreException("Error reading " + filename, ex);
         }
     }
-    
+
     /**
      * Get the next hash to import
      *
@@ -82,7 +81,7 @@ public class HashkeeperHashSetParser implements HashSetParser {
      */
     @Override
     public String getNextHash() throws TskCoreException {
-        if(recordIterator.hasNext()){
+        if (recordIterator.hasNext()) {
             CSVRecord record = recordIterator.next();
             String hash = record.get(hashColumnIndex);
 
@@ -91,7 +90,7 @@ public class HashkeeperHashSetParser implements HashSetParser {
             }
 
             return (hash);
-        } 
+        }
         return null;
     }
 
@@ -102,7 +101,7 @@ public class HashkeeperHashSetParser implements HashSetParser {
      */
     @Override
     public boolean doneReading() {
-        return (! recordIterator.hasNext());
+        return (!recordIterator.hasNext());
     }
 
     /**
@@ -120,15 +119,15 @@ public class HashkeeperHashSetParser implements HashSetParser {
      * Closes the import file
      */
     @Override
-    public final void close() { 
-        if(inputStreamReader != null){
-            try{
+    public final void close() {
+        if (inputStreamReader != null) {
+            try {
                 inputStreamReader.close();
             } catch (IOException ex) {
-                Logger.getLogger(EncaseHashSetParser.class.getName()).log(Level.SEVERE, "Error closing Hashkeeper hash set " + filename, ex);
+                Logger.getLogger(HashkeeperHashSetParser.class.getName()).log(Level.SEVERE, "Error closing Hashkeeper hash set " + filename, ex);
             } finally {
                 inputStreamReader = null;
-            }    
+            }
         }
     }
 }

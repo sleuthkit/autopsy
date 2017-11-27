@@ -28,8 +28,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Parser for idx files and md5sum files (*.idx or *.txt)
- * This parsers lines that start with md5 hashes and ignores any others
+ * Parser for idx files and md5sum files (*.idx or *.txt) This parsers lines
+ * that start with md5 hashes and ignores any others
  */
 class IdxHashSetParser implements HashSetParser {
 
@@ -71,7 +71,7 @@ class IdxHashSetParser implements HashSetParser {
                 String[] parts = line.split("\\|| ");
 
                 String hashStr = parts[0].toLowerCase();
-                if(! hashStr.matches("^[0-9a-f]{32}$")){
+                if (!hashStr.matches("^[0-9a-f]{32}$")) {
                     continue;
                 }
 

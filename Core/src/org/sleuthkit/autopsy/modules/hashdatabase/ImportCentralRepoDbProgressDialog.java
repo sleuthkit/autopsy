@@ -215,12 +215,12 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             HashSetParser hashSetParser;
             if (importFileName.toLowerCase().endsWith(".idx") || importFileName.toLowerCase().endsWith(".txt")) {
                 hashSetParser = new IdxHashSetParser(importFileName);
-            } else if(importFileName.toLowerCase().endsWith(".hash")){
+            } else if (importFileName.toLowerCase().endsWith(".hash")) {
                 hashSetParser = new EncaseHashSetParser(importFileName);
-            } else if(importFileName.toLowerCase().endsWith(".kdb")){
+            } else if (importFileName.toLowerCase().endsWith(".kdb")) {
                 hashSetParser = new KdbHashSetParser(importFileName);
-            } else if(importFileName.toLowerCase().endsWith(".hsh")){
-                hashSetParser = new HashkeeperHashSetParser(importFileName);    
+            } else if (importFileName.toLowerCase().endsWith(".hsh")) {
+                hashSetParser = new HashkeeperHashSetParser(importFileName);
             } else {
                 // We've gotten here with a format that can't be processed
                 throw new TskCoreException("Hash set to import is an unknown format : " + importFileName);
