@@ -84,24 +84,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        updateFileChooserFilter();
+        String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
+        fileChooser.setFileFilter(filter); 
         fileChooser.setMultiSelectionEnabled(false);
-    }
-    
-    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.kdb, .idx or .hash)"})
-    private void updateFileChooserFilter() {
-        fileChooser.resetChoosableFileFilters();
-        if(centralRepoRadioButton.isSelected()){
-            String[] EXTENSION = new String[]{"kdb", "idx", "hash", "Hash"}; //NON-NLS
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.centralRepoExtFilter.text"), EXTENSION);
-            fileChooser.setFileFilter(filter);  
-        } else {
-            String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
-            fileChooser.setFileFilter(filter);            
-        }
     }
 
     private void display() {
@@ -409,7 +396,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             hashDbFolder.mkdir();
         }
         fileChooser.setCurrentDirectory(hashDbFolder);
-        updateFileChooserFilter();
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
