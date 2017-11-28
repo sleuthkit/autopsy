@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
  * Main interface for interacting with the database
@@ -29,6 +30,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public interface EamDb {
 
     public static final int SCHEMA_VERSION = 1;
+    public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
+			= new CaseDbSchemaVersionNumber(1, 1);
 
     /**
      * Get the instance

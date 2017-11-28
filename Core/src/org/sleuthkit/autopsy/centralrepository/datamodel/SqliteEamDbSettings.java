@@ -87,6 +87,9 @@ public final class SqliteEamDbSettings {
         }
 
        
+            
+        System.out.println("\n#### UPDATING DATABASE!!!");
+        EamDbUtil.updateSchema(getEphemeralConnection());
     }
 
     public void saveSettings() {
@@ -434,7 +437,7 @@ public final class SqliteEamDbSettings {
         }
 
         boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.insertSchemaVersion(conn);
+                && EamDbUtil.updateSchemaVersion(conn);
         EamDbUtil.closeConnection(conn);
         return result;
     }
