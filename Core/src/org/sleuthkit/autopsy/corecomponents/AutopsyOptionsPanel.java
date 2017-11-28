@@ -85,6 +85,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
                 BufferedImage image = ImageIO.read(file); //create it as an image first to support BMP files 
+                if (image == null) {
+                    throw new IOException("Unable to read file as a BufferedImage for file " + file.toString());
+                }  
                 agencyLogoIcon = new ImageIcon(image.getScaledInstance(64, 64, 4));
                 agencyLogoPreview.setText("");
             }
