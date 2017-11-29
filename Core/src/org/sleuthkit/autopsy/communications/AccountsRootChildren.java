@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +84,7 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
             this.accountDeviceInstanceKey = accountDeviceInstanceKey;
             this.commsManager = commsManager;
             this.account = accountDeviceInstanceKey.getAccountDeviceInstance().getAccount();
-            setName(account.getAccountUniqueID());
+            setName(account.getTypeSpecificID());
             setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + Utils.getIconFileName(account.getAccountType()));
         }
 
