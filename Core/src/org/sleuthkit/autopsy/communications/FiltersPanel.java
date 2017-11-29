@@ -40,12 +40,12 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
+import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
+import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.DateRangeFilter;
-import org.sleuthkit.datamodel.DeviceFilter;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**

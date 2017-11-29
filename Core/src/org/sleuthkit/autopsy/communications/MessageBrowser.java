@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,7 +80,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                     if (selectedNodes.length == 1) {
                         final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
                         accountDeviceInstances = Collections.singleton(accountDeviceInstance);
-                        messagesResultPanel.setPath(accountDeviceInstance.getAccount().getAccountUniqueID());
+                        messagesResultPanel.setPath(accountDeviceInstance.getAccount().getTypeSpecificID());
                     } else {
                         accountDeviceInstances = Stream.of(selectedNodes)
                                 .map(node -> (AccountDeviceInstanceNode) node)
