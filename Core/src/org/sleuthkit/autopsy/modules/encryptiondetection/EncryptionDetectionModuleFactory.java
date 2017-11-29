@@ -22,10 +22,12 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * A factory that creates file ingest modules that detect encryption.
@@ -33,9 +35,9 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 @Messages({
     "EncryptionDetectionFileIngestModule.moduleName.text=Encryption Detection",
-    "EncryptionDetectionFileIngestModule.getDesc.text=Looks for large files with high entropy."
+    "EncryptionDetectionFileIngestModule.getDesc.text=Looks for files with the specified minimum entropy."
 })
-public class EncryptionDetectionModuleFactory extends IngestModuleFactoryAdapter {
+public class EncryptionDetectionModuleFactory implements IngestModuleFactory {
 
     @Override
     public String getModuleDisplayName() {
@@ -44,7 +46,7 @@ public class EncryptionDetectionModuleFactory extends IngestModuleFactoryAdapter
 
     /**
      * Get the name of the module.
-     * 
+     *
      * @return The module name.
      */
     static String getModuleName() {
@@ -67,7 +69,48 @@ public class EncryptionDetectionModuleFactory extends IngestModuleFactoryAdapter
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new EncryptionDetectionFileIngestModule();
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        if (!(settings instanceof EncryptionDetectionIngestJobSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be an instance of EncryptionDetectionIngestJobSettings.");
+        }
+        return new EncryptionDetectionFileIngestModule((EncryptionDetectionIngestJobSettings) settings);
+    }
+
+    @Override
+    public boolean hasGlobalSettingsPanel() {
+        return false;
+    }
+
+    @Override
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new EncryptionDetectionIngestJobSettings();
+    }
+
+    @Override
+    public boolean hasIngestJobSettingsPanel() {
+        return true;
+    }
+
+    @Override
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        if (!(settings instanceof EncryptionDetectionIngestJobSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be an instance of EncryptionDetectionIngestJobSettings");
+        }
+        return new EncryptionDetectionIngestJobSettingsPanel((EncryptionDetectionIngestJobSettings) settings);
+    }
+
+    @Override
+    public boolean isDataSourceIngestModuleFactory() {
+        return false;
+    }
+
+    @Override
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
     }
 }
