@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class PlatformUtil {
 
-    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules"; //NON-NLS
+    private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules";
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -58,16 +58,32 @@ public class PlatformUtil {
     private static volatile long pid = -1;
     private static volatile Sigar sigar = null;
     private static volatile MemoryMXBean memoryManager = null;
+    
+    private static String installPath = null;
+    private static String userDirectory = null;
 
     /**
      * Get root path where the application is installed
      *
-     * @return absolute path string to the install root dir
+     * @return absolute path string to the install root directory.
      */
-    public static String getInstallPath() {
+    public static String getInstallPath()
+    {    
+        // if we set the install path manually, return it
+        if (PlatformUtil.installPath != null) return PlatformUtil.installPath;
+        
         File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
         File rootPath = coreFolder.getParentFile().getParentFile();
         return rootPath.getAbsolutePath();
+    }
+    
+    /**
+     * Set the install path manually, if not in netbeans container
+     * @param installPath 
+     */
+    public static void setInstallPath(String installPath)
+    {
+        PlatformUtil.installPath = installPath;
     }
 
     /**
@@ -80,13 +96,13 @@ public class PlatformUtil {
         File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false); //NON-NLS
 
         File rootPath = coreFolder.getParentFile();
-        String modulesPath = rootPath.getAbsolutePath() + File.separator + "modules"; //NON-NLS
+        String modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
         File modulesPathF = new File(modulesPath);
         if (modulesPathF.exists() && modulesPathF.isDirectory()) {
             return modulesPath;
         } else {
             rootPath = rootPath.getParentFile();
-            modulesPath = rootPath.getAbsolutePath() + File.separator + "modules"; //NON-NLS
+            modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
             modulesPathF = new File(modulesPath);
             if (modulesPathF.exists() && modulesPathF.isDirectory()) {
                 return modulesPath;
@@ -104,7 +120,7 @@ public class PlatformUtil {
      *         not found
      */
     public static String getUserModulesPath() {
-        return getUserDirectory().getAbsolutePath() + File.separator + "modules"; //NON-NLS
+        return getUserDirectory().getAbsolutePath() + File.separator + "modules";
     }
 
     /**
@@ -138,12 +154,18 @@ public class PlatformUtil {
         } else {
             //else use system installed java in PATH env variable
             javaPath = "java"; //NON-NLS
-
         }
 
-        System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.jrePath.usingJavaPath.msg", javaPath));
-
         return javaPath;
+    }
+
+    /**
+     * Set user directory manually if NetBeans container not available.
+     * @param userDirectory 
+     */
+    public static void setUserDirectory(String userDirectory)
+    {
+        PlatformUtil.userDirectory = userDirectory;
     }
 
     /**
@@ -152,8 +174,12 @@ public class PlatformUtil {
      *
      * @return File object representing user directory
      */
-    public static File getUserDirectory() {
-        return Places.getUserDirectory();
+    public static File getUserDirectory()
+    {
+        // return user directory if saved
+       if (PlatformUtil.userDirectory != null) return new File(PlatformUtil.userDirectory);
+
+       return Places.getUserDirectory();
     }
 
     /**
@@ -182,7 +208,7 @@ public class PlatformUtil {
      * @return Get user config directory path string
      */
     public static String getUserConfigDirectory() {
-        return Places.getUserDirectory() + File.separator + "config"; //NON-NLS
+        return PlatformUtil.getUserDirectory().getAbsolutePath() + File.separator + "config"; //NON-NLS
     }
 
     /**
@@ -310,8 +336,8 @@ public class PlatformUtil {
             return (System.getProperty("os.arch").contains("64")); //NON-NLS
         }
     }
-    
-    
+
+
     /**
      * Attempts to determine whether the JVM is 64-bit or 32-bit. 
      * May not be completely reliable for non-Windows operating systems.
@@ -321,8 +347,7 @@ public class PlatformUtil {
     public static boolean is64BitJVM() {
         return (System.getProperty("sun.arch.data.model").equals("64"));
     }
-    
-    
+
     /**
      * Get a list of all physical drives attached to the client's machine. Error
      * threshold of 4 non-existent physical drives before giving up.

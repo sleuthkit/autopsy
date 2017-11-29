@@ -289,7 +289,7 @@ public class IngestJobSettings {
     /**
      * Loads the saved or default ingest job settings context into memory.
      */
-    private void load() {
+    public void load() {
         /**
          * Get the ingest module factories discovered by the ingest module
          * loader.

@@ -33,6 +33,7 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,8 +61,12 @@ import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
+import org.sleuthkit.autopsy.casemodule.ClusterCase;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -202,6 +207,8 @@ public class Server {
     // This could be a local or remote server.
     private HttpSolrServer currentSolrServer;
 
+    private static String defaultSolrFolder;
+
     private Core currentCore;
     private final ReentrantReadWriteLock currentCoreLock;
 
@@ -219,7 +226,17 @@ public class Server {
 
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
-        solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+
+        // set solr folder manually without netbeans InstalledFileLocator
+        if (Server.defaultSolrFolder != null)
+        {
+            solrFolder = new File(Server.defaultSolrFolder);
+        }
+        else
+        {
+            solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
+        }
+
         javaPath = PlatformUtil.getJavaPath();
 
         solrHome = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
@@ -236,6 +253,31 @@ public class Server {
 
         logger.log(Level.INFO, "Created Server instance using Java at {0}", javaPath); //NON-NLS
     }
+
+    
+    /** for the cluster case mapper */
+    Server(String strSolrFolder, String strJavaPath) 
+    {
+        initSettings();
+        
+        this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
+        serverAction = new ServerAction();
+        solrFolder = new File(strSolrFolder);
+        javaPath = strJavaPath;
+        currentCoreLock = new ReentrantReadWriteLock(true);
+
+        logger.log(Level.INFO, "Created Server instance"); //NON-NLS
+    }
+
+    /**
+     * Set what the solr default folder is. Used if not running through NetBeans.
+     * @param solrFolder 
+     */
+    public static void setDefaultSolrFolder(String solrFolder)
+    {
+        Server.defaultSolrFolder = solrFolder;
+    }
+
 
     private void initSettings() {
 
@@ -761,7 +803,7 @@ public class Server {
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    private Core openCore(Case theCase, Index index) throws KeywordSearchModuleException {
+    public Core openCore(Case theCase, Index index) throws KeywordSearchModuleException {
 
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
@@ -828,6 +870,29 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
+
+    public synchronized void openCore(String host, String port, String dataDir, String coreName) throws KeywordSearchModuleException 
+    {
+        try {
+            currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
+            connectToSolrServer(currentSolrServer);
+        } catch (SolrServerException | IOException ex) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"));
+        }
+        
+        try {
+            CaseMetadata metadata = new CaseMetadata(FileSystems.getDefault().getPath(dataDir));
+            Case cCase = new ClusterCase(metadata);
+            Index index = IndexFinder.createLatestVersionIndexDir(cCase);
+            currentCore = this.openCore(cCase, index);
+            serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
+        }
+        catch (CaseMetadataException | AutopsyServiceException ex) {
+            throw new KeywordSearchModuleException(ex);
+        }
+        
+    }
+
 
     /**
      * Commits current core if it exists

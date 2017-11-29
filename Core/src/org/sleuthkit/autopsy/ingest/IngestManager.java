@@ -344,7 +344,7 @@ public class IngestManager {
         "IngestManager.startupErr.dlgSolution=Please disable the failed modules or fix the errors before restarting ingest.",
         "IngestManager.startupErr.dlgErrorList=Errors:"
     })
-    private IngestJobStartResult startIngestJob(IngestJob job) {
+    public IngestJobStartResult startIngestJob(IngestJob job) {
         List<IngestModuleError> errors = null;
         if (caseIsOpen) {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {

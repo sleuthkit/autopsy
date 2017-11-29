@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 /**
  * Ingest job settings for the hash lookup module.
  */
-final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
+final public class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
     private HashSet<String> namesOfEnabledKnownHashSets;
@@ -44,7 +44,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param namesOfEnabledKnownBadHashSets A list of enabled known bad hash
      *                                       sets.
      */
-    HashLookupModuleSettings(boolean shouldCalculateHashes,
+    public HashLookupModuleSettings(boolean shouldCalculateHashes,
             List<String> namesOfEnabledKnownHashSets,
             List<String> namesOfEnabledKnownBadHashSets) {
         this(shouldCalculateHashes, namesOfEnabledKnownHashSets, namesOfEnabledKnownBadHashSets, new ArrayList<>(), new ArrayList<>());
@@ -63,7 +63,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param namesOfDisabledKnownBadHashSets A list of disabled known bad hash
      *                                        sets.
      */
-    HashLookupModuleSettings(boolean shouldCalculateHashes,
+    public HashLookupModuleSettings(boolean shouldCalculateHashes,
             List<String> namesOfEnabledKnownHashSets,
             List<String> namesOfEnabledKnownBadHashSets,
             List<String> namesOfDisabledKnownHashSets,

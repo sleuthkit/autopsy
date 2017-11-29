@@ -29,23 +29,9 @@ import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-/**
- * Provides thread-safe support for publishing events to registered subscribers
- * on both this Autopsy node and other Autopsy nodes. Subscribers are required
- * to be PropertyChangeListeners to integrate with the legacy use of JavaBeans
- * PropertyChangeEvents and PropertyChangeListeners as an application event
- * system.
- */
-@ThreadSafe
-public class AutopsyEventPublisher {
 
-    private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
-    private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 1;
-    private final LocalEventPublisher localPublisher; // LocalEventPublisher is thread-safe
-    @GuardedBy("this)")
-    private RemoteEventPublisher remotePublisher;
-    @GuardedBy("this)")
-    private String currentChannelName;
+@ThreadSafe
+public class DummyEventPublisher extends AutopsyEventPublisher {
 
     /**
      * Constructs an object for publishing events to registered subscribers on
@@ -53,8 +39,7 @@ public class AutopsyEventPublisher {
      * nodes is not turned on by default - call openRemoteEventChannel() after
      * construction.
      */
-    public AutopsyEventPublisher() {
-        localPublisher = new LocalEventPublisher();
+    public DummyEventPublisher() {;
     }
 
     /**
@@ -66,21 +51,6 @@ public class AutopsyEventPublisher {
      * @throws AutopsyEventException if the channel was not opened.
      */
     public synchronized void openRemoteEventChannel(String channelName) throws AutopsyEventException {
-        currentChannelName = channelName;
-        if (null != remotePublisher) {
-            closeRemoteEventChannel();
-        }
-        try {
-            remotePublisher = new RemoteEventPublisher(channelName, localPublisher, UserPreferences.getMessageServiceConnectionInfo());
-        } catch (URISyntaxException | JMSException ex) {
-            String message = "Failed to open remote event channel"; //NON-NLS
-            logger.log(Level.SEVERE, message, ex);
-            throw new AutopsyEventException(message, ex);
-        } catch (UserPreferencesException ex) {
-            String message = "Error accessing messaging service connection info"; //NON-NLS
-            logger.log(Level.SEVERE, message, ex);
-            throw new AutopsyEventException(message, ex);
-        }
     }
 
     /**
@@ -88,8 +58,6 @@ public class AutopsyEventPublisher {
      * events from other Autopsy nodes.
      */
     public synchronized void closeRemoteEventChannel() {
-        stopRemotePublisher();
-        currentChannelName = null;
     }
 
     /**
@@ -99,7 +67,6 @@ public class AutopsyEventPublisher {
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
-        localPublisher.addSubscriber(eventNames, subscriber);
     }
 
     /**
@@ -109,7 +76,6 @@ public class AutopsyEventPublisher {
      * @param subscriber The subscriber to add.
      */
     public void addSubscriber(String eventName, PropertyChangeListener subscriber) {
-        localPublisher.addSubscriber(eventName, subscriber);
     }
 
     /**
@@ -119,7 +85,6 @@ public class AutopsyEventPublisher {
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
-        localPublisher.removeSubscriber(eventNames, subscriber);
     }
 
     /**
@@ -129,7 +94,6 @@ public class AutopsyEventPublisher {
      * @param subscriber The subscriber to remove.
      */
     public void removeSubscriber(String eventName, PropertyChangeListener subscriber) {
-        localPublisher.removeSubscriber(eventName, subscriber);
     }
 
     /**
@@ -138,8 +102,6 @@ public class AutopsyEventPublisher {
      * @param event The event to publish.
      */
     public void publish(AutopsyEvent event) {
-        publishLocally(event);
-        publishRemotely(event);
     }
 
     /**
@@ -148,7 +110,6 @@ public class AutopsyEventPublisher {
      * @param event The event to publish.
      */
     public void publishLocally(AutopsyEvent event) {
-        localPublisher.publish(event);
     }
 
     /**
@@ -157,24 +118,6 @@ public class AutopsyEventPublisher {
      * @param event The event to publish.
      */
     public synchronized void publishRemotely(AutopsyEvent event) {
-        if (null != currentChannelName) {
-            boolean published = false;
-            int tryCount = 1;
-
-            while (false == published && tryCount <= MAX_REMOTE_EVENT_PUBLISH_TRIES) {
-                try {
-                    if (null == remotePublisher) {
-                        openRemoteEventChannel(currentChannelName);
-                    }
-                    remotePublisher.publish(event);
-                    published = true;
-                } catch (AutopsyEventException | JMSException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to publish %s using channel %s (tryCount = %s)", event.getPropertyName(), currentChannelName, tryCount), ex); //NON-NLS
-                    stopRemotePublisher();
-                    ++tryCount;
-                }
-            }
-        }
     }
 
     /**
@@ -182,14 +125,6 @@ public class AutopsyEventPublisher {
      * name.
      */
     private synchronized void stopRemotePublisher() {
-        if (null != remotePublisher) {
-            try {
-                remotePublisher.stop();
-            } catch (JMSException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing remote event publisher for channel %s", currentChannelName), ex); //NON-NLS
-            }
-            remotePublisher = null;
-        }
     }
 
 }

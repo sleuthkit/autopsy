@@ -21,9 +21,13 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+import java.io.IOException;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -33,13 +37,17 @@ import org.sleuthkit.datamodel.AbstractFile;
  * <p>
  * This class is thread-safe.
  */
-final class FileIngestPipeline {
+public final class FileIngestPipeline {
 
     private static final IngestManager ingestManager = IngestManager.getInstance();
     private final DataSourceIngestJob job;
     private final List<PipelineModule> modules = new ArrayList<>();
     private Date startTime;
     private volatile boolean running;
+    private static final Logger logger = Logger.getLogger("FileIngestPipeline");
+
+    /** flag inidicating whether the file pipeline is running via cluster */
+    private static boolean runningCluster = false;
 
     /**
      * Constructs an object that manages a sequence of file level ingest
@@ -68,6 +76,9 @@ final class FileIngestPipeline {
     boolean isEmpty() {
         return this.modules.isEmpty();
     }
+    
+    /** return the modules */
+    public List<PipelineModule> getModules() { return this.modules; }
 
     /**
      * Queries whether or not this pipeline is running.
@@ -76,6 +87,10 @@ final class FileIngestPipeline {
      */
     boolean isRunning() {
         return this.running;
+    }
+
+    public static void setRunningCluster(boolean runningCluster) {
+        FileIngestPipeline.runningCluster = runningCluster;
     }
 
     /**
@@ -93,14 +108,19 @@ final class FileIngestPipeline {
      *
      * @return List of start up errors, possibly empty.
      */
-    synchronized List<IngestModuleError> startUp() {
+    public synchronized List<IngestModuleError> startUp() {
         this.startTime = new Date();
         this.running = true;
         List<IngestModuleError> errors = new ArrayList<>();
         for (PipelineModule module : this.modules) {
+
+            logger.info("Start up: " + module.getDisplayName());
+
             try {
                 module.startUp(new IngestJobContext(this.job));
             } catch (Throwable ex) { // Catch-all exception firewall
+                logger.info("Start up error: " + module.getDisplayName());
+                logger.info("Start up error: " + ex.getMessage());
                 errors.add(new IngestModuleError(module.getDisplayName(), ex));
             }
         }
@@ -116,6 +136,10 @@ final class FileIngestPipeline {
      */
     synchronized List<IngestModuleError> process(FileIngestTask task) {
         List<IngestModuleError> errors = new ArrayList<>();
+
+        // if running cluster-mode, process files manually via worker application
+        if (FileIngestPipeline.runningCluster) return errors;
+
         if (!this.job.isCancelled()) {
             AbstractFile file = task.getFile();
             for (PipelineModule module : this.modules) {
@@ -124,13 +148,19 @@ final class FileIngestPipeline {
                     this.job.setCurrentFileIngestModule(module.getDisplayName(), task.getFile().getName());
                     module.process(file);
                 } catch (Throwable ex) { // Catch-all exception firewall
+
                     errors.add(new IngestModuleError(module.getDisplayName(), ex));
                     String msg = ex.getMessage();
                     // Jython run-time errors don't seem to have a message, but have details in toString.
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
+
+                    System.err.println(module.getDisplayName() + " Error " + msg + " file: " + file);
+
+                    if (RuntimeProperties.runningWithGUI()) {
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
+                    }
                 }
                 if (this.job.isCancelled()) {
                     break;
@@ -150,8 +180,13 @@ final class FileIngestPipeline {
      *
      * @return A list of shut down errors, possibly empty.
      */
-    synchronized List<IngestModuleError> shutDown() {
+    public synchronized List<IngestModuleError> shutDown() {
+
         List<IngestModuleError> errors = new ArrayList<>();
+
+        // don't allow automatic shutdown when running with cluster
+        if (FileIngestPipeline.runningCluster) return errors;
+
         if (this.running == true) { // Don't shut down pipelines that never started
             for (PipelineModule module : this.modules) {
                 try {
@@ -163,7 +198,13 @@ final class FileIngestPipeline {
                     if (msg == null) {
                         msg = ex.toString();
                     }
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
+
+                    // error shutting down module
+                    System.err.println(module.getDisplayName() + " Error " + msg);
+
+                    if (RuntimeProperties.runningWithGUI()) {
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "FileIngestPipeline.moduleError.title.text", module.getDisplayName()), msg);
+                    }
                 }
             }
         }
@@ -174,7 +215,7 @@ final class FileIngestPipeline {
     /**
      * This class decorates a file level ingest module with a display name.
      */
-    private static final class PipelineModule implements FileIngestModule {
+    public static final class PipelineModule implements FileIngestModule {
 
         private final FileIngestModule module;
         private final String displayName;
@@ -205,7 +246,7 @@ final class FileIngestPipeline {
          *
          * @return The display name.
          */
-        String getDisplayName() {
+        public String getDisplayName() {
             return displayName;
         }
 
