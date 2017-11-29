@@ -657,8 +657,9 @@ class MSOfficeEmbeddedContentExtractor {
             }
 
             File extractedFile = new File(Paths.get(getOutputFolderPath(parentFileName), name).toString());
-            writeExtractedImage(extractedFile.getAbsolutePath(), IOUtils.toByteArray(stream));
-            nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), FileUtils.sizeOf(extractedFile)));
+            byte[] fileData = IOUtils.toByteArray(stream);
+            writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
+            nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
         }
 
         /**
