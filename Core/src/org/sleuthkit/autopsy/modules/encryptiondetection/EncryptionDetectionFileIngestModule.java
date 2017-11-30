@@ -45,8 +45,11 @@ import org.sleuthkit.datamodel.TskData;
  */
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
-    private static final double ENTROPY_THRESHOLD = 7.5;
-    private static final int FILE_SIZE_THRESHOLD = 5242880; // 5MB
+    static final double DEFAULT_CONFIG_MINIMUM_ENTROPY = 7.5;
+    static final int DEFAULT_CONFIG_MINIMUM_FILE_SIZE = 5242880; // 5MB;
+    static final boolean DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED = true;
+    static final boolean DEFAULT_CONFIG_SLACK_FILES_ALLOWED = true;
+
     private static final int FILE_SIZE_MODULUS = 512;
     private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
     private static final int BYTE_OCCURENCES_BUFFER_SIZE = 256;
@@ -55,13 +58,24 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private final Logger LOGGER = SERVICES.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
     private Blackboard blackboard;
-    private double entropy;
+    private double calculatedEntropy;
+
+    private final double minimumEntropy;
+    private final int minimumFileSize;
+    private final boolean fileSizeMultipleEnforced;
+    private final boolean slackFilesAllowed;
 
     /**
-     * Create a EncryptionDetectionFileIngestModule object that will detect files
-     * that are encrypted and create blackboard artifacts as appropriate.
+     * Create a EncryptionDetectionFileIngestModule object that will detect
+     * files that are encrypted and create blackboard artifacts as appropriate.
+     * The supplied EncryptionDetectionIngestJobSettings object is used to
+     * configure the module.
      */
-    EncryptionDetectionFileIngestModule() {
+    EncryptionDetectionFileIngestModule(EncryptionDetectionIngestJobSettings settings) {
+        minimumEntropy = settings.getMinimumEntropy();
+        minimumFileSize = settings.getMinimumFileSize();
+        fileSizeMultipleEnforced = settings.isFileSizeMultipleEnforced();
+        slackFilesAllowed = settings.isSlackFilesAllowed();
     }
 
     @Override
@@ -120,7 +134,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
              */
             StringBuilder detailsSb = new StringBuilder();
             detailsSb.append("File: ").append(file.getParentPath()).append(file.getName()).append("<br/>\n");
-            detailsSb.append("Entropy: ").append(entropy);
+            detailsSb.append("Entropy: ").append(calculatedEntropy);
 
             SERVICES.postMessage(IngestMessage.createDataMessage(EncryptionDetectionModuleFactory.getModuleName(),
                     "Encryption Detected Match: " + file.getName(),
@@ -159,7 +173,8 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                 && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)) {
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
+                && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)) {
             /*
              * Qualify the file against hash databases.
              */
@@ -168,17 +183,19 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  * Qualify the size.
                  */
                 long contentSize = file.getSize();
-                if (contentSize >= FILE_SIZE_THRESHOLD && (contentSize % FILE_SIZE_MODULUS) == 0) {
-                    /*
-                     * Qualify the MIME type.
-                     */
-                    try {
-                        String mimeType = fileTypeDetector.getFileType(file);
-                        if (mimeType != null && mimeType.equals("application/octet-stream")) {
-                            possiblyEncrypted = true;
+                if (contentSize >= minimumFileSize) {
+                    if (!fileSizeMultipleEnforced || (contentSize % FILE_SIZE_MODULUS) == 0) {
+                        /*
+                         * Qualify the MIME type.
+                         */
+                        try {
+                            String mimeType = fileTypeDetector.getFileType(file);
+                            if (mimeType != null && mimeType.equals("application/octet-stream")) {
+                                possiblyEncrypted = true;
+                            }
+                        } catch (TskCoreException ex) {
+                            throw new TskCoreException("Failed to detect the file type.", ex);
                         }
-                    } catch (TskCoreException ex) {
-                        throw new TskCoreException("Failed to detect the file type.", ex);
                     }
                 }
             }
@@ -186,8 +203,8 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
         if (possiblyEncrypted) {
             try {
-                entropy = calculateEntropy(file);
-                if (entropy > ENTROPY_THRESHOLD) {
+                calculatedEntropy = calculateEntropy(file);
+                if (calculatedEntropy >= minimumEntropy) {
                     return true;
                 }
             } catch (IOException ex) {

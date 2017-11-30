@@ -1,20 +1,20 @@
 /*
-* Autopsy Forensic Browser
-*
-* Copyright 2011-2017 Basis Technology Corp.
-* Contact: carrier <at> sleuthkit <dot> org
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
@@ -31,6 +31,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.TskData;
 
+@Messages({"TagNameDialog.descriptionLabel.text=Description:",
+    "TagNameDialog.notableCheckbox.text=Tag indicates item is notable."})
 final class TagNameDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -60,7 +62,7 @@ final class TagNameDialog extends javax.swing.JDialog {
         initComponents();
         tagNameTextField.setText(tagNameToEdit.getDisplayName());
         descriptionTextArea.setText(tagNameToEdit.getDescription());
-        notableCheckbox.setSelected(tagNameToEdit.getKnownStatus()== TskData.FileKnown.BAD);
+        notableCheckbox.setSelected(tagNameToEdit.getKnownStatus() == TskData.FileKnown.BAD);
         tagNameTextField.setEnabled(false);
         this.display();
     }
@@ -127,24 +129,35 @@ final class TagNameDialog extends javax.swing.JDialog {
      *
      * @param okPressed whether the OK button was pressed.
      */
+    @Messages({"TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message=Tag descriptions may not contain commas (,) or semicolons (;)",
+        "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title=Invalid character in tag description"})
     private void doButtonAction(boolean okPressed) {
         if (okPressed) {
             String newTagDisplayName = tagNameTextField.getText().trim();
+            String descriptionText = descriptionTextArea.getText();
             if (newTagDisplayName.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.message"),
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
-            }         
+            }
             //if a tag name contains illegal characters and is not the name of one of the standard tags
             if (TagsManager.containsIllegalCharacters(newTagDisplayName) && !TagNameDefinition.getStandardTagNames().contains(newTagDisplayName)) {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.message"),
-                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameIllegalCharacters.title"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title"),
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            } else if (descriptionText.contains(",")
+                    || descriptionText.contains(";")) {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message"),
+                        NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
             userTagDescription = descriptionTextArea.getText();
             userTagDisplayName = newTagDisplayName;
             userTagIsNotable = notableCheckbox.isSelected();
@@ -231,7 +244,7 @@ final class TagNameDialog extends javax.swing.JDialog {
 
         descriptionTextArea.setColumns(20);
         descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        descriptionTextArea.setRows(5);
+        descriptionTextArea.setRows(3);
         descriptionScrollPane.setViewportView(descriptionTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.descriptionLabel.text")); // NOI18N

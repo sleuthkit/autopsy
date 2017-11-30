@@ -107,8 +107,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     /**
-     * The status which items which have this tag applied to them should have in
-     * the central repository.
+     * The status which will be applied to items with this tag.
      *
      * @return a value of TskData.FileKnown which is associated with this tag
      */

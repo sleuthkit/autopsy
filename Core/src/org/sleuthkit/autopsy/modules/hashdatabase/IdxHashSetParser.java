@@ -28,7 +28,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Parser for idx files (*.idx)
+ * Parser for idx files and md5sum files (*.idx or *.txt) This parsers lines
+ * that start with md5 hashes and ignores any others
  */
 class IdxHashSetParser implements HashSetParser {
 
@@ -49,6 +50,7 @@ class IdxHashSetParser implements HashSetParser {
         File importFile = new File(filename);
         long fileSize = importFile.length();
         totalHashes = fileSize / 0x33 + 1; // IDX file lines are generally 0x33 bytes long. We add one to prevent this from being zero
+                                           // MD5sum output lines should be close enough to that (0x20 byte hash + filename)
     }
 
     /**
@@ -65,14 +67,15 @@ class IdxHashSetParser implements HashSetParser {
         try {
             while ((line = reader.readLine()) != null) {
 
-                String[] parts = line.split("\\|");
+                // idx files have a pipe after the hash, md5sum files should have a space
+                String[] parts = line.split("\\|| ");
 
-                // Header lines start with a 41 character dummy hash, 1 character longer than a SHA-1 hash
-                if (parts.length != 2 || parts[0].length() == 41) {
+                String hashStr = parts[0].toLowerCase();
+                if (!hashStr.matches("^[0-9a-f]{32}$")) {
                     continue;
                 }
 
-                return parts[0].toLowerCase();
+                return hashStr;
             }
         } catch (IOException ex) {
             throw new TskCoreException("Error reading file " + filename, ex);

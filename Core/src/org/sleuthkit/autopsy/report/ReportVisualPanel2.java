@@ -41,10 +41,12 @@ import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 final class ReportVisualPanel2 extends JPanel {
 
@@ -102,7 +104,8 @@ final class ReportVisualPanel2 extends JPanel {
         }
 
         for (TagName tagName : tagNamesInUse) {
-            tagStates.put(tagName.getDisplayName(), Boolean.FALSE);
+              String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            tagStates.put(tagName.getDisplayName() + notableString, Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());
 

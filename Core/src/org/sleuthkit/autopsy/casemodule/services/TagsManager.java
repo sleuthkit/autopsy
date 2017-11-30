@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -68,6 +69,15 @@ public class TagsManager implements Closeable {
                 || tagDisplayName.contains(",")
                 || tagDisplayName.contains(";"));
 
+    }
+    @NbBundle.Messages({"TagsManager.notableTagEnding.text= (Notable)"})
+    /**
+     * Get String of text which is used to label tags as notable to the user. 
+     * 
+     * @return Bundle message TagsManager.notableTagEnding.text
+     */
+    public static String getNotableTagLabel(){
+        return Bundle.TagsManager_notableTagEnding_text();
     }
 
     /**
