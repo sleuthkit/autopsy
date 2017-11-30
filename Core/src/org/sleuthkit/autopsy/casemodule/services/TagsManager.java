@@ -103,7 +103,7 @@ public class TagsManager implements Closeable {
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
         for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
-            if (tagDef.isNotable()) {
+            if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
         }
