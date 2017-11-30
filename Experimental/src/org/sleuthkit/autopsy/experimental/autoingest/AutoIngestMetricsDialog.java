@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +25,17 @@ import java.awt.Window;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
+import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMetricsCollector.JobMetric;
 
 /**
  * Displays auto ingest metrics for a cluster.
  */
 final class AutoIngestMetricsDialog extends javax.swing.JDialog {
+    
+    private static final int GIGABYTE_SIZE = 1073741824;
     
     private final AutoIngestMetricsCollector autoIngestMetricsCollector;
 
@@ -42,7 +46,7 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
      */
     @Messages({
         "AutoIngestMetricsDialog.title.text=Auto Ingest Cluster Metrics",
-        "AutoIngestMetricsDialog.initReportText=Select a date below and click the 'Get Metrics Since...' button to generate\na metrics report."
+        "AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report."
     })
     AutoIngestMetricsDialog(Container parent) throws AutoIngestMetricsDialogException {
         super((Window) parent, NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.title.text"), ModalityType.MODELESS);
@@ -68,21 +72,26 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
         }
         
         AutoIngestMetricsCollector.MetricsSnapshot metricsSnapshot = autoIngestMetricsCollector.queryCoordinationServiceForMetrics();
-        Object[] completedJobDates = metricsSnapshot.getCompletedJobDates().toArray();
-        int count = 0;
+        List<JobMetric> completedJobMetrics = metricsSnapshot.getCompletedJobMetrics();
+        int jobsCompleted = 0;
+        long dataSourceSizeTotal = 0;
         long pickedDate = datePicker.getDate().atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000;
-        for(int i = completedJobDates.length - 1; i >= 0; i--) {
-            if((Long)completedJobDates[i] >= pickedDate) {
-                count++;
+        
+        for(JobMetric jobMetric : completedJobMetrics) {
+            if(jobMetric.getCompletedDate() >= pickedDate) {
+                jobsCompleted++;
+                dataSourceSizeTotal += jobMetric.getDataSourceSize();
             }
         }
         
         SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM d, yyyy");
         reportTextArea.setText(String.format(
                 "Since %s:\n" +
-                "\tNumber of Jobs Completed: %d\n",
+                "Number of Jobs Completed: %d\n" +
+                "Total Size of Data Sources: %.1f GB\n",
                 dateFormatter.format(Date.valueOf(datePicker.getDate())),
-                count
+                jobsCompleted,
+                (double)dataSourceSizeTotal / GIGABYTE_SIZE
         ));
     }
     
@@ -131,6 +140,7 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
         reportTextArea = new javax.swing.JTextArea();
         metricsButton = new javax.swing.JButton();
         datePicker = new DatePicker();
+        startingDataLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
@@ -158,6 +168,8 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
 
         datePicker.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.datePicker.toolTipText")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(startingDataLabel, org.openide.util.NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.startingDataLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -167,24 +179,28 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(metricsButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(startingDataLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(datePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                        .addComponent(metricsButton))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(metricsButton)
+                    .addComponent(datePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(startingDataLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(closeButton)
-                        .addComponent(metricsButton))
-                    .addComponent(datePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(closeButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -208,5 +224,6 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton metricsButton;
     private javax.swing.JTextArea reportTextArea;
+    private javax.swing.JLabel startingDataLabel;
     // End of variables declaration//GEN-END:variables
 }
