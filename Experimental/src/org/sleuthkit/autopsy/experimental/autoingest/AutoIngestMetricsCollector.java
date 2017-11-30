@@ -108,57 +108,58 @@ final class AutoIngestMetricsCollector {
     static final class MetricsSnapshot {
 
         private final List<JobMetric> completedJobMetrics = new ArrayList<>();
-        
+
         /**
          * Gets a list of completed job metrics.
-         * 
+         *
          * @return The completed job metrics.
          */
         List<JobMetric> getCompletedJobMetrics() {
             return new ArrayList<>(completedJobMetrics);
         }
-        
+
         /**
          * Adds a new metric to the list of completed job metrics.
-         * 
-         * @param completedDate The completed job date.
+         *
+         * @param completedDate  The completed job date.
          * @param dataSourceSize The data source size.
          */
         void addCompletedJobMetric(java.util.Date completedDate, long dataSourceSize) {
             completedJobMetrics.add(new JobMetric(completedDate, dataSourceSize));
         }
     }
-    
+
     /**
      * A single job metric for an auto ingest cluster.
      */
     static final class JobMetric {
+
         private final long completedDate;
         private final long dataSourceSize;
-        
+
         /**
          * Instantiates a job metric.
-         * 
-         * @param completedDate The job completion date.
+         *
+         * @param completedDate  The job completion date.
          * @param dataSourceSize The data source size.
          */
         JobMetric(java.util.Date completedDate, long dataSourceSize) {
             this.completedDate = completedDate.getTime();
             this.dataSourceSize = dataSourceSize;
         }
-        
+
         /**
          * Gets the job completion date, formatted in milliseconds.
-         * 
+         *
          * @return The job completion date.
          */
         long getCompletedDate() {
             return completedDate;
         }
-        
+
         /**
          * Gets the data source size.
-         * 
+         *
          * @return The data source size.
          */
         long getDataSourceSize() {

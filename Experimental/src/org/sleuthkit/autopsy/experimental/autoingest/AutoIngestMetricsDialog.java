@@ -34,14 +34,14 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMetricsCollector.
  * Displays auto ingest metrics for a cluster.
  */
 final class AutoIngestMetricsDialog extends javax.swing.JDialog {
-    
+
     private static final int GIGABYTE_SIZE = 1073741824;
-    
+
     private final AutoIngestMetricsCollector autoIngestMetricsCollector;
 
     /**
      * Creates an instance of AutoIngestMetricsDialog
-     * 
+     *
      * @param parent The parent container.
      */
     @Messages({
@@ -62,39 +62,39 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
         setLocationRelativeTo(parent);
         setVisible(true);
     }
-    
+
     /**
      * Update the metrics shown in the report text area.
      */
     private void updateMetrics() {
-        if(datePicker.getDate() == null) {
+        if (datePicker.getDate() == null) {
             return;
         }
-        
+
         AutoIngestMetricsCollector.MetricsSnapshot metricsSnapshot = autoIngestMetricsCollector.queryCoordinationServiceForMetrics();
         List<JobMetric> completedJobMetrics = metricsSnapshot.getCompletedJobMetrics();
         int jobsCompleted = 0;
         long dataSourceSizeTotal = 0;
         long pickedDate = datePicker.getDate().atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000;
-        
-        for(JobMetric jobMetric : completedJobMetrics) {
-            if(jobMetric.getCompletedDate() >= pickedDate) {
+
+        for (JobMetric jobMetric : completedJobMetrics) {
+            if (jobMetric.getCompletedDate() >= pickedDate) {
                 jobsCompleted++;
                 dataSourceSizeTotal += jobMetric.getDataSourceSize();
             }
         }
-        
+
         SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM d, yyyy");
         reportTextArea.setText(String.format(
-                "Since %s:\n" +
-                "Number of Jobs Completed: %d\n" +
-                "Total Size of Data Sources: %.1f GB\n",
+                "Since %s:\n"
+                + "Number of Jobs Completed: %d\n"
+                + "Total Size of Data Sources: %.1f GB\n",
                 dateFormatter.format(Date.valueOf(datePicker.getDate())),
                 jobsCompleted,
-                (double)dataSourceSizeTotal / GIGABYTE_SIZE
+                (double) dataSourceSizeTotal / GIGABYTE_SIZE
         ));
     }
-    
+
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * metrics dialog operation.
