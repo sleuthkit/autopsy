@@ -63,7 +63,7 @@ class AccountDetailsNode extends AbstractNode {
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
             try {
-                list.addAll(commsManager.getCommunications(accountDeviceInstances, filter));
+                list.addAll(commsManager.getRelationshipSources(accountDeviceInstances, filter));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error getting communications", ex);
             }
