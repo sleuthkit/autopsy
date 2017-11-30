@@ -69,6 +69,7 @@ public final class TagsOptionsPanelController extends OptionsPanelController {
      */
     @Override
     public void cancel() {
+       getPanel().cancelChanges();
     }
 
     @Override
