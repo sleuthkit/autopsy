@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -148,8 +149,12 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 orgComboBox.addItem(org.getName());
+                if(EamDbUtil.isDefaultOrg(org)){
+                    orgComboBox.setSelectedItem(org.getName());
+                    selectedOrg = org;
+                }
             });
-            if (!orgs.isEmpty()) {
+            if ((selectedOrg == null) && (!orgs.isEmpty())) {
                 selectedOrg = orgs.get(0);
             }
         } catch (EamDbException ex) {
