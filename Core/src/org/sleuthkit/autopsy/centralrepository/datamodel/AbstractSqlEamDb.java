@@ -36,7 +36,9 @@ import java.util.Map;
 import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -2205,6 +2207,73 @@ public abstract class AbstractSqlEamDb implements EamDb {
         );
 
         return eamGlobalFileInstance;
+    }
+    
+    void updateSchema() {
+
+        ResultSet resultSet = null;
+        Statement statement;
+        Connection conn = null;
+        try {
+            conn = connect();
+            conn.setAutoCommit(false);
+            statement = conn.createStatement();
+
+            int minorVersion = 0;
+            int majorVersion = 0;
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
+            if (resultSet.next()) {
+                String minorVersionStr = resultSet.getString("value");
+                try {
+                    minorVersion = Integer.parseInt(minorVersionStr);
+                } catch (NumberFormatException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
+            if (resultSet.next()) {
+                String majorVersionStr = resultSet.getString("value");
+                try {
+                    majorVersion = Integer.parseInt(majorVersionStr);
+                } catch (NumberFormatException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            System.out.println("Current schema version: " + majorVersion + "." + minorVersion);
+            CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
+
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
+                statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
+                statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
+                statement.execute("ALTER TABLE reference_sets ADD COLUMN type INTEGER;"); //NON-NLS
+            }
+
+            if (!updateSchemaVersion(conn)) {
+
+                // Log error
+                return;
+            }
+
+            conn.commit();
+        } catch (SQLException | EamDbException ex) {
+            try {
+                if(conn != null){
+                    conn.rollback();
+                }
+            } catch (SQLException ex2) {
+                // We're alredy in an error state
+            }
+            ex.printStackTrace();
+        } finally {
+            EamDbUtil.closeResultSet(resultSet);
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
 }

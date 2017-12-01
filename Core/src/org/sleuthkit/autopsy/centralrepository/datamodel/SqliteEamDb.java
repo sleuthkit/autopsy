@@ -989,6 +989,20 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }   
     
     /**
+     * Update the schema of the database (if needed)
+     * @throws EamDbException 
+     */
+    @Override
+    public void updateSchema() throws EamDbException {
+        try{
+            acquireExclusiveLock();
+            super.updateSchema();
+        } finally {
+            releaseExclusiveLock();
+        } 
+    }
+    
+    /**
      * Acquire the lock that provides exclusive access to the case database. 
      * Call this method in a try block with a call to
      * the lock release method in an associated finally block.

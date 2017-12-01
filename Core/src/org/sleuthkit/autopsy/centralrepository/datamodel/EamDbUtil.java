@@ -150,9 +150,8 @@ public class EamDbUtil {
         }
         return true;
     }*/
-    
-    static boolean updateSchemaVersion(Connection conn){
-     
+    static boolean updateSchemaVersion(Connection conn) {
+
         Statement statement;
         ResultSet resultSet;
         //PreparedStatement preparedStatement = null;
@@ -160,15 +159,15 @@ public class EamDbUtil {
         try {
             statement = conn.createStatement();
             resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_VERSION'");
-            if(resultSet.next()){
+            if (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMajor() + " WHERE id=" + id);
             } else {
                 statement.execute("INSERT INTO db_info (name, value) VALUES (SCHEMA_VERSION, " + CURRENT_DB_SCHEMA_VERSION.getMajor() + ")");
             }
-            
+
             resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
-            if(resultSet.next()){
+            if (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
             } else {
@@ -179,7 +178,7 @@ public class EamDbUtil {
             return false;
         } finally {
         }
-        
+
         return true;
     }
 
@@ -208,55 +207,30 @@ public class EamDbUtil {
         }
         return true;
     }
-    
-    static void updateSchema(Connection conn){
-        if (null == conn) {
-            // Add exception
+
+    /**
+     *
+     */
+    public static void updateDatabase() {
+        if (!EamDb.isEnabled()) {
             return;
         }
 
-        ResultSet resultSet = null;
-        Statement statement;
         try {
-            
-            statement = conn.createStatement();
-            
-            int minorVersion = 0;
-            int majorVersion = 0;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
-            if(resultSet.next()){
-                String minorVersionStr = resultSet.getString("value");
-                try{
-                    minorVersion = Integer.parseInt(minorVersionStr);
-                } catch (NumberFormatException ex){
-                    ex.printStackTrace();
-                }
+            EamDb db = EamDb.getInstance();
+
+            if (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.POSTGRESQL) {
+                // Try to get a lock here
             }
             
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
-            if(resultSet.next()){
-                String majorVersionStr = resultSet.getString("value");
-                try{
-                    majorVersion = Integer.parseInt(majorVersionStr);
-                } catch (NumberFormatException ex){
-                    ex.printStackTrace();
-                }
-            }
-            
-            System.out.println("Current schema version: " + majorVersion + "." + minorVersion);
-            CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
-            
-            if(dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0){
-                statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
-                statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
-                statement.execute("ALTER TABLE reference_sets ADD COLUMN type INTEGER;"); //NON-NLS
-            }
-            
-            updateSchemaVersion(conn);            
-        } catch (SQLException ex) {
+            db.updateSchema();
+
+        } catch (EamDbException ex) {
             ex.printStackTrace();
         } finally {
-            EamDbUtil.closeResultSet(resultSet);
+            if (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.POSTGRESQL) {
+                // Release lock here
+            }
         }
     }
 
@@ -264,7 +238,7 @@ public class EamDbUtil {
      * If the Central Repos use has been enabled.
      *
      * @return true if the Central Repo may be configured, false if it should
-     *         not be able to be
+     * not be able to be
      */
     public static boolean useCentralRepo() {
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
@@ -275,7 +249,7 @@ public class EamDbUtil {
      * configured.
      *
      * @param centralRepoCheckBoxIsSelected - true if the central repo can be
-     *                                      used
+     * used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));

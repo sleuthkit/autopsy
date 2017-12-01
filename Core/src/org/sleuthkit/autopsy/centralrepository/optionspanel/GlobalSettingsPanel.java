@@ -77,6 +77,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
         ingestStateUpdated();
     }
+    
+    private void updateDatabase(){
+        // Add UI stuff later
+        EamDbUtil.updateDatabase();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -317,15 +322,18 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
         load(); // reload db settings content and update buttons
         if (dialog.wasConfigurationChanged()) {
+            updateDatabase();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
         //if saved setting is disabled checkbox should be disabled already 
+        store();
         enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
         enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
         this.ingestStateUpdated();
+        updateDatabase();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 

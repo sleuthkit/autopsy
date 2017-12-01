@@ -585,4 +585,10 @@ public interface EamDb {
      * @throws EamDbException
      */
     public CorrelationAttribute.Type getCorrelationTypeById(int typeId) throws EamDbException;
+    
+    /**
+     * Update the schema of the database (if needed)
+     * @throws EamDbException 
+     */
+    public void updateSchema() throws EamDbException;
 }
