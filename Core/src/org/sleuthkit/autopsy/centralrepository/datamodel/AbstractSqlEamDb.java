@@ -2221,6 +2221,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Statement statement;
         Connection conn = null;
         try {
+            throw new EamDbException("Test failure");
+            /*
             conn = connect();
             conn.setAutoCommit(false);
             statement = conn.createStatement();
@@ -2273,7 +2275,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
             conn.commit();
             LOGGER.log(Level.INFO, "Central Repository upgraded to version " + CURRENT_DB_SCHEMA_VERSION);
-        } catch (SQLException | EamDbException ex) {
+        } catch (SQLException | EamDbException ex) {*/
+        } catch (EamDbException ex) {
             try {
                 if(conn != null){
                     conn.rollback();
@@ -2282,6 +2285,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 // We're alredy in an error state
             }
             ex.printStackTrace();
+            throw ex;
         } finally {
             EamDbUtil.closeResultSet(resultSet);
         }

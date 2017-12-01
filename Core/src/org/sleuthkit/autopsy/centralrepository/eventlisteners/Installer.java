@@ -55,7 +55,6 @@ public class Installer extends ModuleInstall {
 
         // TODO: create a thread pool to process Runners.
         
-        System.out.println("\n#######\nIn Installer:restored()\n\n#########");
         EamDbUtil.updateDatabase();
     }
 

@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.CURRENT_DB_SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  *
@@ -227,6 +227,7 @@ public class EamDbUtil {
             db.updateSchema();
 
         } catch (EamDbException ex) {
+            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
             ex.printStackTrace();
         } finally {
             if (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.POSTGRESQL) {
