@@ -315,12 +315,11 @@ final class CaseEventListener implements PropertyChangeListener {
 
             try {
                 String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
-                CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCase());
                 if (null == correlationCase) {
-                    dbManager.newCase(Case.getCurrentCase());
-                    correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                    correlationCase = dbManager.newCase(Case.getCurrentCase());
                 }
-                if (null == dbManager.getDataSourceDetails(correlationCase, deviceId)) {
+                if (null == dbManager.getDataSource(correlationCase, deviceId)) {
                     dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource));
                 }
             } catch (EamDbException ex) {
@@ -351,18 +350,6 @@ final class CaseEventListener implements PropertyChangeListener {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
                 
-                CorrelationCase curCeCase = new CorrelationCase(
-                        -1,
-                        curCase.getName(), // unique case ID
-                        EamOrganization.getDefault(),
-                        curCase.getDisplayName(),
-                        curCase.getCreatedDate(),
-                        curCase.getNumber(),
-                        curCase.getExaminer(),
-                        curCase.getExaminerEmail(),
-                        curCase.getExaminerPhone(),
-                        curCase.getCaseNotes());
-
                 if (!EamDb.isEnabled()) {
                     return;
                 }
@@ -370,10 +357,8 @@ final class CaseEventListener implements PropertyChangeListener {
                 try {
                     // NOTE: Cannot determine if the opened case is a new case or a reopened case,
                     //  so check for existing name in DB and insert if missing.
-                    CorrelationCase existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
-
-                    if (null == existingCase) {
-                        dbManager.newCase(curCeCase);
+                    if (dbManager.getCase(curCase) == null) {
+                        dbManager.newCase(curCase);
                     }
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
