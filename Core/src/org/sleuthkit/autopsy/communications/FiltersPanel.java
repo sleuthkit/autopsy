@@ -48,7 +48,9 @@ import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -183,21 +185,33 @@ final public class FiltersPanel extends javax.swing.JPanel {
      */
     private void updateDeviceFilter() {
         try {
-            Case.getCurrentCase()
-                    .getSleuthkitCase()
-                    .getDataSources().stream().map(DataSource::getDeviceId)
-                    .forEach(
-                            deviceID -> devicesMap.computeIfAbsent(deviceID, ds -> {
-                                final JCheckBox jCheckBox = new JCheckBox(deviceID, false);
-                                devicesPane.add(jCheckBox);
-                                return jCheckBox;
-                            }));
+            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+
+            for (DataSource dataSource : sleuthkitCase.getDataSources()) {
+                String dsName = getDataSourceName(sleuthkitCase, dataSource);
+
+                //store the device id in the map, but display the datasource name in the UI.
+                devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
+                    final JCheckBox jCheckBox = new JCheckBox(dsName, false);
+                    devicesPane.add(jCheckBox);
+                    return jCheckBox;
+                });
+            };
 
         } catch (IllegalStateException ex) {
             logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
+    }
+
+    private String getDataSourceName(SleuthkitCase sleuthkitCase, DataSource dataSource) {
+        try {
+            return sleuthkitCase.getContentById(dataSource.getId()).getName();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
+        }
+        return dataSource.getDeviceId();
     }
 
     /**
@@ -427,7 +441,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         commsFilter.addAndFilter(getDateRangeFilter());
         commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
                 ImmutableSet.of(CALL_LOG, MESSAGE)));
-
+        
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             em.setRootContext(new AbstractNode(Children.create(new AccountsRootChildren(commsManager, commsFilter), true)));
