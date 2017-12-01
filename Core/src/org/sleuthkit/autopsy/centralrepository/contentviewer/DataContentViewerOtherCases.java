@@ -177,7 +177,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 }
                 caseDisplayName = eamCasePartial.getDisplayName();
                 // query case details
-                CorrelationCase eamCase = dbManager.getCaseByUUID(eamCasePartial.getCaseUUID());
+                CorrelationCase eamCase = dbManager.getCase(Case.getCurrentCase());
                 if (eamCase == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                             Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),

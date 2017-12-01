@@ -89,7 +89,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             if (currentCase != null) {
                 try {
                     EamDb dbManager = EamDb.getInstance();
-                    selectedOrg = dbManager.getCaseByUUID(currentCase.getName()).getOrg();
+                    selectedOrg = dbManager.getCase(currentCase).getOrg();
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
                 }
@@ -561,7 +561,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (EamDb.isEnabled()) {
             try {
                 EamDb dbManager = EamDb.getInstance();
-                CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCase());
                 if (caseDisplayNameTextField.isVisible()) {
                     correlationCase.setDisplayName(caseDisplayNameTextField.getText());
                 }

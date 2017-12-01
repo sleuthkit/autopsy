@@ -170,9 +170,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Expects the Organization for this case to already exist in the database.
      *
      * @param eamCase The case to add
+     * @returns New Case class with populated database ID
      */
     @Override
-    public void newCase(CorrelationCase eamCase) throws EamDbException {
+    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -225,6 +226,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
+        
+        // get a new version with the updated ID
+        return getCaseByUUID(eamCase.getCaseUUID());
     }
 
     /**
@@ -249,9 +253,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 autopsyCase.getExaminerEmail(),
                 autopsyCase.getExaminerPhone(),
                 autopsyCase.getCaseNotes());
-        newCase(curCeCase);
-        return curCeCase;
+        return newCase(curCeCase);
     }
+    
+    @Override
+    public CorrelationCase getCase(Case autopsyCase) throws EamDbException {
+        return getCaseByUUID(autopsyCase.getName());
+    }
+    
 
     /**
      * Updates an existing Case in the database
@@ -432,7 +441,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -450,7 +459,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting case details.", ex); // NON-NLS
+            throw new EamDbException("Error getting data source.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1057,12 +1066,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 // We could improve effiency by keeping a list of all datasources and cases
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
-                CorrelationCase correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
-                if (null == correlationCase) {
-                    newCase(eamInstance.getCorrelationCase());
-                    correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
+                CorrelationCase correlationCaseWithId = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
+                if (null == correlationCaseWithId) {
+                    correlationCaseWithId = newCase(eamInstance.getCorrelationCase());
                 }
-                if (null == getDataSourceDetails(correlationCase, eamInstance.getCorrelationDataSource().getDeviceID())) {
+                
+                if (null == getDataSource(correlationCaseWithId, eamInstance.getCorrelationDataSource().getDeviceID())) {
                     newDataSource(eamInstance.getCorrelationDataSource());
                 }
                 eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
@@ -2146,7 +2155,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
-                new CorrelationCase(resultSet.getString("case_uid"), resultSet.getString("case_name")),
+                new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
