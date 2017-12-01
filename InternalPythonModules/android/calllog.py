@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-17 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ from org.sleuthkit.datamodel.BlackboardAttribute import ATTRIBUTE_TYPE
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel import Relationship
 
 import traceback
 import general
@@ -146,7 +147,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                             calllogAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, number, general.MODULE_NAME, abstractFile);
 
                             # create relationship between accounts
-                            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [calllogAccountInstance], artifact, date);
+                            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [calllogAccountInstance], artifact, Relationship.TYPE.CALL_LOG, date);
 
                             bbartifacts.append(artifact)
 

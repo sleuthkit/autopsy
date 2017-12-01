@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-17 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel import Relationship
 
 import traceback
 import general
@@ -121,7 +122,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact, date);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.TYPE.MESSAGE, date);
 
                 bbartifacts.append(artifact)
                 try:

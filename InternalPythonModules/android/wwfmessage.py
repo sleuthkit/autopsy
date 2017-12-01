@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-17 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
 from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel import Relationship
 
 import traceback
 import general
@@ -115,7 +116,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 wwfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact, created_at);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact,Relationship.TYPE.MESSAGE, created_at);
 
                 try:
                     # index the artifact for keyword search
