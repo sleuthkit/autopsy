@@ -58,13 +58,14 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "AutopsyOptionsPanel.maxMemoryLabel.text=Maximum JVM Memory:",
     "AutopsyOptionsPanel.maxMemoryUnitsLabel.text=GB",
     "AutopsyOptionsPanel.runtimePanel.border.title=Runtime",
-    "AutopsyOptionsPanel.invalidReasonLabel.not64BitInstall.text=JVM memory settings only enabled for installed 64 bit version",
+    "AutopsyOptionsPanel.invalidReasonLabel.not64BitInstall.text=JVM memory settings only enabled for 64 bit version",
     "AutopsyOptionsPanel.invalidReasonLabel.noValueEntered.text=No value entered",
     "AutopsyOptionsPanel.invalidReasonLabel.invalidCharacters.text=Invalid characters, value must be a positive integer",
     "# {0} - minimumMemory",
     "AutopsyOptionsPanel.invalidReasonLabel.underMinMemory.text=Value must be at least {0}GB",
     "# {0} - systemMemory",
-    "AutopsyOptionsPanel.invalidReasonLabel.overMaxMemory.text=Value must be less than the total system memory of {0}GB"})
+    "AutopsyOptionsPanel.invalidReasonLabel.overMaxMemory.text=Value must be less than the total system memory of {0}GB",
+    "AutopsyOptionsPanel.invalidReasonLabel.developerMode.text=Memory settings are not available while running in developer mode"})
 
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
@@ -86,13 +87,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         fc.setMultiSelectionEnabled(false);
         fc.setAcceptAllFileFilterUsed(false);
         fc.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
-        if (!PlatformUtil.is64BitJVM()) {
+        if (!PlatformUtil.is64BitJVM() || Version.getBuildType() == Version.Type.DEVELOPMENT) { 
             //32 bit JVM has a max heap size of 1.4 gb to 4 gb depending on OS
             //So disabling the setting of heap size when the JVM is not 64 bit 
             //Is the safest course of action
+            //And the file won't exist in the install folder when running through netbeans
             memField.setEnabled(false);
-            invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_not64BitInstall_text());
-
         }
         systemMemoryTotal.setText(Long.toString(getSystemMemoryInGB()));
     }
@@ -179,7 +179,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         File installFolderEtc = new File(installFolder, ETC_FOLDER_NAME);
         File installFolderConfigFile = new File(installFolderEtc, confFileName);
         if (!installFolderConfigFile.exists()) {
-            throw new IOException("Conf file could not be found, software may not be properly installed. " + installFolderConfigFile.toString());
+            throw new IOException("Conf file could not be found" + installFolderConfigFile.toString());
         }
         return installFolderConfigFile;
     }
@@ -274,8 +274,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         return new String[]{};
     }
 
-    @Messages({"# {0} - installedFolder",
-        "AutopsyOptionsPanel.invalidReasonLabel.configFileMissing.text=Unable to find JVM memory settings in installed folder {0}"})
     void load() {
         boolean keepPreferredViewer = UserPreferences.keepPreferredContentViewer();
         keepCurrentViewerRB.setSelected(keepPreferredViewer);
@@ -293,16 +291,16 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
         }
-        if (PlatformUtil.is64BitJVM()) {
+        if (memField.isEnabled()) {
             try {
                 initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB());
             } catch (IOException ex) {
-                logger.log(Level.INFO, "Can't read current Jvm setting from file", ex);
+                logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
                 memField.setEnabled(false);
-                invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_configFileMissing_text(PlatformUtil.getInstallPath()));
             }
             memField.setText(initialMemValue);
         }
+        isMemFieldValid(); //ensure the error message is up to date
     }
 
     private void updateAgencyLogo(String path) throws IOException {
@@ -337,12 +335,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, agencyLogoPathField.getText());
             }
         }
-        try {
-            if (memField.isEnabled()) {  //if the field can't of been changed we don't need to save it
+        if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
+            try {
                 writeEtcConfFile();
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Unable to save config file to " + PlatformUtil.getUserDirectory() + "\\" + ETC_FOLDER_NAME, ex);
             }
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to save config file to " + PlatformUtil.getUserDirectory() + "\\" + ETC_FOLDER_NAME, ex);
         }
     }
 
@@ -590,12 +588,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(totalMemoryLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.totalMemoryLabel.text")); // NOI18N
 
+        restartNecessaryWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(restartNecessaryWarning, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartNecessaryWarning.text")); // NOI18N
 
         memField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
         memField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                memFieldKeyPressed(evt);
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                memFieldKeyReleased(evt);
             }
         });
 
@@ -742,14 +741,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
-    private void memFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_memFieldKeyPressed
+    private void memFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_memFieldKeyReleased
         String memText = memField.getText();
         if (memText.equals(initialMemValue)) {
             //if it is still the initial value don't fire change
             return;
         }
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_memFieldKeyPressed
+    }//GEN-LAST:event_memFieldKeyReleased
 
     /**
      * Checks that if the mem field is enabled it has a valid value.
@@ -759,9 +758,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private boolean isMemFieldValid() {
         String memText = memField.getText();
         invalidReasonLabel.setText("");
-        if (!memField.isEnabled()) {
+        if (!PlatformUtil.is64BitJVM()) {
             invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_not64BitInstall_text());
-            //the panel should be valid when the memfield is disabled
+            //the panel should be valid when it is a 32 bit jvm because the memfield will be disabled.
+            return true;
+        }
+        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_developerMode_text());
+            //the panel should be valid when you are running in developer mode because the memfield will be disabled
             return true;
         }
         if (memText.length() == 0) {
@@ -783,7 +787,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
         return true;
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel agencyLogoImageLabel;
     private javax.swing.JTextField agencyLogoPathField;
