@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ class AccountDetailsNode extends AbstractNode {
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
             try {
-                list.addAll(commsManager.getCommunications(accountDeviceInstances, filter));
+                list.addAll(commsManager.getRelationshipSources(accountDeviceInstances, filter));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error getting communications", ex);
             }

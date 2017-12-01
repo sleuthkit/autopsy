@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -51,8 +51,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -465,7 +467,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             bbart.addAttributes(bbattributes);
 
             // Add account relationships
-            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart, dateL);
+            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart,Relationship.Type.MESSAGE, dateL);
             
             try {
                 // index the artifact for keyword search
@@ -474,7 +476,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TskDataException ex) {
             logger.log(Level.WARNING, null, ex);
         }
 

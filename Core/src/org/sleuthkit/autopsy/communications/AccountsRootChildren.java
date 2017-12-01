@@ -53,8 +53,8 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
     protected boolean createKeys(List<AccountDeviceInstanceKey> list) {
         List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
         try {
-            for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithCommunications(commsFilter)) {
-                long communicationsCount = commsManager.getCommunicationsCount(adi, commsFilter);
+            for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithRelationships(commsFilter)) {
+                long communicationsCount = commsManager.getRelationshipSourcesCount(adi, commsFilter);
                 accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount));
             };
         } catch (TskCoreException tskCoreException) {

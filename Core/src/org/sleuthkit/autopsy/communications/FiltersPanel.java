@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -46,6 +47,8 @@ import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
+import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -422,6 +425,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
         commsFilter.addAndFilter(getDateRangeFilter());
+        commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
+                ImmutableSet.of(CALL_LOG, MESSAGE)));
 
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
