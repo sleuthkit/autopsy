@@ -70,6 +70,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private final JFileChooser fc;
+    private static final String ETC_FOLDER_NAME = "etc";
+    private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
     private static final long MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
     private static final int HARD_MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
@@ -95,12 +97,23 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         systemMemoryTotal.setText(Long.toString(getSystemMemoryInGB()));
     }
 
+    /**
+     * Get the total system memory in gigabytes which exists on the machine
+     * which the application is running.
+     *
+     * @return the total system memory
+     */
     private long getSystemMemoryInGB() {
         long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
                 .getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
         return memorySize / ONE_BILLION;
     }
 
+    /**
+     * Gets the currently saved max java heap space in gigabytes.
+     *
+     * @return @throws IOException when unable to get a valid setting
+     */
     private long getCurrentJvmMaxMemoryInGB() throws IOException {
         String currentXmx = getCurrentXmxValue();
         char units = '-';
@@ -111,6 +124,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } else {
             throw new IOException("No memory setting found in String: " + currentXmx);
         }
+        //some older .conf files might have the units as megabytes instead of gigabytes
         switch (units) {
             case 'g':
             case 'G':
@@ -123,28 +137,27 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }
 
+    /*
+     * The value currently saved in the conf file as the max java heap space
+     * available to this application. Form will be an integer followed by a
+     * character indicating units. Helper method for
+     * getCurrentJvmMaxMemoryInGB()
+     *
+     * @return the saved value for the max java heap space
+     *
+     * @throws IOException if the conf file does not exist in either the user
+     * directory or the install directory
+     */
     private String getCurrentXmxValue() throws IOException {
-        File userFolder = PlatformUtil.getUserDirectory();
-        File userEtcFolder = new File(userFolder, "etc");
-        String confFile = Version.getName() + ".conf";
-        File userEtcConfigFile = new File(userEtcFolder, confFile);
         String[] settings;
         String currentSetting = "";
-        if (!userEtcConfigFile.exists()) {
-            String installFolder = PlatformUtil.getInstallPath();
-            File installFolderEtc = new File(installFolder, "etc");
-            File installFolderConfigFile = new File(installFolderEtc, confFile);
-            if (installFolderConfigFile.exists()) {
-                settings = getDefaultsFromFileContents(readConfFile(installFolderConfigFile));
-                //copy install folder config
-            } else {
-                throw new IOException("Conf file could not be found, software may not be properly installed. " + installFolderConfigFile.toString());
-            }
+        File userConfFile = getInstallFolderConfFile();
+        if (!userConfFile.exists()) {
+            settings = getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
         } else {
-            settings = getDefaultsFromFileContents(readConfFile(userEtcConfigFile));
+            settings = getDefaultsFromFileContents(readConfFile(userConfFile));
         }
         for (String option : settings) {
-            System.out.println("Setting: " + option);
             if (option.startsWith("-J-Xmx")) {
                 currentSetting = option.replace("-J-Xmx", "").trim();
             }
@@ -152,58 +165,106 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         return currentSetting;
     }
 
-    private void writeEtcConfFile() throws IOException {
-        String confFileName = Version.getName() + ".conf";
-        File userFolder = PlatformUtil.getUserDirectory();
-        File userEtcFolder = new File(userFolder, "etc");
-        File userEtcConfigFile = new File(userEtcFolder, confFileName);
+    /**
+     * Get the conf file from the install directory which stores the default
+     * values for the settings.
+     *
+     * @return the file which has the applications default .conf file
+     *
+     * @throws IOException when the file does not exist.
+     */
+    private static File getInstallFolderConfFile() throws IOException {
+        String confFileName = Version.getName() + CONFIG_FILE_EXTENSION;
         String installFolder = PlatformUtil.getInstallPath();
-        File installFolderEtc = new File(installFolder, "etc");
+        File installFolderEtc = new File(installFolder, ETC_FOLDER_NAME);
         File installFolderConfigFile = new File(installFolderEtc, confFileName);
-        StringBuilder content = new StringBuilder();
-        if (installFolderConfigFile.exists()) {
-            List<String> confFile = readConfFile(installFolderConfigFile);
-            for (String line : confFile) {
-                if (line.contains("-J-Xmx")) {
-                    //   content.append("default_options=\"");
-                    String[] splitLine = line.split(" ");
-                    //.replace("default_options=", "").replaceAll("\"", "")
-                    StringJoiner modifiedLine = new StringJoiner(" ");
-
-                    for (String piece : splitLine) {
-                        if (piece.contains("-J-Xmx")) {
-                            piece = "-J-Xmx" + memField.getText() + "g";
-                        }
-                        modifiedLine.add(piece);
-                    }
-                    content.append(modifiedLine.toString());
-                    // content.append("\"");
-                } else {
-                    content.append(line);
-                }
-                content.append("\n");
-            }
-            Files.write(userEtcConfigFile.toPath(), content.toString().getBytes());
-            //copy install folder config
-        } else {
+        if (!installFolderConfigFile.exists()) {
             throw new IOException("Conf file could not be found, software may not be properly installed. " + installFolderConfigFile.toString());
         }
+        return installFolderConfigFile;
     }
 
-    private static List<String> readConfFile(File ctConfigFile) {
+    /**
+     * Get the conf file from the directory which stores the currently in use
+     * settings. Creates the directory for the file if the directory does not
+     * exist.
+     *
+     * @return the file which has the applications current .conf file
+     */
+    private static File getUserFolderConfFile() {
+        String confFileName = Version.getName() + CONFIG_FILE_EXTENSION;
+        File userFolder = PlatformUtil.getUserDirectory();
+        File userEtcFolder = new File(userFolder, ETC_FOLDER_NAME);
+        if (!userEtcFolder.exists()) {
+            userEtcFolder.mkdir();
+        }
+        return new File(userEtcFolder, confFileName);
+    }
+
+    /**
+     * Take the conf file in the install directory and save a copy of it to the
+     * user directory. The copy will be modified to include the current memory
+     * setting.
+     *
+     * @throws IOException when unable to write a conf file or access the
+     *                     install folders conf file
+     */
+    private void writeEtcConfFile() throws IOException {
+        StringBuilder content = new StringBuilder();
+        List<String> confFile = readConfFile(getInstallFolderConfFile());
+        for (String line : confFile) {
+            if (line.contains("-J-Xmx")) {
+                String[] splitLine = line.split(" ");
+                StringJoiner modifiedLine = new StringJoiner(" ");
+                for (String piece : splitLine) {
+                    if (piece.contains("-J-Xmx")) {
+                        piece = "-J-Xmx" + memField.getText() + "g";
+                    }
+                    modifiedLine.add(piece);
+                }
+                content.append(modifiedLine.toString());
+            } else {
+                content.append(line);
+            }
+            content.append("\n");
+        }
+        Files.write(getUserFolderConfFile().toPath(), content.toString().getBytes());
+    }
+
+    /**
+     * Reads a conf file line by line putting each line into a list of strings
+     * which will be returned.
+     *
+     * @param configFile the .conf file which you wish to read.
+     *
+     * @return a list of strings with a string for each line in the conf file
+     *         specified.
+     */
+    private static List<String> readConfFile(File configFile) {
         List<String> lines = new ArrayList<>();
-        if (null != ctConfigFile) {
-            Path filePath = ctConfigFile.toPath();
+        if (null != configFile) {
+            Path filePath = configFile.toPath();
             Charset charset = Charset.forName("UTF-8");
             try {
                 lines = Files.readAllLines(filePath, charset);
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Error reading config file contents. {}", ctConfigFile.getAbsolutePath());
+                logger.log(Level.SEVERE, "Error reading config file contents. {}", configFile.getAbsolutePath());
             }
         }
         return lines;
     }
 
+    /**
+     * Find the string in the list of strings which contains the default options
+     * settings and split it into an array of strings containing one element for
+     * each setting specified.
+     *
+     * @param list a list of string representing lines of a .conf file
+     *
+     * @return an array of strings for each argument on the line which has the
+     *         default options, returns an empty array of Strings if default
+     *         options is not present.
+     */
     private static String[] getDefaultsFromFileContents(List<String> list) {
         Optional<String> defaultSettings = list.stream().filter(line -> line.startsWith("default_options=")).findFirst();
 
@@ -281,12 +342,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 writeEtcConfFile();
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to save config file to " + PlatformUtil.getUserDirectory() + "\\etc", ex);
+            logger.log(Level.WARNING, "Unable to save config file to " + PlatformUtil.getUserDirectory() + "\\" + ETC_FOLDER_NAME, ex);
         }
     }
 
     boolean valid() {
-        return validateMemField();
+        return isMemFieldValid();
     }
 
     /**
@@ -532,20 +593,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(restartNecessaryWarning, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartNecessaryWarning.text")); // NOI18N
 
         memField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        memField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                memFieldActionPerformed(evt);
-            }
-        });
         memField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 memFieldKeyPressed(evt);
-            }
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                memFieldKeyReleased(evt);
-            }
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                memFieldKeyTyped(evt);
             }
         });
 
@@ -692,38 +742,28 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
-    private void up() {
+    private void memFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_memFieldKeyPressed
         String memText = memField.getText();
         if (memText.equals(initialMemValue)) {
-            System.out.println("hasn't changed don't fire");
+            //if it is still the initial value don't fire change
             return;
         }
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }
-    private void memFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_memFieldKeyPressed
-        up();
     }//GEN-LAST:event_memFieldKeyPressed
 
-    private void memFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_memFieldKeyReleased
-        up();
-    }//GEN-LAST:event_memFieldKeyReleased
-
-    private void memFieldKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_memFieldKeyTyped
-        up();
-    }//GEN-LAST:event_memFieldKeyTyped
-
-    private void memFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_memFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_memFieldActionPerformed
-
-    private boolean validateMemField() {
+    /**
+     * Checks that if the mem field is enabled it has a valid value.
+     *
+     * @return true if the memfield is valid false if it is not
+     */
+    private boolean isMemFieldValid() {
         String memText = memField.getText();
         invalidReasonLabel.setText("");
         if (!memField.isEnabled()) {
             invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_not64BitInstall_text());
+            //the panel should be valid when the memfield is disabled
             return true;
         }
-
         if (memText.length() == 0) {
             invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_noValueEntered_text());
             return false;
@@ -741,7 +781,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_overMaxMemory_text(getSystemMemoryInGB()));
             return false;
         }
-
         return true;
     }
 
