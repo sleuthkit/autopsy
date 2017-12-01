@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.DefaultListModel;
@@ -28,6 +29,8 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
@@ -39,21 +42,32 @@ import org.sleuthkit.datamodel.TskData;
 final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String DEFAULT_DESCRIPTION = "";
     private static final TagName.HTML_COLOR DEFAULT_COLOR = TagName.HTML_COLOR.NONE;
     private final DefaultListModel<TagNameDefinition> tagTypesListModel;
     private Set<TagNameDefinition> tagTypes;
     private IngestJobEventPropertyChangeListener ingestJobEventsListener;
+    private Set<String> updatedStatusTags;
 
     /**
-     * Creates new form TagsManagerOptionsPanel
+     * Creates new form TagOptionsPanel
      */
     TagOptionsPanel() {
         tagTypesListModel = new DefaultListModel<>();
         tagTypes = new TreeSet<>(TagNameDefinition.getTagNameDefinitions());
+        updatedStatusTags = new HashSet<>();
         initComponents();
         customizeComponents();
     }
+
+    @Messages({"TagOptionsPanel.panelDescriptionTextArea.text=Create and manage tags. "
+        + "Tags can be applied to files and results in the case. Notable tags will cause "
+        + "items tagged with them to be flagged as notable when using a central repository. "
+        + "Changing the status of a tag will only effect items in the current case.",
+        "TagOptionsPanel.ingestRunningWarningLabel.text=Cannot make changes to existing tags when ingest is running!",
+        "TagOptionsPanel.descriptionLabel.text=Tag Description:",
+        "TagOptionsPanel.notableYesOrNoLabel.text=",
+        "TagOptionsPanel.isNotableLabel.text=Tag indicates item is notable: ",
+        "TagOptionsPanel.editTagNameButton.text=Edit Tag"})
 
     private void customizeComponents() {
         tagNamesList.setModel(tagTypesListModel);
@@ -88,13 +102,13 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         jSplitPane1 = new javax.swing.JSplitPane();
         modifyTagTypesListPanel = new javax.swing.JPanel();
         tagTypesListLabel = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        TagNameScrollPane = new javax.swing.JScrollPane();
         tagNamesList = new javax.swing.JList<>();
         newTagNameButton = new javax.swing.JButton();
         deleteTagNameButton = new javax.swing.JButton();
         editTagNameButton = new javax.swing.JButton();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        panelDescriptionScrollPane = new javax.swing.JScrollPane();
+        panelDescriptionTextArea = new javax.swing.JTextArea();
         tagTypesAdditionalPanel = new javax.swing.JPanel();
         descriptionLabel = new javax.swing.JLabel();
         descriptionScrollPane = new javax.swing.JScrollPane();
@@ -114,7 +128,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         org.openide.awt.Mnemonics.setLocalizedText(tagTypesListLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.tagTypesListLabel.text")); // NOI18N
 
         tagNamesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(tagNamesList);
+        TagNameScrollPane.setViewportView(tagNamesList);
 
         newTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newTagNameButton, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.newTagNameButton.text")); // NOI18N
@@ -149,16 +163,16 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             }
         });
 
-        jTextArea1.setEditable(false);
-        jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
-        jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setRows(3);
-        jTextArea1.setText(org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.jTextArea1.text")); // NOI18N
-        jTextArea1.setWrapStyleWord(true);
-        jTextArea1.setFocusable(false);
-        jScrollPane3.setViewportView(jTextArea1);
+        panelDescriptionTextArea.setEditable(false);
+        panelDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        panelDescriptionTextArea.setColumns(20);
+        panelDescriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        panelDescriptionTextArea.setLineWrap(true);
+        panelDescriptionTextArea.setRows(3);
+        panelDescriptionTextArea.setText(org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.panelDescriptionTextArea.text")); // NOI18N
+        panelDescriptionTextArea.setWrapStyleWord(true);
+        panelDescriptionTextArea.setFocusable(false);
+        panelDescriptionScrollPane.setViewportView(panelDescriptionTextArea);
 
         javax.swing.GroupLayout modifyTagTypesListPanelLayout = new javax.swing.GroupLayout(modifyTagTypesListPanel);
         modifyTagTypesListPanel.setLayout(modifyTagTypesListPanelLayout);
@@ -171,14 +185,14 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                     .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
                         .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(TagNameScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, modifyTagTypesListPanelLayout.createSequentialGroup()
                                     .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(editTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(deleteTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(panelDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -189,11 +203,11 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(panelDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tagTypesListLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 355, Short.MAX_VALUE)
+                .addComponent(TagNameScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -294,6 +308,9 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message=Tag name must be unique. A tag with this name already exists.",
+        "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title=Duplicate Tag Name"})
+
     private void newTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagNameButtonActionPerformed
         TagNameDialog dialog = new TagNameDialog();
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
@@ -311,8 +328,8 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagOptionsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.message"),
-                        NbBundle.getMessage(TagOptionsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.title"),
+                        NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message"),
+                        NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);
             }
         }
@@ -337,17 +354,20 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             /*
              * If tag name already exists, don't add the tag name.
              */
-
             tagTypes.remove(originalTagName);
             tagTypes.add(newTagType);
             updateTagNamesListModel();
             tagNamesList.setSelectedValue(newTagType, true);
             updatePanel();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()) {
+                updatedStatusTags.add(newTagType.getDisplayName());
+            }
         }
     }//GEN-LAST:event_editTagNameButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane TagNameScrollPane;
     private javax.swing.JButton deleteTagNameButton;
     private javax.swing.JLabel descriptionLabel;
     private javax.swing.JScrollPane descriptionScrollPane;
@@ -356,14 +376,13 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private javax.swing.JLabel ingestRunningWarningLabel;
     private javax.swing.JLabel isNotableLabel;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JPanel modifyTagTypesListPanel;
     private javax.swing.JButton newTagNameButton;
     private javax.swing.JLabel notableYesOrNoLabel;
+    private javax.swing.JScrollPane panelDescriptionScrollPane;
+    private javax.swing.JTextArea panelDescriptionTextArea;
     private javax.swing.JList<org.sleuthkit.autopsy.casemodule.services.TagNameDefinition> tagNamesList;
     private javax.swing.JPanel tagTypesAdditionalPanel;
     private javax.swing.JLabel tagTypesListLabel;
@@ -395,6 +414,21 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     @Override
     public void store() {
         TagNameDefinition.setTagNameDefinitions(tagTypes);
+        sendStatusChangedEvents();
+    }
+
+    void cancelChanges() {
+        updatedStatusTags.clear();
+    }
+
+    private void sendStatusChangedEvents() {
+        for (String modifiedTagDisplayName : updatedStatusTags) {
+            //if  user closes their case after options have been changed but before application of them is complete don't notify
+            if (Case.isCaseOpen()) {
+                Case.getCurrentCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
+            }
+        }
+        updatedStatusTags.clear();
     }
 
     /**
@@ -414,9 +448,8 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         boolean enableDelete = enableEdit && !TagNameDefinition.getStandardTagNames().contains(tagNamesList.getSelectedValue().getDisplayName());
         deleteTagNameButton.setEnabled(enableDelete);
         if (isSelected) {
-
             descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
-            if (tagNamesList.getSelectedValue().isNotable()) {
+            if (tagNamesList.getSelectedValue().getKnownStatus() == TskData.FileKnown.BAD) {
                 notableYesOrNoLabel.setText("Yes");
             } else {
                 notableYesOrNoLabel.setText("No");

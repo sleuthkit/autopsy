@@ -2208,8 +2208,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return eamGlobalFileInstance;
     }
-    
-    void updateSchema() {
+
+    /**
+     * Update the schema of the database (if needed)
+     * @throws EamDbException 
+     */
+    @Override
+    public void updateSchema() throws EamDbException {    
 
         ResultSet resultSet = null;
         Statement statement;
@@ -2244,10 +2249,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
             System.out.println("Current schema version: " + majorVersion + "." + minorVersion);
             CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
 
+            // Update from 1.0 to 1.1
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN type INTEGER;"); //NON-NLS
+                
+                statement.execute("INSERT INTO organizations (name) VALUES (" + EamDbUtil.getDefaultOrgName() + ")");
             }
 
             if (!updateSchemaVersion(conn)) {
@@ -2268,11 +2276,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
             ex.printStackTrace();
         } finally {
             EamDbUtil.closeResultSet(resultSet);
-            try {
-                conn.setAutoCommit(true);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
         }
     }
 

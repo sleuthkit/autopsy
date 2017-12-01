@@ -66,7 +66,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @param displayName The display name for the tag name.
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
-     * @param knownStatus The status denoted by the tag name.
+     * @param status      The status denoted by the tag name.
      */
     TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
@@ -107,13 +107,12 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     }
 
     /**
-     * Whether or not the status that this tag implies Notable status
+     * The status which will be applied to items with this tag.
      *
-     * @return true if the Notable status is implied by this tag, false
-     *         otherwise.
+     * @return a value of TskData.FileKnown which is associated with this tag
      */
-    boolean isNotable() {
-        return knownStatus == TskData.FileKnown.BAD;
+    TskData.FileKnown getKnownStatus() {
+        return knownStatus;
     }
 
     /**
@@ -157,8 +156,9 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         if (!(obj instanceof TagNameDefinition)) {
             return false;
         }
-        TagNameDefinition thatTagName = (TagNameDefinition) obj;
-        return this.getDisplayName().equals(thatTagName.getDisplayName());
+        boolean sameName = this.getDisplayName().equals(((TagNameDefinition) obj).getDisplayName());
+        boolean sameStatus = this.getKnownStatus().equals(((TagNameDefinition) obj).getKnownStatus());
+        return sameName && sameStatus;
     }
 
     /**

@@ -85,11 +85,6 @@ public final class SqliteEamDbSettings {
         } catch (NumberFormatException ex) {
             this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
         }
-
-       
-            
-        System.out.println("\n#### UPDATING DATABASE!!!");
-        EamDbUtil.updateSchema(getEphemeralConnection());
     }
 
     public void saveSettings() {
@@ -437,7 +432,8 @@ public final class SqliteEamDbSettings {
         }
 
         boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.updateSchemaVersion(conn);
+                && EamDbUtil.updateSchemaVersion(conn)
+                && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
         return result;
     }
