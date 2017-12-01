@@ -34,6 +34,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
@@ -2232,7 +2233,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 try {
                     minorVersion = Integer.parseInt(minorVersionStr);
                 } catch (NumberFormatException ex) {
-                    ex.printStackTrace();
+                    throw new EamDbException("Bad value for schema minor version - database is corrupt");
                 }
             }
 
@@ -2242,12 +2243,16 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 try {
                     majorVersion = Integer.parseInt(majorVersionStr);
                 } catch (NumberFormatException ex) {
-                    ex.printStackTrace();
+                    throw new EamDbException("Bad value for schema version - database is corrupt");
                 }
             }
 
             System.out.println("Current schema version: " + majorVersion + "." + minorVersion);
             CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
+            if(dbSchemaVersion.equals(CURRENT_DB_SCHEMA_VERSION)){
+                LOGGER.log(Level.INFO, "Central Repository is up to date");
+                return;
+            }
 
             // Update from 1.0 to 1.1
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
@@ -2255,16 +2260,19 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN type INTEGER;"); //NON-NLS
                 
-                statement.execute("INSERT INTO organizations (name) VALUES (" + EamDbUtil.getDefaultOrgName() + ")");
+                // There's an outide chance that the user has already made an organization with the default name,
+                // and the default org being missing will not impact any database operations, so continue on
+                // regardless of whether this succeeds.
+                EamDbUtil.insertDefaultOrganization(conn);
             }
 
             if (!updateSchemaVersion(conn)) {
-
                 // Log error
                 return;
             }
 
             conn.commit();
+            LOGGER.log(Level.INFO, "Central Repository upgraded to version " + CURRENT_DB_SCHEMA_VERSION);
         } catch (SQLException | EamDbException ex) {
             try {
                 if(conn != null){

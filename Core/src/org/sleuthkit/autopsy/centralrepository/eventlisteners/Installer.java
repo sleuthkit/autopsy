@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -54,7 +56,7 @@ public class Installer extends ModuleInstall {
         // TODO: create a thread pool to process Runners.
         
         System.out.println("\n#######\nIn Installer:restored()\n\n#########");
-        
+        EamDbUtil.updateDatabase();
     }
 
     @Override

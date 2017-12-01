@@ -164,7 +164,7 @@ public class EamDbUtil {
                 int id = resultSet.getInt("id");
                 statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMajor() + " WHERE id=" + id);
             } else {
-                statement.execute("INSERT INTO db_info (name, value) VALUES (SCHEMA_VERSION, " + CURRENT_DB_SCHEMA_VERSION.getMajor() + ")");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             }
 
             resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
@@ -172,7 +172,7 @@ public class EamDbUtil {
                 int id = resultSet.getInt("id");
                 statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
             } else {
-                statement.execute("INSERT INTO db_info (name, value) VALUES (SCHEMA_MINOR_VERSION, " + CURRENT_DB_SCHEMA_VERSION.getMinor() + ")");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
