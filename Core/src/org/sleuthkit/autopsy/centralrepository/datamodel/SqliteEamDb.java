@@ -149,16 +149,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      *
      */
     private void setupConnectionPool() throws EamDbException {
+        
+        if (dbSettings.dbFileExists() == false) {
+            throw new EamDbException("Central repository database missing");
+        }
+        
         connectionPool = new BasicDataSource();
         connectionPool.setDriverClassName(dbSettings.getDriver());
-
-        StringBuilder connectionURL = new StringBuilder();
-        connectionURL.append(dbSettings.getJDBCBaseURI());
-        connectionURL.append(dbSettings.getDbDirectory());
-        connectionURL.append(File.separator);
-        connectionURL.append(dbSettings.getDbName());
-
-        connectionPool.setUrl(connectionURL.toString());
+        connectionPool.setUrl(dbSettings.getConnectionURL());
 
         // tweak pool configuration
         connectionPool.setInitialSize(50);
@@ -279,10 +277,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to add
      */
     @Override
-    public void newCase(CorrelationCase eamCase) throws EamDbException {
+    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
          try{
             acquireExclusiveLock();
-            super.newCase(eamCase);
+            return super.newCase(eamCase);
         } finally {
             releaseExclusiveLock();
         }          
@@ -359,10 +357,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getDataSourceDetails(correlationCase, dataSourceDeviceId);
+            return super.getDataSource(correlationCase, dataSourceDeviceId);
         } finally {
             releaseSharedLock();
         }               

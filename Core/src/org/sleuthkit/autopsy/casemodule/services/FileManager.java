@@ -47,7 +47,6 @@ import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.TskData;
 
@@ -409,10 +408,9 @@ public class FileManager implements Closeable {
              */
             trans = caseDb.beginTransaction();
             LocalFilesDataSource dataSource = caseDb.addLocalFilesDataSource(deviceId, rootDirectoryName, timeZone, trans);
-            VirtualDirectory rootDirectory = dataSource.getRootDirectory();
             List<AbstractFile> filesAdded = new ArrayList<>();
             for (java.io.File localFile : localFiles) {
-                AbstractFile fileAdded = addLocalFile(trans, rootDirectory, localFile, TskData.EncodingType.NONE, progressUpdater);
+                AbstractFile fileAdded = addLocalFile(trans, dataSource, localFile, TskData.EncodingType.NONE, progressUpdater);
                 if (null != fileAdded) {
                     filesAdded.add(fileAdded);
                 } else {
