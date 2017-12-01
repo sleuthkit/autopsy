@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
@@ -97,7 +98,10 @@ final class CaseEventListener implements PropertyChangeListener {
                 jobProcessingExecutor.submit(new DataSourceAddedTask(dbManager, evt));
             }
             break;
-
+            case TAG_DEFINITION_CHANGED: {
+                jobProcessingExecutor.submit(new TagDefinitionChangeTask(evt));
+            }
+            break;
             case CURRENT_CASE: {
                 jobProcessingExecutor.submit(new CurrentCaseTask(dbManager, evt));
             }
@@ -294,6 +298,117 @@ final class CaseEventListener implements PropertyChangeListener {
 
     }
 
+    private final class TagDefinitionChangeTask implements Runnable {
+
+        private final PropertyChangeEvent event;
+
+        private TagDefinitionChangeTask(PropertyChangeEvent evt) {
+            event = evt;
+        }
+
+        @Override
+        public void run() {
+            if (!EamDb.isEnabled()) {
+                return;
+            }
+            //get the display name of the tag that has had it's definition modified
+            String modifiedTagName = (String) event.getOldValue();
+
+            /*
+             * Set knownBad status for all files/artifacts in the given case
+             * that are tagged with the given tag name.
+             */
+            try {
+                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(modifiedTagName);
+                //First update the artifacts
+                //Get all BlackboardArtifactTags with this tag name
+                List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
+                for (BlackboardArtifactTag bbTag : artifactTags) {
+                    //start with assumption that none of the other tags applied to this Correlation Attribute will prevent it's status from being changed
+                    boolean hasTagWithConflictingKnownStatus = false;
+                    // if the status of the tag has been changed to TskData.FileKnown.UNKNOWN
+                    // we need to check the status of all other tags on this correlation attribute before changing
+                    // the status of the correlation attribute in the central repository
+                    if (tagName.getKnownStatus() == TskData.FileKnown.UNKNOWN) {
+                        Content content = bbTag.getContent();
+                        // If the content which this Blackboard Artifact Tag is linked to is an AbstractFile with KNOWN status then 
+                        // it's status in the central reporsitory should not be changed to UNKNOWN
+                        if ((content instanceof AbstractFile) && (((AbstractFile) content).getKnown() == TskData.FileKnown.KNOWN)) {
+                            continue;
+                        }
+                        //Get the BlackboardArtifact which this BlackboardArtifactTag has been applied to.
+                        BlackboardArtifact bbArtifact = bbTag.getArtifact();
+                        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                        List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
+                        //get all tags which are on this blackboard artifact
+                        for (BlackboardArtifactTag t : tags) {
+                            //All instances of the modified tag name will be changed, they can not conflict with each other
+                            if (t.getName().equals(tagName)) {
+                                continue;
+                            }
+                            //if any other tags on this artifact are Notable in status then this artifact can not have its status changed 
+                            if (TskData.FileKnown.BAD == t.getName().getKnownStatus()) {
+                                //a tag with a conflicting status has been found, the status of this correlation attribute can not be modified
+                                hasTagWithConflictingKnownStatus = true;
+                                break;
+                            }
+                        }
+                    }
+                    //if the Correlation Attribute will have no tags with a status which would prevent the current status from being changed 
+                    if (!hasTagWithConflictingKnownStatus) {
+                        //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
+                        //with the initial set of correlation attributes this should be a single correlation attribute
+                        List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
+                        for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                            EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                        }
+                    }
+                }
+                // Next update the files
+
+                List<ContentTag> fileTags = Case.getCurrentCase().getSleuthkitCase().getContentTagsByTagName(tagName);
+                //Get all ContentTags with this tag name
+                for (ContentTag contentTag : fileTags) {
+                    //start with assumption that none of the other tags applied to this ContentTag will prevent it's status from being changed
+                    boolean hasTagWithConflictingKnownStatus = false;
+                    // if the status of the tag has been changed to TskData.FileKnown.UNKNOWN
+                    // we need to check the status of all other tags on this file before changing
+                    // the status of the file in the central repository
+                    if (tagName.getKnownStatus() == TskData.FileKnown.UNKNOWN) {
+                        Content content = contentTag.getContent();
+                        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                        List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
+                        //get all tags which are on this file
+                        for (ContentTag t : tags) {
+                            //All instances of the modified tag name will be changed, they can not conflict with each other
+                            if (t.getName().equals(tagName)) {
+                                continue;
+                            }
+                            //if any other tags on this file are Notable in status then this file can not have its status changed 
+                            if (TskData.FileKnown.BAD == t.getName().getKnownStatus()) {
+                                //a tag with a conflicting status has been found, the status of this file can not be modified
+                                hasTagWithConflictingKnownStatus = true;
+                                break;
+                            }
+                        }
+                    }
+                    //if the file will have no tags with a status which would prevent the current status from being changed 
+                    if (!hasTagWithConflictingKnownStatus) {
+                        final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(),
+                                tagName.getKnownStatus(), "");
+                        if (eamArtifact != null) {
+                            EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                        }
+                    }
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Cannot update known status in central repository for tag: " + modifiedTagName, ex);  //NON-NLS
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Cannot get central repository for tag: " + modifiedTagName, ex);  //NON-NLS
+            }
+        } //TAG_STATUS_CHANGED
+    }
+
     private final class DataSourceAddedTask implements Runnable {
 
         private final EamDb dbManager;
@@ -349,7 +464,7 @@ final class CaseEventListener implements PropertyChangeListener {
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
-                
+
                 if (!EamDb.isEnabled()) {
                     return;
                 }

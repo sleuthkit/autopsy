@@ -94,14 +94,6 @@ public interface EamDb {
         return EamDbUtil.useCentralRepo()
                 && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
-    
-    /**
-     * Placeholder version to use for non-read only databases
-     * @return The version that will be stored in the database
-     */
-    static String getDefaultVersion() {
-        return "";
-    }
 
     /**
      * Add a new name/value pair in the db_info table.

@@ -38,10 +38,10 @@ import org.sleuthkit.autopsy.ingest.IngestJob;
  * ingest service.
  */
 @ThreadSafe
-public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
+final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final int CURRENT_VERSION = 1;
+    private static final int CURRENT_VERSION = 2;
     private static final int DEFAULT_PRIORITY = 0;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
@@ -82,6 +82,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     private int numberOfCrashes;
     @GuardedBy("this")
     private StageDetails stageDetails;
+    
+    /*
+     * Version 2 fields.
+     */
+    @GuardedBy("this")
+    private long dataSourceSize;
 
     /**
      * Constructs a new automated ingest job. All job state not specified in the
@@ -114,6 +120,11 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
             this.processingStatus = ProcessingStatus.PENDING;
             this.numberOfCrashes = 0;
             this.stageDetails = this.getProcessingStageDetails();
+            
+            /*
+             * Version 2 fields.
+             */
+            this.dataSourceSize = 0;
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -151,6 +162,11 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
             this.processingStatus = nodeData.getProcessingStatus();
             this.numberOfCrashes = nodeData.getNumberOfCrashes();
             this.stageDetails = this.getProcessingStageDetails();
+            
+            /*
+             * Version 2 fields.
+             */
+            this.dataSourceSize = nodeData.getDataSourceSize();
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -460,6 +476,24 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      */
     synchronized void setNumberOfCrashes(int numberOfCrashes) {
         this.numberOfCrashes = numberOfCrashes;
+    }
+
+    /**
+     * Gets the total size of the data source.
+     *
+     * @return The data source size.
+     */
+    synchronized long getDataSourceSize() {
+        return dataSourceSize;
+    }
+
+    /**
+     * Sets the total size of the data source.
+     *
+     * @param dataSourceSize The data source size.
+     */
+    synchronized void setDataSourceSize(long dataSourceSize) {
+        this.dataSourceSize = dataSourceSize;
     }
 
     /**

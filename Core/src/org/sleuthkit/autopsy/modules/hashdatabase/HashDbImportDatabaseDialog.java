@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -84,24 +85,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        updateFileChooserFilter();
+        String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
+        fileChooser.setFileFilter(filter); 
         fileChooser.setMultiSelectionEnabled(false);
-    }
-    
-    @NbBundle.Messages({"HashDbImportDatabaseDialog.centralRepoExtFilter.text=Hash Database File (.idx only)"})
-    private void updateFileChooserFilter() {
-        fileChooser.resetChoosableFileFilters();
-        if(centralRepoRadioButton.isSelected()){
-            String[] EXTENSION = new String[]{"idx"}; //NON-NLS
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.centralRepoExtFilter.text"), EXTENSION);
-            fileChooser.setFileFilter(filter);  
-        } else {
-            String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
-            FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
-            fileChooser.setFileFilter(filter);            
-        }
     }
 
     private void display() {
@@ -148,8 +136,12 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 orgComboBox.addItem(org.getName());
+                if(EamDbUtil.isDefaultOrg(org)){
+                    orgComboBox.setSelectedItem(org.getName());
+                    selectedOrg = org;
+                }
             });
-            if (!orgs.isEmpty()) {
+            if ((selectedOrg == null) && (!orgs.isEmpty())) {
                 selectedOrg = orgs.get(0);
             }
         } catch (EamDbException ex) {
@@ -303,95 +295,102 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 325, Short.MAX_VALUE)
-                        .addComponent(okButton)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
+                                .addComponent(fileTypeRadioButton)
+                                .addGap(26, 26, 26)
+                                .addComponent(centralRepoRadioButton)
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(databasePathTextField)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(openButton)
+                                .addContainerGap())))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(sendIngestMessagesCheckbox)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(okButton))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(lbOrg)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(orgComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(orgComboBox, 0, 121, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(orgButton))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel1)
                                     .addComponent(lbVersion))
-                                .addGap(2, 2, 2)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGap(40, 40, 40)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(versionTextField)
-                                    .addComponent(hashSetNameTextField)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel3)
-                                    .addComponent(jLabel4))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(fileTypeRadioButton)
-                                        .addGap(26, 26, 26)
-                                        .addComponent(centralRepoRadioButton))
-                                    .addComponent(databasePathTextField))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openButton))
+                                    .addComponent(hashSetNameTextField))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cancelButton)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
+                            .addComponent(readOnlyCheckbox)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(19, 19, 19)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(knownRadioButton)
-                                    .addComponent(knownBadRadioButton)))
-                            .addComponent(sendIngestMessagesCheckbox)
-                            .addComponent(readOnlyCheckbox))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                                    .addComponent(knownBadRadioButton))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, okButton});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fileTypeRadioButton)
-                    .addComponent(centralRepoRadioButton)
-                    .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(openButton)
                     .addComponent(databasePathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(hashSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(versionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbVersion))
-                .addGap(9, 9, 9)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(orgButton)
-                    .addComponent(orgComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbOrg))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(knownRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(knownBadRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(readOnlyCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(sendIngestMessagesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(okButton)
-                    .addComponent(cancelButton))
+                    .addComponent(jLabel3)
+                    .addComponent(openButton))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(fileTypeRadioButton)
+                            .addComponent(centralRepoRadioButton)
+                            .addComponent(jLabel4))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(hashSetNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbVersion)
+                            .addComponent(versionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(5, 5, 5)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(orgButton)
+                            .addComponent(orgComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbOrg))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(knownRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(knownBadRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(readOnlyCheckbox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sendIngestMessagesCheckbox)
+                        .addGap(0, 21, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cancelButton)
+                            .addComponent(okButton))))
                 .addContainerGap())
         );
 
@@ -409,7 +408,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             hashDbFolder.mkdir();
         }
         fileChooser.setCurrentDirectory(hashDbFolder);
-        updateFileChooserFilter();
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
@@ -447,7 +445,8 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     @NbBundle.Messages({"HashDbImportDatabaseDialog.missingVersion=A version must be entered",
         "HashDbImportDatabaseDialog.missingOrg=An organization must be selected",
         "HashDbImportDatabaseDialog.duplicateName=A hashset with this name and version already exists",
-        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository"
+        "HashDbImportDatabaseDialog.databaseLookupError=Error accessing central repository",
+        "HashDbImportDatabaseDialog.mustEnterHashSetNameMsg=A hash set name must be entered."
     })
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
@@ -456,7 +455,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         if (hashSetNameTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "HashDbCreateDatabaseDialog.mustEnterHashSetNameMsg"),
+                            "HashDbImportDatabaseDialog.mustEnterHashSetNameMsg"),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
@@ -464,7 +463,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         }
         
         if(centralRepoRadioButton.isSelected()){
-            if(versionTextField.getText().isEmpty()){
+            if(readOnlyCheckbox.isSelected() && versionTextField.getText().isEmpty()){
                 JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
                             "HashDbImportDatabaseDialog.missingVersion"),
@@ -557,7 +556,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 version = versionTextField.getText();
             } else {
                 // Editable databases don't have a version
-                version = EamDb.getDefaultVersion();
+                version = "";
             }
             ImportCentralRepoDbProgressDialog progressDialog = new ImportCentralRepoDbProgressDialog();
             progressDialog.importFile(hashSetNameTextField.getText(), version, 

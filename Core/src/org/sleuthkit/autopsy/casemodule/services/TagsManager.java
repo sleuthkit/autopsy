@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -69,6 +70,15 @@ public class TagsManager implements Closeable {
                 || tagDisplayName.contains(";"));
 
     }
+    @NbBundle.Messages({"TagsManager.notableTagEnding.text= (Notable)"})
+    /**
+     * Get String of text which is used to label tags as notable to the user. 
+     * 
+     * @return Bundle message TagsManager.notableTagEnding.text
+     */
+    public static String getNotableTagLabel(){
+        return Bundle.TagsManager_notableTagEnding_text();
+    }
 
     /**
      * Gets the set of display names of the currently available tag types. This
@@ -103,7 +113,7 @@ public class TagsManager implements Closeable {
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
         for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
-            if (tagDef.isNotable()) {
+            if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
         }
