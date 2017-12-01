@@ -82,7 +82,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         // convert the date from the selected timezone to get the GMT
         long fromDate = 0;
-        String startDateValue = panel.getDateFromTextField().getText();
+        String startDateValue = panel.getFromDate();
         Calendar startDate = getCalendarDate(startDateValue);
         if (!startDateValue.isEmpty()) {
             if (startDate != null) {
@@ -91,7 +91,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         }
 
         long toDate = 0;
-        String endDateValue = panel.getDateToTextField().getText();
+        String endDateValue = panel.getToDate();
         Calendar endDate = getCalendarDate(endDateValue);
         if (!endDateValue.isEmpty()) {
             if (endDate != null) {
@@ -199,7 +199,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
       
     @Override
     public void addActionListener(ActionListener l) {
-        getComponent().addActionListener(l);
+        getComponent().addDateChangeListener();
     }
 
     @Override
@@ -210,8 +210,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     public boolean isValid() {
 
         DateSearchPanel panel = this.getComponent();
-        Calendar startDate = getCalendarDate(panel.getDateFromTextField().getText());
-        Calendar endDate = getCalendarDate(panel.getDateToTextField().getText());
+        Calendar startDate = getCalendarDate(panel.getFromDate());
+        Calendar endDate = getCalendarDate(panel.getToDate());
         
         if ((startDate != null && startDate.after(endDate)) || (endDate != null && endDate.before(startDate)))  {
             setLastError(Bundle.DateSearchFilter_errorMessage_endDateBeforeStartDate());
