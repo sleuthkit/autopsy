@@ -48,7 +48,6 @@ import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -188,9 +187,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
             final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-                String dsName = getDataSourceName(sleuthkitCase, dataSource);
-
-                //store the device id in the map, but display the datasource name in the UI.
+                String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
+                //store the device id in the map, but display a datasource name in the UI.
                 devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
                     final JCheckBox jCheckBox = new JCheckBox(dsName, false);
                     devicesPane.add(jCheckBox);
@@ -205,14 +203,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
         }
     }
 
-    private String getDataSourceName(SleuthkitCase sleuthkitCase, DataSource dataSource) {
-        try {
-            return sleuthkitCase.getContentById(dataSource.getId()).getName();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
-        }
-        return dataSource.getDeviceId();
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -227,9 +217,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         applyFiltersButton.setPreferredSize(null);
 
+        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
         filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
-        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
 
         unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
         unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -265,7 +255,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jScrollPane3)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(0, 115, Short.MAX_VALUE)
+                                .addGap(0, 0, Short.MAX_VALUE)
                                 .addComponent(unCheckAllAccountTypesButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(checkAllAccountTypesButton)))))
@@ -318,7 +308,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(0, 115, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(unCheckAllDevicesButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(checkAllDevicesButton))
@@ -409,8 +399,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                         .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(refreshButton))
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(0, 0, 0))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -458,9 +447,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
      * @return a DeviceFilter
      */
     private DeviceFilter getDeviceFilter() {
-        DeviceFilter deviceFilter = new DeviceFilter(devicesMap.entrySet().stream()
+        DeviceFilter deviceFilter = new DeviceFilter(
+                devicesMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isSelected())
-                .map(Entry::getKey).collect(Collectors.toSet()));
+                .map(Entry::getKey)
+                .collect(Collectors.toSet()));
         return deviceFilter;
     }
 

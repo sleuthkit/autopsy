@@ -127,17 +127,15 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
 
         private String getDataSourceName() {
             try {
-                final SleuthkitCase sleuthkitCase = Case.getCurrentCase()
-                        .getSleuthkitCase();
-                List<DataSource> dataSources = sleuthkitCase.getDataSources();
-                for (DataSource dataSource : dataSources) {
+                final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+                for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                     if (dataSource.getDeviceId().equals(getAccountDeviceInstance().getDeviceId())) {
                         return sleuthkitCase.getContentById(dataSource.getId()).getName();
                     }
                 }
             } catch (TskCoreException ex) {
-                  logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
-       }
+                logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
+            }
             return getAccountDeviceInstance().getDeviceId();
         }
     }
