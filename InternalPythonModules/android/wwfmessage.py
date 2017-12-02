@@ -116,7 +116,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 wwfAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact,Relationship.TYPE.MESSAGE, created_at);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [wwfAccountInstance], artifact,Relationship.Type.MESSAGE, created_at);
 
                 try:
                     # index the artifact for keyword search

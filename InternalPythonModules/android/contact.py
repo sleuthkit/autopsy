@@ -151,7 +151,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 contactAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (acctType, data1, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [contactAccountInstance], artifact,Relationship.TYPE.CONTACT,  0);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [contactAccountInstance], artifact,Relationship.Type.CONTACT,  0);
 
                 oldName = name
 
