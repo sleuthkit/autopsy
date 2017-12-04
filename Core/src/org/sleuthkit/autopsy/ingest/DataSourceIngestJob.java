@@ -991,41 +991,19 @@ final class DataSourceIngestJob {
         this.cancelled = true;
         this.cancellationReason = reason;
         DataSourceIngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
-
+        
         if (this.doUI) {
-            /**
-             * Put a cancellation message on data source level ingest progress
-             * bar, if it is still running.
-             */
             synchronized (this.dataSourceIngestProgressLock) {
-                if (dataSourceIngestProgress != null) {
-                    final String displayName = NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.dataSourceIngest.initialDisplayName",
-                            dataSource.getName());
-                    dataSourceIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(),
-                                    "IngestJob.progress.cancelling",
-                                    displayName));
+                if (null != dataSourceIngestProgress) {
+                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
+                    dataSourceIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
 
-            /**
-             * Put a cancellation message on the file level ingest progress bar,
-             * if it is still running.
-             */
             synchronized (this.fileIngestProgressLock) {
-                if (this.fileIngestProgress != null) {
-                    final String displayName = NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.fileIngest.displayName",
-                            this.dataSource.getName());
-                    this.fileIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
-                                    displayName));
-                    if (!this.currentFileIngestModule.isEmpty() && !this.currentFileIngestTask.isEmpty()) {
-                        this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
-                                "IngestJob.progress.fileIngest.cancelMessage",
-                                this.currentFileIngestModule, this.currentFileIngestTask));
-                    }
+                if (null != this.fileIngestProgress) {
+                    this.fileIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", this.dataSource.getName()));
+                    this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
                 }
             }
         }
