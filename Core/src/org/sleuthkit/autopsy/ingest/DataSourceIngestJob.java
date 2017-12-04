@@ -384,6 +384,10 @@ final class DataSourceIngestJob {
         return false;
     }
 
+    public List<FileIngestPipeline> getFileIngestPipelines() {
+        return this.fileIngestPipelines;
+    }
+
     /**
      * Starts up the ingest pipelines for this job.
      *

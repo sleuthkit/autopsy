@@ -64,7 +64,7 @@ public final class IngestJob {
 
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
-    private final Map<Long, DataSourceIngestJob> dataSourceJobs;
+    public final Map<Long, DataSourceIngestJob> dataSourceJobs;
     private final AtomicInteger incompleteJobsCount;
     private volatile CancellationReason cancellationReason;
 
@@ -77,7 +77,7 @@ public final class IngestJob {
      * @param doUI        Whether or not this job should use progress bars,
      *                    message boxes for errors, etc.
      */
-    IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
+    public IngestJob(Collection<Content> dataSources, IngestJobSettings settings, boolean doUI) {
         this.id = IngestJob.nextId.getAndIncrement();
         this.dataSourceJobs = new ConcurrentHashMap<>();
         for (Content dataSource : dataSources) {

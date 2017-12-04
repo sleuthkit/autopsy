@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 /**
  * Ingest job settings for the hash lookup module.
  */
-final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
+final public class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
     private HashSet<String> namesOfEnabledKnownHashSets;    // The four lists of hash set names are only used for upgrading
@@ -42,7 +42,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     private boolean shouldCalculateHashes = true;
     private List<HashDbInfo> databaseInfoList;
 
-    HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDb> hashDbList){
+    public HashLookupModuleSettings(boolean shouldCalculateHashes, List<HashDb> hashDbList){
         this.shouldCalculateHashes = shouldCalculateHashes;
         try{
             databaseInfoList = HashLookupSettings.convertHashSetList(hashDbList);
@@ -75,7 +75,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param enabledHashSets     A list of enabled hash sets.
      * @param disabledHashSets    A list of disabled hash sets.
      */
-    HashLookupModuleSettings(boolean shouldCalculateHashes,
+    public HashLookupModuleSettings(boolean shouldCalculateHashes,
             List<HashDb> enabledHashSets,
             List<HashDb> disabledHashSets) {
         this.shouldCalculateHashes = shouldCalculateHashes;

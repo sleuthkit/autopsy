@@ -61,7 +61,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
-    private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+    protected SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
@@ -87,7 +87,7 @@ public class HashDbIngestModule implements FileIngestModule {
         return totals;
     }
 
-    HashDbIngestModule(HashLookupModuleSettings settings) {
+    public HashDbIngestModule(HashLookupModuleSettings settings) {
         this.settings = settings;
     }
 
@@ -290,6 +290,158 @@ public class HashDbIngestModule implements FileIngestModule {
 
         return ret;
     }
+
+
+    public String debugProcess(AbstractFile file)
+    {
+        // Skip unallocated space files.
+        if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+            return "1 Skip unallocated space files";
+        }
+
+        /*
+         * Skip directories. One reason for this is because we won't accurately
+         * calculate hashes of NTFS directories that have content that spans the
+         * IDX_ROOT and IDX_ALLOC artifacts. So we disable that until a solution
+         * for it is developed.
+         */
+        if (file.isDir()) {
+            return "2 File is dir";
+        }
+
+        // bail out if we have no hashes set
+        if ((knownHashSets.isEmpty()) && (knownBadHashSets.isEmpty()) && (!settings.shouldCalculateHashes())) {
+            return "3 No hash sets";
+        }
+
+        // Safely get a reference to the totalsForIngestJobs object
+        IngestJobTotals totals = getTotalsForIngestJobs(jobId);
+
+        // calc hash value
+        String name = file.getName();
+        String md5Hash = file.getMd5Hash();
+        if (md5Hash == null || md5Hash.isEmpty()) {
+            try {
+                long calcstart = System.currentTimeMillis();
+                md5Hash = HashUtility.calculateMd5(file);
+                long delta = (System.currentTimeMillis() - calcstart);
+                totals.totalCalctime.addAndGet(delta);
+
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Error calculating hash of file " + name, ex); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(
+                        HashLookupModuleFactory.getModuleName(),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbIngestModule.fileReadErrorMsg",
+                                name),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbIngestModule.calcHashValueErr",
+                                name)));
+                return "4 Error calculating hash: " + ex.getMessage();
+            }
+        }
+
+        // look up in known bad first
+        boolean foundBad = false;
+        String ret = "0 OK";
+        
+        for (HashDb db : knownBadHashSets) {
+            
+            try {
+                long lookupstart = System.currentTimeMillis();
+                HashHitInfo hashInfo = db.lookupMD5(file);
+                
+                if (null != hashInfo) {
+                    foundBad = true;
+                    totals.totalKnownBadCount.incrementAndGet();
+
+                    try {
+                        skCase.setKnown(file, TskData.FileKnown.BAD);
+                    } catch (TskException ex) {
+                        logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                        services.postMessage(IngestMessage.createErrorMessage(
+                                HashLookupModuleFactory.getModuleName(),
+                                NbBundle.getMessage(this.getClass(),
+                                        "HashDbIngestModule.hashLookupErrorMsg",
+                                        name),
+                                NbBundle.getMessage(this.getClass(),
+                                        "HashDbIngestModule.settingKnownBadStateErr",
+                                        name)));
+                        ret = "5 Couldn't set known bad state for file " + name + ": " + ex.getMessage();
+                    }
+                    String hashSetName = db.getHashSetName();
+
+                    String comment = "";
+                    ArrayList<String> comments = hashInfo.getComments();
+                    int i = 0;
+                    for (String c : comments) {
+                        if (++i > 1) {
+                            comment += " ";
+                        }
+                        comment += c;
+                        if (comment.length() > MAX_COMMENT_SIZE) {
+                            comment = comment.substring(0, MAX_COMMENT_SIZE) + "...";
+                            break;
+                        }
+                    }
+
+                    postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
+                    ret = "HIT";
+                }
+                long delta = (System.currentTimeMillis() - lookupstart);
+                totals.totalLookuptime.addAndGet(delta);
+
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                services.postMessage(IngestMessage.createErrorMessage(
+                        HashLookupModuleFactory.getModuleName(),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbIngestModule.hashLookupErrorMsg",
+                                name),
+                        NbBundle.getMessage(this.getClass(),
+                                "HashDbIngestModule.lookingUpKnownBadHashValueErr",
+                                name)));
+                ret = "6 Couldn't lookup known bad hash for file " + name + " " + ex.getMessage();
+            }
+        }
+
+        // If the file is not in the known bad sets, search for it in the known sets. 
+        // Any hit is sufficient to classify it as known, and there is no need to create 
+        // a hit artifact or send a message to the application inbox.
+        if (!foundBad) {
+            for (HashDb db : knownHashSets) {
+                try {
+                    long lookupstart = System.currentTimeMillis();
+                    if (db.lookupMD5Quick(file)) {
+                        try {
+                            skCase.setKnown(file, TskData.FileKnown.KNOWN);
+                            break;
+                        } catch (TskException ex) {
+                            logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                            ret = "7 Couldn't set known state for file: " + name + " " + ex.getMessage();
+                        }
+                    }
+                    long delta = (System.currentTimeMillis() - lookupstart);
+                    totals.totalLookuptime.addAndGet(delta);
+
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "Couldn't lookup known hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                    services.postMessage(IngestMessage.createErrorMessage(
+                            HashLookupModuleFactory.getModuleName(),
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbIngestModule.hashLookupErrorMsg",
+                                    name),
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbIngestModule.lookingUpKnownHashValueErr",
+                                    name)));
+                    ret = "8 Couldn't lookup known hash for file: " + name + " " + ex.getMessage();
+                }
+            }
+        }
+
+        return ret;
+    }
+ 
 
     @Messages({"HashDbIngestModule.indexError.message=Failed to index hashset hit artifact for keyword search."})
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {

@@ -25,6 +25,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -56,6 +57,11 @@ public class KeywordSearch {
      *
      * @return singleton instance of KeywordSearch server
      */
+
+    public static synchronized Server createServer(String strSolrFolder, String strJavaPath) {
+        server = new Server(strSolrFolder, strJavaPath);
+        return server;
+    }
     public static synchronized Server getServer() {
         if (server == null) {
             server = new Server();
@@ -77,6 +83,19 @@ public class KeywordSearch {
             logger.log(Level.SEVERE, "Error setting up tika logging", ex); //NON-NLS
         }
     }
+
+
+    public static synchronized void openCore(String host, String port, String strModuleDirectory, String coreName) 
+    { 
+        try {
+            System.err.println("** Debug SOLR **" + String.format("%s %s %s %s\n", host, port, strModuleDirectory, coreName));
+            server.openCore(host, port, strModuleDirectory, coreName);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Could not open core. Exception: " + e); //NON-NLS
+            Exceptions.printStackTrace(e);
+        }
+    }
+
 
     // don't instantiate
     private KeywordSearch() {

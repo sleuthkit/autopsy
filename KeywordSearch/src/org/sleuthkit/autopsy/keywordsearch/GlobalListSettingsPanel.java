@@ -31,10 +31,12 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
     private static final long serialVersionUID = 1L;
 
-    private final GlobalListsManagementPanel listsManagementPanel = new GlobalListsManagementPanel(this);
-    private final GlobalEditListPanel editListPanel = new GlobalEditListPanel();
+    private GlobalListsManagementPanel listsManagementPanel;
+    private GlobalEditListPanel editListPanel;
 
     GlobalListSettingsPanel() {
+        if (listsManagementPanel == null) listsManagementPanel = new GlobalListsManagementPanel(this);
+        if (editListPanel == null) editListPanel = new GlobalEditListPanel();
         initComponents();
         customizeComponents();
         setName(org.openide.util.NbBundle.getMessage(DropdownToolbar.class, "ListBundleConfig"));
