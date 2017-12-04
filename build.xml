@@ -65,7 +65,7 @@
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
       version number. -->
-    <target name="build-zip" depends="doxygen, suite.build-zip"> <!--,findJRE" -->
+    <target name="build-zip" depends="suite.build-zip"> <!--,findJRE" -->
         
         <property name="release.dir" value="${nbdist.dir}/${app.name}"/>
 
@@ -82,13 +82,13 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-        <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
+        <!--<unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>-->
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
-        <!-- Copy the Autopsy documentation to the docs folder -->
+        <!-- Copy the Autopsy documentation to the docs folder
         <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
-        </copy>
+        </copy> -->
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <!-- for Japanese localized version add option:  -Duser.language=ja -->        
