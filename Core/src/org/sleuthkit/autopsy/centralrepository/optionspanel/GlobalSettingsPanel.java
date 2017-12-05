@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
+import java.awt.Cursor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -78,9 +81,31 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestStateUpdated();
     }
     
+    @Messages({"GlobalSettingsPanel.updateFailed.title=Update failed",
+               "GlobalSettingsPanel.updateFailed.message=Failed to update database. Central repository has been disabled."
+    })
     private void updateDatabase(){
-        // Add UI stuff later
-        EamDbUtil.updateDatabase();
+        
+        if(EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)){
+            return;
+        }
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        
+        try {
+            boolean result = EamDbUtil.upgradeDatabase();
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            if(! result){
+                //progressIndicator.finish();
+                JOptionPane.showMessageDialog(null,
+                                        NbBundle.getMessage(this.getClass(),
+                                                "GlobalSettingsPanel.updateFailed.message"),
+                                        NbBundle.getMessage(this.getClass(),
+                                                "GlobalSettingsPanel.updateFailed.title"),
+                                        JOptionPane.WARNING_MESSAGE);
+            }
+        } finally {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
     }
 
     /**
@@ -320,9 +345,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
+        updateDatabase();
         load(); // reload db settings content and update buttons
         if (dialog.wasConfigurationChanged()) {
-            updateDatabase();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
@@ -330,10 +355,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
         //if saved setting is disabled checkbox should be disabled already 
         store();
-        enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
-        enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
-        this.ingestStateUpdated();
         updateDatabase();
+        load();
+        //cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo());
+        //enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
+        //enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
+        this.ingestStateUpdated();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 

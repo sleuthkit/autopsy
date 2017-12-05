@@ -26,9 +26,10 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.CURRENT_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  *
@@ -210,41 +211,66 @@ public class EamDbUtil {
     }
 
     /**
+     * Upgrade the current central reposity to the newest version. If the upgrade
+     * fails, the central repository will be disabled and the current settings
+     * will be cleared.
      *
+     * @return true if the upgrade succeeds, false otherwise.
      */
-    public static void updateDatabase() {
+    public static boolean upgradeDatabase() {
         if (!EamDb.isEnabled()) {
-            return;
+            return true;
         }
-
+        
+        CoordinationService.Lock lock = null;
         try {
             EamDb db = EamDb.getInstance();
 
-            if (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.POSTGRESQL) {
-                // Try to get a lock here
-            }
-            
-            db.updateSchema();
+            // This may return null if locking isn't supported, which is fine. It will
+            // throw an exception if locking is supported but we can't get the lock
+            // (meaning the database is in use by another user)
+            lock = db.getExclusiveMultiUserDbLock();
 
-        } catch (EamDbException ex) {
-            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
-            ex.printStackTrace();
+            db.upgradeSchema();
+
+        } catch (EamDbException | SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
+
+            // Disable the central repo and clear the current settings.
+            try{
+                if (null != EamDb.getInstance()) {
+                    EamDb.getInstance().shutdownConnections();
+                }
+            } catch (EamDbException ex2){
+                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
+            } 
+            setUseCentralRepo(false);
+            EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
+            EamDbPlatformEnum.saveSelectedPlatform();
+            
+            return false;
         } finally {
-            if (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.POSTGRESQL) {
-                // Release lock here
+            if(lock != null){
+                try{
+                    lock.release();
+                } catch (CoordinationServiceException ex){
+                    LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
+                }
             }
         }
+        return true;
     }
-    
+
     /**
      * Get the default organization name
+     *
      * @return the default org name
      */
     static String getDefaultOrgName() {
         return DEFAULT_ORG_NAME;
     }
-        
-    /**    
+
+    /**
      * Check whether the given org is the default organization.
      *
      * @param org

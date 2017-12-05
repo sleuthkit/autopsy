@@ -30,6 +30,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
  * Sqlite implementation of the Central Repository database.
@@ -987,17 +988,31 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }   
     
     /**
-     * Update the schema of the database (if needed)
+     * Upgrade the schema of the database (if needed)
      * @throws EamDbException 
      */
     @Override
-    public void updateSchema() throws EamDbException {
+    public void upgradeSchema() throws EamDbException, SQLException {
         try{
             acquireExclusiveLock();
-            super.updateSchema();
+            super.upgradeSchema();
         } finally {
             releaseExclusiveLock();
         } 
+    }
+    
+    /**
+     * Gets an exclusive lock (if applicable).
+     * Will return the lock if successful, null if unsuccessful because locking
+     * isn't supported, and throw an exception if we should have been able to get the
+     * lock but failed (meaning the database is in use).
+     * @return the lock, or null if locking is not supported
+     * @throws EamDbException if the coordination service is running but we fail to get the lock
+     */
+    @Override
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException{
+        // Multiple users are not supported for SQLite
+        return null;
     }
     
     /**
