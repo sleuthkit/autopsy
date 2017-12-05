@@ -29,11 +29,14 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
@@ -118,8 +121,22 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
             properties.put(new NodeProperty<>("count", Bundle.AccountNode_messageCount(), "count",
                     accountDeviceInstanceKey.getMessageCount())); // NON-NLS
             properties.put(new NodeProperty<>("device", Bundle.AccountNode_device(), "device",
-                    accountDeviceInstanceKey.getAccountDeviceInstance().getDeviceId())); // NON-NLS
+                    getDataSourceName())); // NON-NLS
             return s;
+        }
+
+        private String getDataSourceName() {
+            try {
+                final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+                for (DataSource dataSource : sleuthkitCase.getDataSources()) {
+                    if (dataSource.getDeviceId().equals(getAccountDeviceInstance().getDeviceId())) {
+                        return sleuthkitCase.getContentById(dataSource.getId()).getName();
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
+            }
+            return getAccountDeviceInstance().getDeviceId();
         }
     }
 }
