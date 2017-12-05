@@ -95,7 +95,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             boolean result = EamDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             if(! result){
-                //progressIndicator.finish();
                 JOptionPane.showMessageDialog(null,
                                         NbBundle.getMessage(this.getClass(),
                                                 "GlobalSettingsPanel.updateFailed.message"),
@@ -357,9 +356,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         store();
         updateDatabase();
         load();
-        //cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo());
-        //enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
-        //enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
         this.ingestStateUpdated();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed

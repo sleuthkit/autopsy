@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
