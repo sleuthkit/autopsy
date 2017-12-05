@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2017 Basis Technology Corp.
+ * Copyright 2014 - 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 
@@ -79,19 +80,15 @@ public final class SearchRunner {
     }
 
     /**
-     * Add a new job. Searches will be periodically performed after this is
-     * called.
      *
-     * @param jobId            Job ID that this is associated with
-     * @param dataSourceId     Data source that is being indexed and that
-     *                         searches should be restricted to.
-     * @param keywordListNames List of keyword lists that will be searched. List
-     *                         contents will be refreshed each search.
+     * @param jobContext
+     * @param keywordListNames
      */
-    public synchronized void startJob(long jobId, long dataSourceId, List<String> keywordListNames) {
+    public synchronized void startJob(IngestJobContext jobContext, List<String> keywordListNames) {
+        long jobId = jobContext.getJobId();
         if (jobs.containsKey(jobId) == false) {
             logger.log(Level.INFO, "Adding job {0}", jobId); //NON-NLS
-            SearchJobInfo jobData = new SearchJobInfo(jobId, dataSourceId, keywordListNames);
+            SearchJobInfo jobData = new SearchJobInfo(jobContext, keywordListNames);
             jobs.put(jobId, jobData);
         }
 
@@ -266,6 +263,7 @@ public final class SearchRunner {
      */
     private class SearchJobInfo {
 
+        private final IngestJobContext jobContext;
         private final long jobId;
         private final long dataSourceId;
         // mutable state:
@@ -278,13 +276,18 @@ public final class SearchRunner {
         private AtomicLong moduleReferenceCount = new AtomicLong(0);
         private final Object finalSearchLock = new Object(); //used for a condition wait
 
-        private SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
-            this.jobId = jobId;
-            this.dataSourceId = dataSourceId;
+        private SearchJobInfo(IngestJobContext jobContext, List<String> keywordListNames) {
+            this.jobContext = jobContext;
+            this.jobId = jobContext.getJobId();
+            this.dataSourceId = jobContext.getDataSource().getId();
             this.keywordListNames = new ArrayList<>(keywordListNames);
             currentResults = new HashMap<>();
             workerRunning = false;
             currentSearcher = null;
+        }
+
+        private IngestJobContext getJobContext() {
+            return jobContext;
         }
 
         private long getJobId() {
@@ -435,7 +438,7 @@ public final class SearchRunner {
                 int keywordsSearched = 0;
 
                 for (Keyword keyword : keywords) {
-                    if (this.isCancelled()) {
+                    if (this.isCancelled() || this.job.getJobContext().fileIngestIsCancelled()) {
                         logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
                         return null;
                     }
@@ -480,7 +483,6 @@ public final class SearchRunner {
                     if (!newResults.getKeywords().isEmpty()) {
 
                         // Write results to BB
-                        
                         //scale progress bar more more granular, per result sub-progress, within per keyword
                         int totalUnits = newResults.getKeywords().size();
                         subProgresses[keywordsSearched].start(totalUnits);
