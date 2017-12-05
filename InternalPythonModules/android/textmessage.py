@@ -122,7 +122,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.TYPE.MESSAGE, date);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.Type.MESSAGE, date);
 
                 bbartifacts.append(artifact)
                 try:
