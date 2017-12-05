@@ -135,28 +135,10 @@ public class EamDbUtil {
      *
      * @return true on success, else false
      */
-    /*
-    public static boolean insertSchemaVersion(Connection conn) {
-        PreparedStatement preparedStatement = null;
-        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
-        try {
-            preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, "SCHEMA_VERSION");
-            preparedStatement.setString(2, String.valueOf(SCHEMA_VERSION));
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
-            return false;
-        } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
-        }
-        return true;
-    }*/
     static boolean updateSchemaVersion(Connection conn) {
 
         Statement statement;
         ResultSet resultSet;
-        //PreparedStatement preparedStatement = null;
         String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
         try {
             statement = conn.createStatement();
@@ -178,7 +160,6 @@ public class EamDbUtil {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
             return false;
-        } finally {
         }
 
         return true;
