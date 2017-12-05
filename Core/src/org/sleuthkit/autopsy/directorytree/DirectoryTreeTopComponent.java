@@ -149,6 +149,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
         });
+        
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE, Case.Events.DATA_SOURCE_ADDED), this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
@@ -642,7 +643,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @param newNodes
      */
     @NbBundle.Messages("DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.")
-    private void respondSelection(final Node[] oldNodes, final Node[] newNodes) {
+    void respondSelection(final Node[] oldNodes, final Node[] newNodes) {
         if (!Case.isCaseOpen()) {
             return;
         }
