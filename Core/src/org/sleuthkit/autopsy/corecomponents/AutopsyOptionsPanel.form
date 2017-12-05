@@ -65,9 +65,9 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       <Component id="viewPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="runtimePanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="logoPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
@@ -424,12 +424,12 @@
                               <Component id="maxMemoryUnitsLabel" min="-2" pref="17" max="-2" attributes="0"/>
                               <Component id="maxMemoryUnitsLabel1" min="-2" pref="17" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" max="32767" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="restartNecessaryWarning" min="-2" pref="326" max="-2" attributes="0"/>
-                              <Component id="invalidReasonLabel" min="-2" pref="326" max="-2" attributes="0"/>
+                              <Component id="restartNecessaryWarning" pref="417" max="32767" attributes="0"/>
+                              <Component id="invalidReasonLabel" max="32767" attributes="0"/>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -454,7 +454,6 @@
                               <Component id="totalMemoryLabel" alignment="0" max="32767" attributes="0"/>
                               <Component id="systemMemoryTotal" alignment="0" max="32767" attributes="0"/>
                           </Group>
-                          <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
