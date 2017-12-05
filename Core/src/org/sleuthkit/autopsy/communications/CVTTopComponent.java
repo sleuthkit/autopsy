@@ -47,6 +47,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
     public CVTTopComponent() {
         initComponents();
+        browseVisualizeTabPane.setEnabledAt(1, false);
         setName(Bundle.CVTTopComponent_name());
         splitPane.setRightComponent(new MessageBrowser());
     }
@@ -60,7 +61,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private void initComponents() {
 
         splitPane = new javax.swing.JSplitPane();
-        BrowseVisualizeTabPane = new javax.swing.JTabbedPane();
+        browseVisualizeTabPane = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
         jPanel1 = new javax.swing.JPanel();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
@@ -68,8 +69,8 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.7);
 
-        BrowseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
 
         jPanel1.setName(""); // NOI18N
 
@@ -84,9 +85,9 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             .addGap(0, 725, Short.MAX_VALUE)
         );
 
-        BrowseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), jPanel1); // NOI18N
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), jPanel1); // NOI18N
 
-        splitPane.setLeftComponent(BrowseVisualizeTabPane);
+        splitPane.setLeftComponent(browseVisualizeTabPane);
 
         filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
 
@@ -114,8 +115,8 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTabbedPane BrowseVisualizeTabPane;
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
+    private javax.swing.JTabbedPane browseVisualizeTabPane;
     private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane splitPane;
