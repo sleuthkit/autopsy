@@ -212,7 +212,6 @@
                 <package>jfxtras.scene.control</package>
                 <package>jfxtras.scene.layout</package>
                 <package>jfxtras.util</package>
-                <package>net.sourceforge.jcalendarbutton</package>
                 <package>org.apache.avalon.framework</package>
                 <package>org.apache.avalon.framework.activity</package>
                 <package>org.apache.avalon.framework.component</package>
@@ -587,7 +586,6 @@
                 <package>org.hyperic.sigar.vmware</package>
                 <package>org.hyperic.sigar.win32</package>
                 <package>org.imgscalr</package>
-                <package>org.jbundle.thin.base.screen.jcalendarbutton</package>
                 <package>org.joda.time</package>
                 <package>org.joda.time.base</package>
                 <package>org.joda.time.chrono</package>
@@ -630,7 +628,6 @@
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.impl</package>
                 <package>org.slf4j.spi</package>
-                <package>org.sourceforge.jcalendarbutton</package>
                 <package>org.w3c.dom</package>
                 <package>org.w3c.dom.css</package>
                 <package>org.w3c.dom.events</package>
@@ -762,10 +759,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/poi-excelant-3.15.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-excelant-3.15.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
