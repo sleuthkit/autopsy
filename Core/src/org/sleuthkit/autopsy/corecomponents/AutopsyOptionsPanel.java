@@ -54,7 +54,7 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "AutopsyOptionsPanel.invalidImageFile.msg=The selected file was not able to be used as an agency logo.",
     "AutopsyOptionsPanel.invalidImageFile.title=Invalid Image File",
     "AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any changes to max memory to take effect.",
-    "AutopsyOptionsPanel.totalMemoryLabel.text=Total System Memory in Gigabytes:",
+    "AutopsyOptionsPanel.totalMemoryLabel.text=Total System Memory:",
     "AutopsyOptionsPanel.maxMemoryLabel.text=Maximum JVM Memory:",
     "AutopsyOptionsPanel.maxMemoryUnitsLabel.text=GB",
     "AutopsyOptionsPanel.runtimePanel.border.title=Runtime",
@@ -75,8 +75,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
     private static final long MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
-    private static final int HARD_MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
-    private static final int SOFT_MIN_MEMORY_IN_GB = 4; //the minimum memory we inform the user is required in gigabytes
+    private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
 
@@ -151,7 +150,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private String getCurrentXmxValue() throws IOException {
         String[] settings;
         String currentSetting = "";
-        File userConfFile = getInstallFolderConfFile();
+        File userConfFile = getUserFolderConfFile();
         if (!userConfFile.exists()) {
             settings = getDefaultsFromFileContents(readConfFile(getInstallFolderConfFile()));
         } else {
@@ -386,6 +385,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         restartNecessaryWarning = new javax.swing.JLabel();
         memField = new javax.swing.JTextField();
         invalidReasonLabel = new javax.swing.JLabel();
+        maxMemoryUnitsLabel1 = new javax.swing.JLabel();
 
         jScrollPane1.setBorder(null);
 
@@ -529,11 +529,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                         .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(viewPanelLayout.createSequentialGroup()
                                 .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(dataSourcesHideSlackCB)
-                                    .addComponent(viewsHideSlackCB))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(viewPanelLayout.createSequentialGroup()
-                                .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(useGMTTimeRB)
                                     .addComponent(keepCurrentViewerRB)
                                     .addComponent(useBestViewerRB)
@@ -541,7 +536,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                                     .addComponent(viewsHideKnownCB))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(viewPanelLayout.createSequentialGroup()
-                                .addComponent(useLocalTimeRB)
+                                .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(dataSourcesHideSlackCB)
+                                    .addComponent(viewsHideSlackCB)
+                                    .addComponent(useLocalTimeRB))
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                     .addGroup(viewPanelLayout.createSequentialGroup()
                         .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -588,6 +586,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(totalMemoryLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.totalMemoryLabel.text")); // NOI18N
 
+        systemMemoryTotal.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+
         restartNecessaryWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(restartNecessaryWarning, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartNecessaryWarning.text")); // NOI18N
 
@@ -600,6 +600,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         invalidReasonLabel.setForeground(new java.awt.Color(255, 0, 0));
 
+        org.openide.awt.Mnemonics.setLocalizedText(maxMemoryUnitsLabel1, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.maxMemoryUnitsLabel.text")); // NOI18N
+
         javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
         runtimePanel.setLayout(runtimePanelLayout);
         runtimePanelLayout.setHorizontalGroup(
@@ -607,42 +609,39 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(runtimePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addComponent(totalMemoryLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addComponent(maxMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(memField, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(maxMemoryUnitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(maxMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(totalMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(memField, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(invalidReasonLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(maxMemoryUnitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(maxMemoryUnitsLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(invalidReasonLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
         runtimePanelLayout.setVerticalGroup(
             runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(runtimePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(maxMemoryUnitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(memField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addComponent(maxMemoryLabel))
-                    .addComponent(invalidReasonLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(totalMemoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addGap(11, 11, 11)
-                        .addComponent(restartNecessaryWarning)))
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(maxMemoryUnitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(memField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(invalidReasonLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(maxMemoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(maxMemoryUnitsLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(totalMemoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(0, 0, 0))
         );
 
@@ -650,12 +649,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(viewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(runtimePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(runtimePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -777,8 +776,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             return false;
         }
         int parsedInt = Integer.parseInt(memText);
-        if (parsedInt < HARD_MIN_MEMORY_IN_GB) {
-            invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_underMinMemory_text(SOFT_MIN_MEMORY_IN_GB));
+        if (parsedInt < MIN_MEMORY_IN_GB) {
+            invalidReasonLabel.setText(Bundle.AutopsyOptionsPanel_invalidReasonLabel_underMinMemory_text(MIN_MEMORY_IN_GB));
             return false;
         }
         if (parsedInt >= getSystemMemoryInGB()) {
@@ -807,6 +806,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel logoPanel;
     private javax.swing.JLabel maxMemoryLabel;
     private javax.swing.JLabel maxMemoryUnitsLabel;
+    private javax.swing.JLabel maxMemoryUnitsLabel1;
     private javax.swing.JTextField memField;
     private javax.swing.JLabel restartNecessaryWarning;
     private javax.swing.JPanel runtimePanel;
