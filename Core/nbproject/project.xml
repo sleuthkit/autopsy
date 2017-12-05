@@ -334,7 +334,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
-		<binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel_PostgreSQL.jar</runtime-relative-path>

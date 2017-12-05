@@ -32,6 +32,9 @@ import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
 import com.github.lgooddatepicker.components.DatePickerSettings;        
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
 import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * Subpanel with controls for file data filtering.
@@ -191,11 +194,11 @@ class DateSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         jLabel3.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel3.text")); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
 
-        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         jLabel2.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel2.text")); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
 
         modifiedCheckBox.setSelected(true);
         modifiedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.modifiedCheckBox.text")); // NOI18N
@@ -229,9 +232,27 @@ class DateSearchPanel extends javax.swing.JPanel {
             }
         });
 
-        fromDatePicker.setAutoscrolls(true);
+        fromDatePicker.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                fromDatePickerFocusLost(evt);
+            }
+        });
+        fromDatePicker.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                fromDatePickerPropertyChange(evt);
+            }
+        });
 
-        toDatePicker.setAutoscrolls(true);
+        toDatePicker.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                toDatePickerFocusLost(evt);
+            }
+        });
+        toDatePicker.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                toDatePickerPropertyChange(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -320,7 +341,87 @@ class DateSearchPanel extends javax.swing.JPanel {
     private void changedCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_changedCheckBoxActionPerformed
         firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_changedCheckBoxActionPerformed
-    
+
+    private void fromDatePickerPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_fromDatePickerPropertyChange
+        if (evt.getNewValue() instanceof Date) {
+            setFromDate((Date) evt.getNewValue());
+        }
+    }//GEN-LAST:event_fromDatePickerPropertyChange
+
+    private void toDatePickerPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_toDatePickerPropertyChange
+        if (evt.getNewValue() instanceof Date) {
+           setToDate((Date) evt.getNewValue());
+        }
+    }//GEN-LAST:event_toDatePickerPropertyChange
+
+    private void fromDatePickerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_fromDatePickerFocusLost
+        // set the "from" calendar button to listen to change in the text field
+        String fromDateString = this.fromDatePicker.getText();
+        if (!fromDateString.equals("")) {
+            try {
+                Date fromDate = dateFormat.parse(fromDateString);
+                fromDatePicker.setDate(fromDate.toInstant().atZone(dateFormat.getTimeZone().toZoneId()).toLocalDate());
+            } catch (ParseException ex) {
+                // for now, no need to show the error message to the user her
+            }
+        }
+    }//GEN-LAST:event_fromDatePickerFocusLost
+
+    private void toDatePickerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_toDatePickerFocusLost
+        // set the "to" calendar button to listen to change in the text field
+        String toDateString = this.toDatePicker.getText();
+        if (!toDateString.equals("")) {
+            try {
+                Date toDate = dateFormat.parse(toDateString);
+                toDatePicker.setDate(toDate.toInstant().atZone(dateFormat.getTimeZone().toZoneId()).toLocalDate());
+            } catch (ParseException ex) {
+                // for now, no need to show the error message to the user here
+            }
+        }
+    }//GEN-LAST:event_toDatePickerFocusLost
+
+    /**
+     * Validate and set the datetime field on the screen given a datetime
+     * string.
+     *
+     * @param date The date object
+     */
+    private void setFromDate(Date date) {
+        String dateStringResult = "";
+        Instant ins = null;
+        if (date != null) {
+            dateStringResult = dateFormat.format(date);
+            ins = date.toInstant();
+        }
+        
+        fromDatePicker.setText(dateStringResult);
+        if (ins != null) {
+            fromDatePicker.setDate(ins.atZone(dateFormat.getTimeZone().toZoneId()).toLocalDate());
+        } else {
+            fromDatePicker.setDate(null);
+        }
+    }
+
+    /**
+     * Validate and set the datetime field on the screen given a date.
+     *
+     * @param date The date object
+     */
+    private void setToDate(Date date) {
+        String dateStringResult = "";
+        Instant ins = null;
+        if (date != null) {
+            dateStringResult = dateFormat.format(date);
+            ins = date.toInstant();
+        }
+        toDatePicker.setText(dateStringResult);
+        if (ins != null) {
+            toDatePicker.setDate(ins.atZone(dateFormat.getTimeZone().toZoneId()).toLocalDate());
+        } else {
+            toDatePicker.setDate(null);
+        }
+    }
+
     boolean isValidSearch() {
         return this.accessedCheckBox.isSelected() ||
                 this.changedCheckBox.isSelected() ||
