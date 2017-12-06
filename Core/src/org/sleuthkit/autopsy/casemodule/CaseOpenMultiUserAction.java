@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JDialog;
@@ -44,11 +45,12 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
 
     private static final long serialVersionUID = 1L;
     private static JDialog multiUserCaseWindow;
-    
+
     private static final String DISPLAY_NAME = Bundle.CTL_CaseOpenMultiUserAction();
 
-    public CaseOpenMultiUserAction() {}
-    
+    public CaseOpenMultiUserAction() {
+    }
+
     @Override
     public boolean isEnabled() {
         return UserPreferences.getIsMultiUserModeEnabled();
@@ -62,11 +64,16 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
      */
     @Override
     public void actionPerformed(ActionEvent event) {
-        if(multiUserCaseWindow == null) {
-            multiUserCaseWindow = MultiUserCasesDialog.getInstance();
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            if (multiUserCaseWindow == null) {
+                multiUserCaseWindow = MultiUserCasesDialog.getInstance();
+            }
+            multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+            multiUserCaseWindow.setVisible(true);
+        } finally {
+            WindowManager.getDefault().getMainWindow().setCursor(null);
         }
-        multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        multiUserCaseWindow.setVisible(true);
     }
 
     @Override
@@ -83,7 +90,7 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     @Override
     public boolean asynchronous() {
         return false; // run on edt
