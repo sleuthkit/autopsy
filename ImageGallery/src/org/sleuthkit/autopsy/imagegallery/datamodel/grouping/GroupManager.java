@@ -71,7 +71,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -332,7 +332,7 @@ public class GroupManager {
             switch (groupBy.attrName) {
                 //these cases get special treatment
                 case CATEGORY:
-                    values = (List<A>) Arrays.asList(Category.values());
+                    values = (List<A>) Arrays.asList(DhsImageCategory.values());
                     break;
                 case TAGS:
                     values = (List<A>) controller.getTagsManager().getTagNamesInUse().stream()
@@ -388,7 +388,7 @@ public class GroupManager {
         switch (groupKey.getAttribute().attrName) {
             //these cases get special treatment
             case CATEGORY:
-                fileIDsToReturn = getFileIDsWithCategory((Category) groupKey.getValue());
+                fileIDsToReturn = getFileIDsWithCategory((DhsImageCategory) groupKey.getValue());
                 break;
             case TAGS:
                 fileIDsToReturn = getFileIDsWithTag((TagName) groupKey.getValue());
@@ -409,13 +409,13 @@ public class GroupManager {
 
     // @@@ This was kind of slow in the profiler.  Maybe we should cache it.
     // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
-    public Set<Long> getFileIDsWithCategory(Category category) throws TskCoreException {
+    public Set<Long> getFileIDsWithCategory(DhsImageCategory category) throws TskCoreException {
         Set<Long> fileIDsToReturn = Collections.emptySet();
         if (nonNull(db)) {
             try {
                 final DrawableTagsManager tagsManager = controller.getTagsManager();
-                if (category == Category.ZERO) {
-                    List< TagName> tns = Stream.of(Category.ONE, Category.TWO, Category.THREE, Category.FOUR, Category.FIVE)
+                if (category == DhsImageCategory.ZERO) {
+                    List< TagName> tns = Stream.of(DhsImageCategory.ONE, DhsImageCategory.TWO, DhsImageCategory.THREE, DhsImageCategory.FOUR, DhsImageCategory.FIVE)
                             .map(tagsManager::getTagName)
                             .collect(Collectors.toList());
 

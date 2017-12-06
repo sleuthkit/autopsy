@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,12 +26,14 @@ import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * An abstract base class for Actions that allow users to tag SleuthKit data
@@ -107,7 +109,8 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                     String tagDisplayName = entry.getKey();
-                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
+                    String notableString = entry.getValue().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
                     // for the bookmark tag name only, added shortcut label
                     if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
                         tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
@@ -122,7 +125,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
                 empty.setEnabled(false);
                 quickTagMenu.add(empty);
-             }
+            }
 
             quickTagMenu.addSeparator();
 
@@ -155,10 +158,10 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
         /**
          * Method to add to the action listener for each menu item. Allows a tag
          * display name to be added to the menu with an action listener without
-         * having to instantiate a TagName object for it.
-         * When the method is called, the TagName object is created here if it
-         * doesn't already exist.
-         * 
+         * having to instantiate a TagName object for it. When the method is
+         * called, the TagName object is created here if it doesn't already
+         * exist.
+         *
          * @param tagDisplayName display name for the tag name
          * @param tagName        TagName object associated with the tag name,
          *                       may be null

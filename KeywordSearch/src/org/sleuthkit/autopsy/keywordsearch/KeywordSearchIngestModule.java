@@ -280,7 +280,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return ProcessResult.OK;
             }
             List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
-            SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
+            SearchRunner.getInstance().startJob(context, keywordListNames);
             startedSearching = true;
         }
 

@@ -37,6 +37,7 @@ public class EamDbUtil {
     private final static Logger LOGGER = Logger.getLogger(EamDbUtil.class.getName());
     private static final String CENTRAL_REPO_NAME = "CentralRepository";
     private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
+    private static final String DEFAULT_ORG_NAME = "Not Specified";
 
     /**
      * Close the prepared statement.
@@ -176,10 +177,50 @@ public class EamDbUtil {
     }
 
     /**
+     * Check whether the given org is the default organization.
+     *
+     * @param org
+     * @return true if it is the default org, false otherwise
+     */
+    public static boolean isDefaultOrg(EamOrganization org) {
+        return DEFAULT_ORG_NAME.equals(org.getName());
+    }
+
+    /**
+     * Add the default organization to the database
+     *
+     * @param conn
+     * @return true if successful, false otherwise
+     */
+    static boolean insertDefaultOrganization(Connection conn) {
+        if (null == conn) {
+            return false;
+        }
+
+        PreparedStatement preparedStatement = null;
+        String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?)";
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, DEFAULT_ORG_NAME);
+            preparedStatement.setString(2, "");
+            preparedStatement.setString(3, "");
+            preparedStatement.setString(4, "");
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error adding default organization", ex);
+            return false;
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+        }
+
+        return true;
+    }
+
+    /**
      * If the Central Repos use has been enabled.
      *
      * @return true if the Central Repo may be configured, false if it should
-     *         not be able to be
+     * not be able to be
      */
     public static boolean useCentralRepo() {
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
@@ -190,7 +231,7 @@ public class EamDbUtil {
      * configured.
      *
      * @param centralRepoCheckBoxIsSelected - true if the central repo can be
-     *                                      used
+     * used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));

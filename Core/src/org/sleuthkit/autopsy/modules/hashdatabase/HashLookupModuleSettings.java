@@ -135,8 +135,8 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
             }
         }
         
-        // We didn't find it, so use the default value
-        return db.getDefaultSearchDuringIngest();
+        // We didn't find it, so use the value in the HashDb object
+        return db.getSearchDuringIngest();
     }
 
     /**

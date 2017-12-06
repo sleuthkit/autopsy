@@ -201,47 +201,36 @@ class IngestModule implements FileIngestModule {
         }
         jobId = context.getJobId();
 
-        EamDb dbManager;
+        EamDb centralRepoDb;
         try {
-            dbManager = EamDb.getInstance();
+            centralRepoDb = EamDb.getInstance();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
 
         try {
-            filesType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
-        Case curCase = Case.getCurrentCase();
+        Case autopsyCase = Case.getCurrentCase();
         try {
-            eamCase = dbManager.getCaseByUUID(curCase.getName());
+            eamCase = centralRepoDb.getCase(autopsyCase);
         } catch (EamDbException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
         if (eamCase == null) {
             // ensure we have this case defined in the EAM DB
-            CorrelationCase curCeCase = new CorrelationCase(
-                    -1,
-                    curCase.getName(), // unique case ID
-                    EamOrganization.getDefault(),
-                    curCase.getDisplayName(),
-                    curCase.getCreatedDate(),
-                    curCase.getNumber(),
-                    curCase.getExaminer(),
-                    curCase.getExaminerEmail(),
-                    curCase.getExaminerPhone(),
-                    curCase.getCaseNotes());
             try {
-                dbManager.newCase(curCeCase);
-                eamCase = dbManager.getCaseByUUID(curCase.getName());
+                eamCase = centralRepoDb.newCase(autopsyCase);
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
                 throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
             }
         }
+        
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {
@@ -255,12 +244,12 @@ class IngestModule implements FileIngestModule {
                 == 1) {
             // ensure we have this data source in the EAM DB
             try {
-                if (null == dbManager.getDataSourceDetails(eamCase, eamDataSource.getDeviceID())) {
-                    dbManager.newDataSource(eamDataSource);
+                if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDeviceID())) {
+                    centralRepoDb.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating new data source in ingest module start up.", ex); // NON-NLS
-                throw new IngestModuleException("Error creating new data source in ingest module start up.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
+                throw new IngestModuleException("Error adding data source to Central Repository.", ex); // NON-NLS
             }
 
         }

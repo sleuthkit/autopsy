@@ -25,6 +25,7 @@ from java.lang import ClassNotFoundException
 from java.math import BigInteger
 from java.nio import ByteBuffer
 from java.util.logging import Level
+from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -120,13 +121,15 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                 inputStream.read(tempBytes)
                 timestamp = BigInteger(tempBytes).longValue() / 1000
 
+                attributes = ArrayList()
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_TRACKPOINT)
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, AndroidAnalyzer.MODULE_NAME, latitude))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, AndroidAnalyzer.MODULE_NAME, longitude))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, AndroidModuleFactorymodule.Name, timestamp))
-                artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, AndroidAnalyzer.MODULE_NAME,
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, AndroidAnalyzer.MODULE_NAME, latitude))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, AndroidAnalyzer.MODULE_NAME, longitude))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, AndroidModuleFactorymodule.Name, timestamp))
+                attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, AndroidAnalyzer.MODULE_NAME,
                     file.getName() + "Location History"))
 
+                artifact.addAttributes(attributes)
                 #Not storing these for now.
                 #    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), AndroidModuleFactorymodule.moduleName, accuracy))
                 #    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(), AndroidModuleFactorymodule.moduleName, confidence))

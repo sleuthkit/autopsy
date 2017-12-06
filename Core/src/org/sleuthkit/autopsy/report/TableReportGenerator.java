@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -305,7 +306,8 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (ContentTag tag : tags) {
             // skip tags that we are not reporting on 
-            if (passesTagNamesFilter(tag.getName().getDisplayName()) == false) {
+            String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
             }
 
@@ -316,7 +318,7 @@ class TableReportGenerator {
                 fileName = tag.getContent().getName();
             }
 
-            ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName(), fileName, tag.getComment()));
+            ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName() + notableString, fileName, tag.getComment()));
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) content;
@@ -382,12 +384,13 @@ class TableReportGenerator {
 
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
-            if (passesTagNamesFilter(tag.getName().getDisplayName()) == false) {
+            String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
             }
 
             List<String> row;
-            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
+            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName() + notableString, tag.getComment(), tag.getContent().getName()));
             tableReport.addRow(row);
 
             // check if the tag is an image that we should later make a thumbnail for
@@ -969,7 +972,8 @@ class TableReportGenerator {
                 try {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
                     for (ContentTag ct : contentTags) {
-                        allTags.add(ct.getName().getDisplayName());
+                        String notableString = ct.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                        allTags.add(ct.getName().getDisplayName() + notableString);
                     }
                 } catch (TskCoreException ex) {
                     errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
@@ -1006,7 +1010,8 @@ class TableReportGenerator {
                 List<BlackboardArtifactTag> tags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
-                    uniqueTagNames.add(tag.getName().getDisplayName());
+                    String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                    uniqueTagNames.add(tag.getName().getDisplayName() + notableString);
                 }
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;

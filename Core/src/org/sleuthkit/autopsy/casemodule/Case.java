@@ -363,7 +363,14 @@ public class Case {
          * case number, the examiner name, examiner phone, examiner email, and
          * the case notes.
          */
-        CASE_DETAILS;
+        CASE_DETAILS,
+        /**
+         * A tag definition has changed (e.g., description, known status). The
+         * old value of the PropertyChangeEvent is the display name of the tag
+         * definition that has changed.
+         */
+        TAG_DEFINITION_CHANGED;
+
     };
 
     /**
@@ -1461,6 +1468,18 @@ public class Case {
      */
     public void notifyContentTagDeleted(ContentTag deletedTag) {
         eventPublisher.publish(new ContentTagDeletedEvent(deletedTag));
+    }
+
+    /**
+     * Notifies case event subscribers that a tag definition has changed.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param changedTagName the name of the tag definition which was changed
+     */
+    public void notifyTagDefinitionChanged(String changedTagName) {
+        //leaving new value of changedTagName as null, because we do not currently support changing the display name of a tag. 
+        eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
     }
 
     /**

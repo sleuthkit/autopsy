@@ -109,7 +109,7 @@
         <var name="aut-bin-name-todelete" value="${app.name}64.exe"/>
         <var name="aut-bin-name" value="${app.name}.exe"/>
 
-        <var name="jvm.max.mem" value="512" />
+        <var name="jvm.max.mem" value="512m" />
         
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
         <antcall target="copyJRE" inheritAll="true" />
@@ -144,7 +144,7 @@
         <var name="aut-bin-name" value="${app.name}64.exe"/>
         <var name="aut-bin-name-todelete" value="${app.name}.exe"/>
         
-        <var name="jvm.max.mem" value="2048"/>
+        <var name="jvm.max.mem" value="4G"/>
         
         <var name="jre-path" value="${env.JRE_HOME_64}"/>
         <antcall target="copyJRE" inheritAll="true" />
@@ -170,7 +170,7 @@
         <!-- Update configuration file to include jre -->
         <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
         <!-- Sets max heap size to be ${jvm.max.mem} which is set in the run-ai-(32/64) target -->
-        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication &quot;" />
+        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem} -J-XX:MaxPermSize=128M -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication &quot;" />
         <propertyfile file="${inst.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />

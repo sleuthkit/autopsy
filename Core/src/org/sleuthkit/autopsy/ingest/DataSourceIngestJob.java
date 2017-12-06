@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -125,10 +125,9 @@ final class DataSourceIngestJob {
      * class.
      */
     private volatile boolean currentDataSourceIngestModuleCancelled;
+    private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
     private volatile boolean cancelled;
     private volatile IngestJob.CancellationReason cancellationReason = IngestJob.CancellationReason.NOT_CANCELLED;
-    private final Object cancellationStateMonitor = new Object();
-    private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
 
     /**
      * A data source ingest job uses the task scheduler singleton to create and
@@ -989,66 +988,25 @@ final class DataSourceIngestJob {
      * @param reason The cancellation reason.
      */
     void cancel(IngestJob.CancellationReason reason) {
-        if (this.doUI) {
-            /**
-             * Put a cancellation message on data source level ingest progress
-             * bar, if it is still running.
-             */
-            synchronized (this.dataSourceIngestProgressLock) {
-                if (dataSourceIngestProgress != null) {
-                    final String displayName = NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.dataSourceIngest.initialDisplayName",
-                            dataSource.getName());
-                    dataSourceIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(),
-                                    "IngestJob.progress.cancelling",
-                                    displayName));
-                }
-            }
-
-            /**
-             * Put a cancellation message on the file level ingest progress bar,
-             * if it is still running.
-             */
-            synchronized (this.fileIngestProgressLock) {
-                if (this.fileIngestProgress != null) {
-                    final String displayName = NbBundle.getMessage(this.getClass(),
-                            "IngestJob.progress.fileIngest.displayName",
-                            this.dataSource.getName());
-                    this.fileIngestProgress.setDisplayName(
-                            NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling",
-                                    displayName));
-                    if (!this.currentFileIngestModule.isEmpty() && !this.currentFileIngestTask.isEmpty()) {
-                        this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(),
-                                "IngestJob.progress.fileIngest.cancelMessage",
-                                this.currentFileIngestModule, this.currentFileIngestTask));
-                    }
-
-                }
-            }
-        }
-
-        /*
-         * If the work is not already done, show this job as cancelled for the
-         * given reason.
-         */
-        if (Stages.FINALIZATION != stage) {
-            synchronized (cancellationStateMonitor) {
-                /*
-                 * These fields are volatile for reading, synchronized on the
-                 * monitor here for writing.
-                 */
-                this.cancelled = true;
-                this.cancellationReason = reason;
-            }
-        }
-
-        /**
-         * Tell the task scheduler to cancel all pending tasks, i.e., tasks not
-         * not being performed by an ingest thread.
-         */
+        this.cancelled = true;
+        this.cancellationReason = reason;
         DataSourceIngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
-        this.checkForStageCompleted();
+        
+        if (this.doUI) {
+            synchronized (this.dataSourceIngestProgressLock) {
+                if (null != dataSourceIngestProgress) {
+                    dataSourceIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
+                    dataSourceIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
+                }
+            }
+
+            synchronized (this.fileIngestProgressLock) {
+                if (null != this.fileIngestProgress) {
+                    this.fileIngestProgress.setDisplayName(NbBundle.getMessage(this.getClass(), "IngestJob.progress.fileIngest.displayName", this.dataSource.getName()));
+                    this.fileIngestProgress.progress(NbBundle.getMessage(this.getClass(), "IngestJob.progress.cancelling"));
+                }
+            }
+        }
     }
 
     /**

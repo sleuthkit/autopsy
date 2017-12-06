@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
     private String moduleDirRelative;
     private String moduleDirAbsolute;
-    private ImageExtractor imageExtractor;
+    private MSOfficeEmbeddedContentExtractor officeExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
 
@@ -98,10 +98,10 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         }
 
         /*
-         * Construct an embedded images extractor for processing Microsoft
+         * Construct an embedded content extractor for processing Microsoft
          * Office documents.
          */
-        this.imageExtractor = new ImageExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        this.officeExtractor = new MSOfficeEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
     }
 
     @Override
@@ -134,8 +134,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          */
         if (archiveExtractor.isSevenZipExtractionSupported(abstractFile)) {
             archiveExtractor.unpack(abstractFile);
-        } else if (imageExtractor.isImageExtractionSupported(abstractFile)) {
-            imageExtractor.extractImage(abstractFile);
+        } else if (officeExtractor.isContentExtractionSupported(abstractFile)) {
+            officeExtractor.extractEmbeddedContent(abstractFile);
         }
         return ProcessResult.OK;
     }
