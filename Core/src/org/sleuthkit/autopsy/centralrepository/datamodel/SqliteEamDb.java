@@ -807,15 +807,17 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Get all reference sets
      *
+     * @param correlationType Type of sets to return
+     * 
      * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+    public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getAllReferenceSets();
+            return super.getAllReferenceSets(correlationType);
         } finally {
             releaseSharedLock();
         } 
