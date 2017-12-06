@@ -6,12 +6,16 @@
 It is _highly_ recommended to remove or disable any antivirus software from computers that will be processing or reviewing cases. Antivirus software will often conflict with forensic software, and may quarantine or even delete some of your results before you get a chance to look at them.
 <br><br>
 
-
 \section install Deployment Types
 Starting with Autopsy 4.0, there are two ways to deploy Autopsy:
 - **Single-User**: Cases can be open by only a single instance of Autopsy at a time.  Autopsy installations do not communicate with each other.  This is the easiest to install and deploy.  This page outlines that installation process. 
 - **Multi-User**: Cases can be open by multiple users at the same time and users can see what each other is doing. This collaborative deployment requires installation and configuration of other network-based services. The installation of this deployment is covered in \ref install_multiuser_page.
 
+\section sysreqs System Memory Requirements
+The 64 bit version of Autopsy requires a minimum of 8GB RAM (16 GB recommended).
+When the 64 bit version of Autopsy is installed on Windows it will be limited to a maximum heap size of 4GB leaving the remaining memory for the operating system, the internal Solr text indexing service and other applications. If you wish to change the maximum heap size you can do so after installation by changing the Maximum JVM Memory value in the Runtime section under Tools -> Options -> Application.
+
+\image html runtime_settings.PNG
 
 \section download Download
 Download Autopsy from the website:
