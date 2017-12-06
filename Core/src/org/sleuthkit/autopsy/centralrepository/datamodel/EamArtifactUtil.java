@@ -227,7 +227,7 @@ public class EamArtifactUtil {
      *
      * @return The new EamArtifact or null if creation failed
      */
-    public static CorrelationAttribute getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
+    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
 
         if (!(content instanceof AbstractFile)) {
             return null;
@@ -241,6 +241,7 @@ public class EamArtifactUtil {
 
         // We need a hash to make the artifact
         String md5 = af.getMd5Hash();
+        // @@@ Should also check for empty data hash
         if (md5 == null || md5.isEmpty()) {
             return null;
         }
@@ -258,6 +259,7 @@ public class EamArtifactUtil {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,
+                    // @@@ Shouldn't this use the knownStatus argument?
                     TskData.FileKnown.BAD,
                     CorrelationAttributeInstance.GlobalStatus.LOCAL
             );

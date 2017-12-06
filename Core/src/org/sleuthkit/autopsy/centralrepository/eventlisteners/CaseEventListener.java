@@ -191,7 +191,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             }
 
-            final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af,
+            final CorrelationAttribute eamArtifact = EamArtifactUtil.getCorrelationAttributeFromContent(af,
                     knownStatus, comment);
 
             if (eamArtifact != null) {
@@ -394,7 +394,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the file will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
-                        final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(),
+                        final CorrelationAttribute eamArtifact = EamArtifactUtil.getCorrelationAttributeFromContent(contentTag.getContent(),
                                 tagName.getKnownStatus(), "");
                         if (eamArtifact != null) {
                             EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
