@@ -96,7 +96,7 @@ public class CorrelationAttributeInstance implements Serializable {
         this(-1, eamCase, eamDataSource, filePath, comment, knownStatus, globalStatus);
     }
 
-    public CorrelationAttributeInstance(
+    CorrelationAttributeInstance(
             int ID,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
@@ -198,12 +198,4 @@ public class CorrelationAttributeInstance implements Serializable {
     public GlobalStatus getGlobalStatus() {
         return globalStatus;
     }
-
-    /**
-     * @param globalStatus the globalStatus to set
-     */
-    public void setGlobalStatus(GlobalStatus globalStatus) {
-        this.globalStatus = globalStatus;
-    }
-
 }
