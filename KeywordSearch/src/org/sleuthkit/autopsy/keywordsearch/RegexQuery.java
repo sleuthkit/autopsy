@@ -526,6 +526,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 try {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
                 } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s' ", foundKeyword.getSearchTerm(), hit.getSnippet())); //NON-NLS
                     LOGGER.log(Level.SEVERE, "There was a error getting contentID for keyword hit.", ex); //NON-NLS
                 }
             }
