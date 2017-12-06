@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -107,9 +108,15 @@ public class CueBannerPanel extends javax.swing.JPanel {
         openRecentCaseButton.setEnabled(enableOpenRecentCaseButton);
         openRecentCaseLabel.setEnabled(enableOpenRecentCaseButton);
         
-        boolean enableOpenMultiUserCaseButton = UserPreferences.getIsMultiUserModeEnabled();
-        openMultiUserCaseButton.setEnabled(enableOpenMultiUserCaseButton);
-        openMultiUserCaseLabel.setEnabled(enableOpenMultiUserCaseButton);
+        if(UserPreferences.getIsMultiUserModeEnabled()) {
+            primaryOpenCaseLabel.setText("Open Multi-User Case");
+            secondaryOpenCaseButton.setVisible(true);
+            secondaryOpenCaseLabel.setVisible(true);
+        } else {
+            primaryOpenCaseLabel.setText("Open Case");
+            secondaryOpenCaseButton.setVisible(false);
+            secondaryOpenCaseLabel.setVisible(false);
+        }
     }
 
     /**
@@ -125,14 +132,14 @@ public class CueBannerPanel extends javax.swing.JPanel {
         this.autopsyLogo.setText("");
         createNewCaseButton = new javax.swing.JButton();
         openRecentCaseButton = new javax.swing.JButton();
-        createNewCaseLabel = new javax.swing.JLabel();
+        newCaseLabel = new javax.swing.JLabel();
         openRecentCaseLabel = new javax.swing.JLabel();
-        openExistingCaseButton = new javax.swing.JButton();
-        openExistingCaseLabel = new javax.swing.JLabel();
+        primaryOpenCaseButton = new javax.swing.JButton();
+        primaryOpenCaseLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        openMultiUserCaseButton = new javax.swing.JButton();
-        openMultiUserCaseLabel = new javax.swing.JLabel();
+        secondaryOpenCaseButton = new javax.swing.JButton();
+        secondaryOpenCaseLabel = new javax.swing.JLabel();
 
         autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N
         autopsyLogo.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLogo.text")); // NOI18N
@@ -161,48 +168,48 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        createNewCaseLabel.setFont(createNewCaseLabel.getFont().deriveFont(createNewCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        createNewCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewCaseLabel.text")); // NOI18N
+        newCaseLabel.setFont(newCaseLabel.getFont().deriveFont(newCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        newCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseLabel.text")); // NOI18N
 
         openRecentCaseLabel.setFont(openRecentCaseLabel.getFont().deriveFont(openRecentCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         openRecentCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentCaseLabel.text")); // NOI18N
 
-        openExistingCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
-        openExistingCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openExistingCaseButton.text")); // NOI18N
-        openExistingCaseButton.setBorder(null);
-        openExistingCaseButton.setBorderPainted(false);
-        openExistingCaseButton.setContentAreaFilled(false);
-        openExistingCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
-        openExistingCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        openExistingCaseButton.addActionListener(new java.awt.event.ActionListener() {
+        primaryOpenCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
+        primaryOpenCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.primaryOpenCaseButton.text")); // NOI18N
+        primaryOpenCaseButton.setBorder(null);
+        primaryOpenCaseButton.setBorderPainted(false);
+        primaryOpenCaseButton.setContentAreaFilled(false);
+        primaryOpenCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
+        primaryOpenCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
+        primaryOpenCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openExistingCaseButtonActionPerformed(evt);
+                primaryOpenCaseButtonActionPerformed(evt);
             }
         });
 
-        openExistingCaseLabel.setFont(openExistingCaseLabel.getFont().deriveFont(openExistingCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        openExistingCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openExistingCaseLabel.text")); // NOI18N
+        primaryOpenCaseLabel.setFont(primaryOpenCaseLabel.getFont().deriveFont(primaryOpenCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        primaryOpenCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.primaryOpenCaseLabel.text")); // NOI18N
 
         closeButton.setFont(closeButton.getFont().deriveFont(closeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         closeButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.closeButton.text")); // NOI18N
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        openMultiUserCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
-        openMultiUserCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openMultiUserCaseButton.text")); // NOI18N
-        openMultiUserCaseButton.setBorder(null);
-        openMultiUserCaseButton.setBorderPainted(false);
-        openMultiUserCaseButton.setContentAreaFilled(false);
-        openMultiUserCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
-        openMultiUserCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        openMultiUserCaseButton.addActionListener(new java.awt.event.ActionListener() {
+        secondaryOpenCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
+        secondaryOpenCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.secondaryOpenCaseButton.text")); // NOI18N
+        secondaryOpenCaseButton.setBorder(null);
+        secondaryOpenCaseButton.setBorderPainted(false);
+        secondaryOpenCaseButton.setContentAreaFilled(false);
+        secondaryOpenCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
+        secondaryOpenCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
+        secondaryOpenCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openMultiUserCaseButtonActionPerformed(evt);
+                secondaryOpenCaseButtonActionPerformed(evt);
             }
         });
 
-        openMultiUserCaseLabel.setFont(openMultiUserCaseLabel.getFont().deriveFont(openMultiUserCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        openMultiUserCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openMultiUserCaseLabel.text")); // NOI18N
+        secondaryOpenCaseLabel.setFont(secondaryOpenCaseLabel.getFont().deriveFont(secondaryOpenCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        secondaryOpenCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.secondaryOpenCaseLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -219,14 +226,14 @@ public class CueBannerPanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openExistingCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openMultiUserCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(primaryOpenCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(secondaryOpenCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(createNewCaseLabel)
+                            .addComponent(newCaseLabel)
                             .addComponent(openRecentCaseLabel)
-                            .addComponent(openExistingCaseLabel)
-                            .addComponent(openMultiUserCaseLabel)))
+                            .addComponent(primaryOpenCaseLabel)
+                            .addComponent(secondaryOpenCaseLabel)))
                     .addComponent(closeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -238,24 +245,24 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(createNewCaseLabel))
+                            .addComponent(newCaseLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                             .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openRecentCaseLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(openExistingCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openExistingCaseLabel))
+                            .addComponent(primaryOpenCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(primaryOpenCaseLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(openMultiUserCaseButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(secondaryOpenCaseButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(openMultiUserCaseLabel)
+                                .addComponent(secondaryOpenCaseLabel)
                                 .addGap(20, 20, 20))))
                     .addComponent(jSeparator1)
                     .addComponent(autopsyLogo, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(closeButton)
                 .addContainerGap())
         );
@@ -265,9 +272,15 @@ public class CueBannerPanel extends javax.swing.JPanel {
         Lookup.getDefault().lookup(CaseNewActionInterface.class).actionPerformed(evt);
     }//GEN-LAST:event_createNewCaseButtonActionPerformed
 
-    private void openExistingCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openExistingCaseButtonActionPerformed
-        Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(evt);
-    }//GEN-LAST:event_openExistingCaseButtonActionPerformed
+    private void primaryOpenCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_primaryOpenCaseButtonActionPerformed
+        if(UserPreferences.getIsMultiUserModeEnabled()) {
+            MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
+            multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+            multiUserCaseWindow.setVisible(true);
+        } else {
+            Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(evt);
+        }
+    }//GEN-LAST:event_primaryOpenCaseButtonActionPerformed
 
     private void openRecentCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentCaseButtonActionPerformed
         recentCasesWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
@@ -275,24 +288,22 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
-    private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
-        MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
-        multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        multiUserCaseWindow.setVisible(true);
-    }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed
+    private void secondaryOpenCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_secondaryOpenCaseButtonActionPerformed
+        Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(evt);
+    }//GEN-LAST:event_secondaryOpenCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel autopsyLogo;
     private javax.swing.JButton closeButton;
     private javax.swing.JButton createNewCaseButton;
-    private javax.swing.JLabel createNewCaseLabel;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JButton openMultiUserCaseButton;
-    private javax.swing.JLabel openMultiUserCaseLabel;
-    private javax.swing.JButton openExistingCaseButton;
-    private javax.swing.JLabel openExistingCaseLabel;
+    private javax.swing.JLabel newCaseLabel;
     private javax.swing.JButton openRecentCaseButton;
     private javax.swing.JLabel openRecentCaseLabel;
+    private javax.swing.JButton primaryOpenCaseButton;
+    private javax.swing.JLabel primaryOpenCaseLabel;
+    private javax.swing.JButton secondaryOpenCaseButton;
+    private javax.swing.JLabel secondaryOpenCaseLabel;
     // End of variables declaration//GEN-END:variables
 
 }

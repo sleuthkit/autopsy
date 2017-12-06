@@ -27,15 +27,15 @@
                       <Group type="103" groupAlignment="2" attributes="0">
                           <Component id="createNewCaseButton" alignment="2" min="-2" max="-2" attributes="1"/>
                           <Component id="openRecentCaseButton" alignment="2" min="-2" pref="70" max="-2" attributes="1"/>
-                          <Component id="openExistingCaseButton" alignment="2" min="-2" max="-2" attributes="1"/>
-                          <Component id="openMultiUserCaseButton" alignment="2" min="-2" max="-2" attributes="1"/>
+                          <Component id="primaryOpenCaseButton" alignment="2" min="-2" max="-2" attributes="1"/>
+                          <Component id="secondaryOpenCaseButton" alignment="2" min="-2" max="-2" attributes="1"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="createNewCaseLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="newCaseLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="openRecentCaseLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="openExistingCaseLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="openMultiUserCaseLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="primaryOpenCaseLabel" alignment="0" max="-2" attributes="0"/>
+                          <Component id="secondaryOpenCaseLabel" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Component id="closeButton" alignment="1" min="-2" pref="73" max="-2" attributes="0"/>
@@ -52,7 +52,7 @@
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="2" attributes="0">
                           <Component id="createNewCaseButton" alignment="2" min="-2" pref="56" max="-2" attributes="0"/>
-                          <Component id="createNewCaseLabel" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="newCaseLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="2" attributes="0">
@@ -61,14 +61,14 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="2" attributes="0">
-                          <Component id="openExistingCaseButton" alignment="2" min="-2" pref="58" max="-2" attributes="0"/>
-                          <Component id="openExistingCaseLabel" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="primaryOpenCaseButton" alignment="2" min="-2" pref="58" max="-2" attributes="0"/>
+                          <Component id="primaryOpenCaseLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="openMultiUserCaseButton" alignment="1" min="-2" pref="58" max="-2" attributes="0"/>
+                          <Component id="secondaryOpenCaseButton" alignment="1" min="-2" pref="58" max="-2" attributes="0"/>
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="openMultiUserCaseLabel" min="-2" max="-2" attributes="0"/>
+                              <Component id="secondaryOpenCaseLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -76,7 +76,7 @@
                   <Component id="jSeparator1" alignment="0" max="32767" attributes="0"/>
                   <Component id="autopsyLogo" alignment="0" min="-2" pref="257" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="10" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Component id="closeButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -139,15 +139,15 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openRecentCaseButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="createNewCaseLabel">
+    <Component class="javax.swing.JLabel" name="newCaseLabel">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="false" component="createNewCaseLabel" property="font" relativeSize="false" size="13"/>
+            <Font bold="false" component="newCaseLabel" property="font" relativeSize="false" size="13"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.createNewCaseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.newCaseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -163,13 +163,13 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="openExistingCaseButton">
+    <Component class="javax.swing.JButton" name="primaryOpenCaseButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.openExistingCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.primaryOpenCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
           <Connection code="null" type="code"/>
@@ -184,18 +184,18 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openExistingCaseButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="primaryOpenCaseButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="openExistingCaseLabel">
+    <Component class="javax.swing.JLabel" name="primaryOpenCaseLabel">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="false" component="openExistingCaseLabel" property="font" relativeSize="false" size="13"/>
+            <Font bold="false" component="primaryOpenCaseLabel" property="font" relativeSize="false" size="13"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.openExistingCaseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.primaryOpenCaseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -216,13 +216,13 @@
         <Property name="orientation" type="int" value="1"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="openMultiUserCaseButton">
+    <Component class="javax.swing.JButton" name="secondaryOpenCaseButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.openMultiUserCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.secondaryOpenCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
           <Connection code="null" type="code"/>
@@ -237,18 +237,18 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openMultiUserCaseButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="secondaryOpenCaseButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="openMultiUserCaseLabel">
+    <Component class="javax.swing.JLabel" name="secondaryOpenCaseLabel">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
           <FontInfo relative="true">
-            <Font bold="false" component="openMultiUserCaseLabel" property="font" relativeSize="false" size="13"/>
+            <Font bold="false" component="secondaryOpenCaseLabel" property="font" relativeSize="false" size="13"/>
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.openMultiUserCaseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.secondaryOpenCaseLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

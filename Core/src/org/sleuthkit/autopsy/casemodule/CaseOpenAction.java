@@ -29,12 +29,16 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -46,6 +50,13 @@ import org.sleuthkit.autopsy.coreutils.Version;
  *
  * This action should only be invoked in the event dispatch thread (EDT).
  */
+@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.CaseOpenAction")
+@ActionReference(path = "Menu/Case", position = 103)
+@ActionRegistration(displayName = "#CTL_CaseOpenAction", lazy = false)
+@NbBundle.Messages({
+    "CTL_CaseOpenAction=Open Case",
+    "CTL_CaseOpenSingleUserAction=Open Single-User Case"
+})
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
 
@@ -141,7 +152,15 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(CaseOpenAction.class, "CTL_CaseOpenAction");
+        String name;
+        
+        if(UserPreferences.getIsMultiUserModeEnabled()) {
+            name = Bundle.CTL_CaseOpenSingleUserAction();
+        } else {
+            name = Bundle.CTL_CaseOpenAction();
+        }
+        
+        return name;
     }
 
     @Override
