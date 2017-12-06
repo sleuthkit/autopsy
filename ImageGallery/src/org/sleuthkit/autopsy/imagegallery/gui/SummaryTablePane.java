@@ -36,7 +36,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 
 /**
  * Displays summary statistics (counts) for each group
@@ -44,13 +44,13 @@ import org.sleuthkit.autopsy.datamodel.tags.Category;
 public class SummaryTablePane extends AnchorPane {
 
     @FXML
-    private TableColumn<Pair<Category, Long>, String> catColumn;
+    private TableColumn<Pair<DhsImageCategory, Long>, String> catColumn;
 
     @FXML
-    private TableColumn<Pair<Category, Long>, Long> countColumn;
+    private TableColumn<Pair<DhsImageCategory, Long>, Long> countColumn;
 
     @FXML
-    private TableView<Pair<Category, Long>> tableView;
+    private TableView<Pair<DhsImageCategory, Long>> tableView;
     private final ImageGalleryController controller;
 
     @FXML
@@ -67,11 +67,11 @@ public class SummaryTablePane extends AnchorPane {
         tableView.prefHeightProperty().set(7 * 25);
 
         //set up columns
-        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
+        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<DhsImageCategory, Long>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
         catColumn.setPrefWidth(USE_COMPUTED_SIZE);
         catColumn.setText(Bundle.SummaryTablePane_catColumn());
 
-        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<Category, Long>, Long> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
+        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<DhsImageCategory, Long>, Long> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
         countColumn.setPrefWidth(USE_COMPUTED_SIZE);
         countColumn.setText(Bundle.SummaryTablePane_countColumn());
 
@@ -93,9 +93,9 @@ public class SummaryTablePane extends AnchorPane {
      */
     @Subscribe
     public void handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent evt) {
-        final ObservableList<Pair<Category, Long>> data = FXCollections.observableArrayList();
+        final ObservableList<Pair<DhsImageCategory, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
-            for (Category cat : Category.values()) {
+            for (DhsImageCategory cat : DhsImageCategory.values()) {
                 data.add(new Pair<>(cat, controller.getCategoryManager().getCategoryCount(cat)));
             }
         }

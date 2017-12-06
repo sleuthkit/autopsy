@@ -49,16 +49,12 @@ public class CorrelationCase implements Serializable {
      * 
      * @param caseUUID Globally unique identifier
      * @param displayName 
-     */
-    public CorrelationCase(String caseUUID, String displayName) {
-        this(-1, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
-    }
-    
+     */    
     CorrelationCase(int ID, String caseUUID, String displayName) {
         this(ID, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
     }
 
-    public CorrelationCase(int ID,
+    CorrelationCase(int ID,
             String caseUUID,
             EamOrganization org,
             String displayName,

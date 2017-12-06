@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.tags.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
@@ -229,7 +229,7 @@ public class DrawableTagsManager {
         }
     }
 
-    public TagName getTagName(Category cat) {
+    public TagName getTagName(DhsImageCategory cat) {
         try {
             return getTagName(cat.getDisplayName());
         } catch (TskCoreException ex) {

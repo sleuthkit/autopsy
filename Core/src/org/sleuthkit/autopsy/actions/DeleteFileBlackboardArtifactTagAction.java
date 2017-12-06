@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this Action allow users to delete tags applied to blackboard
@@ -52,7 +53,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "DeleteFileBlackboardArtifactTagAction.deleteTag=Remove Result Tag"
 })
 public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implements Presenter.Popup {
-    
+
     private static final Logger LOGGER = Logger.getLogger(DeleteFileBlackboardArtifactTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
@@ -89,27 +90,27 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
     }
 
     @NbBundle.Messages({"# {0} - artifactID",
-            "DeleteFileBlackboardArtifactTagAction.deleteTag.alert=Unable to untag artifact {0}."})
+        "DeleteFileBlackboardArtifactTagAction.deleteTag.alert=Unable to untag artifact {0}."})
     protected void deleteTag(TagName tagName, BlackboardArtifactTag artifactTag, long artifactId) {
         new SwingWorker<Void, Void>() {
 
             @Override
             protected Void doInBackground() throws Exception {
                 TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-                
+
                 // Pull the from the global context to avoid unnecessary calls
                 // to the database.
-                final Collection<AbstractFile> selectedFilesList =
-                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+                final Collection<AbstractFile> selectedFilesList
+                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
                 AbstractFile file = selectedFilesList.iterator().next();
-                
+
                 try {
                     LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
                     tagsManager.deleteBlackboardArtifactTag(artifactTag);
                 } catch (TskCoreException tskCoreException) {
                     LOGGER.log(Level.SEVERE, "Error untagging artifact", tskCoreException); //NON-NLS
-                    Platform.runLater(() ->
-                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileBlackboardArtifactTagAction_deleteTag_alert(artifactId)).show()
+                    Platform.runLater(()
+                            -> new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileBlackboardArtifactTagAction_deleteTag_alert(artifactId)).show()
                     );
                 }
                 return null;
@@ -133,21 +134,21 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
      * comment.
      */
     @NbBundle.Messages({"# {0} - artifactID",
-            "DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact {0}."})
+        "DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact {0}."})
     private class TagMenu extends JMenu {
 
         private static final long serialVersionUID = 1L;
 
         TagMenu() {
             super(getActionDisplayName());
-            
-            final Collection<BlackboardArtifact> selectedBlackboardArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            
-            if(!selectedBlackboardArtifactsList.isEmpty()) {
-                BlackboardArtifact artifact =
-                        selectedBlackboardArtifactsList.iterator().next();
-                
+
+            final Collection<BlackboardArtifact> selectedBlackboardArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+
+            if (!selectedBlackboardArtifactsList.isEmpty()) {
+                BlackboardArtifact artifact
+                        = selectedBlackboardArtifactsList.iterator().next();
+
                 // Get the current set of tag names.
                 TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
 
@@ -163,17 +164,18 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                 // a tag with the associated tag name.
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
-                        List<BlackboardArtifactTag> existingTagsList =
-                                Case.getCurrentCase().getServices().getTagsManager()
-                                        .getBlackboardArtifactTagsByArtifact(artifact);
+                        List<BlackboardArtifactTag> existingTagsList
+                                = Case.getCurrentCase().getServices().getTagsManager()
+                                .getBlackboardArtifactTagsByArtifact(artifact);
 
                         for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                             String tagDisplayName = entry.getKey();
 
                             TagName tagName = entry.getValue();
-                            for(BlackboardArtifactTag artifactTag : existingTagsList) {
-                                if(tagDisplayName.equals(artifactTag.getName().getDisplayName())) {
-                                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
+                            for (BlackboardArtifactTag artifactTag : existingTagsList) {
+                                if (tagDisplayName.equals(artifactTag.getName().getDisplayName())) {
+                                    String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, artifactTag, artifact.getArtifactID());
                                     });
@@ -187,7 +189,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                     }
                 }
 
-                if(getItemCount() == 0) {
+                if (getItemCount() == 0) {
                     setEnabled(false);
                 }
             }

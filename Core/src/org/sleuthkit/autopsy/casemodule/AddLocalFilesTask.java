@@ -89,7 +89,7 @@ class AddLocalFilesTask implements Runnable {
             progress.setIndeterminate(true);
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", localFilePaths, new ProgressUpdater());
-            newDataSources.add(newDataSource.getRootDirectory());
+            newDataSources.add(newDataSource);
         } catch (TskDataException | TskCoreException ex) {
             errors.add(ex.getMessage());
             LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex);

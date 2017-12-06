@@ -35,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -72,7 +73,7 @@ public final class ManageOrganizationsDialog extends JDialog {
             organizationList.setModel(rulesListModel);
             organizationList.addListSelectionListener(new OrganizationListSelectionListener());
             populateList();
-            setButtonsEnabled(organizationList.getSelectedValue() != null);
+            setButtonsEnabled(organizationList.getSelectedValue());
             newOrg = null;
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -421,9 +422,15 @@ public final class ManageOrganizationsDialog extends JDialog {
         return newOrg;
     }
 
-    private void setButtonsEnabled(boolean isSelected) {
-        editButton.setEnabled(isSelected);
-        deleteButton.setEnabled(isSelected);
+    private void setButtonsEnabled(EamOrganization selectedOrg) {
+        boolean isSelected = (selectedOrg != null);
+        boolean isDefaultOrg = false;
+        if(selectedOrg != null){
+            isDefaultOrg = EamDbUtil.isDefaultOrg(selectedOrg);
+        }
+        
+        editButton.setEnabled(isSelected && (! isDefaultOrg));
+        deleteButton.setEnabled(isSelected && (! isDefaultOrg));
     }
 
     /**
@@ -436,9 +443,8 @@ public final class ManageOrganizationsDialog extends JDialog {
             if (e.getValueIsAdjusting()) {
                 return;
             }
-            EamOrganization selected = organizationList.getSelectedValue();
-            boolean isSelected = (selected != null);
-            setButtonsEnabled(isSelected);
+            EamOrganization selected = organizationList.getSelectedValue();            
+            setButtonsEnabled(selected);
             if (selected != null) {
                 orgNameTextField.setText(selected.getName());
                 pocNameTextField.setText(selected.getPocName());

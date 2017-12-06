@@ -18,6 +18,10 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
+import java.awt.EventQueue;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.swing.DefaultListModel;
@@ -25,7 +29,10 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskData;
 
@@ -35,26 +42,50 @@ import org.sleuthkit.datamodel.TskData;
 final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String DEFAULT_DESCRIPTION = "";
     private static final TagName.HTML_COLOR DEFAULT_COLOR = TagName.HTML_COLOR.NONE;
-    private final DefaultListModel<TagNameDefiniton> tagTypesListModel;
-    private Set<TagNameDefiniton> tagTypes;
+    private final DefaultListModel<TagNameDefinition> tagTypesListModel;
+    private Set<TagNameDefinition> tagTypes;
+    private IngestJobEventPropertyChangeListener ingestJobEventsListener;
+    private Set<String> updatedStatusTags;
 
     /**
-     * Creates new form TagsManagerOptionsPanel
+     * Creates new form TagOptionsPanel
      */
     TagOptionsPanel() {
         tagTypesListModel = new DefaultListModel<>();
-        tagTypes = new TreeSet<>(TagNameDefiniton.getTagNameDefinitions());
+        tagTypes = new TreeSet<>(TagNameDefinition.getTagNameDefinitions());
+        updatedStatusTags = new HashSet<>();
         initComponents();
         customizeComponents();
     }
 
+    @Messages({"TagOptionsPanel.panelDescriptionTextArea.text=Create and manage tags. "
+        + "Tags can be applied to files and results in the case. Notable tags will cause "
+        + "items tagged with them to be flagged as notable when using a central repository. "
+        + "Changing the status of a tag will only effect items in the current case.",
+        "TagOptionsPanel.ingestRunningWarningLabel.text=Cannot make changes to existing tags when ingest is running!",
+        "TagOptionsPanel.descriptionLabel.text=Tag Description:",
+        "TagOptionsPanel.notableYesOrNoLabel.text=",
+        "TagOptionsPanel.isNotableLabel.text=Tag indicates item is notable: ",
+        "TagOptionsPanel.editTagNameButton.text=Edit Tag"})
+
     private void customizeComponents() {
         tagNamesList.setModel(tagTypesListModel);
         tagNamesList.addListSelectionListener((ListSelectionEvent event) -> {
-            enableButtons();
+            updatePanel();
         });
+        addIngestJobEventsListener();
+    }
+
+    /**
+     * Add a property change listener that listens to ingest job events to
+     * disable the buttons on the panel if ingest is running. This is done to
+     * prevent changes to user-defined types while the type definitions are in
+     * use.
+     */
+    private void addIngestJobEventsListener() {
+        ingestJobEventsListener = new IngestJobEventPropertyChangeListener();
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventsListener);
     }
 
     /**
@@ -67,31 +98,43 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        panelDescriptionLabel = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jSplitPane1 = new javax.swing.JSplitPane();
         modifyTagTypesListPanel = new javax.swing.JPanel();
         tagTypesListLabel = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        TagNameScrollPane = new javax.swing.JScrollPane();
         tagNamesList = new javax.swing.JList<>();
         newTagNameButton = new javax.swing.JButton();
         deleteTagNameButton = new javax.swing.JButton();
+        editTagNameButton = new javax.swing.JButton();
+        panelDescriptionScrollPane = new javax.swing.JScrollPane();
+        panelDescriptionTextArea = new javax.swing.JTextArea();
         tagTypesAdditionalPanel = new javax.swing.JPanel();
+        descriptionLabel = new javax.swing.JLabel();
+        descriptionScrollPane = new javax.swing.JScrollPane();
+        descriptionTextArea = new javax.swing.JTextArea();
+        isNotableLabel = new javax.swing.JLabel();
+        notableYesOrNoLabel = new javax.swing.JLabel();
+        ingestRunningWarningLabel = new javax.swing.JLabel();
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(750, 500));
+        jPanel1.setPreferredSize(new java.awt.Dimension(750, 490));
 
-        org.openide.awt.Mnemonics.setLocalizedText(panelDescriptionLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.panelDescriptionLabel.text")); // NOI18N
+        jScrollPane2.setPreferredSize(new java.awt.Dimension(750, 490));
 
-        jSplitPane1.setDividerLocation(400);
+        jSplitPane1.setDividerLocation(365);
         jSplitPane1.setDividerSize(1);
+        jSplitPane1.setPreferredSize(new java.awt.Dimension(748, 488));
 
         org.openide.awt.Mnemonics.setLocalizedText(tagTypesListLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.tagTypesListLabel.text")); // NOI18N
 
         tagNamesList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane1.setViewportView(tagNamesList);
+        TagNameScrollPane.setViewportView(tagNamesList);
 
         newTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add-tag.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newTagNameButton, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.newTagNameButton.text")); // NOI18N
+        newTagNameButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        newTagNameButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        newTagNameButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newTagNameButtonActionPerformed(evt);
@@ -100,11 +143,36 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
         deleteTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete-tag.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteTagNameButton, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.deleteTagNameButton.text")); // NOI18N
+        deleteTagNameButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        deleteTagNameButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        deleteTagNameButton.setPreferredSize(new java.awt.Dimension(111, 25));
         deleteTagNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteTagNameButtonActionPerformed(evt);
             }
         });
+
+        editTagNameButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit-tag.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(editTagNameButton, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.editTagNameButton.text")); // NOI18N
+        editTagNameButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        editTagNameButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        editTagNameButton.setPreferredSize(new java.awt.Dimension(111, 25));
+        editTagNameButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editTagNameButtonActionPerformed(evt);
+            }
+        });
+
+        panelDescriptionTextArea.setEditable(false);
+        panelDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        panelDescriptionTextArea.setColumns(20);
+        panelDescriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        panelDescriptionTextArea.setLineWrap(true);
+        panelDescriptionTextArea.setRows(3);
+        panelDescriptionTextArea.setText(org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.panelDescriptionTextArea.text")); // NOI18N
+        panelDescriptionTextArea.setWrapStyleWord(true);
+        panelDescriptionTextArea.setFocusable(false);
+        panelDescriptionScrollPane.setViewportView(panelDescriptionTextArea);
 
         javax.swing.GroupLayout modifyTagTypesListPanelLayout = new javax.swing.GroupLayout(modifyTagTypesListPanel);
         modifyTagTypesListPanel.setLayout(modifyTagTypesListPanelLayout);
@@ -113,40 +181,98 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(tagTypesListLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
-                        .addComponent(newTagNameButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteTagNameButton)
-                        .addGap(0, 113, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        modifyTagTypesListPanelLayout.setVerticalGroup(
-            modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(tagTypesListLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 381, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(newTagNameButton)
-                    .addComponent(deleteTagNameButton))
+                        .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(TagNameScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, modifyTagTypesListPanelLayout.createSequentialGroup()
+                                    .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(editTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(deleteTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(panelDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
+        modifyTagTypesListPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteTagNameButton, editTagNameButton, newTagNameButton});
+
+        modifyTagTypesListPanelLayout.setVerticalGroup(
+            modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
+                .addGap(10, 10, 10)
+                .addComponent(panelDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tagTypesListLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(TagNameScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(editTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
+        modifyTagTypesListPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteTagNameButton, editTagNameButton, newTagNameButton});
+
         jSplitPane1.setLeftComponent(modifyTagTypesListPanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.descriptionLabel.text")); // NOI18N
+
+        descriptionTextArea.setEditable(false);
+        descriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        descriptionTextArea.setColumns(20);
+        descriptionTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        descriptionTextArea.setLineWrap(true);
+        descriptionTextArea.setRows(5);
+        descriptionTextArea.setWrapStyleWord(true);
+        descriptionTextArea.setFocusable(false);
+        descriptionScrollPane.setViewportView(descriptionTextArea);
+
+        org.openide.awt.Mnemonics.setLocalizedText(isNotableLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.isNotableLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(notableYesOrNoLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.notableYesOrNoLabel.text")); // NOI18N
+
+        ingestRunningWarningLabel.setFont(ingestRunningWarningLabel.getFont().deriveFont(ingestRunningWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        ingestRunningWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/filetypeid/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestRunningWarningLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.ingestRunningWarningLabel.text")); // NOI18N
 
         javax.swing.GroupLayout tagTypesAdditionalPanelLayout = new javax.swing.GroupLayout(tagTypesAdditionalPanel);
         tagTypesAdditionalPanel.setLayout(tagTypesAdditionalPanelLayout);
         tagTypesAdditionalPanelLayout.setHorizontalGroup(
             tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 354, Short.MAX_VALUE)
+            .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(descriptionScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
+                    .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
+                        .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
+                                .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(notableYesOrNoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(ingestRunningWarningLabel))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         tagTypesAdditionalPanelLayout.setVerticalGroup(
             tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 454, Short.MAX_VALUE)
+            .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(descriptionLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(notableYesOrNoLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 304, Short.MAX_VALUE)
+                .addComponent(ingestRunningWarningLabel)
+                .addGap(31, 31, 31))
         );
 
         jSplitPane1.setRightComponent(tagTypesAdditionalPanel);
@@ -158,27 +284,23 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panelDescriptionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2))
-                .addContainerGap())
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(panelDescriptionLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 458, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 778, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -186,12 +308,15 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message=Tag name must be unique. A tag with this name already exists.",
+        "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title=Duplicate Tag Name"})
+
     private void newTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagNameButtonActionPerformed
-        NewTagNameDialog dialog = new NewTagNameDialog();
-        NewTagNameDialog.BUTTON_PRESSED result = dialog.getResult();
-        if (result == NewTagNameDialog.BUTTON_PRESSED.OK) {
-            String newTagDisplayName = dialog.getTagName();
-            TagNameDefiniton newTagType = new TagNameDefiniton(newTagDisplayName, DEFAULT_DESCRIPTION, DEFAULT_COLOR, TskData.FileKnown.UNKNOWN);
+        TagNameDialog dialog = new TagNameDialog();
+        TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == TagNameDialog.BUTTON_PRESSED.OK) {
+            TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
+            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
              */
@@ -199,35 +324,66 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 tagTypes.add(newTagType);
                 updateTagNamesListModel();
                 tagNamesList.setSelectedValue(newTagType, true);
-                enableButtons();
+                updatePanel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(TagOptionsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.message"),
-                        NbBundle.getMessage(TagOptionsPanel.class, "TagNamesSettingsPanel.JOptionPane.tagNameAlreadyExists.title"),
+                        NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message"),
+                        NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }//GEN-LAST:event_newTagNameButtonActionPerformed
 
     private void deleteTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteTagNameButtonActionPerformed
-        TagNameDefiniton tagName = tagNamesList.getSelectedValue();
+        TagNameDefinition tagName = tagNamesList.getSelectedValue();
         tagTypes.remove(tagName);
         updateTagNamesListModel();
-        enableButtons();
+        updatePanel();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+
     }//GEN-LAST:event_deleteTagNameButtonActionPerformed
 
+    private void editTagNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTagNameButtonActionPerformed
+        TagNameDefinition originalTagName = tagNamesList.getSelectedValue();
+        TagNameDialog dialog = new TagNameDialog(originalTagName);
+        TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == TagNameDialog.BUTTON_PRESSED.OK) {
+            TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
+            TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
+            /*
+             * If tag name already exists, don't add the tag name.
+             */
+            tagTypes.remove(originalTagName);
+            tagTypes.add(newTagType);
+            updateTagNamesListModel();
+            tagNamesList.setSelectedValue(newTagType, true);
+            updatePanel();
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()) {
+                updatedStatusTags.add(newTagType.getDisplayName());
+            }
+        }
+    }//GEN-LAST:event_editTagNameButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane TagNameScrollPane;
     private javax.swing.JButton deleteTagNameButton;
+    private javax.swing.JLabel descriptionLabel;
+    private javax.swing.JScrollPane descriptionScrollPane;
+    private javax.swing.JTextArea descriptionTextArea;
+    private javax.swing.JButton editTagNameButton;
+    private javax.swing.JLabel ingestRunningWarningLabel;
+    private javax.swing.JLabel isNotableLabel;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JPanel modifyTagTypesListPanel;
     private javax.swing.JButton newTagNameButton;
-    private javax.swing.JLabel panelDescriptionLabel;
-    private javax.swing.JList<org.sleuthkit.autopsy.casemodule.services.TagNameDefiniton> tagNamesList;
+    private javax.swing.JLabel notableYesOrNoLabel;
+    private javax.swing.JScrollPane panelDescriptionScrollPane;
+    private javax.swing.JTextArea panelDescriptionTextArea;
+    private javax.swing.JList<org.sleuthkit.autopsy.casemodule.services.TagNameDefinition> tagNamesList;
     private javax.swing.JPanel tagTypesAdditionalPanel;
     private javax.swing.JLabel tagTypesListLabel;
     // End of variables declaration//GEN-END:variables
@@ -237,7 +393,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
      */
     private void updateTagNamesListModel() {
         tagTypesListModel.clear();
-        for (TagNameDefiniton tagName : tagTypes) {
+        for (TagNameDefinition tagName : tagTypes) {
             tagTypesListModel.addElement(tagName);
         }
     }
@@ -247,9 +403,9 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
      */
     @Override
     public void load() {
-        tagTypes = new TreeSet<>(TagNameDefiniton.getTagNameDefinitions());
+        tagTypes = new TreeSet<>(TagNameDefinition.getTagNameDefinitions());
         updateTagNamesListModel();
-        enableButtons();
+        updatePanel();
     }
 
     /**
@@ -257,19 +413,76 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
      */
     @Override
     public void store() {
-        TagNameDefiniton.setTagNameDefinitions(tagTypes);
+        TagNameDefinition.setTagNameDefinitions(tagTypes);
+        sendStatusChangedEvents();
+    }
+
+    void cancelChanges() {
+        updatedStatusTags.clear();
+    }
+
+    private void sendStatusChangedEvents() {
+        for (String modifiedTagDisplayName : updatedStatusTags) {
+            //if  user closes their case after options have been changed but before application of them is complete don't notify
+            if (Case.isCaseOpen()) {
+                Case.getCurrentCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
+            }
+        }
+        updatedStatusTags.clear();
     }
 
     /**
      * Enables the button components based on the state of the tag types list
      * component.
      */
-    private void enableButtons() {
+    private void updatePanel() {
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         /*
          * Only enable the delete button when there is a tag type selected in
          * the tag types JList.
          */
-        deleteTagNameButton.setEnabled(tagNamesList.getSelectedIndex() != -1);
+        ingestRunningWarningLabel.setVisible(ingestIsRunning);
+        boolean isSelected = tagNamesList.getSelectedIndex() != -1;
+        boolean enableEdit = !ingestIsRunning && isSelected;
+        editTagNameButton.setEnabled(enableEdit);
+        boolean enableDelete = enableEdit && !TagNameDefinition.getStandardTagNames().contains(tagNamesList.getSelectedValue().getDisplayName());
+        deleteTagNameButton.setEnabled(enableDelete);
+        if (isSelected) {
+            descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
+            if (tagNamesList.getSelectedValue().getKnownStatus() == TskData.FileKnown.BAD) {
+                notableYesOrNoLabel.setText("Yes");
+            } else {
+                notableYesOrNoLabel.setText("No");
+            }
+        } else {
+            descriptionTextArea.setText("");
+            notableYesOrNoLabel.setText("");
+        }
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
+    @SuppressWarnings("FinalizeDeclaration")
+    protected void finalize() throws Throwable {
+        IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventsListener);
+        super.finalize();
+    }
+
+    /**
+     * A property change listener that listens to ingest job events.
+     */
+    private class IngestJobEventPropertyChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    updatePanel();
+                }
+            });
+        }
+    }
 }

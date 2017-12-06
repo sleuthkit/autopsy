@@ -94,14 +94,6 @@ public interface EamDb {
         return EamDbUtil.useCentralRepo()
                 && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
-    
-    /**
-     * Placeholder version to use for non-read only databases
-     * @return The version that will be stored in the database
-     */
-    static String getDefaultVersion() {
-        return "";
-    }
 
     /**
      * Add a new name/value pair in the db_info table.
@@ -141,7 +133,7 @@ public interface EamDb {
      *
      * @param eamCase The case to add
      */
-    void newCase(CorrelationCase eamCase) throws EamDbException;
+    CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException;
 
     /**
      * Creates new Case in the database from the given case
@@ -149,6 +141,8 @@ public interface EamDb {
      * @param autopsyCase The case to add
      */
     CorrelationCase newCase(Case autopsyCase) throws EamDbException;
+    
+    
 
     /**
      * Updates an existing Case in the database
@@ -157,6 +151,15 @@ public interface EamDb {
      */
     void updateCase(CorrelationCase eamCase) throws EamDbException;
 
+    /**
+     * Retrieves Central Repo case based on an Autopsy Case
+     * 
+     * @param autopsyCase Autopsy case to find corresponding CR case for
+     * @return CR Case
+     * @throws EamDbException 
+     */
+    CorrelationCase getCase(Case autopsyCase) throws EamDbException;
+    
     /**
      * Retrieves Case details based on Case UUID
      *
@@ -189,7 +192,7 @@ public interface EamDb {
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
+    CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
 
     /**
      * Retrieves data sources that are in DB

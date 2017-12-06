@@ -107,28 +107,6 @@
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" alignment="0" attributes="0">
                                                       <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="versionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="orgLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="readOnlyLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      </Group>
-                                                      <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="hashDbTypeLabel" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="hashDbLocationLabel" alignment="0" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="hashDbVersionLabel" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="hashDbOrgLabel" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="hashDbReadOnlyLabel" min="-2" max="-2" attributes="0"/>
-                                                      </Group>
-                                                  </Group>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
-                                                      <EmptySpace min="-2" pref="53" max="-2" attributes="0"/>
-                                                      <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
-                                                  </Group>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <Group type="103" groupAlignment="0" attributes="0">
                                                           <Component id="indexLabel" alignment="0" min="-2" pref="66" max="-2" attributes="0"/>
                                                           <Component id="indexPathLabelLabel" min="-2" max="-2" attributes="0"/>
                                                       </Group>
@@ -142,6 +120,25 @@
                                                       <Component id="indexButton" min="-2" pref="120" max="-2" attributes="0"/>
                                                       <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                                                       <Component id="addHashesToDatabaseButton" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="versionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="orgLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="readOnlyLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="nameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
+                                                      <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbTypeLabel" min="-2" pref="225" max="-2" attributes="0"/>
+                                                          <Component id="hashDbLocationLabel" alignment="0" min="-2" pref="225" max="-2" attributes="0"/>
+                                                          <Component id="hashDbVersionLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbOrgLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbReadOnlyLabel" min="-2" max="-2" attributes="0"/>
+                                                      </Group>
                                                   </Group>
                                               </Group>
                                           </Group>

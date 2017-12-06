@@ -56,7 +56,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -98,6 +97,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -2263,6 +2265,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
+            collectMetrics(caseForJob.getSleuthkitCase(), dataSource);
             exportFiles(dataSource);
         }
 
@@ -2542,6 +2545,39 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 IngestManager.getInstance().removeIngestJobEventListener(ingestJobEventListener);
                 currentJob.setIngestJob(null);
             }
+        }
+
+        /**
+         * Gather metrics to store in auto ingest job nodes. A SleuthkitCase
+         * instance is used to get the content size.
+         *
+         * @param caseDb     The SleuthkitCase instance.
+         * @param dataSource The auto ingest data source.
+         *
+         * @throws CoordinationServiceException If there's a problem retrieving
+         *                                      data from the coordination
+         *                                      service.
+         * @throws InterruptedException         If the thread calling the
+         *                                      coordination service is
+         *                                      interrupted.
+         */
+        private void collectMetrics(SleuthkitCase caseDb, AutoIngestDataSource dataSource) throws CoordinationServiceException, InterruptedException {
+            /*
+             * Get the data source size and store it in the current job.
+             */
+            List<Content> contentList = dataSource.getContent();
+            long dataSourceSize = 0;
+            for (Content content : contentList) {
+                dataSourceSize += ((DataSource) content).getContentSize(caseDb);
+            }
+            currentJob.setDataSourceSize(dataSourceSize);
+            
+            /*
+             * Create node data from the current job and store it.
+             */
+            AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(currentJob);
+            String manifestNodePath = currentJob.getManifest().getFilePath().toString();
+            coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
         }
 
         /**

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -69,6 +70,15 @@ public class TagsManager implements Closeable {
                 || tagDisplayName.contains(";"));
 
     }
+    @NbBundle.Messages({"TagsManager.notableTagEnding.text= (Notable)"})
+    /**
+     * Get String of text which is used to label tags as notable to the user. 
+     * 
+     * @return Bundle message TagsManager.notableTagEnding.text
+     */
+    public static String getNotableTagLabel(){
+        return Bundle.TagsManager_notableTagEnding_text();
+    }
 
     /**
      * Gets the set of display names of the currently available tag types. This
@@ -83,7 +93,7 @@ public class TagsManager implements Closeable {
      */
     public static Set<String> getTagDisplayNames() throws TskCoreException {
         Set<String> tagDisplayNames = new HashSet<>();
-        Set<TagNameDefiniton> customNames = TagNameDefiniton.getTagNameDefinitions();
+        Set<TagNameDefinition> customNames = TagNameDefinition.getTagNameDefinitions();
         customNames.forEach((tagType) -> {
             tagDisplayNames.add(tagType.getDisplayName());
         });
@@ -102,8 +112,8 @@ public class TagsManager implements Closeable {
 
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
-        for (TagNameDefiniton tagDef : TagNameDefiniton.getTagNameDefinitions()) {
-            if (tagDef.isNotable()) {
+        for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
+            if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
         }
@@ -170,8 +180,8 @@ public class TagsManager implements Closeable {
          * map.
          */
         Map<String, TagName> tagNames = new HashMap<>();
-        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-        for (TagNameDefiniton tagType : customTypes) {
+        Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
+        for (TagNameDefinition tagType : customTypes) {
             tagNames.put(tagType.getDisplayName(), null);
         }
         for (TagName tagName : caseDb.getAllTagNames()) {
@@ -256,9 +266,9 @@ public class TagsManager implements Closeable {
     public synchronized TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
         try {
             TagName tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
-            Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-            customTypes.add(new TagNameDefiniton(displayName, description, color, knownStatus));
-            TagNameDefiniton.setTagNameDefinitions(customTypes);
+            Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
+            customTypes.add(new TagNameDefinition(displayName, description, color, knownStatus));
+            TagNameDefinition.setTagNameDefinitions(customTypes);
             return tagName;
         } catch (TskCoreException ex) {
             List<TagName> existingTagNames = caseDb.getAllTagNames();

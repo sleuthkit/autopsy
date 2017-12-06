@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,16 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.IndexOutOfBoundsException;
-import java.lang.NullPointerException;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
-import org.apache.poi.POIXMLException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.hwpf.usermodel.Picture;
 import org.apache.poi.hslf.usermodel.HSLFPictureData;
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
@@ -39,11 +41,18 @@ import org.apache.poi.hwpf.model.PicturesTable;
 import org.apache.poi.sl.usermodel.PictureData.PictureType;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.RecordFormatException;
-import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import org.apache.poi.xslf.usermodel.XSLFPictureData;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFPictureData;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.apache.tika.sax.BodyContentHandler;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -57,24 +66,34 @@ import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
-class ImageExtractor {
+/**
+ * Extracts embedded content (e.g. images, audio, video) from Microsoft Office
+ * documents (both original and OOXML forms).
+ */
+class MSOfficeEmbeddedContentExtractor {
 
     private final FileManager fileManager;
     private final IngestServices services;
-    private static final Logger logger = Logger.getLogger(ImageExtractor.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MSOfficeEmbeddedContentExtractor.class.getName());
     private final IngestJobContext context;
     private String parentFileName;
-    private final String UNKNOWN_NAME_PREFIX = "image_"; //NON-NLS
+    private final String UNKNOWN_IMAGE_NAME_PREFIX = "image_"; //NON-NLS
     private final FileTypeDetector fileTypeDetector;
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
 
+    private AutoDetectParser parser = new AutoDetectParser();
+    private Detector detector = parser.getDetector();
+    private TikaConfig config = TikaConfig.getDefaultConfig();
+
     /**
-     * Enum of mimetypes which support image extraction
+     * Enum of mimetypes for which we can extract embedded content.
      */
-    enum SupportedImageExtractionFormats {
+    enum SupportedExtractionFormats {
 
         DOC("application/msword"), //NON-NLS
         DOCX("application/vnd.openxmlformats-officedocument.wordprocessingml.document"), //NON-NLS
@@ -85,7 +104,7 @@ class ImageExtractor {
 
         private final String mimeType;
 
-        SupportedImageExtractionFormats(final String mimeType) {
+        SupportedExtractionFormats(final String mimeType) {
             this.mimeType = mimeType;
         }
 
@@ -93,11 +112,10 @@ class ImageExtractor {
         public String toString() {
             return this.mimeType;
         }
-        // TODO Expand to support more formats
     }
-    private SupportedImageExtractionFormats abstractFileExtractionFormat;
+    private SupportedExtractionFormats abstractFileExtractionFormat;
 
-    ImageExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) {
+    MSOfficeEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) {
 
         this.fileManager = Case.getCurrentCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
@@ -111,15 +129,15 @@ class ImageExtractor {
      * This method returns true if the file format is currently supported. Else
      * it returns false. Performs only Apache Tika based detection.
      *
-     * @param abstractFile The AbstractFilw whose mimetype is to be determined.
+     * @param abstractFile The AbstractFile whose mimetype is to be determined.
      *
      * @return This method returns true if the file format is currently
      *         supported. Else it returns false.
      */
-    boolean isImageExtractionSupported(AbstractFile abstractFile) {
+    boolean isContentExtractionSupported(AbstractFile abstractFile) {
         try {
             String abstractFileMimeType = fileTypeDetector.getFileType(abstractFile);
-            for (SupportedImageExtractionFormats s : SupportedImageExtractionFormats.values()) {
+            for (SupportedExtractionFormats s : SupportedExtractionFormats.values()) {
                 if (s.toString().equals(abstractFileMimeType)) {
                     abstractFileExtractionFormat = s;
                     return true;
@@ -127,59 +145,54 @@ class ImageExtractor {
             }
             return false;
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error executing FileTypeDetector.getFileType()", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error executing FileTypeDetector.getFileType()", ex); // NON-NLS
             return false;
         }
     }
 
     /**
-     * This method selects the appropriate process of extracting images from
-     * files using POI classes. Once the images have been extracted, the method
-     * adds them to the DB and fires a ModuleContentEvent. ModuleContent Event
-     * is not fired if the no images were extracted from the processed file.
+     * This method selects the appropriate process of extracting embedded
+     * content from files using either Tika or POI classes. Once the content has
+     * been extracted as files, the method adds them to the DB and fires a
+     * ModuleContentEvent. ModuleContent Event is not fired if no content
+     * was extracted from the processed file.
      *
-     * @param format
      * @param abstractFile The abstract file to be processed.
      */
-    void extractImage(AbstractFile abstractFile) {
-        // 
-        // switchcase for different supported formats
-        // process abstractFile according to the format by calling appropriate methods.
-
-        List<ExtractedImage> listOfExtractedImages = null;
+    void extractEmbeddedContent(AbstractFile abstractFile) {
+        List<ExtractedFile> listOfExtractedImages = null;
         List<AbstractFile> listOfExtractedImageAbstractFiles = null;
         this.parentFileName = EmbeddedFileExtractorIngestModule.getUniqueName(abstractFile);
-        //check if already has derived files, skip
+
+        // Skip files that already have been unpacked.
         try {
             if (abstractFile.hasChildren()) {
                 //check if local unpacked dir exists
                 if (new File(getOutputFolderPath(parentFileName)).exists()) {
-                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
+                    LOGGER.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", abstractFile.getName()); //NON-NLS
                     return;
                 }
             }
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, String.format("Error checking if file already has been processed, skipping: %s", parentFileName), e); //NON-NLS
+            LOGGER.log(Level.SEVERE, String.format("Error checking if file already has been processed, skipping: %s", parentFileName), e); //NON-NLS
             return;
         }
+
+        // Call the appropriate extraction method based on mime type
         switch (abstractFileExtractionFormat) {
-            case DOC:
-                listOfExtractedImages = extractImagesFromDoc(abstractFile);
-                break;
             case DOCX:
-                listOfExtractedImages = extractImagesFromDocx(abstractFile);
+            case PPTX:
+            case XLSX:
+                listOfExtractedImages = extractEmbeddedContentFromOOXML(abstractFile);
+                break;
+            case DOC:
+                listOfExtractedImages = extractEmbeddedImagesFromDoc(abstractFile);
                 break;
             case PPT:
-                listOfExtractedImages = extractImagesFromPpt(abstractFile);
-                break;
-            case PPTX:
-                listOfExtractedImages = extractImagesFromPptx(abstractFile);
+                listOfExtractedImages = extractEmbeddedImagesFromPpt(abstractFile);
                 break;
             case XLS:
                 listOfExtractedImages = extractImagesFromXls(abstractFile);
-                break;
-            case XLSX:
-                listOfExtractedImages = extractImagesFromXlsx(abstractFile);
                 break;
             default:
                 break;
@@ -190,13 +203,13 @@ class ImageExtractor {
         }
         // the common task of adding abstractFile to derivedfiles is performed.
         listOfExtractedImageAbstractFiles = new ArrayList<>();
-        for (ExtractedImage extractedImage : listOfExtractedImages) {
+        for (ExtractedFile extractedImage : listOfExtractedImages) {
             try {
                 listOfExtractedImageAbstractFiles.add(fileManager.addDerivedFile(extractedImage.getFileName(), extractedImage.getLocalPath(), extractedImage.getSize(),
                         extractedImage.getCtime(), extractedImage.getCrtime(), extractedImage.getAtime(), extractedImage.getAtime(),
                         true, abstractFile, null, EmbeddedFileExtractorModuleFactory.getModuleName(), null, null, TskData.EncodingType.XOR1));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImage.addToDB.exception.msg"), ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImage.addToDB.exception.msg"), ex); //NON-NLS
             }
         }
         if (!listOfExtractedImages.isEmpty()) {
@@ -206,43 +219,79 @@ class ImageExtractor {
     }
 
     /**
-     * Extract images from doc format files.
+     * Extracts embedded content from OOXML documents (i.e. pptx, docx and xlsx)
+     * using Tika. This will extract images and other multimedia content
+     * embedded in the given file.
+     *
+     * @param abstractFile The file to extract content from.
+     *
+     * @return A list of extracted files.
+     */
+    private List<ExtractedFile> extractEmbeddedContentFromOOXML(AbstractFile abstractFile) {
+        Metadata metadata = new Metadata();
+
+        ParseContext parseContext = new ParseContext();
+        parseContext.set(Parser.class, parser);
+
+        // Passing -1 to the BodyContentHandler constructor disables the Tika
+        // write limit (which defaults to 100,000 characters.
+        ContentHandler contentHandler = new BodyContentHandler(-1);
+
+        // TODO: this will be needed once we upgrade to Tika 1.16 or later.
+        //        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
+        //        officeParserConfig.setUseSAXPptxExtractor(true);
+        //        officeParserConfig.setUseSAXDocxExtractor(true);
+        //        parseContext.set(OfficeParserConfig.class, officeParserConfig);
+        EmbeddedDocumentExtractor extractor = new EmbeddedContentExtractor(parseContext);
+        parseContext.set(EmbeddedDocumentExtractor.class, extractor);
+        ReadContentInputStream stream = new ReadContentInputStream(abstractFile);
+
+        try {
+            parser.parse(stream, contentHandler, metadata, parseContext);
+        } catch (IOException | SAXException | TikaException ex) {
+            LOGGER.log(Level.WARNING, "Error while parsing file, skipping: " + abstractFile.getName(), ex); //NON-NLS
+            return null;
+        }
+
+        return ((EmbeddedContentExtractor) extractor).getExtractedImages();
+    }
+
+    /**
+     * Extract embedded images from doc format files.
      *
      * @param af the file from which images are to be extracted.
      *
      * @return list of extracted images. Returns null in case no images were
      *         extracted.
      */
-    private List<ExtractedImage> extractImagesFromDoc(AbstractFile af) {
+    private List<ExtractedFile> extractEmbeddedImagesFromDoc(AbstractFile af) {
         List<Picture> listOfAllPictures;
-        
+
         try {
             HWPFDocument doc = new HWPFDocument(new ReadContentInputStream(af));
             PicturesTable pictureTable = doc.getPicturesTable();
             listOfAllPictures = pictureTable.getAllPictures();
-        } catch (IOException | IllegalArgumentException |
-                IndexOutOfBoundsException | NullPointerException ex) {
+        } catch (IOException | IllegalArgumentException
+                | IndexOutOfBoundsException | NullPointerException ex) {
             // IOException:
             // Thrown when the document has issues being read.
-            
+
             // IllegalArgumentException:
             // This will catch OldFileFormatException, which is thrown when the
             // document's format is Word 95 or older. Alternatively, this is
             // thrown when attempting to load an RTF file as a DOC file.
             // However, our code verifies the file format before ever running it
-            // through the ImageExtractor. This exception gets thrown in the
+            // through the EmbeddedContentExtractor. This exception gets thrown in the
             // "IN10-0137.E01" image regardless. The reason is unknown.
-            
             // IndexOutOfBoundsException:
             // NullPointerException:
             // These get thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -255,7 +304,7 @@ class ImageExtractor {
         if (outputFolderPath == null) {
             return null;
         }
-        List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
+        List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
         for (Picture picture : listOfAllPictures) {
             String fileName = picture.suggestFullFileName();
@@ -266,99 +315,43 @@ class ImageExtractor {
             }
             writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
             // TODO Extract more info from the Picture viz ctime, crtime, atime, mtime
-            listOfExtractedImages.add(new ExtractedImage(fileName, getFileRelativePath(fileName), picture.getSize(), af));
+            listOfExtractedImages.add(new ExtractedFile(fileName, getFileRelativePath(fileName), picture.getSize()));
         }
 
         return listOfExtractedImages;
     }
 
     /**
-     * Extract images from docx format files.
+     * Extract embedded images from ppt format files.
      *
      * @param af the file from which images are to be extracted.
      *
      * @return list of extracted images. Returns null in case no images were
      *         extracted.
      */
-    private List<ExtractedImage> extractImagesFromDocx(AbstractFile af) {
-        List<XWPFPictureData> listOfAllPictures = null;
-        
-        try {
-            XWPFDocument docx = new XWPFDocument(new ReadContentInputStream(af));
-            listOfAllPictures = docx.getAllPictures();
-        } catch (POIXMLException | IOException ex) {
-            // POIXMLException:
-            // Thrown when document fails to load
-            
-            // IOException:
-            // Thrown when the document has issues being read.
-            
-            return null;
-        } catch (Throwable ex) {
-            // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
-            return null;
-        }
-
-        // if no images are extracted from the PPT, return null, else initialize
-        // the output folder for image extraction.
-        String outputFolderPath;
-        if (listOfAllPictures.isEmpty()) {
-            return null;
-        } else {
-            outputFolderPath = getOutputFolderPath(this.parentFileName);
-        }
-        if (outputFolderPath == null) {
-            return null;
-        }
-        List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
-        byte[] data = null;
-        for (XWPFPictureData xwpfPicture : listOfAllPictures) {
-            String fileName = xwpfPicture.getFileName();
-            try {
-                data = xwpfPicture.getData();
-            } catch (Exception ex) {
-                return null;
-            }
-            writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
-            listOfExtractedImages.add(new ExtractedImage(fileName, getFileRelativePath(fileName), xwpfPicture.getData().length, af));
-        }
-        return listOfExtractedImages;
-    }
-
-    /**
-     * Extract images from ppt format files.
-     *
-     * @param af the file from which images are to be extracted.
-     *
-     * @return list of extracted images. Returns null in case no images were
-     *         extracted.
-     */
-    private List<ExtractedImage> extractImagesFromPpt(AbstractFile af) {
+    private List<ExtractedFile> extractEmbeddedImagesFromPpt(AbstractFile af) {
         List<HSLFPictureData> listOfAllPictures = null;
-        
+
         try {
             HSLFSlideShow ppt = new HSLFSlideShow(new ReadContentInputStream(af));
             listOfAllPictures = ppt.getPictureData();
-        } catch (IOException | IllegalArgumentException |
-                IndexOutOfBoundsException ex) {
+        } catch (IOException | IllegalArgumentException
+                | IndexOutOfBoundsException ex) {
             // IllegalArgumentException:
             // This will catch OldFileFormatException, which is thrown when the
             // document version is unsupported. The IllegalArgumentException may
             // also get thrown for unknown reasons.
-            
+
             // IOException:
             // Thrown when the document has issues being read.
-            
             // IndexOutOfBoundsException:
             // This gets thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -374,10 +367,10 @@ class ImageExtractor {
             return null;
         }
 
-        // extract the images to the above initialized outputFolder.
+        // extract the content to the above initialized outputFolder.
         // extraction path - outputFolder/image_number.ext
         int i = 0;
-        List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
+        List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
         for (HSLFPictureData pictureData : listOfAllPictures) {
 
@@ -404,78 +397,17 @@ class ImageExtractor {
                 default:
                     continue;
             }
-            String imageName = UNKNOWN_NAME_PREFIX + i + ext; //NON-NLS
+            String imageName = UNKNOWN_IMAGE_NAME_PREFIX + i + ext; //NON-NLS
             try {
                 data = pictureData.getData();
             } catch (Exception ex) {
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
-            listOfExtractedImages.add(new ExtractedImage(imageName, getFileRelativePath(imageName), pictureData.getData().length, af));
+            listOfExtractedImages.add(new ExtractedFile(imageName, getFileRelativePath(imageName), pictureData.getData().length));
             i++;
         }
         return listOfExtractedImages;
-    }
-
-    /**
-     * Extract images from pptx format files.
-     *
-     * @param af the file from which images are to be extracted.
-     *
-     * @return list of extracted images. Returns null in case no images were
-     *         extracted.
-     */
-    private List<ExtractedImage> extractImagesFromPptx(AbstractFile af) {
-        List<XSLFPictureData> listOfAllPictures = null;
-        
-        try {
-            XMLSlideShow pptx = new XMLSlideShow(new ReadContentInputStream(af));
-            listOfAllPictures = pptx.getPictureData();
-        } catch (POIXMLException | IOException ex) {
-            // POIXMLException:
-            // Thrown when document fails to load.
-            
-            // IOException:
-            // Thrown when the document has issues being read
-            
-            return null;
-        } catch (Throwable ex) {
-            // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
-            return null;
-        }
-
-        // if no images are extracted from the PPT, return null, else initialize
-        // the output folder for image extraction.
-        String outputFolderPath;
-        if (listOfAllPictures.isEmpty()) {
-            return null;
-        } else {
-            outputFolderPath = getOutputFolderPath(this.parentFileName);
-        }
-        if (outputFolderPath == null) {
-            return null;
-        }
-
-        List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
-        byte[] data = null;
-        for (XSLFPictureData xslsPicture : listOfAllPictures) {
-
-            // get image file name, write it to the module outputFolder, and add
-            // it to the listOfExtractedImageAbstractFiles.
-            String fileName = xslsPicture.getFileName();
-            try {
-                data = xslsPicture.getData();
-            } catch (Exception ex) {
-                return null;
-            }
-            writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
-            listOfExtractedImages.add(new ExtractedImage(fileName, getFileRelativePath(fileName), xslsPicture.getData().length, af));
-
-        }
-
-        return listOfExtractedImages;
-
     }
 
     /**
@@ -486,41 +418,37 @@ class ImageExtractor {
      * @return list of extracted images. Returns null in case no images were
      *         extracted.
      */
-    private List<ExtractedImage> extractImagesFromXls(AbstractFile af) {
+    private List<ExtractedFile> extractImagesFromXls(AbstractFile af) {
         List<? extends org.apache.poi.ss.usermodel.PictureData> listOfAllPictures = null;
-        
+
         try {
             Workbook xls = new HSSFWorkbook(new ReadContentInputStream(af));
             listOfAllPictures = xls.getAllPictures();
-        } catch (IOException | LeftoverDataException |
-                RecordFormatException | IllegalArgumentException |
-                IndexOutOfBoundsException ex) {
+        } catch (IOException | LeftoverDataException
+                | RecordFormatException | IllegalArgumentException
+                | IndexOutOfBoundsException ex) {
             // IllegalArgumentException:
             // This will catch OldFileFormatException, which is thrown when the
             // document version is unsupported. The IllegalArgumentException may
             // also get thrown for unknown reasons.
-            
+
             // IOException:
             // Thrown when the document has issues being read.
-            
             // LeftoverDataException:
             // This is thrown for poorly formatted files that have more data
             // than expected.
-            
             // RecordFormatException:
             // This is thrown for poorly formatted files that have less data
             // that expected.
-            
             // IllegalArgumentException:
             // IndexOutOfBoundsException:
             // These get thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.SEVERE, String.format("%s%s", NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()), af.getName()), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, String.format("%s%s", NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()), af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -537,75 +465,17 @@ class ImageExtractor {
         }
 
         int i = 0;
-        List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
+        List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
         for (org.apache.poi.ss.usermodel.PictureData pictureData : listOfAllPictures) {
-            String imageName = UNKNOWN_NAME_PREFIX + i + "." + pictureData.suggestFileExtension(); //NON-NLS
+            String imageName = UNKNOWN_IMAGE_NAME_PREFIX + i + "." + pictureData.suggestFileExtension(); //NON-NLS
             try {
                 data = pictureData.getData();
             } catch (Exception ex) {
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
-            listOfExtractedImages.add(new ExtractedImage(imageName, getFileRelativePath(imageName), pictureData.getData().length, af));
-            i++;
-        }
-        return listOfExtractedImages;
-
-    }
-
-    /**
-     * Extract images from xlsx format files.
-     *
-     * @param af the file from which images are to be extracted.
-     *
-     * @return list of extracted images. Returns null in case no images were
-     *         extracted.
-     */
-    private List<ExtractedImage> extractImagesFromXlsx(AbstractFile af) {
-        List<? extends org.apache.poi.ss.usermodel.PictureData> listOfAllPictures = null;
-        
-        try {
-            Workbook xlsx = new XSSFWorkbook(new ReadContentInputStream(af));
-            listOfAllPictures = xlsx.getAllPictures();
-        } catch (POIXMLException | IOException ex) {
-            // POIXMLException:
-            // Thrown when document fails to load.
-            
-            // IOException:
-            // Thrown when the document has issues being read
-            
-            return null;
-        } catch (Throwable ex) {
-            // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
-            return null;
-        }
-
-        // if no images are extracted from the PPT, return null, else initialize
-        // the output folder for image extraction.
-        String outputFolderPath;
-        if (listOfAllPictures.isEmpty()) {
-            return null;
-        } else {
-            outputFolderPath = getOutputFolderPath(this.parentFileName);
-        }
-        if (outputFolderPath == null) {
-            return null;
-        }
-
-        int i = 0;
-        List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
-        byte[] data = null;
-        for (org.apache.poi.ss.usermodel.PictureData pictureData : listOfAllPictures) {
-            String imageName = UNKNOWN_NAME_PREFIX + i + "." + pictureData.suggestFileExtension();
-            try {
-                data = pictureData.getData();
-            } catch (Exception ex) {
-                return null;
-            }
-            writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
-            listOfExtractedImages.add(new ExtractedImage(imageName, getFileRelativePath(imageName), pictureData.getData().length, af));
+            listOfExtractedImages.add(new ExtractedFile(imageName, getFileRelativePath(imageName), pictureData.getData().length));
             i++;
         }
         return listOfExtractedImages;
@@ -623,18 +493,17 @@ class ImageExtractor {
         try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outputPath), TskData.EncodingType.XOR1)) {
             fos.write(data);
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not write to the provided location: " + outputPath, ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "Could not write to the provided location: " + outputPath, ex); //NON-NLS
         }
     }
 
     /**
-     * Gets path to the output folder for image extraction. If the path does not
+     * Gets path to the output folder for file extraction. If the path does not
      * exist, it is created.
      *
-     * @param parentFileName name of the abstract file being processed for image
-     *                       extraction.
+     * @param parentFileName name of the abstract file being processed
      *
-     * @return path to the image extraction folder for a given abstract file.
+     * @return path to the file extraction folder for a given abstract file.
      */
     private String getOutputFolderPath(String parentFileName) {
         String outputFolderPath = moduleDirAbsolute + File.separator + parentFileName;
@@ -643,7 +512,7 @@ class ImageExtractor {
             try {
                 outputFilePath.mkdirs();
             } catch (SecurityException ex) {
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.getOutputFolderPath.exception.msg", parentFileName), ex);
+                LOGGER.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.getOutputFolderPath.exception.msg", parentFileName), ex);
                 return null;
             }
         }
@@ -665,11 +534,11 @@ class ImageExtractor {
     }
 
     /**
-     * Represents the image extracted using POI methods. Currently, POI is not
-     * capable of extracting ctime, crtime, mtime, and atime; these values are
-     * set to 0.
+     * Represents a file extracted using either Tika or POI methods. Currently,
+     * POI is not capable of extracting ctime, crtime, mtime, and atime; these
+     * values are set to 0.
      */
-    private static class ExtractedImage {
+    private static class ExtractedFile {
         //String fileName, String localPath, long size, long ctime, long crtime, 
         //long atime, long mtime, boolean isFile, AbstractFile parentFile, String rederiveDetails, String toolName, String toolVersion, String otherDetails
 
@@ -680,13 +549,12 @@ class ImageExtractor {
         private final long crtime;
         private final long atime;
         private final long mtime;
-        private final AbstractFile parentFile;
 
-        ExtractedImage(String fileName, String localPath, long size, AbstractFile parentFile) {
-            this(fileName, localPath, size, 0, 0, 0, 0, parentFile);
+        ExtractedFile(String fileName, String localPath, long size) {
+            this(fileName, localPath, size, 0, 0, 0, 0);
         }
 
-        ExtractedImage(String fileName, String localPath, long size, long ctime, long crtime, long atime, long mtime, AbstractFile parentFile) {
+        ExtractedFile(String fileName, String localPath, long size, long ctime, long crtime, long atime, long mtime) {
             this.fileName = fileName;
             this.localPath = localPath;
             this.size = size;
@@ -694,7 +562,6 @@ class ImageExtractor {
             this.crtime = crtime;
             this.atime = atime;
             this.mtime = mtime;
-            this.parentFile = parentFile;
         }
 
         public String getFileName() {
@@ -724,9 +591,84 @@ class ImageExtractor {
         public long getMtime() {
             return mtime;
         }
+    }
 
-        public AbstractFile getParentFile() {
-            return parentFile;
+    /**
+     * Our custom embedded content extractor for OOXML files. We pass an
+     * instance of this class to Tika and Tika calls the parseEmbedded() method
+     * when it encounters an embedded file.
+     */
+    private class EmbeddedContentExtractor extends ParsingEmbeddedDocumentExtractor {
+
+        private int fileCount = 0;
+        // Map of file name to ExtractedFile instance. This can revert to a 
+        // plain old list after we upgrade to Tika 1.16 or above.
+        private final Map<String, ExtractedFile> nameToExtractedFileMap = new HashMap<>();
+
+        public EmbeddedContentExtractor(ParseContext context) {
+            super(context);
+        }
+
+        @Override
+        public boolean shouldParseEmbedded(Metadata metadata) {
+            return true;
+        }
+
+        @Override
+        public void parseEmbedded(InputStream stream, ContentHandler handler,
+                Metadata metadata, boolean outputHtml) throws SAXException, IOException {
+
+            // Get the mime type for the embedded document
+            MediaType contentType = detector.detect(stream, metadata);
+
+            if (!contentType.getType().equalsIgnoreCase("image") //NON-NLS
+                    && !contentType.getType().equalsIgnoreCase("video") //NON-NLS
+                    && !contentType.getType().equalsIgnoreCase("application") //NON-NLS
+                    && !contentType.getType().equalsIgnoreCase("audio")) { //NON-NLS
+                return;
+            }
+
+            // try to get the name of the embedded file from the metadata
+            String name = metadata.get(Metadata.RESOURCE_NAME_KEY);
+
+            // TODO: This can be removed after we upgrade to Tika 1.16 or
+            // above. The 1.16 version of Tika keeps track of files that 
+            // have been seen before.
+            if (nameToExtractedFileMap.containsKey(name)) {
+                return;
+            }
+
+            if (name == null) {
+                name = UNKNOWN_IMAGE_NAME_PREFIX + fileCount++;
+            } else {
+                //make sure to select only the file name (not any directory paths
+                //that might be included in the name) and make sure
+                //to normalize the name
+                name = FilenameUtils.normalize(FilenameUtils.getName(name));
+            }
+
+            // Get the suggested extension based on mime type.
+            if (name.indexOf('.') == -1) {
+                try {
+                    name += config.getMimeRepository().forName(contentType.toString()).getExtension();
+                } catch (MimeTypeException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to get suggested extension for the following type: " + contentType.toString(), ex); //NON-NLS
+                }
+            }
+
+            File extractedFile = new File(Paths.get(getOutputFolderPath(parentFileName), name).toString());
+            byte[] fileData = IOUtils.toByteArray(stream);
+            writeExtractedImage(extractedFile.getAbsolutePath(), fileData);
+            nameToExtractedFileMap.put(name, new ExtractedFile(name, getFileRelativePath(name), fileData.length));
+        }
+
+        /**
+         * Get list of extracted files.
+         *
+         * @return List of extracted files.
+         */
+        public List<ExtractedFile> getExtractedImages() {
+            return new ArrayList<>(nameToExtractedFileMap.values());
         }
     }
 }

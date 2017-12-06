@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
@@ -26,7 +28,9 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.tika.Tika;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -35,6 +39,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -49,8 +54,6 @@ public class FileTypeDetector {
 
     private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
     private static final Tika tika = new Tika();
-    private static final int BUFFER_SIZE = 64 * 1024;
-    private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
     private static SortedSet<String> tikaDetectedTypes;
@@ -269,17 +272,11 @@ public class FileTypeDetector {
          * bytes to Tika.
          */
         if (null == mimeType) {
-            try {
-                byte buf[];
-                int len = file.read(buffer, 0, BUFFER_SIZE);
-                if (len < BUFFER_SIZE) {
-                    buf = new byte[len];
-                    System.arraycopy(buffer, 0, buf, 0, len);
-                } else {
-                    buf = buffer;
-                }
-                String tikaType = tika.detect(buf, file.getName());
-
+            ReadContentInputStream stream = new ReadContentInputStream(file);
+            
+            try (TikaInputStream tikaInputStream = TikaInputStream.get(stream)) {
+                String tikaType = tika.detect(tikaInputStream, file.getName());
+                
                 /*
                  * Remove the Tika suffix from the MIME type name.
                  */
@@ -360,8 +357,9 @@ public class FileTypeDetector {
                 if (fileType.createInterestingFileHit()) {
                     BlackboardArtifact artifact;
                     artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName());
-                    artifact.addAttribute(setNameAttribute);
+                    attributes.add(setNameAttribute);
 
                     /*
                      * Use the MIME type as the category attribute, i.e., the
@@ -369,8 +367,9 @@ public class FileTypeDetector {
                      * files set.
                      */
                     BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
-                    artifact.addAttribute(ruleNameAttribute);
+                    attributes.add(ruleNameAttribute);
 
+                    artifact.addAttributes(attributes);
                     /*
                      * Index the artifact for keyword search.
                      */
