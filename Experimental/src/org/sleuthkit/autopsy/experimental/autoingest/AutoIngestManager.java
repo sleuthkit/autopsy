@@ -2592,12 +2592,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
              */
             List<Content> contentList = dataSource.getContent();
             long dataSourceSize = 0;
-            for (Content content : contentList) {
-                try {
+            try {
+                for (Content content : contentList) {
                     dataSourceSize += ((DataSource) content).getContentSize(caseDb);
-                } catch (TskCoreException ex) {
-                    throw new JobMetricsCollectionException("Unable to get the data content size.", ex);
                 }
+            } catch (TskCoreException ex) {
+                throw new JobMetricsCollectionException("Unable to get the data content size.", ex);
             }
             currentJob.setDataSourceSize(dataSourceSize);
 
