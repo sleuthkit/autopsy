@@ -278,13 +278,13 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
-            multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-            multiUserCaseWindow.setVisible(true);
-        } finally {
-            setCursor(null);
-        }
+
+        MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
+        multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        multiUserCaseWindow.setVisible(true);
+
+        setCursor(null);
+
     }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

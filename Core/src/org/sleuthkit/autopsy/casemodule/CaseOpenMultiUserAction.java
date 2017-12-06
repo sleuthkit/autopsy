@@ -65,15 +65,14 @@ public final class CaseOpenMultiUserAction extends CallableSystemAction implemen
     @Override
     public void actionPerformed(ActionEvent event) {
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            if (multiUserCaseWindow == null) {
-                multiUserCaseWindow = MultiUserCasesDialog.getInstance();
-            }
-            multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-            multiUserCaseWindow.setVisible(true);
-        } finally {
-            WindowManager.getDefault().getMainWindow().setCursor(null);
+
+        if (multiUserCaseWindow == null) {
+            multiUserCaseWindow = MultiUserCasesDialog.getInstance();
         }
+        multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        multiUserCaseWindow.setVisible(true);
+
+        WindowManager.getDefault().getMainWindow().setCursor(null);
     }
 
     @Override
