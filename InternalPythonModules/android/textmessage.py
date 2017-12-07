@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-17 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,9 +43,13 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel import Relationship
 
 import traceback
 import general
+
+deviceAccountInstance = None
 
 """
 Finds database with SMS/MMS messages and adds them to blackboard.
@@ -57,6 +61,15 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
+
+            # Create a 'Device' account using the data source device id
+            datasourceObjId = dataSource.getDataSource().getId()
+            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+            deviceID = ds.getDeviceId()
+
+            global deviceAccountInstance
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+
             absFiles = fileManager.findFiles(dataSource, "mmssms.db")
             for abstractFile in absFiles:
                 try:
@@ -108,6 +121,13 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "SMS Message"))
 
                 artifact.addAttributes(attributes)
+
+                # Create an account
+                msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
+
+                # create relationship between accounts
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact,Relationship.Type.MESSAGE, date);
+
                 bbartifacts.append(artifact)
                 try:
                     # index the artifact for keyword search

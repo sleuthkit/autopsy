@@ -61,6 +61,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
     }
 
     @Override
+    @NbBundle.Messages("AbstractFsContentNode.noDesc.text=no description")
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -72,7 +73,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
 
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "AbstractFsContentNode.noDesc.text");
+        final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
             ss.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));

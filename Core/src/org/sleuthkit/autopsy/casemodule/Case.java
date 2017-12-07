@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -1050,6 +1051,7 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
@@ -1092,24 +1094,13 @@ public class Case {
                 /*
                  * Disable the case-specific menu items.
                  */
-                CallableSystemAction
-                        .get(AddImageAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseCloseAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CasePropertiesAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseDeleteAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenTimelineAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenOutputFolderAction.class
-                        ).setEnabled(false);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
