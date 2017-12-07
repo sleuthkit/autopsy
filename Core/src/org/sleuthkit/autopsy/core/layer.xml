@@ -433,6 +433,7 @@
             <folder name="floatingLeftBottom"/>
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
             <file name="timeline.wsmode" url="timelineWsmode.xml"/>
+            <file name="cvt.wsmode" url="cvtWsmode.xml"/>
         </folder>
     </folder>
     
