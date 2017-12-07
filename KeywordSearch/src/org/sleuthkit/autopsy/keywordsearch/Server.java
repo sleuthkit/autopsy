@@ -1248,8 +1248,8 @@ public class Server {
             // socket read timeout, make large enough so can index larger files
             solrCore.setSoTimeout(QUERY_TIMEOUT_MILLISECONDS);  
             //solrCore.setConnectionTimeout(1000);
-            solrCore.setDefaultMaxConnectionsPerHost(2);
-            solrCore.setMaxTotalConnections(5);
+            solrCore.setDefaultMaxConnectionsPerHost(32);
+            solrCore.setMaxTotalConnections(32);
             solrCore.setFollowRedirects(false);  // defaults to false
             // allowCompression defaults to false.
             // Server side must support gzip or deflate for this to have any effect.

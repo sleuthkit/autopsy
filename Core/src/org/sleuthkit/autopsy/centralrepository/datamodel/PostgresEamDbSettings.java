@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.TextConverterException;
 public final class PostgresEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDbSettings.class.getName());
-    private final String DEFAULT_HOST = "localhost"; // NON-NLS
+    private final String DEFAULT_HOST = ""; // NON-NLS
     private final int DEFAULT_PORT = 5432;
     private final String DEFAULT_DBNAME = "central_repository"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerManager.Provider;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -40,11 +39,6 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     protected transient ExplorerManager em;
-    /**
-     * Content viewer to respond to selection events Either the main one, or
-     * custom one if set
-     */
-    protected DataContent contentViewer;
 
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
@@ -53,10 +47,11 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
      * TopComponent has focus. The ExplorerManager must be present when the
      * object is constructed so that its child components can discover it using
      * the ExplorerManager.find() method.
+     *
+     * @param explorerManager
      */
-    public AbstractDataResultViewer(ExplorerManager explorerManager) {
+    AbstractDataResultViewer(ExplorerManager explorerManager) {
         this.em = explorerManager;
-        initialize();
     }
 
     /**
@@ -65,14 +60,7 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
      * context lookup.
      */
     public AbstractDataResultViewer() {
-        em = new ExplorerManager();
-        initialize();
-    }
-
-    private void initialize() {
-        //DataContent is designed to return only the default viewer from lookup
-        //use the default one unless set otherwise
-        contentViewer = Lookup.getDefault().lookup(DataContent.class);
+        this(new ExplorerManager());
     }
 
     @Override
@@ -115,8 +103,8 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
         }
     }
 
+    @Deprecated
     @Override
     public void setContentViewer(DataContent contentViewer) {
-        this.contentViewer = contentViewer;
     }
 }

@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
  * Singleton keyword search manager: Launches search threads for each job and
  * performs commits, both on timed intervals.
  */
-public final class SearchRunner {
+final class SearchRunner {
 
     private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
     private static SearchRunner instance = null;
