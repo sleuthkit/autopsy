@@ -102,6 +102,10 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                  * Close the startup window, if it is open.
                  */
                 StartupWindowProvider.getInstance().close();
+                
+                /*
+                 * Close the Open Multi-User Case window, if it is open.
+                 */
                 if (multiUserCaseWindow != null) {
                     multiUserCaseWindow.setVisible(false);
                 }
