@@ -54,23 +54,23 @@ import org.sleuthkit.autopsy.coreutils.Version;
 @ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.CaseOpenAction")
 @ActionReference(path = "Menu/Case", position = 102)
 @ActionRegistration(displayName = "#CTL_CaseOpenAction", lazy = false)
-@NbBundle.Messages({"CTL_CaseOpenAction=Open Case",})
+@NbBundle.Messages({"CTL_CaseOpenAction=Open Case"})
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
 
     private static final long serialVersionUID = 1L;
     private static final String DISPLAY_NAME = Bundle.CTL_CaseOpenAction();
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
-    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
     private static JDialog multiUserCaseWindow;
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
 
     /**
      * Constructs the action associated with the Case/Open Case menu item via
-     * the layer.xml file, a toolbar button, and the Create New Case button of
-     * the start up window that allows a user to open a case. It opens an
-     * existing case.
+     * the layer.xml file, a toolbar button, and the Open Case button of the
+     * start up window that allows a user to open a case. It opens an existing
+     * case.
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
@@ -128,7 +128,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                             get();
                         } catch (InterruptedException | ExecutionException ex) {
                             if (ex instanceof InterruptedException || (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException))) {
-                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
+                                LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
                                 JOptionPane.showMessageDialog(
                                         WindowManager.getDefault().getMainWindow(),
                                         ex.getCause().getMessage(), //get the message of the wrapped exception

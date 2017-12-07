@@ -30,7 +30,6 @@ import javax.swing.KeyStroke;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /*
  * The panel in the default Autopsy startup window.
@@ -119,7 +118,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
         autopsyLogo = new javax.swing.JLabel();
         this.autopsyLogo.setText("");
-        createNewCaseButton = new javax.swing.JButton();
+        newCaseButton = new javax.swing.JButton();
         openRecentCaseButton = new javax.swing.JButton();
         newCaseLabel = new javax.swing.JLabel();
         openRecentCaseLabel = new javax.swing.JLabel();
@@ -131,15 +130,15 @@ public class CueBannerPanel extends javax.swing.JPanel {
         autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N
         autopsyLogo.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLogo.text")); // NOI18N
 
-        createNewCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N
-        createNewCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewCaseButton.text")); // NOI18N
-        createNewCaseButton.setBorder(null);
-        createNewCaseButton.setBorderPainted(false);
-        createNewCaseButton.setContentAreaFilled(false);
-        createNewCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        createNewCaseButton.addActionListener(new java.awt.event.ActionListener() {
+        newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N
+        newCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseButton.text")); // NOI18N
+        newCaseButton.setBorder(null);
+        newCaseButton.setBorderPainted(false);
+        newCaseButton.setContentAreaFilled(false);
+        newCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
+        newCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                createNewCaseButtonActionPerformed(evt);
+                newCaseButtonActionPerformed(evt);
             }
         });
 
@@ -195,7 +194,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(newCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -218,7 +217,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addGroup(layout.createSequentialGroup()
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                                .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(newCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addComponent(newCaseLabel))
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
@@ -235,9 +234,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void createNewCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewCaseButtonActionPerformed
+    private void newCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCaseButtonActionPerformed
         Lookup.getDefault().lookup(CaseNewActionInterface.class).actionPerformed(evt);
-    }//GEN-LAST:event_createNewCaseButtonActionPerformed
+    }//GEN-LAST:event_newCaseButtonActionPerformed
 
     private void openCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openCaseButtonActionPerformed
         Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(evt);
@@ -252,8 +251,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel autopsyLogo;
     private javax.swing.JButton closeButton;
-    private javax.swing.JButton createNewCaseButton;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JButton newCaseButton;
     private javax.swing.JLabel newCaseLabel;
     private javax.swing.JButton openCaseButton;
     private javax.swing.JLabel openCaseLabel;
