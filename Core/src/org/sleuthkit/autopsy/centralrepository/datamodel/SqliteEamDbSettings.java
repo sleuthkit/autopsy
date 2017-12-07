@@ -85,8 +85,6 @@ public final class SqliteEamDbSettings {
         } catch (NumberFormatException ex) {
             this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
         }
-
-       
     }
 
     public void saveSettings() {
@@ -434,7 +432,7 @@ public final class SqliteEamDbSettings {
         }
 
         boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.insertSchemaVersion(conn)
+                && EamDbUtil.updateSchemaVersion(conn)
                 && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
         return result;
