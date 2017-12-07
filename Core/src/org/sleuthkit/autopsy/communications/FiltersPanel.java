@@ -89,6 +89,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         updateTimeZone();
         updateFilters();
+        setAllDevicesSelected(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
                 updateTimeZone();
@@ -202,7 +203,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -430,7 +430,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         commsFilter.addAndFilter(getDateRangeFilter());
         commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
                 ImmutableSet.of(CALL_LOG, MESSAGE)));
-        
+
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
             em.setRootContext(new AbstractNode(Children.create(new AccountsRootChildren(commsManager, commsFilter), true)));
@@ -449,9 +449,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private DeviceFilter getDeviceFilter() {
         DeviceFilter deviceFilter = new DeviceFilter(
                 devicesMap.entrySet().stream()
-                .filter(entry -> entry.getValue().isSelected())
-                .map(Entry::getKey)
-                .collect(Collectors.toSet()));
+                        .filter(entry -> entry.getValue().isSelected())
+                        .map(Entry::getKey)
+                        .collect(Collectors.toSet()));
         return deviceFilter;
     }
 
