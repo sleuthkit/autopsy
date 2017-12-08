@@ -104,22 +104,21 @@ class IngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        // If unknown to both the hash module and as a globally known artifact in the EAM DB, correlate to other cases
-        if (af.getKnown() == TskData.FileKnown.UNKNOWN) {
-            // query db for artifact instances having this MD5 and knownStatus = "Bad".
+        /* Search the central repo to see if this file was previously 
+         * marked as being bad.  Create artifact if it was.  */
+        if (af.getKnown() != TskData.FileKnown.KNOWN) {
             try {
-                // if af.getKnown() is "UNKNOWN" and this artifact instance was marked bad in a previous case, 
-                // create TSK_INTERESTING_FILE artifact on BB.
                 List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 if (!caseDisplayNames.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
 
+        // insert this file into the central repository
         try {
             CorrelationAttribute eamArtifact = new CorrelationAttribute(filesType, md5);
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
@@ -127,8 +126,7 @@ class IngestModule implements FileIngestModule {
                     eamDataSource,
                     af.getParentPath() + af.getName(),
                     null,
-                    TskData.FileKnown.UNKNOWN,
-                    CorrelationAttributeInstance.GlobalStatus.LOCAL
+                    TskData.FileKnown.UNKNOWN  // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);
