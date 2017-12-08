@@ -1001,12 +1001,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Sets an eamArtifact instance to the given knownStatus. If eamArtifact
+     * Sets an eamArtifact instance to the given knownStatus. 
+     * knownStatus should be BAD if the file has been tagged with a notable tag and
+     * UNKNOWN otherwise. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist it is added with the
      * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus The status to change the artifact to
+     * @param knownStatus The status to change the artifact to. Should never be KNOWN
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {

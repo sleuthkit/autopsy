@@ -179,14 +179,20 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * @return the knownStatus
+     * Get this knownStatus. This only indicates whether an item has been 
+     * tagged as notable and should never return KNOWN.
+     * 
+     * @return BAD if the item has been tagged as notable, UNKNOWN otherwise
      */
     public TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
     /**
-     * @param knownStatus the knownStatus to set
+     * Set the knownStatus. This only indicates whether an item has been 
+     * tagged as notable and should never be set to KNOWN.
+     * 
+     * @param knownStatus Should be BAD if the item is tagged as notable, UNKNOWN otherwise
      */
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
