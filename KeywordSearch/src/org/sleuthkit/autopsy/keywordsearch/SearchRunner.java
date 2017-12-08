@@ -262,6 +262,7 @@ final class SearchRunner {
 
             commit();
 
+            logger.log(Level.INFO, "Starting periodic searches");
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             synchronized (SearchRunner.this) {
@@ -290,7 +291,9 @@ final class SearchRunner {
                     }
                 }
             }
+            logger.log(Level.INFO, "Finished periodic searches");
             stopWatch.stop();
+            logger.log(Level.INFO, "ALL periodic searches took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
             
             // calculate "hold off" time
             final long timeToTextSearchMs = getTimeToNextPeriodicSearch(stopWatch.getElapsedTimeSecs());
@@ -303,14 +306,14 @@ final class SearchRunner {
         }
         
         
-        private long getTimeToNextPeriodicSearch(long lastSerchTimeMs) {
+        private long getTimeToNextPeriodicSearch(long lastSerchTimeSec) {
             // If periodic search takes more than 1/4 of the current periodic search interval, then double the search interval
-            if (lastSerchTimeMs < defaultUpdateIntervalMs / 4) {
+            if (lastSerchTimeSec * 1000 < defaultUpdateIntervalMs / 4) {
                 return defaultUpdateIntervalMs;
             }
             // double the search interval
             defaultUpdateIntervalMs = defaultUpdateIntervalMs * 2;
-            logger.log(Level.WARNING, "Last periodic search took {0} ms. Increasing search interval to {1} ms", new Object[]{lastSerchTimeMs, defaultUpdateIntervalMs});
+            logger.log(Level.WARNING, "Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, defaultUpdateIntervalMs/1000});
             return defaultUpdateIntervalMs;
         }
     }
