@@ -143,7 +143,7 @@ final class SearchRunner {
             if (jobs.isEmpty()) {
                 // no more jobs left. stop the PeriodicSearchTask. 
                 // A new one will be created for future jobs. 
-                logger.log(Level.INFO, "Cancelling periodic search task"); //NON-NLS
+                logger.log(Level.INFO, "No more search jobs. Stoppping periodic search task"); //NON-NLS
                 periodicSearchTaskRunning = false;
                 jobProcessingTaskFuture.cancel(true);
             }
@@ -157,7 +157,7 @@ final class SearchRunner {
      * @param jobId
      */
     public synchronized void stopJob(long jobId) {
-        logger.log(Level.INFO, "Stopping job {0}", jobId); //NON-NLS
+        logger.log(Level.INFO, "Stopping search job {0}", jobId); //NON-NLS
         commit();
 
         SearchJobInfo job;
@@ -178,7 +178,7 @@ final class SearchRunner {
         if (jobs.isEmpty()) {
             // no more jobs left. stop the PeriodicSearchTask. 
             // A new one will be created for future jobs. 
-            logger.log(Level.INFO, "Cancelling periodic search task"); //NON-NLS
+            logger.log(Level.INFO, "No more search jobs. Stoppping periodic search task"); //NON-NLS
             periodicSearchTaskRunning = false;
             jobProcessingTaskFuture.cancel(true);
         }
