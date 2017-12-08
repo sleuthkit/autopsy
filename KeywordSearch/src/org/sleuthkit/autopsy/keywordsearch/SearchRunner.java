@@ -23,13 +23,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -42,7 +42,6 @@ import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -63,14 +62,14 @@ final class SearchRunner {
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private long defaultUpdateIntervalMs;
-    private volatile boolean updateTimerRunning = false;
+    private volatile boolean periodicSearchTaskRunning = false;
     private Future<?> jobProcessingTaskFuture;
     private final ScheduledThreadPoolExecutor jobProcessingExecutor;
     private static final int NUM_SEARCH_SCHEDULING_THREADS = 1;
     private static final String SEARCH_SCHEDULER_THREAD_NAME = "periodic-search-scheduler-%d";
 
     // maps a jobID to the search
-    private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
+    private Map<Long, SearchJobInfo> jobs = new ConcurrentHashMap<>(); //guarded by "this"
 
     SearchRunner() {
         defaultUpdateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
@@ -97,7 +96,7 @@ final class SearchRunner {
     public synchronized void startJob(IngestJobContext jobContext, List<String> keywordListNames) {
         long jobId = jobContext.getJobId();
         if (jobs.containsKey(jobId) == false) {
-            logger.log(Level.INFO, "Adding job {0}", jobId); //NON-NLS
+            logger.log(Level.INFO, "ELDEBUG Adding job {0}", jobId); //NON-NLS
             SearchJobInfo jobData = new SearchJobInfo(jobContext, keywordListNames);
             jobs.put(jobId, jobData);
         }
@@ -106,11 +105,12 @@ final class SearchRunner {
         jobs.get(jobId).incrementModuleReferenceCount();
 
         // start the timer, if needed
-        if ((jobs.size() > 0) && (updateTimerRunning == false)) {
+        if ((jobs.size() > 0) && (periodicSearchTaskRunning == false)) {
             // reset the default periodic search frequency to the user setting
+            logger.log(Level.INFO, "ELDEBUG Resetting time out to default"); //NON-NLS
             defaultUpdateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
             jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), defaultUpdateIntervalMs, MILLISECONDS);
-            updateTimerRunning = true;
+            periodicSearchTaskRunning = true;
         }
     }
 
@@ -120,30 +120,31 @@ final class SearchRunner {
      *
      * @param jobId
      */
-    public void endJob(long jobId) {
+    public synchronized void endJob(long jobId) {
         SearchJobInfo job;
         boolean readyForFinalSearch = false;
-        synchronized (this) {
-            job = jobs.get(jobId);
-            if (job == null) {
-                return;
-            }
+        job = jobs.get(jobId);
+        if (job == null) {
+            logger.log(Level.INFO, "ELDEBUG job not found, returning {0}", jobId); //NON-NLS
+            return;
+        }
 
-            // Only do final search if this is the last module/thread in this job to call endJob()
-            if (job.decrementModuleReferenceCount() == 0) {
-                jobs.remove(jobId);
-                readyForFinalSearch = true;
-            }
+        // Only do final search if this is the last module/thread in this job to call endJob()
+        if (job.decrementModuleReferenceCount() == 0) {
+            logger.log(Level.INFO, "ELDEBUG removing job {0}", jobId); //NON-NLS
+            jobs.remove(jobId);
+            readyForFinalSearch = true;
         }
 
         if (readyForFinalSearch) {
             logger.log(Level.INFO, "Commiting search index before final search for search job {0}", job.getJobId()); //NON-NLS
             commit();
             doFinalSearch(job); //this will block until it's done
-            
+
             // we are done with all the searches. stop the PeriodicSearchTask. 
             // A new one will be created for future jobs. 
-            updateTimerRunning = false;
+            logger.log(Level.INFO, "ELDEBUG Cancelling periodic search task"); //NON-NLS
+            periodicSearchTaskRunning = false;
             jobProcessingTaskFuture.cancel(true);
         }
     }
@@ -154,31 +155,33 @@ final class SearchRunner {
      *
      * @param jobId
      */
-    public void stopJob(long jobId) {
-        logger.log(Level.INFO, "Stopping job {0}", jobId); //NON-NLS
+    public synchronized void stopJob(long jobId) {
+        logger.log(Level.INFO, "ELDEBUG Stopping job {0}", jobId); //NON-NLS
         commit();
 
         SearchJobInfo job;
-        synchronized (this) {
-            job = jobs.get(jobId);
-            if (job == null) {
-                return;
-            }
+        job = jobs.get(jobId);
+        if (job == null) {
+            logger.log(Level.INFO, "ELDEBUG job not found, returning {0}", jobId); //NON-NLS
+            return;
+        }
 
-            //stop currentSearcher
-            SearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
-            if ((currentSearcher != null) && (!currentSearcher.isDone())) {
-                currentSearcher.cancel(true);
-            }
+        //stop currentSearcher
+        SearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
+        if ((currentSearcher != null) && (!currentSearcher.isDone())) {
+            logger.log(Level.INFO, "ELDEBUG cancelling job {0}", jobId); //NON-NLS
+            currentSearcher.cancel(true);
+        }
 
-            jobs.remove(jobId);
-            
-            if (jobs.isEmpty()) {
-                // no more jobs left. stop the PeriodicSearchTask. 
-                // A new one will be created for future jobs. 
-                updateTimerRunning = false;
-                jobProcessingTaskFuture.cancel(true);
-            }
+        logger.log(Level.INFO, "ELDEBUG removing job {0}", jobId); //NON-NLS
+        jobs.remove(jobId);
+
+        if (jobs.isEmpty()) {
+            // no more jobs left. stop the PeriodicSearchTask. 
+            // A new one will be created for future jobs. 
+            logger.log(Level.INFO, "ELDEBUG Cancelling periodic search task"); //NON-NLS
+            periodicSearchTaskRunning = false;
+            jobProcessingTaskFuture.cancel(true);
         }
     }
 
@@ -256,47 +259,47 @@ final class SearchRunner {
         public void run() {
             // If no jobs then cancel the task. If more job(s) come along, a new task will start up.
             if (jobs.isEmpty() || jobProcessingTaskFuture.isCancelled()) {
-                updateTimerRunning = false;
+                logger.log(Level.INFO, "ELDEBUG Exiting periodic search task"); //NON-NLS
+                periodicSearchTaskRunning = false;
                 return;
             }
 
             commit();
 
-            logger.log(Level.INFO, "Starting periodic searches");
+            logger.log(Level.INFO, "ELDEBUG Starting periodic searches");
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
-            synchronized (SearchRunner.this) {
-                // Spawn a search thread for each job
-                for (Entry<Long, SearchJobInfo> j : jobs.entrySet()) {
-                    SearchJobInfo job = j.getValue();
-                    // If no lists or the worker is already running then skip it
-                    if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
-                        logger.log(Level.INFO, "Executing periodic search for search job {0}", job.getJobId());
-                        Searcher searcher = new Searcher(job);  // SwingWorker
-                        job.setCurrentSearcher(searcher); //save the ref
-                        searcher.execute(); //start thread
-                        job.setWorkerRunning(true);
-                        
-                        try {
-                            // wait for the searcher to finish
-                            searcher.get();
-                        } catch (InterruptedException | ExecutionException ex) {
-                            logger.log(Level.SEVERE, "Error performing keyword search: {0}", ex.getMessage()); //NON-NLS
-                            services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(),
-                                    NbBundle.getMessage(this.getClass(),
-                                            "SearchRunner.Searcher.done.err.msg"), ex.getMessage()));
-                        }// catch and ignore if we were cancelled
-                          catch (java.util.concurrent.CancellationException ex) {
-                        }
+            // NOTE: contents of "jobs" ConcurrentHashMap can be modified in stopJob() and endJob() while we are inside this loop
+            for (Iterator<Entry<Long, SearchJobInfo>> iterator = jobs.entrySet().iterator(); iterator.hasNext();) {
+                SearchJobInfo job = iterator.next().getValue();
+                // If no lists or the worker is already running then skip it
+                if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
+                    // Spawn a search thread for each job
+                    logger.log(Level.INFO, "ELDEBUG Executing periodic search for search job {0}", job.getJobId());
+                    Searcher searcher = new Searcher(job);  // SwingWorker
+                    job.setCurrentSearcher(searcher); //save the ref
+                    searcher.execute(); //start thread
+                    job.setWorkerRunning(true);
+
+                    try {
+                        // wait for the searcher to finish
+                        searcher.get();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        logger.log(Level.SEVERE, "Error performing keyword search: {0}", ex.getMessage()); //NON-NLS
+                        services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(),
+                                NbBundle.getMessage(this.getClass(),
+                                        "SearchRunner.Searcher.done.err.msg"), ex.getMessage()));
+                    }// catch and ignore if we were cancelled
+                    catch (java.util.concurrent.CancellationException ex) {
                     }
                 }
             }
-            logger.log(Level.INFO, "Finished periodic searches");
+            logger.log(Level.INFO, "ELDEBUG Finished periodic searches");
             stopWatch.stop();
-            logger.log(Level.INFO, "ALL periodic searches took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
+            logger.log(Level.INFO, "ELDEBUG ALL periodic searches took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
             
             // calculate "hold off" time
-            final long timeToTextSearchMs = getTimeToNextPeriodicSearch(stopWatch.getElapsedTimeSecs());
+            final long timeToTextSearchMs = getTimeToNextPeriodicSearch(defaultUpdateIntervalMs /*stopWatch.getElapsedTimeSecs()*/); // ELDEBUG
             
             // schedule next PeriodicSearchTask
             jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), timeToTextSearchMs, MILLISECONDS);
@@ -313,7 +316,7 @@ final class SearchRunner {
             }
             // double the search interval
             defaultUpdateIntervalMs = defaultUpdateIntervalMs * 2;
-            logger.log(Level.WARNING, "Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, defaultUpdateIntervalMs/1000});
+            logger.log(Level.WARNING, "ELDEBUG Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, defaultUpdateIntervalMs/1000});
             return defaultUpdateIntervalMs;
         }
     }
