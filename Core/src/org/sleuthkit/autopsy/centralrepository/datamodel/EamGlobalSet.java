@@ -32,6 +32,7 @@ public class EamGlobalSet {
     private String version;
     private TskData.FileKnown fileKnownStatus;
     private boolean isReadOnly;
+    private CorrelationAttribute.Type type;
     private LocalDate importDate;
 
     public EamGlobalSet(
@@ -41,6 +42,7 @@ public class EamGlobalSet {
             String version,
             TskData.FileKnown knownStatus,
             boolean isReadOnly,
+            CorrelationAttribute.Type type,
             LocalDate importDate) {
         this.globalSetID = globalSetID;
         this.orgID = orgID;
@@ -48,6 +50,7 @@ public class EamGlobalSet {
         this.version = version;
         this.fileKnownStatus = knownStatus;
         this.isReadOnly = isReadOnly;
+        this.type = type;
         this.importDate = importDate;
     }
 
@@ -57,8 +60,9 @@ public class EamGlobalSet {
             String version,
             TskData.FileKnown knownStatus,
             boolean isReadOnly,
+            CorrelationAttribute.Type type,
             LocalDate importDate) {
-        this(-1, orgID, setName, version, knownStatus, isReadOnly, importDate);
+        this(-1, orgID, setName, version, knownStatus, isReadOnly, type, importDate);
     }
     
     /**
@@ -77,8 +81,9 @@ public class EamGlobalSet {
             String setName,
             String version,
             TskData.FileKnown knownStatus,
-            boolean isReadOnly) {
-        this(-1, orgID, setName, version, knownStatus, isReadOnly, LocalDate.now());
+            boolean isReadOnly,
+            CorrelationAttribute.Type type) {
+        this(-1, orgID, setName, version, knownStatus, isReadOnly, type, LocalDate.now());
     }
 
     /**
@@ -163,6 +168,24 @@ public class EamGlobalSet {
      */
     public void setFileKnownStatus(TskData.FileKnown fileKnownStatus) {
         this.fileKnownStatus = fileKnownStatus;
+    }
+    
+    /**
+     * Get the type of reference set
+     * 
+     * @return the type (files, phone numbers, etc)
+     */
+    public CorrelationAttribute.Type getType() {
+        return type;
+    }
+    
+    /**
+     * Sets the type of reference set
+     * 
+     * @param type 
+     */
+    void setType(CorrelationAttribute.Type type) {
+        this.type = type;
     }
 
     /**

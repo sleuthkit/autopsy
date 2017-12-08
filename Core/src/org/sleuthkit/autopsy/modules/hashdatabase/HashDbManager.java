@@ -490,7 +490,7 @@ public class HashDbManager implements PropertyChangeListener {
         List<HashDbInfo> crHashSets = new ArrayList<>();
         if(EamDb.isEnabled()){
             try{
-                List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets();
+                List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets(EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
                 for(EamGlobalSet globalSet:crSets){
                     
                     // Defaults for fields not stored in the central repository:
