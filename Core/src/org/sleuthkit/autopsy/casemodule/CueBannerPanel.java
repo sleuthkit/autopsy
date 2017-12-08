@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -106,7 +107,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         boolean enableOpenRecentCaseButton = (RecentCases.getInstance().getTotalRecentCases() > 0);
         openRecentCaseButton.setEnabled(enableOpenRecentCaseButton);
         openRecentCaseLabel.setEnabled(enableOpenRecentCaseButton);
-        
+
         boolean enableOpenMultiUserCaseButton = UserPreferences.getIsMultiUserModeEnabled();
         openMultiUserCaseButton.setEnabled(enableOpenMultiUserCaseButton);
         openMultiUserCaseLabel.setEnabled(enableOpenMultiUserCaseButton);
@@ -276,9 +277,14 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
     private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
         MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
         multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         multiUserCaseWindow.setVisible(true);
+
+        setCursor(null);
+
     }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
