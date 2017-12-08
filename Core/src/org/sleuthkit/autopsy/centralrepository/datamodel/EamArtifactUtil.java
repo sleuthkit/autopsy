@@ -28,6 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -240,8 +241,7 @@ public class EamArtifactUtil {
 
         // We need a hash to make the artifact
         String md5 = af.getMd5Hash();
-        // @@@ Should also check for empty data hash
-        if (md5 == null || md5.isEmpty()) {
+        if (md5 == null || md5.isEmpty() || HashUtility.isNoDataMd5(md5)) {
             return null;
         }
 
