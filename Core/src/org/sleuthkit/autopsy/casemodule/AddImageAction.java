@@ -25,11 +25,15 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.MessageFormat;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
+import static javax.swing.Action.NAME;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.DialogDisplayer;
@@ -56,7 +60,8 @@ import org.sleuthkit.datamodel.Image;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
 @ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
-@ActionReferences(value = {@ActionReference(path = "Toolbars/Case", position = 100)})
+@ActionReferences(value = {
+    @ActionReference(path = "Toolbars/Case", position = 100)})
 @ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
 
@@ -116,26 +121,10 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         String optionsDlgTitle = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.title");
         String optionsDlgMessage = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            iterator = new AddImageWizardIterator(this);
-            wizardDescriptor = new WizardDescriptor(iterator);
-            wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
-            wizardDescriptor.putProperty(NAME, e);
-            wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
-
-            if (dialog != null) {
-                dialog.setVisible(false); // hide the old one
-            }
-            dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
-            Dimension d = dialog.getSize();
-            dialog.setSize(SIZE);
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            dialog.setVisible(true);
-            dialog.toFront();
-
-            // Do any cleanup that needs to happen (potentially: stopping the
-            //add-image process, reverting an image)
-            runCleanupTasks();
+            RootPaneContainer root = (RootPaneContainer) WindowManager.getDefault().getMainWindow();
+            root.getGlassPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            root.getGlassPane().setVisible(true);
+            new AddImageWorker(this, e).execute();
         }
     }
 
@@ -287,6 +276,56 @@ public final class AddImageAction extends CallableSystemAction implements Presen
          */
         public void disable() {
             cleanupSupport.removeChangeListener(this);
+        }
+    }
+
+    private final class AddImageWorker extends SwingWorker<Void, Void> {
+
+        private final AddImageAction theAction;
+        private final ActionEvent event;
+
+        private AddImageWorker(AddImageAction theImageAction, ActionEvent e) {
+            theAction = theImageAction;
+            event = e;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            /**
+             * Create and display a Run Ingest Modules wizard. Note that the
+             * argument in the title format string will be supplied by
+             * WizardDescriptor.Panel.getComponent().getName().
+             */
+            iterator = new AddImageWizardIterator(theAction);
+            wizardDescriptor = new WizardDescriptor(iterator);
+            wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
+            wizardDescriptor.putProperty(NAME, event);
+            wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
+
+            if (dialog != null) {
+                dialog.setVisible(false); // hide the old one
+            }
+            dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+            dialog.setSize(SIZE);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Unexpected exception while untagging file", ex); //NON-NLS
+            } finally {
+                RootPaneContainer root = (RootPaneContainer) WindowManager.getDefault().getMainWindow();
+                root.getGlassPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                root.getGlassPane().setVisible(false);
+                dialog.setVisible(true);
+                dialog.toFront();
+                // Do any cleanup that needs to happen (potentially: stopping the
+                //add-image process, reverting an image)
+                runCleanupTasks();
+            }
         }
     }
 }
