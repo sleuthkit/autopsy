@@ -69,7 +69,7 @@ final class SearchRunner {
     private static final String SEARCH_SCHEDULER_THREAD_NAME = "periodic-search-scheduler-%d";
 
     // maps a jobID to the search
-    private Map<Long, SearchJobInfo> jobs = new ConcurrentHashMap<>(); //guarded by "this"
+    private Map<Long, SearchJobInfo> jobs = new ConcurrentHashMap<>();
 
     SearchRunner() {
         defaultUpdateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
@@ -248,7 +248,7 @@ final class SearchRunner {
     }
 
     /**
-     * Task triggered re-search for each job (does a single index commit first)
+     * Task to perform periodic searches for each job (does a single index commit first)
      */
     private final class PeriodicSearchTask implements Runnable {
 
@@ -296,12 +296,12 @@ final class SearchRunner {
                                 NbBundle.getMessage(this.getClass(),
                                         "SearchRunner.Searcher.done.err.msg"), ex.getMessage()));
                     }// catch and ignore if we were cancelled
-                    catch (java.util.concurrent.CancellationException ex) {
+                      catch (java.util.concurrent.CancellationException ex) {
                     }
                 }
             }
             stopWatch.stop();
-            logger.log(Level.INFO, "All periodic searches took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
+            logger.log(Level.INFO, "All periodic searches cumulatively took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
             
             // calculate "hold off" time
             final long timeToTextSearchMs = getTimeToNextPeriodicSearch(stopWatch.getElapsedTimeSecs()); // ELDEBUG
