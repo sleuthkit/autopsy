@@ -47,8 +47,10 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION;
@@ -106,8 +108,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         drp.open();
         drpExplorerManager = drp.getExplorerManager();
-        drpExplorerManager.addPropertyChangeListener(evt
-                -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
+        drpExplorerManager.addPropertyChangeListener(evt ->
+                viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
     }
 
     /**
@@ -463,10 +465,26 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public boolean isSupported(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        return ((artifact != null)
-                && ((artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID())
-                || (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID())));
+        BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+        if (nodeArtifact != null && nodeArtifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+            try {
+                BlackboardAttribute attribute = nodeArtifact.getAttribute(new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    final long associatedArtifactID = attribute.getValueLong();
+                    BlackboardArtifact assoc = (BlackboardArtifact) nodeArtifact.getSleuthkitCase().getArtifactByArtifactID(associatedArtifactID);
+                    if ((assoc != null)
+                            && ((assoc.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID())
+                            || (assoc.getArtifactTypeID() == TSK_MESSAGE.getTypeID()))) {
+                        return true;
+                    }
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
+            }
+        }
+        return ((nodeArtifact != null)
+                && ((nodeArtifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID())
+                || (nodeArtifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID())));
     }
 
     @Override
