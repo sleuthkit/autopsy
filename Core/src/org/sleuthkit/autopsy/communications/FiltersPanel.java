@@ -69,9 +69,18 @@ final public class FiltersPanel extends javax.swing.JPanel {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
 
+    /**
+     * Listens to ingest events to enable refresh button
+     */
     private final PropertyChangeListener ingestListener;
-    private final ItemListener validationListener;
     private boolean needsRefresh;
+
+    /**
+     * Listen to check box state changes and validates that at least one box is
+     * selected for device and account type ( other wise there will be no
+     * results)
+     */
+    private final ItemListener validationListener;
 
     @NbBundle.Messages({"refreshText=Refresh Results",
         "applyText=Apply"})
@@ -93,15 +102,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         );
 
         updateTimeZone();
-        validationListener = itemEvent -> {
-            boolean someDevice = devicesMap.values().stream().anyMatch(JCheckBox::isSelected);
-            boolean someAccountType = accountTypeMap.values().stream().anyMatch(JCheckBox::isSelected);
-            deviceRequiredLabel.setVisible(someDevice == false);
-            accountTypeRequiredLabel.setVisible(someAccountType == false);
-
-            applyFiltersButton.setEnabled(someDevice && someAccountType);
-            refreshButton.setEnabled(someDevice && someAccountType && needsRefresh);
-        };
+        validationListener = itemEvent -> validateFilters();
 
         updateFilters();
         setAllDevicesSelected(true);
@@ -116,12 +117,30 @@ final public class FiltersPanel extends javax.swing.JPanel {
             if (eventType.equals(DATA_ADDED.toString())) {
                 updateFilters();
                 needsRefresh = true;
-                refreshButton.setEnabled(true);
+                validateFilters();
             }
         };
 
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
+    }
+
+    /**
+     * Validate that filters are in a consistent state and will result in some
+     * results. Checks that at least one device and at least one account type is
+     * selected. Disables the apply and refresh button and shows warnings if the
+     * filters are not valid.
+     */
+    private void validateFilters() {
+        boolean someDevice = devicesMap.values().stream().anyMatch(JCheckBox::isSelected);
+        boolean someAccountType = accountTypeMap.values().stream().anyMatch(JCheckBox::isSelected);
+
+        deviceRequiredLabel.setVisible(someDevice == false);
+        accountTypeRequiredLabel.setVisible(someAccountType == false);
+
+        applyFiltersButton.setEnabled(someDevice && someAccountType);
+        refreshButton.setEnabled(someDevice && someAccountType && needsRefresh);
+
     }
 
     /**
@@ -473,7 +492,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         }
 
         needsRefresh = false;
-        refreshButton.setEnabled(false);
+        validateFilters();
     }
 
     /**
@@ -496,9 +515,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
      * @return an AccountTypeFilter
      */
     private AccountTypeFilter getAccountTypeFilter() {
-        AccountTypeFilter accountTypeFilter = new AccountTypeFilter(accountTypeMap.entrySet().stream()
-                .filter(entry -> entry.getValue().isSelected())
-                .map(entry -> entry.getKey()).collect(Collectors.toSet()));
+        AccountTypeFilter accountTypeFilter = new AccountTypeFilter(
+                accountTypeMap.entrySet().stream()
+                        .filter(entry -> entry.getValue().isSelected())
+                        .map(entry -> entry.getKey())
+                        .collect(Collectors.toSet()));
         return accountTypeFilter;
     }
 
