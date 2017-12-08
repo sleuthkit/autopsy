@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,10 +85,13 @@ public interface DataResultViewer {
 
     /**
      * Set a custom content viewer to respond to selection events from this
-     * result viewer. If not set, the default content viewer is user
+     * result viewer. If not set, the default content viewer is used
      *
      * @param contentViewer content viewer to respond to selection events from
      *                      this viewer
+     *
+     * @deprecated All implementations of this in the standard DataResultViewers are now no-ops.
      */
+    @Deprecated
     public void setContentViewer(DataContent contentViewer);
 }

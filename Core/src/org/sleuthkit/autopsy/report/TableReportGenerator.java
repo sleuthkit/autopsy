@@ -170,21 +170,27 @@ class TableReportGenerator {
                                 return "unknown";
                             }
                         });
-                for (String accountType : groupedArtifacts.keySet()) {
+                for (String accountTypeStr : groupedArtifacts.keySet()) {
                     /* If the report is a ReportHTML, the data type name
                      * eventualy makes it to useDataTypeIcon which expects but
                      * does not require a artifact name, so we make a synthetic
                      * compund name by appending a ":" and the account type.
                      */
-                    String accountDisplayname = accountType;
-                    for (Account.Type acct : Account.Type.values()) {
-                        if (acct.equals(Account.Type.valueOf(accountType))) {
-                            accountDisplayname = acct.getDisplayName();
-                            break;
+                    String accountDisplayname = accountTypeStr;
+                    if (accountTypeStr != null) {
+                        try {
+                            Account.Type acctType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountType(accountTypeStr);
+                            if (acctType != null) {
+                                 accountDisplayname = acctType.getDisplayName();
+                            }
+                        }
+                        catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Unable to get display name for account type " + accountTypeStr, ex);   
                         }
                     }
+                    
                     final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountDisplayname;
-                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
+                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountTypeStr)), type, compundDataTypeName, comment);
                 }
             } else {
                 //all other artifact types are sent to writeTableForDataType directly

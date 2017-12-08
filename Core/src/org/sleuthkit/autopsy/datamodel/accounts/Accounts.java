@@ -71,6 +71,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -294,13 +295,13 @@ final public class Accounts implements AutopsyVisitableItem {
             @Override
             protected Node[] createNodes(String key) {
                 try {
-                    Account.Type accountType = Account.Type.valueOf(key);
-                    switch (accountType) {
-                        case CREDIT_CARD:
-                            return new Node[]{new CreditCardNumberAccountTypeNode()};
-                        default:
-                            return new Node[]{new DefaultAccountTypeNode(key)};
+                    String accountType = key;
+                    if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+                         return new Node[]{new CreditCardNumberAccountTypeNode()};
+                    } else {
+                          return new Node[]{new DefaultAccountTypeNode(key)};
                     }
+                    
                 } catch (IllegalArgumentException ex) {
                     LOGGER.log(Level.WARNING, "Unknown account type: {0}", key);
                     //Flesh out what happens with other account types here.
@@ -547,7 +548,7 @@ final public class Accounts implements AutopsyVisitableItem {
                         + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
                         + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                         + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                        + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
+                        + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
                         + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                         + getRejectedArtifactFilterClause()
                         + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
@@ -607,7 +608,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
                     + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
+                    + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
@@ -1427,7 +1428,7 @@ final public class Accounts implements AutopsyVisitableItem {
             final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
             artifacts.forEach(artifact -> {
                 try {
-                    skCase.setReviewStatus(artifact, newStatus);
+                    skCase.setReviewStatus(artifact, newStatus);                    
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }
