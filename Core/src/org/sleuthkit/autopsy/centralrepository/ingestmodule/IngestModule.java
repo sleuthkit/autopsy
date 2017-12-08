@@ -47,7 +47,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 
 /**
@@ -127,7 +126,7 @@ class IngestModule implements FileIngestModule {
                     eamDataSource,
                     af.getParentPath() + af.getName(),
                     null,
-                    af.getKnown(),
+                    TskData.FileKnown.UNKNOWN,
                     CorrelationAttributeInstance.GlobalStatus.LOCAL
             );
             eamArtifact.addInstance(cefi);

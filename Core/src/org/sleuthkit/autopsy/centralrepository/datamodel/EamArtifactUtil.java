@@ -259,8 +259,7 @@ public class EamArtifactUtil {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,
-                    // @@@ Shouldn't this use the knownStatus argument?
-                    TskData.FileKnown.BAD,
+                    knownStatus,
                     CorrelationAttributeInstance.GlobalStatus.LOCAL
             );
             eamArtifact.addInstance(cei);
