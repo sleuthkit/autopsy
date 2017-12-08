@@ -28,28 +28,11 @@ import org.sleuthkit.datamodel.TskData;
  * CorrelationAttribute. Includes its data source, path, etc.
  *
  */
-@Messages({"EamArtifactInstances.globalStatus.local=Local",
-    "EamArtifactInstances.globalStatus.global=Global",
+@Messages({
     "EamArtifactInstances.knownStatus.bad=Bad",
     "EamArtifactInstances.knownStatus.known=Known",
     "EamArtifactInstances.knownStatus.unknown=Unknown"})
 public class CorrelationAttributeInstance implements Serializable {
-
-    public enum GlobalStatus {
-        LOCAL(Bundle.EamArtifactInstances_globalStatus_local()),
-        GLOBAL(Bundle.EamArtifactInstances_globalStatus_global());
-
-        private final String globalStatus;
-
-        private GlobalStatus(String globalStatus) {
-            this.globalStatus = globalStatus;
-        }
-
-        @Override
-        public String toString() {
-            return globalStatus;
-        }
-    }
 
     private static final long serialVersionUID = 1L;
 
@@ -59,13 +42,12 @@ public class CorrelationAttributeInstance implements Serializable {
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
-    private GlobalStatus globalStatus;
 
     public CorrelationAttributeInstance(
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource
     ) {
-        this(-1, eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this(-1, eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN);
     }
 
     public CorrelationAttributeInstance(
@@ -73,7 +55,7 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath
     ) {
-        this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
     }
 
     public CorrelationAttributeInstance(
@@ -82,7 +64,7 @@ public class CorrelationAttributeInstance implements Serializable {
             String filePath,
             String comment
     ) {
-        this(-1, eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this(-1, eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN);
     }
 
     public CorrelationAttributeInstance(
@@ -90,20 +72,18 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus,
-            GlobalStatus globalStatus
+            TskData.FileKnown knownStatus
     ) {
-        this(-1, eamCase, eamDataSource, filePath, comment, knownStatus, globalStatus);
+        this(-1, eamCase, eamDataSource, filePath, comment, knownStatus);
     }
 
-    public CorrelationAttributeInstance(
+    CorrelationAttributeInstance(
             int ID,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus,
-            GlobalStatus globalStatus
+            TskData.FileKnown knownStatus
     ) {
         this.ID = ID;
         this.correlationCase = eamCase;
@@ -112,7 +92,6 @@ public class CorrelationAttributeInstance implements Serializable {
         this.filePath = filePath.toLowerCase();
         this.comment = comment;
         this.knownStatus = knownStatus;
-        this.globalStatus = globalStatus;
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
@@ -120,7 +99,6 @@ public class CorrelationAttributeInstance implements Serializable {
                 && (this.getCorrelationCase().equals(otherInstance.getCorrelationCase()))
                 && (this.getCorrelationDataSource().equals(otherInstance.getCorrelationDataSource()))
                 && (this.getFilePath().equals(otherInstance.getFilePath()))
-                && (this.getGlobalStatus().equals(otherInstance.getGlobalStatus()))
                 && (this.getKnownStatus().equals(otherInstance.getKnownStatus()))
                 && (this.getComment().equals(otherInstance.getComment())));
     }
@@ -131,7 +109,6 @@ public class CorrelationAttributeInstance implements Serializable {
                 + this.getCorrelationCase().getCaseUUID()
                 + this.getCorrelationDataSource().getName()
                 + this.getFilePath()
-                + this.getGlobalStatus()
                 + this.getKnownStatus()
                 + this.getComment();
     }
@@ -197,19 +174,4 @@ public class CorrelationAttributeInstance implements Serializable {
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
     }
-
-    /**
-     * @return the globalStatus
-     */
-    public GlobalStatus getGlobalStatus() {
-        return globalStatus;
-    }
-
-    /**
-     * @param globalStatus the globalStatus to set
-     */
-    public void setGlobalStatus(GlobalStatus globalStatus) {
-        this.globalStatus = globalStatus;
-    }
-
 }

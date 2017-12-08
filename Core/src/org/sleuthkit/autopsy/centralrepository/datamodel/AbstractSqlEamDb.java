@@ -2172,8 +2172,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
-                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
-                CorrelationAttributeInstance.GlobalStatus.LOCAL
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status"))
         );
 
         return eamArtifactInstance;
