@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
@@ -53,6 +54,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     private static final long INVALID_DOCUMENT_ID = 0L;
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
+    public static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
@@ -173,14 +175,13 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
         }
         panel.updateControls(currentSource);
-       
+
         String contentName = "";
         if (content != null) {
             contentName = content.getName();
         }
         setPanel(contentName, sources);
-        
-        
+
     }
 
     static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
@@ -261,7 +262,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-      
+
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -274,14 +275,22 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         /*
-         * Is there a credit card artifact in the lookup
+         * Is there a credit card or keyword hit artifact in the lookup
          */
         Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
         if (artifacts != null) {
             for (BlackboardArtifact art : artifacts) {
                 final int artifactTypeID = art.getArtifactTypeID();
-                if (artifactTypeID == TSK_ACCOUNT.getTypeID()
-                        || artifactTypeID == TSK_KEYWORD_HIT.getTypeID()) {
+                if (artifactTypeID == TSK_ACCOUNT.getTypeID()) {
+                    try {
+                        BlackboardAttribute attribute = art.getAttribute(TSK_ACCOUNT_TYPE);
+                        if (attribute != null && Account.Type.CREDIT_CARD.getTypeName().equals(attribute.getValueString())) {
+                            return true;
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + art.getArtifactID(), ex);
+                    }
+                } else if (artifactTypeID == TSK_KEYWORD_HIT.getTypeID()) {
                     return true;
                 }
             }
