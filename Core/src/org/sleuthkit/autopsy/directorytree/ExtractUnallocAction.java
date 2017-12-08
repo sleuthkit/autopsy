@@ -147,7 +147,13 @@ final class ExtractUnallocAction extends AbstractAction {
                             uw.execute();
                         }
                     } else {
-                        logger.log(Level.WARNING, "Tried to get unallocated content from volume ID but " + u.VolumeId + u.llf == null ? "its list of unallocated files was null" : "the volume is locked"); //NON-NLS
+                        if(lockedVols.contains(u.getFileName())){
+                            logger.log(Level.WARNING, "Tried to get unallocated content but the volume is locked");  // NON_NLS
+                        } else if (u.llf == null){
+                            logger.log(Level.SEVERE, "Tried to get unallocated content but the list of unallocated files was null"); //NON-NLS
+                        } else {
+                            logger.log(Level.INFO, "No unallocated files found in volume"); //NON-NLS
+                        }
                     }
                 }
                 if (isImage && !copyList.isEmpty()) {
@@ -449,7 +455,7 @@ final class ExtractUnallocAction extends AbstractAction {
         public List<LayoutFile> visit(Directory dir) {
             try {
                 for (Content c : dir.getChildren()) {
-                    if (c instanceof VirtualDirectory) {
+                    if ((c instanceof VirtualDirectory) && (c.getName().equals(VirtualDirectory.NAME_UNALLOC))) {
                         return c.accept(this);
                     }
                 }
