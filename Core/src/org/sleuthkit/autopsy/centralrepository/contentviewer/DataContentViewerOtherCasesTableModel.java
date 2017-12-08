@@ -36,8 +36,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.path=Path",
         "DataContentViewerOtherCasesTableModel.type=Correlation Type",
         "DataContentViewerOtherCasesTableModel.value=Correlation Value",
-        "DataContentViewerOtherCasesTableModel.scope=Scope",
-        "DataContentViewerOtherCasesTableModel.known=Known",
+        "DataContentViewerOtherCasesTableModel.known=Tagged",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
     enum TableColumns {
@@ -48,7 +47,6 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 100),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
         KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
-        SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 50),
         FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
         COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
         DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
@@ -155,9 +153,6 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
                 break;
             case VALUE:
                 value = eamArtifact.getCorrelationValue();
-                break;
-            case SCOPE:
-                value = eamArtifactInstance.getGlobalStatus().toString();
                 break;
             case KNOWN:
                 value = eamArtifactInstance.getKnownStatus().getName();
