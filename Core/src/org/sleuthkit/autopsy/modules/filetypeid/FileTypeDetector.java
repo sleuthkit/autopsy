@@ -54,6 +54,7 @@ public class FileTypeDetector {
 
     private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
     private static final Tika tika = new Tika();
+    private static final int SLACK_FILE_THRESHOLD = 4096;
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
     private static SortedSet<String> tikaDetectedTypes;
@@ -247,7 +248,7 @@ public class FileTypeDetector {
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                || ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) && file.getSize() < SLACK_FILE_THRESHOLD)) {
             mimeType = MimeTypes.OCTET_STREAM;
         }
 

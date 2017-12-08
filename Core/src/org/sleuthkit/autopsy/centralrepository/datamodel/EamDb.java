@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
  * Main interface for interacting with the database
@@ -29,6 +32,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public interface EamDb {
 
     public static final int SCHEMA_VERSION = 1;
+    public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
+			= new CaseDbSchemaVersionNumber(1, 1);
 
     /**
      * Get the instance
@@ -593,4 +598,20 @@ public interface EamDb {
      * @throws EamDbException
      */
     public CorrelationAttribute.Type getCorrelationTypeById(int typeId) throws EamDbException;
+    
+    /**
+     * Upgrade the schema of the database (if needed)
+     * @throws EamDbException 
+     */
+    public void upgradeSchema() throws EamDbException, SQLException;
+    
+    /**
+     * Gets an exclusive lock (if applicable).
+     * Will return the lock if successful, null if unsuccessful because locking
+     * isn't supported, and throw an exception if we should have been able to get the
+     * lock but failed (meaning the database is in use).
+     * @return the lock, or null if locking is not supported
+     * @throws EamDbException if the coordination service is running but we fail to get the lock
+     */
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException;
 }

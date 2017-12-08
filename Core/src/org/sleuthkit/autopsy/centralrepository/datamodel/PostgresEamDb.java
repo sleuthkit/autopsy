@@ -21,8 +21,13 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -184,6 +189,37 @@ public class PostgresEamDb extends AbstractSqlEamDb {
     @Override
     protected String getConflictClause() {
         return CONFLICT_CLAUSE;
+    }
+    
+    /**
+     * Gets an exclusive lock (if applicable).
+     * Will return the lock if successful, null if unsuccessful because locking
+     * isn't supported, and throw an exception if we should have been able to get the
+     * lock but failed (meaning the database is in use).
+     * @return the lock, or null if locking is not supported
+     * @throws EamDbException if the coordination service is running but we fail to get the lock
+     */
+    @Override
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException{
+        try {
+            // First check if multi user mode is enabled - if not there's no point trying to get a lock
+            if( ! UserPreferences.getIsMultiUserModeEnabled()){
+                return null;
+            }
+            
+            String databaseNodeName = dbSettings.getHost() + "_" + dbSettings.getDbName();
+            CoordinationService.Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.CENTRAL_REPO, databaseNodeName, 5, TimeUnit.MINUTES);
+
+            if(lock != null){
+                return lock;
+            }
+            throw new EamDbException("Error acquiring database lock");
+        } catch (InterruptedException ex){
+            throw new EamDbException("Error acquiring database lock");
+        } catch (CoordinationService.CoordinationServiceException ex) {
+            // This likely just means the coordination service isn't running, which is ok
+            return null;
+        }
     }
 
 }

@@ -25,7 +25,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.SCHEMA_VERSION;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.CURRENT_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -133,20 +135,33 @@ public class EamDbUtil {
      *
      * @return true on success, else false
      */
-    public static boolean insertSchemaVersion(Connection conn) {
-        PreparedStatement preparedStatement = null;
+    static boolean updateSchemaVersion(Connection conn) {
+
+        Statement statement;
+        ResultSet resultSet;
         String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
         try {
-            preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, "SCHEMA_VERSION");
-            preparedStatement.setString(2, String.valueOf(SCHEMA_VERSION));
-            preparedStatement.executeUpdate();
+            statement = conn.createStatement();
+            resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_VERSION'");
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMajor() + " WHERE id=" + id);
+            } else {
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            }
+
+            resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
+            } else {
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
             return false;
-        } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
         }
+
         return true;
     }
 
@@ -174,6 +189,66 @@ public class EamDbUtil {
             EamDbUtil.closeResultSet(resultSet);
         }
         return true;
+    }
+
+    /**
+     * Upgrade the current central reposity to the newest version. If the upgrade
+     * fails, the central repository will be disabled and the current settings
+     * will be cleared.
+     *
+     * @return true if the upgrade succeeds, false otherwise.
+     */
+    public static boolean upgradeDatabase() {
+        if (!EamDb.isEnabled()) {
+            return true;
+        }
+        
+        CoordinationService.Lock lock = null;
+        try {
+            EamDb db = EamDb.getInstance();
+
+            // This may return null if locking isn't supported, which is fine. It will
+            // throw an exception if locking is supported but we can't get the lock
+            // (meaning the database is in use by another user)
+            lock = db.getExclusiveMultiUserDbLock();
+
+            db.upgradeSchema();
+
+        } catch (EamDbException | SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
+
+            // Disable the central repo and clear the current settings.
+            try{
+                if (null != EamDb.getInstance()) {
+                    EamDb.getInstance().shutdownConnections();
+                }
+            } catch (EamDbException ex2){
+                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
+            } 
+            setUseCentralRepo(false);
+            EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
+            EamDbPlatformEnum.saveSelectedPlatform();
+            
+            return false;
+        } finally {
+            if(lock != null){
+                try{
+                    lock.release();
+                } catch (CoordinationServiceException ex){
+                    LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get the default organization name
+     *
+     * @return the default org name
+     */
+    static String getDefaultOrgName() {
+        return DEFAULT_ORG_NAME;
     }
 
     /**

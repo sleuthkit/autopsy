@@ -37,6 +37,9 @@
                 <package>com.apple.eawt</package>
                 <package>com.apple.eawt.event</package>
                 <package>com.apple.eio</package>
+                <package>com.github.lgooddatepicker.components</package>
+                <package>com.github.lgooddatepicker.optionalusertools</package>
+                <package>com.github.lgooddatepicker.zinternaltools</package>
                 <package>com.github.mustachejava</package>
                 <package>com.github.mustachejava.codes</package>
                 <package>com.github.mustachejava.functions</package>
@@ -675,6 +678,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/compiler-0.9.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/compiler-0.9.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-iff-3.2.jar</runtime-relative-path>
