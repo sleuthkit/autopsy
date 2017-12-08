@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import com.github.lgooddatepicker.datetimepicker.DateTimePicker;
+import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
-import com.github.lgooddatepicker.timepicker.TimePickerSettings;
+import com.github.lgooddatepicker.components.TimePickerSettings;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.FocusEvent;
@@ -632,7 +632,7 @@ public final class FileExporterSettingsPanel extends JPanel {
         comboBoxValueType.setEnabled(null == attributeTypeMap.get(artifactConditionToPopulateWith.getAttributeTypeName()));
         if (valueType == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
             Instant instant = Instant.ofEpochMilli(artifactConditionToPopulateWith.getDateTimeValue().toDate().getTime());
-            dateTimePicker.setDateTime(LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
+            dateTimePicker.setDateTimeStrict(LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
         } else {
             tbAttributeValue.setText(artifactConditionToPopulateWith.getStringRepresentationOfValue());
         }
@@ -650,30 +650,30 @@ public final class FileExporterSettingsPanel extends JPanel {
         mainPanel = new javax.swing.JPanel();
         tbRootDirectory = new javax.swing.JTextField();
         pnEditRule = new javax.swing.JPanel();
-        comboBoxMimeValue = new javax.swing.JComboBox<String>();
+        comboBoxMimeValue = new javax.swing.JComboBox<>();
         cbMimeType = new javax.swing.JCheckBox();
         spFileSizeValue = new javax.swing.JSpinner();
-        comboBoxFileSizeUnits = new javax.swing.JComboBox<String>();
+        comboBoxFileSizeUnits = new javax.swing.JComboBox<>();
         cbFileSize = new javax.swing.JCheckBox();
-        comboBoxFileSizeComparison = new javax.swing.JComboBox<String>();
-        comboBoxMimeTypeComparison = new javax.swing.JComboBox<String>();
+        comboBoxFileSizeComparison = new javax.swing.JComboBox<>();
+        comboBoxMimeTypeComparison = new javax.swing.JComboBox<>();
         tbRuleName = new javax.swing.JTextField();
         bnSaveRule = new javax.swing.JButton();
-        comboBoxArtifactName = new javax.swing.JComboBox<String>();
-        comboBoxAttributeName = new javax.swing.JComboBox<String>();
-        comboBoxAttributeComparison = new javax.swing.JComboBox<String>();
+        comboBoxArtifactName = new javax.swing.JComboBox<>();
+        comboBoxAttributeName = new javax.swing.JComboBox<>();
+        comboBoxAttributeComparison = new javax.swing.JComboBox<>();
         tbAttributeValue = new javax.swing.JTextField();
         bnAddAttribute = new javax.swing.JButton();
-        comboBoxValueType = new javax.swing.JComboBox<String>();
+        comboBoxValueType = new javax.swing.JComboBox<>();
         cbAttributeType = new javax.swing.JCheckBox();
-        dateTimePicker = new DateTimePicker(null, timeSettings);
         lbArtifact = new javax.swing.JLabel();
         lbAttribute = new javax.swing.JLabel();
         bnDeleteAttribute = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        lsAttributeList = new javax.swing.JList<String>();
+        lsAttributeList = new javax.swing.JList<>();
         lbRuleName = new javax.swing.JLabel();
         lbSaveRuleHelper = new javax.swing.JLabel();
+        dateTimePicker = new DateTimePicker(null, timeSettings);
         bnBrowseReportDirectory = new javax.swing.JButton();
         tbReportDirectory = new javax.swing.JTextField();
         ruleListScrollPane = new javax.swing.JScrollPane();
@@ -690,11 +690,11 @@ public final class FileExporterSettingsPanel extends JPanel {
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
         setName(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.Title")); // NOI18N
 
-        mainPanel.setAutoscrolls(true);
         mainPanel.setPreferredSize(new java.awt.Dimension(657, 425));
+        mainPanel.setAutoscrolls(true);
 
-        tbRootDirectory.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.RuleOutputTooltip_1")); // NOI18N
         tbRootDirectory.setMaximumSize(new java.awt.Dimension(2000, 2000));
+        tbRootDirectory.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.RuleOutputTooltip_1")); // NOI18N
 
         pnEditRule.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         pnEditRule.setAutoscrolls(true);
@@ -716,7 +716,7 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        spFileSizeValue.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1024), Integer.valueOf(0), null, Integer.valueOf(1)));
+        spFileSizeValue.setModel(new javax.swing.SpinnerNumberModel(1024, 0, null, 1));
         spFileSizeValue.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.FileSizeValueToolTip_1")); // NOI18N
 
         comboBoxFileSizeUnits.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.FileSizeUnitToolTip_1")); // NOI18N
@@ -729,15 +729,15 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        comboBoxFileSizeComparison.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.FileSizeComparisonTooltip_1")); // NOI18N
         comboBoxFileSizeComparison.setMinimumSize(new java.awt.Dimension(32, 20));
+        comboBoxFileSizeComparison.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.FileSizeComparisonTooltip_1")); // NOI18N
 
-        comboBoxMimeTypeComparison.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.MimeTypeComparisonTooltip_1")); // NOI18N
         comboBoxMimeTypeComparison.setMinimumSize(new java.awt.Dimension(32, 20));
+        comboBoxMimeTypeComparison.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.MimeTypeComparisonTooltip_1")); // NOI18N
 
-        tbRuleName.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.CurrentlySelectedRuleNameTooltip_1")); // NOI18N
         tbRuleName.setMaximumSize(new java.awt.Dimension(10, 1000));
         tbRuleName.setPreferredSize(new java.awt.Dimension(733, 20));
+        tbRuleName.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.CurrentlySelectedRuleNameTooltip_1")); // NOI18N
         tbRuleName.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent evt) {
                 tbRuleNameKeyTyped(evt);
@@ -746,8 +746,8 @@ public final class FileExporterSettingsPanel extends JPanel {
 
         bnSaveRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/save-icon.png"))); // NOI18N
         bnSaveRule.setText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.SaveText")); // NOI18N
-        bnSaveRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.SaveTooltip_1")); // NOI18N
         bnSaveRule.setEnabled(false);
+        bnSaveRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.SaveTooltip_1")); // NOI18N
         bnSaveRule.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnSaveRuleActionPerformed(evt);
@@ -772,17 +772,17 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        comboBoxAttributeComparison.setToolTipText("Select the conditional operator");
         comboBoxAttributeComparison.setMinimumSize(new java.awt.Dimension(32, 23));
+        comboBoxAttributeComparison.setToolTipText("Select the conditional operator");
 
-        tbAttributeValue.setToolTipText("Type a value here");
         tbAttributeValue.setMinimumSize(new java.awt.Dimension(6, 23));
         tbAttributeValue.setPreferredSize(new java.awt.Dimension(6, 23));
+        tbAttributeValue.setToolTipText("Type a value here");
 
         bnAddAttribute.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/left-arrow-16-icon.png"))); // NOI18N
         bnAddAttribute.setText("Add Attribute");
-        bnAddAttribute.setToolTipText("Click to add an attribute to the current rule");
         bnAddAttribute.setEnabled(false);
+        bnAddAttribute.setToolTipText("Click to add an attribute to the current rule");
         bnAddAttribute.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnAddAttributeActionPerformed(evt);
@@ -804,15 +804,13 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        dateTimePicker.setToolTipText("Choose a date and time");
-
         lbArtifact.setText("Artifact");
 
         lbAttribute.setText("Attribute");
 
         bnDeleteAttribute.setText("Delete Attribute");
-        bnDeleteAttribute.setToolTipText("Click to remove the selected attribute");
         bnDeleteAttribute.setEnabled(false);
+        bnDeleteAttribute.setToolTipText("Click to remove the selected attribute");
         bnDeleteAttribute.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnDeleteAttributeActionPerformed(evt);
@@ -828,6 +826,8 @@ public final class FileExporterSettingsPanel extends JPanel {
 
         lbSaveRuleHelper.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lbSaveRuleHelper.setText("To save, a rule must have a name and at least one condition.");
+
+        dateTimePicker.setToolTipText("Choose a date and time");
 
         javax.swing.GroupLayout pnEditRuleLayout = new javax.swing.GroupLayout(pnEditRule);
         pnEditRule.setLayout(pnEditRuleLayout);
@@ -846,12 +846,6 @@ public final class FileExporterSettingsPanel extends JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(bnSaveRule, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(pnEditRuleLayout.createSequentialGroup()
-                                .addComponent(comboBoxAttributeComparison, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(dateTimePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tbAttributeValue, javax.swing.GroupLayout.DEFAULT_SIZE, 158, Short.MAX_VALUE))
-                            .addGroup(pnEditRuleLayout.createSequentialGroup()
                                 .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(pnEditRuleLayout.createSequentialGroup()
                                         .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -867,7 +861,13 @@ public final class FileExporterSettingsPanel extends JPanel {
                                     .addGroup(pnEditRuleLayout.createSequentialGroup()
                                         .addComponent(bnAddAttribute, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(bnDeleteAttribute)))
+                                        .addComponent(bnDeleteAttribute))
+                                    .addGroup(pnEditRuleLayout.createSequentialGroup()
+                                        .addComponent(comboBoxAttributeComparison, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(dateTimePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(tbAttributeValue, javax.swing.GroupLayout.DEFAULT_SIZE, 158, Short.MAX_VALUE)))
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(pnEditRuleLayout.createSequentialGroup()
                         .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -910,17 +910,15 @@ public final class FileExporterSettingsPanel extends JPanel {
                         .addGap(78, 78, 78)
                         .addComponent(lbAttribute)
                         .addGap(8, 8, 8)
-                        .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(pnEditRuleLayout.createSequentialGroup()
-                                .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(comboBoxAttributeName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(comboBoxArtifactName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(comboBoxValueType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(tbAttributeValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(dateTimePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(comboBoxAttributeComparison, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(comboBoxAttributeName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(comboBoxArtifactName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(comboBoxValueType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(tbAttributeValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(comboBoxAttributeComparison, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(dateTimePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnEditRuleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(bnAddAttribute)
@@ -953,14 +951,14 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
         });
 
-        tbReportDirectory.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.ReportOutputFolderTooltip_1")); // NOI18N
         tbReportDirectory.setMaximumSize(new java.awt.Dimension(2000, 2000));
+        tbReportDirectory.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.ReportOutputFolderTooltip_1")); // NOI18N
 
         javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
         trRuleList.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
-        trRuleList.setToolTipText("This tree shows the rules to collect files for automatic file export");
         trRuleList.setName("trRuleList"); // NOI18N
         trRuleList.setShowsRootHandles(true);
+        trRuleList.setToolTipText("This tree shows the rules to collect files for automatic file export");
         ruleListScrollPane.setViewportView(trRuleList);
         trRuleList.getAccessibleContext().setAccessibleParent(ruleListScrollPane);
 
@@ -1039,8 +1037,8 @@ public final class FileExporterSettingsPanel extends JPanel {
 
         bnDeleteRule.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/minus-icon.png"))); // NOI18N
         bnDeleteRule.setText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.DeleteText")); // NOI18N
-        bnDeleteRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.DeleteTooltip_1")); // NOI18N
         bnDeleteRule.setEnabled(false);
+        bnDeleteRule.setToolTipText(org.openide.util.NbBundle.getMessage(FileExporterSettingsPanel.class, "FileExporterSettingsPanel.DeleteTooltip_1")); // NOI18N
         bnDeleteRule.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnDeleteRuleActionPerformed(evt);
@@ -1260,7 +1258,7 @@ public final class FileExporterSettingsPanel extends JPanel {
             }
 
             if (intrinsicType == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-                LocalDateTime localDateTime = dateTimePicker.getDateTime();
+                LocalDateTime localDateTime = dateTimePicker.getDateTimeStrict();
                 if (localDateTime == null) {
                     throw new IllegalArgumentException("Bad date/time combination");
                 }
@@ -2028,7 +2026,7 @@ public final class FileExporterSettingsPanel extends JPanel {
     private javax.swing.JComboBox<String> comboBoxMimeTypeComparison;
     private javax.swing.JComboBox<String> comboBoxMimeValue;
     private javax.swing.JComboBox<String> comboBoxValueType;
-    private com.github.lgooddatepicker.datetimepicker.DateTimePicker dateTimePicker;
+    private com.github.lgooddatepicker.components.DateTimePicker dateTimePicker;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lbArtifact;
     private javax.swing.JLabel lbAttribute;
