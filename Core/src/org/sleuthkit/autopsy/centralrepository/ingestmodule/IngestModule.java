@@ -126,8 +126,7 @@ class IngestModule implements FileIngestModule {
                     eamDataSource,
                     af.getParentPath() + af.getName(),
                     null,
-                    TskData.FileKnown.UNKNOWN,  // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
-                    CorrelationAttributeInstance.GlobalStatus.LOCAL
+                    TskData.FileKnown.UNKNOWN  // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);

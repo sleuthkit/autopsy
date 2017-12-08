@@ -105,8 +105,7 @@ public class EamArtifactUtil {
                         CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
                         bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
-                        TskData.FileKnown.UNKNOWN,
-                        CorrelationAttributeInstance.GlobalStatus.LOCAL
+                        TskData.FileKnown.UNKNOWN
                 );
 
                 // add the instance details
@@ -259,8 +258,7 @@ public class EamArtifactUtil {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,
-                    knownStatus,
-                    CorrelationAttributeInstance.GlobalStatus.LOCAL
+                    knownStatus
             );
             eamArtifact.addInstance(cei);
             return eamArtifact;

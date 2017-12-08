@@ -453,7 +453,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getReferenceInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
             eamGlobalFileInstances.forEach((eamGlobalFileInstance) -> {
                 eamArtifactInstances.add(new CorrelationAttributeInstance(
-                        null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus(), CorrelationAttributeInstance.GlobalStatus.GLOBAL
+                        null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus()
                 ));
             });
             return eamArtifactInstances;
