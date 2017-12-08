@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.ImmutableSet;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -69,11 +70,15 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
 
     private final PropertyChangeListener ingestListener;
+    private final ItemListener validationListener;
+    private boolean needsRefresh;
 
     @NbBundle.Messages({"refreshText=Refresh Results",
         "applyText=Apply"})
     public FiltersPanel() {
         initComponents();
+        deviceRequiredLabel.setVisible(false);
+        accountTypeRequiredLabel.setVisible(false);
         startDatePicker.setDate(LocalDate.now().minusWeeks(3));
         endDatePicker.setDateToToday();
         startDatePicker.getSettings().setVetoPolicy(
@@ -88,6 +93,16 @@ final public class FiltersPanel extends javax.swing.JPanel {
         );
 
         updateTimeZone();
+        validationListener = itemEvent -> {
+            boolean someDevice = devicesMap.values().stream().anyMatch(JCheckBox::isSelected);
+            boolean someAccountType = accountTypeMap.values().stream().anyMatch(JCheckBox::isSelected);
+            deviceRequiredLabel.setVisible(someDevice == false);
+            accountTypeRequiredLabel.setVisible(someAccountType == false);
+
+            applyFiltersButton.setEnabled(someDevice && someAccountType);
+            refreshButton.setEnabled(someDevice && someAccountType && needsRefresh);
+        };
+
         updateFilters();
         setAllDevicesSelected(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
@@ -100,6 +115,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             String eventType = pce.getPropertyName();
             if (eventType.equals(DATA_ADDED.toString())) {
                 updateFilters();
+                needsRefresh = true;
                 refreshButton.setEnabled(true);
             }
         };
@@ -172,6 +188,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                             + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
                             true
                     );
+                    jCheckBox.addItemListener(validationListener);
                     accountTypePane.add(jCheckBox);
                     return jCheckBox;
                 });
@@ -192,6 +209,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 //store the device id in the map, but display a datasource name in the UI.
                 devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
                     final JCheckBox jCheckBox = new JCheckBox(dsName, false);
+                    jCheckBox.addItemListener(validationListener);
                     devicesPane.add(jCheckBox);
                     return jCheckBox;
                 });
@@ -217,9 +235,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
         applyFiltersButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.applyFiltersButton.text")); // NOI18N
         applyFiltersButton.setPreferredSize(null);
 
-        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
         filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
+        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
 
         unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
         unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -241,15 +259,21 @@ final public class FiltersPanel extends javax.swing.JPanel {
         accountTypePane.setLayout(new javax.swing.BoxLayout(accountTypePane, javax.swing.BoxLayout.Y_AXIS));
         jScrollPane3.setViewportView(accountTypePane);
 
+        accountTypeRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
+        accountTypeRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        accountTypeRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.accountTypeRequiredLabel.text")); // NOI18N
+        accountTypeRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
+                    .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(accountTypesLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(accountTypeRequiredLabel))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -264,7 +288,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(accountTypesLabel)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(accountTypesLabel)
+                    .addComponent(accountTypeRequiredLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -297,13 +323,19 @@ final public class FiltersPanel extends javax.swing.JPanel {
         devicesPane.setLayout(new javax.swing.BoxLayout(devicesPane, javax.swing.BoxLayout.Y_AXIS));
         jScrollPane2.setViewportView(devicesPane);
 
+        deviceRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/error-icon-16.png"))); // NOI18N
+        deviceRequiredLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.deviceRequiredLabel.text")); // NOI18N
+        deviceRequiredLabel.setForeground(new java.awt.Color(255, 0, 0));
+        deviceRequiredLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addComponent(devicesLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(deviceRequiredLabel))
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -317,7 +349,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(devicesLabel)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(devicesLabel)
+                    .addComponent(deviceRequiredLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -438,6 +472,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
         }
 
+        needsRefresh = false;
         refreshButton.setEnabled(false);
     }
 
@@ -532,11 +567,13 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private final javax.swing.JPanel accountTypePane = new javax.swing.JPanel();
+    private final javax.swing.JLabel accountTypeRequiredLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel accountTypesLabel = new javax.swing.JLabel();
     private final javax.swing.JButton applyFiltersButton = new javax.swing.JButton();
     private final javax.swing.JButton checkAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton checkAllDevicesButton = new javax.swing.JButton();
     private final javax.swing.JLabel dateRangeLabel = new javax.swing.JLabel();
+    private final javax.swing.JLabel deviceRequiredLabel = new javax.swing.JLabel();
     private final javax.swing.JLabel devicesLabel = new javax.swing.JLabel();
     private final javax.swing.JPanel devicesPane = new javax.swing.JPanel();
     private final javax.swing.JCheckBox endCheckBox = new javax.swing.JCheckBox();
