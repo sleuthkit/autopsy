@@ -62,6 +62,7 @@ final class SearchRunner {
     private static SearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
+    private long defaultUpdateIntervalMs;
     private volatile boolean updateTimerRunning = false;
     private Future<?> jobProcessingTaskFuture;
     private final ScheduledThreadPoolExecutor jobProcessingExecutor;
@@ -72,6 +73,7 @@ final class SearchRunner {
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
 
     SearchRunner() {
+        defaultUpdateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
         ingester = Ingester.getDefault();
         jobProcessingExecutor = new ScheduledThreadPoolExecutor(NUM_SEARCH_SCHEDULING_THREADS, new ThreadFactoryBuilder().setNameFormat(SEARCH_SCHEDULER_THREAD_NAME).build());
     }
@@ -105,8 +107,9 @@ final class SearchRunner {
 
         // start the timer, if needed
         if ((jobs.size() > 0) && (updateTimerRunning == false)) {
-            final long updateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
-            jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), updateIntervalMs, MILLISECONDS);
+            // reset the default periodic search frequency to the user setting
+            defaultUpdateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
+            jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), defaultUpdateIntervalMs, MILLISECONDS);
             updateTimerRunning = true;
         }
     }
@@ -290,18 +293,25 @@ final class SearchRunner {
             stopWatch.stop();
             
             // calculate "hold off" time
-            final long timeToTextSleepMs = getTimeToNextSleep(stopWatch.getElapsedTimeSecs());
+            final long timeToTextSearchMs = getTimeToNextPeriodicSearch(stopWatch.getElapsedTimeSecs());
             
             // schedule next PeriodicSearchTask
-            jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), timeToTextSleepMs, MILLISECONDS);
+            jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), timeToTextSearchMs, MILLISECONDS);
             
             // exit this thread
             return;
         }
         
         
-        private long getTimeToNextSleep(long lastSerchTimeMs) {
-            return lastSerchTimeMs;
+        private long getTimeToNextPeriodicSearch(long lastSerchTimeMs) {
+            // If periodic search takes more than 1/4 of the current periodic search interval, then double the search interval
+            if (lastSerchTimeMs < defaultUpdateIntervalMs / 4) {
+                return defaultUpdateIntervalMs;
+            }
+            // double the search interval
+            defaultUpdateIntervalMs = defaultUpdateIntervalMs * 2;
+            logger.log(Level.WARNING, "Last periodic search took {0} ms. Increasing search interval to {1} ms", new Object[]{lastSerchTimeMs, defaultUpdateIntervalMs});
+            return defaultUpdateIntervalMs;
         }
     }
 
