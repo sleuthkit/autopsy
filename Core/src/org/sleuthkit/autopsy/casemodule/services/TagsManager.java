@@ -128,6 +128,9 @@ public class TagsManager implements Closeable {
      */
     TagsManager(SleuthkitCase caseDb) {
         this.caseDb = caseDb;
+        for (TagNameDefinition tagName : TagNameDefinition.getTagNameDefinitions()) {
+            tagName.saveToCase(caseDb);
+        }
     }
 
     /**
