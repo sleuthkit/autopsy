@@ -173,7 +173,14 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
         }
         panel.updateControls(currentSource);
-        setPanel(content.getName(), sources);
+       
+        String contentName = "";
+        if (content != null) {
+            contentName = content.getName();
+        }
+        setPanel(contentName, sources);
+        
+        
     }
 
     static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {

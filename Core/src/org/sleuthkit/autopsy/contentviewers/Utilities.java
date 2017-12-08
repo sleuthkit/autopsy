@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers;
 import javax.swing.JTextPane;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import javax.swing.text.rtf.RTFEditorKit;
 
 /**
  *
@@ -46,5 +47,12 @@ public class Utilities {
         styleSheet.addRule("td {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;}"); //NON-NLS
         styleSheet.addRule("th {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;overflow:hidden;padding-right:5px;padding-left:5px;font-weight:bold;}"); //NON-NLS
         styleSheet.addRule("p {font-family:Arial, 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック','MS PGothic',sans-serif;font-size:14pt;}"); //NON-NLS
+    }
+    
+     public static void configureTextPaneAsRtf(JTextPane pane) {
+         
+        pane.setContentType("text/html;charset=UTF-8"); //NON-NLS
+        RTFEditorKit rtfkit = new RTFEditorKit();
+        pane.setEditorKit(rtfkit);
     }
 }

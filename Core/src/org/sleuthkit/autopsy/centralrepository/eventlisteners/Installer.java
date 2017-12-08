@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
+import javax.swing.JOptionPane;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -40,18 +45,32 @@ public class Installer extends ModuleInstall {
         }
         return instance;
     }
-    
+
     private Installer() {
         super();
     }
-    
-    
+
+    @NbBundle.Messages({"Installer.centralRepoUpgradeFailed.title=Central repository upgrade failed",
+        "Installer.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled."
+    })
     @Override
     public void restored() {
         Case.addPropertyChangeListener(pcl);
         ieListener.installListeners();
 
-        // TODO: create a thread pool to process Runners.
+        // Perform the database upgrade and inform the user if it fails
+        if (!EamDbUtil.upgradeDatabase()) {
+            if (RuntimeProperties.runningWithGUI()) {
+                WindowManager.getDefault().invokeWhenUIReady(() -> {
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(this.getClass(),
+                                    "Installer.centralRepoUpgradeFailed.message"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "Installer.centralRepoUpgradeFailed.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }
     }
 
     @Override

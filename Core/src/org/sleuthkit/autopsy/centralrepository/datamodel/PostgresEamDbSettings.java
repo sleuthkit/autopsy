@@ -485,7 +485,7 @@ public final class PostgresEamDbSettings {
         }
 
         boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.insertSchemaVersion(conn)
+                && EamDbUtil.updateSchemaVersion(conn)
                 && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
 
