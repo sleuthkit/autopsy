@@ -454,13 +454,11 @@ final class ExtractUnallocAction extends AbstractAction {
         @Override
         public List<LayoutFile> visit(Directory dir) {
             try {
-                List<LayoutFile> results = new ArrayList<>();
                 for (Content c : dir.getChildren()) {
-                    if (c instanceof VirtualDirectory) {
-                        results.addAll(c.accept(this));
+                    if ((c instanceof VirtualDirectory) && (c.getName().equals(VirtualDirectory.NAME_UNALLOC))) {
+                        return c.accept(this);
                     }
                 }
-                return results;
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at visiting Directory " + dir.getId(), tce); //NON-NLS
             }
