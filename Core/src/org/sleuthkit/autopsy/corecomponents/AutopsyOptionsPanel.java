@@ -291,12 +291,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
         String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
+        boolean useDefault = (path == null || path.isEmpty());
+        defaultLogoRB.setSelected(useDefault);
+        specifyLogoRB.setSelected(!useDefault);
+        agencyLogoPathField.setEnabled(!useDefault);
+        browseLogosButton.setEnabled(!useDefault);
         try {
-            boolean useDefault = (path == null || path.isEmpty());
-            defaultLogoRB.setSelected(useDefault);
-            specifyLogoRB.setSelected(!useDefault);
-            agencyLogoPathField.setEnabled(!useDefault);
-            browseLogosButton.setEnabled(!useDefault);
             updateAgencyLogo(path);
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
