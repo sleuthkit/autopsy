@@ -407,18 +407,18 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         boolean valid = true;
 
         if (defaultLogoRB.isSelected()) {
-            jLabelInvalidAgencyLogoPath.setText("");
+            agencyLogoPathFieldValidationLabel.setText("");
         } else {
             String agencyLogoPath = agencyLogoPathField.getText();
             if (agencyLogoPath.isEmpty()) {
-                jLabelInvalidAgencyLogoPath.setText(Bundle.AutopsyOptionsPanel_agencyLogoPathFieldValidationLabel_pathNotSet_text());
+                agencyLogoPathFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_agencyLogoPathFieldValidationLabel_pathNotSet_text());
                 valid = false;
             } else {
                 File file = new File(agencyLogoPathField.getText());
                 if (file.exists() && file.isFile()) {
-                    jLabelInvalidAgencyLogoPath.setText("");
+                    agencyLogoPathFieldValidationLabel.setText("");
                 } else {
-                    jLabelInvalidAgencyLogoPath.setText(Bundle.AutopsyOptionsPanel_agencyLogoPathFieldValidationLabel_invalidPath_text());
+                    agencyLogoPathFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_agencyLogoPathFieldValidationLabel_invalidPath_text());
                     valid = false;
                 }
             }
@@ -506,7 +506,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         agencyLogoPreview = new javax.swing.JLabel();
         defaultLogoRB = new javax.swing.JRadioButton();
         specifyLogoRB = new javax.swing.JRadioButton();
-        jLabelInvalidAgencyLogoPath = new javax.swing.JLabel();
+        agencyLogoPathFieldValidationLabel = new javax.swing.JLabel();
         viewPanel = new javax.swing.JPanel();
         jLabelSelectFile = new javax.swing.JLabel();
         useBestViewerRB = new javax.swing.JRadioButton();
@@ -566,8 +566,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabelInvalidAgencyLogoPath.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelInvalidAgencyLogoPath, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelInvalidAgencyLogoPath.text")); // NOI18N
+        agencyLogoPathFieldValidationLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(agencyLogoPathFieldValidationLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.text")); // NOI18N
 
         javax.swing.GroupLayout logoPanelLayout = new javax.swing.GroupLayout(logoPanel);
         logoPanel.setLayout(logoPanelLayout);
@@ -584,7 +584,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                         .addComponent(agencyLogoPathField, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(browseLogosButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabelInvalidAgencyLogoPath))
+                    .addComponent(agencyLogoPathFieldValidationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -595,7 +595,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6)
                 .addGroup(logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(defaultLogoRB)
-                    .addComponent(jLabelInvalidAgencyLogoPath))
+                    .addComponent(agencyLogoPathFieldValidationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(specifyLogoRB)
@@ -937,6 +937,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
+    private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
     private javax.swing.JLabel agencyLogoPreview;
     private javax.swing.JButton browseLogosButton;
     private javax.swing.JCheckBox dataSourcesHideKnownCB;
@@ -946,7 +947,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.ButtonGroup fileSelectionButtonGroup;
     private javax.swing.JLabel jLabelHideKnownFiles;
     private javax.swing.JLabel jLabelHideSlackFiles;
-    private javax.swing.JLabel jLabelInvalidAgencyLogoPath;
     private javax.swing.JLabel jLabelSelectFile;
     private javax.swing.JLabel jLabelTimeDisplay;
     private javax.swing.JPanel jPanel1;

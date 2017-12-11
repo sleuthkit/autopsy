@@ -101,7 +101,7 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="browseLogosButton" min="-2" pref="67" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="jLabelInvalidAgencyLogoPath" min="-2" max="-2" attributes="0"/>
+                              <Component id="agencyLogoPathFieldValidationLabel" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="agencyLogoPreview" min="-2" max="-2" attributes="0"/>
@@ -115,7 +115,7 @@
                           <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="defaultLogoRB" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabelInvalidAgencyLogoPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="agencyLogoPathFieldValidationLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -197,13 +197,13 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="specifyLogoRBActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JLabel" name="jLabelInvalidAgencyLogoPath">
+                <Component class="javax.swing.JLabel" name="agencyLogoPathFieldValidationLabel">
                   <Properties>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="0" green="0" red="ff" type="rgb"/>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="AutopsyOptionsPanel.jLabelInvalidAgencyLogoPath.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>
