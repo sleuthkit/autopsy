@@ -85,8 +85,6 @@ public final class SqliteEamDbSettings {
         } catch (NumberFormatException ex) {
             this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
         }
-
-       
     }
 
     public void saveSettings() {
@@ -300,6 +298,7 @@ public final class SqliteEamDbSettings {
         createReferenceSetsTable.append("version text NOT NULL,");
         createReferenceSetsTable.append("known_status integer NOT NULL,");
         createReferenceSetsTable.append("read_only boolean NOT NULL,");
+        createReferenceSetsTable.append("type integer NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
         createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createReferenceSetsTable.append("CONSTRAINT hash_set_unique UNIQUE (set_name, version)");
@@ -434,7 +433,7 @@ public final class SqliteEamDbSettings {
         }
 
         boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.insertSchemaVersion(conn)
+                && EamDbUtil.updateSchemaVersion(conn)
                 && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
         return result;

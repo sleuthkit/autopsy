@@ -433,36 +433,6 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         return Collections.emptyList();
     }
 
-    /**
-     * Get the global file instances matching the given eamArtifact and convert
-     * them to central repository artifact instances.
-     *
-     * @param eamArtifact Artifact to use for ArtifactTypeEnum matching
-     *
-     * @return List of central repository artifact instances, empty list if none
-     *         found
-     */
-    public Collection<CorrelationAttributeInstance> getReferenceInstancesAsArtifactInstances(CorrelationAttribute eamArtifact) {
-        Collection<CorrelationAttributeInstance> eamArtifactInstances = new ArrayList<>();
-        // FUTURE: support other reference types
-        if (eamArtifact.getCorrelationType().getId() != CorrelationAttribute.FILES_TYPE_ID) {
-            return Collections.emptyList();
-        }
-        try {
-            EamDb dbManager = EamDb.getInstance();
-            Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getReferenceInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-            eamGlobalFileInstances.forEach((eamGlobalFileInstance) -> {
-                eamArtifactInstances.add(new CorrelationAttributeInstance(
-                        null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus(), CorrelationAttributeInstance.GlobalStatus.GLOBAL
-                ));
-            });
-            return eamArtifactInstances;
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting reference instances from database.", ex); // NON-NLS
-        }
-        return Collections.emptyList();
-    }
-
     @Override
     public boolean isSupported(Node node) {
         if (!EamDb.isEnabled()) {
@@ -517,7 +487,6 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             
             // get correlation and reference set instances from DB
             corAttrInstances.addAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
-            corAttrInstances.addAll(getReferenceInstancesAsArtifactInstances(corAttr));
 
             corAttrInstances.forEach((corAttrInstance) -> {
                 CorrelationAttribute newCeArtifact = new CorrelationAttribute(

@@ -30,6 +30,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
  * Sqlite implementation of the Central Repository database.
@@ -549,11 +550,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
-     * Sets an eamArtifact instance as the given knownStatus. If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist nothing happens
+     * Sets an eamArtifact instance to the given knownStatus. 
+     * knownStatus should be BAD if the file has been tagged with a notable tag and
+     * UNKNOWN otherwise. If eamArtifact
+     * exists, it is updated. If eamArtifact does not exist it is added with the
+     * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus The known status of the artifact
+     * @param knownStatus The status to change the artifact to. Should never be KNOWN
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
@@ -806,15 +810,17 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Get all reference sets
      *
+     * @param correlationType Type of sets to return
+     * 
      * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException{
+    public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getAllReferenceSets();
+            return super.getAllReferenceSets(correlationType);
         } finally {
             releaseSharedLock();
         } 
@@ -985,6 +991,34 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }  
     }   
+    
+    /**
+     * Upgrade the schema of the database (if needed)
+     * @throws EamDbException 
+     */
+    @Override
+    public void upgradeSchema() throws EamDbException, SQLException {
+        try{
+            acquireExclusiveLock();
+            super.upgradeSchema();
+        } finally {
+            releaseExclusiveLock();
+        } 
+    }
+    
+    /**
+     * Gets an exclusive lock (if applicable).
+     * Will return the lock if successful, null if unsuccessful because locking
+     * isn't supported, and throw an exception if we should have been able to get the
+     * lock but failed (meaning the database is in use).
+     * @return the lock, or null if locking is not supported
+     * @throws EamDbException if the coordination service is running but we fail to get the lock
+     */
+    @Override
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException{
+        // Multiple users are not supported for SQLite
+        return null;
+    }
     
     /**
      * Acquire the lock that provides exclusive access to the case database. 

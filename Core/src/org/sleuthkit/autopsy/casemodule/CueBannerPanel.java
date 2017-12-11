@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -239,7 +240,9 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_newCaseButtonActionPerformed
 
     private void openCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openCaseButtonActionPerformed
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(evt);
+        setCursor(null);
     }//GEN-LAST:event_openCaseButtonActionPerformed
 
     private void openRecentCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentCaseButtonActionPerformed
