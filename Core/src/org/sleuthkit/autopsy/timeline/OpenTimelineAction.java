@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -31,13 +32,11 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.guiutils.JavaFXUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -51,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 102),
     @ActionReference(path = "Toolbars/Case", position = 102)})
-public final class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class OpenTimelineAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenTimelineAction.class.getName());
@@ -59,6 +58,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
 
     private static TimeLineController timeLineController = null;
 
+    private final JMenuItem menuItem;
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
 
@@ -72,6 +72,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
 
     public OpenTimelineAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
+        menuItem = super.getMenuPresenter();
         this.setEnabled(false);
     }
 
@@ -82,15 +83,14 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
          * disabled that check because if it is executed while a data source is
          * being added, it blocks the edt. We still do that in ImageGallery.
          */
-        return Case.isCaseOpen() && Installer.isJavaFxInited();
+        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
     }
 
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
         if (tooManyFiles()) {
-            Platform.runLater(() ->
-                    JavaFXUtils.showTooManyFiles(Bundle.Timeline_dialogs_title()));
+            Platform.runLater(PromptDialogManager::showTooManyFiles);
             synchronized (OpenTimelineAction.this) {
                 if (timeLineController != null) {
                     timeLineController.shutDownTimeLine();
@@ -187,6 +187,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
     @Override
     public void setEnabled(boolean enable) {
         super.setEnabled(enable);
+        menuItem.setEnabled(enable);
         toolbarButton.setEnabled(enable);
     }
 
@@ -197,10 +198,12 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png")); //NON-NLS
-        toolbarButton.setIcon(icon);
-        toolbarButton.setText(this.getName());
         return toolbarButton;
+    }
+
+    @Override
+    public JMenuItem getMenuPresenter() {
+        return menuItem;
     }
 
     private boolean tooManyFiles() {

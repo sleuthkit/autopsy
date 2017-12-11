@@ -48,7 +48,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guiutils.JavaFXUtils;
+import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.snapshot.SnapShotReportWriter;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -105,7 +105,7 @@ public class SaveSnapshotAsReport extends Action {
 
             //prompt user to pick report name
             TextInputDialog textInputDialog = new TextInputDialog();
-            JavaFXUtils.setDialogIcons(textInputDialog);
+            PromptDialogManager.setDialogIcons(textInputDialog);
             textInputDialog.setTitle(Bundle.SaveSnapShotAsReport_action_dialogs_title());
             textInputDialog.getEditor().setPromptText(Bundle.SaveSnapShotAsReport_reportName_prompt(defaultReportName));
             textInputDialog.setHeaderText(Bundle.SaveSnapShotAsReport_reportName_header());

@@ -21,10 +21,19 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.net.URL;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.image.Image;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -34,13 +43,12 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guiutils.JavaFXUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
@@ -56,18 +64,37 @@ import org.sleuthkit.datamodel.TskCoreException;
     + "Do you want to update and listen for further ingest results?\n"
     + "Choosing 'yes' will update the database and enable listening to future ingests.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
-public final class OpenAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class OpenAction extends CallableSystemAction {
 
     private static final Logger logger = Logger.getLogger(OpenAction.class.getName());
     private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
 
-    private final JButton toolbarButton = new JButton();
-    private final PropertyChangeListener pcl;
+    /**
+     * Image to use as title bar icon in dialogs
+     */
+    private static final Image AUTOPSY_ICON;
+
+    static {
+        Image tempImg = null;
+        try {
+            tempImg = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NON-NLS
+        }
+        AUTOPSY_ICON = tempImg;
+    }
+
     private static final long FILE_LIMIT = 6_000_000;
+
+    private final PropertyChangeListener pcl;
+    private final JMenuItem menuItem;
+    private final JButton toolbarButton = new JButton(this.getName(),
+            new ImageIcon(getClass().getResource("btn_icon_image_gallery_26.png")));
 
     public OpenAction() {
         super();
         toolbarButton.addActionListener(actionEvent -> performAction());
+        menuItem = super.getMenuPresenter();
         pcl = (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(RuntimeProperties.runningWithGUI() && evt.getNewValue() != null);
@@ -79,7 +106,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
 
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen() && Installer.isJavaFxInited() && Case.getCurrentCase().hasData();
+        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited() && Case.getCurrentCase().hasData();
     }
 
     /**
@@ -89,10 +116,13 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_image_gallery_26.png")); //NON-NLS
-        toolbarButton.setIcon(icon);
-        toolbarButton.setText(this.getName());
+
         return toolbarButton;
+    }
+
+    @Override
+    public JMenuItem getMenuPresenter() {
+        return menuItem;
     }
 
     /**
@@ -103,6 +133,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
     @Override
     public void setEnabled(boolean value) {
         super.setEnabled(value);
+        menuItem.setEnabled(value);
         toolbarButton.setEnabled(value);
     }
 
@@ -120,8 +151,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
         final Case currentCase = Case.getCurrentCase();
 
         if (tooManyFiles()) {
-            Platform.runLater(() ->
-                    JavaFXUtils.showTooManyFiles(Bundle.OpenAction_dialogTitle()));
+            Platform.runLater(OpenAction::showTooManyFiles);
             setEnabled(false);
             return;
         }
@@ -156,6 +186,31 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
         }
         //if there is any doubt (no case, tskcore error, etc) just disable .
         return false;
+    }
+
+    /**
+     * Set the title bar icon for the given Dialog to be the Autopsy logo icon.
+     *
+     * @param dialog The dialog to set the title bar icon for.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private static void setDialogIcons(Dialog<?> dialog) {
+        ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(AUTOPSY_ICON);
+    }
+
+    @NbBundle.Messages({
+        "ImageGallery.showTooManyFiles.contentText="
+        + "There are too many files in the DB to ensure reasonable performance."
+        + "  Image Gallery  will be disabled. ",
+        "ImageGallery.showTooManyFiles.headerText="})
+    private static void showTooManyFiles() {
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION,
+                Bundle.ImageGallery_showTooManyFiles_contentText(), ButtonType.OK);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle(Bundle.OpenAction_dialogTitle());
+        setDialogIcons(dialog);
+        dialog.setHeaderText(Bundle.ImageGallery_showTooManyFiles_headerText());
+        dialog.showAndWait();
     }
 
     @Override

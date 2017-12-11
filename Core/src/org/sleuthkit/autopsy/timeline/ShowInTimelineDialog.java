@@ -58,7 +58,6 @@ import org.controlsfx.validation.Validator;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guiutils.JavaFXUtils;
 import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
@@ -152,7 +151,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
                 Validator.createPredicateValidator(NumberUtils::isDigits, Bundle.ShowInTimelineDialog_amountValidator_message()));
 
         //configure dialog properties
-        JavaFXUtils.setDialogIcons(this);
+        PromptDialogManager.setDialogIcons(this);
         initModality(Modality.APPLICATION_MODAL);
 
         //add scenegraph loaded from fxml to this dialog.
