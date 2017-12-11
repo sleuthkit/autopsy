@@ -102,7 +102,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                  * Close the startup window, if it is open.
                  */
                 StartupWindowProvider.getInstance().close();
-                
+
                 /*
                  * Close the Open Multi-User Case window, if it is open.
                  */
@@ -159,13 +159,13 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     public void actionPerformed(ActionEvent e) {
         if (UserPreferences.getIsMultiUserModeEnabled()) {
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            
+
             if (multiUserCaseWindow == null) {
                 multiUserCaseWindow = MultiUserCasesDialog.getInstance();
             }
             multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
             multiUserCaseWindow.setVisible(true);
-            
+
             WindowManager.getDefault().getMainWindow().setCursor(null);
         } else {
             openCaseSelectionWindow();
