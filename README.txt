@@ -26,6 +26,15 @@ If you want the Japanese localized version, you must have the Japanese language 
 Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
 
 
+BUILDING FROM SOURCE
+
+For building Autopsy from source code on Linux please refer to the 
+README_LINUX.md file for details.
+
+For building Autopsy from source on Mac OS X please refer to the 
+README_OSX.md file for details.
+
+
 SUPPORT
 
 There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that comes with the installer.
