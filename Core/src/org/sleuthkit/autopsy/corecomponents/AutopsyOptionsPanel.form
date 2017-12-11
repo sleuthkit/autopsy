@@ -91,13 +91,18 @@
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="specifyLogoRB" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="defaultLogoRB" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="specifyLogoRB" alignment="0" min="-2" pref="93" max="-2" attributes="0"/>
+                              <Component id="defaultLogoRB" alignment="0" min="-2" pref="81" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="agencyLogoPathField" min="-2" pref="259" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="browseLogosButton" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="agencyLogoPathField" min="-2" pref="259" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="browseLogosButton" min="-2" pref="67" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="jLabelInvalidAgencyLogoPath" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="agencyLogoPreview" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="32767" attributes="0"/>
@@ -108,14 +113,16 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
-                          <Component id="defaultLogoRB" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="defaultLogoRB" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabelInvalidAgencyLogoPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="specifyLogoRB" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="agencyLogoPathField" alignment="3" max="32767" attributes="0"/>
                               <Component id="browseLogosButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="1" attributes="0">
                           <Component id="agencyLogoPreview" min="-2" max="-2" attributes="0"/>
@@ -127,9 +134,6 @@
               <SubComponents>
                 <Component class="javax.swing.JTextField" name="agencyLogoPathField">
                   <Properties>
-                    <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                      <Color blue="ff" green="ff" red="ff" type="rgb"/>
-                    </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="AutopsyOptionsPanel.agencyLogoPathField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
@@ -192,6 +196,16 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="specifyLogoRBActionPerformed"/>
                   </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabelInvalidAgencyLogoPath">
+                  <Properties>
+                    <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                      <Color blue="0" green="0" red="ff" type="rgb"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="AutopsyOptionsPanel.jLabelInvalidAgencyLogoPath.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
                 </Component>
               </SubComponents>
             </Container>
@@ -441,7 +455,7 @@
                           <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="restartNecessaryWarning" pref="417" max="32767" attributes="0"/>
-                              <Component id="invalidReasonLabel" max="32767" attributes="0"/>
+                              <Component id="memFieldValidationLabel" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
                       </Group>
@@ -456,7 +470,7 @@
                                   <Component id="maxMemoryUnitsLabel" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                                   <Component id="memField" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="invalidReasonLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="memFieldValidationLabel" alignment="0" max="32767" attributes="0"/>
                               <Component id="maxMemoryLabel" alignment="0" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
@@ -517,7 +531,7 @@
                     <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="memFieldKeyReleased"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JLabel" name="invalidReasonLabel">
+                <Component class="javax.swing.JLabel" name="memFieldValidationLabel">
                   <Properties>
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="0" green="0" red="ff" type="rgb"/>
