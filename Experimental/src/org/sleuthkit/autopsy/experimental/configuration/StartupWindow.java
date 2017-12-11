@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.configuration;
 
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -35,8 +34,7 @@ import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCasePanel;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestControlPanel;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -48,7 +46,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static Dimension DIMENSIONS = new Dimension(750, 400);
     private static CueBannerPanel welcomeWindow;
     private static final long serialVersionUID = 1L;
-    private AutoIngestCasePanel caseManagementPanel = null;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
@@ -78,11 +75,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
     @Override
     public void open() {
-        
-        if (caseManagementPanel != null) {
-            caseManagementPanel.setCursor(Cursor.getDefaultCursor());
-        }
-        
         if (welcomeWindow != null) {
             welcomeWindow.refresh();
         }
@@ -103,38 +95,27 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      * user.
      */
     private void addPanelForMode() {
-        UserPreferences.SelectedMode mode = UserPreferences.getMode();
-
-        switch (mode) {
-            case AUTOINGEST:
-                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + LOCAL_HOST_NAME + ")");
-                setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
-                this.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        AutoIngestDashboard.getInstance().shutdown();
-                    }
-                });
-                setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                add(AutoIngestDashboard.getInstance());
-                break;
-            case REVIEW:
-                this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
-                caseManagementPanel = new AutoIngestCasePanel(this);
-                setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
-                add(caseManagementPanel);
-                break;
-            default:                
-                welcomeWindow = new CueBannerPanel();
-                // add the command to close the window to the button on the Volume Detail Panel
-                welcomeWindow.setCloseButtonActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        close();
-                    }
-                });
-                add(welcomeWindow);
-                break;
+        if(UserPreferences.getMode() == UserPreferences.SelectedMode.AUTOINGEST) {
+            this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + LOCAL_HOST_NAME + ")");
+            setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
+            this.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    AutoIngestControlPanel.getInstance().shutdown();
+                }
+            });
+            setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            add(AutoIngestControlPanel.getInstance());
+        } else {             
+            welcomeWindow = new CueBannerPanel();
+            // add the command to close the window to the button on the Volume Detail Panel
+            welcomeWindow.setCloseButtonActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    close();
+                }
+            });
+            add(welcomeWindow);
         }
     }
 }

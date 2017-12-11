@@ -18,9 +18,15 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JDialog;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 /**
  * Panel for displaying the case information, including both case details and
@@ -29,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    CasePropertiesPanel propertiesPanel;
 
     /**
      * Constructs a panel for displaying the case information, including both
@@ -40,16 +47,21 @@ class CaseInformationPanel extends javax.swing.JPanel {
     }
 
     @Messages({
-        "CaseInformationPanel.caseDetails.header=Case Details",
-        "CaseInformationPanel.ingestJobInfo.header=Ingest History"
+        "CaseInformationPanel.caseDetails.header=Details",
+        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
+        "CaseInformationPanel.editDetailsButton.text=Edit Details",
+        "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
-        CasePropertiesPanel propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
+        propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
-        this.tabbedPane.addChangeListener((ChangeEvent e) -> {
-            tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
+        this.tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
+            }
         });
     }
 
@@ -71,36 +83,46 @@ class CaseInformationPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        outerDetailsPanel = new javax.swing.JPanel();
         tabbedPane = new javax.swing.JTabbedPane();
         closeButton = new javax.swing.JButton();
+        editDetailsButton = new javax.swing.JButton();
 
         tabbedPane.setPreferredSize(new java.awt.Dimension(420, 200));
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.closeButton.text")); // NOI18N
-        closeButton.addActionListener(new java.awt.event.ActionListener() {
+
+        org.openide.awt.Mnemonics.setLocalizedText(editDetailsButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.editDetailsButton.text")); // NOI18N
+        editDetailsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                closeButtonActionPerformed(evt);
+                editDetailsButtonActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout outerDetailsPanelLayout = new javax.swing.GroupLayout(outerDetailsPanel);
+        outerDetailsPanel.setLayout(outerDetailsPanelLayout);
+        outerDetailsPanelLayout.setHorizontalGroup(
+            outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(editDetailsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(closeButton)
-                .addGap(5, 5, 5))
+                .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(closeButton)
-                .addGap(5, 5, 5))
+
+        outerDetailsPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, editDetailsButton});
+
+        outerDetailsPanelLayout.setVerticalGroup(
+            outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
+                .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(closeButton)
+                    .addComponent(editDetailsButton))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -109,23 +131,45 @@ class CaseInformationPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(outerDetailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(outerDetailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        // Used by CasePropertiesAction
-    }//GEN-LAST:event_closeButtonActionPerformed
+    private void editDetailsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editDetailsButtonActionPerformed
+        JDialog editCasePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), Bundle.CaseInformationPanel_editDetailsDialog_title(), true);
+        EditOptionalCasePropertiesPanel editCasePropertiesPanel = new EditOptionalCasePropertiesPanel();
+        editCasePropertiesPanel.addCancelButtonAction((ActionEvent e) -> {
+            editCasePropertiesDialog.setVisible(false);
+        });
+        editCasePropertiesPanel.addSaveButtonAction((ActionEvent e) -> {
+            editCasePropertiesDialog.setVisible(false);
+            editCasePropertiesPanel.saveProperties();
+            propertiesPanel.updateCaseInfo();
 
+        });
+
+        editCasePropertiesDialog.add(editCasePropertiesPanel);
+        editCasePropertiesDialog.setResizable(true);
+        editCasePropertiesDialog.pack();
+
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        double w = editCasePropertiesDialog.getSize().getWidth();
+        double h = editCasePropertiesDialog.getSize().getHeight();
+        editCasePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        editCasePropertiesDialog.setVisible(true);
+        editCasePropertiesDialog.toFront();
+        propertiesPanel.updateCaseInfo();
+    }//GEN-LAST:event_editDetailsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JButton editDetailsButton;
+    private javax.swing.JPanel outerDetailsPanel;
     private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
 }

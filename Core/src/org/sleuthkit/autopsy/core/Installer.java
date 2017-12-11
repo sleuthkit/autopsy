@@ -29,15 +29,15 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javax.swing.SwingWorker;
-import org.openide.LifecycleManager;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case;
+import static org.sleuthkit.autopsy.core.UserPreferences.SETTINGS_PROPERTIES;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -206,12 +206,31 @@ public class Installer extends ModuleInstall {
         // Prevent the Autopsy UI from shrinking on high DPI displays
         System.setProperty("sun.java2d.dpiaware", "false");
         System.setProperty("prism.allowhidpi", "false");
+        
+        // Update existing configuration in case of unsupported settings
+        updateConfig();
 
         packageInstallers = new ArrayList<>();
         packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
+    }
+    
+    /**
+     * If the mode in the configuration file is 'REVIEW' (2, now invalid), this
+     * method will set it to 'STANDALONE' (0) and disable auto ingest.
+     */
+    private void updateConfig() {
+        String mode = ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, "AutopsyMode");
+        if(mode != null) {
+            int ordinal = Integer.parseInt(mode);
+            if(ordinal > 1) {
+                UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
+                ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
+            }
+        }
     }
 
     /**

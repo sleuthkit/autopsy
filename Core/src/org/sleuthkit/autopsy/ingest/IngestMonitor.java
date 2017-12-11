@@ -23,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
@@ -121,7 +122,7 @@ public final class IngestMonitor {
 
         MonitorTimerAction() {
             findRootDirectoryForCurrentCase();
-            Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
                 if (evt instanceof AutopsyEvent) {
                     AutopsyEvent event = (AutopsyEvent) evt;
                     if (AutopsyEvent.SourceType.LOCAL == event.getSourceType() && event.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
@@ -191,8 +192,6 @@ public final class IngestMonitor {
             }
 
             logMemoryUsage();
-            logDiskSpaceUsage();
-
             if (!enoughDiskSpace()) {
                 /*
                  * Shut down ingest by cancelling all ingest jobs.

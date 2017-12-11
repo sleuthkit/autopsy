@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import javax.swing.Action;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
@@ -42,7 +43,7 @@ final class CasePropertiesAction extends CallableSystemAction {
     CasePropertiesAction() {
         putValue(Action.NAME, NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction"));
         this.setEnabled(false);
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             setEnabled(null != evt.getNewValue());
         });
     }
@@ -51,7 +52,7 @@ final class CasePropertiesAction extends CallableSystemAction {
     public void performAction() {
         SwingUtilities.invokeLater(() -> {
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
-            casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, false);
+            casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, true);
             CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
             caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
                 casePropertiesDialog.setVisible(false);
@@ -64,7 +65,6 @@ final class CasePropertiesAction extends CallableSystemAction {
             double w = casePropertiesDialog.getSize().getWidth();
             double h = casePropertiesDialog.getSize().getHeight();
             casePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-            casePropertiesDialog.setVisible(true);
             casePropertiesDialog.setVisible(true);
             casePropertiesDialog.toFront();
         });

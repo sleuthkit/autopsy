@@ -28,7 +28,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Panel used by the the open recent case option of the start window.
@@ -93,9 +95,13 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         }
     }
 
-    /*
+    /**
      * Opens the selected case.
      */
+    @NbBundle.Messages({"# {0} - case name",
+        "RecentItems.openRecentCase.msgDlg.text=Case {0} no longer exists.",
+        "CaseOpenAction.msgDlg.cantOpenCase.title=Error Opening Case"})
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void openCase() {
         if (casePaths.length < 1) {
             return;
@@ -110,17 +116,17 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 logger.log(Level.SEVERE, "Error closing start up window", ex); //NON-NLS
             }
 
-            /*
-             * Open the case.
-             */
+            // try to open the case.
             if (caseName.isEmpty() || caseMetadataFilePath.isEmpty() || (!new File(caseMetadataFilePath).exists())) {
+                //case doesn't exist
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
-                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
+                        RecentItems_openRecentCase_msgDlg_text(caseName),
+                        CaseOpenAction_msgDlg_cantOpenCase_title(),
                         JOptionPane.ERROR_MESSAGE);
                 RecentCases.getInstance().removeRecentCase(caseName, caseMetadataFilePath); // remove the recent case if it doesn't exist anymore
                 StartupWindowProvider.getInstance().open();
             } else {
+                //do actual opening on another thread
                 new Thread(() -> {
                     try {
                         Case.openAsCurrentCase(caseMetadataFilePath);
@@ -128,10 +134,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                         SwingUtilities.invokeLater(() -> {
                             if (!(ex instanceof CaseActionCancelledException)) {
                                 logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                                JOptionPane.showMessageDialog(
-                                        WindowManager.getDefault().getMainWindow(),
-                                        ex.getMessage(),
-                                        NbBundle.getMessage(OpenRecentCasePanel.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        ex.getLocalizedMessage(),
+                                        CaseOpenAction_msgDlg_cantOpenCase_title(), //NON-NLS
                                         JOptionPane.ERROR_MESSAGE);
                             }
                             StartupWindowProvider.getInstance().open();

@@ -152,7 +152,7 @@ class StringsTextExtractor extends FileTextExtractor {
 
         private static final Logger logger = Logger.getLogger(EnglishOnlyStream.class.getName());
         private static final String NLS = Character.toString((char) 10); //new line
-        private static final int READ_BUF_SIZE = 256;
+        private static final int READ_BUF_SIZE = 65536;
         private static final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
 
         //args

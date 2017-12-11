@@ -20,4 +20,8 @@ The screenshots below show some examples of content viewers in action.
 <br>
 \image html content-viewer-5.PNG
 <br>
+<br>
+\image html central_repo_content_viewer.png
+Note that the \ref central_repo_page must be enabled to use the Other Data Sources tab.
+<br>
 */

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
@@ -85,7 +86,14 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
     }
 
     @Override
+    @Messages ({
+        "KnownStatusSearchFilter.errorMessage.noKnownStatusCheckboxSelected=At least one known status checkbox must be selected."
+    })
     public boolean isValid() {
-            return this.getComponent().isValidSearch();
+        if (!this.getComponent().isValidSearch()) {
+            setLastError(Bundle.KnownStatusSearchFilter_errorMessage_noKnownStatusCheckboxSelected());
+            return false;
+        }
+        return true;
     }
 }

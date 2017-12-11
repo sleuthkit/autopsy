@@ -37,6 +37,9 @@
                 <package>com.apple.eawt</package>
                 <package>com.apple.eawt.event</package>
                 <package>com.apple.eio</package>
+                <package>com.github.lgooddatepicker.components</package>
+                <package>com.github.lgooddatepicker.optionalusertools</package>
+                <package>com.github.lgooddatepicker.zinternaltools</package>
                 <package>com.github.mustachejava</package>
                 <package>com.github.mustachejava.codes</package>
                 <package>com.github.mustachejava.functions</package>
@@ -212,7 +215,6 @@
                 <package>jfxtras.scene.control</package>
                 <package>jfxtras.scene.layout</package>
                 <package>jfxtras.util</package>
-                <package>net.sourceforge.jcalendarbutton</package>
                 <package>org.apache.avalon.framework</package>
                 <package>org.apache.avalon.framework.activity</package>
                 <package>org.apache.avalon.framework.component</package>
@@ -587,7 +589,6 @@
                 <package>org.hyperic.sigar.vmware</package>
                 <package>org.hyperic.sigar.win32</package>
                 <package>org.imgscalr</package>
-                <package>org.jbundle.thin.base.screen.jcalendarbutton</package>
                 <package>org.joda.time</package>
                 <package>org.joda.time.base</package>
                 <package>org.joda.time.chrono</package>
@@ -630,7 +631,6 @@
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.impl</package>
                 <package>org.slf4j.spi</package>
-                <package>org.sourceforge.jcalendarbutton</package>
                 <package>org.w3c.dom</package>
                 <package>org.w3c.dom.css</package>
                 <package>org.w3c.dom.events</package>
@@ -680,6 +680,10 @@
                 <binary-origin>release/modules/ext/compiler-0.9.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/imageio-iff-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-iff-3.2.jar</binary-origin>
             </class-path-extension>
@@ -700,16 +704,8 @@
                 <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-2.6.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmlbeans-2.6.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jna-3.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
@@ -730,6 +726,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xmlbeans-2.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmlbeans-2.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-io-3.2.jar</runtime-relative-path>
@@ -764,12 +764,8 @@
                 <binary-origin>release/modules/ext/joda-time-2.4-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jcalendarbutton-1.4.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-3.15.jar</binary-origin>
+                <runtime-relative-path>ext/poi-excelant-3.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-excelant-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
@@ -780,16 +776,8 @@
                 <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections4-4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-collections4-4.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-excelant-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-excelant-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pcx-3.2.jar</runtime-relative-path>
@@ -828,10 +816,6 @@
                 <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.15.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.4-sources.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/joda-time-2.4-sources.jar</binary-origin>
             </class-path-extension>
@@ -840,12 +824,24 @@
                 <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-3.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-3.15.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-collections4-4.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-collections4-4.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-logging-1.1.2-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
@@ -854,6 +850,18 @@
             <class-path-extension>
                 <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-schemas-3.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.15.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-scratchpad-3.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
@@ -880,10 +888,6 @@
                 <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-codec-1.10.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
             </class-path-extension>
@@ -896,14 +900,6 @@
                 <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-3.15.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
             </class-path-extension>
@@ -914,6 +910,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-3.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.2.jar</runtime-relative-path>

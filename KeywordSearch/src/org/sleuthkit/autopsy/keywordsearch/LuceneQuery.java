@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -40,6 +39,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -52,8 +52,8 @@ class LuceneQuery implements KeywordSearchQuery {
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
     private String keywordStringEscaped;
     private boolean isEscaped;
-    private final Keyword originalKeyword ;
-    private final KeywordList keywordList ;
+    private final Keyword originalKeyword;
+    private final KeywordList keywordList;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
@@ -70,7 +70,7 @@ class LuceneQuery implements KeywordSearchQuery {
     LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.originalKeyword = keyword;
-        this.keywordStringEscaped = this.originalKeyword.getSearchTerm(); 
+        this.keywordStringEscaped = this.originalKeyword.getSearchTerm();
     }
 
     @Override
@@ -191,16 +191,30 @@ class LuceneQuery implements KeywordSearchQuery {
         return StringUtils.isNotBlank(originalKeyword.getSearchTerm());
     }
 
+    /**
+     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
+     *
+     * @param content      The text source object for the hit.
+     * @param foundKeyword The keyword that was found by the search, this may be
+     *                     different than the Keyword that was searched if, for
+     *                     example, it was a RegexQuery.
+     * @param hit          The keyword hit.
+     * @param snippet      A snippet from the text that contains the hit.
+     * @param listName     The name of the keyword list that contained the
+     *                     keyword for which the hit was found.
+     *
+     *
+     * @return The newly created artifact or null if there was a problem
+     *         creating it.
+     */
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardArtifact bba;
-        KeywordCachedArtifact writeResult;
         try {
-            bba = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            writeResult = new KeywordCachedArtifact(bba);
+            bba = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
@@ -227,14 +241,13 @@ class LuceneQuery implements KeywordSearchQuery {
             }
         }
 
-        if (hit.isArtifactHit()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
-        }
+        hit.getArtifactID().ifPresent(artifactID
+                -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
 
         try {
             bba.addAttributes(attributes); //write out to bb
-            writeResult.add(attributes);
-            return writeResult;
+            return bba;
         } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb attributes to artifact", e); //NON-NLS
             return null;
@@ -399,10 +412,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query + ". Solr doc id " + solrObjectId + ", chunkID " + chunkID, ex); //NON-NLS
             throw ex;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query + ". Solr doc id " + solrObjectId + ", chunkID " + chunkID, ex); //NON-NLS
             return "";
         }
     }

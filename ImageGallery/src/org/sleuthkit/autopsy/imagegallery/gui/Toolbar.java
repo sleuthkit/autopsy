@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
-import org.sleuthkit.autopsy.imagegallery.datamodel.Category;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -136,7 +136,15 @@ public class Toolbar extends ToolBar {
             tagGroupMenuButton.setText(followUpGroupAction.getText());
             tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex); //NON-NLS
+            /*
+             * The problem appears to be a timing issue where a case is closed
+             * before this initialization is completed, which It appears to be
+             * harmless, so we are temporarily changing this log message to a
+             * WARNING.
+             *
+             * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
+             */
+            LOGGER.log(Level.WARNING, "Could not create Follow Up tag menu item", ex); //NON-NLS
         }
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
@@ -146,13 +154,13 @@ public class Toolbar extends ToolBar {
             }
         });
 
-        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(Category.FIVE, controller);
+        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
         catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
             if (catGroupMenuButton.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(Category.values()),
+                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
                         cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }
@@ -172,8 +180,8 @@ public class Toolbar extends ToolBar {
 
         sortChooser = new SortChooser<>(GroupSortBy.getValues());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-            final boolean orderEnabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
-            sortChooser.setSortOrderDisabled(orderEnabled);
+            final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
+            sortChooser.setSortOrderDisabled(orderDisabled);
 
             final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
             sortChooser.setValueType(valueType);
@@ -181,7 +189,7 @@ public class Toolbar extends ToolBar {
         });
 
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
-        sortChooser.setComparator(GroupSortBy.PRIORITY);
+        sortChooser.setComparator(controller.getGroupManager().getSortBy());
         getItems().add(1, sortChooser);
         sortHelpImageView.setCursor(Cursor.HAND);
 

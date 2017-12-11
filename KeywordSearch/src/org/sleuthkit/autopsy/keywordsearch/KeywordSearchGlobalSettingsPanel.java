@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,11 +28,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private GlobalListSettingsPanel listsPanel;
-    private KeywordSearchGlobalLanguageSettingsPanel languagesPanel;
-    private KeywordSearchGlobalSearchSettingsPanel generalPanel;
+    private static final long serialVersionUID = 1L;
+    private final GlobalListSettingsPanel listsPanel = new GlobalListSettingsPanel();
+    private final KeywordSearchGlobalLanguageSettingsPanel languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
+    private final KeywordSearchGlobalSearchSettingsPanel generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
 
-    public KeywordSearchGlobalSettingsPanel() {
+    KeywordSearchGlobalSettingsPanel() {
         initComponents();
         customizeComponents();
     }
@@ -40,9 +41,6 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings"})
     private void customizeComponents() {
         setName(Bundle.KeywordSearchGlobalSettingsPanel_Title());
-        listsPanel = new GlobalListSettingsPanel();
-        languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
-        generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
                 listsPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listLabToolTip"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtTitle"), null,
@@ -53,13 +51,40 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
-        listsPanel.addPropertyChangeListener(l);
-        languagesPanel.addPropertyChangeListener(l);
-        generalPanel.addPropertyChangeListener(l);
+        super.addPropertyChangeListener(l);
+        /*
+         * There is at least one look and feel library that follows the bad
+         * practice of calling overrideable methods in a constructor, e.g.:
+         *
+         * at
+         * javax.swing.plaf.synth.SynthPanelUI.installListeners(SynthPanelUI.java:83)
+         * at
+         * javax.swing.plaf.synth.SynthPanelUI.installUI(SynthPanelUI.java:63)
+         * at javax.swing.JComponent.setUI(JComponent.java:666) at
+         * javax.swing.JPanel.setUI(JPanel.java:153) at
+         * javax.swing.JPanel.updateUI(JPanel.java:126) at
+         * javax.swing.JPanel.<init>(JPanel.java:86) at
+         * javax.swing.JPanel.<init>(JPanel.java:109) at
+         * javax.swing.JPanel.<init>(JPanel.java:117)
+         *
+         * When this happens, the following child components of this JPanel
+         * subclass have not been constructed yet, since this panel's
+         * constructor has not been called yet.
+         */
+        if (null != listsPanel) {
+            listsPanel.addPropertyChangeListener(l);
+        }
+        if (null != languagesPanel) {
+            languagesPanel.addPropertyChangeListener(l);
+        }
+        if (null != generalPanel) {
+            generalPanel.addPropertyChangeListener(l);
+        }
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
+        super.removePropertyChangeListener(l);
         listsPanel.removePropertyChangeListener(l);
         languagesPanel.removePropertyChangeListener(l);
         generalPanel.removePropertyChangeListener(l);

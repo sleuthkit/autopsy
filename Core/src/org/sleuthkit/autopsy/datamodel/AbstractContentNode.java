@@ -18,14 +18,20 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -48,13 +54,23 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param content Underlying Content instances
      */
     AbstractContentNode(T content) {
-        //TODO consider child factory for the content children
-        super(new ContentChildren(content), Lookups.singleton(content));
+        this(content, Lookups.singleton(content) );
+    }
+
+    /**
+     * Handles aspects that depend on the Content object
+     *
+     * @param content Underlying Content instances
+     * @param lookup   The Lookup object for the node.
+     */
+    AbstractContentNode(T content, Lookup lookup) {
+         //TODO consider child factory for the content children
+        super(new ContentChildren(content), lookup);
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS
     }
-
+    
     /**
      * Return the content data associated with this node
      *
@@ -66,8 +82,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
 
     @Override
     public void setName(String name) {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "AbstractContentNode.exception.cannotChangeSysName.msg"));
+        super.setName(name);
     }
 
     @Override
@@ -75,6 +90,47 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         return super.getName();
     }
 
+    /**
+     * Return true if the underlying content object has children Useful for lazy
+     * loading.
+     *
+     * @return true if has children
+     */
+    public boolean hasVisibleContentChildren() {
+        return contentHasVisibleContentChildren(content);
+    }
+ 
+    /**
+     * Return true if the given content object has children. Useful for lazy
+     * loading.
+     * 
+     * @param c The content object to look for children on
+     * @return true if has children
+     */
+    public static boolean contentHasVisibleContentChildren(Content c){
+        if (c != null) {
+            String query = "SELECT COUNT(obj_id) AS count FROM "
+ 			+ " ( SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + c.getId() + " AND type = " 
+                        +       TskData.ObjectType.ARTIFACT.getObjectType()
+ 			+ "   INTERSECT SELECT artifact_obj_id FROM blackboard_artifacts WHERE obj_id = " + c.getId()
+ 			+ "     AND (artifact_type_id = " + ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() 
+                        +          " OR artifact_type_id = " + ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() + ") "
+ 			+ "   UNION SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + c.getId()
+                        + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ") AS OBJECT_IDS"; //NON-NLS;
+  
+            
+            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCase().getSleuthkitCase().executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                if(resultSet.next()){
+                    return (0 < resultSet.getInt("count"));
+                }
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+            }
+        }
+        return false;
+    }
+    
     /**
      * Return true if the underlying content object has children Useful for lazy
      * loading.
@@ -94,7 +150,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
 
         return hasChildren;
     }
-
+    
     /**
      * Return ids of children of the underlying content. The ids can be treated
      * as keys - useful for lazy loading.

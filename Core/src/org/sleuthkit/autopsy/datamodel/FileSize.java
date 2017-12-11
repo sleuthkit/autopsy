@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,9 +22,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -34,6 +36,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -168,65 +171,64 @@ public class FileSize implements AutopsyVisitableItem {
          * Listens for case and ingest invest. Updates observers when events are
          * fired. Size-based nodes are listening to this for changes.
          */
-        private final class FileSizeRootChildrenObservable extends Observable {
+        private static final class FileSizeRootChildrenObservable extends Observable {
+
+            private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
 
             FileSizeRootChildrenObservable() {
                 IngestManager.getInstance().addIngestJobEventListener(pcl);
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
-                Case.addPropertyChangeListener(pcl);
+                Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
             private void removeListeners() {
                 deleteObservers();
                 IngestManager.getInstance().removeIngestJobEventListener(pcl);
                 IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-                Case.removePropertyChangeListener(pcl);
+                Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
-            private final PropertyChangeListener pcl = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    String eventType = evt.getPropertyName();
+            private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
 
-                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        // new file was added
+                        // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
+                        Case.getCurrentCase();
+                        update();
+                    } catch (IllegalStateException notUsed) {
                         /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
+                         * Case is closed, do nothing.
                          */
-                        try {
-                            // new file was added
-                            // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
-                            Case.getCurrentCase();
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    }
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        update();
+                    } catch (IllegalStateException notUsed) {
                         /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
+                         * Case is closed, do nothing.
                          */
-                        try {
-                            Case.getCurrentCase();
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                        // case was closed. Remove listeners so that we don't get called with a stale case handle
-                        if (evt.getNewValue() == null) {
-                            removeListeners();
-                        }
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeListeners();
                     }
                 }
             };
@@ -306,8 +308,8 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             private void updateDisplayName() {
-                final long count = FileSizeChildren.calculateItems(skCase, filter);
-                super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
+                final long numVisibleChildren = FileSizeChildren.calculateItems(skCase, filter);
+                super.setDisplayName(filter.getDisplayName() + " (" + numVisibleChildren + ")");
             }
 
             @Override
@@ -409,8 +411,20 @@ public class FileSize implements AutopsyVisitableItem {
                     default:
                         throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
                 }
-                // ignore unalloc block files
+                
+                // Ignore unallocated block files.
                 query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+                
+                // Hide known files if indicated in the user preferences.
+                if(UserPreferences.hideKnownFilesInViewsTree()) {
+                    query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
+                            + " OR known IS NULL)"; //NON-NLS
+                }
+                
+                // Hide slack files if indicated in the user preferences.
+                if(UserPreferences.hideSlackFilesInViewsTree()) {
+                    query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + ")"; //NON-NLS
+                }
 
                 return query;
             }

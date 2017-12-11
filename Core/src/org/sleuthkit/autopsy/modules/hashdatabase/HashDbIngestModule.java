@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,8 +51,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 @NbBundle.Messages({
-    "HashDbIngestModule.noKnownBadHashDbSetMsg=No known bad hash database set.",
-    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Known bad file search will not be executed.",
+    "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash database set.",
+    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
     "HashDbIngestModule.noKnownHashDbSetMsg=No known hash database set.",
     "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
 })
@@ -129,13 +130,13 @@ public class HashDbIngestModule implements FileIngestModule {
     private void updateEnabledHashSets(List<HashDb> allHashSets, List<HashDb> enabledHashSets) {
         enabledHashSets.clear();
         for (HashDb db : allHashSets) {
-            if (settings.isHashSetEnabled(db.getHashSetName())) {
+            if (settings.isHashSetEnabled(db)) {
                 try {
-                    if (db.hasIndex()) {
+                    if (db.isValid()) {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting index status for " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName()+ " hash database", ex); //NON-NLS
                 }
             }
         }
@@ -193,7 +194,7 @@ public class HashDbIngestModule implements FileIngestModule {
             }
         }
 
-        // look up in known bad first
+        // look up in notable first
         boolean foundBad = false;
         ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
@@ -207,7 +208,7 @@ public class HashDbIngestModule implements FileIngestModule {
                     try {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
                     } catch (TskException ex) {
-                        logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                        logger.log(Level.WARNING, "Couldn't set notable state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
                         services.postMessage(IngestMessage.createErrorMessage(
                                 HashLookupModuleFactory.getModuleName(),
                                 NbBundle.getMessage(this.getClass(),
@@ -218,7 +219,7 @@ public class HashDbIngestModule implements FileIngestModule {
                                         name)));
                         ret = ProcessResult.ERROR;
                     }
-                    String hashSetName = db.getHashSetName();
+                    String hashSetName = db.getDisplayName();
 
                     String comment = "";
                     ArrayList<String> comments = hashInfo.getComments();
@@ -240,7 +241,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 totals.totalLookuptime.addAndGet(delta);
 
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                logger.log(Level.WARNING, "Couldn't lookup notable hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(
                         HashLookupModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(),
@@ -253,7 +254,7 @@ public class HashDbIngestModule implements FileIngestModule {
             }
         }
 
-        // If the file is not in the known bad sets, search for it in the known sets. 
+        // If the file is not in the notable sets, search for it in the known sets. 
         // Any hit is sufficient to classify it as known, and there is no need to create 
         // a hit artifact or send a message to the application inbox.
         if (!foundBad) {
@@ -296,14 +297,14 @@ public class HashDbIngestModule implements FileIngestModule {
             String MODULE_NAME = NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.moduleName");
 
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
-            BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, hashSetName);
-            badFile.addAttribute(att2);
-            BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, MODULE_NAME, md5Hash);
-            badFile.addAttribute(att3);
-            BlackboardAttribute att4 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, comment);
-            badFile.addAttribute(att4);
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, hashSetName));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5, MODULE_NAME, md5Hash));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, comment));
+
+            badFile.addAttributes(attributes);
 
             try {
                 // index the artifact for keyword search

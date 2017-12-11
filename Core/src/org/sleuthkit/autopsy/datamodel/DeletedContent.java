@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -37,7 +39,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -57,14 +61,15 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
 
+    @NbBundle.Messages({"DeletedContent.fsDelFilter.text=File System",
+        "DeletedContent.allDelFilter.text=All"})
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
-        FS_DELETED_FILTER(0,
-                "FS_DELETED_FILTER", //NON-NLS
-                NbBundle.getMessage(DeletedContent.class, "DeletedContent.fsDelFilter.text")),
-        ALL_DELETED_FILTER(1,
-                "ALL_DELETED_FILTER", //NON-NLS
-                NbBundle.getMessage(DeletedContent.class, "DeletedContent.allDelFilter.text"));
+        FS_DELETED_FILTER(0, "FS_DELETED_FILTER", //NON-NLS
+                Bundle.DeletedContent_fsDelFilter_text()),
+        ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", //NON-NLS
+                Bundle.DeletedContent_allDelFilter_text());
+
         private int id;
         private String name;
         private String displayName;
@@ -109,15 +114,13 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public static class DeletedContentsNode extends DisplayableItemNode {
 
-        private static final String NAME = NbBundle.getMessage(DeletedContent.class,
-                "DeletedContent.deletedContentsNode.name");
-        private SleuthkitCase skCase;
+        @NbBundle.Messages("DeletedContent.deletedContentsNode.name=Deleted Files")
+        private static final String NAME = Bundle.DeletedContent_deletedContentsNode_name();
 
         DeletedContentsNode(SleuthkitCase skCase) {
             super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
-            this.skCase = skCase;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
         }
 
@@ -132,6 +135,9 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({
+            "DeletedContent.createSheet.name.displayName=Name",
+            "DeletedContent.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -140,9 +146,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.displayName"),
-                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.desc"),
+            ss.put(new NodeProperty<>("Name", //NON-NLS
+                    Bundle.DeletedContent_createSheet_name_displayName(),
+                    Bundle.DeletedContent_createSheet_name_desc(),
                     NAME));
             return s;
         }
@@ -169,68 +175,69 @@ public class DeletedContent implements AutopsyVisitableItem {
          * Listens for case and ingest invest. Updates observers when events are
          * fired. Other nodes are listening to this for changes.
          */
-        private final class DeletedContentsChildrenObservable extends Observable {
+        private static final class DeletedContentsChildrenObservable extends Observable {
+            private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
+                Case.Events.DATA_SOURCE_ADDED,
+                Case.Events.CURRENT_CASE
+            );
 
             DeletedContentsChildrenObservable() {
                 IngestManager.getInstance().addIngestJobEventListener(pcl);
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
-                Case.addPropertyChangeListener(pcl);
+                Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
             private void removeListeners() {
                 deleteObservers();
                 IngestManager.getInstance().removeIngestJobEventListener(pcl);
                 IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-                Case.removePropertyChangeListener(pcl);
+                Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
-            private final PropertyChangeListener pcl = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    String eventType = evt.getPropertyName();
-                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                    /**
+                     * + // @@@ COULD CHECK If the new file is deleted
+                     * before notifying... Checking for a current case is a
+                     * stop gap measure	+ update(); until a different way of
+                     * handling the closing of cases is worked out.
+                     * Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        // new file was added
+                        // @@@ COULD CHECK If the new file is deleted before notifying...
+                        update();
+                    } catch (IllegalStateException notUsed) {
                         /**
-                         * + // @@@ COULD CHECK If the new file is deleted
-                         * before notifying... Checking for a current case is a
-                         * stop gap measure	+ update(); until a different way of
-                         * handling the closing of cases is worked out.
-                         * Currently, remote events may be received for a case
-                         * that is already closed.
+                         * Case is closed, do nothing.
                          */
-                        try {
-                            Case.getCurrentCase();
-                            // new file was added                            		
-                            // @@@ COULD CHECK If the new file is deleted before notifying...		
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
-                         */
-                        try {
-                            Case.getCurrentCase();
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                        // case was closed. Remove listeners so that we don't get called with a stale case handle
-                        if (evt.getNewValue() == null) {
-                            removeListeners();
-                        }
-                        maxFilesDialogShown = false;
                     }
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure
+                     * until a different way of handling the closing of
+                     * cases is worked out. Currently, remote events may be
+                     * received for a case that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeListeners();
+                    }
+                    maxFilesDialogShown = false;
                 }
             };
 
@@ -302,6 +309,9 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
+            @NbBundle.Messages({
+                "DeletedContent.createSheet.filterType.displayName=Type",
+                "DeletedContent.createSheet.filterType.desc=no description"})
             protected Sheet createSheet() {
                 Sheet s = super.createSheet();
                 Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -310,10 +320,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.name"),
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.displayName"),
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.desc"),
+                ss.put(new NodeProperty<>("Type", //NON_NLS
+                        Bundle.DeletedContent_createSheet_filterType_displayName(),
+                        Bundle.DeletedContent_createSheet_filterType_desc(),
                         filter.getDisplayName()));
 
                 return s;
@@ -333,7 +342,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 return DisplayableItemNode.FILE_PARENT_NODE_KEY;
             }
         }
-        
+
         static class DeletedContentChildren extends ChildFactory.Detachable<AbstractFile> {
 
             private final SleuthkitCase skCase;
@@ -374,6 +383,10 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
+            @NbBundle.Messages({"# {0} - The deleted files threshold",
+                "DeletedContent.createKeys.maxObjects.msg="
+                + "There are more Deleted Files than can be displayed."
+                + " Only the first {0} Deleted Files will be shown."})
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
@@ -381,14 +394,10 @@ public class DeletedContent implements AutopsyVisitableItem {
                     // only show the dialog once - not each time we refresh
                     if (maxFilesDialogShown == false) {
                         maxFilesDialogShown = true;
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(),
-                                        "DeletedContent.createKeys.maxObjects.msg",
-                                        MAX_OBJECTS - 1));
-                            }
-                        });
+                        SwingUtilities.invokeLater(()
+                                -> JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        DeletedContent_createKeys_maxObjects_msg(MAX_OBJECTS - 1))
+                        );
                     }
                 }
                 list.addAll(queryList);
@@ -428,6 +437,11 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 }
 
+                if (UserPreferences.hideKnownFilesInViewsTree()) {
+                    query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
+                            + " OR known IS NULL)"; //NON-NLS
+                }
+
                 query += " LIMIT " + MAX_OBJECTS; //NON-NLS
                 return query;
             }
@@ -448,6 +462,9 @@ public class DeletedContent implements AutopsyVisitableItem {
 
             /**
              * Get children count without actually loading all nodes
+             *
+             * @param sleuthkitCase
+             * @param filter
              *
              * @return
              */
@@ -488,9 +505,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
-                                "DeletedContent.createNodeForKey.typeNotSupported.msg",
-                                di.toString()));
+                        throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
                     }
                 });
             }

@@ -72,8 +72,8 @@ public class ViewContextAction extends AbstractAction {
      */
     public ViewContextAction(String displayName, BlackboardArtifactNode artifactNode) {
         super(displayName);
-        this.content = artifactNode.getLookup().lookup(Content.class);
-        if (content instanceof AbstractFile) {
+        this.content = artifactNode.getLookup().lookup(AbstractFile.class);
+        if (this.content != null) {
             AbstractFile file = (AbstractFile) content;
             if ((TskData.FileKnown.KNOWN == file.getKnown() && UserPreferences.hideKnownFilesInDataSourcesTree())
                     || (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK == file.getType() && UserPreferences.hideSlackFilesInDataSourcesTree())) {
@@ -122,8 +122,7 @@ public class ViewContextAction extends AbstractAction {
     @Override
     @Messages({
         "ViewContextAction.errorMessage.cannotFindDirectory=Failed to locate directory.",
-        "ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.",
-    })
+        "ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.",})
     public void actionPerformed(ActionEvent event) {
         EventQueue.invokeLater(() -> {
             /*
@@ -132,7 +131,6 @@ public class ViewContextAction extends AbstractAction {
             DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
             ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
             Node parentTreeViewNode = treeViewExplorerMgr.getRootContext().getChildren().findChild(DataSourcesNode.NAME);
-
             /*
              * Get the parent content for the content to be selected in the
              * results view. If the parent content is null, then the specified
@@ -204,11 +202,21 @@ public class ViewContextAction extends AbstractAction {
             undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
             TreeView treeView = treeViewTopComponent.getTree();
             treeView.expandNode(parentTreeViewNode);
-            try {
-                treeViewExplorerMgr.setExploredContextAndSelection(parentTreeViewNode, new Node[]{parentTreeViewNode});
-            } catch (PropertyVetoException ex) {
-                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotSelectDirectory());
-                logger.log(Level.SEVERE, "Failed to select the parent node in the tree view", ex); //NON-NLS
+            if (treeViewTopComponent.getSelectedNode().getDisplayName().equals(parentTreeViewNode.getDisplayName())) {
+                //In the case where our tree view already has the destination directory selected 
+                //due to an optimization in the ExplorerManager.setExploredContextAndSelection method 
+                //the property change we listen for to call DirectoryTreeTopComponent.respondSelection 
+                //will not be sent so we call it manually ourselves after making 
+                //the directory listing the active tab.
+                treeViewTopComponent.setDirectoryListingActive();
+                treeViewTopComponent.respondSelection(treeViewExplorerMgr.getSelectedNodes(), new Node[]{parentTreeViewNode});
+            } else {
+                try {
+                    treeViewExplorerMgr.setExploredContextAndSelection(parentTreeViewNode, new Node[]{parentTreeViewNode});
+                } catch (PropertyVetoException ex) {
+                    MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotSelectDirectory());
+                    logger.log(Level.SEVERE, "Failed to select the parent node in the tree view", ex); //NON-NLS
+                }
             }
         });
     }
@@ -264,5 +272,5 @@ public class ViewContextAction extends AbstractAction {
             return parent == null ? lineage : parent.accept(this);
         }
     }
-    
+
 }

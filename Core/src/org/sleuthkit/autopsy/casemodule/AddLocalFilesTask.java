@@ -20,12 +20,14 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -37,6 +39,7 @@ import org.sleuthkit.datamodel.TskDataException;
  */
 class AddLocalFilesTask implements Runnable {
 
+    private static final Logger LOGGER = Logger.getLogger(AddLocalFilesTask.class.getName());
     private final String deviceId;
     private final String rootVirtualDirectoryName;
     private final List<String> localFilePaths;
@@ -86,9 +89,10 @@ class AddLocalFilesTask implements Runnable {
             progress.setIndeterminate(true);
             FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", localFilePaths, new ProgressUpdater());
-            newDataSources.add(newDataSource.getRootDirectory());
+            newDataSources.add(newDataSource);
         } catch (TskDataException | TskCoreException ex) {
             errors.add(ex.getMessage());
+            LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex);
         } finally {
             DataSourceProcessorCallback.DataSourceProcessorResult result;
             if (!errors.isEmpty()) {

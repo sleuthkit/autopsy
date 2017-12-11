@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-17 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -41,9 +42,13 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel import Relationship
 
 import traceback
 import general
+
+deviceAccountInstance = None
 
 """
 Locates a variety of different contacts databases, parses them, and populates the blackboard.
@@ -55,6 +60,15 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
+
+            # Create a 'Device' account using the data source device id
+            datasourceObjId = dataSource.getDataSource().getId()
+            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+            deviceID = ds.getDeviceId()
+
+            global deviceAccountInstance
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+
             absFiles = fileManager.findFiles(dataSource, "contacts.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
             if absFiles.isEmpty():
@@ -118,6 +132,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n"
                     + "ORDER BY raw_contacts.display_name ASC;")
 
+            attributes = ArrayList()
             artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
             oldName = ""
             while resultSet.next():
@@ -126,11 +141,21 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 mimetype = resultSet.getString("mimetype") # either phone or email
                 if name != oldName:
                     artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
                 if mimetype == "vnd.android.cursor.item/phone_v2":
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, general.MODULE_NAME, data1))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, general.MODULE_NAME, data1))
+                    acctType = Account.Type.PHONE
                 else:
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
+                    acctType = Account.Type.EMAIL
+
+                artifact.addAttributes(attributes)
+
+                # Create an account instance
+                contactAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (acctType, data1, general.MODULE_NAME, abstractFile);
+
+                # create relationship between accounts
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [contactAccountInstance], artifact,Relationship.Type.CONTACT,  0);
 
                 oldName = name
 

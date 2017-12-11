@@ -27,13 +27,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
@@ -91,7 +91,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         Lookup nodeLookup = node.getLookup();
-        Content content = nodeLookup.lookup(Content.class);
+        AbstractFile content = nodeLookup.lookup(AbstractFile.class);
 
         /*
          * Assemble a collection of all of the indexed text "sources" for the
@@ -125,7 +125,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                     //if there is kwh artifact use that to construct the HighlightedText
                     highlightedHitText = new HighlightedText(artifact);
                 } catch (TskCoreException ex) {
-                   logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
                 }
             }
 
@@ -173,7 +173,14 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
         }
         panel.updateControls(currentSource);
-        setPanel(sources);
+       
+        String contentName = "";
+        if (content != null) {
+            contentName = content.getName();
+        }
+        setPanel(contentName, sources);
+        
+        
     }
 
     static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
@@ -254,7 +261,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<>());
+      
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -310,11 +317,13 @@ public class ExtractedContentViewer implements DataContentViewer {
      * Set the MarkupSources for the panel to display (safe to call even if the
      * panel hasn't been created yet)
      *
-     * @param sources
+     * @param contentName The name of the content to be displayed
+     * @param sources     A list of IndexedText that have different 'views' of
+     *                    the content.
      */
-    private void setPanel(List<IndexedText> sources) {
+    private void setPanel(String contentName, List<IndexedText> sources) {
         if (panel != null) {
-            panel.setSources(sources);
+            panel.setSources(contentName, sources);
         }
     }
 
@@ -327,9 +336,10 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     private boolean solrHasContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
-        if (solrServer.coreIsOpen() == false)
+        if (solrServer.coreIsOpen() == false) {
             return false;
-        
+        }
+
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {

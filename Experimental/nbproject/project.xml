@@ -25,6 +25,15 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.netbeans.modules.settings</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.49.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.openide.awt</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -110,7 +119,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.8</specification-version>
+                        <specification-version>10.9</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -137,16 +146,16 @@
                 <package>org.sleuthkit.autopsy.experimental.configuration</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/LGoodDatePicker-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/LGoodDatePicker-4.3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.14.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tika-core-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
+		<binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-core-2.7.0.jar</runtime-relative-path>

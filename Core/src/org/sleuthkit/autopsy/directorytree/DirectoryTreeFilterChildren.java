@@ -26,20 +26,23 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
+import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -117,7 +120,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                         && !((Directory) c).getName().equals(".."))) {
                     ret = false;
                     break;
-                } else if (c.hasChildren()) {
+                } else if(AbstractContentNode.contentHasVisibleContentChildren(c)){
                     //fie has children, such as derived files
                     ret = false;
                     break;
@@ -198,15 +201,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             List<Content> derivedChildren = node.getContentChildren();
             //child of a file, must be a (derived) file too
             for (Content childContent : derivedChildren) {
-                if (((AbstractFile) childContent).isDir()) {
+                if ((childContent instanceof AbstractFile) && ((AbstractFile) childContent).isDir()) {
                     return false;
                 } else {
-                    try {
-                        if (childContent.hasChildren()) {
-                            return false;
-                        }
-                    } catch (TskCoreException e) {
-                        logger.log(Level.SEVERE, "Error checking if file node is leaf.", e); //NON-NLS
+                    if(AbstractContentNode.contentHasVisibleContentChildren(childContent)){
+                        return false;
                     }
                 }
             }
@@ -241,7 +240,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
             return visitDeep(vdn);
-            //return ! vdn.hasContentChildren();
+        }
+
+        @Override
+        public Boolean visit(LocalDirectoryNode ldn) {
+            return visitDeep(ldn);
         }
 
         @Override
@@ -249,6 +252,16 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return defaultVisit(ft);
         }
 
+        @Override
+        public Boolean visit(BlackboardArtifactNode bbafn) {
+            // Only show Message arttifacts with children
+            if ( (bbafn.getArtifact().getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) ||             
+                 (bbafn.getArtifact().getArtifactTypeID() == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
+                 return bbafn.hasContentChildren();
+            }
+            
+            return false;
+        }
     }
 
     private static class ShowItemVisitor extends DisplayableItemNodeVisitor.Default<Boolean> {
@@ -268,22 +281,22 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         @Override
         public Boolean visit(FileNode fn) {
-            return fn.hasContentChildren();
+            return fn.hasVisibleContentChildren();
         }
 
         @Override
         public Boolean visit(LocalFileNode lfn) {
-            return lfn.hasContentChildren();
+            return lfn.hasVisibleContentChildren();
         }
 
         @Override
         public Boolean visit(LayoutFileNode ln) {
-            return ln.hasContentChildren();
+            return ln.hasVisibleContentChildren();
         }
         
         @Override
         public Boolean visit(SlackFileNode sfn) {
-            return sfn.hasContentChildren();
+            return sfn.hasVisibleContentChildren();
         }
 
         @Override
@@ -292,9 +305,27 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             //return vdn.hasContentChildren();
         }
 
+        
+        @Override
+        public Boolean visit(LocalDirectoryNode ldn) {
+            return true;
+        }
+
         @Override
         public Boolean visit(FileTypesNode fileTypes) {
            return defaultVisit(fileTypes);
+        }
+        
+        @Override
+        public Boolean visit(BlackboardArtifactNode bbafn) {
+            
+            // Only show Message arttifacts with children
+            if ( (bbafn.getArtifact().getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) ||             
+                 (bbafn.getArtifact().getArtifactTypeID() == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
+                 return bbafn.hasContentChildren();
+            }
+            
+            return false;
         }
 
     }

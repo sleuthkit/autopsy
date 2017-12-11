@@ -26,7 +26,9 @@ import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import javax.swing.filechooser.FileFilter;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
 import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import net.sf.sevenzipjbinding.SevenZip;
@@ -35,16 +37,44 @@ import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 
 /**
  * Set of utilities that handles archive file extraction. Uses 7zip library.
  */
 final class ArchiveUtil {
 
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // NON-NLS
-
+    private static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // NON-NLS
+    private static final List<String> ARCHIVE_EXTS = Arrays.asList(".zip", ".rar", ".arj", ".7z", ".7zip", ".gzip", ".gz", ".bzip2", ".tar", ".tgz"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.archiveDesc.text=Archive Files (.zip, .rar, .arj, .7z, .7zip, .gzip, .gz, .bzip2, .tar, .tgz)")
+    private static final String ARCHIVE_DESC = Bundle.GeneralFilter_archiveDesc_text();
+    private static final GeneralFilter SEVEN_ZIP_FILTER = new GeneralFilter(ARCHIVE_EXTS, ARCHIVE_DESC);
+    private static final List<FileFilter> ARCHIVE_FILTERS = new ArrayList<>();
+    static {
+        ARCHIVE_FILTERS.add(SEVEN_ZIP_FILTER);
+    }
     
     private ArchiveUtil() {
+    }
+    
+    static List<FileFilter> getArchiveFilters() {
+        return ARCHIVE_FILTERS;
+    }
+    
+    static boolean isArchive(Path dataSourcePath) {
+        String fileName = dataSourcePath.getFileName().toString();
+        // check whether it's a zip archive file that can be extracted
+        return isAcceptedByFiler(new File(fileName), ARCHIVE_FILTERS);
+    }    
+
+    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
+        for (FileFilter filter : filters) {
+            if (filter.accept(file)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
@@ -184,10 +214,11 @@ final class ArchiveUtil {
      * @param destinationFolder Path to directory where results will be
      *                          extracted to.
      *
+     * @return List of file names contained within archive 
      * @throws
      * ArchiveExtractionException
      */
-    static void unpackArchiveFile(String archiveFilePath, String destinationFolder) throws ArchiveExtractionException {
+    static List<String> unpackArchiveFile(String archiveFilePath, String destinationFolder) throws ArchiveExtractionException {
         if (!SevenZip.isInitializedSuccessfully() && (SevenZip.getLastInitializationException() == null)) {
             try {
                 SevenZip.initSevenZipFromPlatformJAR();
@@ -195,6 +226,7 @@ final class ArchiveUtil {
                 throw new ArchiveExtractionException("Unable to initialize 7Zip libraries", ex);
             }
         }
+        List<String> files = new ArrayList<>();
         ISevenZipInArchive inArchive = null;
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(new File(archiveFilePath), "r");
@@ -221,6 +253,8 @@ final class ArchiveUtil {
                         }
                     }
                 }
+                // keep track of extracted files
+                files.add(fullPath.toString());
             }
         } catch (Exception ex) {
             throw new ArchiveExtractionException("Exception while unpacking archive contents", ex);
@@ -233,6 +267,7 @@ final class ArchiveUtil {
                 throw new ArchiveExtractionException("Exception while closing the archive", ex);
             }
         }
+        return files;
     }
 
     /**

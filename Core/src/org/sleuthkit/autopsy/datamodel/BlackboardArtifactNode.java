@@ -25,18 +25,20 @@ import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -61,17 +63,23 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Node wrapping a blackboard artifact object. This is generated from several
  * places in the tree.
  */
-public class BlackboardArtifactNode extends DisplayableItemNode {
+public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifact> {
 
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
+            Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
+            Case.Events.CONTENT_TAG_ADDED,
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.CURRENT_CASE);
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
             build();
 
     private final BlackboardArtifact artifact;
-    private final Content associated;
+    private Content associated = null;
     private List<NodeProperty<? extends Object>> customProperties;
+
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -123,22 +131,40 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     };
 
     /**
-     * Construct blackboard artifact node from an artifact and using provided
-     * icon
+     * We pass a weak reference wrapper around the listener to the event
+     * publisher. This allows Netbeans to delete the node when the user
+     * navigates to another part of the tree (previously, nodes were not being
+     * deleted because the event publisher was holding onto a strong reference
+     * to the listener. We need to hold onto the weak reference here to support
+     * unregistering of the listener in removeListeners() below.
+     */
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
+    /**
+     * Construct blackboard artifact node from an artifact, overriding the
+     * standard icon with the one at the path provided.
+     *
      *
      * @param artifact artifact to encapsulate
      * @param iconPath icon to use for the artifact
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-        super(Children.LEAF, createLookup(artifact));
+        super(artifact, createLookup(artifact));
 
         this.artifact = artifact;
-        //this.associated = getAssociatedContent(artifact);
-        this.associated = this.getLookup().lookup(Content.class);
+
+        // Look for associated Content  i.e. the source file for the artifact
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
+            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
+                this.associated = lookupContent;
+                break;
+            }
+        }
+
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
-        Case.addPropertyChangeListener(pcl);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
     /**
@@ -148,18 +174,29 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * @param artifact artifact to encapsulate
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, createLookup(artifact));
+        this(artifact, ExtractedContent.getIconFilePath(artifact.getArtifactTypeID()));
+    }
 
-        this.artifact = artifact;
-        this.associated = this.getLookup().lookup(Content.class);
-        this.setName(Long.toString(artifact.getArtifactID()));
-        this.setDisplayName();
-        this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
-        Case.addPropertyChangeListener(pcl);
+    /**
+     * The finalizer removes event listeners as the BlackboardArtifactNode
+     * is being garbage collected. Yes, we know that finalizers are considered
+     * to be "bad" but since the alternative also relies on garbage collection
+     * being run and we know that finalize will be called when the object is
+     * being GC'd it seems like this is a reasonable solution.
+     * @throws Throwable
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        removeListeners();
     }
 
     private void removeListeners() {
-        Case.removePropertyChangeListener(pcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
+    }
+
+    public BlackboardArtifact getArtifact() {
+        return this.artifact;
     }
 
     @Override
@@ -211,9 +248,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      */
     private void setDisplayName() {
         String displayName = ""; //NON-NLS
-        if (associated != null) {
-            displayName = associated.getName();
-        }
 
         // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
@@ -238,7 +272,27 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 // Do nothing since the display name will be set to the file name.
             }
         }
+
+        if (displayName.isEmpty() && artifact != null) {
+            displayName = artifact.getName();
+        }
+
         this.setDisplayName(displayName);
+
+    }
+
+    /**
+     * Return the name of the associated source file/content
+     *
+     * @return source file/content name
+     */
+    public String getSourceName() {
+
+        String srcName = "";
+        if (associated != null) {
+            srcName = associated.getName();
+        }
+        return srcName;
     }
 
     @NbBundle.Messages({
@@ -264,7 +318,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.name"),
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
-                this.getDisplayName()));
+                this.getSourceName()));
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -448,11 +502,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()) {
-                } 
-                else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
-                    addEmailMsgProperty (map, attribute);
-                }  
-                else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    addEmailMsgProperty(map, attribute);
+                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
                     map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
@@ -468,8 +520,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         value = value.substring(0, 512);
                     }
                     map.put(attribute.getAttributeType().getDisplayName(), value);
-                } 
-                else {
+                } else {
                     map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
                 }
             }
@@ -478,14 +529,14 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
     }
 
-/**
+    /**
      * Fill map with EmailMsg properties, not all attributes are filled
      *
      * @param map       map with preserved ordering, where property names/values
      *                  are put
      * @param attribute attribute to check/fill as property
      */
- private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute ) {
+    private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute) {
 
         final int attributeTypeID = attribute.getAttributeType().getTypeID();
 
@@ -495,23 +546,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID()
                 || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()
                 || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()
-            ) {
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()) {
 
             // do nothing
-    }
-    else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
+        } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
 
             String value = attribute.getDisplayString();
             if (value.length() > 160) {
                 value = value.substring(0, 160) + "...";
             }
             map.put(attribute.getAttributeType().getDisplayName(), value);
-    }
-   else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+        } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
             map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
-    }
-    else {
+        } else {
             map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
         }
 
@@ -554,5 +601,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     @Override
     public String getItemType() {
         return getClass().getName();
+    }
+
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> v) {
+        return v.visit(this);
     }
 }

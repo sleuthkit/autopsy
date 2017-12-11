@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,23 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
-import org.openide.nodes.Children;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
+import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -47,34 +52,50 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
+    @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
+    private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
+
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
+            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED);
 
     /**
-     * @param <T> type of the AbstractFile data to encapsulate
-     * @param abstractFile file to encapsulate
+     * @param abstractFile file to wrap
      */
     AbstractAbstractFileNode(T abstractFile) {
         super(abstractFile);
-        String name = abstractFile.getName();
-        int dotIndex = name.lastIndexOf(".");
-        if (dotIndex > 0) {
-            String ext = name.substring(dotIndex).toLowerCase();
-
+        String ext = abstractFile.getNameExtension();
+        if (StringUtils.isNotBlank(ext)) {
+            ext = "." + ext;
             // If this is an archive file we will listen for ingest events
             // that will notify us when new content has been identified.
-            for (String s : FileTypeExtensions.getArchiveExtensions()) {
-                if (ext.equals(s)) {
-                    IngestManager.getInstance().addIngestModuleEventListener(pcl);
-                }
+            if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
+                IngestManager.getInstance().addIngestModuleEventListener(weakPcl);
             }
         }
-        // Listen for case events so that we can detect when case is closed
-        Case.addPropertyChangeListener(pcl);
+        // Listen for case events so that we can detect when the case is closed
+        // or when tags are added.
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
+    }
+
+    /**
+     * The finalizer removes event listeners as the BlackboardArtifactNode is
+     * being garbage collected. Yes, we know that finalizers are considered to
+     * be "bad" but since the alternative also relies on garbage collection
+     * being run and we know that finalize will be called when the object is
+     * being GC'd it seems like this is a reasonable solution.
+     *
+     * @throws Throwable
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        removeListeners();
     }
 
     private void removeListeners() {
-        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-        Case.removePropertyChangeListener(pcl);
+        IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -96,14 +117,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 // If so, refresh our children.
                 try {
                     Children parentsChildren = getParentNode().getChildren();
-                    if (parentsChildren != null) {
+                    // We only want to refresh our parents children if we are in the
+                    // data sources branch of the tree. The parent nodes in other
+                    // branches of the tree (e.g. File Types and Deleted Files) do
+                    // not need to be refreshed.
+                    if (parentsChildren instanceof ContentChildren) {
                         ((ContentChildren) parentsChildren).refreshChildren();
                         parentsChildren.getNodesCount();
                     }
                 } catch (NullPointerException ex) {
                     // Skip
                 }
-
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
             if (evt.getNewValue() == null) {
@@ -123,198 +147,139 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     };
 
+    /**
+     * We pass a weak reference wrapper around the listener to the event
+     * publisher. This allows Netbeans to delete the node when the user
+     * navigates to another part of the tree (previously, nodes were not being
+     * deleted because the event publisher was holding onto a strong reference
+     * to the listener. We need to hold onto the weak reference here to support
+     * unregistering of the listener in removeListeners() below.
+     */
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
     private void updateSheet() {
         this.setSheet(createSheet());
     }
 
-    // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
-    public static enum AbstractFilePropertyType {
+    @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
+        "AbstractAbstractFileNode.locationColLbl=Location",
+        "AbstractAbstractFileNode.modifiedTimeColLbl=Modified Time",
+        "AbstractAbstractFileNode.changeTimeColLbl=Change Time",
+        "AbstractAbstractFileNode.accessTimeColLbl=Access Time",
+        "AbstractAbstractFileNode.createdTimeColLbl=Created Time",
+        "AbstractAbstractFileNode.sizeColLbl=Size",
+        "AbstractAbstractFileNode.flagsDirColLbl=Flags(Dir)",
+        "AbstractAbstractFileNode.flagsMetaColLbl=Flags(Meta)",
+        "AbstractAbstractFileNode.modeColLbl=Mode",
+        "AbstractAbstractFileNode.useridColLbl=UserID",
+        "AbstractAbstractFileNode.groupidColLbl=GroupID",
+        "AbstractAbstractFileNode.metaAddrColLbl=Meta Addr.",
+        "AbstractAbstractFileNode.attrAddrColLbl=Attr. Addr.",
+        "AbstractAbstractFileNode.typeDirColLbl=Type(Dir)",
+        "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
+        "AbstractAbstractFileNode.knownColLbl=Known",
+        "AbstractAbstractFileNode.inHashsetsColLbl=In Hashsets",
+        "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
+        "AbstractAbstractFileNode.objectId=Object ID",
+        "AbstractAbstractFileNode.mimeType=MIME Type",
+        "AbstractAbstractFileNode.extensionColLbl=Extension"})
+    public enum AbstractFilePropertyType {
 
-        NAME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.nameColLbl");
-                    }
-                },
-        LOCATION {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.locationColLbl");
-                    }
-                },
-        MOD_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.modifiedTimeColLbl");
-                    }
-                },
-        CHANGED_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.changeTimeColLbl");
-                    }
-                },
-        ACCESS_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.accessTimeColLbl");
-                    }
-                },
-        CREATED_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.createdTimeColLbl");
-                    }
-                },
-        SIZE {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.sizeColLbl");
-                    }
-                },
-        FLAGS_DIR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.flagsDirColLbl");
-                    }
-                },
-        FLAGS_META {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.flagsMetaColLbl");
-                    }
-                },
-        MODE {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.modeColLbl");
-                    }
-                },
-        USER_ID {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.useridColLbl");
-                    }
-                },
-        GROUP_ID {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.groupidColLbl");
-                    }
-                },
-        META_ADDR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.metaAddrColLbl");
-                    }
-                },
-        ATTR_ADDR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.attrAddrColLbl");
-                    }
-                },
-        TYPE_DIR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.typeDirColLbl");
-                    }
-                },
-        TYPE_META {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.typeMetaColLbl");
-                    }
-                },
-        KNOWN {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.knownColLbl");
-                    }
-                },
-        HASHSETS {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.inHashsetsColLbl");
-                    }
-                },
-        MD5HASH {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.md5HashColLbl");
-                    }
-                },
-        ObjectID {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.objectId");
+        NAME(AbstractAbstractFileNode_nameColLbl()),
+        LOCATION(AbstractAbstractFileNode_locationColLbl()),
+        MOD_TIME(AbstractAbstractFileNode_modifiedTimeColLbl()),
+        CHANGED_TIME(AbstractAbstractFileNode_changeTimeColLbl()),
+        ACCESS_TIME(AbstractAbstractFileNode_accessTimeColLbl()),
+        CREATED_TIME(AbstractAbstractFileNode_createdTimeColLbl()),
+        SIZE(AbstractAbstractFileNode_sizeColLbl()),
+        FLAGS_DIR(AbstractAbstractFileNode_flagsDirColLbl()),
+        FLAGS_META(AbstractAbstractFileNode_flagsMetaColLbl()),
+        MODE(AbstractAbstractFileNode_modeColLbl()),
+        USER_ID(AbstractAbstractFileNode_useridColLbl()),
+        GROUP_ID(AbstractAbstractFileNode_groupidColLbl()),
+        META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()),
+        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()),
+        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
+        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
+        KNOWN(AbstractAbstractFileNode_knownColLbl()),
+        HASHSETS(AbstractAbstractFileNode_inHashsetsColLbl()),
+        MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
+        ObjectID(AbstractAbstractFileNode_objectId()),
+        MIMETYPE(AbstractAbstractFileNode_mimeType()),
+        EXTENSION(AbstractAbstractFileNode_extensionColLbl());
 
-                    }
-                },
-        MIMETYPE {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.mimeType");
+        final private String displayString;
 
-                    }
-                },
+        private AbstractFilePropertyType(String displayString) {
+            this.displayString = displayString;
+        }
+
+        @Override
+        public String toString() {
+            return displayString;
+        }
     }
 
     /**
      * Fill map with AbstractFile properties
      *
-     * @param map map with preserved ordering, where property names/values are
-     * put
-     * @param content to extract properties from
+     * @param map     map with preserved ordering, where property names/values
+     *                are put
+     * @param content The content to get properties for.
      */
-    public static void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
-
-        String path = "";
-        try {
-            path = content.getUniquePath();
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
-        }
-
-        map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
-        map.put(AbstractFilePropertyType.LOCATION.toString(), path);
-        map.put(AbstractFilePropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
-        map.put(AbstractFilePropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
-        map.put(AbstractFilePropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
-        map.put(AbstractFilePropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
-        map.put(AbstractFilePropertyType.SIZE.toString(), content.getSize());
-        map.put(AbstractFilePropertyType.FLAGS_DIR.toString(), content.getDirFlagAsString());
-        map.put(AbstractFilePropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(AbstractFilePropertyType.MODE.toString(), content.getModesAsString());
-        map.put(AbstractFilePropertyType.USER_ID.toString(), content.getUid());
-        map.put(AbstractFilePropertyType.GROUP_ID.toString(), content.getGid());
-        map.put(AbstractFilePropertyType.META_ADDR.toString(), content.getMetaAddr());
-        map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + content.getAttributeId());
-        map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
-        map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
-        map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
-        map.put(AbstractFilePropertyType.HASHSETS.toString(), getHashSetHitsForFile(content));
-        map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
-        map.put(AbstractFilePropertyType.ObjectID.toString(), content.getId());
-        map.put(AbstractFilePropertyType.MIMETYPE.toString(), content.getMIMEType() == null ? "" : content.getMIMEType());
+    static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
+        map.put(NAME.toString(), getContentDisplayName(content));
+        map.put(LOCATION.toString(), getContentPath(content));
+        map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
+        map.put(CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
+        map.put(ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
+        map.put(CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
+        map.put(SIZE.toString(), content.getSize());
+        map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
+        map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(MODE.toString(), content.getModesAsString());
+        map.put(USER_ID.toString(), content.getUid());
+        map.put(GROUP_ID.toString(), content.getGid());
+        map.put(META_ADDR.toString(), content.getMetaAddr());
+        map.put(ATTR_ADDR.toString(), content.getAttrType().getValue() + "-" + content.getAttributeId());
+        map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
+        map.put(TYPE_META.toString(), content.getMetaType().toString());
+        map.put(KNOWN.toString(), content.getKnown().getName());
+        map.put(HASHSETS.toString(), getHashSetHitsForFile(content));
+        map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
+        map.put(ObjectID.toString(), content.getId());
+        map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
+        map.put(EXTENSION.toString(), content.getNameExtension());
     }
 
     /**
      * Used by subclasses of AbstractAbstractFileNode to add the tags property
      * to their sheets.
-     * @param ss the modifiable Sheet.Set returned by Sheet.get(Sheet.PROPERTIES)
+     *
+     * @param ss the modifiable Sheet.Set returned by
+     *           Sheet.get(Sheet.PROPERTIES)
      */
+    @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     protected void addTagProperty(Sheet.Set ss) {
-        final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
-        List<ContentTag> tags;
+        List<ContentTag> tags = new ArrayList<>();
         try {
-            tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
+            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content));
         } catch (TskCoreException ex) {
-            tags = new ArrayList<>();
-            LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+            logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
-        ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
-                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+        ss.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
+                        .distinct()
+                        .collect(Collectors.joining(", "))));
+    }
+
+    private static String getContentPath(AbstractFile file) {
+        try {
+            return file.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + file, ex); //NON-NLS
+            return "";            //NON-NLS
+        }
     }
 
     static String getContentDisplayName(AbstractFile file) {
@@ -330,12 +295,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    @SuppressWarnings("deprecation")
-    private static String getHashSetHitsForFile(AbstractFile content) {
+    private static String getHashSetHitsForFile(AbstractFile file) {
         try {
-            return StringUtils.join(content.getHashSetNames(), ", ");
+            return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
+            logger.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
             return "";
         }
     }

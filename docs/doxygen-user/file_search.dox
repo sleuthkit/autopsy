@@ -2,7 +2,6 @@
 
 \section about_file_search About File Search
 The File Search tool can be accessed either from the Tools menu or by right-clicking on a data source node in the Data Explorer / Directory Tree. By using File Search, you can specify, filter, and show the directories and files that you want to see from the images in the currently opened case. The File Search results will be populated in a brand new Table Result viewer on the right-hand side.
-Currently, Autopsy only supports 4 categories in File Search: Name, Size, Date, and Known Status based search.
 
 Note: Currently File Search doesn't support regular expressions. The Keyword Search feature of Autopsy does support regular expressions and can be used for to search for files and/or directories by name.
 
@@ -16,20 +15,25 @@ or select the "Tools", "File Search by Attributes".
 
 \section how_to_use_file_search How To Use File Search
 
-Currently, there are 4 categories that you can use to filter and show the directories and files within the images in the current opened case.
+There are several categories that you can use to filter and show the directories and files within the images in the current opened case.
 The categories are:
 \li Name:
 Search for all files and directory whose name contains the pattern given.
 Note: it doesn't support regular expression and keyword matching.
 \li Size:
 Search for all files and directory whose size matches the pattern given. The pattern can be "equal to", "greater than", and "less than". The unit for the size can be "Byte(s)", "KB", "MB", "GB", and "TB".
+\li MIME Type:
+Search for all files with the selected MIME type. Multiple types can be used by holding SHIFT or CTRL while selecting.
 \li Date:
 Search for all files and directory whose "date property" is within the date range given. The "date properties" are "Modified Date", "Accessed Date", "Changed Date", and "Created Date". You must also specify the timezone for the date given.
 \li Known Status:
 Search for all files and directory whose known status is recognized as either Unknown, Known, or Known Bad. For more on Known Status, see Hash Database Management.
 To use any of these filters, check the box next to the category and click "Search" button to start the search process. The result will show up in the "Result Viewer".
+\li MD5
+Search for all files with the given MD5 hash.
 
-Here's an example where we try to get all the directories and files whose name contains "hello", has a size greater than 1000 Bytes,was created between 06/15/2010 and 06/16/2010 (in GMT-5 timezone), and is an unknown file:
-\image html example-of-file-sarch.PNG
+Here's a contrived example where we try to get all the directories and files whose name contains "hello", has a size greater than 1000 Bytes, is in JPEG format, was created between 09/06/2017 and 
+09/09/2017 (in GMT-5 timezone), is an unknown file, and has a hash of 1127F348BD4303A4C3D1D587C807B49F:
+\image html example-of-file-search.PNG
 
 */

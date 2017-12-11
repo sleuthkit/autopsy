@@ -37,7 +37,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
-import java.util.stream.Stream;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -59,8 +58,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
-import org.openide.nodes.NodeAdapter;
-import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -82,9 +79,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
-    @NbBundle.Messages("DataResultViewerTable.pleasewaitNodeDisplayName=Please Wait...")
-    private static final String PLEASEWAIT_NODE_DISPLAY_NAME = Bundle.DataResultViewerTable_pleasewaitNodeDisplayName();
-    private static final Color TAGGED_COLOR = new Color(200, 210, 220);
+    private static final Color TAGGED_COLOR = new Color(255, 255, 195);
+
+    private final String title;
+
     /**
      * The properties map:
      *
@@ -103,8 +101,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private final Map<String, ETableColumn> columnMap = new HashMap<>();
 
-    private final PleasewaitNodeListener pleasewaitNodeListener = new PleasewaitNodeListener();
-
     private Node currentRoot;
 
     /*
@@ -115,17 +111,42 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Listener for table model event and mouse clicks.
      */
-    private TableListener tableListener;
+    private final  TableListener tableListener;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
-     * multiple selection actions.
+     * multiple selection actions, and the default title.
      *
      * @param explorerManager allow for explorer manager sharing
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
+        this(explorerManager, Bundle.DataResultViewerTable_title());
+    }
+
+    /**
+     * Creates a DataResultViewerTable object that is compatible with node
+     * multiple selection actions, and a custom title.
+     *
+     * @param explorerManager allow for explorer manager sharing
+     * @param title           The custom title.
+     */
+    public DataResultViewerTable(ExplorerManager explorerManager, String title) {
         super(explorerManager);
-        initialize();
+        this.title = title;
+        
+        initComponents();
+        
+        outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        outline = outlineView.getOutline();
+        outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        outline.setRootVisible(false);    // don't show the root node
+        outline.setDragEnabled(false);
+        outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+        // add a listener so that when columns are moved, the new order is stored
+        tableListener = new TableListener();
+        outline.getColumnModel().addColumnModelListener(tableListener);
+        // the listener also moves columns back if user tries to move the first column out of place
+        outline.getTableHeader().addMouseListener(tableListener);
     }
 
     /**
@@ -133,26 +154,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * multiple selection actions.
      */
     public DataResultViewerTable() {
-        initialize();
+        this(new ExplorerManager(),Bundle.DataResultViewerTable_title());
     }
 
-    private void initialize() {
-        initComponents();
-
-        outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
-
-        outline = outlineView.getOutline();
-        outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        outline.setRootVisible(false);    // don't show the root node
-        outline.setDragEnabled(false);
-        outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
-
-        // add a listener so that when columns are moved, the new order is stored
-        tableListener = new TableListener();
-        outline.getColumnModel().addColumnModelListener(tableListener);
-        // the listener also moves columns back if user tries to move the first column out of place
-        outline.getTableHeader().addMouseListener(tableListener);
-    }
 
     /**
      * Expand node
@@ -218,15 +222,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
 
-            Node oldNode = this.em.getRootContext();
-            if (oldNode != null) {
-                oldNode.removeNodeListener(pleasewaitNodeListener);
-            }
-
             if (hasChildren) {
                 currentRoot = selectedNode;
-                pleasewaitNodeListener.reset();
-                currentRoot.addNodeListener(pleasewaitNodeListener);
                 em.setRootContext(currentRoot);
                 setupTable();
             } else {
@@ -593,7 +590,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
     public String getTitle() {
-        return Bundle.DataResultViewerTable_title();
+        return title;
     }
 
     @Override
@@ -764,35 +761,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    private class PleasewaitNodeListener extends NodeAdapter {
-
-        private volatile boolean load = true;
-
-        public void reset() {
-            load = true;
-        }
-
-        @Override
-        public void childrenAdded(final NodeMemberEvent nme) {
-            Node[] delta = nme.getDelta();
-            if (load && containsReal(delta)) {
-                load = false;
-                //JMTODO: this looks suspicious
-                if (SwingUtilities.isEventDispatchThread()) {
-                    setupTable();
-                } else {
-                    SwingUtilities.invokeLater(() -> setupTable());
-                }
-            }
-        }
-
-        private boolean containsReal(Node[] delta) {
-            return Stream.of(delta)
-                    .map(Node::getDisplayName)
-                    .noneMatch(PLEASEWAIT_NODE_DISPLAY_NAME::equals);
-        }
-    }
-
     /**
      * This custom renderer extends the renderer that was already being used by
      * the outline table. This renderer colors a row if the tags property of the
@@ -807,7 +775,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             // only override the color if a node is not selected
-            if (!isSelected) {
+            if (currentRoot != null && !isSelected) {
                 Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
                 boolean tagFound = false;
                 if (node != null) {

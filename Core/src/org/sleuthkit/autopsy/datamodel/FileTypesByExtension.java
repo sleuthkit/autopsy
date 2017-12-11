@@ -21,10 +21,11 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
@@ -33,14 +34,13 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -75,9 +75,11 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     private class FileTypesByExtObservable extends Observable {
 
         private final PropertyChangeListener pcl;
+        private final Set<Case.Events> CASE_EVENTS_OF_INTEREST;
 
         private FileTypesByExtObservable() {
             super();
+            this.CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
             this.pcl = (PropertyChangeEvent evt) -> {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
@@ -109,15 +111,14 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
-            Case.addPropertyChangeListener(pcl);
-
+            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
         private void removeListeners() {
             deleteObservers();
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removePropertyChangeListener(pcl);
+            Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
         private void update() {
@@ -353,29 +354,14 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             throw new IllegalArgumentException("Empty filter list passed to createQuery()"); // NON-NLS
         }
 
-        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (UserPreferences.hideKnownFilesInViewsTree() ? " AND (known IS NULL OR known != "
-                + TskData.FileKnown.KNOWN.getFileKnownValue() + ")" : " ")
-                + " AND (NULL "; //NON-NLS
-
-        if (skCase.getDatabaseType().equals(TskData.DbType.POSTGRESQL)) {
-            // For PostgreSQL we get a more efficient query by using builtin
-            // regular expression support and or'ing all extensions. We also
-            // escape the dot at the beginning of the extension.
-            // We will end up with a query that looks something like this:
-            // OR LOWER(name) ~ '(\.zip|\.rar|\.7zip|\.cab|\.jar|\.cpio|\.ar|\.gz|\.tgz|\.bz2)$')
-            query += "OR LOWER(name) ~ '(\\";
-            query += StringUtils.join(filter.getFilter().stream()
-                    .map(String::toLowerCase).collect(Collectors.toList()), "|\\");
-            query += ")$'";
-        } else {
-            for (String s : filter.getFilter()) {
-                query += "OR LOWER(name) LIKE '%" + s.toLowerCase() + "'"; // NON-NLS
-            }
-        }
-
-        query += ')';
-        return query;
+        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (UserPreferences.hideKnownFilesInViewsTree()
+                ? " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")"
+                : " ")
+                + " AND (extension IN (" + filter.getFilter().stream()
+                        .map(String::toLowerCase)
+                        .map(s -> "'"+StringUtils.substringAfter(s, ".")+"'")
+                        .collect(Collectors.joining(", ")) + "))";
     }
 
     /**
@@ -438,6 +424,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     }
 
     // root node filters
+    @Messages({"FileTypeExtensionFilters.tskDatabaseFilter.text=Databases"})
     public static enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
 
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", //NON-NLS
@@ -452,10 +439,13 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         TSK_ARCHIVE_FILTER(3, "TSK_ARCHIVE_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskArchiveFilter.text"),
                 FileTypeExtensions.getArchiveExtensions()),
-        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", //NON-NLS
+        TSK_DATABASE_FILTER(4, "TSK_DATABASE_FILTER", //NON-NLS
+                NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDatabaseFilter.text"),
+                FileTypeExtensions.getDatabaseExtensions()),
+        TSK_DOCUMENT_FILTER(5, "TSK_DOCUMENT_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
                 Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
-        TSK_EXECUTABLE_FILTER(3, "TSK_EXECUTABLE_FILTER", //NON-NLS
+        TSK_EXECUTABLE_FILTER(6, "TSK_EXECUTABLE_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskExecFilter.text"),
                 FileTypeExtensions.getExecutableExtensions()); //NON-NLS
 

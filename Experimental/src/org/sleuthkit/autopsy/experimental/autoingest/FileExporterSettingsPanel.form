@@ -71,10 +71,10 @@
   <SubComponents>
     <Container class="javax.swing.JPanel" name="mainPanel">
       <Properties>
-        <Property name="autoscrolls" type="boolean" value="true"/>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[657, 425]"/>
         </Property>
+        <Property name="autoscrolls" type="boolean" value="true"/>
       </Properties>
 
       <Layout>
@@ -136,11 +136,11 @@
       <SubComponents>
         <Component class="javax.swing.JTextField" name="tbRootDirectory">
           <Properties>
-            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.RuleOutputTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[2000, 2000]"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.RuleOutputTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -161,7 +161,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
@@ -172,13 +172,6 @@
                                       <Component id="lbSaveRuleHelper" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="bnSaveRule" min="-2" pref="101" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Component id="comboBoxAttributeComparison" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="dateTimePicker" min="-2" pref="306" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="tbAttributeValue" pref="158" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -201,6 +194,13 @@
                                               <Component id="bnAddAttribute" min="-2" pref="117" max="-2" attributes="0"/>
                                               <EmptySpace max="-2" attributes="0"/>
                                               <Component id="bnDeleteAttribute" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="comboBoxAttributeComparison" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="dateTimePicker" min="-2" pref="306" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="tbAttributeValue" pref="158" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -236,7 +236,7 @@
                               <Component id="tbRuleName" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -259,20 +259,16 @@
                               <EmptySpace min="-2" pref="78" max="-2" attributes="0"/>
                               <Component id="lbAttribute" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="comboBoxAttributeName" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="comboBoxArtifactName" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="comboBoxValueType" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="tbAttributeValue" min="-2" max="-2" attributes="0"/>
-                                          <Component id="dateTimePicker" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Component id="comboBoxAttributeComparison" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="comboBoxAttributeName" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="comboBoxArtifactName" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="comboBoxValueType" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="tbAttributeValue" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="comboBoxAttributeComparison" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="dateTimePicker" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -380,11 +376,11 @@
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                   <StringArray count="0"/>
                 </Property>
-                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.FileSizeComparisonTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32, 20]"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.FileSizeComparisonTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -396,11 +392,11 @@
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                   <StringArray count="0"/>
                 </Property>
-                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.MimeTypeComparisonTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32, 20]"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.MimeTypeComparisonTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <AuxValues>
@@ -409,14 +405,14 @@
             </Component>
             <Component class="javax.swing.JTextField" name="tbRuleName">
               <Properties>
-                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.CurrentlySelectedRuleNameTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[10, 1000]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[733, 20]"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.CurrentlySelectedRuleNameTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
@@ -431,10 +427,10 @@
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.SaveText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
+                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.SaveTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnSaveRuleActionPerformed"/>
@@ -477,10 +473,10 @@
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                   <StringArray count="0"/>
                 </Property>
-                <Property name="toolTipText" type="java.lang.String" value="Select the conditional operator"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[32, 23]"/>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Select the conditional operator"/>
               </Properties>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
@@ -488,13 +484,13 @@
             </Component>
             <Component class="javax.swing.JTextField" name="tbAttributeValue">
               <Properties>
-                <Property name="toolTipText" type="java.lang.String" value="Type a value here"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[6, 23]"/>
                 </Property>
                 <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[6, 23]"/>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Type a value here"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JButton" name="bnAddAttribute">
@@ -503,8 +499,8 @@
                   <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/images/left-arrow-16-icon.png"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Add Attribute"/>
-                <Property name="toolTipText" type="java.lang.String" value="Click to add an attribute to the current rule"/>
                 <Property name="enabled" type="boolean" value="false"/>
+                <Property name="toolTipText" type="java.lang.String" value="Click to add an attribute to the current rule"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnAddAttributeActionPerformed"/>
@@ -533,14 +529,6 @@
                 <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cbAttributeTypeItemStateChanged"/>
               </Events>
             </Component>
-            <Component class="com.github.lgooddatepicker.datetimepicker.DateTimePicker" name="dateTimePicker">
-              <Properties>
-                <Property name="toolTipText" type="java.lang.String" value="Choose a date and time"/>
-              </Properties>
-              <AuxValues>
-                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new DateTimePicker(null, timeSettings);"/>
-              </AuxValues>
-            </Component>
             <Component class="javax.swing.JLabel" name="lbArtifact">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Artifact"/>
@@ -554,8 +542,8 @@
             <Component class="javax.swing.JButton" name="bnDeleteAttribute">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Delete Attribute"/>
-                <Property name="toolTipText" type="java.lang.String" value="Click to remove the selected attribute"/>
                 <Property name="enabled" type="boolean" value="false"/>
+                <Property name="toolTipText" type="java.lang.String" value="Click to remove the selected attribute"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnDeleteAttributeActionPerformed"/>
@@ -593,6 +581,14 @@
                 <Property name="text" type="java.lang.String" value="To save, a rule must have a name and at least one condition."/>
               </Properties>
             </Component>
+            <Component class="com.github.lgooddatepicker.components.DateTimePicker" name="dateTimePicker">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="Choose a date and time"/>
+              </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new DateTimePicker(null, timeSettings);"/>
+              </AuxValues>
+            </Component>
           </SubComponents>
         </Container>
         <Component class="javax.swing.JButton" name="bnBrowseReportDirectory">
@@ -610,11 +606,11 @@
         </Component>
         <Component class="javax.swing.JTextField" name="tbReportDirectory">
           <Properties>
-            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.ReportOutputFolderTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[2000, 2000]"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.ReportOutputFolderTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -630,9 +626,9 @@
                 <Property name="model" type="javax.swing.tree.TreeModel" editor="org.netbeans.modules.form.editors2.TreeModelEditor">
                   <TreeModel code=""/>
                 </Property>
-                <Property name="toolTipText" type="java.lang.String" value="This tree shows the rules to collect files for automatic file export"/>
                 <Property name="name" type="java.lang.String" value="trRuleList" noResource="true"/>
                 <Property name="showsRootHandles" type="boolean" value="true"/>
+                <Property name="toolTipText" type="java.lang.String" value="This tree shows the rules to collect files for automatic file export"/>
               </Properties>
               <AccessibilityProperties>
                 <Property name="AccessibleContext.accessibleParent" type="javax.accessibility.Accessible" editor="org.netbeans.modules.form.ComponentChooserEditor">
@@ -700,10 +696,10 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.DeleteText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="FileExporterSettingsPanel.DeleteTooltip_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
-        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnDeleteRuleActionPerformed"/>

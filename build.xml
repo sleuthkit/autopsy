@@ -92,7 +92,7 @@
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <!-- for Japanese localized version add option:  -Duser.language=ja -->        
-        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
+        <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx4G -J-XX:MaxPermSize=128M -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J-Xdock:name=${app.title}&quot;" />
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
@@ -263,10 +263,11 @@
     <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
-        <!-- Disable the Experimental module by default for the installed version -->
+	    
+        <!-- Disable the Experimental module by default for the installed version.  Need to update .lastModified time for change to be seen. -->
         <replace file="${nbdist.dir}/${app.name}-installer/autopsy/config/modules/org-sleuthkit-autopsy-experimental.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
-        <replace file="${nbdist.dir}/${app.name}-installer/autopsy/config/modules/org-sleuthkit-autopsy-centralrepository.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
         <echo file="${nbdist.dir}/${app.name}-installer/autopsy/.lastModified" message="" />
+        
         <antcall target="build-installer-${os.family}" />
     </target>
 </project>

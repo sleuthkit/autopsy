@@ -94,6 +94,8 @@ class FileSearchPanel extends javax.swing.JPanel {
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
+        
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), new HashSearchFilter()));
 
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
@@ -109,13 +111,12 @@ class FileSearchPanel extends javax.swing.JPanel {
                 }
             });
         }
-
         addListenerToAll(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 search();
             }
-        });
+        });        
         searchButton.setEnabled(isValidSearch());
     }
 
@@ -128,11 +129,13 @@ class FileSearchPanel extends javax.swing.JPanel {
             if (filter.isEnabled()) {
                 enabled = true;
                 if (!filter.isValid()) {
+                    errorLabel.setText(filter.getLastError());
                     return false;
                 }
             }
         }
 
+        errorLabel.setText("");
         return enabled;
     }
 
@@ -278,6 +281,7 @@ class FileSearchPanel extends javax.swing.JPanel {
 
         filterPanel = new javax.swing.JPanel();
         searchButton = new javax.swing.JButton();
+        errorLabel = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(300, 300));
 
@@ -287,27 +291,34 @@ class FileSearchPanel extends javax.swing.JPanel {
 
         searchButton.setText(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.searchButton.text")); // NOI18N
 
+        errorLabel.setForeground(new java.awt.Color(255, 51, 51));
+        errorLabel.setText(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.errorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(filterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchButton)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(filterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
-                .addComponent(searchButton)
+                .addComponent(filterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(searchButton)
+                    .addComponent(errorLabel))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JPanel filterPanel;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables

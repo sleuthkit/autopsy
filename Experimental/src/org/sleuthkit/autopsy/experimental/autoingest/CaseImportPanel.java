@@ -672,7 +672,6 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
      */
     private void enableStartButton() {
         if (UserPreferences.getIsMultiUserModeEnabled()
-                && AutoIngestUserPreferences.getJoinAutoModeCluster()
                 && (! RuntimeProperties.runningWithGUI())
                 && !tbCaseSource.getText().isEmpty()
                 && !tbCaseDestination.getText().isEmpty()

@@ -65,6 +65,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
+import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
@@ -75,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -89,6 +91,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -110,6 +113,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
 /**
  * An Autopsy case. Currently, only one case at a time may be open.
@@ -125,9 +129,7 @@ public class Case {
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
-    private static final int MIN_SECS_BETWEEN_TSK_ERROR_REPORTS = 60;
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
-    private static final long EXECUTOR_AWAIT_TIMEOUT_SECS = 5;
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
@@ -248,19 +250,28 @@ public class Case {
          * The name of the current case has changed. The old value of the
          * PropertyChangeEvent is the old case name (type: String), the new
          * value is the new case name (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         NAME,
         /**
          * The number of the current case has changed. The old value of the
          * PropertyChangeEvent is the old case number (type: String), the new
          * value is the new case number (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         NUMBER,
         /**
          * The examiner associated with the current case has changed. The old
          * value of the PropertyChangeEvent is the old examiner (type: String),
          * the new value is the new examiner (type: String).
+         *
+         * @Deprecated CASE_DETAILS event should be used instead
          */
+        @Deprecated
         EXAMINER,
         /**
          * An attempt to add a new data source to the current case is being
@@ -345,7 +356,21 @@ public class Case {
          * The old value of the PropertyChangeEvent is is the tag info (type:
          * ContentTagDeletedEvent.DeletedContentTagInfo), the new value is null.
          */
-        CONTENT_TAG_DELETED;
+        CONTENT_TAG_DELETED,
+        /**
+         * The case display name or an optional detail which can be provided
+         * regarding a case has been changed. The optional details include the
+         * case number, the examiner name, examiner phone, examiner email, and
+         * the case notes.
+         */
+        CASE_DETAILS,
+        /**
+         * A tag definition has changed (e.g., description, known status). The
+         * old value of the PropertyChangeEvent is the display name of the tag
+         * definition that has changed.
+         */
+        TAG_DEFINITION_CHANGED;
+
     };
 
     /**
@@ -377,7 +402,10 @@ public class Case {
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
+     *
+     * @deprecated Use addEventTypeSubscriber instead.
      */
+    @Deprecated
     public static void addEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventNames, subscriber);
     }
@@ -385,9 +413,24 @@ public class Case {
     /**
      * Adds a subscriber to specific case events.
      *
-     * @param eventName  The event the subscriber is interested in.
+     * @param eventTypes The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
      */
+    public static void addEventTypeSubscriber(Set<Events> eventTypes, PropertyChangeListener subscriber) {
+        eventTypes.forEach((Events event) -> {
+            eventPublisher.addSubscriber(event.toString(), subscriber);
+        });
+    }
+
+    /**
+     * Adds a subscriber to specific case events.
+     *
+     * @param eventName  The event the subscriber is interested in.
+     * @param subscriber The subscriber (PropertyChangeListener) to add.
+     *
+     * @deprecated Use addEventTypeSubscriber instead.
+     */
+    @Deprecated
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventName, subscriber);
     }
@@ -410,6 +453,18 @@ public class Case {
      */
     public static void removeEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
+    }
+
+    /**
+     * Removes a subscriber to specific case events.
+     *
+     * @param eventTypes The events the subscriber is no longer interested in.
+     * @param subscriber The subscriber (PropertyChangeListener) to remove.
+     */
+    public static void removeEventTypeSubscriber(Set<Events> eventTypes, PropertyChangeListener subscriber) {
+        eventTypes.forEach((Events event) -> {
+            eventPublisher.removeSubscriber(event.toString(), subscriber);
+        });
     }
 
     /**
@@ -446,19 +501,46 @@ public class Case {
      * @throws CaseActionException          If there is a problem creating the
      *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
+     *
+     * @Deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
+     * CaseDetails caseDetails) instead
+     */
+    @Deprecated
+    public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
+        createAsCurrentCase(caseType, caseDir, new CaseDetails(caseDisplayName, caseNumber, examiner, "", "", ""));
+    }
+
+    /**
+     * Creates a new case and makes it the current case.
+     *
+     * IMPORTANT: This method should not be called in the event dispatch thread
+     * (EDT).
+     *
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
+     * @param caseType    The type of case (single-user or multi-user).
+     * @param caseDetails Contains the modifiable details of the case such as
+     *                    the case display name, the case number, and the
+     *                    examiner related data.
+     *
+     * @throws CaseActionException          If there is a problem creating the
+     *                                      case.
+     * @throws CaseActionCancelledException If creating the case is cancelled.
      */
     @Messages({
         "Case.exceptionMessage.emptyCaseName=Must specify a case name.",
         "Case.exceptionMessage.emptyCaseDir=Must specify a case directory path."
     })
-    public static void createAsCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException, CaseActionCancelledException {
-        if (caseDisplayName.isEmpty()) {
+    public static void createAsCurrentCase(CaseType caseType, String caseDir, CaseDetails caseDetails) throws CaseActionException, CaseActionCancelledException {
+        if (caseDetails.getCaseDisplayName().isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseName());
         }
         if (caseDir.isEmpty()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseDir());
         }
-        openAsCurrentCase(new Case(caseType, caseDir, caseDisplayName, caseNumber, examiner), true);
+        openAsCurrentCase(new Case(caseType, caseDir, caseDetails), true);
     }
 
     /**
@@ -969,6 +1051,7 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
@@ -1011,24 +1094,13 @@ public class Case {
                 /*
                  * Disable the case-specific menu items.
                  */
-                CallableSystemAction
-                        .get(AddImageAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseCloseAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CasePropertiesAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseDeleteAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenTimelineAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenOutputFolderAction.class
-                        ).setEnabled(false);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
@@ -1101,7 +1173,7 @@ public class Case {
     }
 
     /**
-     * Gets the immutable case name.
+     * Gets the unique and immutable case name.
      *
      * @return The case name.
      */
@@ -1134,6 +1206,33 @@ public class Case {
      */
     public String getExaminer() {
         return metadata.getExaminer();
+    }
+
+    /**
+     * Gets the examiner phone number.
+     *
+     * @return The examiner phone number.
+     */
+    public String getExaminerPhone() {
+        return metadata.getExaminerPhone();
+    }
+
+    /**
+     * Gets the examiner email address.
+     *
+     * @return The examiner email address.
+     */
+    public String getExaminerEmail() {
+        return metadata.getExaminerEmail();
+    }
+
+    /**
+     * Gets the case notes.
+     *
+     * @return The case notes.
+     */
+    public String getCaseNotes() {
+        return metadata.getCaseNotes();
     }
 
     /**
@@ -1372,6 +1471,18 @@ public class Case {
     }
 
     /**
+     * Notifies case event subscribers that a tag definition has changed.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param changedTagName the name of the tag definition which was changed
+     */
+    public void notifyTagDefinitionChanged(String changedTagName) {
+        //leaving new value of changedTagName as null, because we do not currently support changing the display name of a tag. 
+        eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
+    }
+
+    /**
      * Notifies case event subscribers that an artifact tag has been added.
      *
      * This should not be called from the event dispatch thread (EDT)
@@ -1453,24 +1564,37 @@ public class Case {
     }
 
     /**
-     * Updates the case display name name.
+     * Updates the case display name.
+     *
+     * @param newDisplayName the new display name for the case
+     *
+     * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
      */
     @Messages({
-        "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata, cannot change case display name."
+        "Case.exceptionMessage.metadataUpdateError=Failed to update case metadata"
     })
-    void updateDisplayName(String newDisplayName) throws CaseActionException {
-        String oldDisplayName = metadata.getCaseDisplayName();
+    void updateCaseDetails(CaseDetails caseDetails) throws CaseActionException {
+        CaseDetails oldCaseDetails = metadata.getCaseDetails();
         try {
-            metadata.setCaseDisplayName(newDisplayName);
+            metadata.setCaseDetails(caseDetails);
         } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError());
+            throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError(), ex);
         }
-        eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, newDisplayName));
+        if (!oldCaseDetails.getCaseNumber().equals(caseDetails.getCaseNumber())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getCaseNumber(), caseDetails.getCaseNumber()));
+        }
+        if (!oldCaseDetails.getExaminerName().equals(caseDetails.getExaminerName())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getExaminerName(), caseDetails.getExaminerName()));
+        }
+        if (!oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
+            eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldCaseDetails.getCaseDisplayName(), caseDetails.getCaseDisplayName()));
+        }
+        eventPublisher.publish(new AutopsyEvent(Events.CASE_DETAILS.toString(), oldCaseDetails, caseDetails));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(newDisplayName + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + UserPreferences.getAppName());
                 try {
-                    RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), newDisplayName, metadata.getFilePath().toString());
+                    RecentCases.getInstance().updateRecentCase(oldCaseDetails.getCaseDisplayName(), metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Error updating case name in UI", ex); //NON-NLS
                 }
@@ -1492,8 +1616,8 @@ public class Case {
      * @param examiner        The examiner to associate with the case, can be
      *                        the empty string.
      */
-    private Case(CaseType caseType, String caseDir, String caseDisplayName, String caseNumber, String examiner) {
-        metadata = new CaseMetadata(caseDir, caseType, displayNameToUniqueName(caseDisplayName), caseDisplayName, caseNumber, examiner);
+    private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
+        metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
     }
 
     /**
@@ -1614,7 +1738,7 @@ public class Case {
             } else {
                 future.cancel(true);
             }
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
         } catch (CancellationException discarded) {
             /*
              * The create/open task has been cancelled. Wait for it to finish,
@@ -1623,7 +1747,7 @@ public class Case {
              * will have been closed and the case directory lock released will
              * have been released.
              */
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         } catch (ExecutionException ex) {
             /*
@@ -1633,7 +1757,7 @@ public class Case {
              * case will have been closed and the case directory lock released
              * will have been released.
              */
-            Case.shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getLocalizedMessage()), ex);
         } finally {
             progressIndicator.finish();
@@ -1759,7 +1883,11 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
-        "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database."
+        "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database.",
+        "Case.unsupportedSchemaVersionMessage=Unsupported DB schema version - see log for details",
+        "Case.databaseConnectionInfo.error.msg=Error accessing database server connection info. See Tools, Options, Multi-User.",
+        "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. "
+        + "See Tools, Options, Multi-user."
     })
     private void openCaseData(ProgressIndicator progressIndicator) throws CaseActionException {
         try {
@@ -1770,16 +1898,14 @@ public class Case {
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 try {
                     caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
-
                 } catch (UserPreferencesException ex) {
-                    throw new CaseActionException(NbBundle.getMessage(Case.class,
-                            "Case.databaseConnectionInfo.error.msg"), ex);
-
+                    throw new CaseActionException(Case_databaseConnectionInfo_error_msg(), ex);
                 }
             } else {
-                throw new CaseActionException(NbBundle.getMessage(Case.class,
-                        "Case.open.exception.multiUserCaseNotEnabled"));
+                throw new CaseActionException(Case_open_exception_multiUserCaseNotEnabled());
             }
+        } catch (TskUnsupportedSchemaVersionException ex) {
+            throw new CaseActionException(Bundle.Case_unsupportedSchemaVersionMessage(), ex);
         } catch (TskCoreException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotOpenCaseDatabase(), ex);
         }
@@ -1959,7 +2085,7 @@ public class Case {
                  * would be possible to start the next task before the current
                  * task responded to a cancellation request.
                  */
-                shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
 
@@ -2030,7 +2156,7 @@ public class Case {
         } catch (ExecutionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_execExceptionWrapperMessage(ex.getCause().getMessage()), ex);
         } finally {
-            shutDownTaskExecutor(caseLockingExecutor);
+            ThreadUtils.shutDownTaskExecutor(caseLockingExecutor);
             progressIndicator.finish();
         }
     }
@@ -2141,7 +2267,7 @@ public class Case {
                             Bundle.Case_servicesException_serviceResourcesCloseError(service.getServiceName(), ex.getLocalizedMessage())));
                 }
             } finally {
-                shutDownTaskExecutor(executor);
+                ThreadUtils.shutDownTaskExecutor(executor);
                 progressIndicator.finish();
             }
         }
@@ -2196,41 +2322,6 @@ public class Case {
         }
         return subDirectory.toString();
 
-    }
-
-    /**
-     * Shuts down a task executor service, waiting until all tasks are
-     * terminated. The current policy is to wait for the tasks to finish so that
-     * the case for which the executor is running can be left in a consistent
-     * state.
-     *
-     * @param executor The executor.
-     */
-    private static void shutDownTaskExecutor(ExecutorService executor) {
-        executor.shutdown();
-        boolean taskCompleted = false;
-        while (!taskCompleted) {
-            try {
-                taskCompleted = executor.awaitTermination(EXECUTOR_AWAIT_TIMEOUT_SECS, TimeUnit.SECONDS);
-            } catch (InterruptedException ignored) {
-                /*
-                 * The current policy is to wait for the task to finish so that
-                 * the case can be left in a consistent state.
-                 *
-                 * For a specific example of the motivation for this policy,
-                 * note that a application service (Solr search service)
-                 * experienced an error condition when opening case resources
-                 * that left the service blocked uninterruptibly on a socket
-                 * read. This eventually led to a mysterious "freeze" as the
-                 * user-cancelled service task continued to run holdiong a lock
-                 * that a UI thread soon tried to acquire. Thus it has been
-                 * deemed better to make the "freeze" happen in a more
-                 * informative way, i.e., with the progress indicator for the
-                 * unfinished task on the screen, if a similar error condition
-                 * arises again.
-                 */
-            }
-        }
     }
 
     /**

@@ -1,4 +1,36 @@
+---------------- VERSION 4.5.0  --------------
+- Memory usage has been reduced to improve support for very large cases.
+- The central repository and correlation engine introduced in version 4.4.1 have 
+been moved to Core Autopsy, so they are available without doing a plugin 
+installation. This optional feature includes a database (SQLite or PostgreSQL) 
+and logic for correlating artifacts across cases. Results are displayed using an 
+Interesting Artifacts branch of the Interesting Items tree and an 
+Other Occurrences content viewer.
+- Message results with attachments can now be seen be seen by browsing to the 
+source file in the Data Sources tree, which will display the messages in the 
+results view to the right. Any messages with attachments will be shown under 
+the source file in the tree, and the attachments can be seen in the result view 
+by selecting the message.
+- Volume nodes in the tree view and results view now have a context menu item 
+that displays a file system properties dialog.
+- Nodes in the tree view now have the same context menu items as nodes in the 
+results view.
+- Virtual directory nodes in the tree view are distinguished in the Data Sources 
+tree by the addition of a "V" to their icon.
+- Credit card number search has added logic to reduce false positives.
+- A new version of the automated ingest dashboard has been added to allow 
+insight into pending, running and completed automated ingest jobs in automated 
+ingest Examiner mode.
+- All occurrences of "Known Bad" in the user interface have been changed to 
+"Notable."  
+- Assorted small enhancements and bug fixes are included.
+
 ---------------- VERSION 4.4.1  --------------
+- A new central repository feature has been added to the optional 
+CentralRepository plug-in (NetBeans module); this optional feature includes a 
+database (SQLite or PostgreSQL) and logic for correlating artifacts across 
+cases; results are displayed using an Interesting Artifacts branch of the 
+Interesting Items tree and an Other Data Sources content viewer. 
 - Case deletion is now done using a Case menu item and both single-user and 
 general (not auto ingest) multi-user cases can be deleted.
 - Results viewer (top right area of desktop application) sorts are persistent 
@@ -6,12 +38,8 @@ and can be applied to either the table viewer or the thumbnail viewer.
 - Content viewers (bottom right area of desktop application) now resize 
 correctly.
 - The View Source File in Directory context menu item now works correctly.
-- Tagged image files in the HTML report are now displayed full-size. 
-- A new central repository feature has been added to the optional 
-CentralRepository plug-in (NetBeans module; this optional feature includes a 
-database (SQLite or PostgreSQL) and logic for correlating artifacts across 
-cases; results are displayed using an Interesting Artifacts branch of the 
-Interesting Items tree and an Other Data Sources content viewer. 
+- Tagged image files in the HTML report are now displayed full-size.
+- Some general UI responsiveness issues have been addressed. 
 - Some potential deadlocks during ingest have been eliminated.
 - Assorted small enhancements and bug fixes are included.
 

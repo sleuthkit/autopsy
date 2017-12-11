@@ -24,6 +24,7 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -125,19 +126,18 @@ final class AddRawImageTask implements Runnable {
         progressMonitor.setProgressText(Bundle.AddRawImageTask_progress_add_text() + imageFilePath);
         List<String> imageFilePaths = new ArrayList<>();
         SleuthkitCase caseDatabase = Case.getCurrentCase().getSleuthkitCase();
-        caseDatabase.acquireExclusiveLock();
-
         File imageFile = Paths.get(imageFilePath).toFile();
         if (!imageFile.exists()) {
-            errorMessages.add(Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddRawImageTask_for_device() 
-                    + deviceId + Bundle.AddRawImageTask_image_notExisting());
+            String errorMessage = Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddRawImageTask_for_device() 
+                    + deviceId + Bundle.AddRawImageTask_image_notExisting();
+            errorMessages.add(errorMessage);
+            logger.log(Level.SEVERE, errorMessage);
             criticalErrorOccurred = true;
             return;
-        }
-
-        imageFilePaths.add(imageFilePath);
-        
-        try {
+        }        
+        imageFilePaths.add(imageFilePath); 
+        try { 
+            caseDatabase.acquireSingleUserCaseWriteLock();
             /*
              * Get Image that will be added to case
              */
@@ -173,10 +173,12 @@ final class AddRawImageTask implements Runnable {
             caseDatabase.addLayoutFiles(dataSource, fileRanges);
 
         } catch (TskCoreException ex) {
-            errorMessages.add(Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePaths + Bundle.AddRawImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
+            String errorMessage = Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePaths + Bundle.AddRawImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage();
+            errorMessages.add(errorMessage);
+            logger.log(Level.SEVERE, errorMessage, ex);
             criticalErrorOccurred = true;
         } finally {
-            caseDatabase.releaseExclusiveLock();
+            caseDatabase.releaseSingleUserCaseReadLock();
         }
 
     }    

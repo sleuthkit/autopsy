@@ -38,6 +38,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
@@ -105,6 +106,23 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
 
     @Override
     public List<? extends Action> visit(final VirtualDirectory d) {
+        List<Action> actionsList = new ArrayList<>();
+        if (!d.isDataSource()) {
+            actionsList.add(AddContentTagAction.getInstance());
+            
+            final Collection<AbstractFile> selectedFilesList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+            if(selectedFilesList.size() == 1) {
+                actionsList.add(DeleteFileContentTagAction.getInstance());
+            }
+        }
+        actionsList.add(ExtractAction.getInstance());
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        return actionsList;
+    }
+    
+    @Override
+    public List<? extends Action> visit(final LocalDirectory d) {
         List<Action> actionsList = new ArrayList<>();
         if (!d.isDataSource()) {
             actionsList.add(AddContentTagAction.getInstance());

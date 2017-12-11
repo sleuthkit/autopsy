@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.text.JTextComponent;
+import javax.swing.tree.TreePath;
 import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
@@ -53,6 +54,8 @@ import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.jemmy.operators.JToggleButtonOperator;
+import org.netbeans.jemmy.operators.JTreeOperator;
+import org.netbeans.jemmy.operators.JTreeOperator.NoSuchPathException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
@@ -94,6 +97,7 @@ public class AutopsyTestCases {
 
     public void testNewCaseWizardOpen(String title) {
         logger.info("New Case");
+        resetTimeouts("WindowWaiter.WaitWindowTimeout", 240000);
         NbDialogOperator nbdo = new NbDialogOperator(title);
         JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
         jbo.pushNoBlock();
@@ -121,8 +125,8 @@ public class AutopsyTestCases {
         */
         new Timeout("pausing", 120000).sleep();
         logger.info("Starting Add Image process");
+        resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000);
         WizardOperator wo = new WizardOperator("Add Data Source");
-        wo.setTimeouts(resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000));
         while(!wo.btNext().isEnabled()){
             new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
         }
@@ -289,6 +293,16 @@ public class AutopsyTestCases {
 
     }
 
+    public void testExpandDataSourcesTree() {
+        logger.info("Data Sources Node");
+        MainWindowOperator mwo = MainWindowOperator.getDefault();
+        JTreeOperator jto = new JTreeOperator(mwo, "Data Sources");
+        String [] nodeNames = {"Data Sources"};
+        TreePath tp = jto.findPath(nodeNames);
+        expandNodes(jto, tp);
+        screenshot("Data Sources Tree");
+    }
+
     public void testGenerateReportToolbar() {
         logger.info("Generate Report Toolbars");
         MainWindowOperator mwo = MainWindowOperator.getDefault();
@@ -299,6 +313,7 @@ public class AutopsyTestCases {
 
     public void testGenerateReportButton() throws IOException {
         logger.info("Generate Report Button");
+        resetTimeouts("ComponentOperator.WaitComponentTimeout", 240000);
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
         JListOperator listOperator = new JListOperator(reportDialogOperator);
@@ -307,12 +322,10 @@ public class AutopsyTestCases {
         Date date = new Date();
         String datenotime = dateFormat.format(date);
         listOperator.clickOnItem(0, 1);
-        new Timeout("pausing", 2000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 2000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 1000).sleep();
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
@@ -378,6 +391,17 @@ public class AutopsyTestCases {
             UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+        }
+    }
+    
+    private void expandNodes (JTreeOperator jto, TreePath tp) {
+        try {
+            jto.expandPath(tp);
+            for (TreePath t : jto.getChildPaths(tp)) {
+                expandNodes(jto, t);
+            }
+        } catch (NoSuchPathException ne) {
+            logger.log(Level.SEVERE, "Error expanding tree path", ne);
         }
     }
 }

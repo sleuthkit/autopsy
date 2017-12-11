@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.Children;
@@ -35,6 +36,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 
 /**
  * This class is used to represent the "Node" for the volume. Its child is the
@@ -72,12 +74,12 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         // Listen for ingest events so that we can detect new added files (e.g. carved)
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
         // Listen for case events so that we can detect when case is closed
-        Case.addPropertyChangeListener(pcl);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
     }
 
     private void removeListeners() {
         IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-        Case.removePropertyChangeListener(pcl);
+        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
     }
 
     /*
@@ -138,7 +140,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
-
+        actionsList.add(new FileSystemDetailsAction(content));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "VolumeNode.getActions.viewInNewWin.text"), this));
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));

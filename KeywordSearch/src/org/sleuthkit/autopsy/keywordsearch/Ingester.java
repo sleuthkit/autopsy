@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
@@ -131,11 +132,11 @@ class Ingester {
      * @param context   The ingest job context that can be used to cancel this
      *                  process.
      *
-     * @return True if this method executed normally. or False if there was an
-     *         unexpected exception. //JMTODO: This policy needs to be reviewed.
+     * @return True if indexing was completed, false otherwise.
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
+    // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
     < T extends SleuthkitVisitableItem> boolean indexText(TextExtractor< T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
         final long sourceID = extractor.getID(source);
         final String sourceName = extractor.getName(source);
@@ -143,8 +144,10 @@ class Ingester {
         int numChunks = 0; //unknown until chunking is done
 
         if (extractor.isDisabled()) {
-            /* some Extractors, notable the strings extractor, have options
-             * which can be configured such that no extraction should be done */
+            /*
+             * some Extractors, notable the strings extractor, have options
+             * which can be configured such that no extraction should be done
+             */
             return true;
         }
 
@@ -153,6 +156,10 @@ class Ingester {
         try (BufferedReader reader = new BufferedReader(extractor.getReader(source));) {
             Chunker chunker = new Chunker(reader);
             for (Chunk chunk : chunker) {
+                if (context != null && context.fileIngestIsCancelled()) {
+                    logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
+                    return false;
+                }
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
@@ -175,15 +182,18 @@ class Ingester {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
-            //after all chunks, index just the meta data, including the  numChunks, of the parent file
-            fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-            //reset id field to base document id
-            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
-            //"parent" docs don't have chunk_size
-            fields.remove(Server.Schema.CHUNK_SIZE.toString());
-            indexChunk(null, sourceName, fields);
+            if (context != null && context.fileIngestIsCancelled()) {
+                return false;
+            } else {
+                //after all chunks, index just the meta data, including the  numChunks, of the parent file
+                fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
+                //reset id field to base document id
+                fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
+                //"parent" docs don't have chunk_size
+                fields.remove(Server.Schema.CHUNK_SIZE.toString());
+                indexChunk(null, sourceName, fields);
+            }
         }
-
         return true;
     }
 
@@ -206,7 +216,6 @@ class Ingester {
             // but does this really mean we don't want to index it?
 
             //skip the file, image id unknown
-            //JMTODO: does this need to ne internationalized?
             String msg = NbBundle.getMessage(Ingester.class,
                     "Ingester.ingest.exception.unknownImgId.msg", sourceName); //JMTODO: does this need to ne internationalized?
             logger.log(Level.SEVERE, msg);
@@ -271,6 +280,11 @@ class Ingester {
         @Override
         public Map<String, String> visit(Directory d) {
             return getCommonAndMACTimeFields(d);
+        }
+
+        @Override
+        public Map<String, String> visit(LocalDirectory ld) {
+            return getCommonAndMACTimeFields(ld);
         }
 
         @Override

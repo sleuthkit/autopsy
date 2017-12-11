@@ -25,6 +25,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts.AccountsRootNode;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -32,6 +33,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
@@ -113,8 +115,18 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractContentNode<? extends Content> visit(LocalDirectory ld) {
+            return new LocalDirectoryNode(ld);
+        }
+
+        @Override
         public AbstractContentNode<? extends Content> visit(SlackFile sf) {
             return new SlackFileNode(sf);
+        }
+
+        @Override
+        public AbstractContentNode<? extends Content> visit(BlackboardArtifact art) {
+            return new BlackboardArtifactNode(art);
         }
 
         @Override

@@ -104,13 +104,13 @@ class HighlightedText implements IndexedText {
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
      * search results. In that case we have the entire QueryResults object and
-     * need to arrange the paging.
+ need to arrange the paging.
      *
      * @param objectId     The objectID of the content whose text will be
      *                     highlighted.
      * @param QueryResults The QueryResults for the ad-hoc search from whose
-     *                     results a selection was made leading to this
-     *                     HighlightedText.
+                     results a selection was made leading to this
+                     HighlightedText.
      */
     HighlightedText(long objectId, QueryResults hits) {
         this.objectId = objectId;
@@ -205,7 +205,13 @@ class HighlightedText implements IndexedText {
      */
     synchronized private void loadPageInfoFromHits() {
         isLiteral = hits.getQuery().isLiteral();
-        //organize the hits by page, filter as needed
+
+        /**
+         * Organize the hits by page, filter as needed.
+         * We process *every* keyword here because in the case of a regular
+         * expression search there may be multiple different keyword
+         * hits located in different chunks for the same file/artifact.
+         */
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
@@ -341,6 +347,8 @@ class HighlightedText implements IndexedText {
 
     @Override
     public String getText() {
+        String chunkID = "";
+        String highlightField = "";
         try {
             loadPageInfo(); //inits once
             SolrQuery q = new SolrQuery();
@@ -348,14 +356,14 @@ class HighlightedText implements IndexedText {
 
             String contentIdStr = Long.toString(this.objectId);
             if (numberPages != 0) {
-                final String chunkID = Integer.toString(this.currentPage);
+                chunkID = Integer.toString(this.currentPage);
                 contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
             double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
             //choose field to highlight based on isLiteral and Solr index schema version.
-            String highlightField = (isLiteral || (indexSchemaVersion < 2.0))
+            highlightField = (isLiteral || (indexSchemaVersion < 2.0))
                     ? LuceneQuery.HIGHLIGHT_FIELD
                     : Server.Schema.CONTENT_STR.toString();
             if (isLiteral) {
@@ -419,7 +427,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting highlighted text for " + objectId, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }

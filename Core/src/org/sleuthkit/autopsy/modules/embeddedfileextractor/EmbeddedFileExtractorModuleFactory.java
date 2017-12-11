@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * A factory for creating archive extractor file ingest modules and the user
- * interface panels used to configure the settings for instances of the modules.
+ * A factory for creating file level ingest module that extracts embedded files
+ * from supported archive and document formats.
  */
 @NbBundle.Messages({
     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.moduleName=Embedded File Extractor",
@@ -65,4 +65,5 @@ public class EmbeddedFileExtractorModuleFactory extends IngestModuleFactoryAdapt
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new EmbeddedFileExtractorIngestModule();
     }
+    
 }

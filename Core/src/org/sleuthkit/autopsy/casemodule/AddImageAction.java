@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -56,13 +57,15 @@ import org.sleuthkit.datamodel.Image;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
 @ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
-@ActionReferences(value = {@ActionReference(path = "Toolbars/Case", position = 100)})
+@ActionReferences(value = {
+    @ActionReference(path = "Toolbars/Case", position = 100)})
 @ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
     private static final Dimension SIZE = new Dimension(875, 550);
     private final ChangeSupport cleanupSupport = new ChangeSupport(this);
+    //  private final static MouseAdapter mouseDisabler = new MouseAdapter() {};
 
     // Keys into the WizardDescriptor properties that pass information between stages of the wizard
     // <TYPE>: <DESCRIPTION>
@@ -116,6 +119,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         String optionsDlgTitle = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.title");
         String optionsDlgMessage = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            RootPaneContainer root = (RootPaneContainer) WindowManager.getDefault().getMainWindow();
+            root.getGlassPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            root.getGlassPane().setVisible(true);
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             iterator = new AddImageWizardIterator(this);
             wizardDescriptor = new WizardDescriptor(iterator);
@@ -129,7 +135,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
             Dimension d = dialog.getSize();
             dialog.setSize(SIZE);
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            root.getGlassPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            root.getGlassPane().setVisible(false);
             dialog.setVisible(true);
             dialog.toFront();
 

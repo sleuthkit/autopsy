@@ -6,8 +6,21 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.keywordsearch.</description>
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
+    <property name="lib" location="release/modules/ext"/>
+    <property name="autopsy-lib" location="../CoreLibs/release/modules/ext"/>
+    <property name="build" location="build/classes"/>
+    <property name="build-test" location="build/test/unit/classes"/>
     
-    
+    <path id="libs">
+	<fileset dir="${lib}">
+		<include name="*.jar"/>
+	</fileset>
+	<fileset dir="${autopsy-lib}">
+		<include name="*.jar"/>
+	</fileset>
+	<pathelement path="${build}"/>
+	<pathelement path="${build-test}"/>
+    </path>	
     <target name="get-solr-deployment" description="copy the solr deployment into release"> 
         <copy  todir="${basedir}/release/solr" >
             <fileset dir="solr"/>
@@ -39,5 +52,12 @@
     <target name="clean-all" depends="clean" description="Clear Ivy cache.">
         <ivy:cleancache/>
     </target>
-    
+    <target name="test-unit" depends="init, test-init, test-build">
+        <junit fork="on" haltonfailure="yes" dir=".">
+            <formatter type="plain" usefile="false" />
+                <classpath refid="libs"/>
+                <test name="org.sleuthkit.autopsy.keywordsearch.KeywordSearchTestSuite" />
+        </junit>
+    </target>
+
 </project>

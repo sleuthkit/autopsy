@@ -236,9 +236,7 @@ public final class ImageGalleryController {
             undoManager.clear();
         });
 
-        regroupDisabled.addListener((Observable observable) -> {
-            checkForGroups();
-        });
+        regroupDisabled.addListener(observable -> checkForGroups());
 
         IngestManager ingestManager = IngestManager.getInstance();
         PropertyChangeListener ingestEventHandler =

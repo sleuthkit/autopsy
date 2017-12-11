@@ -55,6 +55,8 @@ class AccountsText implements IndexedText {
     private static final Logger logger = Logger.getLogger(AccountsText.class.getName());
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
+    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";
+
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String ANCHOR_NAME_PREFIX = AccountsText.class.getName() + "_";
 
@@ -73,30 +75,31 @@ class AccountsText implements IndexedText {
     private final long solrObjectId;
     private final Collection<? extends BlackboardArtifact> artifacts;
     private final Set<String> accountNumbers = new HashSet<>();
-    private final String displayName;
+    private final String title;
 
     @GuardedBy("this")
     private boolean isPageInfoLoaded = false;
     private int numberPagesForFile = 0;
     private Integer currentPage = 0;
 
-    /*
+    /**
      * map from page/chunk to number of hits. value is 0 if not yet known.
      */
     private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
-    /*
+
+    /**
      * set of pages, used for iterating back and forth. Only stores pages with
      * hits
      */
     private final Set<Integer> pages = numberOfHitsPerPage.keySet();
-    /*
+
+    /**
      * map from page/chunk number to current hit on that page.
      */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
 
     AccountsText(long objectID, BlackboardArtifact artifact) {
         this(objectID, Arrays.asList(artifact));
-
     }
 
     @NbBundle.Messages({
@@ -105,7 +108,7 @@ class AccountsText implements IndexedText {
     AccountsText(long objectID, Collection<? extends BlackboardArtifact> artifacts) {
         this.solrObjectId = objectID;
         this.artifacts = artifacts;
-        displayName = artifacts.size() == 1
+        title = artifacts.size() == 1
                 ? Bundle.AccountsText_creditCardNumber()
                 : Bundle.AccountsText_creditCardNumbers();
     }
@@ -201,11 +204,7 @@ class AccountsText implements IndexedText {
 
     @Override
     public int currentItem() {
-        if (this.currentHitPerPage.containsKey(currentPage)) {
-            return currentHitPerPage.get(currentPage);
-        } else {
-            return 0;
-        }
+        return currentHitPerPage.getOrDefault(currentPage, 0);
     }
 
     /**
@@ -227,11 +226,13 @@ class AccountsText implements IndexedText {
             }
 
             //add both the canonical form and the form in the text as accountNumbers to highlight.
-            this.accountNumbers.add(artifact.getAttribute(TSK_KEYWORD).getValueString());
-            this.accountNumbers.add(artifact.getAttribute(TSK_CARD_NUMBER).getValueString());
-            
+            BlackboardAttribute attribute = artifact.getAttribute(TSK_KEYWORD);
+            this.accountNumbers.add(attribute.getValueString());
+            attribute = artifact.getAttribute(TSK_CARD_NUMBER);
+            this.accountNumbers.add(attribute.getValueString());
+
             //if the chunk id is present just use that.
-            Optional<Integer> chunkID = 
+            Optional<Integer> chunkID =
                     Optional.ofNullable(artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID))
                             .map(BlackboardAttribute::getValueString)
                             .map(String::trim)
@@ -243,12 +244,13 @@ class AccountsText implements IndexedText {
             } else {
                 //otherwise we need to do a query to figure out the paging.
                 needsQuery = true;
+                // we can't break the for loop here because we need to accumulate all the accountNumbers
             }
         }
-        
+
         if (needsQuery) {
             // Run a query to figure out which chunks for the current object have hits.
-            Keyword queryKeyword = new Keyword(CCN_REGEX, false, false); 
+            Keyword queryKeyword = new Keyword(CCN_REGEX, false, false);
             KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(queryKeyword, new KeywordList(Arrays.asList(queryKeyword)));
             chunksQuery.addFilter(new KeywordQueryFilter(KeywordQueryFilter.FilterType.CHUNK, this.solrObjectId));
             //load the chunks/pages from the result of the query.
@@ -259,10 +261,11 @@ class AccountsText implements IndexedText {
 
         isPageInfoLoaded = true;
     }
-    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";
 
     /**
      * Load the paging info from the QueryResults object.
+     *
+     * @param hits The QueryResults to load the paging info from.
      */
     synchronized private void loadPageInfoFromHits(QueryResults hits) {
         //organize the hits by page, filter as needed
@@ -317,7 +320,7 @@ class AccountsText implements IndexedText {
             // extracted content (minus highlight tags) is HTML-escaped
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error getting highlighted text for " + solrObjectId, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
             return Bundle.AccountsText_getMarkup_queryFailedMsg();
         }
     }
@@ -353,7 +356,7 @@ class AccountsText implements IndexedText {
 
     @Override
     public String toString() {
-        return displayName;
+        return title;
     }
 
     @Override
@@ -368,9 +371,6 @@ class AccountsText implements IndexedText {
 
     @Override
     public int getNumberHits() {
-        if (!this.numberOfHitsPerPage.containsKey(this.currentPage)) {
-            return 0;
-        }
-        return this.numberOfHitsPerPage.get(this.currentPage);
+        return numberOfHitsPerPage.getOrDefault(currentPage, 0);
     }
 }

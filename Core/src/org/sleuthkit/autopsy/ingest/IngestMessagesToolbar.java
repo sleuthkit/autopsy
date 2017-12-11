@@ -25,6 +25,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
 import javax.swing.JButton;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
@@ -128,7 +129,7 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
             }
         });
 
-        Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(evt.getNewValue() != null && RuntimeProperties.runningWithGUI());
             }

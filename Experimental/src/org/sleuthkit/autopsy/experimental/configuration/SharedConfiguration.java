@@ -778,26 +778,26 @@ public class SharedConfiguration {
     }
 
     /**
-     * Upload Central Repository settings.
+     * Upload central repository settings.
      *
      * @param remoteFolder Shared settings folder
      *
      * @throws SharedConfigurationException
      */
     private void uploadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Uploading Central Repository configuration");
+        publishTask("Uploading central repository configuration");
         copyToRemoteFolder(CENTRAL_REPOSITORY_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
     }
 
     /**
-     * Download Central Repository settings.
+     * Download central repository settings.
      *
      * @param remoteFolder Shared settings folder
      *
      * @throws SharedConfigurationException
      */
     private void downloadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Downloading Central Repository configuration");
+        publishTask("Downloading central repository configuration");
         copyToLocalFolder(CENTRAL_REPOSITORY_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
     }
 
@@ -1122,7 +1122,7 @@ public class SharedConfiguration {
         try {
             HashDbManager hashDbManager = HashDbManager.getInstance();
             hashDbManager.loadLastSavedConfiguration();
-            for (HashDb hashDb : hashDbManager.getAllHashSets()) {
+            for (HashDbManager.HashDb hashDb : hashDbManager.getAllHashSets()) {
                 if (hashDb.hasIndexOnly()) {
                     results.add(hashDb.getIndexPath());
                 } else {

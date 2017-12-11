@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Date;
 import java.util.HashMap;
 import javax.annotation.concurrent.Immutable;
 import javax.xml.parsers.DocumentBuilder;
@@ -38,18 +41,18 @@ import org.xml.sax.SAXException;
 @ServiceProvider(service = ManifestFileParser.class)
 public final class AutopsyManifestFileParser implements ManifestFileParser {
 
-    private static final String MANIFEST_FILE_NAME_SIGNATURE = "_Manifest.xml";
+    private static final String MANIFEST_FILE_NAME_SIGNATURE = "_MANIFEST.XML";
     private static final String ROOT_ELEM_TAG_NAME = "AutopsyManifest";
     private static final String CASE_NAME_XPATH = "/AutopsyManifest/CaseName/text()";
     private static final String DEVICE_ID_XPATH = "/AutopsyManifest/DeviceId/text()";
     private static final String DATA_SOURCE_NAME_XPATH = "/AutopsyManifest/DataSource/text()";
-    
+
     @Override
     public boolean fileIsManifest(Path filePath) {
         boolean fileIsManifest = false;
         try {
             Path fileName = filePath.getFileName();
-            if (fileName.toString().endsWith(MANIFEST_FILE_NAME_SIGNATURE)) {
+            if (fileName.toString().toUpperCase().endsWith(MANIFEST_FILE_NAME_SIGNATURE)) {
                 Document doc = this.createManifestDOM(filePath);
                 Element docElement = doc.getDocumentElement();
                 fileIsManifest = docElement.getTagName().equals(ROOT_ELEM_TAG_NAME);
@@ -63,16 +66,18 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
     @Override
     public Manifest parse(Path filePath) throws ManifestFileParserException {
         try {
+            BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
+            Date dateFileCreated = new Date(attrs.creationTime().toMillis());
             Document doc = this.createManifestDOM(filePath);
-            XPath xpath = XPathFactory.newInstance().newXPath();            
+            XPath xpath = XPathFactory.newInstance().newXPath();
             XPathExpression expr = xpath.compile(CASE_NAME_XPATH);
-            String caseName = (String) expr.evaluate(doc, XPathConstants.STRING);            
+            String caseName = (String) expr.evaluate(doc, XPathConstants.STRING);
             expr = xpath.compile(DEVICE_ID_XPATH);
             String deviceId = (String) expr.evaluate(doc, XPathConstants.STRING);
             expr = xpath.compile(DATA_SOURCE_NAME_XPATH);
-            String dataSourceName = (String) expr.evaluate(doc, XPathConstants.STRING);            
+            String dataSourceName = (String) expr.evaluate(doc, XPathConstants.STRING);
             Path dataSourcePath = filePath.getParent().resolve(dataSourceName);
-            return new Manifest(filePath, caseName, deviceId, dataSourcePath,  new HashMap<>());
+            return new Manifest(filePath, dateFileCreated, caseName, deviceId, dataSourcePath, new HashMap<>());
         } catch (Exception ex) {
             throw new ManifestFileParserException(String.format("Error parsing manifest %s", filePath), ex);
         }
