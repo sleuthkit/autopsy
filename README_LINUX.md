@@ -40,6 +40,10 @@ export CLASSPATH=$JAVA_HOME/lib/:$CLASSPATH
 export PATH=$JAVA_HOME/bin/:$PATH
 export JDK_HOME="/usr/lib/jvm/java-8-oracle/"
 export JRE_HOME="/usr/lib/jvm/java-8-oracle/jre/"
+
+# This location can be anywhere, a user folder, etc. 
+# If you are going to be building frequently it should be a location that is
+# not likely to be deleted, or modified uncessarily.
 export TSK_HOME="/opt/tsk"
 ```
 
@@ -113,7 +117,7 @@ wget -c http://central.maven.org/maven2/com/mchange/c3p0/0.9.5/c3p0-0.9.5.jar
 #### Get a local copy of autopsy (if you haven't already)
 ```bash
 cd ${WORKDIR}
-git clone git@github.com:seannicholls/autopsy.git
+git clone git@github.com:sleuthkit/autopsy.git
 git pull 4.5.1
 ```
 
