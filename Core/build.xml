@@ -36,6 +36,22 @@
         <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
+                
+        <!-- LGoodDatePicker -->
+        <property environment="env"/>
+        <if>
+            <available file="${env.TSK_HOME}/bindings/java/lib/LGoodDatePicker-10.3.1.jar"/>
+            <then>
+                <echo>Found dependency: LGoodDatePicker-10.3.1.jar</echo>
+            </then>
+            <else>
+                <echo>Downloading missing dependency: LGoodDatePicker-10.3.1.jar</echo>
+                <get    src="https://github.com/LGoodDatePicker/LGoodDatePicker/releases/download/v10.3.1-Standard/LGoodDatePicker-10.3.1.jar" 
+                        dest="${env.TSK_HOME}/bindings/java/lib/LGoodDatePicker-10.3.1.jar" />
+            </else>
+        </if>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/LGoodDatePicker-10.3.1.jar"
+              tofile="${ext.dir}/LGoodDatePicker-10.3.1.jar"/>
     </target>
     
     
@@ -49,17 +65,78 @@
         <fail unless="tskFound" message="TSK_HOME must be set as an environment variable."/>
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>  
-    
+        
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
+
+        <!--
+            Currently there is no reliable source for built releases of Tsk_DataModel_PostgreSQL.jar
+            Until such time, we must rely on a local copy instead.
+        -->            
+        <condition property="dataModelFound">
+            <available file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar"/>
+        </condition>
+        <fail unless="dataModelFound" message="Unmet dependency: ${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar" 
               tofile="${ext.dir}/Tsk_DataModel_PostgreSQL.jar"/>
+                
+        <!-- SQLITE-JDBC -->
+        <if>
+            <available file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"/>
+            <then>
+                <echo>Found dependency: sqlite-jdbc-3.8.11.jar</echo>
+            </then>
+            <else>
+                <echo>Downloading missing dependency: sqlite-jdbc-3.8.11.jar</echo>
+                <get    src="https://bitbucket.org/xerial/sqlite-jdbc/downloads/sqlite-jdbc-3.8.11.jar" 
+                        dest="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" />
+            </else>
+        </if>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.8.11.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
-              tofile="${ext.dir}/postgresql-9.4.1211.jre7.jar"/>
+        
+        <!-- POSTGRESQL -->
+        <if>
+            <available file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar"/>
+            <then>
+                <echo>Found dependency: postgresql-9.4.1211.jre7.jar</echo>
+            </then>
+            <else>
+                <echo>Downloading missing dependency: postgresql-9.4.1211.jre7.jar</echo>
+                <get    src="http://central.maven.org/maven2/org/postgresql/postgresql/9.4.1211.jre7/postgresql-9.4.1211.jre7.jar" 
+                        dest="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" />
+            </else>
+        </if>
+        <copy   file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
+                tofile="${ext.dir}/postgresql-9.4.1211.jre7.jar"/>
+        
+        <!-- mchange-commons -->
+        <if>
+            <available file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"/>
+            <then>
+                <echo>Found dependency: mchange-commons-java-0.2.9.jar</echo>
+            </then>
+            <else>
+                <echo>Downloading missing dependency: mchange-commons-java-0.2.9.jar</echo>
+                <get    src="http://central.maven.org/maven2/com/mchange/mchange-commons-java/0.2.9/mchange-commons-java-0.2.9.jar" 
+                        dest="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar" />
+            </else>
+        </if>
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
               tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
+        
+        <!-- c3p0-0.9.5 -->
+        <if>
+            <available file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"/>
+            <then>
+                <echo>Found dependency: c3p0-0.9.5.jar</echo>
+            </then>
+            <else>
+                <echo>Downloading missing dependency: c3p0-0.9.5.jar</echo>
+                <get    src="http://central.maven.org/maven2/com/mchange/c3p0/0.9.5/c3p0-0.9.5.jar" 
+                        dest="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar" />
+            </else>
+        </if>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
     </target>
