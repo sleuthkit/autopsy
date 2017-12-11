@@ -1610,7 +1610,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, import_date) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, type, import_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
@@ -1620,7 +1620,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement1.setString(3, eamGlobalSet.getVersion());
             preparedStatement1.setInt(4, eamGlobalSet.getFileKnownStatus().getFileKnownValue());
             preparedStatement1.setBoolean(5, eamGlobalSet.isReadOnly());
-            preparedStatement1.setString(6, eamGlobalSet.getImportDate().toString());
+            preparedStatement1.setInt(6, eamGlobalSet.getType().getId());
+            preparedStatement1.setString(7, eamGlobalSet.getImportDate().toString());
 
             preparedStatement1.executeUpdate();
 
@@ -1680,18 +1681,20 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Get all reference sets
      *
+     * @param correlationType Type of sets to return
+     * 
      * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalSet> getAllReferenceSets() throws EamDbException {
+    public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
         List<EamGlobalSet> results = new ArrayList<>();
         Connection conn = connect();
 
         PreparedStatement preparedStatement1 = null;
         ResultSet resultSet = null;
-        String sql1 = "SELECT * FROM reference_sets";
+        String sql1 = "SELECT * FROM reference_sets WHERE type=" + correlationType.getId();
 
         try {
             preparedStatement1 = conn.prepareStatement(sql1);
@@ -2194,7 +2197,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamOrganization;
     }
 
-    private EamGlobalSet getEamGlobalSetFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamGlobalSet getEamGlobalSetFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
         if (null == resultSet) {
             return null;
         }
@@ -2206,6 +2209,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("version"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
                 resultSet.getBoolean("read_only"),
+                EamDb.getInstance().getCorrelationTypeById(resultSet.getInt("type")),
                 LocalDate.parse(resultSet.getString("import_date"))
         );
 

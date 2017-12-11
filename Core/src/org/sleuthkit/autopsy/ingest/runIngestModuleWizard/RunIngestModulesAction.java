@@ -26,6 +26,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
+import javax.swing.RootPaneContainer;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle.Messages;
@@ -50,6 +51,7 @@ public final class RunIngestModulesAction extends AbstractAction {
      * used instead of this wizard and is retained for backwards compatibility.
      */
     private static final String EXECUTION_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
+
     /**
      * Display any warnings that the ingestJobSettings have.
      *
@@ -104,19 +106,21 @@ public final class RunIngestModulesAction extends AbstractAction {
          * argument in the title format string will be supplied by
          * WizardDescriptor.Panel.getComponent().getName().
          */
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        RootPaneContainer root = (RootPaneContainer) WindowManager.getDefault().getMainWindow();
+        root.getGlassPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        root.getGlassPane().setVisible(true);
         RunIngestModulesWizardIterator wizard = new RunIngestModulesWizardIterator(EXECUTION_CONTEXT, this.ingestType, this.dataSources);
         WizardDescriptor wiz = new WizardDescriptor(wizard);
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle(Bundle.RunIngestModulesAction_name());
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        root.getGlassPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        root.getGlassPane().setVisible(false);
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             IngestJobSettings ingestJobSettings = wizard.getIngestJobSettings();
             showWarnings(ingestJobSettings);
             IngestManager.getInstance().queueIngestJob(this.dataSources, ingestJobSettings);
         }
     }
-
 
     @Override
     public Object clone() throws CloneNotSupportedException {

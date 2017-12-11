@@ -179,7 +179,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
         return displayName + "," + description + "," + color.name() + "," + knownStatus.toString();
     }
 
-    private TagName saveToCase(SleuthkitCase caseDb) {
+    TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
             tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);

@@ -237,7 +237,8 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
 
                 // Create an empty hashset in the central repository
                 EamDb dbManager = EamDb.getInstance();
-                referenceSetID.set(dbManager.newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, readOnly)));
+                referenceSetID.set(dbManager.newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, 
+                        readOnly, EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID))));
 
                 // Get the "FILES" content type. This is a database lookup so we
                 // only want to do it once.
