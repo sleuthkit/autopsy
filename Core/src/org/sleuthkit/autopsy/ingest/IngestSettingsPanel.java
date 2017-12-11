@@ -37,8 +37,10 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel {
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         Integer fileIngestThreadCountChoices[];
         int recommendedFileIngestThreadCount;
-
-        if (availableProcessors >= 6) {
+        if (availableProcessors >= 8) {
+            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8};
+            recommendedFileIngestThreadCount = 4;
+        } else if (availableProcessors >= 6 && availableProcessors <= 7) {
             fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6};
             recommendedFileIngestThreadCount = 4;
         } else if (availableProcessors >= 4 && availableProcessors <= 5) {
