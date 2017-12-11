@@ -2,6 +2,11 @@ Most of the Autopsy development occurs to be run on Windows systems, but it is
 possible to run Autopsy on Linux and OS X.  This file contains the instructions 
 for building Autopsy on Linux and getting it working.
 
+this will build Autopsy to a "usable state" but that is not to say that all 
+features are presently working. PhotoCarver for instance, apparently is only 
+available for Windows and as yet Windows Registry extraction does not appear to
+work.
+
 This guide assumes Ubuntu 16.04 LTS for linux building instructions.
 
 
