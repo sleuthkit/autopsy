@@ -408,6 +408,17 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             return;
         }
 
+        if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+            try {
+                BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    final long associatedArtifactID = attribute.getValueLong();
+                    artifact = artifact.getSleuthkitCase().getArtifactByArtifactId(associatedArtifactID);
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
+            }
+        }
         if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
             displayMsg();
         } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
@@ -471,7 +482,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 BlackboardAttribute attribute = nodeArtifact.getAttribute(new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
                     final long associatedArtifactID = attribute.getValueLong();
-                    BlackboardArtifact assoc = (BlackboardArtifact) nodeArtifact.getSleuthkitCase().getArtifactByArtifactID(associatedArtifactID);
+                    BlackboardArtifact assoc = nodeArtifact.getSleuthkitCase().getArtifactByArtifactId(associatedArtifactID);
                     if ((assoc != null)
                             && ((assoc.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID())
                             || (assoc.getArtifactTypeID() == TSK_MESSAGE.getTypeID()))) {
