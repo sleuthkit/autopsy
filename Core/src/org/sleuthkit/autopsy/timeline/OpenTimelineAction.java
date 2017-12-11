@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline;
 import java.awt.Component;
 import java.io.IOException;
 import java.util.logging.Level;
+import javafx.application.Platform;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.awt.ActionID;
@@ -36,8 +37,10 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.guiutils.JavaFXUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An Action that opens the Timeline window. Has methods to open the window in
@@ -51,9 +54,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public final class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(OpenTimelineAction.class.getName());
-
-    private static final boolean FX_INITED = Installer.isJavaFxInited();
+    private static final Logger logger = Logger.getLogger(OpenTimelineAction.class.getName());
+    private static final int FILE_LIMIT = 6_000_000;
 
     private static TimeLineController timeLineController = null;
 
@@ -78,15 +80,26 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
         /**
          * We used to also check if Case.getCurrentCase().hasData() was true. We
          * disabled that check because if it is executed while a data source is
-         * being added, it blocks the edt
+         * being added, it blocks the edt. We still do that in ImageGallery.
          */
-        return Case.isCaseOpen() && FX_INITED;
+        return Case.isCaseOpen() && Installer.isJavaFxInited();
     }
 
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void performAction() {
-        showTimeline();
+        if (tooManyFiles()) {
+            Platform.runLater(() ->
+                    JavaFXUtils.showTooManyFiles(Bundle.Timeline_dialogs_title()));
+            synchronized (OpenTimelineAction.this) {
+                if (timeLineController != null) {
+                    timeLineController.shutDownTimeLine();
+                }
+            }
+            setEnabled(false);
+        } else {
+            showTimeline();
+        }
     }
 
     @NbBundle.Messages({
@@ -97,7 +110,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
             Case currentCase = Case.getCurrentCase();
             if (currentCase.hasData() == false) {
                 MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
-                LOGGER.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
+                logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
                 return;
             }
             try {
@@ -112,7 +125,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
 
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
-                LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
+                logger.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
             }
         } catch (IllegalStateException e) {
             //there is no case...   Do nothing.
@@ -169,12 +182,12 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
     /**
      * Set this action to be enabled/disabled
      *
-     * @param value whether to enable this action or not
+     * @param enable whether to enable this action or not
      */
     @Override
-    public void setEnabled(boolean value) {
-        super.setEnabled(value);
-        toolbarButton.setEnabled(value);
+    public void setEnabled(boolean enable) {
+        super.setEnabled(enable);
+        toolbarButton.setEnabled(enable);
     }
 
     /**
@@ -188,5 +201,17 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
         toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
         return toolbarButton;
+    }
+
+    private boolean tooManyFiles() {
+        try {
+            return FILE_LIMIT < Case.getCurrentCase().getSleuthkitCase().countFilesWhere("1 = 1");
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "Can not open timeline with no case open.", ex);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error counting files in the DB.", ex);
+        }
+        //if there is any doubt (no case, tskcore error, etc) just disable .
+        return false;
     }
 }

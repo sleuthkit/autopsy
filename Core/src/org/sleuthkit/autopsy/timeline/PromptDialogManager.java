@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.List;
-import java.util.logging.Level;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -30,22 +27,19 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.ListView;
-import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.controlsfx.dialog.ProgressDialog;
 import org.controlsfx.tools.Borders;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.guiutils.JavaFXUtils;
 
 /**
  * Manager for the various prompts and dialogs Timeline shows the user related
  * to rebuilding the database. Methods must only be called on the JFX thread.
  */
 public final class PromptDialogManager {
-
-    private static final Logger LOGGER = Logger.getLogger(PromptDialogManager.class.getName());
 
     @NbBundle.Messages("PrompDialogManager.buttonType.showTimeline=Continue")
     private static final ButtonType CONTINUE = new ButtonType(Bundle.PrompDialogManager_buttonType_showTimeline(), ButtonBar.ButtonData.OK_DONE);
@@ -55,21 +49,6 @@ public final class PromptDialogManager {
 
     @NbBundle.Messages("PrompDialogManager.buttonType.update=Update DB")
     private static final ButtonType UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_update(), ButtonBar.ButtonData.OK_DONE);
-
-    /**
-     * Image to use as title bar icon in dialogs
-     */
-    private static final Image AUTOPSY_ICON;
-
-    static {
-        Image tempImg = null;
-        try {
-            tempImg = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NON-NLS
-        } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NON-NLS
-        }
-        AUTOPSY_ICON = tempImg;
-    }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private Dialog<?> currentDialog;
@@ -143,8 +122,9 @@ public final class PromptDialogManager {
      * @param dialog The dialog to set the title bar icon for.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    @Deprecated
     public static void setDialogIcons(Dialog<?> dialog) {
-        ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(AUTOPSY_ICON);
+        JavaFXUtils.setDialogIcons(dialog);
     }
 
     /**
@@ -168,6 +148,8 @@ public final class PromptDialogManager {
         return currentDialog.showAndWait().map(CONTINUE::equals).orElse(false);
     }
 
+  
+
     /**
      * Prompt the user to confirm rebuilding the database for the given list of
      * reasons.
@@ -177,7 +159,8 @@ public final class PromptDialogManager {
      * @return True if the user a confirms rebuilding the database.
      */
     @NbBundle.Messages({
-        "PromptDialogManager.rebuildPrompt.headerText=The Timeline DB is incomplete and/or out of date.  Some events may be missing or inaccurate and some features may be unavailable.",
+        "PromptDialogManager.rebuildPrompt.headerText=The Timeline DB is incomplete and/or out of date."
+        + "  Some events may be missing or inaccurate and some features may be unavailable.",
         "PromptDialogManager.rebuildPrompt.details=Details"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmRebuild(List<String> rebuildReasons) {
