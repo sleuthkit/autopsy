@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.MultiUserCaseManager.MultiUserCase;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -369,8 +369,10 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         rbWeeks = new javax.swing.JRadioButton();
         rbMonths = new javax.swing.JRadioButton();
         rbGroupLabel = new javax.swing.JLabel();
+        bnOpenSingleUserCase = new javax.swing.JButton();
 
         setName("Completed Cases"); // NOI18N
+        setPreferredSize(new java.awt.Dimension(960, 485));
 
         org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnOpen.text")); // NOI18N
         bnOpen.setEnabled(false);
@@ -458,6 +460,13 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         rbGroupLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.rbGroupLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnOpenSingleUserCase, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnOpenSingleUserCase.text")); // NOI18N
+        bnOpenSingleUserCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnOpenSingleUserCaseActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -469,8 +478,10 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                         .addGap(4, 4, 4)
                         .addComponent(bnOpen, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(bnOpenSingleUserCase)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnShowLog)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
                         .addComponent(rbGroupLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(rbDays)
@@ -480,9 +491,8 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                         .addComponent(rbMonths)
                         .addGap(0, 0, 0)
                         .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(bnRefresh)
-                        .addGap(4, 4, 4))
+                        .addGap(14, 14, 14)
+                        .addComponent(bnRefresh))
                     .addComponent(scrollPaneTable))
                 .addContainerGap())
         );
@@ -495,15 +505,16 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(bnOpen)
+                        .addComponent(bnOpenSingleUserCase)
                         .addComponent(bnShowLog))
-                    .addComponent(bnRefresh)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(rbDays)
                             .addComponent(rbWeeks)
                             .addComponent(rbMonths)
                             .addComponent(rbGroupLabel))
-                        .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(bnRefresh, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -586,8 +597,13 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_casesTableMouseClicked
 
+    private void bnOpenSingleUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenSingleUserCaseActionPerformed
+        Lookup.getDefault().lookup(CaseOpenAction.class).openCaseSelectionWindow();
+    }//GEN-LAST:event_bnOpenSingleUserCaseActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnOpen;
+    private javax.swing.JButton bnOpenSingleUserCase;
     private javax.swing.JButton bnRefresh;
     private javax.swing.JButton bnShowLog;
     private javax.swing.JTable casesTable;
