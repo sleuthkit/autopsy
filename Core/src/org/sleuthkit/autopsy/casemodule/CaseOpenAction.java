@@ -24,17 +24,22 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -46,21 +51,26 @@ import org.sleuthkit.autopsy.coreutils.Version;
  *
  * This action should only be invoked in the event dispatch thread (EDT).
  */
+@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.CaseOpenAction")
+@ActionReference(path = "Menu/Case", position = 102)
+@ActionRegistration(displayName = "#CTL_CaseOpenAction", lazy = false)
+@NbBundle.Messages({"CTL_CaseOpenAction=Open Case"})
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
 
     private static final long serialVersionUID = 1L;
+    private static final String DISPLAY_NAME = Bundle.CTL_CaseOpenAction();
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
-    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
+    private static JDialog multiUserCaseWindow;
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
 
     /**
      * Constructs the action associated with the Case/Open Case menu item via
-     * the layer.xml file, a toolbar button, and the Create New Case button of
-     * the start up window that allows a user to open a case. It opens an
-     * existing case.
-     *
+     * the layer.xml file, a toolbar button, and the Open Case button of the
+     * start up window that allows a user to open a case. It opens an existing
+     * case.
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
@@ -74,13 +84,11 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
     }
 
     /**
-     * Pops up a file chooser to allow the user to select a case metadata file
-     * (.aut file) and attempts to open the case described by the file.
-     *
-     * @param e The action event.
+     * Open the case selection window to allow the user to select a case
+     * metadata file (.aut file). Upon confirming the selection, it will attempt
+     * to open the case described by the file.
      */
-    @Override
-    public void actionPerformed(ActionEvent e) {
+    void openCaseSelectionWindow() {
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
         String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
@@ -94,6 +102,13 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                  * Close the startup window, if it is open.
                  */
                 StartupWindowProvider.getInstance().close();
+
+                /*
+                 * Close the Open Multi-User Case window, if it is open.
+                 */
+                if (multiUserCaseWindow != null) {
+                    multiUserCaseWindow.setVisible(false);
+                }
 
                 /*
                  * Try to open the case associated with the case metadata file
@@ -117,7 +132,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                             get();
                         } catch (InterruptedException | ExecutionException ex) {
                             if (ex instanceof InterruptedException || (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException))) {
-                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
+                                LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
                                 JOptionPane.showMessageDialog(
                                         WindowManager.getDefault().getMainWindow(),
                                         ex.getCause().getMessage(), //get the message of the wrapped exception
@@ -134,6 +149,29 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
         }
     }
 
+    /**
+     * Pops up either the case selection window or the Open Multi-User Case
+     * window, depending on the multi-user case settings.
+     *
+     * @param e The action event.
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (UserPreferences.getIsMultiUserModeEnabled()) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            if (multiUserCaseWindow == null) {
+                multiUserCaseWindow = MultiUserCasesDialog.getInstance();
+            }
+            multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+            multiUserCaseWindow.setVisible(true);
+
+            WindowManager.getDefault().getMainWindow().setCursor(null);
+        } else {
+            openCaseSelectionWindow();
+        }
+    }
+
     @Override
     public void performAction() {
         actionPerformed(null);
@@ -141,7 +179,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(CaseOpenAction.class, "CTL_CaseOpenAction");
+        return DISPLAY_NAME;
     }
 
     @Override

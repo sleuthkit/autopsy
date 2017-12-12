@@ -368,7 +368,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param input - input string, like the To/CC line from an email header
      * 
-     * @param Set<String>: set of email addresses found in the input string
+     * @return Set<String>: set of email addresses found in the input string
      */
     private Set<String> findEmailAddresess(String input) {
         Pattern p = Pattern.compile("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b",

@@ -31,7 +31,6 @@ import javax.swing.KeyStroke;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /*
  * The panel in the default Autopsy startup window.
@@ -107,10 +106,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
         boolean enableOpenRecentCaseButton = (RecentCases.getInstance().getTotalRecentCases() > 0);
         openRecentCaseButton.setEnabled(enableOpenRecentCaseButton);
         openRecentCaseLabel.setEnabled(enableOpenRecentCaseButton);
-
-        boolean enableOpenMultiUserCaseButton = UserPreferences.getIsMultiUserModeEnabled();
-        openMultiUserCaseButton.setEnabled(enableOpenMultiUserCaseButton);
-        openMultiUserCaseLabel.setEnabled(enableOpenMultiUserCaseButton);
     }
 
     /**
@@ -124,29 +119,27 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
         autopsyLogo = new javax.swing.JLabel();
         this.autopsyLogo.setText("");
-        createNewCaseButton = new javax.swing.JButton();
+        newCaseButton = new javax.swing.JButton();
         openRecentCaseButton = new javax.swing.JButton();
-        createNewCaseLabel = new javax.swing.JLabel();
+        newCaseLabel = new javax.swing.JLabel();
         openRecentCaseLabel = new javax.swing.JLabel();
-        openExistingCaseButton = new javax.swing.JButton();
-        openExistingCaseLabel = new javax.swing.JLabel();
+        openCaseButton = new javax.swing.JButton();
+        openCaseLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        openMultiUserCaseButton = new javax.swing.JButton();
-        openMultiUserCaseLabel = new javax.swing.JLabel();
 
         autopsyLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/welcome_logo.png"))); // NOI18N
         autopsyLogo.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLogo.text")); // NOI18N
 
-        createNewCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N
-        createNewCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewCaseButton.text")); // NOI18N
-        createNewCaseButton.setBorder(null);
-        createNewCaseButton.setBorderPainted(false);
-        createNewCaseButton.setContentAreaFilled(false);
-        createNewCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        createNewCaseButton.addActionListener(new java.awt.event.ActionListener() {
+        newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N
+        newCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseButton.text")); // NOI18N
+        newCaseButton.setBorder(null);
+        newCaseButton.setBorderPainted(false);
+        newCaseButton.setContentAreaFilled(false);
+        newCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
+        newCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                createNewCaseButtonActionPerformed(evt);
+                newCaseButtonActionPerformed(evt);
             }
         });
 
@@ -162,48 +155,32 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        createNewCaseLabel.setFont(createNewCaseLabel.getFont().deriveFont(createNewCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        createNewCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.createNewCaseLabel.text")); // NOI18N
+        newCaseLabel.setFont(newCaseLabel.getFont().deriveFont(newCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        newCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseLabel.text")); // NOI18N
 
         openRecentCaseLabel.setFont(openRecentCaseLabel.getFont().deriveFont(openRecentCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         openRecentCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentCaseLabel.text")); // NOI18N
 
-        openExistingCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
-        openExistingCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openExistingCaseButton.text")); // NOI18N
-        openExistingCaseButton.setBorder(null);
-        openExistingCaseButton.setBorderPainted(false);
-        openExistingCaseButton.setContentAreaFilled(false);
-        openExistingCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
-        openExistingCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        openExistingCaseButton.addActionListener(new java.awt.event.ActionListener() {
+        openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
+        openCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openCaseButton.text")); // NOI18N
+        openCaseButton.setBorder(null);
+        openCaseButton.setBorderPainted(false);
+        openCaseButton.setContentAreaFilled(false);
+        openCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
+        openCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
+        openCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openExistingCaseButtonActionPerformed(evt);
+                openCaseButtonActionPerformed(evt);
             }
         });
 
-        openExistingCaseLabel.setFont(openExistingCaseLabel.getFont().deriveFont(openExistingCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        openExistingCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openExistingCaseLabel.text")); // NOI18N
+        openCaseLabel.setFont(openCaseLabel.getFont().deriveFont(openCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
+        openCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openCaseLabel.text")); // NOI18N
 
         closeButton.setFont(closeButton.getFont().deriveFont(closeButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         closeButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.closeButton.text")); // NOI18N
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-        openMultiUserCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
-        openMultiUserCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openMultiUserCaseButton.text")); // NOI18N
-        openMultiUserCaseButton.setBorder(null);
-        openMultiUserCaseButton.setBorderPainted(false);
-        openMultiUserCaseButton.setContentAreaFilled(false);
-        openMultiUserCaseButton.setMargin(new java.awt.Insets(1, 1, 1, 1));
-        openMultiUserCaseButton.setPreferredSize(new java.awt.Dimension(64, 64));
-        openMultiUserCaseButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openMultiUserCaseButtonActionPerformed(evt);
-            }
-        });
-
-        openMultiUserCaseLabel.setFont(openMultiUserCaseLabel.getFont().deriveFont(openMultiUserCaseLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
-        openMultiUserCaseLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openMultiUserCaseLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -211,64 +188,62 @@ public class CueBannerPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(autopsyLogo)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 5, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(autopsyLogo)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 5, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(newCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openExistingCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openMultiUserCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(createNewCaseLabel)
+                            .addComponent(newCaseLabel)
                             .addComponent(openRecentCaseLabel)
-                            .addComponent(openExistingCaseLabel)
-                            .addComponent(openMultiUserCaseLabel)))
-                    .addComponent(closeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                            .addComponent(openCaseLabel))
+                        .addGap(18, 18, 18))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 139, Short.MAX_VALUE)
+                        .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(createNewCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(createNewCaseLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openRecentCaseLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                            .addComponent(openExistingCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(openExistingCaseLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(openMultiUserCaseButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(openMultiUserCaseLabel)
-                                .addGap(20, 20, 20))))
-                    .addComponent(jSeparator1)
-                    .addComponent(autopsyLogo, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
-                .addComponent(closeButton)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(autopsyLogo, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                                .addComponent(newCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(newCaseLabel))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                                .addComponent(openRecentCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(openRecentCaseLabel))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                                .addComponent(openCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(openCaseLabel))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(closeButton))
+                        .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 260, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void createNewCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createNewCaseButtonActionPerformed
+    private void newCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCaseButtonActionPerformed
         Lookup.getDefault().lookup(CaseNewActionInterface.class).actionPerformed(evt);
-    }//GEN-LAST:event_createNewCaseButtonActionPerformed
+    }//GEN-LAST:event_newCaseButtonActionPerformed
 
-    private void openExistingCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openExistingCaseButtonActionPerformed
+    private void openCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openCaseButtonActionPerformed
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         Lookup.getDefault().lookup(CaseOpenAction.class).actionPerformed(evt);
-    }//GEN-LAST:event_openExistingCaseButtonActionPerformed
+        setCursor(null);
+    }//GEN-LAST:event_openCaseButtonActionPerformed
 
     private void openRecentCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentCaseButtonActionPerformed
         recentCasesWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
@@ -276,27 +251,14 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed
 
-    private void openMultiUserCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMultiUserCaseButtonActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-        MultiUserCasesDialog multiUserCaseWindow = MultiUserCasesDialog.getInstance();
-        multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        multiUserCaseWindow.setVisible(true);
-
-        setCursor(null);
-
-    }//GEN-LAST:event_openMultiUserCaseButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel autopsyLogo;
     private javax.swing.JButton closeButton;
-    private javax.swing.JButton createNewCaseButton;
-    private javax.swing.JLabel createNewCaseLabel;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JButton openMultiUserCaseButton;
-    private javax.swing.JLabel openMultiUserCaseLabel;
-    private javax.swing.JButton openExistingCaseButton;
-    private javax.swing.JLabel openExistingCaseLabel;
+    private javax.swing.JButton newCaseButton;
+    private javax.swing.JLabel newCaseLabel;
+    private javax.swing.JButton openCaseButton;
+    private javax.swing.JLabel openCaseLabel;
     private javax.swing.JButton openRecentCaseButton;
     private javax.swing.JLabel openRecentCaseLabel;
     // End of variables declaration//GEN-END:variables

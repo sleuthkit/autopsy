@@ -645,8 +645,9 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     
     /**
      * Check if the given hash is in a specific reference set
-     * @param hash
+     * @param value
      * @param referenceSetID
+     * @param correlationTypeID
      * @return true if the hash is found in the reference set
      */
     @Override

@@ -75,6 +75,7 @@ public class EamGlobalSet {
      * @param version
      * @param knownStatus
      * @param isReadOnly 
+     * @param type
      */
     public EamGlobalSet(
             int orgID,
@@ -164,7 +165,7 @@ public class EamGlobalSet {
     }
 
     /**
-     * @param knownStatus the known status to set
+     * @param fileKnownStatus the known status to set
      */
     public void setFileKnownStatus(TskData.FileKnown fileKnownStatus) {
         this.fileKnownStatus = fileKnownStatus;
