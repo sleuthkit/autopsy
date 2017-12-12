@@ -999,6 +999,7 @@ public class Case {
     }
 
     private static String getNameForTitle(){
+        //Method should become unnecessary once technical debt story 3334 is done.
         if (UserPreferences.getAppName().equals(Version.getName())){
             //Available version number is version number for this application
             return String.format("%s %s", UserPreferences.getAppName(), Version.getVersion());
