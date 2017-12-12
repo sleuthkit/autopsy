@@ -998,6 +998,10 @@ public class Case {
         }
     }
 
+    private static String getAppNameWithVersion(){
+        return String.format("%s %s", Version.getName(), Version.getVersion());
+    }
+    
     /**
      * Update the GUI to to reflect the current case.
      */
@@ -1074,7 +1078,7 @@ public class Case {
                  *
                  * [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getAppNameWithVersion());
             });
         }
     }
@@ -1112,7 +1116,7 @@ public class Case {
                  * Reset the main window title to be just the application name,
                  * instead of [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(UserPreferences.getAppName());
+                mainFrame.setTitle(getAppNameWithVersion());
             });
         }
     }
@@ -1592,7 +1596,7 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.CASE_DETAILS.toString(), oldCaseDetails, caseDetails));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + getAppNameWithVersion());
                 try {
                     RecentCases.getInstance().updateRecentCase(oldCaseDetails.getCaseDisplayName(), metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
