@@ -998,8 +998,14 @@ public class Case {
         }
     }
 
-    private static String getAppNameWithVersion(){
-        return String.format("%s %s", Version.getName(), Version.getVersion());
+    private static String getNameForTitle(){
+        if (UserPreferences.getAppName().equals(Version.getName())){
+            //Available version number is version number for this application
+            return String.format("%s %s", UserPreferences.getAppName(), Version.getVersion());
+        }
+        else {
+            return UserPreferences.getAppName();
+        }
     }
     
     /**
@@ -1078,7 +1084,7 @@ public class Case {
                  *
                  * [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getAppNameWithVersion());
+                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
             });
         }
     }
@@ -1116,7 +1122,7 @@ public class Case {
                  * Reset the main window title to be just the application name,
                  * instead of [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(getAppNameWithVersion());
+                mainFrame.setTitle(getNameForTitle());
             });
         }
     }
@@ -1596,7 +1602,7 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.CASE_DETAILS.toString(), oldCaseDetails, caseDetails));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + getAppNameWithVersion());
+                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + getNameForTitle());
                 try {
                     RecentCases.getInstance().updateRecentCase(oldCaseDetails.getCaseDisplayName(), metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
