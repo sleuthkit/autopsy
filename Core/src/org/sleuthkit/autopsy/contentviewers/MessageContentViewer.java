@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,8 +47,10 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DIRECTION;
@@ -73,6 +75,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MessageContentViewer.class.getName());
+    private static final BlackboardAttribute.Type TSK_ASSOCIATED_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
 
     private static final int HDR_TAB_INDEX = 0;
     private static final int TEXT_TAB_INDEX = 1;
@@ -92,9 +95,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     /**
      * Creates new MessageContentViewer
      */
+    @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
     public MessageContentViewer() {
         initComponents();
-        drp = DataResultPanel.createInstanceUninitialized("Attachments", "", Node.EMPTY, 0, null);
+        drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", Node.EMPTY, 0, null);
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
@@ -106,8 +110,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         drp.open();
         drpExplorerManager = drp.getExplorerManager();
-        drpExplorerManager.addPropertyChangeListener(evt
-                -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
+        drpExplorerManager.addPropertyChangeListener(evt ->
+                viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
     }
 
     /**
@@ -406,6 +410,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             return;
         }
 
+        /*
+         * If the artifact is a keyword hit, use the associated artifact as the
+         * one to show in this viewer
+         */
+        if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+            try {
+                getAssociatedArtifact(artifact).ifPresent(associatedArtifact -> {
+                    artifact = associatedArtifact;
+                });
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
+            }
+        }
+
         if (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID()) {
             displayMsg();
         } else if (artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID()) {
@@ -413,6 +431,24 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         } else {
             resetComponent();
         }
+    }
+
+    /**
+     * Get the artifact associated with the given artifact, if there is one.
+     *
+     * @param artifact The artifact to get the associated artifact from. Must
+     *                 not be null
+     *
+     * @throws TskCoreException If there is a critical error querying the DB.
+     * @return An optional containing the artifact associated with the given
+     *         artifact, if there is one.
+     */
+    private static Optional<BlackboardArtifact> getAssociatedArtifact(final BlackboardArtifact artifact) throws TskCoreException {
+        BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_TYPE);
+        if (attribute != null) {
+            return Optional.of(artifact.getSleuthkitCase().getArtifactByArtifactId(attribute.getValueLong()));
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -463,10 +499,37 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
     @Override
     public boolean isSupported(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        return ((artifact != null)
-                && ((artifact.getArtifactTypeID() == TSK_EMAIL_MSG.getTypeID())
-                || (artifact.getArtifactTypeID() == TSK_MESSAGE.getTypeID())));
+        BlackboardArtifact nodeArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+
+        if (nodeArtifact == null) {
+            return false;
+        }
+        //if the artifact is a keyword hit, check if its associated artifact is a message or email.
+        if (nodeArtifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+            try {
+                if (getAssociatedArtifact(nodeArtifact).map(MessageContentViewer::isMessageArtifact).orElse(false)) {
+                    return true;
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "error getting associated artifact", ex);
+            }
+        }
+        return isMessageArtifact(nodeArtifact);
+    }
+
+    /**
+     * Is the given artifact one that can be shown in this viewer?
+     *
+     * @param nodeArtifact An artifact that might be a message. Must not be
+     *                     null.
+     *
+     * @return True if the given artifact can be shown as a message in this
+     *         viewer.
+     */
+    private static boolean isMessageArtifact(BlackboardArtifact nodeArtifact) {
+        final int artifactTypeID = nodeArtifact.getArtifactTypeID();
+        return artifactTypeID == TSK_EMAIL_MSG.getTypeID()
+                || artifactTypeID == TSK_MESSAGE.getTypeID();
     }
 
     @Override
