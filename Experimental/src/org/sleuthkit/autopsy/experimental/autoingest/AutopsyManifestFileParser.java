@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.UUID;
 import javax.annotation.concurrent.Immutable;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -74,6 +75,9 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             String caseName = (String) expr.evaluate(doc, XPathConstants.STRING);
             expr = xpath.compile(DEVICE_ID_XPATH);
             String deviceId = (String) expr.evaluate(doc, XPathConstants.STRING);
+            if (deviceId.isEmpty()) {
+                deviceId = UUID.randomUUID().toString();
+            }
             expr = xpath.compile(DATA_SOURCE_NAME_XPATH);
             String dataSourceName = (String) expr.evaluate(doc, XPathConstants.STRING);
             Path dataSourcePath = filePath.getParent().resolve(dataSourceName);
