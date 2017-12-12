@@ -1610,11 +1610,8 @@ public class Case {
      *                        will be created if it doesn't already exist; if it
      *                        exists, it is ASSUMED it was created by calling
      *                        createCaseDirectory.
-     * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
+     * @param caseDetails     Contains details of the case, such as examiner, display name, etc
+     *                        
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
         metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
