@@ -188,7 +188,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * @throws IOException when the file does not exist.
      */
     private static File getInstallFolderConfFile() throws IOException {
-        String confFileName = Version.getName() + CONFIG_FILE_EXTENSION;
+        String confFileName = UserPreferences.getAppName() + CONFIG_FILE_EXTENSION;
         String installFolder = PlatformUtil.getInstallPath();
         File installFolderEtc = new File(installFolder, ETC_FOLDER_NAME);
         File installFolderConfigFile = new File(installFolderEtc, confFileName);
