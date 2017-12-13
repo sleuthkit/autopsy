@@ -47,8 +47,6 @@ from org.sleuthkit.datamodel import Account
 import traceback
 import general
 
-deviceAccountInstance = None
-
 """
 Locates database for the Tango app and adds info to blackboard.
 """
@@ -59,20 +57,13 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
-            # Create a 'Device' account using the data source device id
-            datasourceObjId = dataSource.getDataSource().getId()
-            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-            deviceID = ds.getDeviceId()
-
-            global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
-
+           
             absFiles = fileManager.findFiles(dataSource, "tc.db")
             for abstractFile in absFiles:
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findTangoMessagesInDB(jFile.toString(), abstractFile)
+                    self.__findTangoMessagesInDB(jFile.toString(), abstractFile, dataSource)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Tango messages", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -80,7 +71,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error finding Tango messages", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
-    def __findTangoMessagesInDB(self, databasePath, abstractFile):
+    def __findTangoMessagesInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
             return
 
@@ -92,6 +83,12 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error opening database", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+
+ 	# Create a 'Device' account using the data source device id
+        datasourceObjId = dataSource.getDataSource().getId()
+        ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+        deviceID = ds.getDeviceId()
+        deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
         try:
             resultSet = statement.executeQuery(

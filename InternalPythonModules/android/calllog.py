@@ -87,13 +87,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
     def analyze(self, dataSource, fileManager, context):
         try:
 
-            # Create a 'Device' account using the data source device id
-            datasourceObjId = dataSource.getDataSource().getId()
-            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-            deviceID = ds.getDeviceId()
-
-            global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+           
 
             absFiles = fileManager.findFiles(dataSource, "logs.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db"))
@@ -102,7 +96,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     file = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, file, context.dataSourceIngestIsCancelled)
-                    self.__findCallLogsInDB(file.toString(), abstractFile)
+                    self.__findCallLogsInDB(file.toString(), abstractFile, dataSource)
                 except IOException as ex:
                     self._logger.log(Level.SEVERE, "Error writing temporary call log db to disk", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -110,15 +104,21 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error finding call logs", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
-    def __findCallLogsInDB(self, databasePath, abstractFile):
+    def __findCallLogsInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
             return
+
 
         bbartifacts = list()
         try:
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
 
+ 	    # Create a 'Device' account using the data source device id
+            datasourceObjId = dataSource.getDataSource().getId()
+            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+            deviceID = ds.getDeviceId()
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
             for tableName in CallLogAnalyzer._tableNames:
                 try:
