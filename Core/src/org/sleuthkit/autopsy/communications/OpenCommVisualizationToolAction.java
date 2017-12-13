@@ -42,8 +42,9 @@ import org.openide.windows.WindowManager;
 @ActionRegistration(displayName = "#CTL_OpenCVTAction", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/Tools", position = 102)
-    ,    @ActionReference(path = "Toolbars/Case", position = 102)})
-@Messages("CTL_OpenCVTAction=Visualize Communications")
+    ,    @ActionReference(path = "Toolbars/Case", position = 102)
+})
+@Messages("CTL_OpenCVTAction=Communications")
 public final class OpenCommVisualizationToolAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
@@ -80,7 +81,7 @@ public final class OpenCommVisualizationToolAction extends CallableSystemAction 
     }
 
     @Override
-    @NbBundle.Messages("OpenCVTAction.displayName=Communications Visualizaton")
+    @NbBundle.Messages("OpenCVTAction.displayName=Communications")
     public String getName() {
         return Bundle.OpenCVTAction_displayName();
     }

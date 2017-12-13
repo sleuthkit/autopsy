@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
     @ActionReference(path = "Toolbars/Case", position = 101)
 })
 @ActionRegistration(displayName = "#CTL_OpenAction", lazy = false)
-@Messages({"CTL_OpenAction=View Images/Videos",
+@Messages({"CTL_OpenAction=Images/Videos",
     "OpenAction.stale.confDlg.msg=The image / video database may be out of date. " +
             "Do you want to update and listen for further ingest results?\n" +
             "Choosing 'yes' will update the database and enable listening to future ingests.",
