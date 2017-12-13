@@ -357,7 +357,7 @@ public final class UserPreferences {
      * @return Name of this program
      */
     public static String getAppName() {
-        return preferences.get(APP_NAME, "Autopsy");
+        return preferences.get(APP_NAME, Version.getName());
     }
 
     /**
