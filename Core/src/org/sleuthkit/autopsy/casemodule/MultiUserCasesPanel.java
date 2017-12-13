@@ -30,11 +30,13 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SortOrder;
+import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.MultiUserCaseManager.MultiUserCase;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,12 +48,12 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
+@NbBundle.Messages({"MultiUSerCasesPanel.caseListLoading.message=Retrieving Case List"})
 final class MultiUserCasesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
     private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
-    private static final MultiUserCaseManager.MultiUserCase.LastAccessedDateDescendingComparator REVERSE_DATE_MODIFIED_COMPARATOR = new MultiUserCaseManager.MultiUserCase.LastAccessedDateDescendingComparator();
     private static final int CASE_COL_MIN_WIDTH = 30;
     private static final int CASE_COL_MAX_WIDTH = 2000;
     private static final int CASE_COL_PREFERRED_WIDTH = 300;
@@ -61,6 +63,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private static final int STATUS_COL_MIN_WIDTH = 55;
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
+    private static final String CASES_POPULATING_MESSAGE = NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUSerCasesPanel.caseListLoading.message");
 
     /*
      * The JTable table model for the cases table presented by this view is
@@ -69,13 +72,13 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      * TODO (RC): Consider unifying this stuff in an enum as in
      * AutoIngestDashboard to make it less error prone.
      */
-    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CaseHeaderText");
-    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
-    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
-    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
-    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
-    private static final String METADATA_FILE_HEADER = org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.MetadataFileHeaderText");
-
+    private static final String CASE_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CaseHeaderText");
+    private static final String CREATEDTIME_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
+    private static final String COMPLETEDTIME_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
+    private static final String STATUS_ICON_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
+    private static final String OUTPUT_FOLDER_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
+    private static final String METADATA_FILE_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.MetadataFileHeaderText");
+    
     enum COLUMN_HEADERS {
 
         CASE,
@@ -89,6 +92,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private DefaultTableModel caseTableModel;
     private Path currentlySelectedCase = null;
     private JDialog parentDialog;
+    private LoadTableWorker tableWorker;
 
     /**
      * Constructs a panel that allows a user to open cases created by automated
@@ -151,7 +155,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         casesTable.removeColumn(casesTable.getColumn(OUTPUT_FOLDER_HEADER));
         casesTable.removeColumn(casesTable.getColumn(METADATA_FILE_HEADER));
         casesTable.setRowSorter(new RowSorter<>(caseTableModel));
-
+        casesTable.getRowSorter().toggleSortOrder(casesTable.getColumn(COMPLETEDTIME_HEADER).getModelIndex());
         /*
          * Listen for row selection changes and set button state for the current
          * selection.
@@ -169,33 +173,11 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      * Gets the list of cases known to the review mode cases manager and
      * refreshes the cases table.
      */
-    void refresh() {
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-        try {
-            currentlySelectedCase = getSelectedCase();
-            MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
-            List<MultiUserCase> cases = manager.getCases();
-            cases.sort(REVERSE_DATE_MODIFIED_COMPARATOR);
-            caseTableModel.setRowCount(0);
-            long now = new Date().getTime();
-            for (MultiUserCase autoIngestCase : cases) {
-                if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
-                    caseTableModel.addRow(new Object[]{
-                        autoIngestCase.getCaseDisplayName(),
-                        autoIngestCase.getCreationDate(),
-                        autoIngestCase.getLastAccessedDate(),
-                        (MultiUserCaseManager.CaseStatus.OK != autoIngestCase.getStatus()) ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK,
-                        autoIngestCase.getCaseDirectoryPath().toString(),
-                        autoIngestCase.getMetadataFileName()});
-                }
-            }
-            setSelectedCase(currentlySelectedCase);
-            setButtons();
-        } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
-            LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
-        } finally {
-            setCursor(null);
+    synchronized void refresh() {
+        if (tableWorker == null || tableWorker.isDone() || tableWorker.isCancelled()) {
+            //create a new TableWorker to and execute it in a background thread if one is not currently working
+            tableWorker = new LoadTableWorker();
+            tableWorker.execute();
         }
     }
 
@@ -244,7 +226,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      * in the cases table.
      */
     private void setButtons() {
-        boolean openEnabled = casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount();
+        boolean openEnabled = casesTable.getRowSelectionAllowed() && casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount();
         bnOpen.setEnabled(openEnabled);
 
         Path pathToLog = getSelectedCaseLogFilePath();
@@ -589,7 +571,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnShowLogActionPerformed
 
     private void casesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_casesTableMouseClicked
-        if (evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2 && casesTable.getRowSelectionAllowed() && casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
             int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
             String caseDirectory = (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
             Path caseMetadataFilePath = Paths.get(caseDirectory, (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.METADATA_FILE.ordinal()));
@@ -617,4 +599,46 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane scrollPaneTable;
     // End of variables declaration//GEN-END:variables
 
+    private class LoadTableWorker extends SwingWorker<Void, Void> {
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            try {
+                if (caseTableModel.getRowCount() == 0) {
+                    //if there are no rows in the current table model add one to let the user know the list of cases is being retrieved
+                    caseTableModel.setRowCount(0);
+                    casesTable.setRowSelectionAllowed(false);
+                    caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
+                }
+                currentlySelectedCase = getSelectedCase();
+                MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
+                List<MultiUserCase> cases = manager.getCases();
+                caseTableModel.setRowCount(0);
+                long now = new Date().getTime();
+                for (MultiUserCase autoIngestCase : cases) {
+                    if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
+                        caseTableModel.addRow(new Object[]{
+                            autoIngestCase.getCaseDisplayName(),
+                            autoIngestCase.getCreationDate(),
+                            autoIngestCase.getLastAccessedDate(),
+                            (MultiUserCaseManager.CaseStatus.OK != autoIngestCase.getStatus()) ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK,
+                            autoIngestCase.getCaseDirectoryPath().toString(),
+                            autoIngestCase.getMetadataFileName()});
+                    }
+                }
+            } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
+                LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
+            } finally {
+                //ensure the cases are able to be selected
+                casesTable.setRowSelectionAllowed(true);
+            }
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            setSelectedCase(currentlySelectedCase);
+            setButtons();
+        }
+    }
 }
