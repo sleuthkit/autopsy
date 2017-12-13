@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -108,14 +109,23 @@ class AddArchiveTask implements Runnable {
                 // unable to create directory
                 criticalErrorOccurred = true;
                 errorMessages.add(String.format("Unable to create directory {0} to extract archive {1} ", new Object[]{destinationFolder.toString(), archivePath}));
-                logger.log(Level.SEVERE, String.format("Unable to create directory {0} to extract archive {1} ", new Object[]{destinationFolder.toString(), archivePath}));
+                logger.log(Level.SEVERE, "Unable to create directory {0} to extract archive {1} ", new Object[]{destinationFolder.toString(), archivePath});
                 return;
             }
 
             // extract contents of ZIP archive into destination folder
-            progressMonitor.setProgressText(String.format("Extracting archive contents to: %s", destinationFolder.toString()));
-            List<String> extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
-            int numExtractedFilesRemaining = extractedFiles.size();
+            List<String> extractedFiles = new ArrayList<>();
+            int numExtractedFilesRemaining = 0;
+            try {
+                progressMonitor.setProgressText(String.format("Extracting archive contents to: %s", destinationFolder.toString()));
+                extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
+                numExtractedFilesRemaining = extractedFiles.size();
+            } catch (ArchiveUtil.ArchiveExtractionException ex) {
+                // delete extracted contents
+                logger.log(Level.SEVERE,"Exception while extracting archive contents into {0}. Deleteing the directory", destinationFolder.toString());
+                FileUtils.deleteDirectory(destinationFolder.toFile());
+                throw ex;
+            }
 
             // lookup all AutomatedIngestDataSourceProcessors so that we only do it once. 
             // LocalDisk, LocalFiles, and ArchiveDSP are removed from the list.
@@ -155,7 +165,7 @@ class AddArchiveTask implements Runnable {
                     // unable to create directory
                     criticalErrorOccurred = true;
                     errorMessages.add(String.format("Unable to create directory {0} to extract content of archive {1} ", new Object[]{newFolder.toString(), archivePath}));
-                    logger.log(Level.SEVERE, String.format("Unable to create directory {0} to extract content of archive {1} ", new Object[]{newFolder.toString(), archivePath}));
+                    logger.log(Level.SEVERE, "Unable to create directory {0} to extract content of archive {1} ", new Object[]{newFolder.toString(), archivePath});
                     return;
                 }
 
