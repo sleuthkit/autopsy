@@ -458,7 +458,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             memFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_memFieldValidationLabel_underMinMemory_text(MIN_MEMORY_IN_GB));
             return false;
         }
-        if (parsedInt >= getSystemMemoryInGB()) {
+        if (parsedInt > getSystemMemoryInGB()) {
             memFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_memFieldValidationLabel_overMaxMemory_text(getSystemMemoryInGB()));
             return false;
         }
