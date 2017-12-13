@@ -41,9 +41,7 @@ import org.openide.windows.WindowManager;
         id = "org.sleuthkit.autopsy.communicationsVisualization.OpenCVTAction")
 @ActionRegistration(displayName = "#CTL_OpenCVTAction", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102)
-    ,    @ActionReference(path = "Toolbars/Case", position = 102)
-})
+    @ActionReference(path = "Menu/Tools", position = 102)})
 @Messages("CTL_OpenCVTAction=Communications")
 public final class OpenCommVisualizationToolAction extends CallableSystemAction implements Presenter.Toolbar {
 
