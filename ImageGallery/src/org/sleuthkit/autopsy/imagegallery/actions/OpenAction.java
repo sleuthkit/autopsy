@@ -59,10 +59,10 @@ import org.sleuthkit.datamodel.TskCoreException;
     @ActionReference(path = "Menu/Tools", position = 101),
     @ActionReference(path = "Toolbars/Case", position = 101)})
 @ActionRegistration(displayName = "#CTL_OpenAction", lazy = false)
-@Messages({"CTL_OpenAction=View Images/Videos",
-    "OpenAction.stale.confDlg.msg=The image / video database may be out of date. "
-    + "Do you want to update and listen for further ingest results?\n"
-    + "Choosing 'yes' will update the database and enable listening to future ingests.",
+@Messages({"CTL_OpenAction=Images/Videos",
+    "OpenAction.stale.confDlg.msg=The image / video database may be out of date. " +
+            "Do you want to update and listen for further ingest results?\n" +
+            "Choosing 'yes' will update the database and enable listening to future ingests.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
 
