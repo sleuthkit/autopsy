@@ -86,9 +86,6 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
-
-           
-
             absFiles = fileManager.findFiles(dataSource, "logs.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db"))
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))

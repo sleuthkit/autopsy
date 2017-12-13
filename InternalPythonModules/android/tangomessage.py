@@ -84,7 +84,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
 
- 	# Create a 'Device' account using the data source device id
+ 	    # Create a 'Device' account using the data source device id
         datasourceObjId = dataSource.getDataSource().getId()
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
