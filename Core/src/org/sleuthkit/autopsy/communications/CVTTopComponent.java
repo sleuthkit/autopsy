@@ -63,7 +63,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         splitPane = new javax.swing.JSplitPane();
         browseVisualizeTabPane = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
-        jPanel1 = new javax.swing.JPanel();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
         splitPane.setDividerLocation(400);
@@ -71,21 +70,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
         browseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
-
-        jPanel1.setName(""); // NOI18N
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 397, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 725, Short.MAX_VALUE)
-        );
-
-        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), jPanel1); // NOI18N
 
         splitPane.setLeftComponent(browseVisualizeTabPane);
 
@@ -118,7 +102,6 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
     private javax.swing.JTabbedPane browseVisualizeTabPane;
     private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
@@ -139,7 +122,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         /*
          * when the window is (re)opened make sure the filters and accounts are
          * in an up to date and consistent state.
-         * 
+         *
          * Re-applying the filters means we will lose the selection...
          */
         filtersPane.updateAndApplyFilters();
