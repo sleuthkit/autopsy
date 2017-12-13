@@ -48,8 +48,6 @@ from org.sleuthkit.datamodel import Relationship
 import traceback
 import general
 
-deviceAccountInstance = None
-
 """
 Locates a variety of different contacts databases, parses them, and populates the blackboard.
 """
@@ -61,14 +59,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
     def analyze(self, dataSource, fileManager, context):
         try:
 
-            # Create a 'Device' account using the data source device id
-            datasourceObjId = dataSource.getDataSource().getId()
-            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-            deviceID = ds.getDeviceId()
-
-            global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
-
             absFiles = fileManager.findFiles(dataSource, "contacts.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
             if absFiles.isEmpty():
@@ -77,7 +67,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findContactsInDB(str(jFile.toString()), abstractFile)
+                    self.__findContactsInDB(str(jFile.toString()), abstractFile, dataSource)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Contacts", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -89,7 +79,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
     Will create artifact from a database given by the path
     The fileId will be the abstract file associated with the artifacts
     """
-    def __findContactsInDB(self, databasePath, abstractFile):
+    def __findContactsInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
             return
 
@@ -102,6 +92,14 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error opening database", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+
+
+    	# Create a 'Device' account using the data source device id
+    	datasourceObjId = dataSource.getDataSource().getId()
+    	ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+    	deviceID = ds.getDeviceId()
+
+    	deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
         try:
             # get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
