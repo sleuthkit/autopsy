@@ -47,7 +47,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
     public CVTTopComponent() {
         initComponents();
-        browseVisualizeTabPane.setEnabledAt(1, false);
+        browseVisualizeTabPane.setEnabledAt(0, false);
         setName(Bundle.CVTTopComponent_name());
         splitPane.setRightComponent(new MessageBrowser());
     }
