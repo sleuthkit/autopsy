@@ -30,6 +30,7 @@ import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -48,7 +49,7 @@ class AccountDetailsNode extends AbstractNode {
     /**
      * Children object for the relationships that the accounts are part of.
      */
-    private static class AccountRelationshipChildren extends ChildFactory<BlackboardArtifact> {
+    private static class AccountRelationshipChildren extends ChildFactory<Content> {
 
         private final Set<AccountDeviceInstance> accountDeviceInstances;
         private final CommunicationsManager commsManager;
@@ -61,7 +62,7 @@ class AccountDetailsNode extends AbstractNode {
         }
 
         @Override
-        protected boolean createKeys(List<BlackboardArtifact> list) {
+        protected boolean createKeys(List<Content> list) {
             try {
                 list.addAll(commsManager.getRelationshipSources(accountDeviceInstances, filter));
             } catch (TskCoreException ex) {
@@ -71,8 +72,12 @@ class AccountDetailsNode extends AbstractNode {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact t) {
-            return new RelationShipNode(t);
+        protected Node createNodeForKey(Content t) {
+            if (t instanceof BlackboardArtifact) {
+                return new RelationShipNode((BlackboardArtifact) t);
+            } else {
+                throw new UnsupportedOperationException("Cannot create a RelationshipNode for non BlackboardArtifact content.");
+            }
         }
     }
 }
