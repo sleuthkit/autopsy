@@ -604,11 +604,11 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         @Override
         protected Void doInBackground() throws Exception {
             try {
+                currentlySelectedCase = getSelectedCase();
                 //set the table to display text informing the user that the list is being retreived and disable case selection
                 caseTableModel.setRowCount(0);
                 casesTable.setRowSelectionAllowed(false);
                 caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
-                currentlySelectedCase = getSelectedCase();
                 MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
                 List<MultiUserCase> cases = manager.getCases();
                 caseTableModel.setRowCount(0);
@@ -624,6 +624,8 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                             autoIngestCase.getMetadataFileName()});
                     }
                 }
+                setSelectedCase(currentlySelectedCase);
+                setButtons();
             } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
             } finally {
@@ -631,12 +633,6 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                 casesTable.setRowSelectionAllowed(true);
             }
             return null;
-        }
-
-        @Override
-        protected void done() {
-            setSelectedCase(currentlySelectedCase);
-            setButtons();
         }
     }
 }
