@@ -46,7 +46,7 @@ import traceback
 import general
 
 wwfAccountType = None
-deviceAccountInstance = None
+
 
 """
 Analyzes messages from Words With Friends
@@ -62,20 +62,12 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             global wwfAccountType
             wwfAccountType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addAccountType("WWF", "Words with Friends")
 
-            # Create a 'Device' account using the data source device id
-            datasourceObjId = dataSource.getDataSource().getId()
-            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-            deviceID = ds.getDeviceId()
-
-            global deviceAccountInstance
-            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
-
             absFiles = fileManager.findFiles(dataSource, "WordsFramework")
             for abstractFile in absFiles:
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findWWFMessagesInDB(jFile.toString(), abstractFile)
+                    self.__findWWFMessagesInDB(jFile.toString(), abstractFile, dataSource)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing WWF messages", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -83,7 +75,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error finding WWF messages", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
-    def __findWWFMessagesInDB(self, databasePath, abstractFile):
+    def __findWWFMessagesInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
             return
 
@@ -95,6 +87,12 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error opening database", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+
+	# Create a 'Device' account using the data source device id
+        datasourceObjId = dataSource.getDataSource().getId()
+        ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+        deviceID = ds.getDeviceId()
+        deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
         try:
             resultSet = statement.executeQuery(
