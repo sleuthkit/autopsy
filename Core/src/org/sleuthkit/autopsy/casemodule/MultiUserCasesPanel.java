@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-@NbBundle.Messages({"MultiUSerCasesPanel.caseListLoading.message=Retrieving Case List"})
+@NbBundle.Messages({"MultiUSerCasesPanel.caseListLoading.message=Retrieving list of cases, please wait..."})
 final class MultiUserCasesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -78,7 +78,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private static final String STATUS_ICON_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
     private static final String OUTPUT_FOLDER_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
     private static final String METADATA_FILE_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.MetadataFileHeaderText");
-    
+
     enum COLUMN_HEADERS {
 
         CASE,
@@ -604,12 +604,10 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         @Override
         protected Void doInBackground() throws Exception {
             try {
-                if (caseTableModel.getRowCount() == 0) {
-                    //if there are no rows in the current table model add one to let the user know the list of cases is being retrieved
-                    caseTableModel.setRowCount(0);
-                    casesTable.setRowSelectionAllowed(false);
-                    caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
-                }
+                //set the table to display text informing the user that the list is being retreived and disable case selection
+                caseTableModel.setRowCount(0);
+                casesTable.setRowSelectionAllowed(false);
+                caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
                 currentlySelectedCase = getSelectedCase();
                 MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
                 List<MultiUserCase> cases = manager.getCases();
