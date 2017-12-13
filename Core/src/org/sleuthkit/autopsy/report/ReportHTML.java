@@ -242,6 +242,7 @@ class ReportHTML implements TableReportModule {
                 case TSK_EMAIL_MSG:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
                     break;
+                case TSK_ENCRYPTION_SUSPECTED:
                 case TSK_ENCRYPTION_DETECTED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/encrypted-file.png"); //NON-NLS
                     break;

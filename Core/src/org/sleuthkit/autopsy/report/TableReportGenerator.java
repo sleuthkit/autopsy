@@ -156,9 +156,11 @@ class TableReportGenerator {
                 continue;
             }
 
-            /* TSK_ACCOUNT artifacts get grouped by their TSK_ACCOUNT_TYPE
+            /*
+             * TSK_ACCOUNT artifacts get grouped by their TSK_ACCOUNT_TYPE
              * attribute, and then handed off to the standard method for writing
-             * tables. */
+             * tables.
+             */
             if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                 //Group account artifacts by their account type
                 ListMultimap<String, ArtifactData> groupedArtifacts = Multimaps.index(artifactList,
@@ -171,7 +173,8 @@ class TableReportGenerator {
                             }
                         });
                 for (String accountTypeStr : groupedArtifacts.keySet()) {
-                    /* If the report is a ReportHTML, the data type name
+                    /*
+                     * If the report is a ReportHTML, the data type name
                      * eventualy makes it to useDataTypeIcon which expects but
                      * does not require a artifact name, so we make a synthetic
                      * compund name by appending a ":" and the account type.
@@ -181,14 +184,13 @@ class TableReportGenerator {
                         try {
                             Account.Type acctType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountType(accountTypeStr);
                             if (acctType != null) {
-                                 accountDisplayname = acctType.getDisplayName();
+                                accountDisplayname = acctType.getDisplayName();
                             }
-                        }
-                        catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Unable to get display name for account type " + accountTypeStr, ex);   
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Unable to get display name for account type " + accountTypeStr, ex);
                         }
                     }
-                    
+
                     final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountDisplayname;
                     writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountTypeStr)), type, compundDataTypeName, comment);
                 }
@@ -221,7 +223,8 @@ class TableReportGenerator {
                 attrTypeSet.add(attribute.getAttributeType());
             }
         }
-        /* Get the columns appropriate for the artifact type. This is used to
+        /*
+         * Get the columns appropriate for the artifact type. This is used to
          * get the data that will be in the cells below based on type, and
          * display the column headers.
          */
@@ -231,7 +234,8 @@ class TableReportGenerator {
         }
         columnHeaderMap.put(type.getTypeID(), columns);
 
-        /* The artifact list is sorted now, as getting the row data is dependent
+        /*
+         * The artifact list is sorted now, as getting the row data is dependent
          * on having the columns, which is necessary for sorting.
          */
         Collections.sort(artifactList);
@@ -1383,7 +1387,8 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SERVER_NAME)));
 
-        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId) {
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId  || 
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME)));
 
@@ -1513,7 +1518,7 @@ class TableReportGenerator {
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));            
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
@@ -1558,6 +1563,7 @@ class TableReportGenerator {
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
+                || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID()) {
             columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
         }

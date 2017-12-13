@@ -113,7 +113,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      */
     private IngestModule.ProcessResult flagFile(AbstractFile file) {
         try {
-            BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
+            BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED);
 
             try {
                 /*
@@ -127,7 +127,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             /*
              * Send an event to update the view with the new result.
              */
-            SERVICES.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Collections.singletonList(artifact)));
+            SERVICES.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, Collections.singletonList(artifact)));
 
             /*
              * Make an ingest inbox message.
