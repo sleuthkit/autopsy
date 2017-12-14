@@ -12,18 +12,53 @@ The Hash Database Management window is where you can set and update your hash da
 \li Known good files are those that can be safely ignored. This set of files frequently includes standard OS and application files. Ignoring such uninteresting-to-the-investigator files, can greatly reduce image analysis time.
 \li Notable (or known bad) files are those that should raise awareness. This set will vary depending on the type of investigation, but common examples include contraband images and malware.
 
-\section notable_known_bad_hashsets Notable / Known Bad Hashsets
-Autopsy allows for multiple notable hash databases to be set. Autopsy supports the following formats:
-\li EnCase: An EnCase hashset file.
-\li MD5sum: Output from running the md5, md5sum, or md5deep program on a set of files.
-\li NSRL: The format of the NSRL database.
-\li HashKeeper: Hashset file conforming to the HashKeeper standard.
+\section adding_hashsets Importing Hashsets
 
-\section adding_hashsets Adding Hashsets
-Autopsy needs an index of the hashset to actually use a hash database. It can create the index if you import only the hashset. When you select the database from within this window, it will tell you if the index needs to be created. Autopsy uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or you can use Autopsy. If you attempt proceed without indexing a database, Autopsy will offer to automatically produce an index for you.
+To import an existing hashset, use the "Import Database" button on the Hash Databases options panel. This will bring up a dialog to import the file.
+
+\image html hash_import.png
+
+<b>Database Path</b> - The path to the hashset you are importing. Autopsy supports the following formats:
+\li EnCase: An EnCase hashset file (*.hash)
+\li MD5sum: Output from running the md5, md5sum, or md5deep program on a set of files (*.txt)
+\li NSRL: The format of the NSRL database (*.idx)
+\li HashKeeper: Hashset file conforming to the HashKeeper standard (*.hsh)
+\li Autopsy format: SQLite hashsets created by Autopsy (*.kdb)
+
+<b>Destination</b> - The Destination field refers to where the hashset will be stored. 
+\li Local: The hashset file will be used from original the location on disk
+\li Remote: The hashset will be copied into the \ref central_repo_page "central repository". When using a PostgreSQL central repository, this allows multiple users to easily share the same hashsets.
+
+<b>Name</b> - Display name of the hashset. One will be suggested based on the file name, but this can be changed.
+
+<b>Version</b> - The version of the hashset can only be entered when importing the hashset into the central repository. Additionally, no version can be entered if the database is not read-only.
+
+<b>Source Organization</b> - The organization can only be entered when importing the hashset into the central repository. See the section on \ref cr_manage_orgs "managing organizations" for more information.
+
+<b>Type of database</b> - All entries in the hashset should either be "known" (can be safely ignored) or "notable" (could be indicators of suspicous behavior). 
+
+<b>Make database read-only</b> - The read-only can only be entered when importing the hashset into the central repository. A read-only database can not have new hashes added to it through either the Hash Database options panel or the context menu. For locally imported hashsets, whether they can be written to is dependent on the type of hashset. Autopsy format databases (*.kdb) can be edited, but all other types will be read-only.
+
+<b>Send ingest inbox message for each hit</b> - Determines whether a message is sent for each matching file. This can not be enabled for a "known" database.
+
+\subsection hashset_indexing Indexing
+
+After importing the hashset, you may have to index it before it can be used. For most hashset types, Autopsy needs an index of the hashset to actually use a hash database. It can create the index if you import only the hashset. Any hashsets that require an index will be displayed in red, and their "Index Status" will indicate that an index needs to be created. This is done simply by using the Index button.
+
+\image html hash_indexing.png
+
+Autopsy uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or you can use Autopsy. If you attempt proceed without indexing a database, Autopsy will offer to automatically produce an index for you.
 You can also specify only the index file and not use the full hashset - the index file is sufficient to identify known files. This can save space. To do this, specify the .idx file from the Hash Database Management window.
 
-<br>
+\section creating_hashsets Creating Hashsets
+
+New hashsets can be created using the "New Database" button. The fields are mostly the same as the \ref adding_hashsets "import dialog" described above.
+
+\image html hash_new_db.png
+
+In this case, the Database Path is where the new database will be stored. If the central repository is being used then this field is not needed. 
+
+
 \section using_hashsets Using Hashsets
 There is an \ref ingest_page "ingest module" that will hash the files and look them up in the hashsets. It will flag files that were in the notable hashset and those results will be shown in the Results tree of the \ref tree_viewer_page.
 Other ingest modules are able to use the known status of a file to decide if they should ignore the file or process it.
@@ -38,14 +73,6 @@ To use the NSRL, you may download a pre-made index from <A HREF="http://sourcefo
 <br>
 \image html nsrl_import_process.PNG
 <br>
-<br>
-
-The screenshot below shows an imported NSRL.
-<br>
-\image html nsrl_imported.PNG
-<br>
-<br>
-
 
 Using the Module
 ======
