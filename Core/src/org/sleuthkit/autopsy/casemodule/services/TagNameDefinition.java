@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -196,9 +196,9 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @return A set of tag name definition objects.
      */
     static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
-        Set<TagNameDefinition> tagNames = new HashSet<>();
+        Set<TagNameDefinition> tagNames = new LinkedHashSet<>();
         //modifiable copy of default tags list for us to keep track of which default tags have already been created
-        Set<String> standardTags = new HashSet<>(STANDARD_TAG_DISPLAY_NAMES);
+        Set<String> standardTags = new LinkedHashSet<>(STANDARD_TAG_DISPLAY_NAMES);
         String setting = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
         if (null != setting && !setting.isEmpty()) {
             List<String> tagNameTuples = Arrays.asList(setting.split(";"));
@@ -239,7 +239,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @return tagNames a list of TagNameDefinitions
      */
     private static Set<TagNameDefinition> upgradeTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
-        Set<TagNameDefinition> tagNames = new HashSet<>();
+        Set<TagNameDefinition> tagNames = new LinkedHashSet<>();
         List<String> legacyNotableTags = new ArrayList<>();
         String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
         if (badTagsStr == null || badTagsStr.isEmpty()) {  //if there were no bad tags in the central repo properties file use the default list
@@ -273,7 +273,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @return tagNames a list of TagNameDefinitions
      */
     private static Set<TagNameDefinition> readCurrentTagPropertiesFile(List<String> tagProperties, Set<String> standardTagsToBeCreated) {
-        Set<TagNameDefinition> tagNames = new HashSet<>();
+        Set<TagNameDefinition> tagNames = new LinkedHashSet<>();
         for (String tagNameTuple : tagProperties) {
             String[] tagNameAttributes = tagNameTuple.split(","); //get the attributes
             standardTagsToBeCreated.remove(tagNameAttributes[0]);  //remove the tag from the list of standard tags which have not been created
