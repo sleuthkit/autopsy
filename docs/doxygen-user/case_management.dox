@@ -18,15 +18,19 @@ The New Case wizard dialog will open and you will need to enter the case name an
 
 NOTE: You will only have the option of making a multi-user case if you have configured Autopsy with multi-user settings.  See \ref install_multiuser_page for installation instructions and \ref creating_multi_user_cases for details on creating multi-user cases.
 
-You will also be prompted for optional information, such as investigator name and case number.  
+You will also be prompted for optional information, such as examiner name and case number.  
 
 After you create the case, you will be prompted to add a data source, as described in \ref ds_add. 
 
 \section case_open Opening a Case
 
 To open a case, either:
-- Choose "Open Existing Case" or "Open Recent Case" from the opening splash screen.
+- Choose "Open Case" or "Open Recent Case" from the opening splash screen.
 - Choose the "Case", "Open Case" menu item or "Case", "Open Recent Case"
+
+"Open Recent Case" will always bring up a screen allowing you to select one of the recently opened cases. "Open Case" will do one of two things;
+- If multi-user cases are not enabled, it will bring up a file chooser that can be used to browse to the ".aut" file of the desired case
+- If multi-user case are enabled, it will bring up the multi-user case selection screen. This uses the coordination services to find a list of multi-user cases. If needed, the "Open Single-User Case" button can be used to bring up the normal file chooser.
 
 Navigate to the case directory and select the ".aut" file.
 
