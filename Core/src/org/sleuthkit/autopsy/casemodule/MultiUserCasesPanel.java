@@ -175,6 +175,11 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     void refresh() {
         if (tableWorker == null || tableWorker.isDone()) {
             //create a new TableWorker to and execute it in a background thread if one is not currently working
+            currentlySelectedCase = getSelectedCase();
+            //set the table to display text informing the user that the list is being retreived and disable case selection
+            caseTableModel.setRowCount(0);
+            casesTable.setRowSelectionAllowed(false);
+            caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
             tableWorker = new LoadTableWorker();
             tableWorker.execute();
         }
@@ -607,15 +612,8 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         protected Void doInBackground() throws Exception {
 
             try {
-                currentlySelectedCase = getSelectedCase();
-                //set the table to display text informing the user that the list is being retreived and disable case selection
-                caseTableModel.setRowCount(0);
-                casesTable.setRowSelectionAllowed(false);
-                caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
                 MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
                 cases = manager.getCases();
-                caseTableModel.setRowCount(0);
-
             } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
             } finally {
@@ -627,6 +625,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
+            caseTableModel.setRowCount(0);
             long now = new Date().getTime();
             for (MultiUserCase autoIngestCase : cases) {
                 if (autoIngestCase.getLastAccessedDate() != null && passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
