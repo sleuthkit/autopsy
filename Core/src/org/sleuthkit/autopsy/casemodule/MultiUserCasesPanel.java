@@ -64,7 +64,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
     private static final String CASES_POPULATING_MESSAGE = NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUSerCasesPanel.caseListLoading.message");
-
+    
     /*
      * The JTable table model for the cases table presented by this view is
      * defined by the following string, enum, and array.
@@ -92,7 +92,8 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private DefaultTableModel caseTableModel;
     private JDialog parentDialog;
     private LoadTableWorker tableWorker;
-
+    private Path currentlySelectedCase;
+    
     /**
      * Constructs a panel that allows a user to open cases created by automated
      * ingest.
@@ -606,7 +607,6 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private class LoadTableWorker extends SwingWorker<Void, Void> {
 
         private List<MultiUserCase> cases;
-        private Path currentlySelectedCase;
 
         @Override
         protected Void doInBackground() throws Exception {
