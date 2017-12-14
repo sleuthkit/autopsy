@@ -12,6 +12,8 @@ The following are some use cases for the Central Repository:
  - If you find a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other cases that had this same file or that had items with the same feature (such as Domain name).   You will also be able to see what other data sources in the same case had this feature. 
 - <b>Alerting When Previously Notable Properties Occur</b>
  - You can use the Central Repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
+- <b>Storing Hash Sets</b>
+ - You can create and import hash sets in the central repository instead of using local copies in the \ref hash_db_page "Hash Database module". These hash sets are functionally equivalent to local hash sets but can be shared among multiple analysts (when using a PostgreSQL central repository).
 
 \section cr_terms Terms and Concepts
 
@@ -58,25 +60,9 @@ Select SQLite in the Database Type to set up a SQLite database. SQLite databases
 
 Enter or browse to a folder for the database. If the database file does not exist in that folder, you will be prompted to create it. 
 
-\subsection cr_manage_tags Manage Tags
-
-In Autopsy, you are allowed to define your own Tag names, tag files and artifacts,and add comments when you tag a file or artifact. The purpose of this 
-feature is to associate one or more of those tags with this module to be used for Correlation. Associating a tag with the Correlation Engine means 
-that when a file/artifact is tagged by the user, any property created from that file/artifact in the Correlation Database is marked as notable. After 
-this point, whenever the Correlation Engine Ingest Module creates a property that matches this notable one, it is automatically flagged 
-and added to the list of Interesting Items.
-
-\image html central_repo_manage_tags.png
-
-If a case is open, checking the Notable checkbox will give you the option to add the notable status to anything in the current case
-that has already been tagged. For example, if you create a tag named "Alpha", tag a few items and then go into Manage Tags and check the box for the Alpha tag, you can optionally choose to have the status for those tagged items changed in the central repository. The effect is the same as if you had checked the box in Manage Tags before tagging the items. Note that data from any previous cases will not be changed. 
-
-By default there is a tag called "Evidence" as the only tag associated with this module. To associate one or more tag(s) with this module, check the Correlate box next to the tag
-name(s) and click OK. To create additional tags, use the Tags options panel.
-
 \subsection cr_manage_properties Manage Correlation Properties
 
-The Correlation Engine ingest module can save different types of properties to the database. By default, only files are recorded, but 
+The Correlation Engine ingest module can save different types of properties to the database. By default all properties are recorded, but 
 this setting can be changed on the options panel through the Manage Correlation Properties button. Note that these settings 
 are saved to the database, so in a multi-user setting any changes will affect all users.
 
@@ -94,6 +80,16 @@ Descriptions of the property types:
 - <b>USB Devices</b>
  - USB device properties come from the registry parsing in the Recent Activity Module.
 
+\subsection cr_manage_orgs Manage Organizations
+
+Organizations are stored in the central repository and contain contact information for the given organization. Organizations are used for Hash Databases saved in the central repository, and can also be associated with Autopsy cases. 
+
+\image html central_repo_orgs.png
+
+One default org, "Not Specified" will always be present in the list. New organizations can be created, edited, and deleted through the appropriate buttons. Note that any organization that is currently in use by a case or hash set can not be deleted. All fields apart from the organization name are optional.
+
+\image html central_repo_new_org.png
+ 
 \section cr_using_repo Using the Central Repository
 
 \subsection cr_ingest_module Correlation Engine Module
@@ -107,24 +103,15 @@ other cases/data sources where the Correlation Engine was run.
 
 \subsection cr_tagging Tagging Files and Artifacts
 
-Any file or artifact that a user tags with one of the tags associated with the Correlation Engine will be added 
-to the database as a file or artifact of interest. Any future data source ingest, where this module is enabled, 
-will use those files or artifacts in a similar manner as a Known Bad hash set, causing matching files from that 
+Any file or artifact that a user tags with a tag with notable set will be added 
+to the database as a file or artifact of interest. By default, there will be a tag named "Notable Item" that can be used for this purpose. See the \ref tagging_page "Tagging page" for more information on creating additional tags with notable status. Any future data source ingest (where this module is enabled) 
+will use those notable files or artifacts in a similar manner as a Known Bad hash set, causing matching files from that 
 ingest to be added to the Interesting Artifacts list in that currently open case.
 
 \image html central_repo_tag_file.png
 
 If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its
 notable status in the Central Repository.
-
-\subsection cr_case_properties Edit Central Repository Case Properties
-
-By default, Autopsy lets you edit Case Details in the Case menu. When this module is enabled, there is an 
-additional option in the Case menu, called "Central Repository Case Properties".
-
-This is where the examiner can store a number of details about the case.
-- The contact information of the case examiner.
-- The case examiner's case notes.
 
 \section cr_viewing_results Viewing Results
 
@@ -174,8 +161,8 @@ details will include:
 - Case Examiner contact information
 - Case Examiner's notes
 
-These details would have been entered by the examiner of the selected case, by visiting
-the Case -> Central Repository Case Properties menu, when that case was open.
+These details would have been entered by the examiner of the selected case, when creating the case or later by visiting
+the Case -> Case Properties menu.
 
 <b>Show Frequency</b>
 
