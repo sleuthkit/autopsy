@@ -173,7 +173,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      * Gets the list of cases known to the review mode cases manager and
      * refreshes the cases table.
      */
-    synchronized void refresh() {
+    void refresh() {
         if (tableWorker == null || tableWorker.isDone() || tableWorker.isCancelled()) {
             //create a new TableWorker to and execute it in a background thread if one is not currently working
             tableWorker = new LoadTableWorker();
