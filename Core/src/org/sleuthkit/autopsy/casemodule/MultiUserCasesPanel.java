@@ -64,7 +64,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
     private static final String CASES_POPULATING_MESSAGE = NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUSerCasesPanel.caseListLoading.message");
-    
+
     /*
      * The JTable table model for the cases table presented by this view is
      * defined by the following string, enum, and array.
@@ -93,7 +93,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     private JDialog parentDialog;
     private LoadTableWorker tableWorker;
     private Path currentlySelectedCase;
-    
+
     /**
      * Constructs a panel that allows a user to open cases created by automated
      * ingest.
@@ -616,10 +616,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                 cases = manager.getCases();
             } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
-            } finally {
-                //ensure the cases are able to be selected
-                casesTable.setRowSelectionAllowed(true);
-            }
+            } 
             return null;
         }
 
@@ -638,6 +635,8 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                         autoIngestCase.getMetadataFileName()});
                 }
             }
+            //ensure the cases are able to be selected
+            casesTable.setRowSelectionAllowed(true);
             setSelectedCase(currentlySelectedCase);
             setButtons();
         }
