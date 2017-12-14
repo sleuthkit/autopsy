@@ -90,7 +90,6 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
     }
     private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER, METADATA_FILE_HEADER};
     private DefaultTableModel caseTableModel;
-    private Path currentlySelectedCase = null;
     private JDialog parentDialog;
     private LoadTableWorker tableWorker;
 
@@ -174,7 +173,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      * refreshes the cases table.
      */
     void refresh() {
-        if (tableWorker == null || tableWorker.isDone() || tableWorker.isCancelled()) {
+        if (tableWorker == null || tableWorker.isDone()) {
             //create a new TableWorker to and execute it in a background thread if one is not currently working
             tableWorker = new LoadTableWorker();
             tableWorker.execute();
@@ -601,8 +600,12 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
 
     private class LoadTableWorker extends SwingWorker<Void, Void> {
 
+        private List<MultiUserCase> cases;
+        private Path currentlySelectedCase;
+
         @Override
         protected Void doInBackground() throws Exception {
+
             try {
                 currentlySelectedCase = getSelectedCase();
                 //set the table to display text informing the user that the list is being retreived and disable case selection
@@ -610,22 +613,9 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                 casesTable.setRowSelectionAllowed(false);
                 caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
                 MultiUserCaseManager manager = MultiUserCaseManager.getInstance();
-                List<MultiUserCase> cases = manager.getCases();
+                cases = manager.getCases();
                 caseTableModel.setRowCount(0);
-                long now = new Date().getTime();
-                for (MultiUserCase autoIngestCase : cases) {
-                    if (passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
-                        caseTableModel.addRow(new Object[]{
-                            autoIngestCase.getCaseDisplayName(),
-                            autoIngestCase.getCreationDate(),
-                            autoIngestCase.getLastAccessedDate(),
-                            (MultiUserCaseManager.CaseStatus.OK != autoIngestCase.getStatus()) ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK,
-                            autoIngestCase.getCaseDirectoryPath().toString(),
-                            autoIngestCase.getMetadataFileName()});
-                    }
-                }
-                setSelectedCase(currentlySelectedCase);
-                setButtons();
+
             } catch (MultiUserCaseManager.MultiUserCaseManagerException | CoordinationService.CoordinationServiceException ex) {
                 LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
             } finally {
@@ -633,6 +623,24 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
                 casesTable.setRowSelectionAllowed(true);
             }
             return null;
+        }
+
+        @Override
+        protected void done() {
+            long now = new Date().getTime();
+            for (MultiUserCase autoIngestCase : cases) {
+                if (autoIngestCase.getLastAccessedDate() != null && passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
+                    caseTableModel.addRow(new Object[]{
+                        autoIngestCase.getCaseDisplayName(),
+                        autoIngestCase.getCreationDate(),
+                        autoIngestCase.getLastAccessedDate(),
+                        (MultiUserCaseManager.CaseStatus.OK != autoIngestCase.getStatus()) ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK,
+                        autoIngestCase.getCaseDirectoryPath().toString(),
+                        autoIngestCase.getMetadataFileName()});
+                }
+            }
+            setSelectedCase(currentlySelectedCase);
+            setButtons();
         }
     }
 }
