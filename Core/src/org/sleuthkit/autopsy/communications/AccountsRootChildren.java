@@ -56,10 +56,10 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
     protected boolean createKeys(List<AccountDeviceInstanceKey> list) {
         List<AccountDeviceInstanceKey> accountDeviceInstanceKeys = new ArrayList<>();
         try {
-            for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithRelationships(commsFilter)) {
-                long communicationsCount = commsManager.getRelationshipSourcesCount(adi, commsFilter);
-                String dataSourceName = getDataSourceName(adi);
-                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount, dataSourceName));
+            for (AccountDeviceInstance accountDeviceInstance : commsManager.getAccountDeviceInstancesWithRelationships(commsFilter)) {
+                long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
+                String dataSourceName = getDataSourceName(accountDeviceInstance);
+                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount, dataSourceName));
             };
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Error getting filtered account device instances", tskCoreException);
@@ -74,18 +74,18 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
         return new AccountDeviceInstanceNode(key, commsManager);
     }
 
-    private String getDataSourceName(AccountDeviceInstance adi) {
+    private String getDataSourceName(AccountDeviceInstance accountDeviceInstance) {
         try {
             final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-                if (dataSource.getDeviceId().equals(adi.getDeviceId())) {
+                if (dataSource.getDeviceId().equals(accountDeviceInstance.getDeviceId())) {
                     return sleuthkitCase.getContentById(dataSource.getId()).getName();
                 }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
         }
-        return adi.getDeviceId();
+        return accountDeviceInstance.getDeviceId();
     }
     
     /**
