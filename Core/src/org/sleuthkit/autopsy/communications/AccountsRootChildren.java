@@ -58,7 +58,8 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
         try {
             for (AccountDeviceInstance adi : commsManager.getAccountDeviceInstancesWithRelationships(commsFilter)) {
                 long communicationsCount = commsManager.getRelationshipSourcesCount(adi, commsFilter);
-                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount));
+                String dataSourceName = getDataSourceName(adi);
+                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(adi, commsFilter, communicationsCount, dataSourceName));
             };
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Error getting filtered account device instances", tskCoreException);
@@ -73,6 +74,20 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
         return new AccountDeviceInstanceNode(key, commsManager);
     }
 
+    private String getDataSourceName(AccountDeviceInstance adi) {
+        try {
+            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+            for (DataSource dataSource : sleuthkitCase.getDataSources()) {
+                if (dataSource.getDeviceId().equals(adi.getDeviceId())) {
+                    return sleuthkitCase.getContentById(dataSource.getId()).getName();
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
+        }
+        return adi.getDeviceId();
+    }
+    
     /**
      * Node to represent an Account in the AccountsBrowser
      */
@@ -121,22 +136,8 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
             properties.put(new NodeProperty<>("count", Bundle.AccountNode_messageCount(), "count",
                     accountDeviceInstanceKey.getMessageCount())); // NON-NLS
             properties.put(new NodeProperty<>("device", Bundle.AccountNode_device(), "device",
-                    getDataSourceName())); // NON-NLS
+                    accountDeviceInstanceKey.getDataSourceName())); // NON-NLS
             return s;
-        }
-
-        private String getDataSourceName() {
-            try {
-                final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-                for (DataSource dataSource : sleuthkitCase.getDataSources()) {
-                    if (dataSource.getDeviceId().equals(getAccountDeviceInstance().getDeviceId())) {
-                        return sleuthkitCase.getContentById(dataSource.getId()).getName();
-                    }
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
-            }
-            return getAccountDeviceInstance().getDeviceId();
         }
     }
 }
