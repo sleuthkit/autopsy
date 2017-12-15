@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -277,21 +278,30 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      */
     private void openCase(Path caseMetadataFilePath) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            StartupWindowProvider.getInstance().close();
-            if (parentDialog != null) {
-                parentDialog.setVisible(false);
-            }
-            MultiUserCaseManager.getInstance().openCase(caseMetadataFilePath);
-        } catch (CaseActionException | MultiUserCaseManager.MultiUserCaseManagerException ex) {
-            if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
-            }
-            StartupWindowProvider.getInstance().open();
-        } finally {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+        StartupWindowProvider.getInstance().close();
+        if (parentDialog != null) {
+            parentDialog.setVisible(false);
         }
+        new Thread(() -> {
+            try {
+                MultiUserCaseManager.getInstance().openCase(caseMetadataFilePath);
+            } catch (CaseActionException | MultiUserCaseManager.MultiUserCaseManagerException ex) {
+                if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                    LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
+                    MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
+                }
+                SwingUtilities.invokeLater(() -> {
+                    //GUI changes done back on the EDT
+                    StartupWindowProvider.getInstance().open();
+                });
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    //GUI changes done back on the EDT
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                });
+            }
+        }).start();
     }
 
     /**
@@ -528,10 +538,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
         String caseDirectory = (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
         Path caseMetadataFilePath = Paths.get(caseDirectory, (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.METADATA_FILE.ordinal()));
-
-        new Thread(() -> {
-            openCase(caseMetadataFilePath);
-        }).start();
+        openCase(caseMetadataFilePath);
     }//GEN-LAST:event_bnOpenActionPerformed
 
     /**
@@ -593,9 +600,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
             int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
             String caseDirectory = (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
             Path caseMetadataFilePath = Paths.get(caseDirectory, (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.METADATA_FILE.ordinal()));
-            new Thread(() -> {
-                openCase(caseMetadataFilePath);
-            }).start();
+            openCase(caseMetadataFilePath);
         }
     }//GEN-LAST:event_casesTableMouseClicked
 
