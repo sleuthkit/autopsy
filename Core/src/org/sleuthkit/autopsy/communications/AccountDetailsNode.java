@@ -74,7 +74,7 @@ class AccountDetailsNode extends AbstractNode {
         @Override
         protected Node createNodeForKey(Content t) {
             if (t instanceof BlackboardArtifact) {
-                return new RelationShipNode((BlackboardArtifact) t);
+                return new RelationshipNode((BlackboardArtifact) t);
             } else {
                 throw new UnsupportedOperationException("Cannot create a RelationshipNode for non BlackboardArtifact content.");
             }
