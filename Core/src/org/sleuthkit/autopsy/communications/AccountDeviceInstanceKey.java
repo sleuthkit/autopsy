@@ -31,13 +31,15 @@ class AccountDeviceInstanceKey {
     private final AccountDeviceInstance accountDeviceInstance;
     private final CommunicationsFilter filter;
     private final long messageCount;
+    private final String dataSourceName;
 
    
 
-    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount) {
+    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount, String dataSourceName) {
         this.accountDeviceInstance = accountDeviceInstance;
         this.filter = filter;
         this.messageCount = msgCount;
+        this.dataSourceName = dataSourceName;
     }
 
     AccountDeviceInstance getAccountDeviceInstance() {
@@ -48,7 +50,11 @@ class AccountDeviceInstanceKey {
         return filter;
     }
 
-     long getMessageCount() {
+    long getMessageCount() {
         return messageCount;
+    }
+    
+    String getDataSourceName() {
+        return dataSourceName;
     }
 }
