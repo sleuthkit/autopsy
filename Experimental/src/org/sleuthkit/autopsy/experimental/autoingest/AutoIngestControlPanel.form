@@ -22,17 +22,17 @@
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="bnPause" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnPause" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="bnRefresh" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnRefresh" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="bnOptions" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnOptions" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="bnOpenLogDir" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnOpenLogDir" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="bnClusterMetrics" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnClusterMetrics" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="bnExit" min="-2" max="-2" attributes="0"/>
+                              <Component id="bnExit" linkSize="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="lbStatus" min="-2" max="-2" attributes="0"/>
