@@ -494,6 +494,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         htmlbodyTextPane.setText("");
         textbodyTextArea.setText("");
         drp.setNode(null);
+        showImagesToggleButton.setEnabled(false);
         msgbodyTabbedPane.setEnabled(false);
     }
 
@@ -599,6 +600,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         directionText.setEnabled(false);
         ccLabel.setEnabled(true);
 
+        showImagesToggleButton.setEnabled(true);
         showImagesToggleButton.setText("Show Images");
         showImagesToggleButton.setSelected(false);
 
