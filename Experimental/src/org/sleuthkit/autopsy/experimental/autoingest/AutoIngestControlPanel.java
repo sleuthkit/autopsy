@@ -73,7 +73,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
  * one such panel per node.
  */
 @Messages({
-    "AutoIngestControlPanel.bnClusterMetrics.text=Cluster Metrics",
+    "AutoIngestControlPanel.bnClusterMetrics.text=Auto Ingest Metrics",
     "AutoIngestControlPanel.bnPause.text=Pause",
     "AutoIngestControlPanel.bnPause.paused=Paused",
     "AutoIngestControlPanel.bnPause.running=Running",
@@ -1491,6 +1491,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnShowProgress});
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnClusterMetrics, bnExit, bnOpenLogDir, bnOptions, bnPause, bnRefresh});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
