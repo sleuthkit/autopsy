@@ -72,6 +72,7 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "AutopsyOptionsPanel.specifyLogoRB.text=Specify a logo",
     "AutopsyOptionsPanel.browseLogosButton.text=Browse",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidPath.text=Path is not valid.",
+    "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidImageSpecified.text=Invalid image file specified.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set."
 })
 
@@ -416,7 +417,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             } else {
                 File file = new File(agencyLogoPathField.getText());
                 if (file.exists() && file.isFile()) {
-                    agencyLogoPathFieldValidationLabel.setText("");
+                    BufferedImage image;
+                    try {  //ensure the image can be read
+                        image = ImageIO.read(file); //create it as an image first to support BMP files
+                        if (image == null) {
+                            throw new IOException("Unable to read file as a BufferedImage for file " + file.toString());
+                        }
+                        agencyLogoPathFieldValidationLabel.setText("");
+                    } catch (IOException | IndexOutOfBoundsException ignored) {
+                        agencyLogoPathFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_agencyLogoPathFieldValidationLabel_invalidImageSpecified_text());
+                        valid = false;
+                    }
                 } else {
                     agencyLogoPathFieldValidationLabel.setText(Bundle.AutopsyOptionsPanel_agencyLogoPathFieldValidationLabel_invalidPath_text());
                     valid = false;
