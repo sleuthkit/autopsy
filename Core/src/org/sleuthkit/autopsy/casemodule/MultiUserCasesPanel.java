@@ -593,7 +593,9 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
             int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
             String caseDirectory = (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
             Path caseMetadataFilePath = Paths.get(caseDirectory, (String) caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.METADATA_FILE.ordinal()));
-            openCase(caseMetadataFilePath);
+            new Thread(() -> {
+                openCase(caseMetadataFilePath);
+            }).start();
         }
     }//GEN-LAST:event_casesTableMouseClicked
 
