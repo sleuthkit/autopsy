@@ -44,7 +44,7 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
      * @param parent The parent container.
      */
     @Messages({
-        "AutoIngestMetricsDialog.title.text=Auto Ingest Cluster Metrics",
+        "AutoIngestMetricsDialog.title.text=Auto Ingest Metrics",
         "AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report."
     })
     AutoIngestMetricsDialog(Container parent) throws AutoIngestMetricsDialogException {
