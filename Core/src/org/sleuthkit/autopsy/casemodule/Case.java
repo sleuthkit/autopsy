@@ -251,7 +251,7 @@ public class Case {
          * PropertyChangeEvent is the old case name (type: String), the new
          * value is the new case name (type: String).
          *
-         * @Deprecated CASE_DETAILS event should be used instead
+         * @deprecated CASE_DETAILS event should be used instead
          */
         @Deprecated
         NAME,
@@ -260,7 +260,7 @@ public class Case {
          * PropertyChangeEvent is the old case number (type: String), the new
          * value is the new case number (type: String).
          *
-         * @Deprecated CASE_DETAILS event should be used instead
+         * @deprecated CASE_DETAILS event should be used instead
          */
         @Deprecated
         NUMBER,
@@ -269,7 +269,7 @@ public class Case {
          * value of the PropertyChangeEvent is the old examiner (type: String),
          * the new value is the new examiner (type: String).
          *
-         * @Deprecated CASE_DETAILS event should be used instead
+         * @deprecated CASE_DETAILS event should be used instead
          */
         @Deprecated
         EXAMINER,
@@ -502,7 +502,7 @@ public class Case {
      *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
      *
-     * @Deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
+     * @deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
      * CaseDetails caseDetails) instead
      */
     @Deprecated
