@@ -161,14 +161,18 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         org.openide.awt.Mnemonics.setLocalizedText(toLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.toLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(toText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.toText.text")); // NOI18N
+        toText.setAutoscrolls(true);
+        toText.setMinimumSize(new java.awt.Dimension(27, 14));
 
         org.openide.awt.Mnemonics.setLocalizedText(ccLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.ccLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(ccText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.ccText.text")); // NOI18N
+        ccText.setMinimumSize(new java.awt.Dimension(27, 14));
 
         org.openide.awt.Mnemonics.setLocalizedText(subjectLabel, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.subjectLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(subjectText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.subjectText.text")); // NOI18N
+        subjectText.setMinimumSize(new java.awt.Dimension(26, 14));
 
         directionText.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         org.openide.awt.Mnemonics.setLocalizedText(directionText, org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.directionText.text")); // NOI18N
@@ -215,16 +219,16 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(toLabel)
-                    .addComponent(toText)
+                    .addComponent(toText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(directionText))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ccLabel)
-                    .addComponent(ccText))
+                    .addComponent(ccText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(envelopePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(subjectLabel)
-                    .addComponent(subjectText))
+                    .addComponent(subjectText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(5, 5, 5))
         );
 
@@ -494,6 +498,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         htmlbodyTextPane.setText("");
         textbodyTextArea.setText("");
         drp.setNode(null);
+        showImagesToggleButton.setEnabled(false);
         msgbodyTabbedPane.setEnabled(false);
     }
 
@@ -599,14 +604,18 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         directionText.setEnabled(false);
         ccLabel.setEnabled(true);
 
+        showImagesToggleButton.setEnabled(true);
         showImagesToggleButton.setText("Show Images");
         showImagesToggleButton.setSelected(false);
 
         try {
             this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
+            this.fromText.setToolTipText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
             this.toText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
+            this.toText.setToolTipText(getAttributeValueSafe(artifact, TSK_EMAIL_TO));
             this.directionText.setText("");
             this.ccText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
+            this.ccText.setToolTipText(getAttributeValueSafe(artifact, TSK_EMAIL_CC));
             this.subjectText.setText(getAttributeValueSafe(artifact, TSK_SUBJECT));
             this.datetimeText.setText(getAttributeValueSafe(artifact, TSK_DATETIME_RCVD));
 
