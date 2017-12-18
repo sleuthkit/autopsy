@@ -297,15 +297,23 @@ final public class Accounts implements AutopsyVisitableItem {
                 try {
                     String accountType = key;
                     if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
-                         return new Node[]{new CreditCardNumberAccountTypeNode()};
+                        return new Node[]{new CreditCardNumberAccountTypeNode()};
                     } else {
-                          return new Node[]{new DefaultAccountTypeNode(key)};
+                        String accountTypeDisplayname;
+                        try {
+                            accountTypeDisplayname = skCase.getCommunicationsManager().getAccountType(accountType).getDisplayName();
+                            } 
+                        catch (TskCoreException ex) {
+                            LOGGER.log(Level.SEVERE, "Error getting display name for account type. ", ex);
+                            accountTypeDisplayname = accountType;
+                        }
+                        
+                        return new Node[]{new DefaultAccountTypeNode(key, accountTypeDisplayname)};
                     }
-                    
                 } catch (IllegalArgumentException ex) {
                     LOGGER.log(Level.WARNING, "Unknown account type: {0}", key);
                     //Flesh out what happens with other account types here.
-                    return new Node[]{new DefaultAccountTypeNode(key)};
+                    return new Node[]{new DefaultAccountTypeNode(key, key)};
                 }
             }
 
@@ -359,6 +367,7 @@ final public class Accounts implements AutopsyVisitableItem {
     final public class DefaultAccountTypeNode extends DisplayableItemNode {
 
         private final String accountTypeName;
+        private final String accountTypeDisplayName;
 
         final private class DefaultAccountFactory extends ObservingChildren<Long> {
 
@@ -410,11 +419,12 @@ final public class Accounts implements AutopsyVisitableItem {
             }
         }
 
-        private DefaultAccountTypeNode(String accountTypeName) {
+        private DefaultAccountTypeNode(String accountTypeName, String accountTypeDisplayName) {
             super(Children.LEAF);
             this.accountTypeName = accountTypeName;
+            this.accountTypeDisplayName = accountTypeDisplayName;
             setChildren(Children.createLazy(DefaultAccountFactory::new));
-            setName(accountTypeName);
+            setName(accountTypeDisplayName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
         }
 
