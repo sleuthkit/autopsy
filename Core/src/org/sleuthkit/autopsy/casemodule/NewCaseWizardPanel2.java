@@ -147,6 +147,7 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
             panel.setExaminerEmail(lastExaminerEmail);
             panel.setOrganization(EamDb.isEnabled() ? lastOrganizationName : "");
             panel.setCaseNumber("");  //clear the number field 
+            panel.setCaseNotes(""); //clear the notes field
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel2, ", e); //NON-NLS
         }
