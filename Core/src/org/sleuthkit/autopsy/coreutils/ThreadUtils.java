@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /*
- * General purpose actions which can be performed on Threads.
+ * Concurrent programming utilities.
  */
 final public class ThreadUtils {
 
@@ -30,33 +30,21 @@ final public class ThreadUtils {
     private static final TimeUnit DEFAULT_TIMEOUT_UNITS = TimeUnit.SECONDS;
 
     /**
-     * Shuts down a task executor service, waiting until all tasks are
-     * terminated.
+     * Shuts down a task executor service, unconditionally waiting until all
+     * tasks are terminated.
      *
      * @param executor The executor.
      */
     public static void shutDownTaskExecutor(ExecutorService executor) {
         executor.shutdown();
-        boolean taskCompleted = false;
-        while (!taskCompleted) {
+        boolean tasksCompleted = false;
+        while (!tasksCompleted) {
             try {
-                taskCompleted = executor.awaitTermination(DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_UNITS);
+                tasksCompleted = executor.awaitTermination(DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_UNITS);
             } catch (InterruptedException ignored) {
                 /*
-                 * The current policy is to wait for the task to finish so that
-                 * the case can be left in a consistent state.
-                 *
-                 * For a specific example of the motivation for this policy,
-                 * note that a application service (Solr search service)
-                 * experienced an error condition when opening case resources
-                 * that left the service blocked uninterruptibly on a socket
-                 * read. This eventually led to a mysterious "freeze" as the
-                 * user-cancelled service task continued to run holdiong a lock
-                 * that a UI thread soon tried to acquire. Thus it has been
-                 * deemed better to make the "freeze" happen in a more
-                 * informative way, i.e., with the progress indicator for the
-                 * unfinished task on the screen, if a similar error condition
-                 * arises again.
+                 * Ignore interrupts. The policy implemented by this method is
+                 * an unconditional wait.
                  */
             }
         }
