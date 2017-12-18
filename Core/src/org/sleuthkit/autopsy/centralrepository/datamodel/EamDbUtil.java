@@ -247,7 +247,7 @@ public class EamDbUtil {
      *
      * @return the default org name
      */
-    static String getDefaultOrgName() {
+    public static String getDefaultOrgName() {
         return DEFAULT_ORG_NAME;
     }
 
