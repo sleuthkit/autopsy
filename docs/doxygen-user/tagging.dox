@@ -24,7 +24,7 @@ There are several default tag names:
 - Follow Up - Default tag for marking files to follow up on
 - Notable item - Default tag for indicating that an item should be marked as notable in the central repository
 
-You can also create arbitrary tag names. These tag names will be automatically saved for future use. Choose a tag from the list you have created, or create a "New Tag".
+You can also create custom tag names. These tag names will be automatically saved for future use. Choose a tag from the list you have created, or create a "New Tag".
 
 \image html tagging-3.PNG
 
