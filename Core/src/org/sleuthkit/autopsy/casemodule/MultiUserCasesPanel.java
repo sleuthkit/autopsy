@@ -75,7 +75,6 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
      */
     private static final String CASE_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CaseHeaderText");
     private static final String CREATEDTIME_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
-    private static final String COMPLETEDTIME_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
     private static final String STATUS_ICON_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
     private static final String OUTPUT_FOLDER_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
     private static final String METADATA_FILE_HEADER = NbBundle.getMessage(MultiUserCasesPanel.class, "ReviewModeCasePanel.MetadataFileHeaderText");
@@ -89,7 +88,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         OUTPUTFOLDER,
         METADATA_FILE
     }
-    private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER, METADATA_FILE_HEADER};
+    private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER, METADATA_FILE_HEADER};
     private DefaultTableModel caseTableModel;
     private JDialog parentDialog;
     private LoadTableWorker tableWorker;
@@ -111,7 +110,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
 
             @Override
             public Class<?> getColumnClass(int col) {
-                if (this.getColumnName(col).equals(CREATEDTIME_HEADER) || this.getColumnName(col).equals(COMPLETEDTIME_HEADER)) {
+                if (this.getColumnName(col).equals(CREATEDTIME_HEADER)) {
                     return Date.class;
                 } else {
                     return super.getColumnClass(col);
@@ -139,13 +138,6 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         theColumn.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
         theColumn.setWidth(TIME_COL_PREFERRED_WIDTH);
 
-        theColumn = casesTable.getColumn(COMPLETEDTIME_HEADER);
-        theColumn.setCellRenderer(new LongDateCellRenderer());
-        theColumn.setMinWidth(TIME_COL_MIN_WIDTH);
-        theColumn.setMaxWidth(TIME_COL_MAX_WIDTH);
-        theColumn.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
-        theColumn.setWidth(TIME_COL_PREFERRED_WIDTH);
-
         theColumn = casesTable.getColumn(STATUS_ICON_HEADER);
         theColumn.setCellRenderer(new StatusIconCellRenderer());
         theColumn.setMinWidth(STATUS_COL_MIN_WIDTH);
@@ -156,7 +148,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
         casesTable.removeColumn(casesTable.getColumn(OUTPUT_FOLDER_HEADER));
         casesTable.removeColumn(casesTable.getColumn(METADATA_FILE_HEADER));
         casesTable.setRowSorter(new RowSorter<>(caseTableModel));
-        casesTable.getRowSorter().toggleSortOrder(casesTable.getColumn(COMPLETEDTIME_HEADER).getModelIndex());
+        casesTable.getRowSorter().toggleSortOrder(casesTable.getColumn(CREATEDTIME_HEADER).getModelIndex());
         /*
          * Listen for row selection changes and set button state for the current
          * selection.
@@ -181,7 +173,7 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
             //set the table to display text informing the user that the list is being retreived and disable case selection
             caseTableModel.setRowCount(0);
             casesTable.setRowSelectionAllowed(false);
-            caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, null, "", ""});
+            caseTableModel.addRow(new Object[]{CASES_POPULATING_MESSAGE, null, null, "", ""});
             tableWorker = new LoadTableWorker();
             tableWorker.execute();
         }
@@ -632,11 +624,10 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
             caseTableModel.setRowCount(0);
             long now = new Date().getTime();
             for (MultiUserCase autoIngestCase : cases) {
-                if (autoIngestCase.getLastAccessedDate() != null && passesTimeFilter(now, autoIngestCase.getLastAccessedDate().getTime())) {
+                if (autoIngestCase.getCreationDate() != null && passesTimeFilter(now, autoIngestCase.getCreationDate().getTime())) {
                     caseTableModel.addRow(new Object[]{
                         autoIngestCase.getCaseDisplayName(),
                         autoIngestCase.getCreationDate(),
-                        autoIngestCase.getLastAccessedDate(),
                         (MultiUserCaseManager.CaseStatus.OK != autoIngestCase.getStatus()) ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK,
                         autoIngestCase.getCaseDirectoryPath().toString(),
                         autoIngestCase.getMetadataFileName()});
