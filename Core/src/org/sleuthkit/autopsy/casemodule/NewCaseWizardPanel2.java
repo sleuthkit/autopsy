@@ -42,7 +42,6 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
     private static final String PROP_EXAMINER_NAME = "LBL_EXAMINER_NAME"; //NON-NLS
     private static final String PROP_EXAMINER_PHONE = "LBL_EXAMINER_PHONE"; //NON-NLS
     private static final String PROP_EXAMINER_EMAIL = "LBL_EXAMINER_EMAIL"; //NON-NLS
-    private static final String PROP_CASE_NOTES = "LBL_CASE_NOTES"; //NON-NLS
     private static final String PROP_ORGANIZATION_NAME = "LBL_ORGANIZATION_NAME"; //NON-NLS
     private NewCaseVisualPanel2 component;
     private final Set<ChangeListener> listeners = new HashSet<>(1);
@@ -142,14 +141,13 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
             String lastExaminerName = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_NAME);
             String lastExaminerPhone = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_PHONE);
             String lastExaminerEmail = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_EMAIL);
-            String lastCaseNotes = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_CASE_NOTES);
             String lastOrganizationName = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_ORGANIZATION_NAME);
             panel.setExaminerName(lastExaminerName);
             panel.setExaminerPhone(lastExaminerPhone);
             panel.setExaminerEmail(lastExaminerEmail);
-            panel.setCaseNotes(lastCaseNotes);
             panel.setOrganization(EamDb.isEnabled() ? lastOrganizationName : "");
             panel.setCaseNumber("");  //clear the number field 
+            panel.setCaseNotes(""); //clear the notes field
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel2, ", e); //NON-NLS
         }
@@ -174,7 +172,6 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         settings.putProperty("caseExaminerEmail", component.getExaminerEmail()); //NON-NLS
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_EXAMINER_EMAIL, component.getExaminerEmail());
         settings.putProperty("caseNotes", component.getCaseNotes()); //NON-NLS
-        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_CASE_NOTES, component.getCaseNotes());
         settings.putProperty("caseOrganization", component.getOrganization()); //NON-NLS
         ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_ORGANIZATION_NAME, component.getOrganization());
     }
