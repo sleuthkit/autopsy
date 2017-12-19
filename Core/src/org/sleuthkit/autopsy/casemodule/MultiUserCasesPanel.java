@@ -83,7 +83,6 @@ final class MultiUserCasesPanel extends javax.swing.JPanel {
 
         CASE,
         CREATEDTIME,
-        COMPLETEDTIME,
         STATUS_ICON,
         OUTPUTFOLDER,
         METADATA_FILE
