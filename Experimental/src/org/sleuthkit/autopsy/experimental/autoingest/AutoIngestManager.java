@@ -313,11 +313,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     private void handleRemoteJobStatusEvent(AutoIngestJobStatusEvent event) {
         AutoIngestJob job = event.getJob();
-        for (Iterator<AutoIngestJob> iterator = pendingJobs.iterator(); iterator.hasNext();) {
-            AutoIngestJob pendingJob = iterator.next();
-            if (job.equals(pendingJob)) {
-                iterator.remove();
-                break;
+        synchronized (jobsLock) {
+            for (Iterator<AutoIngestJob> iterator = pendingJobs.iterator(); iterator.hasNext();) {
+                AutoIngestJob pendingJob = iterator.next();
+                if (job.equals(pendingJob)) {
+                    iterator.remove();
+                    break;
+                }
             }
         }
         String hostName = job.getProcessingHostName();
