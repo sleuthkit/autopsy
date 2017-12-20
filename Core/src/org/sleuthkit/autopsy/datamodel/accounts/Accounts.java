@@ -289,6 +289,11 @@ final public class Accounts implements AutopsyVisitableItem {
                 } catch (TskCoreException | SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Error querying for account_types", ex);
                 }
+                
+                // quickfix for 937
+                // refresh the children for each account type
+                list.forEach(this::refreshKey);
+                
                 return list;
             }
 
