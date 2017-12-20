@@ -45,7 +45,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     private DataResultViewerTable dataResultViewerTable;
 
     /**
-     * Constructs the right hand side of the cCmmunications Visualization Tool
+     * Constructs the right hand side of the Communications Visualization Tool
      * (CVT).
      *
      * @param gacExplorerManager An explorer manager associated with the
