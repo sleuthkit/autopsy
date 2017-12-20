@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -31,24 +32,37 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 /**
  * Top component which displays the Communications Visualization Tool.
  */
-@TopComponent.Description(
-        preferredID = "CVTTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", //use this to put icon in window title area,
-        persistenceType = TopComponent.PERSISTENCE_NEVER)
+@TopComponent.Description(preferredID = "CVTTopComponent", persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "cvt", openAtStartup = false)
 @RetainLocation("cvt")
 @NbBundle.Messages("CVTTopComponent.name= Communications Visualization")
 public final class CVTTopComponent extends TopComponent implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+    private final ExplorerManager messagesBrowserExplorerManager;
+    private final ExplorerManager acctsBrowserExplorerManager;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private final ExplorerManager em = new ExplorerManager();
-
     public CVTTopComponent() {
         initComponents();
         setName(Bundle.CVTTopComponent_name());
-        splitPane.setRightComponent(new MessageBrowser());
+        /*
+         * Associate an explorer manager with the GlobalActionContext (GAC) for
+         * use by the messages browser so that selections in the messages
+         * browser can be exposed to context-sensitive actions.
+         */
+        messagesBrowserExplorerManager = new ExplorerManager();
+        associateLookup(ExplorerUtils.createLookup(messagesBrowserExplorerManager, getActionMap()));
+        splitPane.setRightComponent(new MessageBrowser(messagesBrowserExplorerManager));
+
+        /*
+         * Create a second explorer manager to be discovered by the accounts
+         * browser and the message browser so that the browsers can both listen
+         * for explorer manager property events for the outline view of the
+         * accounts browser. This provides a mechanism for pushing selected
+         * Nodes from the accounts browser to the messages browser.
+         */
+        acctsBrowserExplorerManager = new ExplorerManager();
     }
 
     /**
@@ -112,7 +126,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return em;
+        return acctsBrowserExplorerManager;
     }
 
     @Override

@@ -40,19 +40,24 @@ import org.sleuthkit.datamodel.CommunicationsManager;
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
-
-
+    private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
-    private final ExplorerManager explorerManager = new ExplorerManager();
-    private final DataResultViewerTable dataResultViewerTable = new DataResultViewerTable(explorerManager, "Messages");
+    private DataResultViewerTable dataResultViewerTable;
 
-    ;
-
-    MessageBrowser() {
+    /**
+     * Constructs the right hand side of the Communications Visualization Tool
+     * (CVT).
+     *
+     * @param gacExplorerManager An explorer manager associated with the
+     *                           GlobalActionsContext (GAC) so that selections
+     *                           in the messages browser can be exposed to
+     *                           context-sensitive actions.
+     */
+    MessageBrowser(ExplorerManager gacExplorerManager) {
+        this.gacExplorerManager = gacExplorerManager;
         initComponents();
         //create an uninitialized DataResultPanel so we can control the ResultViewers that get added.
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
-
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
     }
@@ -60,10 +65,10 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     @Override
     public void addNotify() {
         super.addNotify();
-        ExplorerManager parentExplorereManager = ExplorerManager.find(this);
-        parentExplorereManager.addPropertyChangeListener(pce -> {
+        ExplorerManager parentExplorerManager = ExplorerManager.find(this);
+        parentExplorerManager.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] selectedNodes = parentExplorereManager.getSelectedNodes();
+                final Node[] selectedNodes = parentExplorerManager.getSelectedNodes();
 
                 messagesResultPanel.setNumMatches(0);
                 messagesResultPanel.setNode(null);
@@ -88,27 +93,26 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                                 .collect(Collectors.toSet());
                         messagesResultPanel.setPath(selectedNodes.length + " accounts");
                     }
-                    AccountDetailsNode accountDetailsNode =
-                            new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
-                    TableFilterNode wrappedNode =
-                            new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorereManager), true);
+                    AccountDetailsNode accountDetailsNode
+                            = new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
+                    TableFilterNode wrappedNode
+                            = new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorerManager), true);
                     messagesResultPanel.setNode(wrappedNode);
                 }
             }
         });
 
         //add the required result viewers and THEN open the panel
-        if (messagesResultPanel.getViewers().contains(dataResultViewerTable) == false) {
+        if (null == dataResultViewerTable) {
+            dataResultViewerTable = new DataResultViewerTable(gacExplorerManager, "Messages");
             messagesResultPanel.addResultViewer(dataResultViewerTable);
         }
         messagesResultPanel.open();
     }
 
-  
-
     @Override
     public ExplorerManager getExplorerManager() {
-        return explorerManager;
+        return gacExplorerManager;
     }
 
     /**
