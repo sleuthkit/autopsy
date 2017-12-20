@@ -1,0 +1,23 @@
+/*! \page communications_page Communications Visualization Tool
+
+\section cvt_overview Overview
+
+The Communications Visualization Tool gives a consolidated view of all communication events for the case. This allows an analyst to quickly view communications data such as:
+* The most commonly used accounts
+* Communications within a specific time frame
+
+\section cvt_usage Usage
+
+The Communications Visualization Tool is loaded through the Tools->Communications menu item. 
+
+\image html cvt_main.png
+
+From the left hand column, you can choose which devices to display, which types of data to display, and optionally select a time range. After any changes to the filters, use the Apply button to update the tables.
+
+The middle column displays each account, its device and type, and the number of associated messages (emails, call logs, etc.). By default it will be sorted in descending order of frequency.
+
+Selecting an account in the middle column will bring up the messages for that account in the right hand column. Here data about each message is displayed in the top section, and the messages itself can be seen in the bottom section (if applicable).
+
+\image html cvt_messages.png
+
+*/
