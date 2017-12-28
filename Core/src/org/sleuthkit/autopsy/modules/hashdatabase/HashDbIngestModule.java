@@ -205,21 +205,8 @@ public class HashDbIngestModule implements FileIngestModule {
                     foundBad = true;
                     totals.totalKnownBadCount.incrementAndGet();
 
-                    //try {
-                        file.setKnown(TskData.FileKnown.BAD);
-                    //    skCase.setKnown(file, TskData.FileKnown.BAD);
-                    //} catch (TskException ex) {
-                    //    logger.log(Level.WARNING, "Couldn't set notable state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
-                    //    services.postMessage(IngestMessage.createErrorMessage(
-                    //            HashLookupModuleFactory.getModuleName(),
-                    //            NbBundle.getMessage(this.getClass(),
-                    //                    "HashDbIngestModule.hashLookupErrorMsg",
-                    //                    name),
-                    //            NbBundle.getMessage(this.getClass(),
-                    //                    "HashDbIngestModule.settingKnownBadStateErr",
-                    //                    name)));
-                    //    ret = ProcessResult.ERROR;
-                    //}
+                    file.setKnown(TskData.FileKnown.BAD);
+
                     String hashSetName = db.getDisplayName();
 
                     String comment = "";
@@ -263,14 +250,8 @@ public class HashDbIngestModule implements FileIngestModule {
                 try {
                     long lookupstart = System.currentTimeMillis();
                     if (db.lookupMD5Quick(file)) {
-                        //try {
-                            file.setKnown(TskData.FileKnown.KNOWN);
-                            //skCase.setKnown(file, TskData.FileKnown.KNOWN);
-                            break;
-                        //} catch (TskException ex) {
-                        //    logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
-                        //    ret = ProcessResult.ERROR;
-                        //}
+                        file.setKnown(TskData.FileKnown.KNOWN);
+                        break;
                     }
                     long delta = (System.currentTimeMillis() - lookupstart);
                     totals.totalLookuptime.addAndGet(delta);
