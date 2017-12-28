@@ -211,7 +211,7 @@ public class FileTypeDetector {
      * @throws TskCoreException If there is a problem writing the result to the
      *                          case database.
      */
-    private String detect(AbstractFile file) throws TskCoreException {
+    public String detect(AbstractFile file) throws TskCoreException {
         return detect(file, false);
     }
 
@@ -234,7 +234,7 @@ public class FileTypeDetector {
      * @throws TskCoreException If there is a problem writing the result to the
      *                          case database.
      */
-    public String detect(AbstractFile file, boolean addToCaseDb) throws TskCoreException {
+    private String detect(AbstractFile file, boolean addToCaseDb) throws TskCoreException {
         /*
          * Check to see if the file has already been typed. This is the "check"
          * part of a check-then-act race condition (see note below).
