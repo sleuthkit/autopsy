@@ -56,7 +56,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -98,6 +97,10 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -310,11 +313,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      */
     private void handleRemoteJobStatusEvent(AutoIngestJobStatusEvent event) {
         AutoIngestJob job = event.getJob();
-        for (Iterator<AutoIngestJob> iterator = pendingJobs.iterator(); iterator.hasNext();) {
-            AutoIngestJob pendingJob = iterator.next();
-            if (job.equals(pendingJob)) {
-                iterator.remove();
-                break;
+        synchronized (jobsLock) {
+            for (Iterator<AutoIngestJob> iterator = pendingJobs.iterator(); iterator.hasNext();) {
+                AutoIngestJob pendingJob = iterator.next();
+                if (job.equals(pendingJob)) {
+                    iterator.remove();
+                    break;
+                }
             }
         }
         String hostName = job.getProcessingHostName();
@@ -1540,6 +1545,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             errorState = ErrorState.JOB_LOGGER_ERROR;
                         } else if (ex instanceof AutoIngestDataSourceProcessorException) {
                             errorState = ErrorState.DATA_SOURCE_PROCESSOR_ERROR;
+                        } else if (ex instanceof JobMetricsCollectionException) {
+                            errorState = ErrorState.JOB_METRICS_COLLECTION_ERROR;
                         } else if (ex instanceof InterruptedException) {
                             throw (InterruptedException) ex;
                         } else {
@@ -1733,8 +1740,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                                    error constructing
          *                                                    auto ingest node
          *                                                    data objects.
+         * @throws JobMetricsCollectionException              If there's an
+         *                                                    issue trying to
+         *                                                    collect metrics
+         *                                                    for an auto ingest
+         *                                                    job.
          */
-        private void processJobs() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, AutoIngestJobNodeData.InvalidDataException, CaseNodeData.InvalidDataException {
+        private void processJobs() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, AutoIngestJobNodeData.InvalidDataException, CaseNodeData.InvalidDataException, JobMetricsCollectionException {
             SYS_LOGGER.log(Level.INFO, "Started processing pending jobs queue");
             Lock manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
             while (null != manifestLock) {
@@ -1929,8 +1941,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                                    error constructing
          *                                                    auto ingest node
          *                                                    data objects.
+         * @throws JobMetricsCollectionException              If there's an
+         *                                                    issue trying to
+         *                                                    collect metrics
+         *                                                    for an auto ingest
+         *                                                    job.
          */
-        private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException {
+        private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, JobMetricsCollectionException {
             Path manifestPath = currentJob.getManifest().getFilePath();
             SYS_LOGGER.log(Level.INFO, "Started processing of {0}", manifestPath);
             currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
@@ -2014,8 +2031,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                          interrupted while blocked,
          *                                          i.e., if auto ingest is
          *                                          shutting down.
+         * @throws JobMetricsCollectionException    If there's an issue trying
+         *                                          to collect metrics for an
+         *                                          auto ingest job.
          */
-        private void attemptJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException {
+        private void attemptJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, JobMetricsCollectionException {
             updateConfiguration();
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
@@ -2170,25 +2190,28 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *
          * @param caseForJob The case for the job.
          *
-         * @throws CoordinationServiceException if there is an error acquiring
-         *                                      or releasing coordination
-         *                                      service locks or setting
-         *                                      coordination service node data.
-         * @throws AnalysisStartupException     if there is an error starting
-         *                                      analysis of the data source by
-         *                                      the data source level and file
-         *                                      level ingest modules.
-         * @throws FileExportException          if there is an error exporting
-         *                                      files.
-         * @throws AutoIngestJobLoggerException if there is an error writing to
-         *                                      the auto ingest log for the
-         *                                      case.
-         * @throws InterruptedException         if the thread running the job
-         *                                      processing task is interrupted
-         *                                      while blocked, i.e., if auto
-         *                                      ingest is shutting down.
+         * @throws CoordinationServiceException  if there is an error acquiring
+         *                                       or releasing coordination
+         *                                       service locks or setting
+         *                                       coordination service node data.
+         * @throws AnalysisStartupException      if there is an error starting
+         *                                       analysis of the data source by
+         *                                       the data source level and file
+         *                                       level ingest modules.
+         * @throws FileExportException           if there is an error exporting
+         *                                       files.
+         * @throws AutoIngestJobLoggerException  if there is an error writing to
+         *                                       the auto ingest log for the
+         *                                       case.
+         * @throws InterruptedException          if the thread running the job
+         *                                       processing task is interrupted
+         *                                       while blocked, i.e., if auto
+         *                                       ingest is shutting down.
+         * @throws JobMetricsCollectionException If there's an issue trying to
+         *                                       collect metrics for an auto
+         *                                       ingest job.
          */
-        private void runIngestForJob(Case caseForJob) throws CoordinationServiceException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException {
+        private void runIngestForJob(Case caseForJob) throws CoordinationServiceException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, JobMetricsCollectionException {
             try {
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
@@ -2210,26 +2233,29 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *
          * @param caseForJob The case for the job.
          *
-         * @throws AnalysisStartupException     if there is an error starting
-         *                                      analysis of the data source by
-         *                                      the data source level and file
-         *                                      level ingest modules.
-         * @throws FileExportException          if there is an error exporting
-         *                                      files.
-         * @throws AutoIngestJobLoggerException if there is an error writing to
-         *                                      the auto ingest log for the
-         *                                      case.
-         * @throws InterruptedException         if the thread running the job
-         *                                      processing task is interrupted
-         *                                      while blocked, i.e., if auto
-         *                                      ingest is shutting down.
+         * @throws AnalysisStartupException      If there is an error starting
+         *                                       analysis of the data source by
+         *                                       the data source level and file
+         *                                       level ingest modules.
+         * @throws FileExportException           If there is an error exporting
+         *                                       files.
+         * @throws AutoIngestJobLoggerException  If there is an error writing to
+         *                                       the auto ingest log for the
+         *                                       case.
+         * @throws InterruptedException          If the thread running the job
+         *                                       processing task is interrupted
+         *                                       while blocked, i.e., if auto
+         *                                       ingest is shutting down.
+         * @throws JobMetricsCollectionException If there's an issue trying to
+         *                                       collect metrics for an auto
+         *                                       ingest job.
          */
-        private void ingestDataSource(Case caseForJob) throws AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void ingestDataSource(Case caseForJob) throws AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException, JobMetricsCollectionException {
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
             }
 
-            DataSource dataSource = identifyDataSource();
+            AutoIngestDataSource dataSource = identifyDataSource();
             if (null == dataSource) {
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
@@ -2263,6 +2289,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return;
             }
 
+            collectMetrics(caseForJob.getSleuthkitCase(), dataSource);
             exportFiles(dataSource);
         }
 
@@ -2280,7 +2307,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      interrupted while blocked, i.e.,
          *                                      if auto ingest is shutting down.
          */
-        private DataSource identifyDataSource() throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private AutoIngestDataSource identifyDataSource() throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
@@ -2297,7 +2324,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return null;
             }
             String deviceId = manifest.getDeviceId();
-            return new DataSource(deviceId, dataSourcePath);
+            return new AutoIngestDataSource(deviceId, dataSourcePath);
         }
 
         /**
@@ -2314,23 +2341,20 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestJobLoggerException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestJobLoggerException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE, Date.from(Instant.now()));
-            UUID taskId = UUID.randomUUID();
-            DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             try {
-                caseForJob.notifyAddingDataSource(taskId);
 
-                Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap;
+                // Get an ordered list of data source processors to try
+                List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
                 try {
-                    // lookup all AutomatedIngestDataSourceProcessors and poll which ones are able to process the current data source
-                    validDataSourceProcessorsMap = DataSourceProcessorUtility.getDataSourceProcessor(dataSource.getPath());
+                    validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath());
                 } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                     SYS_LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
                     // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
@@ -2338,7 +2362,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
 
                 // did we find a data source processor that can process the data source
-                if (validDataSourceProcessorsMap.isEmpty()) {
+                if (validDataSourceProcessors.isEmpty()) {
                     // This should never happen. We should add all unsupported data sources as logical files.
                     setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                     currentJob.setErrorsOccurred(true);
@@ -2347,15 +2371,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     return;
                 }
 
-                // Get an ordered list of data source processors to try
-                List<AutoIngestDataSourceProcessor> validDataSourceProcessors = validDataSourceProcessorsMap.entrySet().stream()
-                        .sorted(Map.Entry.<AutoIngestDataSourceProcessor, Integer>comparingByValue().reversed())
-                        .map(Map.Entry::getKey)
-                        .collect(Collectors.toList());
-
                 synchronized (ingestLock) {
                     // Try each DSP in decreasing order of confidence
                     for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
+                        UUID taskId = UUID.randomUUID();
+                        caseForJob.notifyAddingDataSource(taskId);
+                        DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
+                        caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                         SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         try {
@@ -2398,7 +2420,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void logDataSourceProcessorResult(DataSource dataSource) throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void logDataSourceProcessorResult(AutoIngestDataSource dataSource) throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
@@ -2468,7 +2490,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void analyze(DataSource dataSource) throws AnalysisStartupException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", manifestPath);
@@ -2550,6 +2572,46 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         /**
+         * Gather metrics to store in auto ingest job nodes. A SleuthkitCase
+         * instance is used to get the content size.
+         *
+         * @param caseDb     The SleuthkitCase instance.
+         * @param dataSource The auto ingest data source.
+         *
+         * @throws CoordinationServiceException  If there's a problem retrieving
+         *                                       data from the coordination
+         *                                       service.
+         * @throws InterruptedException          If the thread calling the
+         *                                       coordination service is
+         *                                       interrupted.
+         * @throws JobMetricsCollectionException If there's an issue trying to
+         *                                       retreive data from the
+         *                                       database.
+         */
+        private void collectMetrics(SleuthkitCase caseDb, AutoIngestDataSource dataSource) throws CoordinationServiceException, InterruptedException, JobMetricsCollectionException {
+            /*
+             * Get the data source size and store it in the current job.
+             */
+            List<Content> contentList = dataSource.getContent();
+            long dataSourceSize = 0;
+            try {
+                for (Content content : contentList) {
+                    dataSourceSize += ((DataSource) content).getContentSize(caseDb);
+                }
+            } catch (TskCoreException ex) {
+                throw new JobMetricsCollectionException("Unable to get the data content size.", ex);
+            }
+            currentJob.setDataSourceSize(dataSourceSize);
+
+            /*
+             * Create node data from the current job and store it.
+             */
+            AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(currentJob);
+            String manifestNodePath = currentJob.getManifest().getFilePath().toString();
+            coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+        }
+
+        /**
          * Exports any files from the data source for the current job that
          * satisfy any user-defined file export rules.
          *
@@ -2565,7 +2627,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while blocked, i.e., if auto
          *                                      ingest is shutting down.
          */
-        private void exportFiles(DataSource dataSource) throws FileExportException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
+        private void exportFiles(AutoIngestDataSource dataSource) throws FileExportException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Exporting files for {0}", manifestPath);
@@ -2722,6 +2784,23 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             }
         }
 
+        /**
+         * Exception thrown when an issue occurs trying to collect metrics for
+         * an auto ingest job.
+         */
+        private final class JobMetricsCollectionException extends Exception {
+
+            private static final long serialVersionUID = 1L;
+
+            private JobMetricsCollectionException(String message) {
+                super(message);
+            }
+
+            private JobMetricsCollectionException(String message, Throwable cause) {
+                super(message, cause);
+            }
+        }
+
     }
 
     /**
@@ -2852,7 +2931,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         FILE_EXPORT_ERROR("File export error"),
         JOB_LOGGER_ERROR("Job logger error"),
         DATA_SOURCE_PROCESSOR_ERROR("Data source processor error"),
-        UNEXPECTED_EXCEPTION("Unknown error");
+        UNEXPECTED_EXCEPTION("Unknown error"),
+        JOB_METRICS_COLLECTION_ERROR("Job metrics collection error");
 
         private final String desc;
 

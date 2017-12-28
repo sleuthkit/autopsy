@@ -49,12 +49,6 @@
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
-            <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance">
-                <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseOpenAction"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseOpenAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseSaveAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_SaveCaseAction"/>
@@ -152,12 +146,8 @@
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance"/>
-                <attr name="position" intvalue="101"/>
-            </file>
             <folder name="Open Recent Case">
-                <attr name="position" intvalue="103"/>
+                <attr name="position" intvalue="101"/>
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.casemodule.Bundle"/>
                 <file name="org-sleuthkit-autopsy-casemodule-RecentCasesAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
@@ -165,11 +155,11 @@
             </folder>
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAct.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
-                <attr name="position" intvalue="104"/>
+                <attr name="position" intvalue="103"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
-                <attr name="position" intvalue="105"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
@@ -443,6 +433,7 @@
             <folder name="floatingLeftBottom"/>
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
             <file name="timeline.wsmode" url="timelineWsmode.xml"/>
+            <file name="cvt.wsmode" url="cvtWsmode.xml"/>
         </folder>
     </folder>
     

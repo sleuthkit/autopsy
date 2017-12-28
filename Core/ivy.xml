@@ -16,10 +16,12 @@
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.8.1"/>
 
         <dependency conf="core->default" org="org.apache.tika" name="tika-core" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.tika" name="tika-parsers" rev="1.14"/>
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
 
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
         <dependency conf="core->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
+        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
     </dependencies>
 </ivy-module>

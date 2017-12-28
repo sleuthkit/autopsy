@@ -61,6 +61,10 @@ public class StatusIconCellRenderer extends GrayableCellRenderer {
                     break;
             }
         }
+        else {
+            setIcon(null);
+            setText("");
+        }
         grayCellIfTableNotEnabled(table, isSelected);
 
         return this;

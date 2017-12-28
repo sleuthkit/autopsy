@@ -28,6 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -96,18 +97,16 @@ public class EamArtifactUtil {
                 }
 
                 // make an instance for the BB source file 
-                CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 if (null == correlationCase) {
-                    EamDb.getInstance().newCase(Case.getCurrentCase());
-                    correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+                    correlationCase = EamDb.getInstance().newCase(Case.getCurrentCase());
                 }
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
                         correlationCase,
                         CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
                         bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
-                        TskData.FileKnown.UNKNOWN,
-                        CorrelationAttributeInstance.GlobalStatus.LOCAL
+                        TskData.FileKnown.UNKNOWN
                 );
 
                 // add the instance details
@@ -228,7 +227,7 @@ public class EamArtifactUtil {
      *
      * @return The new EamArtifact or null if creation failed
      */
-    public static CorrelationAttribute getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
+    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
 
         if (!(content instanceof AbstractFile)) {
             return null;
@@ -242,7 +241,7 @@ public class EamArtifactUtil {
 
         // We need a hash to make the artifact
         String md5 = af.getMd5Hash();
-        if (md5 == null || md5.isEmpty()) {
+        if (md5 == null || md5.isEmpty() || HashUtility.isNoDataMd5(md5)) {
             return null;
         }
 
@@ -250,18 +249,16 @@ public class EamArtifactUtil {
         try {
             CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
-            CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
             if (null == correlationCase) {
-                EamDb.getInstance().newCase(Case.getCurrentCase());
-                correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCase());
             }
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,
-                    TskData.FileKnown.BAD,
-                    CorrelationAttributeInstance.GlobalStatus.LOCAL
+                    knownStatus
             );
             eamArtifact.addInstance(cei);
             return eamArtifact;

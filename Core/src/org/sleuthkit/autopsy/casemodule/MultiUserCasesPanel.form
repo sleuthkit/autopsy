@@ -7,6 +7,9 @@
   </NonVisualComponents>
   <Properties>
     <Property name="name" type="java.lang.String" value="Completed Cases" noResource="true"/>
+    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+      <Dimension value="[960, 485]"/>
+    </Property>
   </Properties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
@@ -30,6 +33,8 @@
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                       <Component id="bnOpen" min="-2" pref="80" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="bnOpenSingleUserCase" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="bnShowLog" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="rbGroupLabel" min="-2" max="-2" attributes="0"/>
@@ -41,9 +46,8 @@
                       <Component id="rbMonths" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       <Component id="panelFilter" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                       <Component id="bnRefresh" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                   </Group>
                   <Component id="scrollPaneTable" max="32767" attributes="0"/>
               </Group>
@@ -60,9 +64,9 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="bnOpen" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="bnOpenSingleUserCase" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="bnShowLog" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="bnRefresh" min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="1" attributes="0">
                       <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                           <Component id="rbDays" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -72,6 +76,7 @@
                       </Group>
                       <Component id="panelFilter" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="bnRefresh" alignment="1" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
@@ -223,6 +228,16 @@
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="MultiUserCasesPanel.rbGroupLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="bnOpenSingleUserCase">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="MultiUserCasesPanel.bnOpenSingleUserCase.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnOpenSingleUserCaseActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

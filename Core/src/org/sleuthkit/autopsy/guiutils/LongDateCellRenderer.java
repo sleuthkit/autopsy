@@ -43,6 +43,9 @@ public class LongDateCellRenderer extends GrayableCellRenderer {
         if (value != null) {
             setText(dateFormat.format(value));
         }
+        else {
+            setText("");
+        }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
     }

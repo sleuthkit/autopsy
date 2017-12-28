@@ -26,6 +26,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -89,13 +90,16 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             if (currentCase != null) {
                 try {
                     EamDb dbManager = EamDb.getInstance();
-                    selectedOrg = dbManager.getCaseByUUID(currentCase.getName()).getOrg();
+                    selectedOrg = dbManager.getCase(currentCase).getOrg();
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
                 }
             }
             if (selectedOrg != null) {
                 setCurrentlySelectedOrganization(selectedOrg.getName());
+            }
+            else {
+                setCurrentlySelectedOrganization(EamDbUtil.getDefaultOrgName());
             }
         }
     }
@@ -124,7 +128,6 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         Object selectedBeforeLoad = comboBoxOrgName.getSelectedItem();
         comboBoxOrgName.removeAllItems();
         try {
-            comboBoxOrgName.addItem(""); // for when a case has a null Org
             EamDb dbManager = EamDb.getInstance();
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
@@ -167,7 +170,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (selectedOrg != null) {
             return selectedOrg.getName();
         } else {
-            return "";
+            return EamDbUtil.getDefaultOrgName();
         }
     }
 
@@ -519,7 +522,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
 
     void setCurrentlySelectedOrganization(String orgName) {
-        comboBoxOrgName.setSelectedItem(orgName == null ? "" : orgName);
+        comboBoxOrgName.setSelectedItem(orgName == null ? EamDbUtil.getDefaultOrgName() : orgName);
     }
 
     @Messages({
@@ -561,7 +564,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (EamDb.isEnabled()) {
             try {
                 EamDb dbManager = EamDb.getInstance();
-                CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCase());
                 if (caseDisplayNameTextField.isVisible()) {
                     correlationCase.setDisplayName(caseDisplayNameTextField.getText());
                 }

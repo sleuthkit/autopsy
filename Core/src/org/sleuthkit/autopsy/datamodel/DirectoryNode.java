@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
@@ -32,8 +33,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -42,7 +45,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * are more directories.
  */
 public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
-    
+
     private static final Logger LOGGER = Logger.getLogger(DirectoryNode.class.getName());
 
     public static final String DOTDOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.parFolder.text");
@@ -88,17 +91,19 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
             actionsList.add(null); // creates a menu separator
         }
         actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "DirectoryNode.viewInNewWin.text"), this));
-        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
+        actionsList.add(ViewFileInTimelineAction.createViewFileAction(content));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
+        actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+        actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
-        
+
         final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        
+
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[actionsList.size()]);
     }

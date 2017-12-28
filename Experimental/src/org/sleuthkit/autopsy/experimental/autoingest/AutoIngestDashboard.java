@@ -789,6 +789,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clusterMetricsButton, prioritizeCaseButton, prioritizeJobButton, refreshButton});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -873,7 +876,11 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
-        new AutoIngestMetricsDialog(this.getTopLevelAncestor(), autoIngestMonitor);
+        try {
+            new AutoIngestMetricsDialog(this.getTopLevelAncestor());
+        } catch (AutoIngestMetricsDialog.AutoIngestMetricsDialogException ex) {
+            MessageNotifyUtil.Message.error(ex.getMessage());
+        }
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

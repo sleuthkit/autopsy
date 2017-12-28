@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 class ReportHTML implements TableReportModule {
@@ -241,6 +242,7 @@ class ReportHTML implements TableReportModule {
                 case TSK_EMAIL_MSG:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mail-icon-16.png"); //NON-NLS
                     break;
+                case TSK_ENCRYPTION_SUSPECTED:
                 case TSK_ENCRYPTION_DETECTED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/encrypted-file.png"); //NON-NLS
                     break;
@@ -688,7 +690,8 @@ class ReportHTML implements TableReportModule {
                 }
                 for (int i = 0; i < tags.size(); i++) {
                     ContentTag tag = tags.get(i);
-                    linkToThumbnail.append(tag.getName().getDisplayName());
+                    String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                    linkToThumbnail.append(tag.getName().getDisplayName() + notableString);
                     if (i != tags.size() - 1) {
                         linkToThumbnail.append(", ");
                     }

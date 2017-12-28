@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-17 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ from java.sql import ResultSet
 from java.sql import SQLException
 from java.sql import Statement
 from java.util.logging import Level
+from java.util import ArrayList
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
 from org.sleuthkit.autopsy.casemodule.services import FileManager
@@ -41,6 +42,8 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel import Account
+from org.sleuthkit.datamodel import Relationship
 
 import traceback
 import general
@@ -55,6 +58,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
+
             absFiles = fileManager.findFiles(dataSource, "contacts.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
             if absFiles.isEmpty():
@@ -63,7 +67,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findContactsInDB(str(jFile.toString()), abstractFile)
+                    self.__findContactsInDB(str(jFile.toString()), abstractFile, dataSource)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Contacts", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -75,7 +79,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
     Will create artifact from a database given by the path
     The fileId will be the abstract file associated with the artifacts
     """
-    def __findContactsInDB(self, databasePath, abstractFile):
+    def __findContactsInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
             return
 
@@ -88,6 +92,14 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error opening database", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+
+
+    	# Create a 'Device' account using the data source device id
+    	datasourceObjId = dataSource.getDataSource().getId()
+    	ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+    	deviceID = ds.getDeviceId()
+
+    	deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
         try:
             # get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
@@ -118,6 +130,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     + "WHERE mimetype = 'vnd.android.cursor.item/phone_v2' OR mimetype = 'vnd.android.cursor.item/email_v2'\n"
                     + "ORDER BY raw_contacts.display_name ASC;")
 
+            attributes = ArrayList()
             artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
             oldName = ""
             while resultSet.next():
@@ -126,11 +139,21 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 mimetype = resultSet.getString("mimetype") # either phone or email
                 if name != oldName:
                     artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
                 if mimetype == "vnd.android.cursor.item/phone_v2":
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, general.MODULE_NAME, data1))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, general.MODULE_NAME, data1))
+                    acctType = Account.Type.PHONE
                 else:
-                    artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
+                    attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
+                    acctType = Account.Type.EMAIL
+
+                artifact.addAttributes(attributes)
+
+                # Create an account instance
+                contactAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (acctType, data1, general.MODULE_NAME, abstractFile);
+
+                # create relationship between accounts
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [contactAccountInstance], artifact,Relationship.Type.CONTACT,  0);
 
                 oldName = name
 

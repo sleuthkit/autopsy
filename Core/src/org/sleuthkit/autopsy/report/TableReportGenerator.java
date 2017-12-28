@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -155,9 +156,11 @@ class TableReportGenerator {
                 continue;
             }
 
-            /* TSK_ACCOUNT artifacts get grouped by their TSK_ACCOUNT_TYPE
+            /*
+             * TSK_ACCOUNT artifacts get grouped by their TSK_ACCOUNT_TYPE
              * attribute, and then handed off to the standard method for writing
-             * tables. */
+             * tables.
+             */
             if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                 //Group account artifacts by their account type
                 ListMultimap<String, ArtifactData> groupedArtifacts = Multimaps.index(artifactList,
@@ -169,21 +172,27 @@ class TableReportGenerator {
                                 return "unknown";
                             }
                         });
-                for (String accountType : groupedArtifacts.keySet()) {
-                    /* If the report is a ReportHTML, the data type name
+                for (String accountTypeStr : groupedArtifacts.keySet()) {
+                    /*
+                     * If the report is a ReportHTML, the data type name
                      * eventualy makes it to useDataTypeIcon which expects but
                      * does not require a artifact name, so we make a synthetic
                      * compund name by appending a ":" and the account type.
                      */
-                    String accountDisplayname = accountType;
-                    for (Account.Type acct : Account.Type.values()) {
-                        if (acct.equals(Account.Type.valueOf(accountType))) {
-                            accountDisplayname = acct.getDisplayName();
-                            break;
+                    String accountDisplayname = accountTypeStr;
+                    if (accountTypeStr != null) {
+                        try {
+                            Account.Type acctType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountType(accountTypeStr);
+                            if (acctType != null) {
+                                accountDisplayname = acctType.getDisplayName();
+                            }
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Unable to get display name for account type " + accountTypeStr, ex);
                         }
                     }
+
                     final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountDisplayname;
-                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
+                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountTypeStr)), type, compundDataTypeName, comment);
                 }
             } else {
                 //all other artifact types are sent to writeTableForDataType directly
@@ -214,7 +223,8 @@ class TableReportGenerator {
                 attrTypeSet.add(attribute.getAttributeType());
             }
         }
-        /* Get the columns appropriate for the artifact type. This is used to
+        /*
+         * Get the columns appropriate for the artifact type. This is used to
          * get the data that will be in the cells below based on type, and
          * display the column headers.
          */
@@ -224,7 +234,8 @@ class TableReportGenerator {
         }
         columnHeaderMap.put(type.getTypeID(), columns);
 
-        /* The artifact list is sorted now, as getting the row data is dependent
+        /*
+         * The artifact list is sorted now, as getting the row data is dependent
          * on having the columns, which is necessary for sorting.
          */
         Collections.sort(artifactList);
@@ -299,7 +310,8 @@ class TableReportGenerator {
         // Give the modules the rows for the content tags. 
         for (ContentTag tag : tags) {
             // skip tags that we are not reporting on 
-            if (passesTagNamesFilter(tag.getName().getDisplayName()) == false) {
+            String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
             }
 
@@ -310,7 +322,7 @@ class TableReportGenerator {
                 fileName = tag.getContent().getName();
             }
 
-            ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName(), fileName, tag.getComment()));
+            ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName() + notableString, fileName, tag.getComment()));
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) content;
@@ -376,12 +388,13 @@ class TableReportGenerator {
 
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
-            if (passesTagNamesFilter(tag.getName().getDisplayName()) == false) {
+            String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
             }
 
             List<String> row;
-            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName(), tag.getComment(), tag.getContent().getName()));
+            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName() + notableString, tag.getComment(), tag.getContent().getName()));
             tableReport.addRow(row);
 
             // check if the tag is an image that we should later make a thumbnail for
@@ -963,7 +976,8 @@ class TableReportGenerator {
                 try {
                     List<ContentTag> contentTags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
                     for (ContentTag ct : contentTags) {
-                        allTags.add(ct.getName().getDisplayName());
+                        String notableString = ct.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                        allTags.add(ct.getName().getDisplayName() + notableString);
                     }
                 } catch (TskCoreException ex) {
                     errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetContentTags"));
@@ -1000,7 +1014,8 @@ class TableReportGenerator {
                 List<BlackboardArtifactTag> tags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
-                    uniqueTagNames.add(tag.getName().getDisplayName());
+                    String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                    uniqueTagNames.add(tag.getName().getDisplayName() + notableString);
                 }
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
@@ -1372,7 +1387,8 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SERVER_NAME)));
 
-        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId) {
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId  || 
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME)));
 
@@ -1502,7 +1518,7 @@ class TableReportGenerator {
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));            
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
@@ -1547,6 +1563,7 @@ class TableReportGenerator {
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
+                || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()
                 || artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO.getTypeID()) {
             columns.add(new SourceFileColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile")));
         }

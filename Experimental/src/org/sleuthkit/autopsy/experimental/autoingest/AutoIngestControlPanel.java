@@ -73,6 +73,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
  * one such panel per node.
  */
 @Messages({
+    "AutoIngestControlPanel.bnClusterMetrics.text=Auto Ingest Metrics",
     "AutoIngestControlPanel.bnPause.text=Pause",
     "AutoIngestControlPanel.bnPause.paused=Paused",
     "AutoIngestControlPanel.bnPause.running=Running",
@@ -116,7 +117,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
     "AutoIngestControlPanel.bnPrioritizeJob.actionCommand=<AutoIngestControlPanel.bnPrioritizeJob.text>",
     "AutoIngestControlPanel.lbServicesStatus.text=Services Status:",
     "AutoIngestControlPanel.tbServicesStatusMessage.text=",
-    "AutoIngestControlPanel.bnOpenLogDir.text=Open System Logs Directory",
+    "AutoIngestControlPanel.bnOpenLogDir.text=Open System Logs Folder",
     "AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job",
     "AutoIngestControlPanel.bnPrioritizeFolder.label=<AutoIngestControlPanel.bnPrioritizeJob.text>",
     "AutoIngestControlPanel.Cancelling=Cancelling...",
@@ -1198,10 +1199,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
         bnOpenLogDir = new javax.swing.JButton();
+        bnClusterMetrics = new javax.swing.JButton();
         bnReprocessJob = new javax.swing.JButton();
 
         pendingTable.setModel(pendingTableModel);
         pendingTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.pendingTable.toolTipText")); // NOI18N
+        pendingTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         pendingTable.setRowHeight(20);
         pendingTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -1219,6 +1222,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         runningTable.setModel(runningTableModel);
         runningTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.runningTable.toolTipText")); // NOI18N
+        runningTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         runningTable.setRowHeight(20);
         runningTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -1236,6 +1240,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         completedTable.setModel(completedTableModel);
         completedTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.completedTable.toolTipText")); // NOI18N
+        completedTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
         completedTable.setRowHeight(20);
         completedTable.setSelectionModel(new DefaultListSelectionModel() {
             private static final long serialVersionUID = 1L;
@@ -1253,6 +1258,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnCancelJob, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnCancelJob.text")); // NOI18N
         bnCancelJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnCancelJob.toolTipText")); // NOI18N
+        bnCancelJob.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnCancelJob.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnCancelJob.setPreferredSize(new java.awt.Dimension(162, 23));
         bnCancelJob.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnCancelJobActionPerformed(evt);
@@ -1261,6 +1269,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnDeleteCase, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeleteCase.text")); // NOI18N
         bnDeleteCase.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeleteCase.toolTipText")); // NOI18N
+        bnDeleteCase.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnDeleteCase.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnDeleteCase.setPreferredSize(new java.awt.Dimension(162, 23));
         bnDeleteCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnDeleteCaseActionPerformed(evt);
@@ -1278,6 +1289,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnRefresh.text")); // NOI18N
         bnRefresh.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnRefresh.toolTipText")); // NOI18N
+        bnRefresh.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnRefresh.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnRefresh.setPreferredSize(new java.awt.Dimension(162, 23));
         bnRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnRefreshActionPerformed(evt);
@@ -1286,6 +1300,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnCancelModule, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnCancelModule.text")); // NOI18N
         bnCancelModule.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnCancelModule.toolTipText")); // NOI18N
+        bnCancelModule.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnCancelModule.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnCancelModule.setPreferredSize(new java.awt.Dimension(162, 23));
         bnCancelModule.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnCancelModuleActionPerformed(evt);
@@ -1294,6 +1311,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnExit, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnExit.text")); // NOI18N
         bnExit.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnExit.toolTipText")); // NOI18N
+        bnExit.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnExit.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnExit.setPreferredSize(new java.awt.Dimension(162, 23));
         bnExit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnExitActionPerformed(evt);
@@ -1303,6 +1323,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         org.openide.awt.Mnemonics.setLocalizedText(bnOptions, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnOptions.text")); // NOI18N
         bnOptions.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnOptions.toolTipText")); // NOI18N
         bnOptions.setEnabled(false);
+        bnOptions.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnOptions.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnOptions.setPreferredSize(new java.awt.Dimension(162, 23));
         bnOptions.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnOptionsActionPerformed(evt);
@@ -1311,6 +1334,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnShowProgress, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnShowProgress.text")); // NOI18N
         bnShowProgress.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnShowProgress.toolTipText")); // NOI18N
+        bnShowProgress.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnShowProgress.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnShowProgress.setPreferredSize(new java.awt.Dimension(162, 23));
         bnShowProgress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnShowProgressActionPerformed(evt);
@@ -1319,6 +1345,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPause, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.text")); // NOI18N
         bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.toolTipText")); // NOI18N
+        bnPause.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnPause.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnPause.setPreferredSize(new java.awt.Dimension(162, 23));
         bnPause.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnPauseActionPerformed(evt);
@@ -1327,6 +1356,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeCase, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPrioritizeCase.text")); // NOI18N
         bnPrioritizeCase.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPrioritizeCase.toolTipText")); // NOI18N
+        bnPrioritizeCase.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnPrioritizeCase.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnPrioritizeCase.setPreferredSize(new java.awt.Dimension(162, 23));
         bnPrioritizeCase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnPrioritizeCaseActionPerformed(evt);
@@ -1335,6 +1367,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnShowCaseLog, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnShowCaseLog.text")); // NOI18N
         bnShowCaseLog.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnShowCaseLog.toolTipText")); // NOI18N
+        bnShowCaseLog.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnShowCaseLog.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnShowCaseLog.setPreferredSize(new java.awt.Dimension(162, 23));
         bnShowCaseLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnShowCaseLogActionPerformed(evt);
@@ -1352,6 +1387,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeJob, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPrioritizeJob.text")); // NOI18N
         bnPrioritizeJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPrioritizeJob.toolTipText")); // NOI18N
         bnPrioritizeJob.setActionCommand(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPrioritizeJob.actionCommand")); // NOI18N
+        bnPrioritizeJob.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnPrioritizeJob.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnPrioritizeJob.setPreferredSize(new java.awt.Dimension(162, 23));
         bnPrioritizeJob.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnPrioritizeJobActionPerformed(evt);
@@ -1367,13 +1405,29 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         tbServicesStatusMessage.setBorder(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(bnOpenLogDir, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnOpenLogDir.text")); // NOI18N
+        bnOpenLogDir.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnOpenLogDir.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnOpenLogDir.setPreferredSize(new java.awt.Dimension(162, 23));
         bnOpenLogDir.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnOpenLogDirActionPerformed(evt);
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnClusterMetrics, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnClusterMetrics.text")); // NOI18N
+        bnClusterMetrics.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnClusterMetrics.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnClusterMetrics.setPreferredSize(new java.awt.Dimension(162, 23));
+        bnClusterMetrics.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnClusterMetricsActionPerformed(evt);
+            }
+        });
+
         org.openide.awt.Mnemonics.setLocalizedText(bnReprocessJob, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnReprocessJob.text")); // NOI18N
+        bnReprocessJob.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnReprocessJob.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnReprocessJob.setPreferredSize(new java.awt.Dimension(162, 23));
         bnReprocessJob.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnReprocessJobActionPerformed(evt);
@@ -1388,37 +1442,19 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(bnPause)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnOptions)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnOpenLogDir)
-                                .addGap(18, 18, 18)
-                                .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 920, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(bnPause, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(bnCancelJob, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnShowProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 116, Short.MAX_VALUE)
-                                    .addComponent(bnCancelModule, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnDeleteCase, javax.swing.GroupLayout.PREFERRED_SIZE, 117, Short.MAX_VALUE)
-                                    .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(bnReprocessJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(bnOptions, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(bnOpenLogDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(bnClusterMetrics, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(lbStatus)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1429,11 +1465,34 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                                 .addComponent(lbServicesStatus)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbPending)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 1021, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 1021, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(bnCancelJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnShowProgress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnCancelModule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnDeleteCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnShowCaseLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnReprocessJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 1021, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnPause, bnRefresh, bnShowProgress});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnShowProgress});
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnClusterMetrics, bnExit, bnOpenLogDir, bnOptions, bnPause, bnRefresh});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1453,48 +1512,47 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                         .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(82, 82, 82)
-                        .addComponent(bnPrioritizeCase)
+                        .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnPrioritizeJob)))
+                        .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbRunning)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(34, 34, 34)
-                        .addComponent(bnShowProgress)
+                        .addComponent(bnShowProgress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnCancelJob)
+                        .addComponent(bnCancelJob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnCancelModule))
+                        .addComponent(bnCancelModule, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(68, 68, 68)
-                        .addComponent(bnReprocessJob)
+                        .addComponent(bnReprocessJob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnDeleteCase)
+                        .addComponent(bnDeleteCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnShowCaseLog))
+                        .addComponent(bnShowCaseLog, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lbCompleted)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(bnExit)
-                                .addComponent(bnOpenLogDir))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(bnPause)
-                                .addComponent(bnRefresh)
-                                .addComponent(bnOptions)))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(bnPause, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(bnRefresh, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(bnOptions, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(bnOpenLogDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(bnClusterMetrics, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(bnExit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnRefresh, bnShowProgress});
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnClusterMetrics, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnPrioritizeCase, bnPrioritizeJob, bnRefresh, bnShowProgress});
 
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1790,9 +1848,18 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_bnReprocessJobActionPerformed
 
+    private void bnClusterMetricsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnClusterMetricsActionPerformed
+        try {
+            new AutoIngestMetricsDialog(this.getTopLevelAncestor());
+        } catch (AutoIngestMetricsDialog.AutoIngestMetricsDialogException ex) {
+            MessageNotifyUtil.Message.error(ex.getMessage());
+        }
+    }//GEN-LAST:event_bnClusterMetricsActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancelJob;
     private javax.swing.JButton bnCancelModule;
+    private javax.swing.JButton bnClusterMetrics;
     private javax.swing.JButton bnDeleteCase;
     private javax.swing.JButton bnExit;
     private javax.swing.JButton bnOpenLogDir;

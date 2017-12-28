@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -250,7 +251,7 @@ public class Case {
          * PropertyChangeEvent is the old case name (type: String), the new
          * value is the new case name (type: String).
          *
-         * @Deprecated CASE_DETAILS event should be used instead
+         * @deprecated CASE_DETAILS event should be used instead
          */
         @Deprecated
         NAME,
@@ -259,7 +260,7 @@ public class Case {
          * PropertyChangeEvent is the old case number (type: String), the new
          * value is the new case number (type: String).
          *
-         * @Deprecated CASE_DETAILS event should be used instead
+         * @deprecated CASE_DETAILS event should be used instead
          */
         @Deprecated
         NUMBER,
@@ -268,7 +269,7 @@ public class Case {
          * value of the PropertyChangeEvent is the old examiner (type: String),
          * the new value is the new examiner (type: String).
          *
-         * @Deprecated CASE_DETAILS event should be used instead
+         * @deprecated CASE_DETAILS event should be used instead
          */
         @Deprecated
         EXAMINER,
@@ -362,7 +363,14 @@ public class Case {
          * case number, the examiner name, examiner phone, examiner email, and
          * the case notes.
          */
-        CASE_DETAILS;
+        CASE_DETAILS,
+        /**
+         * A tag definition has changed (e.g., description, known status). The
+         * old value of the PropertyChangeEvent is the display name of the tag
+         * definition that has changed.
+         */
+        TAG_DEFINITION_CHANGED;
+
     };
 
     /**
@@ -494,7 +502,7 @@ public class Case {
      *                                      case.
      * @throws CaseActionCancelledException If creating the case is cancelled.
      *
-     * @Deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
+     * @deprecated use createAsCurrentCase(CaseType caseType, String caseDir,
      * CaseDetails caseDetails) instead
      */
     @Deprecated
@@ -990,6 +998,17 @@ public class Case {
         }
     }
 
+    private static String getNameForTitle(){
+        //Method should become unnecessary once technical debt story 3334 is done.
+        if (UserPreferences.getAppName().equals(Version.getName())){
+            //Available version number is version number for this application
+            return String.format("%s %s", UserPreferences.getAppName(), Version.getVersion());
+        }
+        else {
+            return UserPreferences.getAppName();
+        }
+    }
+    
     /**
      * Update the GUI to to reflect the current case.
      */
@@ -1043,6 +1062,7 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
@@ -1065,7 +1085,7 @@ public class Case {
                  *
                  * [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
             });
         }
     }
@@ -1085,24 +1105,13 @@ public class Case {
                 /*
                  * Disable the case-specific menu items.
                  */
-                CallableSystemAction
-                        .get(AddImageAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseCloseAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CasePropertiesAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseDeleteAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenTimelineAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenOutputFolderAction.class
-                        ).setEnabled(false);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
@@ -1114,7 +1123,7 @@ public class Case {
                  * Reset the main window title to be just the application name,
                  * instead of [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(UserPreferences.getAppName());
+                mainFrame.setTitle(getNameForTitle());
             });
         }
     }
@@ -1473,6 +1482,18 @@ public class Case {
     }
 
     /**
+     * Notifies case event subscribers that a tag definition has changed.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param changedTagName the name of the tag definition which was changed
+     */
+    public void notifyTagDefinitionChanged(String changedTagName) {
+        //leaving new value of changedTagName as null, because we do not currently support changing the display name of a tag. 
+        eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
+    }
+
+    /**
      * Notifies case event subscribers that an artifact tag has been added.
      *
      * This should not be called from the event dispatch thread (EDT)
@@ -1582,7 +1603,7 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.CASE_DETAILS.toString(), oldCaseDetails, caseDetails));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + UserPreferences.getAppName());
+                mainFrame.setTitle(caseDetails.getCaseDisplayName() + " - " + getNameForTitle());
                 try {
                     RecentCases.getInstance().updateRecentCase(oldCaseDetails.getCaseDisplayName(), metadata.getFilePath().toString(), caseDetails.getCaseDisplayName(), metadata.getFilePath().toString());
                 } catch (Exception ex) {
@@ -1600,11 +1621,8 @@ public class Case {
      *                        will be created if it doesn't already exist; if it
      *                        exists, it is ASSUMED it was created by calling
      *                        createCaseDirectory.
-     * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
+     * @param caseDetails     Contains details of the case, such as examiner, display name, etc
+     *                        
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
         metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);

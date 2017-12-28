@@ -26,8 +26,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -44,7 +42,6 @@ public final class SqliteEamDbSettings {
     private final String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
-    private final String DEFAULT_BAD_TAGS = "Evidence"; // NON-NLS
     private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
     private final String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
     private final String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
@@ -59,7 +56,6 @@ public final class SqliteEamDbSettings {
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
-    private List<String> badTags;
 
     public SqliteEamDbSettings() {
         loadSettings();
@@ -89,16 +85,6 @@ public final class SqliteEamDbSettings {
         } catch (NumberFormatException ex) {
             this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
         }
-
-        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-        if (badTagsStr == null) {
-            badTagsStr = DEFAULT_BAD_TAGS;
-        }
-        if (badTagsStr.isEmpty()) {
-            badTags = new ArrayList<>();
-        } else {
-            badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
-        }
     }
 
     public void saveSettings() {
@@ -107,7 +93,6 @@ public final class SqliteEamDbSettings {
         ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbName", getDbName()); // NON-NLS
         ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
         ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
-        ModuleSettings.setConfigSetting("CentralRepository", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
     
     /**
@@ -311,6 +296,9 @@ public final class SqliteEamDbSettings {
         createReferenceSetsTable.append("org_id integer NOT NULL,");
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
+        createReferenceSetsTable.append("known_status integer NOT NULL,");
+        createReferenceSetsTable.append("read_only boolean NOT NULL,");
+        createReferenceSetsTable.append("type integer NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
         createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createReferenceSetsTable.append("CONSTRAINT hash_set_unique UNIQUE (set_name, version)");
@@ -445,7 +433,8 @@ public final class SqliteEamDbSettings {
         }
 
         boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.insertSchemaVersion(conn);
+                && EamDbUtil.updateSchemaVersion(conn)
+                && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
         return result;
     }
@@ -500,19 +489,7 @@ public final class SqliteEamDbSettings {
         }
     }
 
-    /**
-     * @return the badTags
-     */
-    public List<String> getBadTags() {
-        return badTags;
-    }
 
-    /**
-     * @param badTags the badTags to set
-     */
-    public void setBadTags(List<String> badTags) {
-        this.badTags = badTags;
-    }
 
     /**
      * @return the dbDirectory

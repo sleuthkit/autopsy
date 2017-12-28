@@ -34,11 +34,12 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.openide.util.NbBundle;
+import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-
+import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -55,7 +56,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
     private int bulkArtifactsCount;
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
-    private final List<String> badTags;
 
     /**
      * Connect to the DB and initialize it.
@@ -63,7 +63,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws UnknownHostException, EamDbException
      */
     protected AbstractSqlEamDb() throws EamDbException {
-        badTags = new ArrayList<>();
         bulkArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
 
@@ -79,34 +78,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
     protected abstract Connection connect() throws EamDbException;
 
     /**
-     * Get the list of tags recognized as "Bad"
-     *
-     * @return The list of bad tags
-     */
-    @Override
-    public List<String> getBadTags() {
-        synchronized (badTags) {
-            return new ArrayList<>(badTags);
-        }
-    }
-
-    /**
-     * Set the tags recognized as "Bad"
-     *
-     * @param tags The tags to consider bad
-     */
-    @Override
-    public void setBadTags(List<String> tags) {
-        synchronized (badTags) {
-            badTags.clear();
-            badTags.addAll(tags);
-        }
-    }
-
-    /**
      * Add a new name/value pair in the db_info table.
      *
-     * @param name  Key to set
+     * @param name Key to set
      * @param value Value to set
      *
      * @throws EamDbException
@@ -169,7 +143,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Update the value for a name in the name/value db_info table.
      *
-     * @param name  Name to find
+     * @param name Name to find
      * @param value Value to assign to name.
      *
      * @throws EamDbException
@@ -199,9 +173,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Expects the Organization for this case to already exist in the database.
      *
      * @param eamCase The case to add
+     * @returns New Case class with populated database ID
      */
     @Override
-    public void newCase(CorrelationCase eamCase) throws EamDbException {
+    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -254,6 +229,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
+
+        // get a new version with the updated ID
+        return getCaseByUUID(eamCase.getCaseUUID());
     }
 
     /**
@@ -278,8 +256,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 autopsyCase.getExaminerEmail(),
                 autopsyCase.getExaminerPhone(),
                 autopsyCase.getCaseNotes());
-        newCase(curCeCase);
-        return curCeCase;
+        return newCase(curCeCase);
+    }
+
+    @Override
+    public CorrelationCase getCase(Case autopsyCase) throws EamDbException {
+        return getCaseByUUID(autopsyCase.getName());
     }
 
     /**
@@ -454,14 +436,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
-     * @param correlationCase    the current CorrelationCase used for ensuring
-     *                           uniqueness of DataSource
+     * @param correlationCase the current CorrelationCase used for ensuring
+     * uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -479,7 +461,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting case details.", ex); // NON-NLS
+            throw new EamDbException("Error getting data source.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -628,7 +610,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
      *
-     * @param aType    EamArtifact.Type to search for
+     * @param aType EamArtifact.Type to search for
      * @param filePath File path to search for
      *
      * @return List of 0 or more EamArtifactInstances
@@ -684,7 +666,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param value The correlation value
      *
      * @return Number of artifact instances having ArtifactType and
-     *         ArtifactValue.
+     * ArtifactValue.
      */
     @Override
     public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
@@ -799,11 +781,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * associated with the caseDisplayName and dataSource of the given
      * eamArtifact instance.
      *
-     * @param caseUUID     Case ID to search for
+     * @param caseUUID Case ID to search for
      * @param dataSourceID Data source ID to search for
      *
      * @return Number of artifact instances having caseDisplayName and
-     *         dataSource
+     * dataSource
      */
     @Override
     public Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException {
@@ -1019,12 +1001,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Sets an eamArtifact instance to the given knownStatus. If eamArtifact
+     * Sets an eamArtifact instance to the given knownStatus. 
+     * knownStatus should be BAD if the file has been tagged with a notable tag and
+     * UNKNOWN otherwise. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist it is added with the
      * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus The status to change the artifact to
+     * @param knownStatus The status to change the artifact to. Should never be KNOWN
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
@@ -1086,12 +1070,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 // We could improve effiency by keeping a list of all datasources and cases
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
-                CorrelationCase correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
-                if (null == correlationCase) {
-                    newCase(eamInstance.getCorrelationCase());
-                    correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
+                CorrelationCase correlationCaseWithId = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
+                if (null == correlationCaseWithId) {
+                    correlationCaseWithId = newCase(eamInstance.getCorrelationCase());
                 }
-                if (null == getDataSourceDetails(correlationCase, eamInstance.getCorrelationDataSource().getDeviceID())) {
+
+                if (null == getDataSource(correlationCaseWithId, eamInstance.getCorrelationDataSource().getDeviceID())) {
                     newDataSource(eamInstance.getCorrelationDataSource());
                 }
                 eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
@@ -1207,7 +1191,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
-     *         bad
+     * bad
      *
      * @throws EamDbException
      */
@@ -1252,6 +1236,143 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Remove a reference set and all entries contained in it.
+     *
+     * @param referenceSetID
+     * @throws EamDbException
+     */
+    @Override
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException {
+        deleteReferenceSetEntries(referenceSetID);
+        deleteReferenceSetEntry(referenceSetID);
+    }
+
+    /**
+     * Remove the entry for this set from the reference_sets table
+     *
+     * @param referenceSetID
+     * @throws EamDbException
+     */
+    private void deleteReferenceSetEntry(int referenceSetID) throws EamDbException {
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "DELETE FROM reference_sets WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, referenceSetID);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting reference set " + referenceSetID, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
+     * Remove all entries for this reference set from the reference tables
+     * (Currently only removes entries from the reference_file table)
+     *
+     * @param referenceSetID
+     * @throws EamDbException
+     */
+    private void deleteReferenceSetEntries(int referenceSetID) throws EamDbException {
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "DELETE FROM %s WHERE reference_set_id=?";
+
+        // When other reference types are added, this will need to loop over all the tables
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setInt(1, referenceSetID);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error deleting files from reference set " + referenceSetID, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
+     * Check whether a reference set with the given parameters exists in the
+     * central repository. Used to check whether reference sets saved in the
+     * settings are still present.
+     *
+     * @param referenceSetID
+     * @param setName
+     * @param version
+     * @return true if a matching entry exists in the central repository
+     * @throws EamDbException
+     */
+    @Override
+    public boolean referenceSetIsValid(int referenceSetID, String setName, String version) throws EamDbException {
+        EamGlobalSet refSet = this.getReferenceSetByID(referenceSetID);
+        if (refSet == null) {
+            return false;
+        }
+
+        return (refSet.getSetName().equals(setName) && refSet.getVersion().equals(version));
+    }
+
+    /**
+     * Check if the given file hash is in this reference set. Only searches the
+     * reference_files table.
+     *
+     * @param hash
+     * @param referenceSetID
+     * @return true if the hash is found in the reference set
+     * @throws EamDbException
+     */
+    @Override
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException {
+        return isValueInReferenceSet(hash, referenceSetID, CorrelationAttribute.FILES_TYPE_ID);
+    }
+
+    /**
+     * Check if the given value is in a specific reference set
+     *
+     * @param value
+     * @param referenceSetID
+     * @param correlationTypeID
+     * @return true if the value is found in the reference set
+     */
+    @Override
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
+
+        Connection conn = connect();
+
+        Long matchingInstances = 0L;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql = "SELECT count(*) FROM %s WHERE value=? AND reference_set_id=?";
+
+        String fileTableName = EamDbUtil.correlationTypeToReferenceTableName(getCorrelationTypeById(correlationTypeID));
+
+        try {
+            preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
+            preparedStatement.setString(1, value);
+            preparedStatement.setInt(2, referenceSetID);
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            matchingInstances = resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error determining if value (" + value + ") is in reference set " + referenceSetID, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return 0 < matchingInstances;
+    }
+
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -1260,7 +1381,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {
 
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttribute.FILES_TYPE_ID) {
@@ -1398,10 +1519,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Get the organization associated with the given reference set.
+     *
+     * @param referenceSetID ID of the reference set
+     * @return The organization object
+     * @throws EamDbException
+     */
+    @Override
+    public EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException {
+
+        EamGlobalSet globalSet = getReferenceSetByID(referenceSetID);
+        return (getOrganizationByID(globalSet.getOrgID()));
+    }
+
+    /**
      * Update an existing organization.
      *
      * @param updatedOrganization the values the Organization with the same ID
-     *                            will be updated to in the database.
+     * will be updated to in the database.
      *
      * @throws EamDbException
      */
@@ -1427,8 +1562,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     @Messages({"AbstractSqlEamDb.deleteOrganization.inUseException.message=Can not delete organization "
-            + "which is currently in use by a case or reference set in the central repository.",
-             "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
+        + "which is currently in use by a case or reference set in the central repository.",
+        "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
     @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
         Connection conn = connect();
@@ -1469,13 +1604,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, import_date) VALUES (?, ?, ?, ?)";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, type, import_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
@@ -1483,7 +1618,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement1.setInt(1, eamGlobalSet.getOrgID());
             preparedStatement1.setString(2, eamGlobalSet.getSetName());
             preparedStatement1.setString(3, eamGlobalSet.getVersion());
-            preparedStatement1.setString(4, eamGlobalSet.getImportDate().toString());
+            preparedStatement1.setInt(4, eamGlobalSet.getFileKnownStatus().getFileKnownValue());
+            preparedStatement1.setBoolean(5, eamGlobalSet.isReadOnly());
+            preparedStatement1.setInt(6, eamGlobalSet.getType().getId());
+            preparedStatement1.setString(7, eamGlobalSet.getImportDate().toString());
 
             preparedStatement1.executeUpdate();
 
@@ -1541,11 +1679,45 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Get all reference sets
+     *
+     * @param correlationType Type of sets to return
+     * 
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
+        List<EamGlobalSet> results = new ArrayList<>();
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement1 = null;
+        ResultSet resultSet = null;
+        String sql1 = "SELECT * FROM reference_sets WHERE type=" + correlationType.getId();
+
+        try {
+            preparedStatement1 = conn.prepareStatement(sql1);
+            resultSet = preparedStatement1.executeQuery();
+            while (resultSet.next()) {
+                results.add(getEamGlobalSetFromResultSet(resultSet));
+            }
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting reference sets.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+        return results;
+    }
+
+    /**
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
-     * @param correlationType       Correlation Type that this Reference
-     *                              Instance is
+     * @param correlationType Correlation Type that this Reference Instance is
      *
      * @throws EamDbException
      */
@@ -1568,6 +1740,41 @@ public abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Error inserting new reference instance into reference_ table.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
+     * Check whether a reference set with the given name/version is in the
+     * central repo. Used to check for name collisions when creating reference
+     * sets.
+     *
+     * @param referenceSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException
+     */
+    @Override
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement1 = null;
+        ResultSet resultSet = null;
+        String sql1 = "SELECT * FROM reference_sets WHERE set_name=? AND version=?";
+
+        try {
+            preparedStatement1 = conn.prepareStatement(sql1);
+            preparedStatement1.setString(1, referenceSetName);
+            preparedStatement1.setString(2, version);
+            resultSet = preparedStatement1.executeQuery();
+            return (resultSet.next());
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error testing whether reference set exists (name: " + referenceSetName
+                    + " version: " + version, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1617,7 +1824,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Get all reference entries having a given correlation type and value
      *
-     * @param aType  Type to use for matching
+     * @param aType Type to use for matching
      * @param aValue Value to use for matching
      *
      * @return List of all global file instances with a type and value
@@ -1747,7 +1954,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * artifacts.
      *
      * @return List of enabled EamArtifact.Type's. If none are defined in the
-     *         database, the default list will be returned.
+     * database, the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -1782,7 +1989,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * correlate artifacts.
      *
      * @return List of supported EamArtifact.Type's. If none are defined in the
-     *         database, the default list will be returned.
+     * database, the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -1883,7 +2090,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Convert a ResultSet to a EamCase object
      *
      * @param resultSet A resultSet with a set of values to create a EamCase
-     *                  object.
+     * object.
      *
      * @return fully populated EamCase object, or null
      *
@@ -1953,7 +2160,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Convert a ResultSet to a EamArtifactInstance object
      *
      * @param resultSet A resultSet with a set of values to create a
-     *                  EamArtifactInstance object.
+     * EamArtifactInstance object.
      *
      * @return fully populated EamArtifactInstance, or null
      *
@@ -1964,12 +2171,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
-                new CorrelationCase(resultSet.getString("case_uid"), resultSet.getString("case_name")),
+                new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
-                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
-                CorrelationAttributeInstance.GlobalStatus.LOCAL
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status"))
         );
 
         return eamArtifactInstance;
@@ -1991,7 +2197,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamOrganization;
     }
 
-    private EamGlobalSet getEamGlobalSetFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamGlobalSet getEamGlobalSetFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
         if (null == resultSet) {
             return null;
         }
@@ -2001,6 +2207,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("org_id"),
                 resultSet.getString("set_name"),
                 resultSet.getString("version"),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
+                resultSet.getBoolean("read_only"),
+                EamDb.getInstance().getCorrelationTypeById(resultSet.getInt("type")),
                 LocalDate.parse(resultSet.getString("import_date"))
         );
 
@@ -2021,6 +2230,84 @@ public abstract class AbstractSqlEamDb implements EamDb {
         );
 
         return eamGlobalFileInstance;
+    }
+
+    /**
+     * Upgrade the schema of the database (if needed)
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void upgradeSchema() throws EamDbException, SQLException {
+
+        ResultSet resultSet = null;
+        Statement statement;
+        Connection conn = null;
+        try {
+
+            conn = connect();
+            conn.setAutoCommit(false);
+            statement = conn.createStatement();
+
+            int minorVersion = 0;
+            int majorVersion = 0;
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
+            if (resultSet.next()) {
+                String minorVersionStr = resultSet.getString("value");
+                try {
+                    minorVersion = Integer.parseInt(minorVersionStr);
+                } catch (NumberFormatException ex) {
+                    throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt");
+                }
+            }
+
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
+            if (resultSet.next()) {
+                String majorVersionStr = resultSet.getString("value");
+                try {
+                    majorVersion = Integer.parseInt(majorVersionStr);
+                } catch (NumberFormatException ex) {
+                    throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt");
+                }
+            }
+
+            CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
+            if (dbSchemaVersion.equals(CURRENT_DB_SCHEMA_VERSION)) {
+                LOGGER.log(Level.INFO, "Central Repository is up to date");
+                return;
+            }
+
+            // Update from 1.0 to 1.1
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
+                statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
+                statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
+                statement.execute("ALTER TABLE reference_sets ADD COLUMN type INTEGER;"); //NON-NLS
+
+                // There's an outide chance that the user has already made an organization with the default name,
+                // and the default org being missing will not impact any database operations, so continue on
+                // regardless of whether this succeeds.
+                EamDbUtil.insertDefaultOrganization(conn);
+            }
+
+            if (!updateSchemaVersion(conn)) {
+                throw new EamDbException("Error updating schema version");
+            }
+
+            conn.commit();
+            LOGGER.log(Level.INFO, "Central Repository upgraded to version " + CURRENT_DB_SCHEMA_VERSION);
+        } catch (SQLException | EamDbException ex) {
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException ex2) {
+                LOGGER.log(Level.SEVERE, "Database rollback failed", ex2);
+            }
+            throw ex;
+        } finally {
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
     }
 
 }

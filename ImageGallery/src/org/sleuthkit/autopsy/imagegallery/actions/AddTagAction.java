@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-16 Basis Technology Corp.
+ *
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,10 +36,12 @@ import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
 import org.sleuthkit.autopsy.actions.GetTagNameDialog;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
@@ -48,6 +50,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -67,7 +70,8 @@ public class AddTagAction extends Action {
         this.selectedFileIDs = selectedFileIDs;
         this.tagName = tagName;
         setGraphic(controller.getTagsManager().getGraphic(tagName));
-        setText(tagName.getDisplayName());
+        String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+        setText(tagName.getDisplayName() + notableString);
         setEventHandler(actionEvent -> addTagWithComment(""));
     }
 
@@ -78,7 +82,7 @@ public class AddTagAction extends Action {
     private void addTagWithComment(String comment) {
         addTagsToFiles(tagName, comment, selectedFileIDs);
     }
-
+    
     @NbBundle.Messages({"# {0} - fileID",
         "AddDrawableTagAction.addTagsToFiles.alert=Unable to tag file {0}."})
     private void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
@@ -108,8 +112,8 @@ public class AddTagAction extends Action {
 
                     } catch (TskCoreException tskCoreException) {
                         LOGGER.log(Level.SEVERE, "Error tagging file", tskCoreException); //NON-NLS
-                        Platform.runLater(() ->
-                                new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show()
+                        Platform.runLater(()
+                                -> new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show()
                         );
                         break;
                     }
@@ -172,8 +176,8 @@ public class AddTagAction extends Action {
              * or select a tag name and adds a tag with the resulting name.
              */
             MenuItem newTagMenuItem = new MenuItem(Bundle.AddTagAction_menuItem_newTag());
-            newTagMenuItem.setOnAction(actionEvent ->
-                    SwingUtilities.invokeLater(() -> {
+            newTagMenuItem.setOnAction(actionEvent
+                    -> SwingUtilities.invokeLater(() -> {
                         TagName tagName = GetTagNameDialog.doDialog(getIGWindow());
                         if (tagName != null) {
                             new AddTagAction(controller, tagName, selectedFileIDs).handle(actionEvent);
@@ -188,8 +192,8 @@ public class AddTagAction extends Action {
              * name.
              */
             MenuItem tagAndCommentItem = new MenuItem(Bundle.AddTagAction_menuItem_tagAndComment());
-            tagAndCommentItem.setOnAction(actionEvent ->
-                    SwingUtilities.invokeLater(() -> {
+            tagAndCommentItem.setOnAction(actionEvent
+                    -> SwingUtilities.invokeLater(() -> {
                         GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog(getIGWindow());
                         if (null != tagNameAndComment) {
                             new AddTagAction(controller, tagNameAndComment.getTagName(), selectedFileIDs).addTagWithComment(tagNameAndComment.getComment());

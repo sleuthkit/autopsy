@@ -30,6 +30,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
  * Sqlite implementation of the Central Repository database.
@@ -149,16 +150,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      *
      */
     private void setupConnectionPool() throws EamDbException {
+        
+        if (dbSettings.dbFileExists() == false) {
+            throw new EamDbException("Central repository database missing");
+        }
+        
         connectionPool = new BasicDataSource();
         connectionPool.setDriverClassName(dbSettings.getDriver());
-
-        StringBuilder connectionURL = new StringBuilder();
-        connectionURL.append(dbSettings.getJDBCBaseURI());
-        connectionURL.append(dbSettings.getDbDirectory());
-        connectionURL.append(File.separator);
-        connectionURL.append(dbSettings.getDbName());
-
-        connectionPool.setUrl(connectionURL.toString());
+        connectionPool.setUrl(dbSettings.getConnectionURL());
 
         // tweak pool configuration
         connectionPool.setInitialSize(50);
@@ -200,16 +199,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         return "";
     }
 
-    @Override
-    public List<String> getBadTags() {
-        return dbSettings.getBadTags();
-    }
-
-    @Override
-    public void setBadTags(List<String> badTags) {
-        dbSettings.setBadTags(badTags);
-    }
-    
+   
     /**
      * Add a new name/value pair in the db_info table.
      *
@@ -288,10 +278,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to add
      */
     @Override
-    public void newCase(CorrelationCase eamCase) throws EamDbException {
+    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
          try{
             acquireExclusiveLock();
-            super.newCase(eamCase);
+            return super.newCase(eamCase);
         } finally {
             releaseExclusiveLock();
         }          
@@ -368,10 +358,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getDataSourceDetails(correlationCase, dataSourceDeviceId);
+            return super.getDataSource(correlationCase, dataSourceDeviceId);
         } finally {
             releaseSharedLock();
         }               
@@ -560,11 +550,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
-     * Sets an eamArtifact instance as the given knownStatus. If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist nothing happens
+     * Sets an eamArtifact instance to the given knownStatus. 
+     * knownStatus should be BAD if the file has been tagged with a notable tag and
+     * UNKNOWN otherwise. If eamArtifact
+     * exists, it is updated. If eamArtifact does not exist it is added with the
+     * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus The known status of the artifact
+     * @param knownStatus The status to change the artifact to. Should never be KNOWN
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
@@ -636,6 +629,56 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Remove a reference set and all values contained in it.
+     * @param referenceSetID
+     * @throws EamDbException 
+     */
+    @Override
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException{
+        try{
+            acquireExclusiveLock();
+            super.deleteReferenceSet(referenceSetID);
+        } finally {
+            releaseExclusiveLock();
+        }   
+    }    
+    
+    /**
+     * Check if the given hash is in a specific reference set
+     * @param value
+     * @param referenceSetID
+     * @param correlationTypeID
+     * @return true if the hash is found in the reference set
+     */
+    @Override
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.isValueInReferenceSet(value, referenceSetID, correlationTypeID);
+        } finally {
+            releaseSharedLock();
+        }          
+    }
+    
+    /**
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
+     * @param referenceSetName
+     * @param version
+     * @return true if a matching set is found
+     * @throws EamDbException 
+     */
+    @Override
+    public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.referenceSetExists(referenceSetName, version);
+        } finally {
+            releaseSharedLock();
+        }  
+    }
+    
+    /**
      * Is the artifact known as bad according to the reference entries?
      *
      * @param aType EamArtifact.Type to search for
@@ -644,10 +687,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
         try{
             acquireSharedLock();
-            return super.isArtifactlKnownBadByReference(aType, value);
+            return super.isArtifactKnownBadByReference(aType, value);
         } finally {
             releaseSharedLock();
         }      
@@ -737,10 +780,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         try{
             acquireExclusiveLock();
-            return super.newReferencelSet(eamGlobalSet);
+            return super.newReferenceSet(eamGlobalSet);
         } finally {
             releaseExclusiveLock();
         }     
@@ -766,6 +809,25 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     * Get all reference sets
+     *
+     * @param correlationType Type of sets to return
+     * 
+     * @return List of all reference sets in the central repository
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.getAllReferenceSets(correlationType);
+        } finally {
+            releaseSharedLock();
+        } 
+    }
+    
+    /**
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
@@ -782,7 +844,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseExclusiveLock();
         }  
-    }    
+    }  
     
     /**
      * Insert the bulk collection of Reference Type Instances
@@ -930,6 +992,34 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }  
     }   
+    
+    /**
+     * Upgrade the schema of the database (if needed)
+     * @throws EamDbException 
+     */
+    @Override
+    public void upgradeSchema() throws EamDbException, SQLException {
+        try{
+            acquireExclusiveLock();
+            super.upgradeSchema();
+        } finally {
+            releaseExclusiveLock();
+        } 
+    }
+    
+    /**
+     * Gets an exclusive lock (if applicable).
+     * Will return the lock if successful, null if unsuccessful because locking
+     * isn't supported, and throw an exception if we should have been able to get the
+     * lock but failed (meaning the database is in use).
+     * @return the lock, or null if locking is not supported
+     * @throws EamDbException if the coordination service is running but we fail to get the lock
+     */
+    @Override
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException{
+        // Multiple users are not supported for SQLite
+        return null;
+    }
     
     /**
      * Acquire the lock that provides exclusive access to the case database. 

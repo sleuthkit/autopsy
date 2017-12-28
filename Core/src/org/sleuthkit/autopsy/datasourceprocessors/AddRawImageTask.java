@@ -126,8 +126,6 @@ final class AddRawImageTask implements Runnable {
         progressMonitor.setProgressText(Bundle.AddRawImageTask_progress_add_text() + imageFilePath);
         List<String> imageFilePaths = new ArrayList<>();
         SleuthkitCase caseDatabase = Case.getCurrentCase().getSleuthkitCase();
-        caseDatabase.acquireExclusiveLock();
-
         File imageFile = Paths.get(imageFilePath).toFile();
         if (!imageFile.exists()) {
             String errorMessage = Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddRawImageTask_for_device() 
@@ -136,11 +134,10 @@ final class AddRawImageTask implements Runnable {
             logger.log(Level.SEVERE, errorMessage);
             criticalErrorOccurred = true;
             return;
-        }
-
-        imageFilePaths.add(imageFilePath);
-        
-        try {
+        }        
+        imageFilePaths.add(imageFilePath); 
+        try { 
+            caseDatabase.acquireSingleUserCaseWriteLock();
             /*
              * Get Image that will be added to case
              */
@@ -181,7 +178,7 @@ final class AddRawImageTask implements Runnable {
             logger.log(Level.SEVERE, errorMessage, ex);
             criticalErrorOccurred = true;
         } finally {
-            caseDatabase.releaseExclusiveLock();
+            caseDatabase.releaseSingleUserCaseReadLock();
         }
 
     }    
