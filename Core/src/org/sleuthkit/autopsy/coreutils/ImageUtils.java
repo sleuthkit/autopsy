@@ -263,7 +263,7 @@ public class ImageUtils {
             return true;
         } else {
             try {
-                String mimeType = getFileTypeDetector().detect(file);
+                String mimeType = getFileTypeDetector().detect(file, false);
                 if (StringUtils.isNotBlank(mimeTypePrefix) && mimeType.startsWith(mimeTypePrefix)) {
                     return true;
                 }

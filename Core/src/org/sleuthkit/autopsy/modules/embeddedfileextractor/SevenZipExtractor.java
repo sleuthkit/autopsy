@@ -142,7 +142,7 @@ class SevenZipExtractor {
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
         try {
-            String abstractFileMimeType = fileTypeDetector.getFileType(abstractFile);
+            String abstractFileMimeType = fileTypeDetector.getFileType(abstractFile, false);
             for (SupportedArchiveExtractionFormats s : SupportedArchiveExtractionFormats.values()) {
                 if (s.toString().equals(abstractFileMimeType)) {
                     return true;

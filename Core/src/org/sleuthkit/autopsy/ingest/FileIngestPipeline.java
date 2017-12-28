@@ -141,8 +141,9 @@ final class FileIngestPipeline {
                 }
             }
             
+            // Save any properties that have not already been saved to the database
             try{
-                Case.getCurrentCase().getSleuthkitCase().setKnownAndFileTypeAndMD5(file);
+                file.save(Case.getCurrentCase().getSleuthkitCase());
             } catch (TskCoreException ex){
                 Logger.getLogger(FileIngestPipeline.class.getName()).log(Level.SEVERE, "Failed to save data", ex); //NON-NLS
             }

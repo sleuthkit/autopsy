@@ -173,16 +173,21 @@ public class FileTypeDetector {
     private boolean isDetectableByTika(String mimeType) {
         return FileTypeDetector.getTikaDetectedTypes().contains(removeOptionalParameter(mimeType));
     }
-
+    
     /**
      * Gets the MIME type of a file, detecting it if it is not already known. If
-     * detection is necessary, the result is added to the case database.
+     * detection is necessary, the result is saved to the AbstractFile object
+     * and optionally added to the case database.
      *
+     * In general, saveToDatabase should be set to false - the ingest process
+     * handles the database save.
+     * 
      * IMPORTANT: This method should only be called by ingest modules. All other
      * clients should call AbstractFile.getMIMEType, and may call
      * FileTypeDetector.detect, if AbstractFile.getMIMEType returns null.
      *
      * @param file The file.
+     * @param saveToDatabase  True if the result should be saved to the database
      *
      * @return A MIME type name. If file type could not be detected or results
      *         were uncertain, octet-stream is returned.
@@ -190,9 +195,8 @@ public class FileTypeDetector {
      * @throws TskCoreException if detection is required and there is a problem
      *                          writing the result to the case database.
      */
-    public String getFileType(AbstractFile file) throws TskCoreException {
-        return file.getMIMEType();
-        //return detect(file, true);
+    public String getFileType(AbstractFile file, boolean saveToDatabase) throws TskCoreException {
+        return detect(file, saveToDatabase);
     }
 
     /**
@@ -207,13 +211,16 @@ public class FileTypeDetector {
      * @throws TskCoreException If there is a problem writing the result to the
      *                          case database.
      */
-    public String detect(AbstractFile file) throws TskCoreException {
+    private String detect(AbstractFile file) throws TskCoreException {
         return detect(file, false);
     }
 
     /**
      * Detects the MIME type of a file. The result is saved to the case database
      * only if the add to case database flag is set.
+     * 
+     * Ingest modules should not set addToCaseDb to true - the ingest process
+     * handles the database save.
      *
      * @param file        The file to test.
      * @param addToCaseDb Whether the MIME type should be added to the case
@@ -321,9 +328,10 @@ public class FileTypeDetector {
             /*
              * Add the MIME type to the files table in the case database.
              */
-            //Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
+            Case.getCurrentCase().getSleuthkitCase().setFileMIMEType(file, mimeType);
         }
 
+        file.setMIMEType(mimeType);
         return mimeType;
     }
 
@@ -475,7 +483,30 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
-        return getFileType(file);
+        return getFileType(file, true);
+    }
+    
+    /**
+     * Gets the MIME type of a file, detecting it if it is not already known. If
+     * detection is necessary, the result is added to the case database.
+     *
+     * IMPORTANT: This method should only be called by ingest modules. All other
+     * clients should call AbstractFile.getMIMEType, and may call
+     * FileTypeDetector.detect, if AbstractFile.getMIMEType returns null.
+     *
+     * @param file The file.
+     *
+     * @return A MIME type name. If file type could not be detected or results
+     *         were uncertain, octet-stream is returned.
+     *
+     * @throws TskCoreException if detection is required and there is a problem
+     *                          writing the result to the case database.
+     * 
+     * @deprecated
+     */
+    @Deprecated
+    public String getFileType(AbstractFile file) throws TskCoreException {
+        return detect(file, true);
     }
 
 }

@@ -220,7 +220,7 @@ public enum FileTypeUtils {
      *         mimetype could not be detected.
      */
     static boolean hasDrawableMIMEType(AbstractFile file) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
-        String mimeType = getFileTypeDetector().detect(file).toLowerCase();
+        String mimeType = getFileTypeDetector().detect(file, true).toLowerCase();
         return isDrawableMimeType(mimeType) || (mimeType.equals("audio/x-aiff") && "tiff".equalsIgnoreCase(file.getNameExtension()));
     }
 
@@ -235,7 +235,7 @@ public enum FileTypeUtils {
      */
     public static boolean hasVideoMIMEType(AbstractFile file) {
         try {
-            String mimeType = getFileTypeDetector().detect(file).toLowerCase();
+            String mimeType = getFileTypeDetector().detect(file, true).toLowerCase();
             return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
         } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
