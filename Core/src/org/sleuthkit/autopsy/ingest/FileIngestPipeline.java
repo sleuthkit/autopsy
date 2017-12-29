@@ -141,17 +141,16 @@ final class FileIngestPipeline {
                 }
             }
             
-            // Save any properties that have not already been saved to the database
-            try{
-                file.save(Case.getCurrentCase().getSleuthkitCase());
-            } catch (TskCoreException ex){
-                Logger.getLogger(FileIngestPipeline.class.getName()).log(Level.SEVERE, "Failed to save data", ex); //NON-NLS
-            }
-            
-            file.close();
             if (!this.job.isCancelled()) {
+                // Save any properties that have not already been saved to the database
+                try{
+                    file.save(Case.getCurrentCase().getSleuthkitCase());
+                } catch (TskCoreException ex){
+                    Logger.getLogger(FileIngestPipeline.class.getName()).log(Level.SEVERE, "Failed to save data for file " + file.getId(), ex); //NON-NLS
+                }
                 IngestManager.getInstance().fireFileIngestDone(file);
             }
+            file.close();
         }
         FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
         return errors;

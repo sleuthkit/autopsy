@@ -170,7 +170,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
             return false;
         }
-        String currActualSigType = detector.getFileType(abstractFile, false);
+        String currActualSigType = detector.detectFileType(abstractFile);
         if (currActualSigType == null) {
             return false;
         }

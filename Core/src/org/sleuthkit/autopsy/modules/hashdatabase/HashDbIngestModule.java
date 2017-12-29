@@ -177,6 +177,7 @@ public class HashDbIngestModule implements FileIngestModule {
             try {
                 long calcstart = System.currentTimeMillis();
                 md5Hash = HashUtility.calculateMd5(file, false);
+                file.setMd5Hash(md5Hash);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);
 

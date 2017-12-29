@@ -178,16 +178,12 @@ public class FileTypeDetector {
      * Gets the MIME type of a file, detecting it if it is not already known. If
      * detection is necessary, the result is saved to the AbstractFile object
      * and optionally added to the case database.
-     *
-     * In general, saveToDatabase should be set to false - the ingest process
-     * handles the database save.
      * 
      * IMPORTANT: This method should only be called by ingest modules. All other
      * clients should call AbstractFile.getMIMEType, and may call
      * FileTypeDetector.detect, if AbstractFile.getMIMEType returns null.
      *
      * @param file The file.
-     * @param saveToDatabase  True if the result should be saved to the database
      *
      * @return A MIME type name. If file type could not be detected or results
      *         were uncertain, octet-stream is returned.
@@ -195,8 +191,8 @@ public class FileTypeDetector {
      * @throws TskCoreException if detection is required and there is a problem
      *                          writing the result to the case database.
      */
-    public String getFileType(AbstractFile file, boolean saveToDatabase) throws TskCoreException {
-        return detect(file, saveToDatabase);
+    public String detectFileType(AbstractFile file) throws TskCoreException {
+        return detect(file, false);
     }
 
     /**
@@ -483,7 +479,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
-        return getFileType(file, true);
+        return detect(file, true);
     }
     
     /**
