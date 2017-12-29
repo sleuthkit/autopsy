@@ -177,7 +177,6 @@ public class FileTypeDetector {
     /**
      * Gets the MIME type of a file, detecting it if it is not already known. If
      * detection is necessary, the result is saved to the AbstractFile object
-     * and optionally added to the case database.
      * 
      * IMPORTANT: This method should only be called by ingest modules. All other
      * clients should call AbstractFile.getMIMEType, and may call
