@@ -1329,7 +1329,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 BlackboardArtifact art = skCase.getBlackboardArtifact(artifactID);
                 return new Node[]{new AccountArtifactNode(art)};
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
+                LOGGER.log(Level.SEVERE, "Error creating BlackboardArtifactNode for artifact with ID " + artifactID, ex);   //NON-NLS
                 return new Node[0];
             }
         }
