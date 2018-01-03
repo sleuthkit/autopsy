@@ -49,6 +49,7 @@ import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.mitre.stix.common_1.IndicatorBaseType;
 import org.mitre.stix.indicator_2.Indicator;
 import org.mitre.stix.stix_1.STIXPackage;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -66,6 +67,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class STIXReportModule implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(STIXReportModule.class.getName());
+    private static final String STIX_REPORT = "STIX Report";
     private STIXReportModuleConfigPanel configPanel;
     private static STIXReportModule instance = null;
     private String reportPath;
@@ -101,6 +103,13 @@ public class STIXReportModule implements GeneralReportModule {
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.readSTIX"));
+        String stixReportDir = baseReportDir + " " + STIX_REPORT;
+        try {
+            FileUtil.createFolder(new File(stixReportDir));
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to make STIX report folder."); //NON-NLS
+        }
+        
         reportPath = baseReportDir + getRelativeFilePath();
         File reportFile = new File(reportPath);
         // Check if the user wants to display all output or just hits
@@ -119,7 +128,7 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
-            new File(baseReportDir).delete();
+            new File(stixReportDir).delete();
             return;
         }
         if (stixFileName.isEmpty()) {
@@ -129,7 +138,7 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.noFildDirProvided"));
-            new File(baseReportDir).delete();
+            new File(stixReportDir).delete();
             return;
         }
         File stixFile = new File(stixFileName);
@@ -142,7 +151,7 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.couldNotOpenFileDir", stixFileName));
-            new File(baseReportDir).delete();
+            new File(stixReportDir).delete();
             return;
         }
 
@@ -649,7 +658,7 @@ public class STIXReportModule implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "stix.txt"; //NON-NLS
+        return " " + STIX_REPORT + File.separator + "stix.txt"; //NON-NLS
     }
 
     @Override

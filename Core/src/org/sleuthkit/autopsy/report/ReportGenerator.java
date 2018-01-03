@@ -93,17 +93,9 @@ class ReportGenerator {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " " + dateNoTime + File.separator;
+        this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " " + dateNoTime + " ";
 
         this.errorList = new ArrayList<>();
-
-        // Create the root reports directory.
-        try {
-            FileUtil.createFolder(new File(this.reportPath));
-        } catch (IOException ex) {
-            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
-            logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
-        }
     }
 
     /**

@@ -73,7 +73,7 @@ class ReportHTML implements TableReportModule {
     private static ReportHTML instance;
     private static final int MAX_THUMBS_PER_PAGE = 1000;
     private static final String HTML_REPORT = "HTML Report";
-    private static final String HTML_SUBDIR = "reports";
+    private static final String HTML_SUBDIR = "content";
     private Case currentCase;
     private SleuthkitCase skCase;
     static Integer THUMBNAIL_COLUMNS = 5;
@@ -161,7 +161,7 @@ class ReportHTML implements TableReportModule {
         if (null != artifactType) {
             // set the icon file name
             iconFileName = dataTypeToFileName(artifactType.getDisplayName()) + ".png"; //NON-NLS
-            iconFilePath = subPath + iconFileName;
+            iconFilePath = subPath + File.separator + iconFileName;
 
             // determine the source image to use
             switch (artifactType) {
@@ -272,7 +272,7 @@ class ReportHTML implements TableReportModule {
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
                     iconFileName = "star.png"; //NON-NLS
-                    iconFilePath = subPath + iconFileName;
+                    iconFilePath = subPath + File.separator + iconFileName;
                     break;
             }
         } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
@@ -285,11 +285,11 @@ class ReportHTML implements TableReportModule {
              */
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
             iconFileName = "accounts.png"; //NON-NLS
-            iconFilePath = subPath + iconFileName;
+            iconFilePath = subPath + File.separator + iconFileName;
         } else {  // no defined artifact found for this dataType
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
-            iconFilePath = subPath + iconFileName;
+            iconFilePath = subPath + File.separator + iconFileName;
         }
 
         try {
@@ -329,7 +329,7 @@ class ReportHTML implements TableReportModule {
         // Refresh the HTML report
         refresh();
         // Setup the path for the HTML report
-        this.path = baseReportDir + HTML_REPORT + File.separator; //NON-NLS
+        this.path = baseReportDir + " " + HTML_REPORT + File.separator; //NON-NLS
         this.subPath = this.path + HTML_SUBDIR + File.separator;
         this.thumbsPath = this.subPath + THUMBS_REL_PATH; //NON-NLS
         try {
@@ -801,7 +801,7 @@ class ReportHTML implements TableReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return HTML_REPORT + File.separator + "report.html"; //NON-NLS
+        return " " + HTML_REPORT + File.separator + "report.html"; //NON-NLS
     }
 
     @Override

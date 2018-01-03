@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 import org.openide.util.NbBundle;
@@ -45,6 +47,7 @@ class FileReportText implements FileReportModule {
     private String reportPath;
     private Writer out;
     private static final String FILE_NAME = "file-report.txt"; //NON-NLS
+    private static final String FILE_REPORT = "Text Report";
 
     private static FileReportText instance;
 
@@ -58,7 +61,14 @@ class FileReportText implements FileReportModule {
 
     @Override
     public void startReport(String baseReportDir) {
-        this.reportPath = baseReportDir + FILE_NAME;
+        String fileReportDir = baseReportDir + " " + FILE_REPORT;
+        try {
+            FileUtil.createFolder(new File(fileReportDir));
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to make File report folder."); //NON-NLS
+        }
+
+        this.reportPath = baseReportDir + getRelativeFilePath();
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
         } catch (IOException ex) {
@@ -138,6 +148,6 @@ class FileReportText implements FileReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return FILE_NAME;
+        return " " + FILE_REPORT + File.separator + FILE_NAME;
     }
 }

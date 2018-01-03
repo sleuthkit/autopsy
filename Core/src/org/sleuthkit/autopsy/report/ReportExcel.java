@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -33,6 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ReportExcel implements TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
+    private static final String EXCEL_REPORT = "Excel Report";
     private static ReportExcel instance;
 
     private Workbook wb;
@@ -65,8 +68,13 @@ class ReportExcel implements TableReportModule {
     @Override
     public void startReport(String baseReportDir) {
         // Set the path and save it for when the report is written to disk.
-        this.reportPath = baseReportDir + getRelativeFilePath();
-
+        try {
+            FileUtil.createFolder(new File(baseReportDir + " " + EXCEL_REPORT));
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to make Excel report folder."); //NON-NLS
+        }
+       this.reportPath = baseReportDir + getRelativeFilePath();
+ 
         // Make a workbook.
         wb = new XSSFWorkbook();
 
@@ -269,7 +277,7 @@ class ReportExcel implements TableReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "Excel.xlsx"; //NON-NLS
+        return " " + EXCEL_REPORT + File.separator + "Excel.xlsx"; //NON-NLS
     }
 
     /**
