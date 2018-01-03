@@ -176,7 +176,8 @@ public class HashDbIngestModule implements FileIngestModule {
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
                 long calcstart = System.currentTimeMillis();
-                md5Hash = HashUtility.calculateMd5(file);
+                md5Hash = HashUtility.calculateMd5Hash(file);
+                file.setMd5Hash(md5Hash);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);
 
@@ -205,20 +206,8 @@ public class HashDbIngestModule implements FileIngestModule {
                     foundBad = true;
                     totals.totalKnownBadCount.incrementAndGet();
 
-                    try {
-                        skCase.setKnown(file, TskData.FileKnown.BAD);
-                    } catch (TskException ex) {
-                        logger.log(Level.WARNING, "Couldn't set notable state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
-                        services.postMessage(IngestMessage.createErrorMessage(
-                                HashLookupModuleFactory.getModuleName(),
-                                NbBundle.getMessage(this.getClass(),
-                                        "HashDbIngestModule.hashLookupErrorMsg",
-                                        name),
-                                NbBundle.getMessage(this.getClass(),
-                                        "HashDbIngestModule.settingKnownBadStateErr",
-                                        name)));
-                        ret = ProcessResult.ERROR;
-                    }
+                    file.setKnown(TskData.FileKnown.BAD);
+
                     String hashSetName = db.getDisplayName();
 
                     String comment = "";
@@ -262,13 +251,8 @@ public class HashDbIngestModule implements FileIngestModule {
                 try {
                     long lookupstart = System.currentTimeMillis();
                     if (db.lookupMD5Quick(file)) {
-                        try {
-                            skCase.setKnown(file, TskData.FileKnown.KNOWN);
-                            break;
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Couldn't set known state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
-                            ret = ProcessResult.ERROR;
-                        }
+                        file.setKnown(TskData.FileKnown.KNOWN);
+                        break;
                     }
                     long delta = (System.currentTimeMillis() - lookupstart);
                     totals.totalLookuptime.addAndGet(delta);
