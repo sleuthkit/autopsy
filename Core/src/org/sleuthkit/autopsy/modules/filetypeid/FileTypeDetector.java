@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.filetypeid;
 
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -205,9 +206,18 @@ public class FileTypeDetector {
      *
      * @throws TskCoreException If there is a problem writing the result to the
      *                          case database.
+     * 
+ 
      */
-    public String detect(AbstractFile file) throws TskCoreException {
-        return detect(file, false);
+    public String detectFileType(AbstractFile file) throws TskCoreException {
+        String mimeType = file.getMIMEType();
+        if (Strings.isNullOrEmpty(mimeType) == false) {
+            return mimeType;
+        }
+        else {
+            return detect(file, false);
+        }        
+        
     }
 
     /**
@@ -477,4 +487,22 @@ public class FileTypeDetector {
         return getFileType(file);
     }
 
+    /**
+     * Detects the MIME type of a file. The result is not added to the case
+     * database.
+     *
+     * @param file The file to test.
+     *
+     * @return A MIME type name. If file type could not be detected or results
+     *         were uncertain, octet-stream is returned.
+     *
+     * @throws TskCoreException If there is a problem writing the result to the
+     *                          case database.
+     * 
+     * @deprecated - use detectFileType to detect
+     */
+    @Deprecated
+    public String detect(AbstractFile file) throws TskCoreException {
+        return detect(file, true);
+    }
 }
