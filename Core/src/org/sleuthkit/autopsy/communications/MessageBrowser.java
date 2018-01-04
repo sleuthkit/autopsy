@@ -77,27 +77,30 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                     //reset panel when there is no selection
                     messagesResultPanel.setPath("");
                 } else {
-                    AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
-                    CommunicationsFilter filter = adiNode.getFilter();
-                    CommunicationsManager commsManager = adiNode.getCommsManager();
-                    final Set<AccountDeviceInstance> accountDeviceInstances;
+                    final Node selectedNode = selectedNodes[0];
+                    if (selectedNode instanceof AccountDeviceInstanceNode) {
+                        AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNode;
+                        CommunicationsFilter filter = adiNode.getFilter();
+                        CommunicationsManager commsManager = adiNode.getCommsManager();
+                        final Set<AccountDeviceInstance> accountDeviceInstances;
 
-                    if (selectedNodes.length == 1) {
-                        final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
-                        accountDeviceInstances = Collections.singleton(accountDeviceInstance);
-                        messagesResultPanel.setPath(accountDeviceInstance.getAccount().getTypeSpecificID());
-                    } else {
-                        accountDeviceInstances = Stream.of(selectedNodes)
-                                .map(node -> (AccountDeviceInstanceNode) node)
-                                .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
-                                .collect(Collectors.toSet());
-                        messagesResultPanel.setPath(selectedNodes.length + " accounts");
+                        if (selectedNodes.length == 1) {
+                            final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
+                            accountDeviceInstances = Collections.singleton(accountDeviceInstance);
+                            messagesResultPanel.setPath(accountDeviceInstance.getAccount().getTypeSpecificID());
+                        } else {
+                            accountDeviceInstances = Stream.of(selectedNodes)
+                                    .map(node -> (AccountDeviceInstanceNode) node)
+                                    .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
+                                    .collect(Collectors.toSet());
+                            messagesResultPanel.setPath(selectedNodes.length + " accounts");
+                        }
+                        AccountDetailsNode accountDetailsNode =
+                                new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
+                        TableFilterNode wrappedNode =
+                                new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorerManager), true);
+                        messagesResultPanel.setNode(wrappedNode);
                     }
-                    AccountDetailsNode accountDetailsNode
-                            = new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
-                    TableFilterNode wrappedNode
-                            = new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorerManager), true);
-                    messagesResultPanel.setNode(wrappedNode);
                 }
             }
         });

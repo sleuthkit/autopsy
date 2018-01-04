@@ -18,22 +18,28 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.mxFastOrganicLayout;
+import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
+import com.mxgraph.swing.handler.mxPanningHandler;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxStylesheet;
 import java.awt.Color;
-import java.util.Collection;
-import static java.util.Collections.singleton;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.beans.PropertyVetoException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
@@ -45,20 +51,26 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMA
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public class VisualizationPanel extends JPanel {
-
+    
+    static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private ExplorerManager explorerManager;
     private final mxGraph graph;
-
-    private Map<String, mxCell> nodeMap = new HashMap<>();
+    
+    private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final mxGraphComponent graphComponent;
+    
+    static {
+        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
+        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
+    }
 
     /**
      * Creates new form VizPanel
@@ -79,41 +91,67 @@ public class VisualizationPanel extends JPanel {
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         this.add(graphComponent);
-
+        graphComponent.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                graphComponent.zoomTo(graphComponent.getZoomFactor() + e.getPreciseWheelRotation(), true);
+            }
+        });
+        
         CVTEvents.getCVTEventBus().register(this);
+        
+        graph.setStylesheet(mxStylesheet);
+        
     }
-
+    
     public void initVisualization(ExplorerManager em) {
         explorerManager = em;
-
+        
         graph.getSelectionModel().addListener(null, (sender, evt) -> {
             Object[] selectionCells = graph.getSelectionCells();
             if (selectionCells.length == 1) {
                 mxCell selectionCell = (mxCell) selectionCells[0];
-
-                if (selectionCell.isVertex()) {
-                    try {
-
-                        CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-
-                        AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) selectionCell.getValue();
-                        explorerManager.setRootContext(new AccountDetailsNode(
-                                singleton(adiKey.getAccountDeviceInstance()),
-                                adiKey.getCommunicationsFilter(),
-                                commsManager));
-                    } catch (TskCoreException tskCoreException) {
-                        Logger.getLogger(VisualizationPanel.class.getName()).log(Level.SEVERE,
-                                "Could not get communications manager for current case", tskCoreException);
+                try {
+                    CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+                    
+                    if (selectionCell.isVertex()) {
+                        final AccountDeviceInstanceNode accountDeviceInstanceNode =
+                                new AccountDeviceInstanceNode(((AccountDeviceInstanceKey) selectionCell.getValue()),
+                                        commsManager);
+                        explorerManager.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
+                        
+                    } else if (selectionCell.isEdge()) {
+                        System.out.println(selectionCell.getId());
+//                        explorerManager.setRootContext(new CommunicationsBundleNode(adiKey, commsManager));
                     }
+                } catch (TskCoreException tskCoreException) {
+                    Logger.getLogger(VisualizationPanel.class.getName()).log(Level.SEVERE,
+                            "Could not get communications manager for current case", tskCoreException);
+                } catch (PropertyVetoException ex) {
+                    Exceptions.printStackTrace(ex);
                 }
             }
         });
     }
-
+    
+    private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
+        
+        Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
+        
+        if (edgesBetween.length == 0) {
+            final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
+            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, pinnedAccountVertex, relatedAccountVertex);
+        } else if (edgesBetween.length == 1) {
+            final mxCell edge = (mxCell) edgesBetween[0];
+            edge.setValue(1d + (double) edge.getValue());
+            edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
+        }
+    }
+    
     private void addEdge(BlackboardArtifact artifact) throws TskCoreException {
         BlackboardArtifact.ARTIFACT_TYPE artfType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != artfType) {
-
+            
             String from = null;
             String[] tos = new String[0];
 
@@ -136,12 +174,12 @@ public class VisualizationPanel extends JPanel {
             }
             for (String to : tos) {
                 if (StringUtils.isNotBlank(from) && StringUtils.isNotBlank(to)) {
-
+                    
                     mxCell fromV = getOrCreateNodeDraft(from, 10);
                     mxCell toV = getOrCreateNodeDraft(to, 10);
-
+                    
                     Object[] edgesBetween = graph.getEdgesBetween(fromV, toV);
-
+                    
                     if (edgesBetween.length == 0) {
                         final String edgeName = from + "->" + to;
                         mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, fromV, toV);
@@ -154,29 +192,31 @@ public class VisualizationPanel extends JPanel {
             }
         }
     }
-
+    
     @Subscribe
     public void pinAccount(PinAccountEvent pinEvent) {
-
+        
         final AccountDeviceInstanceNode adiNode = pinEvent.getAccountDeviceInstanceNode();
         final AccountDeviceInstanceKey adiKey = adiNode.getAccountDeviceInstanceKey();
-
+        
         graph.getModel().beginUpdate();
         try {
-//            final String nodeId = /*
-//                     * adiKey.getDataSourceName() + ":" +
-//                     */ adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
-
-            mxCell v = getOrCreateNodeDraft(adiKey);
+            nodeMap.clear();
+            graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+            
+            mxCell pinnedAccountVertex = getOrCreateNodeDraft(adiKey);
             CommunicationsManager commsManager = adiNode.getCommsManager();
-
-            Collection<Content> relationshipSources =
-                    commsManager.getRelationshipSources(ImmutableSet.of(adiKey.getAccountDeviceInstance()), adiNode.getFilter());
-
-            for (Content source : relationshipSources) {
-                if (source instanceof BlackboardArtifact) {
-                    addEdge((BlackboardArtifact) source);
-                }
+            final CommunicationsFilter commsFilter = adiNode.getFilter();
+            List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                    commsManager.getRelatedAccountDeviceInstances(adiNode.getAccountDeviceInstance(), commsFilter);
+            
+            for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+                long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
+                String dataSourceName = AccountsRootChildren.getDataSourceName(relatedADI);
+                AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount, dataSourceName);
+                mxCell relatedAccountVertex = getOrCreateNodeDraft(relatedADIKey);
+                
+                addEdge(pinnedAccountVertex, relatedAccountVertex);
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
@@ -188,7 +228,7 @@ public class VisualizationPanel extends JPanel {
         
         new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
     }
-
+    
     private mxCell getOrCreateNodeDraft(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
@@ -203,23 +243,24 @@ public class VisualizationPanel extends JPanel {
                     new Random().nextInt(200),
                     size,
                     size);
+            graph.getView().getState(nodeDraft, true).setLabel(name);
             nodeMap.put(name, nodeDraft);
         }
         return nodeDraft;
     }
-
+    
     private mxCell getOrCreateNodeDraft(String name, long size) {
         mxCell nodeDraft = nodeMap.get(name);
         if (nodeDraft == null) {
             nodeDraft = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
                     name,
-                    null,
+                    name,
                     new Random().nextInt(200),
                     new Random().nextInt(200),
                     size,
                     size);
-//            nodeDraft.setLabel(name);
+            graph.getView().getState(nodeDraft, true).setLabel(name);
             nodeMap.put(name, nodeDraft);
         }
         return nodeDraft;
@@ -236,6 +277,7 @@ public class VisualizationPanel extends JPanel {
 
         jToolBar1 = new javax.swing.JToolBar();
         jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -245,14 +287,43 @@ public class VisualizationPanel extends JPanel {
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jToolBar1.add(jButton1);
+
+        jButton2.setText(org.openide.util.NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton2.text")); // NOI18N
+        jButton2.setFocusable(false);
+        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton2);
 
         add(jToolBar1, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        graphComponent.addMouseListener(new mxPanningHandler(graphComponent));
+
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        new mxOrganicLayout(graph).execute(graph.getDefaultParent());
+//        new mxCompactTreeLayout(graph).execute(graph.getDefaultParent());
+        graphComponent.zoomAndCenter();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JToolBar jToolBar1;
     // End of variables declaration//GEN-END:variables
+
 }

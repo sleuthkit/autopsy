@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -78,7 +79,7 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
         return new AccountDeviceInstanceNode(key, commsManager);
     }
 
-    private String getDataSourceName(AccountDeviceInstance accountDeviceInstance) {
+    static String getDataSourceName(AccountDeviceInstance accountDeviceInstance) {
         try {
             final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
@@ -151,6 +152,32 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
             properties.put(new NodeProperty<>("device", Bundle.AccountNode_device(), "device",
                     accountDeviceInstanceKey.getDataSourceName())); // NON-NLS
             return s;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 73 * hash + Objects.hashCode(this.accountDeviceInstanceKey);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final AccountDeviceInstanceNode other = (AccountDeviceInstanceNode) obj;
+            if (!Objects.equals(this.accountDeviceInstanceKey, other.accountDeviceInstanceKey)) {
+                return false;
+            }
+
+            return true;
         }
 
         @Override

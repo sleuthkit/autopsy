@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 
@@ -57,4 +58,43 @@ class AccountDeviceInstanceKey {
     String getDataSourceName() {
         return dataSourceName;
     }
+
+    @Override
+    public String toString() {
+        return accountDeviceInstance.getAccount().getTypeSpecificID();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + Objects.hashCode(this.accountDeviceInstance);
+        hash = 37 * hash + (int) (this.messageCount ^ (this.messageCount >>> 32));
+        hash = 37 * hash + Objects.hashCode(this.dataSourceName);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final AccountDeviceInstanceKey other = (AccountDeviceInstanceKey) obj;
+        if (this.messageCount != other.messageCount) {
+            return false;
+        }
+        if (!Objects.equals(this.dataSourceName, other.dataSourceName)) {
+            return false;
+        }
+        if (!Objects.equals(this.accountDeviceInstance, other.accountDeviceInstance)) {
+            return false;
+        }
+        return true;
+    }
+    
 }
