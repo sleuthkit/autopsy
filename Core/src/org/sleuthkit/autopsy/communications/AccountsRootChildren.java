@@ -18,10 +18,14 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -87,17 +91,18 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
         }
         return accountDeviceInstance.getDeviceId();
     }
-    
+
     /**
      * Node to represent an Account in the AccountsBrowser
      */
     static class AccountDeviceInstanceNode extends AbstractNode {
 
         private final AccountDeviceInstanceKey accountDeviceInstanceKey;
+
         private final CommunicationsManager commsManager;
         private final Account account;
 
-        private AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
+        AccountDeviceInstanceNode(AccountDeviceInstanceKey accountDeviceInstanceKey, CommunicationsManager commsManager) {
             super(Children.LEAF, Lookups.fixed(accountDeviceInstanceKey, commsManager));
             this.accountDeviceInstanceKey = accountDeviceInstanceKey;
             this.commsManager = commsManager;
@@ -110,8 +115,16 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
             return accountDeviceInstanceKey.getAccountDeviceInstance();
         }
 
+        public AccountDeviceInstanceKey getAccountDeviceInstanceKey() {
+            return accountDeviceInstanceKey;
+        }
+
         public CommunicationsManager getCommsManager() {
             return commsManager;
+        }
+
+        public long getMessageCount() {
+            return accountDeviceInstanceKey.getMessageCount();
         }
 
         public CommunicationsFilter getFilter() {
@@ -138,6 +151,28 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
             properties.put(new NodeProperty<>("device", Bundle.AccountNode_device(), "device",
                     accountDeviceInstanceKey.getDataSourceName())); // NON-NLS
             return s;
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            ArrayList<Action> actions = new ArrayList<>(Arrays.asList(super.getActions(context)));
+            actions.add(new PinAccountAction());
+            return actions.toArray(new Action[actions.size()]);
+        }
+
+        /**
+         *
+         */
+        private class PinAccountAction extends AbstractAction {
+
+            public PinAccountAction() {
+                super("Visualize Account");
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CVTEvents.getCVTEventBus().post(new PinAccountEvent(AccountDeviceInstanceNode.this));
+            }
         }
     }
 }

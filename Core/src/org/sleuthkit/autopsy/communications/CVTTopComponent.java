@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
@@ -37,11 +38,11 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @RetainLocation("cvt")
 @NbBundle.Messages("CVTTopComponent.name= Communications Visualization")
 public final class CVTTopComponent extends TopComponent implements ExplorerManager.Provider {
-
+    
     private static final long serialVersionUID = 1L;
     private final ExplorerManager messagesBrowserExplorerManager;
     private final ExplorerManager acctsBrowserExplorerManager;
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
@@ -63,6 +64,14 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          * Nodes from the accounts browser to the messages browser.
          */
         acctsBrowserExplorerManager = new ExplorerManager();
+        
+        vizPanel.initVisualization(acctsBrowserExplorerManager);
+        CVTEvents.getCVTEventBus().register(this);
+    }
+    
+    @Subscribe
+    public void pinAccount(PinAccountEvent pinEvent) {
+        browseVisualizeTabPane.setSelectedIndex(1);
     }
 
     /**
@@ -76,6 +85,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         splitPane = new javax.swing.JSplitPane();
         browseVisualizeTabPane = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
+        vizPanel = new org.sleuthkit.autopsy.communications.VisualizationPanel();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
         splitPane.setDividerLocation(400);
@@ -83,6 +93,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
         browseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
 
         splitPane.setLeftComponent(browseVisualizeTabPane);
 
@@ -94,9 +105,9 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1339, Short.MAX_VALUE)
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1324, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
@@ -116,6 +127,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private javax.swing.JTabbedPane browseVisualizeTabPane;
     private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
     private javax.swing.JSplitPane splitPane;
+    private org.sleuthkit.autopsy.communications.VisualizationPanel vizPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -123,12 +135,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
     }
-
+    
     @Override
     public ExplorerManager getExplorerManager() {
         return acctsBrowserExplorerManager;
     }
-
+    
     @Override
     public void open() {
         super.open();
@@ -140,7 +152,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          */
         filtersPane.updateAndApplyFilters();
     }
-
+    
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
         /*

@@ -346,7 +346,11 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-dbcp2-2.1.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/commons-dbcp2-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jgraphx-v3.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jgraphx-v3.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-parsers-1.14.jar</runtime-relative-path>

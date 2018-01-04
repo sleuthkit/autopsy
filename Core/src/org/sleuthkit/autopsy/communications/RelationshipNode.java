@@ -127,7 +127,7 @@ public class RelationshipNode extends BlackboardArtifactNode {
      * @return The display string, or an empty string if there is no such
      *         attribute or an an error.
      */
-    private static String getAttributeDisplayString(final BlackboardArtifact artifact, final ATTRIBUTE_TYPE attributeType) {
+    static String getAttributeDisplayString(final BlackboardArtifact artifact, final ATTRIBUTE_TYPE attributeType) {
         try {
             BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(attributeType.getTypeID())));
             if (attribute == null) {
