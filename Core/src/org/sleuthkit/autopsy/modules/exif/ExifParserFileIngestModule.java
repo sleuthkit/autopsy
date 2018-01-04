@@ -251,7 +251,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      */
     private boolean parsableFormat(AbstractFile f) {
         try {
-            String mimeType = fileTypeDetector.detectFileType(f);
+            String mimeType = fileTypeDetector.detect(f);
             if (mimeType != null) {
                 return supportedMimeTypes.contains(mimeType);
             } else {
