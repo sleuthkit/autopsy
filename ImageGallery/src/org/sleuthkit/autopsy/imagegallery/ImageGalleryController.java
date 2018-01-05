@@ -771,7 +771,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException {
+        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr) {
             final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
             if (known) {

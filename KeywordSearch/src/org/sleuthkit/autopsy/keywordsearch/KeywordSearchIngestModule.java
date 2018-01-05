@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -509,16 +508,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            String fileType;
-            try {
-                if (context.fileIngestIsCancelled()) {
-                    return;
-                }
-                fileType = fileTypeDetector.detectFileType(aFile);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
+            if (context.fileIngestIsCancelled()) {
                 return;
             }
+            String fileType = fileTypeDetector.detectMIMEType(aFile);
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...

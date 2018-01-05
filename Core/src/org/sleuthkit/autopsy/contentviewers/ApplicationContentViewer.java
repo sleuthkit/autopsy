@@ -118,14 +118,11 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
-                mimeType = fileTypeDetector.detectFileType(file);
-            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                mimeType = fileTypeDetector.detectMIMEType(file);
+            }catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
                 return;
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", file), ex); //NON-NLS
-                return;
-            } 
+            }
         }
         
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
@@ -194,14 +191,11 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", aFile.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
-                mimeType = fileTypeDetector.detectFileType(aFile);
-            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                mimeType = fileTypeDetector.detectMIMEType(aFile);
+            }catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
                 return false;
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
-                return false;
-            } 
+            }
         }
         
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
@@ -228,14 +222,11 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
-                mimeType = fileTypeDetector.detectFileType(file);
-            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                mimeType = fileTypeDetector.detectMIMEType(file);
+            }catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
                 return 0;
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", file), ex); //NON-NLS
-                return 0;
-            } 
+            }
         }
         
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
