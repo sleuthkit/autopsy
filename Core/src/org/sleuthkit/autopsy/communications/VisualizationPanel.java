@@ -27,8 +27,6 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.Color;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class VisualizationPanel extends JPanel {
+public class VisualizationPanel extends JPanel implements ExplorerManager.Provider {
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private ExplorerManager explorerManager;
@@ -92,12 +90,6 @@ public class VisualizationPanel extends JPanel {
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         this.add(graphComponent);
-        graphComponent.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                graphComponent.zoomTo(graphComponent.getZoomFactor() + e.getPreciseWheelRotation(), true);
-            }
-        });
 
         CVTEvents.getCVTEventBus().register(this);
 
@@ -105,7 +97,7 @@ public class VisualizationPanel extends JPanel {
 
     }
 
-    public void initVisualization(ExplorerManager em, ExplorerManager messageBrowserManager) {
+    public void initVisualization(ExplorerManager em) {
         explorerManager = em;
 
         graph.getSelectionModel().addListener(null, (sender, evt) -> {
@@ -119,8 +111,8 @@ public class VisualizationPanel extends JPanel {
                         final AccountDeviceInstanceNode accountDeviceInstanceNode =
                                 new AccountDeviceInstanceNode(((AccountDeviceInstanceKey) selectionCell.getValue()),
                                         commsManager);
-                        messageBrowserManager.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
-                        messageBrowserManager.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
+                        explorerManager.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
+                        explorerManager.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
 
                     } else if (selectionCell.isEdge()) {
                         System.out.println(selectionCell.getId());
@@ -134,6 +126,11 @@ public class VisualizationPanel extends JPanel {
                 }
             }
         });
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
     }
 
     private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
@@ -150,6 +147,7 @@ public class VisualizationPanel extends JPanel {
         }
     }
 
+    @Deprecated
     private void addEdge(BlackboardArtifact artifact) throws TskCoreException {
         BlackboardArtifact.ARTIFACT_TYPE artfType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != artfType) {
@@ -177,8 +175,8 @@ public class VisualizationPanel extends JPanel {
             for (String to : tos) {
                 if (StringUtils.isNotBlank(from) && StringUtils.isNotBlank(to)) {
 
-                    mxCell fromV = getOrCreateNodeDraft(from, 10);
-                    mxCell toV = getOrCreateNodeDraft(to, 10);
+                    mxCell fromV = getOrCreateVertex(from, 10);
+                    mxCell toV = getOrCreateVertex(to, 10);
 
                     Object[] edgesBetween = graph.getEdgesBetween(fromV, toV);
 
@@ -206,7 +204,7 @@ public class VisualizationPanel extends JPanel {
             nodeMap.clear();
             graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
 
-            mxCell pinnedAccountVertex = getOrCreateNodeDraft(adiKey);
+            mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
             CommunicationsManager commsManager = adiNode.getCommsManager();
             final CommunicationsFilter commsFilter = adiNode.getFilter();
             List<AccountDeviceInstance> relatedAccountDeviceInstances =
@@ -216,7 +214,7 @@ public class VisualizationPanel extends JPanel {
                 long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
                 String dataSourceName = AccountsRootChildren.getDataSourceName(relatedADI);
                 AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount, dataSourceName);
-                mxCell relatedAccountVertex = getOrCreateNodeDraft(relatedADIKey);
+                mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
 
                 addEdge(pinnedAccountVertex, relatedAccountVertex);
             }
@@ -231,30 +229,31 @@ public class VisualizationPanel extends JPanel {
         new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
     }
 
-    private mxCell getOrCreateNodeDraft(AccountDeviceInstanceKey accountDeviceInstanceKey) {
+    private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
-        mxCell nodeDraft = nodeMap.get(name);
-        if (nodeDraft == null) {
-            double size = accountDeviceInstanceKey.getMessageCount() / 10;
-            nodeDraft = (mxCell) graph.insertVertex(
+        mxCell vertex = nodeMap.get(name);
+        if (vertex == null) {
+            double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
+            vertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
                     name, accountDeviceInstanceKey,
                     new Random().nextInt(200),
                     new Random().nextInt(200),
                     size,
                     size);
-            graph.getView().getState(nodeDraft, true).setLabel(name);
-            nodeMap.put(name, nodeDraft);
+            graph.getView().getState(vertex, true).setLabel(name);
+            nodeMap.put(name, vertex);
         }
-        return nodeDraft;
+        return vertex;
     }
 
-    private mxCell getOrCreateNodeDraft(String name, long size) {
-        mxCell nodeDraft = nodeMap.get(name);
-        if (nodeDraft == null) {
-            nodeDraft = (mxCell) graph.insertVertex(
+    @Deprecated
+    private mxCell getOrCreateVertex(String name, long size) {
+        mxCell vertex = nodeMap.get(name);
+        if (vertex == null) {
+            vertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
                     name,
                     name,
@@ -262,10 +261,10 @@ public class VisualizationPanel extends JPanel {
                     new Random().nextInt(200),
                     size,
                     size);
-            graph.getView().getState(nodeDraft, true).setLabel(name);
-            nodeMap.put(name, nodeDraft);
+            graph.getView().getState(vertex, true).setLabel(name);
+            nodeMap.put(name, vertex);
         }
-        return nodeDraft;
+        return vertex;
     }
 
     /**
@@ -312,7 +311,7 @@ public class VisualizationPanel extends JPanel {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
 //        graphComponent.addMouseListener(new mxPanningHandler(graphComponent));
-graphComponent.getPanningHandler().setEnabled(true);
+        graphComponent.getPanningHandler().setEnabled(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed

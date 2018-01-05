@@ -31,7 +31,7 @@ import org.openide.explorer.ExplorerManager;
  * A panel that goes in the Browse tab of the Communications Visualization Tool.
  * Hosts an OutlineView that shows information about Accounts.
  */
-public class AccountsBrowser extends JPanel {
+public class AccountsBrowser extends JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
 
@@ -56,10 +56,8 @@ public class AccountsBrowser extends JPanel {
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
     }
 
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        em = ExplorerManager.find(this);
+    void init(ExplorerManager acctsBrowserExplorerManager) {
+        em = acctsBrowserExplorerManager;
         em.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
@@ -67,8 +65,8 @@ public class AccountsBrowser extends JPanel {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             }
         });
-    }
-
+    
+    } 
     private void setColumnWidths() {
         int margin = 4;
         int padding = 8;
@@ -126,4 +124,11 @@ public class AccountsBrowser extends JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return em;
+    }
+
+   
 }
