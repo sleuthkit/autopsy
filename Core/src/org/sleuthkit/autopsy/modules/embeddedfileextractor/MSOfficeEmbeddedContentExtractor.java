@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.hwpf.usermodel.Picture;
@@ -135,27 +134,22 @@ class MSOfficeEmbeddedContentExtractor {
      *         supported. Else it returns false.
      */
     boolean isContentExtractionSupported(AbstractFile abstractFile) {
-        try {
-            String abstractFileMimeType = fileTypeDetector.detectFileType(abstractFile);
-            for (SupportedExtractionFormats s : SupportedExtractionFormats.values()) {
-                if (s.toString().equals(abstractFileMimeType)) {
-                    abstractFileExtractionFormat = s;
-                    return true;
-                }
+        String abstractFileMimeType = fileTypeDetector.detectMIMEType(abstractFile);
+        for (SupportedExtractionFormats s : SupportedExtractionFormats.values()) {
+            if (s.toString().equals(abstractFileMimeType)) {
+                abstractFileExtractionFormat = s;
+                return true;
             }
-            return false;
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error executing FileTypeDetector.getFileType()", ex); // NON-NLS
-            return false;
         }
+        return false;
     }
 
     /**
      * This method selects the appropriate process of extracting embedded
      * content from files using either Tika or POI classes. Once the content has
      * been extracted as files, the method adds them to the DB and fires a
-     * ModuleContentEvent. ModuleContent Event is not fired if no content
-     * was extracted from the processed file.
+     * ModuleContentEvent. ModuleContent Event is not fired if no content was
+     * extracted from the processed file.
      *
      * @param abstractFile The abstract file to be processed.
      */
