@@ -144,7 +144,7 @@ final class FileIngestPipeline {
             if (!this.job.isCancelled()) {
                 // Save any properties that have not already been saved to the database
                 try{
-                    file.save(Case.getCurrentCase().getSleuthkitCase());
+                    file.save();
                 } catch (TskCoreException ex){
                     Logger.getLogger(FileIngestPipeline.class.getName()).log(Level.SEVERE, "Failed to save data for file " + file.getId(), ex); //NON-NLS
                 }
