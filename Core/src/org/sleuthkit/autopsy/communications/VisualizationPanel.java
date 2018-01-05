@@ -22,7 +22,6 @@ import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
-import com.mxgraph.swing.handler.mxPanningHandler;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
@@ -39,6 +38,8 @@ import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -59,14 +60,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public class VisualizationPanel extends JPanel {
-    
+
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private ExplorerManager explorerManager;
     private final mxGraph graph;
-    
+
     private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final mxGraphComponent graphComponent;
-    
+
     static {
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
@@ -97,29 +98,30 @@ public class VisualizationPanel extends JPanel {
                 graphComponent.zoomTo(graphComponent.getZoomFactor() + e.getPreciseWheelRotation(), true);
             }
         });
-        
+
         CVTEvents.getCVTEventBus().register(this);
-        
+
         graph.setStylesheet(mxStylesheet);
-        
+
     }
-    
-    public void initVisualization(ExplorerManager em) {
+
+    public void initVisualization(ExplorerManager em, ExplorerManager messageBrowserManager) {
         explorerManager = em;
-        
+
         graph.getSelectionModel().addListener(null, (sender, evt) -> {
             Object[] selectionCells = graph.getSelectionCells();
             if (selectionCells.length == 1) {
                 mxCell selectionCell = (mxCell) selectionCells[0];
                 try {
                     CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-                    
+
                     if (selectionCell.isVertex()) {
                         final AccountDeviceInstanceNode accountDeviceInstanceNode =
                                 new AccountDeviceInstanceNode(((AccountDeviceInstanceKey) selectionCell.getValue()),
                                         commsManager);
-                        explorerManager.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
-                        
+                        messageBrowserManager.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
+                        messageBrowserManager.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
+
                     } else if (selectionCell.isEdge()) {
                         System.out.println(selectionCell.getId());
 //                        explorerManager.setRootContext(new CommunicationsBundleNode(adiKey, commsManager));
@@ -133,11 +135,11 @@ public class VisualizationPanel extends JPanel {
             }
         });
     }
-    
+
     private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
-        
+
         Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
-        
+
         if (edgesBetween.length == 0) {
             final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
             mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, pinnedAccountVertex, relatedAccountVertex);
@@ -147,11 +149,11 @@ public class VisualizationPanel extends JPanel {
             edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
         }
     }
-    
+
     private void addEdge(BlackboardArtifact artifact) throws TskCoreException {
         BlackboardArtifact.ARTIFACT_TYPE artfType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != artfType) {
-            
+
             String from = null;
             String[] tos = new String[0];
 
@@ -174,12 +176,12 @@ public class VisualizationPanel extends JPanel {
             }
             for (String to : tos) {
                 if (StringUtils.isNotBlank(from) && StringUtils.isNotBlank(to)) {
-                    
+
                     mxCell fromV = getOrCreateNodeDraft(from, 10);
                     mxCell toV = getOrCreateNodeDraft(to, 10);
-                    
+
                     Object[] edgesBetween = graph.getEdgesBetween(fromV, toV);
-                    
+
                     if (edgesBetween.length == 0) {
                         final String edgeName = from + "->" + to;
                         mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, fromV, toV);
@@ -192,30 +194,30 @@ public class VisualizationPanel extends JPanel {
             }
         }
     }
-    
+
     @Subscribe
     public void pinAccount(PinAccountEvent pinEvent) {
-        
+
         final AccountDeviceInstanceNode adiNode = pinEvent.getAccountDeviceInstanceNode();
         final AccountDeviceInstanceKey adiKey = adiNode.getAccountDeviceInstanceKey();
-        
+
         graph.getModel().beginUpdate();
         try {
             nodeMap.clear();
             graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
-            
+
             mxCell pinnedAccountVertex = getOrCreateNodeDraft(adiKey);
             CommunicationsManager commsManager = adiNode.getCommsManager();
             final CommunicationsFilter commsFilter = adiNode.getFilter();
             List<AccountDeviceInstance> relatedAccountDeviceInstances =
                     commsManager.getRelatedAccountDeviceInstances(adiNode.getAccountDeviceInstance(), commsFilter);
-            
+
             for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
                 long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
                 String dataSourceName = AccountsRootChildren.getDataSourceName(relatedADI);
                 AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount, dataSourceName);
                 mxCell relatedAccountVertex = getOrCreateNodeDraft(relatedADIKey);
-                
+
                 addEdge(pinnedAccountVertex, relatedAccountVertex);
             }
         } catch (TskCoreException ex) {
@@ -225,10 +227,10 @@ public class VisualizationPanel extends JPanel {
             graph.getModel().endUpdate();
             revalidate();
         }
-        
+
         new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
     }
-    
+
     private mxCell getOrCreateNodeDraft(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
@@ -248,7 +250,7 @@ public class VisualizationPanel extends JPanel {
         }
         return nodeDraft;
     }
-    
+
     private mxCell getOrCreateNodeDraft(String name, long size) {
         mxCell nodeDraft = nodeMap.get(name);
         if (nodeDraft == null) {
@@ -309,8 +311,8 @@ public class VisualizationPanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        graphComponent.addMouseListener(new mxPanningHandler(graphComponent));
-
+//        graphComponent.addMouseListener(new mxPanningHandler(graphComponent));
+graphComponent.getPanningHandler().setEnabled(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -326,4 +328,16 @@ public class VisualizationPanel extends JPanel {
     private javax.swing.JToolBar jToolBar1;
     // End of variables declaration//GEN-END:variables
 
+    static class SimpleParentNode extends AbstractNode {
+
+        static SimpleParentNode createFromChildNodes(Node... nodes) {
+            Children.Array array = new Children.Array();
+            array.add(nodes);
+            return new SimpleParentNode(array);
+        }
+
+        public SimpleParentNode(Children children) {
+            super(children);
+        }
+    }
 }

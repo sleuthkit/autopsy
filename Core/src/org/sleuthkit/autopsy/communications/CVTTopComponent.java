@@ -38,15 +38,16 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @RetainLocation("cvt")
 @NbBundle.Messages("CVTTopComponent.name= Communications Visualization")
 public final class CVTTopComponent extends TopComponent implements ExplorerManager.Provider {
-    
+
     private static final long serialVersionUID = 1L;
     private final ExplorerManager messagesBrowserExplorerManager;
     private final ExplorerManager acctsBrowserExplorerManager;
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
         setName(Bundle.CVTTopComponent_name());
+
         /*
          * Associate an explorer manager with the GlobalActionContext (GAC) for
          * use by the messages browser so that selections in the messages
@@ -64,11 +65,14 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          * Nodes from the accounts browser to the messages browser.
          */
         acctsBrowserExplorerManager = new ExplorerManager();
-        
-        vizPanel.initVisualization(acctsBrowserExplorerManager);
+
+        vizPanel.initVisualization(acctsBrowserExplorerManager, messagesBrowserExplorerManager);
+       
+
         CVTEvents.getCVTEventBus().register(this);
+
     }
-    
+
     @Subscribe
     public void pinAccount(PinAccountEvent pinEvent) {
         browseVisualizeTabPane.setSelectedIndex(1);
@@ -135,12 +139,12 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
     }
-    
+
     @Override
     public ExplorerManager getExplorerManager() {
         return acctsBrowserExplorerManager;
     }
-    
+
     @Override
     public void open() {
         super.open();
@@ -152,7 +156,7 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          */
         filtersPane.updateAndApplyFilters();
     }
-    
+
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
         /*

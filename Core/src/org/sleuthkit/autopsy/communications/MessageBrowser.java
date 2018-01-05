@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  * other account details, and a ContentViewer to show individual
  */
 final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
-
+    
     private static final long serialVersionUID = 1L;
     private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
@@ -61,18 +61,27 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
     }
-
+    
     @Override
     public void addNotify() {
         super.addNotify();
-        ExplorerManager parentExplorerManager = ExplorerManager.find(this);
-        parentExplorerManager.addPropertyChangeListener(pce -> {
+        ExplorerManager parentEm = ExplorerManager.find(this);
+//        parentEm.addPropertyChangeListener(pce -> {
+//            gacExplorerManager.setRootContext(parentEm.getRootContext());
+//            try {
+//                gacExplorerManager.setSelectedNodes(parentEm.getSelectedNodes());
+//            } catch (PropertyVetoException ex) {
+//                Exceptions.printStackTrace(ex);
+//            }
+//        });
+        
+        parentEm.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] selectedNodes = parentExplorerManager.getSelectedNodes();
-
+                final Node[] selectedNodes = parentEm.getSelectedNodes();
+                
                 messagesResultPanel.setNumMatches(0);
                 messagesResultPanel.setNode(null);
-
+                
                 if (selectedNodes.length == 0) {
                     //reset panel when there is no selection
                     messagesResultPanel.setPath("");
@@ -83,7 +92,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                         CommunicationsFilter filter = adiNode.getFilter();
                         CommunicationsManager commsManager = adiNode.getCommsManager();
                         final Set<AccountDeviceInstance> accountDeviceInstances;
-
+                        
                         if (selectedNodes.length == 1) {
                             final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
                             accountDeviceInstances = Collections.singleton(accountDeviceInstance);
@@ -98,7 +107,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                         AccountDetailsNode accountDetailsNode =
                                 new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
                         TableFilterNode wrappedNode =
-                                new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorerManager), true);
+                                new TableFilterNode(new DataResultFilterNode(accountDetailsNode, gacExplorerManager), true);
                         messagesResultPanel.setNode(wrappedNode);
                     }
                 }
@@ -112,7 +121,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         }
         messagesResultPanel.open();
     }
-
+    
     @Override
     public ExplorerManager getExplorerManager() {
         return gacExplorerManager;
