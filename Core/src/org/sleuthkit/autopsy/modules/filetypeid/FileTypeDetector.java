@@ -291,20 +291,10 @@ public class FileTypeDetector {
                         Collection<BlackboardAttribute> attributes = new ArrayList<>();
                         BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName());
                         attributes.add(setNameAttribute);
-
-                        /*
-                         * Use the MIME type as the category attribute, i.e.,
-                         * the rule that determined this file belongs to the
-                         * interesting files set.
-                         */
                         BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                         attributes.add(ruleNameAttribute);
-
-                        artifact.addAttributes(attributes);
+                        artifact.addAttributes(attributes);                        
                         try {
-                            /*
-                             * Index the artifact for keyword search.
-                             */
                             Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
@@ -313,7 +303,6 @@ public class FileTypeDetector {
                         logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
                     }
                 }
-
                 return fileType.getMimeType();
             }
         }

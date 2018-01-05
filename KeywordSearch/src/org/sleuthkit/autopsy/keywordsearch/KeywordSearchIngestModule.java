@@ -508,11 +508,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            String fileType;
             if (context.fileIngestIsCancelled()) {
                 return;
             }
-            fileType = fileTypeDetector.detectMIMEType(aFile);
+            String fileType = fileTypeDetector.detectMIMEType(aFile);
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...

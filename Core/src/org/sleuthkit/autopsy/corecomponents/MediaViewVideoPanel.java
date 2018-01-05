@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.List;
-import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -153,9 +152,7 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
             SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
             try {
                 String mimeType = new FileTypeDetector().detectMIMEType(file);
-                if (nonNull(mimeType)) {
-                    return mimeTypes.contains(mimeType);
-                }
+                return mimeTypes.contains(mimeType);
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
                 if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == AbstractFile.MimeMatchEnum.TRUE) {
