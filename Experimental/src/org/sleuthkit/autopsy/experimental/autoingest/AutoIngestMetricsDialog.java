@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMetricsCollector.JobMetric;
 
 /**
@@ -36,10 +37,10 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
 
     private static final int GIGABYTE_SIZE = 1073741824;
 
-    private final AutoIngestMetricsCollector autoIngestMetricsCollector;
+    private AutoIngestMetricsCollector autoIngestMetricsCollector;
 
     /**
-     * Creates an instance of AutoIngestMetricsDialog
+     * Creates an instance of AutoIngestMetricsDialog.
      *
      * @param parent The parent container.
      */
@@ -47,27 +48,35 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
         "AutoIngestMetricsDialog.title.text=Auto Ingest Metrics",
         "AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report."
     })
-    AutoIngestMetricsDialog(Container parent) throws AutoIngestMetricsDialogException {
+    AutoIngestMetricsDialog(Container parent) {
         super((Window) parent, NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.title.text"), ModalityType.MODELESS);
-        try {
-            autoIngestMetricsCollector = new AutoIngestMetricsCollector();
-        } catch (AutoIngestMetricsCollector.AutoIngestMetricsCollectorException ex) {
-            throw new AutoIngestMetricsDialogException("Error starting up the auto ingest metrics dialog.", ex);
-        }
         initComponents();
         reportTextArea.setText(NbBundle.getMessage(AutoIngestMetricsDialog.class, "AutoIngestMetricsDialog.initReportText"));
         setModal(true);
         setSize(getPreferredSize());
         setLocationRelativeTo(parent);
+        setAlwaysOnTop(false);
         setVisible(true);
     }
 
     /**
      * Update the metrics shown in the report text area.
+     *
+     * @throws AutoIngestMetricsDialogException When the initialization of the
+     *                                          AutoIngestMetricsCollector
+     *                                          fails.
      */
-    private void updateMetrics() {
+    private void updateMetrics() throws AutoIngestMetricsDialogException {
         if (datePicker.getDate() == null) {
             return;
+        }
+        
+        if(autoIngestMetricsCollector == null) {
+            try {
+                autoIngestMetricsCollector = new AutoIngestMetricsCollector();
+            } catch (AutoIngestMetricsCollector.AutoIngestMetricsCollectorException ex) {
+                throw new AutoIngestMetricsDialogException("Error initializing the auto ingest metrics collector.", ex);
+            }
         }
 
         AutoIngestMetricsCollector.MetricsSnapshot metricsSnapshot = autoIngestMetricsCollector.queryCoordinationServiceForMetrics();
@@ -214,7 +223,11 @@ final class AutoIngestMetricsDialog extends javax.swing.JDialog {
 
     private void metricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metricsButtonActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        updateMetrics();
+        try {
+            updateMetrics();
+        } catch (AutoIngestMetricsDialogException ex) {
+            MessageNotifyUtil.Message.error(ex.getMessage());
+        }
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_metricsButtonActionPerformed
 
