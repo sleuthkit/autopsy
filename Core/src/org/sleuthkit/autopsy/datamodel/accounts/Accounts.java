@@ -311,26 +311,22 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected Node[] createNodesForKey(String key) {
-            try {
-                String accountType = key;
-                if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
-                    return new Node[]{new CreditCardNumberAccountTypeNode()};
-                } else {
-                    String accountTypeDisplayname;
-                    try {
-                        accountTypeDisplayname = skCase.getCommunicationsManager().getAccountType(accountType).getDisplayName();
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Error getting display name for account type. ", ex);
-                        accountTypeDisplayname = accountType;
-                    }
 
-                    return new Node[]{new DefaultAccountTypeNode(key, accountTypeDisplayname)};
+            String accountType = key;
+            if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+                return new Node[]{new CreditCardNumberAccountTypeNode()};
+            } else {
+                String accountTypeDisplayname;
+                try {
+                    accountTypeDisplayname = skCase.getCommunicationsManager().getAccountType(accountType).getDisplayName();
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error getting display name for account type. ", ex);
+                    accountTypeDisplayname = accountType;
                 }
-            } catch (IllegalArgumentException ex) {
-                LOGGER.log(Level.WARNING, "Unknown account type: {0}", key);
-                //Flesh out what happens with other account types here.
-                return new Node[]{new DefaultAccountTypeNode(key, key)};
+
+                return new Node[]{new DefaultAccountTypeNode(key, accountTypeDisplayname)};
             }
+
         }
 
         @Override
