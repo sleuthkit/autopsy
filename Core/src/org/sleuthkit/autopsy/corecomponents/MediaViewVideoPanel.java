@@ -30,7 +30,6 @@ import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Video viewer part of the Media View layered pane. Uses different engines
@@ -153,11 +152,11 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
         if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
             SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
             try {
-                String mimeType = new FileTypeDetector().detect(file);
+                String mimeType = new FileTypeDetector().detectMIMEType(file);
                 if (nonNull(mimeType)) {
                     return mimeTypes.contains(mimeType);
                 }
-            } catch (FileTypeDetector.FileTypeDetectorInitException | TskCoreException ex) {
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
                 if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == AbstractFile.MimeMatchEnum.TRUE) {
                     return true;

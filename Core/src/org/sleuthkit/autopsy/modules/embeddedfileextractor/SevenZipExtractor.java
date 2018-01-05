@@ -141,16 +141,11 @@ class SevenZipExtractor {
      *         supported. Else it returns false.
      */
     boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
-        try {
-            String abstractFileMimeType = fileTypeDetector.detect(abstractFile);
-            for (SupportedArchiveExtractionFormats s : SupportedArchiveExtractionFormats.values()) {
-                if (s.toString().equals(abstractFileMimeType)) {
-                    return true;
-                }
+        String abstractFileMimeType = fileTypeDetector.detectMIMEType(abstractFile);
+        for (SupportedArchiveExtractionFormats s : SupportedArchiveExtractionFormats.values()) {
+            if (s.toString().equals(abstractFileMimeType)) {
+                return true;
             }
-            return false;
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error executing FileTypeDetector.getFileType()", ex); // NON-NLS
         }
 
         // attempt extension matching

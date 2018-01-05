@@ -263,12 +263,12 @@ public class ImageUtils {
             return true;
         } else {
             try {
-                String mimeType = getFileTypeDetector().detect(file);
+                String mimeType = getFileTypeDetector().detectMIMEType(file);
                 if (StringUtils.isNotBlank(mimeTypePrefix) && mimeType.startsWith(mimeTypePrefix)) {
                     return true;
                 }
                 return supportedMimeTypes.contains(mimeType);
-            } catch (FileTypeDetectorInitException | TskCoreException ex) {
+            } catch (FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);//NON-NLS
                 return false;
             }
