@@ -131,9 +131,7 @@ class SevenZipExtractor {
     }
 
     /**
-     * This method returns true if the file format is currently supported. Else
-     * it returns false. Attempt extension based detection in case Apache Tika
-     * based detection fails.
+     * Checks whether extraction is supported for a file, based on MIME type.
      *
      * @param abstractFile The AbstractFilw whose mimetype is to be determined.
      *
@@ -147,15 +145,6 @@ class SevenZipExtractor {
                 return true;
             }
         }
-
-        // attempt extension matching
-        final String extension = abstractFile.getNameExtension();
-        for (String supportedExtension : SUPPORTED_EXTENSIONS) {
-            if (extension.equals(supportedExtension)) {
-                return true;
-            }
-        }
-
         return false;
     }
 
