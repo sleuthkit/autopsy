@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  * The right hand side of the CVT. Has a DataResultPanel to show messages and
  * other account details, and a ContentViewer to show individual
  */
-public final class MessageBrowser extends JPanel {
+public final class MessageBrowser extends JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private final ExplorerManager tableEM;
@@ -68,15 +68,6 @@ public final class MessageBrowser extends JPanel {
     @Override
     public void addNotify() {
         super.addNotify();
-//        ExplorerManager parentEm = ExplorerManager.find(this);
-//        parentEm.addPropertyChangeListener(pce -> {
-//            gacExplorerManager.setRootContext(parentEm.getRootContext());
-//            try {
-//                gacExplorerManager.setSelectedNodes(parentEm.getSelectedNodes());
-//            } catch (PropertyVetoException ex) {
-//                Exceptions.printStackTrace(ex);
-//            }
-//        });
 
         tableEM.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -166,4 +157,8 @@ public final class MessageBrowser extends JPanel {
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return gacExplorerManager;
+    }
 }

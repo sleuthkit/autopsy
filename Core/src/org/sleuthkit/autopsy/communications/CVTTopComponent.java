@@ -73,7 +73,7 @@ public final class CVTTopComponent extends TopComponent {
 //        acctsBrowserExplorerManager = new ExplorerManager();
 
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
-            ProxiedExplorerManagerProvider selectedComponent = (ProxiedExplorerManagerProvider) browseVisualizeTabPane.getSelectedComponent();
+            ProxiedExplorerManagerProvider selectedComponent =  (ProxiedExplorerManagerProvider) browseVisualizeTabPane.getSelectedComponent();
             proxyLookup.changeLookup(createLookup(selectedComponent.getProxiedExplorerManager(), getActionMap()));
         });
 

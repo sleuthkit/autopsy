@@ -59,14 +59,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class VisualizationPanel extends JPanel implements ExplorerManager.Provider, ProxiedExplorerManagerProvider {
+public class VisualizationPanel extends JPanel implements ProxiedExplorerManagerProvider {
 
     private static final long serialVersionUID = 1L;
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
 
-    private ExplorerManager vizEM = new ExplorerManager();
-
+    private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
@@ -93,7 +92,7 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
         graphComponent.setAutoScroll(true);
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
-     jPanel1.add(graphComponent, BorderLayout.CENTER);
+        jPanel1.add(graphComponent, BorderLayout.CENTER);
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
         CVTEvents.getCVTEventBus().register(this);
 
@@ -125,11 +124,6 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
                 }
             }
         });
-    }
-
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return vizEM;
     }
 
     @Override
