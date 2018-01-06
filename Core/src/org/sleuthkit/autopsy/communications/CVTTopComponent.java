@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.swing.JSplitPane;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.util.Lookup;
@@ -40,15 +39,16 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @TopComponent.Registration(mode = "cvt", openAtStartup = false)
 @RetainLocation("cvt")
 @NbBundle.Messages("CVTTopComponent.name= Communications Visualization")
-public final class CVTTopComponent extends TopComponent implements ExplorerManager.Provider {
+public final class CVTTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    private final ExplorerManager acctsBrowserExplorerManager;
+
+    private final ExplorerManager filterToTableEXplorerManager = new ExplorerManager();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
-
+        filtersPane.setExplorerManager(filterToTableEXplorerManager);
         setName(Bundle.CVTTopComponent_name());
 
         /*
@@ -56,27 +56,25 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          * use by the messages browsers so that selections in the messages
          * browser can be exposed to context-sensitive actions.
          */
-        ExplorerManager browserExplorerManager = new ExplorerManager();
-        ExplorerManager vizExplorerManager = new ExplorerManager();
+//        ExplorerManager browserExplorerManager = new ExplorerManager();
+//        ExplorerManager vizExplorerManager = new ExplorerManager();
         ProxyLookupImpl proxyLookup = new ProxyLookupImpl();
         associateLookup(proxyLookup);
-        browseSplitPane.setRightComponent(new MessageBrowser(browserExplorerManager));
-        vizSplitPane.setRightComponent(new MessageBrowser(vizExplorerManager));
-        /*
-         * Create a second explorer manager to be discovered by the accounts
-         * browser and the message browser so that the browsers can both listen
-         * for explorer manager property events for the outline view of the
-         * accounts browser. This provides a mechanism for pushing selected
-         * Nodes from the accounts browser to the messages browser.
-         */
-        acctsBrowserExplorerManager = new ExplorerManager();
-        accountsBrowser.init(acctsBrowserExplorerManager);
-        vizPanel.initVisualization(acctsBrowserExplorerManager);
+        accountsBrowser.init(filterToTableEXplorerManager);
+//        browseSplitPane.setRightComponent(new MessageBrowser(browserExplorerManager));
+//        vizSplitPane.setRightComponent(new MessageBrowser(vizExplorerManager));
+//        /*
+//         * Create a second explorer manager to be discovered by the accounts
+//         * browser and the message browser so that the browsers can both listen
+//         * for explorer manager property events for the outline view of the
+//         * accounts browser. This provides a mechanism for pushing selected
+//         * Nodes from the accounts browser to the messages browser.
+//         */
+//        acctsBrowserExplorerManager = new ExplorerManager();
 
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
-            JSplitPane selectedComponent = (JSplitPane) browseVisualizeTabPane.getSelectedComponent();
-            ExplorerManager.Provider leftComponent = (ExplorerManager.Provider) selectedComponent.getLeftComponent();
-           proxyLookup.changeLookup(createLookup(leftComponent.getExplorerManager(), getActionMap()));
+            ProxiedExplorerManagerProvider selectedComponent = (ProxiedExplorerManagerProvider) browseVisualizeTabPane.getSelectedComponent();
+            proxyLookup.changeLookup(createLookup(selectedComponent.getProxiedExplorerManager(), getActionMap()));
         });
 
         CVTEvents.getCVTEventBus().register(this);
@@ -97,21 +95,13 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private void initComponents() {
 
         browseVisualizeTabPane = new javax.swing.JTabbedPane();
-        browseSplitPane = new javax.swing.JSplitPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
-        vizSplitPane = new javax.swing.JSplitPane();
         vizPanel = new org.sleuthkit.autopsy.communications.VisualizationPanel();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
         browseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-
-        browseSplitPane.setLeftComponent(accountsBrowser);
-
-        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseSplitPane.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), browseSplitPane); // NOI18N
-
-        vizSplitPane.setLeftComponent(vizPanel);
-
-        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizSplitPane.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizSplitPane); // NOI18N
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
 
         filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
 
@@ -136,27 +126,22 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
                 .addComponent(browseVisualizeTabPane)
                 .addContainerGap())
         );
+
+        browseVisualizeTabPane.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
-    private javax.swing.JSplitPane browseSplitPane;
     private javax.swing.JTabbedPane browseVisualizeTabPane;
     private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
     private org.sleuthkit.autopsy.communications.VisualizationPanel vizPanel;
-    private javax.swing.JSplitPane vizSplitPane;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-    }
-
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return acctsBrowserExplorerManager;
     }
 
     @Override
@@ -184,11 +169,16 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
 
     private static class ProxyLookupImpl extends ProxyLookup {
 
-        public ProxyLookupImpl() {
+        ProxyLookupImpl() {
         }
-        
-        void changeLookup(Lookup l){
+
+        void changeLookup(Lookup l) {
             setLookups(l);
         }
+    }
+
+    static interface ProxiedExplorerManagerProvider {
+
+        ExplorerManager getProxiedExplorerManager();
     }
 }

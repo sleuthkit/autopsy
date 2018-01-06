@@ -31,12 +31,13 @@ import org.openide.explorer.ExplorerManager;
  * A panel that goes in the Browse tab of the Communications Visualization Tool.
  * Hosts an OutlineView that shows information about Accounts.
  */
-public class AccountsBrowser extends JPanel implements ExplorerManager.Provider {
+public class AccountsBrowser extends JPanel implements ExplorerManager.Provider, CVTTopComponent.ProxiedExplorerManagerProvider {
 
     private static final long serialVersionUID = 1L;
 
     private final Outline outline;
-    private ExplorerManager em;
+    private final ExplorerManager gacEM = new ExplorerManager();
+    private ExplorerManager tableEM;
 
     /**
      * Creates new form AccountsBrowser
@@ -54,19 +55,22 @@ public class AccountsBrowser extends JPanel implements ExplorerManager.Provider 
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
+
     }
 
-    void init(ExplorerManager acctsBrowserExplorerManager) {
-        em = acctsBrowserExplorerManager;
-        em.addPropertyChangeListener(evt -> {
+    void init(ExplorerManager tableExplorerManager) {
+        this.tableEM = tableExplorerManager;
+        tableExplorerManager.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             }
         });
-    
-    } 
+
+        jSplitPane1.setRightComponent(new MessageBrowser(tableExplorerManager, gacEM));
+    }
+
     private void setColumnWidths() {
         int margin = 4;
         int padding = 8;
@@ -100,35 +104,29 @@ public class AccountsBrowser extends JPanel implements ExplorerManager.Provider 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSplitPane1 = new javax.swing.JSplitPane();
         outlineView = new org.openide.explorer.view.OutlineView();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
-        );
+        setLayout(new java.awt.BorderLayout());
+
+        jSplitPane1.setLeftComponent(outlineView);
+
+        add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSplitPane jSplitPane1;
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return em;
+        return tableEM;
     }
 
-   
+    @Override
+    public ExplorerManager getProxiedExplorerManager() {
+        return gacEM;
+    }
 }

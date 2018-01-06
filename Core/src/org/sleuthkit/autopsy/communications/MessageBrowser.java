@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
@@ -37,9 +38,10 @@ import org.sleuthkit.datamodel.CommunicationsManager;
  * The right hand side of the CVT. Has a DataResultPanel to show messages and
  * other account details, and a ContentViewer to show individual
  */
-final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
-    
+public final class MessageBrowser extends JPanel {
+
     private static final long serialVersionUID = 1L;
+    private final ExplorerManager tableEM;
     private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
     private DataResultViewerTable dataResultViewerTable;
@@ -53,7 +55,8 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
      *                           in the messages browser can be exposed to
      *                           context-sensitive actions.
      */
-    MessageBrowser(ExplorerManager gacExplorerManager) {
+    public MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
+        this.tableEM = tableEM;
         this.gacExplorerManager = gacExplorerManager;
         initComponents();
         //create an uninitialized DataResultPanel so we can control the ResultViewers that get added.
@@ -61,11 +64,11 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
-        ExplorerManager parentEm = ExplorerManager.find(this);
+//        ExplorerManager parentEm = ExplorerManager.find(this);
 //        parentEm.addPropertyChangeListener(pce -> {
 //            gacExplorerManager.setRootContext(parentEm.getRootContext());
 //            try {
@@ -74,14 +77,14 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
 //                Exceptions.printStackTrace(ex);
 //            }
 //        });
-        
-        parentEm.addPropertyChangeListener(pce -> {
+
+        tableEM.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] selectedNodes = parentEm.getSelectedNodes();
-                
+                final Node[] selectedNodes = tableEM.getSelectedNodes();
+
                 messagesResultPanel.setNumMatches(0);
                 messagesResultPanel.setNode(null);
-                
+
                 if (selectedNodes.length == 0) {
                     //reset panel when there is no selection
                     messagesResultPanel.setPath("");
@@ -92,7 +95,7 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
                         CommunicationsFilter filter = adiNode.getFilter();
                         CommunicationsManager commsManager = adiNode.getCommsManager();
                         final Set<AccountDeviceInstance> accountDeviceInstances;
-                        
+
                         if (selectedNodes.length == 1) {
                             final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
                             accountDeviceInstances = Collections.singleton(accountDeviceInstance);
@@ -120,11 +123,6 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
             messagesResultPanel.addResultViewer(dataResultViewerTable);
         }
         messagesResultPanel.open();
-    }
-    
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return gacExplorerManager;
     }
 
     /**

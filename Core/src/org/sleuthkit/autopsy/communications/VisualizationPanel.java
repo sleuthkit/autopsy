@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
+import org.sleuthkit.autopsy.communications.CVTTopComponent.ProxiedExplorerManagerProvider;
 import static org.sleuthkit.autopsy.communications.RelationshipNode.getAttributeDisplayString;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -57,23 +59,25 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class VisualizationPanel extends JPanel implements ExplorerManager.Provider {
+public class VisualizationPanel extends JPanel implements ExplorerManager.Provider, ProxiedExplorerManagerProvider {
+
+    private static final long serialVersionUID = 1L;
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
-    private ExplorerManager explorerManager;
-    private final mxGraph graph;
 
-    private final Map<String, mxCell> nodeMap = new HashMap<>();
+    private ExplorerManager vizEM = new ExplorerManager();
+
+    private final ExplorerManager gacEM = new ExplorerManager();
     private final mxGraphComponent graphComponent;
+    private final mxGraph graph;
+    private final Map<String, mxCell> nodeMap = new HashMap<>();
 
     static {
+        //initialize defaul cell properties
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
     }
 
-    /**
-     * Creates new form VizPanel
-     */
     public VisualizationPanel() {
         initComponents();
         graph = new mxGraph();
@@ -89,16 +93,11 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
         graphComponent.setAutoScroll(true);
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
-        this.add(graphComponent);
-
+     jPanel1.add(graphComponent, BorderLayout.CENTER);
+        splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
         CVTEvents.getCVTEventBus().register(this);
 
         graph.setStylesheet(mxStylesheet);
-
-    }
-
-    public void initVisualization(ExplorerManager em) {
-        explorerManager = em;
 
         graph.getSelectionModel().addListener(null, (sender, evt) -> {
             Object[] selectionCells = graph.getSelectionCells();
@@ -111,8 +110,8 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
                         final AccountDeviceInstanceNode accountDeviceInstanceNode =
                                 new AccountDeviceInstanceNode(((AccountDeviceInstanceKey) selectionCell.getValue()),
                                         commsManager);
-                        explorerManager.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
-                        explorerManager.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
+                        vizEM.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
+                        vizEM.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
 
                     } else if (selectionCell.isEdge()) {
                         System.out.println(selectionCell.getId());
@@ -130,7 +129,12 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return explorerManager;
+        return vizEM;
+    }
+
+    @Override
+    public ExplorerManager getProxiedExplorerManager() {
+        return gacEM;
     }
 
     private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
@@ -276,24 +280,17 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        splitPane = new javax.swing.JSplitPane();
+        jPanel1 = new javax.swing.JPanel();
         jToolBar1 = new javax.swing.JToolBar();
-        jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
 
-        jToolBar1.setRollover(true);
+        jPanel1.setLayout(new java.awt.BorderLayout());
 
-        jButton1.setText(org.openide.util.NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton1.text")); // NOI18N
-        jButton1.setFocusable(false);
-        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(jButton1);
+        jToolBar1.setRollover(true);
 
         jButton2.setText(org.openide.util.NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton2.text")); // NOI18N
         jButton2.setFocusable(false);
@@ -306,7 +303,22 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
         });
         jToolBar1.add(jButton2);
 
-        add(jToolBar1, java.awt.BorderLayout.PAGE_START);
+        jButton1.setText(org.openide.util.NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton1.text")); // NOI18N
+        jButton1.setFocusable(false);
+        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton1);
+
+        jPanel1.add(jToolBar1, java.awt.BorderLayout.PAGE_START);
+
+        splitPane.setLeftComponent(jPanel1);
+
+        add(splitPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -324,7 +336,9 @@ public class VisualizationPanel extends JPanel implements ExplorerManager.Provid
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
     static class SimpleParentNode extends AbstractNode {

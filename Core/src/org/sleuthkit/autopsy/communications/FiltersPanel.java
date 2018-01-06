@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -59,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel that holds the Filter control widgets and translates user filtering
  * changes into queries against the CommunicationsManager.
  */
-final public class FiltersPanel extends javax.swing.JPanel {
+final public class FiltersPanel extends JPanel {
 
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
@@ -119,9 +120,9 @@ final public class FiltersPanel extends javax.swing.JPanel {
             if (eventType.equals(DATA_ADDED.toString())) {
                 // Indicate that a refresh may be needed, unless the data added is Keyword or Hashset hits
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
-                if (null != eventData && 
-                        eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() &&
-                        eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                if (null != eventData
+                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                     updateFilters();
                     needsRefresh = true;
                     validateFilters();
@@ -173,11 +174,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
     @Override
     public void addNotify() {
         super.addNotify();
-        /*
-         * Since we get the exploreremanager from the parent JComponenet, wait
-         * till this FiltersPanel is actaully added to a parent.
-         */
-        em = ExplorerManager.find(this);
         IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             devicesMap.clear();
@@ -625,4 +621,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
+
+    void setExplorerManager(ExplorerManager explorerManager) {
+        em = explorerManager;
+    }
 }
