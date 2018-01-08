@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
-import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
@@ -239,10 +238,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         } finally {
             // Updates the display
             graph.getModel().endUpdate();
-            revalidate();
+
         }
 
-        new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
+        applyOrganicLayout();
+        revalidate();
     }
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
@@ -382,10 +382,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        new mxOrganicLayout(graph).execute(graph.getDefaultParent());
-//        new mxCompactTreeLayout(graph).execute(graph.getDefaultParent());
-        graphComponent.zoomAndCenter();
+        applyOrganicLayout();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void applyOrganicLayout() {
+        new mxOrganicLayout(graph).execute(graph.getDefaultParent());
+        graphComponent.zoomAndCenter();
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
