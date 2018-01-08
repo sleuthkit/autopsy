@@ -144,7 +144,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             return IngestModule.ProcessResult.OK;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", Paths.get(file.getParentPath(), file.getName())), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
     }
