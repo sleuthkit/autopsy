@@ -72,7 +72,6 @@ class ReportHTML implements TableReportModule {
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
     private static ReportHTML instance;
     private static final int MAX_THUMBS_PER_PAGE = 1000;
-    private static final String HTML_REPORT = "HTML Report";
     private static final String HTML_SUBDIR = "content";
     private Case currentCase;
     private SleuthkitCase skCase;
