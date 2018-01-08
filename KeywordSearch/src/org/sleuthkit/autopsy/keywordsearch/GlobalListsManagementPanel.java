@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFileChooser;
@@ -35,6 +36,8 @@ import javax.swing.table.AbstractTableModel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -45,6 +48,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     private static final long serialVersionUID = 1L;
     private final KeywordListTableModel tableModel;
     private final org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel globalListSettingsPanel;
+    private final static String LAST_KEYWORD_LIST_PATH_KEY = "KeyWordImport_List";
 
     GlobalListsManagementPanel(org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel gsp) {
         this.globalListSettingsPanel = gsp;
@@ -345,8 +349,13 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
-
+        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), "KeywordList").toString();
+        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_KEYWORD_LIST_PATH_KEY)) {
+            lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_KEYWORD_LIST_PATH_KEY);
+        }
+        File importFolder = new File(lastBaseDirectory);
         JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(importFolder);
         final String[] AUTOPSY_EXTENSIONS = new String[]{"xml"}; //NON-NLS
         final String[] ENCASE_EXTENSIONS = new String[]{"txt"}; //NON-NLS
         FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
@@ -430,7 +439,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 KeywordSearchUtil.displayDialog(
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
-
+            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_KEYWORD_LIST_PATH_KEY, selFile.getParent());
         }
         tableModel.resync();
 
