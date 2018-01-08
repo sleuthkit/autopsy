@@ -47,7 +47,6 @@ class FileReportText implements FileReportModule {
     private String reportPath;
     private Writer out;
     private static final String FILE_NAME = "file-report.txt"; //NON-NLS
-    private static final String FILE_REPORT = "Text Report";
 
     private static FileReportText instance;
 
@@ -61,14 +60,7 @@ class FileReportText implements FileReportModule {
 
     @Override
     public void startReport(String baseReportDir) {
-        String fileReportDir = baseReportDir + " " + FILE_REPORT;
-        try {
-            FileUtil.createFolder(new File(fileReportDir));
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to make File report folder."); //NON-NLS
-        }
-
-        this.reportPath = baseReportDir + getRelativeFilePath();
+        this.reportPath = baseReportDir + FILE_NAME;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
         } catch (IOException ex) {
@@ -148,6 +140,6 @@ class FileReportText implements FileReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return " " + FILE_REPORT + File.separator + FILE_NAME;
+        return FILE_NAME;
     }
 }

@@ -35,7 +35,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ReportExcel implements TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
-    private static final String EXCEL_REPORT = "Excel Report";
     private static ReportExcel instance;
 
     private Workbook wb;
@@ -68,12 +67,7 @@ class ReportExcel implements TableReportModule {
     @Override
     public void startReport(String baseReportDir) {
         // Set the path and save it for when the report is written to disk.
-        try {
-            FileUtil.createFolder(new File(baseReportDir + " " + EXCEL_REPORT));
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to make Excel report folder."); //NON-NLS
-        }
-       this.reportPath = baseReportDir + getRelativeFilePath();
+        this.reportPath = baseReportDir + getRelativeFilePath();
  
         // Make a workbook.
         wb = new XSSFWorkbook();
@@ -277,7 +271,7 @@ class ReportExcel implements TableReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return " " + EXCEL_REPORT + File.separator + "Excel.xlsx"; //NON-NLS
+        return "Excel.xlsx"; //NON-NLS
     }
 
     /**

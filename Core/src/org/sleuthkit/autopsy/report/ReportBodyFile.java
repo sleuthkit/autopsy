@@ -45,7 +45,6 @@ import org.sleuthkit.datamodel.*;
 class ReportBodyFile implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
-    private static final String TSK_BODY_REPORT = "TSK Body File Report";
     private static ReportBodyFile instance = null;
 
     private Case currentCase;
@@ -78,11 +77,6 @@ class ReportBodyFile implements GeneralReportModule {
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
-        try {
-            FileUtil.createFolder(new java.io.File(baseReportDir + " " + TSK_BODY_REPORT));
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to make TSK Body File report folder."); //NON-NLS
-        }
         reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
@@ -187,7 +181,7 @@ class ReportBodyFile implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return " " + TSK_BODY_REPORT + java.io.File.separator + NbBundle.getMessage(this.getClass(), "ReportBodyFile.getFilePath.text");
+        return NbBundle.getMessage(this.getClass(), "ReportBodyFile.getFilePath.text");
     }
 
     @Override

@@ -53,7 +53,6 @@ class ReportKML implements GeneralReportModule {
     private static final String KML_STYLE_FILE = "style.kml";
     private static final String REPORT_KML = "ReportKML.kml";
     private static final String STYLESHEETS_PATH = "/org/sleuthkit/autopsy/report/stylesheets/";
-    private static final String KML_REPORT = "Google Earth KML Report";
     private static ReportKML instance = null;
     private Case currentCase;
     private SleuthkitCase skCase;
@@ -104,14 +103,8 @@ class ReportKML implements GeneralReportModule {
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
-        baseReportDir += " " + KML_REPORT + File.separator;
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
-        try {
-            FileUtil.createFolder(new File(baseReportDir));
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to make KML report folder."); //NON-NLS
-        }
-
+        
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
 
@@ -840,7 +833,7 @@ class ReportKML implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return " " + KML_REPORT + File.separator + "ReportKML.kml"; //NON-NLS
+        return "ReportKML.kml"; //NON-NLS
     }
 
     @Override

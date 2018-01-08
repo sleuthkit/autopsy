@@ -63,7 +63,7 @@ class ReportGenerator {
      */
     private ReportProgressPanel progressPanel;
 
-    private final String reportPath;
+    private String reportPathFormatString;
     private final ReportGenerationPanel reportGenerationPanel = new ReportGenerationPanel();
 
     static final String REPORTS_DIR = "Reports"; //NON-NLS
@@ -93,10 +93,11 @@ class ReportGenerator {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " " + dateNoTime + " ";
+        this.reportPathFormatString = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " %s " + dateNoTime + File.separator;
 
         this.errorList = new ArrayList<>();
     }
+
 
     /**
      * Display the progress panels to the user, and add actions to close the
@@ -137,9 +138,17 @@ class ReportGenerator {
      */
     void generateGeneralReport(GeneralReportModule generalReportModule) {
         if (generalReportModule != null) {
+            reportPathFormatString = String.format(reportPathFormatString, generalReportModule.getName());
+            // Create the root reports directory.
+            try {
+                FileUtil.createFolder(new File(reportPathFormatString));
+            } catch (IOException ex) {
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
+                logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
+            }
             setupProgressPanel(generalReportModule);
             ReportWorker worker = new ReportWorker(() -> {
-                generalReportModule.generateReport(reportPath, progressPanel);
+                generalReportModule.generateReport(reportPathFormatString, progressPanel);
             });
             worker.execute();
             displayProgressPanel();
@@ -156,9 +165,17 @@ class ReportGenerator {
      */
     void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
         if (tableReport != null && null != artifactTypeSelections) {
+            reportPathFormatString = String.format(reportPathFormatString, tableReport.getName());
+            // Create the root reports directory.
+            try {
+                FileUtil.createFolder(new File(reportPathFormatString));
+            } catch (IOException ex) {
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
+                logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
+            }
             setupProgressPanel(tableReport);
             ReportWorker worker = new ReportWorker(() -> {
-                tableReport.startReport(reportPath);
+                tableReport.startReport(reportPathFormatString);
                 TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
                 generator.execute();
                 tableReport.endReport();
@@ -179,6 +196,14 @@ class ReportGenerator {
      */
     void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) {
         if (fileReportModule != null && null != enabledInfo) {
+            reportPathFormatString = String.format(reportPathFormatString, fileReportModule.getName());
+            // Create the root reports directory.
+            try {
+                FileUtil.createFolder(new File(reportPathFormatString));
+            } catch (IOException ex) {
+                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
+                logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
+            }
             List<FileReportDataTypes> enabled = new ArrayList<>();
             for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
                 if (e.getValue()) {
@@ -196,7 +221,7 @@ class ReportGenerator {
                 List<AbstractFile> files = getFiles();
                 int numFiles = files.size();
                 if (progressPanel.getStatus() != ReportStatus.CANCELED) {
-                    fileReportModule.startReport(reportPath);
+                    fileReportModule.startReport(reportPathFormatString);
                     fileReportModule.startTable(enabled);
                 }
                 progressPanel.setIndeterminate(false);
@@ -254,7 +279,7 @@ class ReportGenerator {
     private void setupProgressPanel(ReportModule module) {
         String reportFilePath = module.getRelativeFilePath();
         if (!reportFilePath.isEmpty()) {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportPath + reportFilePath);
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), String.format(reportPathFormatString, module.getName()) + reportFilePath);
         } else {
             this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
         }

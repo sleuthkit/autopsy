@@ -329,11 +329,10 @@ class ReportHTML implements TableReportModule {
         // Refresh the HTML report
         refresh();
         // Setup the path for the HTML report
-        this.path = baseReportDir + " " + HTML_REPORT + File.separator; //NON-NLS
+        this.path = baseReportDir; //NON-NLS
         this.subPath = this.path + HTML_SUBDIR + File.separator;
         this.thumbsPath = this.subPath + THUMBS_REL_PATH; //NON-NLS
         try {
-            FileUtil.createFolder(new File(this.path));
             FileUtil.createFolder(new File(this.subPath));
             FileUtil.createFolder(new File(this.thumbsPath));
         } catch (IOException ex) {
@@ -801,7 +800,7 @@ class ReportHTML implements TableReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return " " + HTML_REPORT + File.separator + "report.html"; //NON-NLS
+        return "report.html"; //NON-NLS
     }
 
     @Override
