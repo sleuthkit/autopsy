@@ -30,7 +30,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
     private final LocalDiskModel model = new LocalDiskModel();
     private final java.awt.Frame parent;
     private String drivePath = "";
-    
+
     /**
      * Creates new form SelectDriveDialog
      */
@@ -39,7 +39,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.parent = parent;
-        
+
         model.loadDisks();
         bnOk.setEnabled(false);
         diskTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -53,10 +53,10 @@ class SelectDriveDialog extends javax.swing.JDialog {
             }
         });
     }
-    
-    void display(){        
+
+    void display() {
         this.setTitle(Bundle.SelectDriveDialog_title());
-        
+
         final Dimension parentSize = parent.getSize();
         final Point parentLocationOnScreen = parent.getLocationOnScreen();
         final Dimension childSize = this.getSize();
@@ -70,11 +70,10 @@ class SelectDriveDialog extends javax.swing.JDialog {
         setLocation(x, y);
         setVisible(true);
     }
-    
-    String getSelectedDrive(){
+
+    String getSelectedDrive() {
         return this.drivePath;
     }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -231,7 +230,6 @@ class SelectDriveDialog extends javax.swing.JDialog {
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 
-
     /**
      * Table model for displaying information from LocalDisk Objects in a table.
      */
@@ -245,7 +243,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
         "SelectDriveDialog.errLabel.drivesNotDetected.toolTipText=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
         "SelectDriveDialog.errLabel.someDisksNotDetected.text=Some disks were not detected. On some systems it requires admin privileges",
         "SelectDriveDialog.errLabel.someDisksNotDetected.toolTipText=Some disks were not detected. On some systems it requires admin privileges"
-            
+
     })
     private class LocalDiskModel implements TableModel {
 
