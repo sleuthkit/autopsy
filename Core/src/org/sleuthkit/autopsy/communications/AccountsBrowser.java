@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,22 +26,34 @@ import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.ProxyLookup;
 
 /**
  * A panel that goes in the Browse tab of the Communications Visualization Tool.
- * Hosts an OutlineView that shows information about Accounts.
+ * Hosts an OutlineView that shows information about Accounts, and a
+ * MessageBrowser for viewing details of communications.
+ *
+ * The Lookup provided by getLookup will be proxied by the lookup of the
+ * CVTTopComponent when this tab is active allowing for context sensitive
+ * actions to work correctly.
  */
-public class AccountsBrowser extends JPanel implements ExplorerManager.Provider, CVTTopComponent.ProxiedExplorerManagerProvider {
+public class AccountsBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
 
     private final Outline outline;
-    private final ExplorerManager gacEM = new ExplorerManager();
-    private ExplorerManager tableEM;
 
-    /**
-     * Creates new form AccountsBrowser
+    private final ExplorerManager messageBrowserEM = new ExplorerManager();
+    private ExplorerManager accountsTableEM;
+
+    /*
+     * This lookup proxies the selection lookup of both he accounts table and
+     * the messages table.
      */
+    private ProxyLookup proxyLookup;
+
     public AccountsBrowser() {
         initComponents();
         outline = outlineView.getOutline();
@@ -59,7 +71,7 @@ public class AccountsBrowser extends JPanel implements ExplorerManager.Provider,
     }
 
     void init(ExplorerManager tableExplorerManager) {
-        this.tableEM = tableExplorerManager;
+        this.accountsTableEM = tableExplorerManager;
         tableExplorerManager.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
@@ -68,7 +80,11 @@ public class AccountsBrowser extends JPanel implements ExplorerManager.Provider,
             }
         });
 
-        jSplitPane1.setRightComponent(new MessageBrowser(tableExplorerManager, gacEM));
+        jSplitPane1.setRightComponent(new MessageBrowser(tableExplorerManager, messageBrowserEM));
+
+        proxyLookup = new ProxyLookup(
+                ExplorerUtils.createLookup(messageBrowserEM, getActionMap()),
+                ExplorerUtils.createLookup(accountsTableEM, getActionMap()));
     }
 
     private void setColumnWidths() {
@@ -122,11 +138,11 @@ public class AccountsBrowser extends JPanel implements ExplorerManager.Provider,
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return tableEM;
+        return accountsTableEM;
     }
 
     @Override
-    public ExplorerManager getProxiedExplorerManager() {
-        return gacEM;
+    public Lookup getLookup() {
+        return proxyLookup;
     }
 }

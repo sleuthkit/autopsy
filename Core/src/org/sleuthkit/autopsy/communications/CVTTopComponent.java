@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
-import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
@@ -48,35 +47,29 @@ public final class CVTTopComponent extends TopComponent {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
-        filtersPane.setExplorerManager(filterToTableEXplorerManager);
         setName(Bundle.CVTTopComponent_name());
+        /*
+         * Connect the filtersPane and the accountsBrowser via a shared
+         * ExplorerMmanager
+         */
+        filtersPane.setExplorerManager(filterToTableEXplorerManager);
+        accountsBrowser.init(filterToTableEXplorerManager);
+
 
         /*
-         * Associate an explorer manager with the GlobalActionContext (GAC) for
-         * use by the messages browsers so that selections in the messages
-         * browser can be exposed to context-sensitive actions.
+         * Associate an Lookup with the GlobalActionContext (GAC) so that
+         * selections in the sub views can be exposed to context-sensitive
+         * actions.
          */
-//        ExplorerManager browserExplorerManager = new ExplorerManager();
-//        ExplorerManager vizExplorerManager = new ExplorerManager();
-        ProxyLookupImpl proxyLookup = new ProxyLookupImpl();
+        ProxyLookupImpl proxyLookup = new ProxyLookupImpl(accountsBrowser.getLookup());
         associateLookup(proxyLookup);
-        accountsBrowser.init(filterToTableEXplorerManager);
-//        browseSplitPane.setRightComponent(new MessageBrowser(browserExplorerManager));
-//        vizSplitPane.setRightComponent(new MessageBrowser(vizExplorerManager));
-//        /*
-//         * Create a second explorer manager to be discovered by the accounts
-//         * browser and the message browser so that the browsers can both listen
-//         * for explorer manager property events for the outline view of the
-//         * accounts browser. This provides a mechanism for pushing selected
-//         * Nodes from the accounts browser to the messages browser.
-//         */
-//        acctsBrowserExplorerManager = new ExplorerManager();
-
+        // Make sure the GAC is proxying the selection of the active tab.
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
-            ProxiedExplorerManagerProvider selectedComponent =  (ProxiedExplorerManagerProvider) browseVisualizeTabPane.getSelectedComponent();
-            proxyLookup.changeLookup(createLookup(selectedComponent.getProxiedExplorerManager(), getActionMap()));
+            Lookup.Provider selectedComponent = (Lookup.Provider) browseVisualizeTabPane.getSelectedComponent();
+            proxyLookup.changeLookups(selectedComponent.getLookup());
         });
 
+        vizPanel.setFilterProvider(filtersPane);
         CVTEvents.getCVTEventBus().register(this);
 
     }
@@ -169,16 +162,12 @@ public final class CVTTopComponent extends TopComponent {
 
     private static class ProxyLookupImpl extends ProxyLookup {
 
-        ProxyLookupImpl() {
+        ProxyLookupImpl(Lookup... l) {
+            super(l);
         }
 
-        void changeLookup(Lookup l) {
+        void changeLookups(Lookup... l) {
             setLookups(l);
         }
-    }
-
-    static interface ProxiedExplorerManagerProvider {
-
-        ExplorerManager getProxiedExplorerManager();
     }
 }

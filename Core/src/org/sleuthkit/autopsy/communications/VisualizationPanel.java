@@ -29,21 +29,25 @@ import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.beans.PropertyVetoException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
-import org.sleuthkit.autopsy.communications.CVTTopComponent.ProxiedExplorerManagerProvider;
+import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import static org.sleuthkit.autopsy.communications.RelationshipNode.getAttributeDisplayString;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -57,25 +61,43 @@ import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
+ * * A panel that goes in the Visualize tab of the Communications Visualization
+ * Tool. Hosts an JGraphX mxGraphComponent that host the communications network
+ * visualization and a MessageBrowser for viewing details of communications.
  *
+ * The Lookup provided by getLookup will be proxied by the lookup of the
+ * CVTTopComponent when this tab is active allowing for context sensitive
+ * actions to work correctly.
  */
-public class VisualizationPanel extends JPanel implements ProxiedExplorerManagerProvider {
+final public class VisualizationPanel extends JPanel implements Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
+    private Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
 
+    static {
+        //initialize defaul cell (Vertex and/or Edge)  properties
+        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
+        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
+    }
+
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
+    private final ProxyLookup proxyLookup = new ProxyLookup(
+            ExplorerUtils.createLookup(gacEM, getActionMap()),
+            ExplorerUtils.createLookup(vizEM, getActionMap()));
+
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
     private final Map<String, mxCell> nodeMap = new HashMap<>();
 
-    static {
-        //initialize defaul cell properties
-        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
-        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
+    private CommunicationsManager commsManager;
+
+    void setFilterProvider(FilterProvider filterProvider) {
+        this.filterProvider = filterProvider;
     }
+    private FilterProvider filterProvider;
 
     public VisualizationPanel() {
         initComponents();
@@ -103,7 +125,6 @@ public class VisualizationPanel extends JPanel implements ProxiedExplorerManager
             if (selectionCells.length == 1) {
                 mxCell selectionCell = (mxCell) selectionCells[0];
                 try {
-                    CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
 
                     if (selectionCell.isVertex()) {
                         final AccountDeviceInstanceNode accountDeviceInstanceNode =
@@ -116,19 +137,16 @@ public class VisualizationPanel extends JPanel implements ProxiedExplorerManager
                         System.out.println(selectionCell.getId());
 //                        explorerManager.setRootContext(new CommunicationsBundleNode(adiKey, commsManager));
                     }
-                } catch (TskCoreException tskCoreException) {
-                    Logger.getLogger(VisualizationPanel.class.getName()).log(Level.SEVERE,
-                            "Could not get communications manager for current case", tskCoreException);
                 } catch (PropertyVetoException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.SEVERE, "Account selection vetoed.", ex);
                 }
             }
         });
     }
 
     @Override
-    public ExplorerManager getProxiedExplorerManager() {
-        return gacEM;
+    public Lookup getLookup() {
+        return proxyLookup;
     }
 
     private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
@@ -192,29 +210,29 @@ public class VisualizationPanel extends JPanel implements ProxiedExplorerManager
     }
 
     @Subscribe
-    public void pinAccount(PinAccountEvent pinEvent) {
+    public void pinAccounts(PinAccountEvent pinEvent) {
 
-        final AccountDeviceInstanceNode adiNode = pinEvent.getAccountDeviceInstanceNode();
-        final AccountDeviceInstanceKey adiKey = adiNode.getAccountDeviceInstanceKey();
+        final Set<AccountDeviceInstanceKey> adiKeys = pinEvent.getAccountDeviceInstances();
+        final CommunicationsFilter commsFilter = filterProvider.getFilter();
 
         graph.getModel().beginUpdate();
         try {
             nodeMap.clear();
             graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
 
-            mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
-            CommunicationsManager commsManager = adiNode.getCommsManager();
-            final CommunicationsFilter commsFilter = adiNode.getFilter();
-            List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                    commsManager.getRelatedAccountDeviceInstances(adiNode.getAccountDeviceInstance(), commsFilter);
+            for (AccountDeviceInstanceKey adiKey : adiKeys) {
+                mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
 
-            for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
-                String dataSourceName = AccountsRootChildren.getDataSourceName(relatedADI);
-                AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount, dataSourceName);
-                mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
+                List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                        commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), commsFilter);
 
-                addEdge(pinnedAccountVertex, relatedAccountVertex);
+                for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+                    long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
+                    AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount);
+                    mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
+
+                    addEdge(pinnedAccountVertex, relatedAccountVertex);
+                }
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
@@ -263,6 +281,49 @@ public class VisualizationPanel extends JPanel implements ProxiedExplorerManager
             nodeMap.put(name, vertex);
         }
         return vertex;
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+//        IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
+        try {
+            commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
+
+        }
+
+        Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
+            graph.getModel().beginUpdate();
+            try {
+                nodeMap.clear();
+                graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+            } finally {
+                graph.getModel().endUpdate();
+            }
+            if (evt.getNewValue() != null) {
+                Case currentCase = (Case) evt.getNewValue();
+                try {
+                    commsManager = currentCase.getSleuthkitCase().getCommunicationsManager();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
+                }
+            } else {
+                commsManager = null;
+            }
+
+        });
+    }
+
+    @Override
+
+    public void removeNotify() {
+        super.removeNotify();
+//        IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
     }
 
     /**

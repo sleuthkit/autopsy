@@ -5,20 +5,21 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
+import com.google.common.collect.ImmutableSet;
+import java.util.Collection;
 
 /**
  *
  */
 class PinAccountEvent {
 
-    private final AccountDeviceInstanceNode accountDeviceInstance;
+    private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
 
-    public AccountDeviceInstanceNode getAccountDeviceInstanceNode() {
-        return accountDeviceInstance;
+    public ImmutableSet<AccountDeviceInstanceKey> getAccountDeviceInstances() {
+        return accountDeviceInstances;
     }
 
-    PinAccountEvent(AccountDeviceInstanceNode accountDeviceInstance) {
-        this.accountDeviceInstance = accountDeviceInstance;
+    PinAccountEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances) {
+        this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
     }
 }

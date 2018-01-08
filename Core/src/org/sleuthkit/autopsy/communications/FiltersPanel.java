@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,13 +57,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel that holds the Filter control widgets and translates user filtering
- * changes into queries against the CommunicationsManager.
+ * Panel that holds the Filter control widgets and triggers queries against the
+ * CommunicationsManager on user filtering changes.
  */
-final public class FiltersPanel extends JPanel {
+final public class FiltersPanel extends JPanel implements FilterProvider {
 
-    private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
 
     private ExplorerManager em;
 
@@ -134,6 +134,10 @@ final public class FiltersPanel extends JPanel {
         refreshButton.addActionListener(e -> applyFilters());
     }
 
+    void setExplorerManager(ExplorerManager explorerManager) {
+        em = explorerManager;
+    }
+
     /**
      * Validate that filters are in a consistent state and will result in some
      * results. Checks that at least one device and at least one account type is
@@ -166,6 +170,9 @@ final public class FiltersPanel extends JPanel {
         dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().toString() + "):");
     }
 
+    /**
+     * Updates the filter widgets to reflect he data sources/types in the case.
+     */
     private void updateFilters() {
         updateAccountTypeFilter();
         updateDeviceFilter();
@@ -176,6 +183,7 @@ final public class FiltersPanel extends JPanel {
         super.addNotify();
         IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
+            //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesPane.removeAll();
         });
@@ -482,26 +490,34 @@ final public class FiltersPanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Query for accounts using the selected filters, and send the results to
-     * the AccountsBrowser via the ExplorerManager.
+     * Push a new root AccountDeviceInstanceNodeFactory with he current filters
+     * into the explorer manager. The factory will do he actual queries.
+     *
+     *
      */
     private void applyFilters() {
-        CommunicationsFilter commsFilter = new CommunicationsFilter();
-        commsFilter.addAndFilter(getDeviceFilter());
-        commsFilter.addAndFilter(getAccountTypeFilter());
-        commsFilter.addAndFilter(getDateRangeFilter());
-        commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
-                ImmutableSet.of(CALL_LOG, MESSAGE)));
+        CommunicationsFilter commsFilter = getFilter();
 
         try {
             final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            em.setRootContext(new AbstractNode(Children.create(new AccountsRootChildren(commsManager, commsFilter), true)));
+            em.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, commsFilter), true)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
         }
 
         needsRefresh = false;
         validateFilters();
+    }
+
+    @Override
+    public CommunicationsFilter getFilter() {
+        CommunicationsFilter commsFilter = new CommunicationsFilter();
+        commsFilter.addAndFilter(getDeviceFilter());
+        commsFilter.addAndFilter(getAccountTypeFilter());
+        commsFilter.addAndFilter(getDateRangeFilter());
+        commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
+                ImmutableSet.of(CALL_LOG, MESSAGE)));
+        return commsFilter;
     }
 
     /**
@@ -532,6 +548,11 @@ final public class FiltersPanel extends JPanel {
         return accountTypeFilter;
     }
 
+    /**
+     * Get an DateRangeFilter that matches the state of the UI widgets
+     *
+     * @return an DateRangeFilter
+     */
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
         long start = startDatePicker.isEnabled() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
@@ -622,7 +643,4 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
 
-    void setExplorerManager(ExplorerManager explorerManager) {
-        em = explorerManager;
-    }
 }

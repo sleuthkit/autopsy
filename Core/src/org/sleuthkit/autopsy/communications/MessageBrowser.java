@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -50,6 +49,8 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
      * Constructs the right hand side of the Communications Visualization Tool
      * (CVT).
      *
+     * @param tableEM            An explorer manager to listen to as the driver
+     *                           of the Message Table.
      * @param gacExplorerManager An explorer manager associated with the
      *                           GlobalActionsContext (GAC) so that selections
      *                           in the messages browser can be exposed to
@@ -63,11 +64,9 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
-    }
-
-    @Override
-    public void addNotify() {
-        super.addNotify();
+        dataResultViewerTable = new DataResultViewerTable(gacExplorerManager, "Messages");
+        messagesResultPanel.addResultViewer(dataResultViewerTable);
+        messagesResultPanel.open();
 
         tableEM.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -107,13 +106,11 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                 }
             }
         });
+    }
 
-        //add the required result viewers and THEN open the panel
-        if (null == dataResultViewerTable) {
-            dataResultViewerTable = new DataResultViewerTable(gacExplorerManager, "Messages");
-            messagesResultPanel.addResultViewer(dataResultViewerTable);
-        }
-        messagesResultPanel.open();
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return gacExplorerManager;
     }
 
     /**
@@ -157,8 +154,4 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return gacExplorerManager;
-    }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-18 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,9 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.eventbus.EventBus;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 
-/**
- * Provide he singleton EventBus.
- */
-final class CVTEvents {
+interface FilterProvider {
 
-    private final static EventBus cvtEventBus = new EventBus();
-
-    public static EventBus getCVTEventBus() {
-        return cvtEventBus;
-    }
-
+    CommunicationsFilter getFilter();
 }
