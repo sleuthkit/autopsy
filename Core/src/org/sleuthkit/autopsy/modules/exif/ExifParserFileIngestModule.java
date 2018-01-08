@@ -104,8 +104,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
         //skip unalloc
-        if ((content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
-                (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.SLACK)))) {
+        if ((content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.SLACK)))) {
             return ProcessResult.OK;
         }
 
@@ -250,17 +250,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
      * @return true if to be processed
      */
     private boolean parsableFormat(AbstractFile f) {
-        try {
-            String mimeType = fileTypeDetector.getFileType(f);
-            if (mimeType != null) {
-                return supportedMimeTypes.contains(mimeType);
-            } else {
-                return false;
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to detect file type", ex); //NON-NLS
-            return false;
-        }
+        String mimeType = fileTypeDetector.detectMIMEType(f);
+        return supportedMimeTypes.contains(mimeType);
     }
 
     @Override

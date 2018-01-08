@@ -91,7 +91,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          */
         try {
             long startTime = System.currentTimeMillis();
-            fileTypeDetector.getFileType(file);
+            file.setMIMEType(fileTypeDetector.detectMIMEType(file));
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
         } catch (Exception e) {

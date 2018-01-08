@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class manages a sequence of file level ingest modules for a data source
@@ -136,10 +140,17 @@ final class FileIngestPipeline {
                     break;
                 }
             }
-            file.close();
+            
             if (!this.job.isCancelled()) {
+                // Save any properties that have not already been saved to the database
+                try{
+                    file.save();
+                } catch (TskCoreException ex){
+                    Logger.getLogger(FileIngestPipeline.class.getName()).log(Level.SEVERE, "Failed to save data for file " + file.getId(), ex); //NON-NLS
+                }
                 IngestManager.getInstance().fireFileIngestDone(file);
             }
+            file.close();
         }
         FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
         return errors;

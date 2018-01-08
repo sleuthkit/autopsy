@@ -39,7 +39,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskException;
@@ -163,17 +162,14 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
      *
      * @return false if the two match. True if there is a mismatch.
      */
-    private boolean compareSigTypeToExt(AbstractFile abstractFile) throws TskCoreException {
+    private boolean compareSigTypeToExt(AbstractFile abstractFile) {
         String currActualExt = abstractFile.getNameExtension();
 
         // If we are skipping names with no extension
         if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
             return false;
         }
-        String currActualSigType = detector.getFileType(abstractFile);
-        if (currActualSigType == null) {
-            return false;
-        }
+        String currActualSigType = detector.detectMIMEType(abstractFile);
         if (settings.getCheckType() != CHECK_TYPE.ALL) {
             if (settings.getCheckType() == CHECK_TYPE.NO_TEXT_FILES) {
                 if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
