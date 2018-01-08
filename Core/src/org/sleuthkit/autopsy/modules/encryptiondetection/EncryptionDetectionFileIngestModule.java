@@ -96,7 +96,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 return flagFile(file);
             }
         } catch (IOException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to process file '%s'", Paths.get(file.getParentPath(), file.getName())), ex);
+            LOGGER.log(Level.SEVERE, String.format("Unable to process file '%s'", file.getParentPath() + file.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
         }
 
