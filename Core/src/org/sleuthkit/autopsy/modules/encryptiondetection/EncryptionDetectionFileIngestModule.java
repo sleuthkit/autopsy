@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.modules.encryptiondetection;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
