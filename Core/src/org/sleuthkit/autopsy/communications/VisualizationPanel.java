@@ -36,7 +36,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JPanel;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.AbstractNode;
@@ -47,14 +46,8 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
-import static org.sleuthkit.autopsy.communications.RelationshipNode.getAttributeDisplayString;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -93,7 +86,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private CommunicationsManager commsManager;
 
-    void setFilterProvider(FilterProvider filterProvider) {
+    protected void setFilterProvider(FilterProvider filterProvider) {
         this.filterProvider = filterProvider;
     }
     private FilterProvider filterProvider;
@@ -146,66 +139,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Override
     public Lookup getLookup() {
         return proxyLookup;
-    }
-
-    private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
-
-        Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
-
-        if (edgesBetween.length == 0) {
-            final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
-            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, pinnedAccountVertex, relatedAccountVertex);
-        } else if (edgesBetween.length == 1) {
-            final mxCell edge = (mxCell) edgesBetween[0];
-            edge.setValue(1d + (double) edge.getValue());
-            edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
-        }
-    }
-
-    @Deprecated
-    private void addEdge(BlackboardArtifact artifact) throws TskCoreException {
-        BlackboardArtifact.ARTIFACT_TYPE artfType = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
-        if (null != artfType) {
-
-            String from = null;
-            String[] tos = new String[0];
-
-            //Consider refactoring this to reduce boilerplate
-            switch (artfType) {
-                case TSK_EMAIL_MSG:
-                    from = StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_FROM), " \t\n;");
-                    tos = StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_TO), " \t\n;").split(";");
-                    break;
-                case TSK_MESSAGE:
-                    from = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM);
-                    tos = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO).split(";");
-                    break;
-                case TSK_CALLLOG:
-                    from = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM);
-                    tos = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO).split(";");
-                    break;
-                default:
-                    break;
-            }
-            for (String to : tos) {
-                if (StringUtils.isNotBlank(from) && StringUtils.isNotBlank(to)) {
-
-                    mxCell fromV = getOrCreateVertex(from, 10);
-                    mxCell toV = getOrCreateVertex(to, 10);
-
-                    Object[] edgesBetween = graph.getEdgesBetween(fromV, toV);
-
-                    if (edgesBetween.length == 0) {
-                        final String edgeName = from + "->" + to;
-                        mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, fromV, toV);
-                    } else if (edgesBetween.length == 1) {
-                        final mxCell edge = (mxCell) edgesBetween[0];
-                        edge.setValue(1d + (double) edge.getValue());
-                        edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
-                    }
-                }
-            }
-        }
     }
 
     @Subscribe
@@ -265,22 +198,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         return vertex;
     }
 
-    @Deprecated
-    private mxCell getOrCreateVertex(String name, long size) {
-        mxCell vertex = nodeMap.get(name);
-        if (vertex == null) {
-            vertex = (mxCell) graph.insertVertex(
-                    graph.getDefaultParent(),
-                    name,
-                    name,
-                    new Random().nextInt(200),
-                    new Random().nextInt(200),
-                    size,
-                    size);
-            graph.getView().getState(vertex, true).setLabel(name);
-            nodeMap.put(name, vertex);
+    private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
+
+        Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
+
+        if (edgesBetween.length == 0) {
+            final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
+            graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, pinnedAccountVertex, relatedAccountVertex);
+        } else if (edgesBetween.length == 1) {
+            final mxCell edge = (mxCell) edgesBetween[0];
+            edge.setValue(1d + (double) edge.getValue());
+            edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
         }
-        return vertex;
     }
 
     @Override
@@ -399,15 +328,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    static class SimpleParentNode extends AbstractNode {
+    private static class SimpleParentNode extends AbstractNode {
 
-        static SimpleParentNode createFromChildNodes(Node... nodes) {
+        private static SimpleParentNode createFromChildNodes(Node... nodes) {
             Children.Array array = new Children.Array();
             array.add(nodes);
             return new SimpleParentNode(array);
         }
 
-        public SimpleParentNode(Children children) {
+        private SimpleParentNode(Children children) {
             super(children);
         }
     }

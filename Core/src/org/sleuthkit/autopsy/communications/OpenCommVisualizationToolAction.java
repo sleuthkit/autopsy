@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,10 +48,10 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
     ,
  @ActionReference(path = "Toolbars/Case", position = 102)})
 @Messages("CTL_OpenCVTAction=Communications")
-public final class OpenCommVisualizationToolAction extends CallableSystemAction  {
+public final class OpenCommVisualizationToolAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    PropertyChangeListener pcl;
+    private final PropertyChangeListener pcl;
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/emblem-web24.png"))); //NON-NLS
 

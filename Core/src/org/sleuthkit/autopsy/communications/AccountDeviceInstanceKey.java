@@ -105,10 +105,7 @@ final class AccountDeviceInstanceKey {
         if (!Objects.equals(this.dataSourceName, other.dataSourceName)) {
             return false;
         }
-        if (!Objects.equals(this.accountDeviceInstance, other.accountDeviceInstance)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.accountDeviceInstance, other.accountDeviceInstance);
     }
 
     private static String getDataSourceName(AccountDeviceInstance accountDeviceInstance, SleuthkitCase db) {

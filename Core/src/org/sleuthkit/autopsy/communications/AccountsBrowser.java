@@ -39,7 +39,7 @@ import org.openide.util.lookup.ProxyLookup;
  * CVTTopComponent when this tab is active allowing for context sensitive
  * actions to work correctly.
  */
-public class AccountsBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
+public final class AccountsBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
 
@@ -70,7 +70,7 @@ public class AccountsBrowser extends JPanel implements ExplorerManager.Provider,
 
     }
 
-    void init(ExplorerManager tableExplorerManager) {
+    protected void init(ExplorerManager tableExplorerManager) {
         this.accountsTableEM = tableExplorerManager;
         tableExplorerManager.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {

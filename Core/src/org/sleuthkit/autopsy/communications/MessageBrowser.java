@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -43,7 +44,6 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private final ExplorerManager tableEM;
     private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
-    private DataResultViewerTable dataResultViewerTable;
 
     /**
      * Constructs the right hand side of the Communications Visualization Tool
@@ -56,6 +56,7 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
      *                           in the messages browser can be exposed to
      *                           context-sensitive actions.
      */
+    @NbBundle.Messages({"MessageBrowser.DataResultViewerTable.title=Messages"})
     public MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
         this.tableEM = tableEM;
         this.gacExplorerManager = gacExplorerManager;
@@ -64,13 +65,13 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
-        dataResultViewerTable = new DataResultViewerTable(gacExplorerManager, "Messages");
-        messagesResultPanel.addResultViewer(dataResultViewerTable);
+        messagesResultPanel.addResultViewer(new DataResultViewerTable(gacExplorerManager,
+                Bundle.MessageBrowser_DataResultViewerTable_title()));
         messagesResultPanel.open();
 
-        tableEM.addPropertyChangeListener(pce -> {
+        this.tableEM.addPropertyChangeListener(pce -> {
             if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] selectedNodes = tableEM.getSelectedNodes();
+                final Node[] selectedNodes = this.tableEM.getSelectedNodes();
 
                 messagesResultPanel.setNumMatches(0);
                 messagesResultPanel.setNode(null);

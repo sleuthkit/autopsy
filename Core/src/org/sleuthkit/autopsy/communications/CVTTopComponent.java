@@ -160,13 +160,13 @@ public final class CVTTopComponent extends TopComponent {
                 .collect(Collectors.toList());
     }
 
-    private static class ProxyLookupImpl extends ProxyLookup {
+    final private static class ProxyLookupImpl extends ProxyLookup {
 
         ProxyLookupImpl(Lookup... l) {
             super(l);
         }
 
-        void changeLookups(Lookup... l) {
+        protected void changeLookups(Lookup... l) {
             setLookups(l);
         }
     }
