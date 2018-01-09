@@ -440,7 +440,6 @@ public class FileTypeDetector {
     @Deprecated
     public String detect(AbstractFile file) throws TskCoreException {
         String fileType = detectMIMEType(file);
-        file.setMIMEType(fileType); // Retain side effect of setting value in file object.
         return fileType;
     }
 
