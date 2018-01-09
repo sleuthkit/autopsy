@@ -73,10 +73,6 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction {
         String installPath = PlatformUtil.getInstallPath();
 
         Path exePath = Paths.get(installPath, "bin", exeName);
-        System.out.println("Exe expected at " + exePath);
-
-        // TEMP for testing - allows this to run from Netbeans
-        exePath = Paths.get("C:\\Program Files\\Autopsy-4.5.0", "bin", exeName);
 
         if (!exePath.toFile().exists()) {
             JOptionPane.showMessageDialog(mainWindow,
@@ -193,6 +189,11 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction {
 
         String batchFile
                 = "@echo off\n"
+                + "\n"
+                + "REM This restores the working directory when using 'Run as administrator'"
+                + "@setlocal enableextensions\n"
+                + "@cd /d \"%~dp0\""
+                + "\n"
                 + "SET appName=\"" + appName + "\"\n"
                 + "\n"
                 + "REM Create the configData directory. Exit if it does not exist after attempting to create it\n"
