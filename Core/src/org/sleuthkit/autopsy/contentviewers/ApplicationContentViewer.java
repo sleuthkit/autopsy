@@ -83,7 +83,7 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
      * mimetype
      */
     private ContentViewer getSupportingViewer(String mimeType) {
-        return mimeTypeToViewerMap.containsKey(mimeType) ? mimeTypeToViewerMap.get(mimeType) : null;
+        return  mimeTypeToViewerMap.get(mimeType);
     }
 
     /**
@@ -104,6 +104,9 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
     
     @Override
     public void setNode(Node selectedNode) {
+        
+        resetComponent();
+        
         if (selectedNode == null) {
             return;
         }
@@ -208,16 +211,9 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public int isPreferred(Node node) {
-        if (node == null) {
-            return 0;
-        }
-
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return 0;
-        }
-
         String mimeType = file.getMIMEType();
+        
         if (Strings.isNullOrEmpty(mimeType)) {
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
