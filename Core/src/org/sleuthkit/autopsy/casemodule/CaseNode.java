@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+
 /**
  * Provides a root node for the results views with a single child node that
  * displays a message as the sole item in its property sheet, useful for
@@ -66,18 +66,17 @@ public final class CaseNode extends AbstractNode {
 
     static class CaseNodeChildren extends ChildFactory<Entry<CaseMetadata, Boolean>> {
 
-        Map<CaseMetadata, Boolean> caseList;
+        private final Map<CaseMetadata, Boolean> caseMap;
 
-        public CaseNodeChildren(Map<CaseMetadata, Boolean> caseList) {
-            this.caseList = caseList;
+        CaseNodeChildren(Map<CaseMetadata, Boolean> caseMap) {
+            this.caseMap = caseMap;
         }
 
         @Override
         protected boolean createKeys(List<Entry<CaseMetadata, Boolean>> list) {
-            if (caseList != null && caseList.size() > 0) {
-                list.addAll(caseList.entrySet());
+            if (caseMap != null && caseMap.size() > 0) {
+                list.addAll(caseMap.entrySet());
             }
-            System.out.println("NUM OF KEYS: " + list.size());
             return true;
         }
 
@@ -94,18 +93,20 @@ public final class CaseNode extends AbstractNode {
      */
     public static final class CaseNameNode extends DisplayableItemNode {
 
-        CaseMetadata multiUserCase;
-        String caseMetadataFilePath;
-        boolean caseHasAlert;
+        private final String caseName;
+        private final String caseCreatedDate;
+        private final String caseMetadataFilePath;
+        private final boolean caseHasAlert;
 
         CaseNameNode(Entry<CaseMetadata, Boolean> userCase) {
             super(Children.LEAF);
-            multiUserCase = userCase.getKey();
+            caseName = userCase.getKey().getCaseDisplayName();
+            caseCreatedDate = userCase.getKey().getCreatedDate();
             caseHasAlert = userCase.getValue();
-            super.setName(multiUserCase.getCaseDisplayName());
-            setName(multiUserCase.getCaseDisplayName());
-            setDisplayName(multiUserCase.getCaseDisplayName());
-            caseMetadataFilePath = multiUserCase.getFilePath().toString();
+            super.setName(caseName);
+            setName(caseName);
+            setDisplayName(caseName);
+            caseMetadataFilePath = userCase.getKey().getFilePath().toString();
         }
 
         @Override
@@ -122,7 +123,7 @@ public final class CaseNode extends AbstractNode {
         public String getItemType() {
             return getClass().getName();
         }
-        
+
         public String getMetadataFilePath() {
             return caseMetadataFilePath;
         }
@@ -136,9 +137,9 @@ public final class CaseNode extends AbstractNode {
                 s.put(ss);
             }
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_name(), Bundle.CaseNode_column_name(), Bundle.CaseNode_column_name(),
-                    multiUserCase.getCaseDisplayName()));
+                    caseName));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
-                    multiUserCase.getCreatedDate()));
+                    caseCreatedDate));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(),
                     (caseHasAlert == true ? "Alert" : "")));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(),
@@ -150,7 +151,7 @@ public final class CaseNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             actions.addAll(Arrays.asList(super.getActions(context)));
-            actions.add(new OpenMultiUserCaseAction(multiUserCase.getFilePath()));
+            actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));
             return actions.toArray(new Action[actions.size()]);
         }
     }
@@ -162,9 +163,9 @@ public final class CaseNode extends AbstractNode {
 
         private static final long serialVersionUID = 1L;
 
-        private final Path caseMetadataFilePath;
+        private final String caseMetadataFilePath;
 
-        public OpenMultiUserCaseAction(Path path) {
+        OpenMultiUserCaseAction(String path) {
             super("Open Case");
             caseMetadataFilePath = path;
         }
@@ -172,32 +173,32 @@ public final class CaseNode extends AbstractNode {
         @Override
         public void actionPerformed(ActionEvent e) {
             StartupWindowProvider.getInstance().close();
-            openCaseThread(caseMetadataFilePath);
-        }
-    }
-
-    private static void openCaseThread(Path caseMetadataFilePath) {
-
-        new Thread(
-                () -> {
-                    try {
-                        Case.openAsCurrentCase(caseMetadataFilePath.toString());
-                    } catch (CaseActionException ex) {
-                        if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                            //                   LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                            MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
+            new Thread(
+                    () -> {
+                        try {
+                            Case.openAsCurrentCase(caseMetadataFilePath);
+                        } catch (CaseActionException ex) {
+                            if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                                //                   LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
+                                MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
+                            }
+                            SwingUtilities.invokeLater(() -> {
+                                //GUI changes done back on the EDT
+                                StartupWindowProvider.getInstance().open();
+                            });
+                        } finally {
+                            SwingUtilities.invokeLater(() -> {
+                                //GUI changes done back on the EDT
+                            });
                         }
-                        SwingUtilities.invokeLater(() -> {
-                            //GUI changes done back on the EDT
-                            StartupWindowProvider.getInstance().open();
-                        });
-                    } finally {
-                        SwingUtilities.invokeLater(() -> {
-                            //GUI changes done back on the EDT
-                        });
                     }
-                }
-        ).start();
+            ).start();
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
     }
 
 }

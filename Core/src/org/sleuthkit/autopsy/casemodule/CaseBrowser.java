@@ -23,11 +23,13 @@ import java.lang.reflect.InvocationTargetException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import org.netbeans.swing.etable.ETableColumn;
+import org.netbeans.swing.etable.ETableColumnModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
-import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.openide.nodes.Node;
 
 /**
  * A Swing JPanel with a JTabbedPane child component. The tabbed pane contains
@@ -56,10 +58,10 @@ class CaseBrowser extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private Outline outline;
+    private final Outline outline;
     private ExplorerManager em;
-    private org.openide.explorer.view.OutlineView outlineView;
-
+    private final org.openide.explorer.view.OutlineView outlineView;
+    private int originalPathColumnIndex = 0;
     /**
      * Creates new form CaseBrowser
      */
@@ -71,13 +73,28 @@ class CaseBrowser extends javax.swing.JPanel {
         outlineView.setPropertyColumns(
                 Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
                 Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(),
-                Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath()
-        );
+                Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath());
+        customize();
+
+    }
+
+    private void customize() {
+        TableColumnModel columnModel = outline.getColumnModel();
+        int dateColumnIndex = 0;
+        for (int index = 0; index < columnModel.getColumnCount(); index++) {  //get indexes for hidden column and default sorting column
+            if (columnModel.getColumn(index).getHeaderValue().toString().equals(Bundle.CaseNode_column_metadataFilePath())) {
+                originalPathColumnIndex = index;
+            } else if (columnModel.getColumn(index).getHeaderValue().toString().equals(Bundle.CaseNode_column_createdTime())) {
+                dateColumnIndex = index;
+            }
+        }
+        ETableColumn column = (ETableColumn) columnModel.getColumn(originalPathColumnIndex);
+        ((ETableColumnModel) columnModel).setColumnHidden(column, true);
         outline.setRootVisible(false);
+
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.CaseNode_column_name());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        outline.setColumnSorted(1, false, 1); //it would be nice if the column index wasn't hardcoded
-
+        outline.setColumnSorted(dateColumnIndex, false, 1); //it would be nice if the column index wasn't hardcoded
     }
 
     /**
@@ -102,37 +119,28 @@ class CaseBrowser extends javax.swing.JPanel {
         this.setVisible(true);
     }
 
-    public void addListSelectionListener(ListSelectionListener listener) {
+    void setRowSelectionAllowed(boolean allowed) {
+        outline.setRowSelectionAllowed(allowed);
+    }
+
+    void addListSelectionListener(ListSelectionListener listener) {
         outline.getSelectionModel().addListSelectionListener(listener);
     }
 
     String getCasePath() {
         int[] selectedRows = outline.getSelectedRows();
-        System.out.println("Explored Context: " + em.getExploredContext());
-        System.out.println("EM ROOT NODe: " + em.getRootContext().getDisplayName());
         if (selectedRows.length == 1) {
-            System.out.println("Selected Row: " + selectedRows[0]);
-            for (int colIndex = 0; colIndex < outline.getColumnCount(); colIndex++) {
-                TableColumn col = outline.getColumnModel().getColumn(colIndex);
-                System.out.println("COL: " + col.getHeaderValue().toString());
-                if (col.getHeaderValue().toString().equals(Bundle.CaseNode_column_metadataFilePath())) {
-                    try {
-                        return ((NodeProperty)outline.getValueAt(selectedRows[0], colIndex)).getValue().toString();
-                    } catch (IllegalAccessException ex) {
-                        
-                    } catch (InvocationTargetException ex) {
-                        
-                    }        
-                }
+            try {
+                return ((Node.Property) outline.getModel().getValueAt(outline.convertRowIndexToModel(selectedRows[0]), originalPathColumnIndex)).getValue().toString();
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                System.out.println("THROW");
             }
-
         }
         return null;
     }
-                                                                                                                                                                                                                                                    
+
     boolean isRowSelected() {
-        System.out.println("SELECTED ROWS: " + outline.getSelectedRows().length);
-        return outline.getSelectedRows().length > 0;
+        return outline.getRowSelectionAllowed() && outline.getSelectedRows().length > 0;
     }
 
     private void setColumnWidths() {
@@ -141,8 +149,8 @@ class CaseBrowser extends javax.swing.JPanel {
 
         final int rows = Math.min(100, outline.getRowCount());
 
-        for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
-            int columnWidthLimit = 500;
+        for (int column = 0; column < outline.getColumnModel().getColumnCount(); column++) {
+            int columnWidthLimit = 800;
             int columnWidth = 0;
 
             // find the maximum width needed to fit the values for the first 100 rows, at most
