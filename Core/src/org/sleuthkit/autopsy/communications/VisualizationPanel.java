@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
@@ -28,8 +30,11 @@ import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.beans.PropertyVetoException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -83,6 +88,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
     private final Map<String, mxCell> nodeMap = new HashMap<>();
+    Multimap<BlackboardArtifact, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     private CommunicationsManager commsManager;
 
@@ -126,8 +132,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         vizEM.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
 
                     } else if (selectionCell.isEdge()) {
-                        System.out.println(selectionCell.getId());
-//                        explorerManager.setRootContext(new CommunicationsBundleNode(adiKey, commsManager));
+                        vizEM.setRootContext(new AbstractNode(Children.create(new RelaionshipSetNodeFactory((Set<BlackboardArtifact>) selectionCell.getValue()), true)));
                     }
                 } catch (PropertyVetoException ex) {
                     logger.log(Level.SEVERE, "Account selection vetoed.", ex);
@@ -139,43 +144,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Override
     public Lookup getLookup() {
         return proxyLookup;
-    }
-
-    @Subscribe
-    public void pinAccounts(PinAccountEvent pinEvent) {
-
-        final Set<AccountDeviceInstanceKey> adiKeys = pinEvent.getAccountDeviceInstances();
-        final CommunicationsFilter commsFilter = filterProvider.getFilter();
-
-        graph.getModel().beginUpdate();
-        try {
-            nodeMap.clear();
-            graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
-
-            for (AccountDeviceInstanceKey adiKey : adiKeys) {
-                mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
-
-                List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                        commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), commsFilter);
-
-                for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                    long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
-                    AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount);
-                    mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
-
-                    addEdge(pinnedAccountVertex, relatedAccountVertex);
-                }
-            }
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        } finally {
-            // Updates the display
-            graph.getModel().endUpdate();
-
-        }
-
-        applyOrganicLayout();
-        revalidate();
     }
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
@@ -197,19 +165,57 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
         return vertex;
     }
-
-    private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
-
+    @SuppressWarnings("unchecked")
+    private void addEdge(BlackboardArtifact artifact, mxCell pinnedAccountVertex, mxCell relatedAccountVertex) throws TskCoreException {
         Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
-
         if (edgesBetween.length == 0) {
             final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
-            graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, pinnedAccountVertex, relatedAccountVertex);
+            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, new HashSet<>(Arrays.asList(artifact)), pinnedAccountVertex, relatedAccountVertex);
+            edgeMap.put(artifact, edge);
         } else if (edgesBetween.length == 1) {
             final mxCell edge = (mxCell) edgesBetween[0];
-            edge.setValue(1d + (double) edge.getValue());
-            edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
+            ((Collection<BlackboardArtifact>) edge.getValue()).add(artifact);
+            edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
+    @Subscribe
+    public void pinAccounts(PinAccountEvent pinEvent) {
+
+        final Set<AccountDeviceInstanceKey> adiKeys = pinEvent.getAccountDeviceInstances();
+        final CommunicationsFilter commsFilter = filterProvider.getFilter();
+
+        graph.getModel().beginUpdate();
+        try {
+            nodeMap.clear();
+            graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+
+            for (AccountDeviceInstanceKey adiKey : adiKeys) {
+                mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
+
+                List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                        commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), commsFilter);
+
+                for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+
+                    List<BlackboardArtifact> relationships = commsManager.getRelationships(adiKey.getAccountDeviceInstance(), relatedADI, commsFilter);
+
+                    long communicationsCount = relationships.size();
+                    AccountDeviceInstanceKey relatedADIKey =
+                            new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount);
+                    mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
+                    for (BlackboardArtifact relationship : relationships) {
+                        addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        } finally {
+            // Updates the display
+            graph.getModel().endUpdate();
+
         }
+
+        applyOrganicLayout();
+        revalidate();
     }
 
     @Override
