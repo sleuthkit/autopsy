@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
-import java.awt.Cursor;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
@@ -28,11 +27,6 @@ import javax.swing.table.TableColumn;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
-import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
@@ -106,39 +100,6 @@ class CaseBrowser extends javax.swing.JPanel {
         jScrollPane1.setViewportView(outlineView);
         setColumnWidths();
         this.setVisible(true);
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void setNode(Node selectedNode) {
-
-        /*
-         * The quick filter must be reset because when determining column width,
-         * ETable.getRowCount is called, and the documentation states that quick
-         * filters must be unset for the method to work "If the quick-filter is
-         * applied the number of rows do not match the number of rows in the
-         * model."
-         */
-        outline.unsetQuickFilter();
-        // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            boolean hasChildren = false;
-            if (selectedNode != null) {
-                // @@@ This just did a DB round trip to get the count and the results were not saved...
-                hasChildren = selectedNode.getChildren().getNodesCount() > 0;
-            }
-
-            if (hasChildren) {
-                em.setRootContext(selectedNode);;
-                outline = outlineView.getOutline();
-            } else {
-                Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode); // make empty node
-                outlineView.setPropertyColumns(); // set the empty property header
-            }
-        } finally {
-            this.setCursor(null);
-        }
     }
 
     public void addListSelectionListener(ListSelectionListener listener) {
