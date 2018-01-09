@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.modules.encryptiondetection;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -96,7 +95,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 return flagFile(file);
             }
         } catch (IOException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to process file '%s'", Paths.get(file.getParentPath(), file.getName())), ex);
+            LOGGER.log(Level.SEVERE, String.format("Unable to process file '%s'", file.getParentPath() + file.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
         }
 
@@ -144,7 +143,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             return IngestModule.ProcessResult.OK;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", Paths.get(file.getParentPath(), file.getName())), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
     }
@@ -188,13 +187,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                         /*
                          * Qualify the MIME type.
                          */
-                        try {
-                            String mimeType = fileTypeDetector.detectFileType(file);
-                            if (mimeType != null && mimeType.equals("application/octet-stream")) {
-                                possiblyEncrypted = true;
-                            }
-                        } catch (TskCoreException ex) {
-                            throw new TskCoreException("Failed to detect the file type.", ex);
+                        String mimeType = fileTypeDetector.detectMIMEType(file);
+                        if (mimeType.equals("application/octet-stream")) {
+                            possiblyEncrypted = true;
                         }
                     }
                 }

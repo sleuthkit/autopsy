@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2014-2016 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,6 +104,7 @@ class ReportKML implements GeneralReportModule {
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
+        
         currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
 

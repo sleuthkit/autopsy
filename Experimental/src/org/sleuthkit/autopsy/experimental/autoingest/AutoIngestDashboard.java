@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,7 +77,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_MIN_WIDTH = 30;
     private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
-    private static final Logger logger = Logger.getLogger(AutoIngestDashboard.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
@@ -159,7 +159,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    logger.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
+                    LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
                 }
                 return serviceStatus;
             }
@@ -470,7 +470,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             }
             setSelectedEntry(table, tableModel, currentRow);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error refreshing table " + table.toString(), ex);
+            LOGGER.log(Level.SEVERE, "Error refreshing table " + table.toString(), ex);
         }
     }
 
@@ -848,7 +848,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 refreshTables(jobsSnapshot);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeJobError"), job.getManifest().getFilePath());
-                logger.log(Level.SEVERE, errorMessage, ex);
+                LOGGER.log(Level.SEVERE, errorMessage, ex);
                 MessageNotifyUtil.Message.error(errorMessage);
             }
             setCursor(Cursor.getDefaultCursor());
@@ -868,7 +868,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 refreshTables(jobsSnapshot);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeCaseError"), caseName);
-                logger.log(Level.SEVERE, errorMessage, ex);
+                LOGGER.log(Level.SEVERE, errorMessage, ex);
                 MessageNotifyUtil.Message.error(errorMessage);
             }
             setCursor(Cursor.getDefaultCursor());
@@ -876,11 +876,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
-        try {
-            new AutoIngestMetricsDialog(this.getTopLevelAncestor());
-        } catch (AutoIngestMetricsDialog.AutoIngestMetricsDialogException ex) {
-            MessageNotifyUtil.Message.error(ex.getMessage());
-        }
+        new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

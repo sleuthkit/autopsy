@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1849,11 +1849,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     }//GEN-LAST:event_bnReprocessJobActionPerformed
 
     private void bnClusterMetricsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnClusterMetricsActionPerformed
-        try {
-            new AutoIngestMetricsDialog(this.getTopLevelAncestor());
-        } catch (AutoIngestMetricsDialog.AutoIngestMetricsDialogException ex) {
-            MessageNotifyUtil.Message.error(ex.getMessage());
-        }
+        new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_bnClusterMetricsActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
