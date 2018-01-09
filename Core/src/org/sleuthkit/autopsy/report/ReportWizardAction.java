@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -26,12 +26,14 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -70,12 +72,17 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             TableReportModule tableReport = (TableReportModule) wiz.getProperty("tableModule");
             GeneralReportModule generalReport = (GeneralReportModule) wiz.getProperty("generalModule");
             FileReportModule fileReport = (FileReportModule) wiz.getProperty("fileModule");
-            if (tableReport != null) {
-                generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
-            } else if (generalReport != null) {
-                generator.generateGeneralReport(generalReport);
-            } else if (fileReport != null) {
-                generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+            try {
+                if (tableReport != null) {
+                    generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
+                } else if (generalReport != null) {
+                    generator.generateGeneralReport(generalReport);
+                } else if (fileReport != null) {
+                    generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+                }
+            } catch (IOException e) {
+                NotifyDescriptor descriptor = new NotifyDescriptor.Message(e.getMessage(), NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(descriptor);
             }
         }
     }

@@ -136,16 +136,9 @@ class ReportGenerator {
     /**
      * Run the GeneralReportModules using a SwingWorker.
      */
-    void generateGeneralReport(GeneralReportModule generalReportModule) {
+    void generateGeneralReport(GeneralReportModule generalReportModule) throws IOException {
         if (generalReportModule != null) {
-            reportPathFormatString = String.format(reportPathFormatString, generalReportModule.getName());
-            // Create the root reports directory.
-            try {
-                FileUtil.createFolder(new File(reportPathFormatString));
-            } catch (IOException ex) {
-                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
-                logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
-            }
+            reportPathFormatString = createReportDirectory(generalReportModule, reportPathFormatString);
             setupProgressPanel(generalReportModule);
             ReportWorker worker = new ReportWorker(() -> {
                 generalReportModule.generateReport(reportPathFormatString, progressPanel);
@@ -163,16 +156,9 @@ class ReportGenerator {
      * @param tagSelections          the enabled/disabled state of the tag names
      *                               to be included in the report
      */
-    void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) throws IOException {
         if (tableReport != null && null != artifactTypeSelections) {
-            reportPathFormatString = String.format(reportPathFormatString, tableReport.getName());
-            // Create the root reports directory.
-            try {
-                FileUtil.createFolder(new File(reportPathFormatString));
-            } catch (IOException ex) {
-                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
-                logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
-            }
+            reportPathFormatString = createReportDirectory(tableReport, reportPathFormatString);
             setupProgressPanel(tableReport);
             ReportWorker worker = new ReportWorker(() -> {
                 tableReport.startReport(reportPathFormatString);
@@ -194,16 +180,9 @@ class ReportGenerator {
      * @param enabledInfo the Information that should be included about each
      *                    file in the report.
      */
-    void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) {
+    void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) throws IOException {
         if (fileReportModule != null && null != enabledInfo) {
-            reportPathFormatString = String.format(reportPathFormatString, fileReportModule.getName());
-            // Create the root reports directory.
-            try {
-                FileUtil.createFolder(new File(reportPathFormatString));
-            } catch (IOException ex) {
-                errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
-                logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
-            }
+            reportPathFormatString = createReportDirectory(fileReportModule, reportPathFormatString);
             List<FileReportDataTypes> enabled = new ArrayList<>();
             for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
                 if (e.getValue()) {
@@ -285,6 +264,17 @@ class ReportGenerator {
         }
     }
 
+    private static String createReportDirectory(ReportModule module, String pathFormat) throws IOException {
+        String reportPath = String.format(pathFormat, module.getName());
+        // Create the root reports directory.
+        try {
+            FileUtil.createFolder(new File(reportPath));
+        } catch (IOException ex) {
+            throw new IOException("Failed to make report folder, unable to generate reports.", ex);
+        }
+        return reportPath;    
+    }
+    
     private class ReportWorker extends SwingWorker<Void, Void> {
 
         private final Runnable doInBackground;
