@@ -45,13 +45,12 @@ import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-@NbBundle.Messages({"MultiUSerCasesPanel.caseListLoading.message=Retrieving list of cases, please wait..."})
+@NbBundle.Messages({"MultiUserCasesPanel.caseListLoading.message=Please wait..."})
 final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
@@ -73,7 +72,7 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
 
         caseListPanel = new CaseBrowser();
         caseListPanel.open();
-
+        caseListPanel.setRowSelectionAllowed(false);
         caseExplorerScrollPane.add(caseListPanel);
         caseExplorerScrollPane.setViewportView(caseListPanel);
         /*
@@ -92,11 +91,13 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
      */
     void refresh() {
         if (tableWorker == null || tableWorker.isDone()) {
+            caseListPanel.setRowSelectionAllowed(false);
             //create a new TableWorker to and execute it in a background thread if one is not currently working
             //set the table to display text informing the user that the list is being retreived and disable case selection
+            EmptyNode emptyNode = new EmptyNode(Bundle.MultiUserCasesPanel_caseListLoading_message());
+            explorerManager.setRootContext(emptyNode);
             tableWorker = new LoadCaseListWorker();
             tableWorker.execute();
-
         }
 
     }
@@ -117,7 +118,6 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
      */
     private void openCase(String caseMetadataFilePath) {
         if (caseMetadataFilePath != null) {
-            System.out.println("OPENENING CASE: " + caseMetadataFilePath);
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
             StartupWindowProvider.getInstance().close();
@@ -296,7 +296,7 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
          * @throws CoordinationServiceException
          */
         private Map<CaseMetadata, Boolean> getCases() throws CoordinationService.CoordinationServiceException {
-            Map<CaseMetadata, Boolean> cases = new HashMap<>();
+            Map<CaseMetadata, Boolean> casesMap = new HashMap<>();
             List<String> nodeList = CoordinationService.getInstance().getNodeList(CoordinationService.CategoryNode.CASES);
 
             for (String node : nodeList) {
@@ -352,7 +352,7 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
                             }
 
                             CaseMetadata caseMetadata = new CaseMetadata(Paths.get(autFilePath));
-                            cases.put(caseMetadata, hasAlertStatus);
+                            casesMap.put(caseMetadata, hasAlertStatus);
                         } catch (CaseMetadata.CaseMetadataException ex) {
                             LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
                         } catch (InterruptedException | CaseNodeData.InvalidDataException ex) {
@@ -361,7 +361,7 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
                     }
                 }
             }
-            return cases;
+            return casesMap;
         }
 
         @Override
@@ -381,18 +381,7 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
             EventQueue.invokeLater(() -> {
                 CaseNode caseListNode = new CaseNode(cases);
                 explorerManager.setRootContext(caseListNode);
-                String displayName = "";
-                Content content = caseListNode.getLookup().lookup(Content.class);
-                if (content != null) {
-                    try {
-                        displayName = content.getUniquePath();
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: {0}", caseListNode); //NON-NLS
-                    }
-                } else if (caseListNode.getLookup().lookup(String.class) != null) {
-                    displayName = caseListNode.getLookup().lookup(String.class);
-                }
-                System.out.println("GET CASES DONE");
+                caseListPanel.setRowSelectionAllowed(true);
                 setButtons();
             });
         }
