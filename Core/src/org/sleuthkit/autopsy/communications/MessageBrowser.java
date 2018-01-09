@@ -103,6 +103,8 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                         TableFilterNode wrappedNode =
                                 new TableFilterNode(new DataResultFilterNode(accountDetailsNode, gacExplorerManager), true);
                         messagesResultPanel.setNode(wrappedNode);
+                    }else{
+                        messagesResultPanel.setNode(selectedNode);
                     }
                 }
             }
