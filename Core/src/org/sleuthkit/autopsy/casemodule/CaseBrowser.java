@@ -80,6 +80,7 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
                 Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
                 Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(),
                 Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath());
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.CaseNode_column_name());
         customize();
 
     }
@@ -88,27 +89,28 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
      * Configures the the table of cases and its columns.
      */
     private void customize() {
+        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         TableColumnModel columnModel = outline.getColumnModel();
         int dateColumnIndex = 0;
-        for (int index = 0; index < columnModel.getColumnCount(); index++) {  //get indexes for hidden column and default sorting column
+        for (int index = 0; index < columnModel.getColumnCount(); index++) {
+            //get indexes for created date column and path column
             if (columnModel.getColumn(index).getHeaderValue().toString().equals(Bundle.CaseNode_column_metadataFilePath())) {
                 originalPathColumnIndex = index;
             } else if (columnModel.getColumn(index).getHeaderValue().toString().equals(Bundle.CaseNode_column_createdTime())) {
                 dateColumnIndex = index;
             }
         }
+        //Hide path column by default will need to 
         ETableColumn column = (ETableColumn) columnModel.getColumn(originalPathColumnIndex);
         ((ETableColumnModel) columnModel).setColumnHidden(column, true);
         outline.setRootVisible(false);
 
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.CaseNode_column_name());
-        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        outline.setColumnSorted(dateColumnIndex, false, 1); //it would be nice if the column index wasn't hardcoded
+        //Sort on Created date column in descending order by default
+        outline.setColumnSorted(dateColumnIndex, false, 1);
         if (null == em) {
             em = new ExplorerManager();
         }
         caseTableScrollPane.setViewportView(outlineView);
-        setColumnWidths();
         this.setVisible(true);
         outline.setRowSelectionAllowed(false);
     }
@@ -136,35 +138,11 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
 
     /**
      * Check if a row could be and is selected.
-     * 
+     *
      * @return true if a row is selected, false if no row is selected
      */
     boolean isRowSelected() {
         return outline.getRowSelectionAllowed() && outline.getSelectedRows().length > 0;
-    }
-
-    private void setColumnWidths() {
-        int margin = 4;
-        int padding = 8;
-
-        final int rows = Math.min(100, outline.getRowCount());
-
-        for (int column = 0; column < outline.getColumnModel().getColumnCount(); column++) {
-            int columnWidthLimit = 2000;
-            int columnWidth = 200;
-
-            // find the maximum width needed to fit the values for the first 100 rows, at most
-            for (int row = 0; row < rows; row++) {
-                TableCellRenderer renderer = outline.getCellRenderer(row, column);
-                Component comp = outline.prepareRenderer(renderer, row, column);
-                columnWidth = Math.max(comp.getPreferredSize().width, columnWidth);
-            }
-
-            columnWidth += 2 * margin + padding; // add margin and regular padding
-            columnWidth = Math.min(columnWidth, columnWidthLimit);
-
-            outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
-        }
     }
 
     @NbBundle.Messages({"CaseBrowser.caseListLoading.message=Please Wait..."})
@@ -311,7 +289,6 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
             EventQueue.invokeLater(() -> {
                 MultiUserNode caseListNode = new MultiUserNode(cases);
                 em.setRootContext(caseListNode);
-                setColumnWidths();
                 outline.setRowSelectionAllowed(true);
             });
         }
