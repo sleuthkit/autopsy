@@ -20,10 +20,10 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
@@ -33,6 +33,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -50,6 +51,7 @@ public final class CaseNode extends AbstractNode {
         "CaseNode.column.createdTime=Created Time",
         "CaseNode.column.status=Status",
         "CaseNode.column.metadataFilePath=Path"})
+    private static final Logger LOGGER = Logger.getLogger(CaseNode.class.getName());
 
     /**
      * Provides a root node for the results views with a single child node that
@@ -150,7 +152,7 @@ public final class CaseNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            actions.addAll(Arrays.asList(super.getActions(context)));
+            //  actions.addAll(Arrays.asList(super.getActions(context)));  
             actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));
             return actions.toArray(new Action[actions.size()]);
         }
@@ -173,13 +175,14 @@ public final class CaseNode extends AbstractNode {
         @Override
         public void actionPerformed(ActionEvent e) {
             StartupWindowProvider.getInstance().close();
+            MultiUserCasesDialog.getInstance().setVisible(false);
             new Thread(
                     () -> {
                         try {
                             Case.openAsCurrentCase(caseMetadataFilePath);
                         } catch (CaseActionException ex) {
                             if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                                //                   LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
+                                LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
                                 MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
                             }
                             SwingUtilities.invokeLater(() -> {
