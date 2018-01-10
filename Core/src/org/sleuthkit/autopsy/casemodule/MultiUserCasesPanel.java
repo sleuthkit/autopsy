@@ -19,46 +19,30 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Cursor;
-import java.awt.EventQueue;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JDialog;
+import javax.swing.JPanel;
 import javax.swing.SortOrder;
-import javax.swing.SwingWorker;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
 @NbBundle.Messages({"MultiUserCasesPanel.caseListLoading.message=Please wait..."})
-final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.Provider {
+final class MultiUserCasesPanel extends JPanel{
 
-    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
     private final JDialog parentDialog;
-    private LoadCaseListWorker tableWorker;
     private final CaseBrowser caseListPanel;
-    private final ExplorerManager explorerManager;
 
     /**
      * Constructs a panel that allows a user to open cases created by automated
@@ -66,8 +50,6 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
      */
     MultiUserCasesPanel(JDialog parentDialog) {
         this.parentDialog = parentDialog;
-        explorerManager = new ExplorerManager();
-        associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         initComponents();
 
         caseListPanel = new CaseBrowser();
@@ -90,23 +72,14 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
      * refreshes the cases table.
      */
     void refresh() {
-        if (tableWorker == null || tableWorker.isDone()) {
-            caseListPanel.setRowSelectionAllowed(false);
-            //create a new TableWorker to and execute it in a background thread if one is not currently working
-            //set the table to display text informing the user that the list is being retreived and disable case selection
-            EmptyNode emptyNode = new EmptyNode(Bundle.MultiUserCasesPanel_caseListLoading_message());
-            explorerManager.setRootContext(emptyNode);
-            tableWorker = new LoadCaseListWorker();
-            tableWorker.execute();
-        }
-
+        caseListPanel.refresh();
     }
 
     /**
      * Enables/disables the Open and Show Log buttons based on the case selected
      * in the cases table.
      */
-    private void setButtons() {
+    void setButtons() {
         boolean openEnabled = caseListPanel.isRowSelected();
         bnOpen.setEnabled(openEnabled);
     }
@@ -144,11 +117,6 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
                 }
             }).start();
         }
-    }
-
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return explorerManager;
     }
 
     /**
@@ -282,108 +250,4 @@ final class MultiUserCasesPanel extends TopComponent implements ExplorerManager.
     private javax.swing.JScrollPane caseExplorerScrollPane;
     private javax.swing.JLabel searchLabel;
     // End of variables declaration//GEN-END:variables
-
-    private class LoadCaseListWorker extends SwingWorker<Void, Void> {
-
-        private static final String ALERT_FILE_NAME = "autoingest.alert";
-        private Map<CaseMetadata, Boolean> cases;
-
-        /**
-         * Gets a list of the cases in the top level case folder
-         *
-         * @return List of cases.
-         *
-         * @throws CoordinationServiceException
-         */
-        private Map<CaseMetadata, Boolean> getCases() throws CoordinationService.CoordinationServiceException {
-            Map<CaseMetadata, Boolean> casesMap = new HashMap<>();
-            List<String> nodeList = CoordinationService.getInstance().getNodeList(CoordinationService.CategoryNode.CASES);
-
-            for (String node : nodeList) {
-                Path casePath = Paths.get(node);
-                File caseFolder = casePath.toFile();
-                if (caseFolder.exists()) {
-                    /*
-                     * Search for '*.aut' and 'autoingest.alert' files.
-                     */
-                    File[] fileArray = caseFolder.listFiles();
-                    if (fileArray == null) {
-                        continue;
-                    }
-                    String autFilePath = null;
-                    boolean alertFileFound = false;
-                    for (File file : fileArray) {
-                        String name = file.getName().toLowerCase();
-                        if (autFilePath == null && name.endsWith(".aut")) {
-                            autFilePath = file.getAbsolutePath();
-                            if (!alertFileFound) {
-                                continue;
-                            }
-                        }
-                        if (!alertFileFound && name.endsWith(ALERT_FILE_NAME)) {
-                            alertFileFound = true;
-                        }
-                        if (autFilePath != null && alertFileFound) {
-                            break;
-                        }
-                    }
-
-                    if (autFilePath != null) {
-                        try {
-                            boolean hasAlertStatus = false;
-                            if (alertFileFound) {
-                                /*
-                                 * When an alert file exists, ignore the node
-                                 * data and use the ALERT status.
-                                 */
-                                hasAlertStatus = true;
-                            } else {
-                                byte[] rawData = CoordinationService.getInstance().getNodeData(CoordinationService.CategoryNode.CASES, node);
-                                if (rawData != null && rawData.length > 0) {
-                                    /*
-                                     * When node data exists, use the status
-                                     * stored in the node data.
-                                     */
-                                    CaseNodeData caseNodeData = new CaseNodeData(rawData);
-                                    if (caseNodeData.getErrorsOccurred()) {
-                                        hasAlertStatus = true;
-                                    }
-                                }
-                            }
-
-                            CaseMetadata caseMetadata = new CaseMetadata(Paths.get(autFilePath));
-                            casesMap.put(caseMetadata, hasAlertStatus);
-                        } catch (CaseMetadata.CaseMetadataException ex) {
-                            LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
-                        } catch (InterruptedException | CaseNodeData.InvalidDataException ex) {
-                            LOGGER.log(Level.SEVERE, String.format("Error reading case node data for '%s'.", node), ex);
-                        }
-                    }
-                }
-            }
-            return casesMap;
-        }
-
-        @Override
-        protected Void doInBackground() throws Exception {
-
-            try {
-                cases = getCases();
-            } catch (CoordinationService.CoordinationServiceException ex) {
-                LOGGER.log(Level.SEVERE, "Unexpected exception while refreshing the table.", ex); //NON-NLS
-            }
-            return null;
-        }
-
-        @Override
-        protected void done() {
-
-            EventQueue.invokeLater(() -> {
-                CaseNode caseListNode = new CaseNode(cases);
-                explorerManager.setRootContext(caseListNode);
-                caseListPanel.setRowSelectionAllowed(true);
-                setButtons();
-            });
-        }
-    }
 }
