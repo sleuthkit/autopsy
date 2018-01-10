@@ -39,44 +39,29 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
 /**
- * A Swing JPanel with a JTabbedPane child component. The tabbed pane contains
- * result viewers.
+ * A Swing JPanel with a scroll pane child component. The scroll pane contain
+ * the table of cases.
  *
- * The "main" DataResultPanel for the desktop application has a table viewer
- * (DataResultViewerTable) and a thumbnail viewer (DataResultViewerThumbnail),
- * plus zero to many additional DataResultViewers, since the DataResultViewer
- * interface is an extension point.
+ * Used to display a list of multi user cases and allow the user to open one of
+ * them.
  *
- * The "main" DataResultPanel resides in the "main" results view
- * (DataResultTopComponent) that is normally docked into the upper right hand
- * side of the main window of the desktop application.
- *
- * The result viewers in the "main panel" are used to view the child nodes of a
- * node selected in the tree view (DirectoryTreeTopComponent) that is normally
- * docked into the left hand side of the main window of the desktop application.
- *
- * Nodes selected in the child results viewers of a DataResultPanel are
- * displayed in a content view (implementation of the DataContent interface)
- * supplied the panel. The default content view is (DataContentTopComponent) is
- * normally docked into the lower right hand side of the main window, underneath
- * the results view. A custom content view may be specified instead.
  */
 class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
-
     private final Outline outline;
     private ExplorerManager em;
     private final org.openide.explorer.view.OutlineView outlineView;
     private int originalPathColumnIndex = 0;
     private static final Logger LOGGER = Logger.getLogger(CaseBrowser.class.getName());
-    private LoadCaseListWorker tableWorker;
+    private LoadCaseMapWorker tableWorker;
 
     @Override
     public ExplorerManager getExplorerManager() {
@@ -84,7 +69,7 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
     }
 
     /**
-     * Creates new form CaseBrowser
+     * Creates a new CaseBrowser
      */
     CaseBrowser() {
         outlineView = new org.openide.explorer.view.OutlineView();
@@ -99,6 +84,9 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
 
     }
 
+    /**
+     * Configures the the table of cases and its columns.
+     */
     private void customize() {
         TableColumnModel columnModel = outline.getColumnModel();
         int dateColumnIndex = 0;
@@ -116,25 +104,20 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.CaseNode_column_name());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setColumnSorted(dateColumnIndex, false, 1); //it would be nice if the column index wasn't hardcoded
-    }
-
-    /**
-     * Initializes this panel. Intended to be called by a parent top component
-     * when the top component is opened.
-     */
-    void open() {
         if (null == em) {
             em = new ExplorerManager();
         }
-        jScrollPane1.setViewportView(outlineView);
+        caseTableScrollPane.setViewportView(outlineView);
         setColumnWidths();
         this.setVisible(true);
+        outline.setRowSelectionAllowed(false);
     }
 
-    void setRowSelectionAllowed(boolean allowed) {
-        outline.setRowSelectionAllowed(allowed);
-    }
-
+    /**
+     * Add a listener to changes in case selections in the table
+     *
+     * @param listener the ListSelectionListener to add
+     */
     void addListSelectionListener(ListSelectionListener listener) {
         outline.getSelectionModel().addListSelectionListener(listener);
     }
@@ -145,12 +128,17 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
             try {
                 return ((Node.Property) outline.getModel().getValueAt(outline.convertRowIndexToModel(selectedRows[0]), originalPathColumnIndex)).getValue().toString();
             } catch (IllegalAccessException | InvocationTargetException ex) {
-                System.out.println("THROW");
+                //WJS-TODO THROW SOMETHING
             }
         }
         return null;
     }
 
+    /**
+     * Check if a row could be and is selected.
+     * 
+     * @return true if a row is selected, false if no row is selected
+     */
     boolean isRowSelected() {
         return outline.getRowSelectionAllowed() && outline.getSelectedRows().length > 0;
     }
@@ -162,8 +150,8 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
         final int rows = Math.min(100, outline.getRowCount());
 
         for (int column = 0; column < outline.getColumnModel().getColumnCount(); column++) {
-            int columnWidthLimit = 800;
-            int columnWidth = 0;
+            int columnWidthLimit = 2000;
+            int columnWidth = 200;
 
             // find the maximum width needed to fit the values for the first 100 rows, at most
             for (int row = 0; row < rows; row++) {
@@ -179,18 +167,19 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
         }
     }
 
+    @NbBundle.Messages({"CaseBrowser.caseListLoading.message=Please Wait..."})
     /**
      * Gets the list of cases known to the review mode cases manager and
      * refreshes the cases table.
      */
     void refresh() {
         if (tableWorker == null || tableWorker.isDone()) {
-            setRowSelectionAllowed(false);
+            outline.setRowSelectionAllowed(false);
             //create a new TableWorker to and execute it in a background thread if one is not currently working
             //set the table to display text informing the user that the list is being retreived and disable case selection
-            EmptyNode emptyNode = new EmptyNode(Bundle.MultiUserCasesPanel_caseListLoading_message());
+            EmptyNode emptyNode = new EmptyNode(Bundle.CaseBrowser_caseListLoading_message());
             em.setRootContext(emptyNode);
-            tableWorker = new LoadCaseListWorker();
+            tableWorker = new LoadCaseMapWorker();
             tableWorker.execute();
         }
 
@@ -205,22 +194,27 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        caseTableScrollPane = new javax.swing.JScrollPane();
 
         setMinimumSize(new java.awt.Dimension(0, 5));
         setPreferredSize(new java.awt.Dimension(5, 5));
         setLayout(new java.awt.BorderLayout());
 
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane1.setMinimumSize(new java.awt.Dimension(0, 5));
-        jScrollPane1.setOpaque(false);
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(5, 5));
-        add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        caseTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        caseTableScrollPane.setMinimumSize(new java.awt.Dimension(0, 5));
+        caseTableScrollPane.setOpaque(false);
+        caseTableScrollPane.setPreferredSize(new java.awt.Dimension(5, 5));
+        add(caseTableScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane caseTableScrollPane;
     // End of variables declaration//GEN-END:variables
-    private class LoadCaseListWorker extends SwingWorker<Void, Void> {
+
+    /**
+     * Swingworker to fetch the updated map of cases and their status in a
+     * background thread
+     */
+    private class LoadCaseMapWorker extends SwingWorker<Void, Void> {
 
         private static final String ALERT_FILE_NAME = "autoingest.alert";
         private Map<CaseMetadata, Boolean> cases;
@@ -314,11 +308,11 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
 
         @Override
         protected void done() {
-
             EventQueue.invokeLater(() -> {
-                CaseNode caseListNode = new CaseNode(cases);
+                MultiUserNode caseListNode = new MultiUserNode(cases);
                 em.setRootContext(caseListNode);
-                setRowSelectionAllowed(true);
+                setColumnWidths();
+                outline.setRowSelectionAllowed(true);
             });
         }
     }
