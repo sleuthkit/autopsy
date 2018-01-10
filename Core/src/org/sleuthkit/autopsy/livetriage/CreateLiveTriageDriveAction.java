@@ -106,40 +106,40 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction impl
             if (drivePath.startsWith("\\\\.\\")) {
                 drivePath = drivePath.substring(4);
             }
-                        
+
             worker = new CopyFilesWorker(applicationBasePath, drivePath, appName);
             worker.addPropertyChangeListener(this);
             worker.execute();
         }
     }
-    
+
     @NbBundle.Messages({"# {0} - drivePath",
-            "CreateLiveTriageDriveAction.progressBar.text=Copying live triage files to {0}",
-            "CreateLiveTriageDriveAction.progressBar.title=Please wait"})
+        "CreateLiveTriageDriveAction.progressBar.text=Copying live triage files to {0}",
+        "CreateLiveTriageDriveAction.progressBar.title=Please wait"})
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        
+
         if ("state".equals(evt.getPropertyName())
-                && (SwingWorker.StateValue.STARTED.equals(evt.getNewValue()))) {   
-            
+                && (SwingWorker.StateValue.STARTED.equals(evt.getNewValue()))) {
+
             // Setup progress bar.
             String displayStr = NbBundle.getMessage(this.getClass(), "CreateLiveTriageDriveAction.progressBar.text",
                     drivePath);
-            
+
             progressIndicator = new ModalDialogProgressIndicator(WindowManager.getDefault().getMainWindow(),
                     NbBundle.getMessage(this.getClass(), "CreateLiveTriageDriveAction.progressBar.title"));
             progressIndicator.start(displayStr);
-            
+
         } else if ("state".equals(evt.getPropertyName())
-                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) { 
-            if(progressIndicator != null){
+                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) {
+            if (progressIndicator != null) {
                 progressIndicator.finish();
             }
-            
-            if(worker.hadError()){
+
+            if (worker.hadError()) {
                 MessageNotifyUtil.Message.error(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.error.text"));
             } else {
-                MessageNotifyUtil.Message.info(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.done.text"));                
+                MessageNotifyUtil.Message.info(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.done.text"));
             }
         }
     }
@@ -156,11 +156,11 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction impl
             this.drivePath = drivePath;
             this.appName = appName;
         }
-        
-        boolean hadError(){
+
+        boolean hadError() {
             return error;
         }
-        
+
         @Override
         protected Void doInBackground() throws Exception {
 
