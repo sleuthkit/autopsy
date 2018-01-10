@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-@NbBundle.Messages({"MultiUserCasesPanel.caseListLoading.message=Please wait..."})
+@NbBundle.Messages({"MultiUserCasesPanel.caseListLoading.message=Please Wait..."})
 final class MultiUserCasesPanel extends JPanel{
 
     private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
@@ -80,8 +80,7 @@ final class MultiUserCasesPanel extends JPanel{
      * in the cases table.
      */
     void setButtons() {
-        boolean openEnabled = caseListPanel.isRowSelected();
-        bnOpen.setEnabled(openEnabled);
+        bnOpen.setEnabled(caseListPanel.isRowSelected());
     }
 
     /**
