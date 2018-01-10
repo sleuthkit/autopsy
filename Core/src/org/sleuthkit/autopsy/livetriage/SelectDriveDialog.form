@@ -23,27 +23,21 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="bnRefresh" max="32767" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="bnRefresh" pref="112" max="32767" attributes="0"/>
+                      <EmptySpace pref="48" max="32767" attributes="0"/>
                       <Component id="bnOk" min="-2" pref="101" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="bnCancel" min="-2" pref="101" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane1" alignment="0" pref="0" max="32767" attributes="0"/>
                   <Component id="jLabel1" alignment="0" max="32767" attributes="0"/>
-                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                      <Component id="jLabel3" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jLabel2" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-                  <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jSeparator1" alignment="0" max="32767" attributes="0"/>
-                  <Component id="jLabel5" alignment="0" pref="368" max="32767" attributes="0"/>
                   <Component id="errorLabel" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jScrollPane2" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -53,16 +47,8 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-              <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-              <Component id="jLabel4" min="-2" pref="14" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-              <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jScrollPane2" min="-2" pref="107" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="jSeparator1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
@@ -129,42 +115,7 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel2">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/livetriage/Bundle.properties" key="SelectDriveDialog.jLabel2.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel3">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/livetriage/Bundle.properties" key="SelectDriveDialog.jLabel3.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel4">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/livetriage/Bundle.properties" key="SelectDriveDialog.jLabel4.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JSeparator" name="jSeparator1">
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel5">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/livetriage/Bundle.properties" key="SelectDriveDialog.jLabel5.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="jLabel6">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/livetriage/Bundle.properties" key="SelectDriveDialog.jLabel6.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="bnCancel">
       <Properties>
@@ -176,5 +127,37 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnCancelActionPerformed"/>
       </Events>
     </Component>
+    <Container class="javax.swing.JScrollPane" name="jScrollPane2">
+      <Properties>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="null"/>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+      </AuxValues>
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextArea" name="jTextArea1">
+          <Properties>
+            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+              <Color blue="f0" green="f0" red="f0" type="rgb"/>
+            </Property>
+            <Property name="columns" type="int" value="20"/>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+              <Font name="Tahoma" size="11" style="0"/>
+            </Property>
+            <Property name="rows" type="int" value="5"/>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/livetriage/Bundle.properties" key="SelectDriveDialog.jTextArea1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+              <Border info="null"/>
+            </Property>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
   </SubComponents>
 </Form>

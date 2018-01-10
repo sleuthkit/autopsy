@@ -23,11 +23,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.InvalidPathException;
 import java.util.logging.Level;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 import javax.swing.JOptionPane;
 import java.awt.Frame;
 import javax.swing.SwingWorker;
 import org.apache.commons.io.FileUtils;
-import org.netbeans.api.progress.ProgressHandle;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -39,14 +40,18 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.livetriage.CreateLiveTriageDriveAction")
 @ActionReference(path = "Menu/Tools", position = 1401)
 @ActionRegistration(displayName = "#CTL_CreateLiveTriageDriveAction", lazy = false)
 @NbBundle.Messages({"CTL_CreateLiveTriageDriveAction=Make Live Triage Drive"})
-public final class CreateLiveTriageDriveAction extends CallableSystemAction {
+public final class CreateLiveTriageDriveAction extends CallableSystemAction implements PropertyChangeListener {
 
     private static final String DISPLAY_NAME = Bundle.CTL_CreateLiveTriageDriveAction();
+    private ModalDialogProgressIndicator progressIndicator = null;
+    private String drivePath = "";
+    private CopyFilesWorker worker;
 
     @Override
     public boolean isEnabled() {
@@ -57,7 +62,7 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction {
         "CreateLiveTriageDriveAction.exenotfound.message=Executable could not be found",
         "CreateLiveTriageDriveAction.batchFileError.message=Error creating batch file",
         "CreateLiveTriageDriveAction.appPathError.message=Could not location application directory",
-        "CreateLiveTriageDriveAction.copyError.message=Could not copy application",
+        "CreateLiveTriageDriveAction.copyError.message=Could not copy application. Only works on installed version.",
         "CreateLiveTriageDriveAction.success.title=Success",
         "CreateLiveTriageDriveAction.success.message=Live triage drive created. Use RunFromUSB.bat to run the application"
     })
@@ -97,16 +102,46 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction {
         driveDialog.display();
 
         if (!driveDialog.getSelectedDrive().isEmpty()) {
-            String drivePath = driveDialog.getSelectedDrive();
+            drivePath = driveDialog.getSelectedDrive();
             if (drivePath.startsWith("\\\\.\\")) {
                 drivePath = drivePath.substring(4);
             }
-            System.out.println("Destination path: " + drivePath);
-
-            CopyFilesWorker worker = new CopyFilesWorker(applicationBasePath, drivePath, appName);
+                        
+            worker = new CopyFilesWorker(applicationBasePath, drivePath, appName);
+            worker.addPropertyChangeListener(this);
             worker.execute();
         }
-
+    }
+    
+    @NbBundle.Messages({"# {0} - drivePath",
+            "CreateLiveTriageDriveAction.progressBar.text=Copying live triage files to {0}",
+            "CreateLiveTriageDriveAction.progressBar.title=Please wait"})
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        
+        if ("state".equals(evt.getPropertyName())
+                && (SwingWorker.StateValue.STARTED.equals(evt.getNewValue()))) {   
+            
+            // Setup progress bar.
+            String displayStr = NbBundle.getMessage(this.getClass(), "CreateLiveTriageDriveAction.progressBar.text",
+                    drivePath);
+            
+            progressIndicator = new ModalDialogProgressIndicator(WindowManager.getDefault().getMainWindow(),
+                    NbBundle.getMessage(this.getClass(), "CreateLiveTriageDriveAction.progressBar.title"));
+            progressIndicator.start(displayStr);
+            
+        } else if ("state".equals(evt.getPropertyName())
+                && (SwingWorker.StateValue.DONE.equals(evt.getNewValue()))) { 
+            if(progressIndicator != null){
+                progressIndicator.finish();
+            }
+            
+            if(worker.hadError()){
+                MessageNotifyUtil.Message.error(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.error.text"));
+            } else {
+                MessageNotifyUtil.Message.info(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.done.text"));                
+            }
+        }
     }
 
     private class CopyFilesWorker extends SwingWorker<Void, Void> {
@@ -114,27 +149,20 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction {
         private final Path sourceFolder;
         private final String drivePath;
         private final String appName;
-        private ProgressHandle progressHandle = null;
+        private boolean error = false;
 
         CopyFilesWorker(Path sourceFolder, String drivePath, String appName) {
             this.sourceFolder = sourceFolder;
             this.drivePath = drivePath;
             this.appName = appName;
         }
-
-        @NbBundle.Messages({"# {0} - drivePath",
-            "CopyFilesWorker.progressBar.text=Live Triage: Copying files to {0}"})
+        
+        boolean hadError(){
+            return error;
+        }
+        
         @Override
         protected Void doInBackground() throws Exception {
-            // Setup progress bar.
-            String displayName = NbBundle.getMessage(this.getClass(),
-                    "CopyFilesWorker.progressBar.text",
-                    drivePath);
-
-            // There's no way to stop FileUtils.copyDirectory, so don't include cancellation
-            progressHandle = ProgressHandle.createHandle(displayName);
-            progressHandle.start();
-            progressHandle.switchToIndeterminate();
 
             copyBatchFile(drivePath, appName);
             copyApplication(sourceFolder, drivePath, appName);
@@ -142,25 +170,15 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction {
             return null;
         }
 
-        @NbBundle.Messages({"CopyFilesWorker.title=Create Live Triage Drive",
-            "CopyFilesWorker.error.text=Error copying live triage files",
+        @NbBundle.Messages({"CopyFilesWorker.error.text=Error copying live triage files",
             "CopyFilesWorker.done.text=Finished creating live triage disk"})
         @Override
         protected void done() {
             try {
                 super.get();
-
-                MessageNotifyUtil.Notify.info(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.title"),
-                        NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.done.text"));
-
             } catch (Exception ex) {
-                Logger.getLogger(CreateLiveTriageDriveAction.class.getName()).log(Level.SEVERE, "Fatal error during live triage drive creation", ex); //NON-NLS
-                MessageNotifyUtil.Notify.info(NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.title"),
-                        NbBundle.getMessage(CopyFilesWorker.class, "CopyFilesWorker.error.text"));
-            } finally {
-                if (progressHandle != null) {
-                    progressHandle.finish();
-                }
+                error = true;
+                Logger.getLogger(CreateLiveTriageDriveAction.class.getName()).log(Level.SEVERE, "Fatal error during live triage drive creation", ex); //NON-NLS                
             }
         }
     }

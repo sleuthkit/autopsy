@@ -90,13 +90,10 @@ class SelectDriveDialog extends javax.swing.JDialog {
         bnRefresh = new javax.swing.JButton();
         bnOk = new javax.swing.JButton();
         errorLabel = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
         bnCancel = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -121,22 +118,22 @@ class SelectDriveDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jLabel2.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jLabel3.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jLabel4.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jLabel5.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jLabel6.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.bnCancel.text")); // NOI18N
         bnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnCancelActionPerformed(evt);
             }
         });
+
+        jScrollPane2.setBorder(null);
+
+        jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
+        jTextArea1.setColumns(20);
+        jTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        jTextArea1.setRows(5);
+        jTextArea1.setText(org.openide.util.NbBundle.getMessage(SelectDriveDialog.class, "SelectDriveDialog.jTextArea1.text")); // NOI18N
+        jTextArea1.setBorder(null);
+        jScrollPane2.setViewportView(jTextArea1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -145,38 +142,25 @@ class SelectDriveDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel6)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(bnRefresh, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(bnRefresh, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 48, Short.MAX_VALUE)
                         .addComponent(bnOk, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnCancel, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jLabel4)
                     .addComponent(jSeparator1)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
-                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel2)
-                .addGap(1, 1, 1)
-                .addComponent(jLabel3)
-                .addGap(1, 1, 1)
-                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5)
-                .addGap(1, 1, 1)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
@@ -221,13 +205,10 @@ class SelectDriveDialog extends javax.swing.JDialog {
     private javax.swing.JTable diskTable;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JTextArea jTextArea1;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -238,11 +219,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
         "SelectDriveDialog.diskTable.column1.title=Disk Name",
         "SelectDriveDialog.diskTable.column2.title=Disk Size",
         "SelectDriveDialog.errLabel.disksNotDetected.text=Disks were not detected. On some systems it requires admin privileges",
-        "SelectDriveDialog.errLabel.disksNotDetected.toolTipText=Disks were not detected. On some systems it requires admin privileges",
-        "SelectDriveDialog.errLabel.drivesNotDetected.text=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
-        "SelectDriveDialog.errLabel.drivesNotDetected.toolTipText=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
-        "SelectDriveDialog.errLabel.someDisksNotDetected.text=Some disks were not detected. On some systems it requires admin privileges",
-        "SelectDriveDialog.errLabel.someDisksNotDetected.toolTipText=Some disks were not detected. On some systems it requires admin privileges"
+        "SelectDriveDialog.errLabel.disksNotDetected.toolTipText=Disks were not detected."
 
     })
     private class LocalDiskModel implements TableModel {
@@ -348,15 +325,12 @@ class SelectDriveDialog extends javax.swing.JDialog {
         class LocalDiskThread extends SwingWorker<Object, Void> {
 
             private final Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
-            private List<LocalDisk> physicalDrives = new ArrayList<>();
             private List<LocalDisk> partitions = new ArrayList<>();
 
             @Override
             protected Object doInBackground() throws Exception {
                 // Populate the lists
-                //physicalDrives = new ArrayList<>();
                 partitions = new ArrayList<>();
-                //physicalDrives = PlatformUtil.getPhysicalDrives();
                 partitions = PlatformUtil.getPartitions();
                 return null;
             }
@@ -366,7 +340,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
              * the lists of physical drives or partitions.
              */
             private void displayErrors() {
-                if (physicalDrives.isEmpty() && partitions.isEmpty()) {
+                if (partitions.isEmpty()) {
                     if (PlatformUtil.isWindowsOS()) {
                         errorLabel.setText(
                                 NbBundle.getMessage(this.getClass(), "SelectDriveDialog.errLabel.disksNotDetected.text"));
@@ -380,13 +354,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
                     }
                     errorLabel.setVisible(true);
                     diskTable.setEnabled(false);
-                }/* else if (physicalDrives.isEmpty()) {
-                    errorLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "SelectDriveDialog.errLabel.someDisksNotDetected.text"));
-                    errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                            "SelectDriveDialog.errLabel.someDisksNotDetected.toolTipText"));
-                    errorLabel.setVisible(true);
-                }*/
+                }
             }
 
             @Override
@@ -405,7 +373,6 @@ class SelectDriveDialog extends javax.swing.JDialog {
                         worker = null;
                         loadingDisks = false;
                         disks = new ArrayList<>();
-                        //disks.addAll(physicalDrives);
                         disks.addAll(partitions);
                         if (disks.size() > 0) {
                             diskTable.setEnabled(true);
