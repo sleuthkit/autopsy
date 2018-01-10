@@ -130,7 +130,7 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
             try {
                 return ((Node.Property) outline.getModel().getValueAt(outline.convertRowIndexToModel(selectedRows[0]), originalPathColumnIndex)).getValue().toString();
             } catch (IllegalAccessException | InvocationTargetException ex) {
-                //WJS-TODO THROW SOMETHING
+                LOGGER.log(Level.SEVERE, "Unable to get case path from table.", ex);
             }
         }
         return null;
