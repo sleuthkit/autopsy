@@ -109,6 +109,15 @@ final class MultiUserNode extends AbstractNode {
             caseMetadataFilePath = multiUserCase.getKey().getFilePath().toString();
             caseLogFilePath = Paths.get(multiUserCase.getKey().getCaseDirectory(), LOG_FILE_NAME);
         }
+        
+        /**
+         * Returns action to open the Case represented by this node
+         * @return an action which will open the current case
+         */
+        @Override 
+        public Action getPreferredAction() {
+            return new OpenMultiUserCaseAction(caseMetadataFilePath);
+        }
 
         @Messages({"MultiUserNode.AlertColumn.text=Alert"})  //text to display when there is an alert present
         @Override
