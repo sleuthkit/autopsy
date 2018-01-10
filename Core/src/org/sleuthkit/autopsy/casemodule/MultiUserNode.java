@@ -40,14 +40,12 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
  * A root node containing child nodes of the multi user cases
  */
-public final class MultiUserNode extends AbstractNode {
+final class MultiUserNode extends AbstractNode {
 
     @Messages({"CaseNode.column.name=Name",
         "CaseNode.column.createdTime=Created Time",
@@ -92,7 +90,7 @@ public final class MultiUserNode extends AbstractNode {
     /**
      * A node which represents a single multi user case.
      */
-    public static final class MultiUserCaseNode extends DisplayableItemNode {
+    static final class MultiUserCaseNode extends AbstractNode {
 
         private final String caseName;
         private final String caseCreatedDate;
@@ -110,25 +108,6 @@ public final class MultiUserNode extends AbstractNode {
             setDisplayName(caseName);
             caseMetadataFilePath = multiUserCase.getKey().getFilePath().toString();
             caseLogFilePath = Paths.get(multiUserCase.getKey().getCaseDirectory(), LOG_FILE_NAME);
-        }
-
-        @Override
-        public boolean isLeafTypeNode() {
-            return true;
-        }
-
-        @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
-        }
-
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
-
-        public String getMetadataFilePath() {
-            return caseMetadataFilePath;
         }
 
         @Messages({"MultiUserNode.AlertColumn.text=Alert"})  //text to display when there is an alert present
