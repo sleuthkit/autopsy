@@ -18,7 +18,11 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -49,6 +54,7 @@ public final class MultiUserNode extends AbstractNode {
         "CaseNode.column.status=Status",
         "CaseNode.column.metadataFilePath=Path"})
     private static final Logger LOGGER = Logger.getLogger(MultiUserNode.class.getName());
+    private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
 
     /**
      * Provides a root node with children which each represent a case.
@@ -92,6 +98,7 @@ public final class MultiUserNode extends AbstractNode {
         private final String caseCreatedDate;
         private final String caseMetadataFilePath;
         private final boolean caseHasAlert;
+        private final Path caseLogFilePath;
 
         MultiUserCaseNode(Entry<CaseMetadata, Boolean> multiUserCase) {
             super(Children.LEAF);
@@ -102,6 +109,7 @@ public final class MultiUserNode extends AbstractNode {
             setName(caseName);
             setDisplayName(caseName);
             caseMetadataFilePath = multiUserCase.getKey().getFilePath().toString();
+            caseLogFilePath = Paths.get(multiUserCase.getKey().getCaseDirectory(), LOG_FILE_NAME);
         }
 
         @Override
@@ -123,6 +131,7 @@ public final class MultiUserNode extends AbstractNode {
             return caseMetadataFilePath;
         }
 
+        @Messages({"MultiUserNode.AlertColumn.text=Alert"})  //text to display when there is an alert present
         @Override
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
@@ -136,7 +145,7 @@ public final class MultiUserNode extends AbstractNode {
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
                     caseCreatedDate));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(),
-                    (caseHasAlert == true ? "Alert" : "")));
+                    (caseHasAlert == true ? Bundle.MultiUserNode_AlertColumn_text() : "")));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(),
                     caseMetadataFilePath));
             return s;
@@ -146,10 +155,14 @@ public final class MultiUserNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));  //open case context menu option
+            if (caseLogFilePath != null && caseLogFilePath.toFile().exists()) {
+                actions.add(new OpenCaseLogAction(caseLogFilePath));
+            }
             return actions.toArray(new Action[actions.size()]);
         }
     }
 
+    @Messages({"MultiUserNode.OpenMultiUserCaseAction.text=Open Case"})
     /**
      * An action that opens the specified case and hides the multi user case
      * panel.
@@ -161,7 +174,7 @@ public final class MultiUserNode extends AbstractNode {
         private final String caseMetadataFilePath;
 
         OpenMultiUserCaseAction(String path) {
-            super("Open Case");
+            super(Bundle.MultiUserNode_OpenMultiUserCaseAction_text());
             caseMetadataFilePath = path;
         }
 
@@ -186,6 +199,49 @@ public final class MultiUserNode extends AbstractNode {
                         }
                     }
             ).start();
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
+    @Messages({"MultiUserNode.OpenCaseLogAction.text=Open Log File"})
+    /**
+     * An action that opens the specified case and hides the multi user case
+     * panel.
+     */
+    private static final class OpenCaseLogAction extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Path pathToLog;
+
+        OpenCaseLogAction(Path caseLogFilePath) {
+            super(Bundle.MultiUserNode_OpenCaseLogAction_text());
+            pathToLog = caseLogFilePath;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            if (pathToLog != null) {
+                try {
+                    if (pathToLog.toFile().exists()) {
+                        Desktop.getDesktop().edit(pathToLog.toFile());
+
+                    } else {
+                        JOptionPane.showMessageDialog(MultiUserCasesDialog.getInstance(), org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotFindLog"),
+                                org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (IOException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Error attempting to open case auto ingest log file %s", pathToLog), ex);
+                    JOptionPane.showMessageDialog(MultiUserCasesDialog.getInstance(),
+                            org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotOpenLog"),
+                            org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"),
+                            JOptionPane.PLAIN_MESSAGE);
+                }
+            }
         }
 
         @Override
