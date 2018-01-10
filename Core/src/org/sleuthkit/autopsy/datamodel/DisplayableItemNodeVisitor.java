@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.casemodule.CaseNode;
+import org.sleuthkit.autopsy.casemodule.MultiUserNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -159,7 +159,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(EmptyNode.MessageNode emptyNode);
 
-    T visit(CaseNode.CaseNameNode caseNode);
+    T visit(MultiUserNode.MultiUserCaseNode caseNode);
 
     T visit(InterestingHits.InterestingItemTypeNode aThis);
 
@@ -245,7 +245,7 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(ftByMimeTypeEmptyNode);
         }
         @Override
-        public T visit(CaseNode.CaseNameNode caseNameNode) {
+        public T visit(MultiUserNode.MultiUserCaseNode caseNameNode) {
             return defaultVisit(caseNameNode);
         }
         @Override

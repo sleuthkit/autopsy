@@ -30,19 +30,18 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
-@NbBundle.Messages({"MultiUserCasesPanel.caseListLoading.message=Please Wait..."})
 final class MultiUserCasesPanel extends JPanel{
 
     private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
+    private static final long serialVersionUID = 1L;
     private final JDialog parentDialog;
-    private final CaseBrowser caseListPanel;
+    private final CaseBrowser caseBrowserPanel;
 
     /**
      * Constructs a panel that allows a user to open cases created by automated
@@ -52,16 +51,14 @@ final class MultiUserCasesPanel extends JPanel{
         this.parentDialog = parentDialog;
         initComponents();
 
-        caseListPanel = new CaseBrowser();
-        caseListPanel.open();
-        caseListPanel.setRowSelectionAllowed(false);
-        caseExplorerScrollPane.add(caseListPanel);
-        caseExplorerScrollPane.setViewportView(caseListPanel);
+        caseBrowserPanel = new CaseBrowser();
+        caseExplorerScrollPane.add(caseBrowserPanel);
+        caseExplorerScrollPane.setViewportView(caseBrowserPanel);
         /*
          * Listen for row selection changes and set button state for the current
          * selection.
          */
-        caseListPanel.addListSelectionListener((ListSelectionEvent e) -> {
+        caseBrowserPanel.addListSelectionListener((ListSelectionEvent e) -> {
             setButtons();
         });
 
@@ -72,7 +69,7 @@ final class MultiUserCasesPanel extends JPanel{
      * refreshes the cases table.
      */
     void refresh() {
-        caseListPanel.refresh();
+        caseBrowserPanel.refresh();
     }
 
     /**
@@ -80,7 +77,7 @@ final class MultiUserCasesPanel extends JPanel{
      * in the cases table.
      */
     void setButtons() {
-        bnOpen.setEnabled(caseListPanel.isRowSelected());
+        bnOpen.setEnabled(caseBrowserPanel.isRowSelected());
     }
 
     /**
@@ -229,7 +226,7 @@ final class MultiUserCasesPanel extends JPanel{
      * @param evt -- The event that caused this to be called
      */
     private void bnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenActionPerformed
-        openCase(caseListPanel.getCasePath());
+        openCase(caseBrowserPanel.getCasePath());
     }//GEN-LAST:event_bnOpenActionPerformed
 
     private void bnOpenSingleUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenSingleUserCaseActionPerformed

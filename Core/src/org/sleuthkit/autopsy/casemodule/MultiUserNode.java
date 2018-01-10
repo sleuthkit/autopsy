@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,37 +40,31 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Provides a root node for the results views with a single child node that
- * displays a message as the sole item in its property sheet, useful for
- * displaying explanatory text in the result views when there is a node with no
- * children in the tree view.
+ * A root node containing child nodes of the multi user cases
  */
-public final class CaseNode extends AbstractNode {
+public final class MultiUserNode extends AbstractNode {
 
     @Messages({"CaseNode.column.name=Name",
         "CaseNode.column.createdTime=Created Time",
         "CaseNode.column.status=Status",
         "CaseNode.column.metadataFilePath=Path"})
-    private static final Logger LOGGER = Logger.getLogger(CaseNode.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MultiUserNode.class.getName());
 
     /**
-     * Provides a root node for the results views with a single child node that
-     * displays a message as the sole item in its property sheet, useful for
-     * displaying explanatory text in the result views when there is a node with
-     * no children in the tree view.
+     * Provides a root node with children which each represent a case.
      *
-     * @param displayedMessage The text for the property sheet of the child
-     *                         node.
+     * @param caseMap the map of cases and a boolean indicating if they have an
+     *                alert
      */
-    CaseNode(Map<CaseMetadata, Boolean> caseList) {
-        super(Children.create(new CaseNodeChildren(caseList), true));
+    MultiUserNode(Map<CaseMetadata, Boolean> caseMap) {
+        super(Children.create(new MultiUserNodeChildren(caseMap), true));
     }
 
-    static class CaseNodeChildren extends ChildFactory<Entry<CaseMetadata, Boolean>> {
+    static class MultiUserNodeChildren extends ChildFactory<Entry<CaseMetadata, Boolean>> {
 
         private final Map<CaseMetadata, Boolean> caseMap;
 
-        CaseNodeChildren(Map<CaseMetadata, Boolean> caseMap) {
+        MultiUserNodeChildren(Map<CaseMetadata, Boolean> caseMap) {
             this.caseMap = caseMap;
         }
 
@@ -84,31 +78,30 @@ public final class CaseNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(Entry<CaseMetadata, Boolean> key) {
-            return new CaseNameNode(key);
+            return new MultiUserCaseNode(key);
         }
 
     }
 
     /**
-     * The single child node of an EmptyNode, responsible for displaying a
-     * message as the sole item in its property sheet.
+     * A node which represents a single multi user case.
      */
-    public static final class CaseNameNode extends DisplayableItemNode {
+    public static final class MultiUserCaseNode extends DisplayableItemNode {
 
         private final String caseName;
         private final String caseCreatedDate;
         private final String caseMetadataFilePath;
         private final boolean caseHasAlert;
 
-        CaseNameNode(Entry<CaseMetadata, Boolean> userCase) {
+        MultiUserCaseNode(Entry<CaseMetadata, Boolean> multiUserCase) {
             super(Children.LEAF);
-            caseName = userCase.getKey().getCaseDisplayName();
-            caseCreatedDate = userCase.getKey().getCreatedDate();
-            caseHasAlert = userCase.getValue();
+            caseName = multiUserCase.getKey().getCaseDisplayName();
+            caseCreatedDate = multiUserCase.getKey().getCreatedDate();
+            caseHasAlert = multiUserCase.getValue();
             super.setName(caseName);
             setName(caseName);
             setDisplayName(caseName);
-            caseMetadataFilePath = userCase.getKey().getFilePath().toString();
+            caseMetadataFilePath = multiUserCase.getKey().getFilePath().toString();
         }
 
         @Override
@@ -152,14 +145,14 @@ public final class CaseNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            //  actions.addAll(Arrays.asList(super.getActions(context)));  
-            actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));
+            actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));  //open case context menu option
             return actions.toArray(new Action[actions.size()]);
         }
     }
 
     /**
-     * An action that opens the case node which it was generated off of
+     * An action that opens the specified case and hides the multi user case
+     * panel.
      */
     private static final class OpenMultiUserCaseAction extends AbstractAction {
 
@@ -188,10 +181,7 @@ public final class CaseNode extends AbstractNode {
                             SwingUtilities.invokeLater(() -> {
                                 //GUI changes done back on the EDT
                                 StartupWindowProvider.getInstance().open();
-                            });
-                        } finally {
-                            SwingUtilities.invokeLater(() -> {
-                                //GUI changes done back on the EDT
+                                MultiUserCasesDialog.getInstance().setVisible(true);
                             });
                         }
                     }
