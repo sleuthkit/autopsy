@@ -143,5 +143,4 @@ public class RelationshipNode extends BlackboardArtifactNode {
             return "";
         }
     }
-
 }
