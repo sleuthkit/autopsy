@@ -155,9 +155,7 @@ public final class MultiUserNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));  //open case context menu option
-            if (caseLogFilePath != null && caseLogFilePath.toFile().exists()) {
-                actions.add(new OpenCaseLogAction(caseLogFilePath));
-            }
+            actions.add(new OpenCaseLogAction(caseLogFilePath));
             return actions.toArray(new Action[actions.size()]);
         }
     }
@@ -206,6 +204,7 @@ public final class MultiUserNode extends AbstractNode {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
     }
+
     @Messages({"MultiUserNode.OpenCaseLogAction.text=Open Log File"})
     /**
      * An action that opens the specified case and hides the multi user case
@@ -220,6 +219,7 @@ public final class MultiUserNode extends AbstractNode {
         OpenCaseLogAction(Path caseLogFilePath) {
             super(Bundle.MultiUserNode_OpenCaseLogAction_text());
             pathToLog = caseLogFilePath;
+            this.setEnabled(caseLogFilePath != null && caseLogFilePath.toFile().exists());
         }
 
         @Override
@@ -231,14 +231,14 @@ public final class MultiUserNode extends AbstractNode {
                         Desktop.getDesktop().edit(pathToLog.toFile());
 
                     } else {
-                        JOptionPane.showMessageDialog(MultiUserCasesDialog.getInstance(), org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotFindLog"),
-                                org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(MultiUserCasesDialog.getInstance(), org.openide.util.NbBundle.getMessage(MultiUserNode.class, "DisplayLogDialog.cannotFindLog"),
+                                org.openide.util.NbBundle.getMessage(MultiUserNode.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Error attempting to open case auto ingest log file %s", pathToLog), ex);
                     JOptionPane.showMessageDialog(MultiUserCasesDialog.getInstance(),
-                            org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.cannotOpenLog"),
-                            org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "DisplayLogDialog.unableToShowLogFile"),
+                            org.openide.util.NbBundle.getMessage(MultiUserNode.class, "DisplayLogDialog.cannotOpenLog"),
+                            org.openide.util.NbBundle.getMessage(MultiUserNode.class, "DisplayLogDialog.unableToShowLogFile"),
                             JOptionPane.PLAIN_MESSAGE);
                 }
             }
