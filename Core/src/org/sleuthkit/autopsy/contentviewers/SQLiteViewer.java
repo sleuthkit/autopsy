@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.contentviewers;
 
@@ -22,30 +35,28 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JComboBox;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-
 
 public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
     private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
     private Connection connection = null;
-     
+
     private String tmpDBPathName = null;
     private File tmpDBFile = null;
-                
+
     // TBD: Change the value to be a Array of ColDefs
     Map<String, String> dbTablesMap = new TreeMap<>();
-    
+
     /**
      * Creates new form SQLiteViewer
      */
     public SQLiteViewer() {
         initComponents();
-        
+
         customizeComponents();
     }
 
@@ -164,7 +175,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         if (null == tableName) {
             return;
         }
-        
+
         readTable(tableName);
     }//GEN-LAST:event_tablesDropdownListActionPerformed
 
@@ -181,12 +192,12 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public List<String> getSupportedMIMETypes() {
-         return Arrays.asList(SUPPORTED_MIMETYPES);
+        return Arrays.asList(SUPPORTED_MIMETYPES);
     }
 
     @Override
     public void setFile(AbstractFile file) {
-        processSQLiteFile( file);
+        processSQLiteFile(file);
     }
 
     @Override
@@ -196,13 +207,13 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void resetComponent() {
-        
+
         dbTablesMap.clear();
-        
+
         tablesDropdownList.setEnabled(true);
         tablesDropdownList.removeAllItems();
         numEntriesField.setText("");
-        
+
         // close DB connection to file
         if (null != connection) {
             try {
@@ -212,23 +223,23 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 LOGGER.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
             }
         }
-        
+
         // delete last temp file
         if (null != tmpDBFile) {
             tmpDBFile.delete();
             tmpDBFile = null;
         }
     }
-    
+
     private void customizeComponents() {
-        
+
         // add a actionListener to jTablesComboBox
     }
-    
+
     /**
      * Process the given SQLite DB file
      *
-     * @param sqliteFile - 
+     * @param sqliteFile -
      *
      * @return none
      */
@@ -239,15 +250,13 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
-                
+
                 try {
+                    // Copy the file to temp folder
                     tmpDBPathName = Case.getCurrentCase().getTempDirectory() + File.separator + sqliteFile.getName() + "-" + sqliteFile.getId();
                     tmpDBFile = new File(tmpDBPathName);
-                
-                    // Copy the file to temp folder
                     ContentUtils.writeToFile(sqliteFile, tmpDBFile);
-                    System.out.println("RAMAN: SQLite file copied to: " + tmpDBPathName);
-        
+                    
                     // Open copy using JDBC
                     Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver 
                     connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
@@ -266,18 +275,17 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             @Override
             protected void done() {
-               super.done();
+                super.done();
                 try {
                     boolean status = get();
-                    if ( (status == true) && (dbTablesMap.size() > 0) ) {
+                    if ((status == true) && (dbTablesMap.size() > 0)) {
                         dbTablesMap.keySet().forEach((tableName) -> {
                             tablesDropdownList.addItem(tableName);
                         });
-                    }
-                    else {
+                    } else {
                         // Populate error message
-                         tablesDropdownList.addItem("No tables found");
-                         tablesDropdownList.setEnabled(false);
+                        tablesDropdownList.addItem("No tables found");
+                        tablesDropdownList.setEnabled(false);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while opening DB file", ex); //NON-NLS
@@ -286,68 +294,66 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         }.execute();
 
     }
-    
+
     /**
      * Gets the table names and their schema from loaded SQLite db file
      *
      * @return true if success, false otherwise
      */
     private boolean getTables() {
-        
+
         try {
             Statement statement = connection.createStatement();
-            
-            ResultSet resultSet = statement.executeQuery(
-                        "SELECT name, sql FROM sqlite_master "
-                                + " WHERE type= 'table' "
-                                + " ORDER BY name;"); //NON-NLS
 
-                while (resultSet.next()) {
-                    String tableName = resultSet.getString("name"); //NON-NLS
-                    String tableSQL = resultSet.getString("sql"); //NON-NLS
-                   
-                    dbTablesMap.put(tableName, tableSQL);
-                    String query = "PRAGMA table_info(" + tableName + ")"; //NON-NLS
-                    ResultSet rs2;
-                    try {
-                        Statement statement2 = connection.createStatement();
-                        rs2 = statement2.executeQuery(query);
-                        while (rs2.next()) {
-                            
-                            System.out.println("RAMAN: Col Name = " + rs2.getString("name") );
-                            System.out.println("RAMAN: Col Type = " + rs2.getString("type") );
-        
-                            // RAMAN TBD: parse and save the table schema
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
+            ResultSet resultSet = statement.executeQuery(
+                    "SELECT name, sql FROM sqlite_master "
+                    + " WHERE type= 'table' "
+                    + " ORDER BY name;"); //NON-NLS
+
+            while (resultSet.next()) {
+                String tableName = resultSet.getString("name"); //NON-NLS
+                String tableSQL = resultSet.getString("sql"); //NON-NLS
+
+                dbTablesMap.put(tableName, tableSQL);
+                String query = "PRAGMA table_info(" + tableName + ")"; //NON-NLS
+                ResultSet rs2;
+                try {
+                    Statement statement2 = connection.createStatement();
+                    rs2 = statement2.executeQuery(query);
+                    while (rs2.next()) {
+
+                        // System.out.println("RAMAN: Col Name = " + rs2.getString("name"));
+                        // System.out.println("RAMAN: Col Type = " + rs2.getString("type"));
+
+                        // RAMAN TBD: parse and save the table schema
                     }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
                 }
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
             }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
+        }
         return true;
     }
-    
+
     private void readTable(String tableName) {
-        
-        System.out.println("RAMAN: selected table = " + tableName);
-         
         // TBD: need to handle cancelling if one is already in progress
+        
         new SwingWorker<Integer, Void>() {
             @Override
             protected Integer doInBackground() throws Exception {
-                
+
                 try {
                     Statement statement = connection.createStatement();
                     ResultSet resultSet = statement.executeQuery(
-                        "SELECT COUNT(*) as count FROM " + tableName ); //NON-NLS
+                            "SELECT COUNT(*) as count FROM " + tableName); //NON-NLS
 
-                    System.out.println("Row count = " + resultSet.getInt("count") );
-                    // Read all table names and schema
+                    // TBD: read the rows here and popluate the ExplorerManager. 
+                    
                     return resultSet.getInt("count");
-                }catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to Open DB.", ex); //NON-NLS
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
                 }
                 //NON-NLS
                 return 0;
@@ -355,35 +361,35 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             @Override
             protected void done() {
-               super.done();
+                super.done();
                 try {
                     int numRows = get();
-                    numEntriesField.setText( numRows + " entries");
+                    numEntriesField.setText(numRows + " entries");
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
                 }
             }
         }.execute();
-        
+
     }
-            
+
     enum SQLStorageClass {
         NULL,
-        INTEGER, 
+        INTEGER,
         REAL,
         TEXT,
         BLOB
     };
-    
+
     private class SQLColDef {
-        
+
         private final String colName;
         private final SQLStorageClass storageClass;
-        
-        SQLColDef(String colName, SQLStorageClass sc ) {
+
+        SQLColDef(String colName, SQLStorageClass sc) {
             this.colName = colName;
             this.storageClass = sc;
         }
-        
+
     }
 }
