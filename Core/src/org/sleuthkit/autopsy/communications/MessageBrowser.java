@@ -57,7 +57,7 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
      *                           context-sensitive actions.
      */
     @NbBundle.Messages({"MessageBrowser.DataResultViewerTable.title=Messages"})
-    public MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
+     MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
         this.tableEM = tableEM;
         this.gacExplorerManager = gacExplorerManager;
         initComponents();
