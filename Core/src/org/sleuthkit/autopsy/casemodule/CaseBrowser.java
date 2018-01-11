@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Component;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
@@ -100,7 +98,7 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
                 dateColumnIndex = index;
             }
         }
-        //Hide path column by default will need to 
+        //Hide path column by default (user can unhide it)
         ETableColumn column = (ETableColumn) columnModel.getColumn(originalPathColumnIndex);
         ((ETableColumnModel) columnModel).setColumnHidden(column, true);
         outline.setRootVisible(false);
@@ -124,6 +122,11 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
         outline.getSelectionModel().addListSelectionListener(listener);
     }
 
+    /**
+     *  Get the path to the .aut file for the selected case.  
+     * 
+     * @return the full path to the selected case's .aut file
+     */
     String getCasePath() {
         int[] selectedRows = outline.getSelectedRows();
         if (selectedRows.length == 1) {
