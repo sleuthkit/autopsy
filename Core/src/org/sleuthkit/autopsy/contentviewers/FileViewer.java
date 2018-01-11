@@ -24,42 +24,40 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Generic Application content viewer
  */
 @ServiceProvider(service = DataContentViewer.class, position = 5)
-public class ApplicationContentViewer extends javax.swing.JPanel implements DataContentViewer {
+public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final int CONFIDENCE_LEVEL = 7;
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(ApplicationContentViewer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
 
-    private final Map<String, ContentViewer> mimeTypeToViewerMap = new HashMap<>();
+    private final Map<String, FileTypeViewer> mimeTypeToViewerMap = new HashMap<>();
 
     // TBD: This hardcoded list of viewers should be replaced with a dynamic lookup
-    private static final ContentViewer[] KNOWN_VIEWERS = new ContentViewer[]{
-        new JPEGViewerDummy() // this if for testing only
+    private static final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
+        new JPEGViewerDummy(), // this if for testing only
+        new SQLiteViewer()
     };
 
-    private ContentViewer lastViewer;
+    private FileTypeViewer lastViewer;
 
     /**
      * Creates new form ApplicationContentViewer
      */
-    public ApplicationContentViewer() {
+    public FileViewer() {
 
         // init the mimetype to viewer map
-        for (ContentViewer cv : KNOWN_VIEWERS) {
+        for (FileTypeViewer cv : KNOWN_VIEWERS) {
             cv.getSupportedMIMETypes().forEach((mimeType) -> {
                 if (mimeTypeToViewerMap.containsKey(mimeType) == false) {
                     mimeTypeToViewerMap.put(mimeType, cv);
@@ -75,14 +73,13 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
     }
 
     /**
-     * Get the ContentViewer for a given mimetype
+     * Get the FileTypeViewer for a given mimetype
      *
      * @param mimeType
      *
-     * @return ContentViewer, null if no known content viewer supports the
-     * mimetype
+     * @return FileTypeViewer, null if no known content viewer supports the mimetype
      */
-    private ContentViewer getSupportingViewer(String mimeType) {
+    private FileTypeViewer getSupportingViewer(String mimeType) {
         return  mimeTypeToViewerMap.get(mimeType);
     }
 
@@ -132,7 +129,7 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
             return;
         } 
         else {
-            ContentViewer viewer = getSupportingViewer(mimeType);
+            FileTypeViewer viewer = getSupportingViewer(mimeType);
             if (viewer != null) {
                 lastViewer = viewer;
 
@@ -146,7 +143,7 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
     }
 
     @Override
-    @NbBundle.Messages("ApplicationContentViewer.title=Application Content Viewer")
+    @NbBundle.Messages("ApplicationContentViewer.title=Application")
     public String getTitle() {
         return Bundle.ApplicationContentViewer_title();
     }
@@ -159,7 +156,7 @@ public class ApplicationContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public DataContentViewer createInstance() {
-        return new ApplicationContentViewer();
+        return new FileViewer();
     }
 
     @Override

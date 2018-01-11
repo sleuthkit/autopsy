@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 
-public class JPEGViewerDummy extends javax.swing.JPanel implements ContentViewer {
+public class JPEGViewerDummy extends javax.swing.JPanel implements FileTypeViewer {
 
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"image/jpeg"};
 
