@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
  * Extends MessageContentViewer so that it implements DataContent and can be set
  * as the only ContentViewer for a DataResultPanel
  */
-public class MessageDataContent extends MessageContentViewer implements DataContent {
+final class MessageDataContent extends MessageContentViewer implements DataContent {
 
     private static final long serialVersionUID = 1L;
 

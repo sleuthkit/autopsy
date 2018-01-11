@@ -70,7 +70,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     }
 
-    protected void init(ExplorerManager tableExplorerManager) {
+    void init(ExplorerManager tableExplorerManager) {
         this.accountsTableEM = tableExplorerManager;
         tableExplorerManager.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {

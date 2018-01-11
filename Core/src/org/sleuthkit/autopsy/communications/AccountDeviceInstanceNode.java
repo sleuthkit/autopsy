@@ -54,23 +54,23 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + Utils.getIconFileName(account.getAccountType()));
     }
 
-    public AccountDeviceInstance getAccountDeviceInstance() {
+    AccountDeviceInstance getAccountDeviceInstance() {
         return accountDeviceInstanceKey.getAccountDeviceInstance();
     }
 
-    public AccountDeviceInstanceKey getAccountDeviceInstanceKey() {
+    AccountDeviceInstanceKey getAccountDeviceInstanceKey() {
         return accountDeviceInstanceKey;
     }
 
-    public CommunicationsManager getCommsManager() {
+    CommunicationsManager getCommsManager() {
         return commsManager;
     }
 
-    public long getMessageCount() {
+    long getMessageCount() {
         return accountDeviceInstanceKey.getMessageCount();
     }
 
-    public CommunicationsFilter getFilter() {
+    CommunicationsFilter getFilter() {
         return accountDeviceInstanceKey.getCommunicationsFilter();
     }
 

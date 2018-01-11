@@ -28,6 +28,7 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -136,6 +137,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             
         };
         graphComponent.setAutoScroll(true);
+
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         jPanel1.add(graphComponent, BorderLayout.CENTER);
@@ -445,6 +447,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void applyOrganicLayout() {
         new mxOrganicLayout(graph).execute(graph.getDefaultParent());
+
+        mxGraphView view = graphComponent.getGraph().getView();
+        int compLen = graphComponent.getWidth();
+        int viewLen = (int) view.getGraphBounds().getWidth();
+        view.setScale((double) compLen / viewLen * view.getScale());
         graphComponent.zoomAndCenter();
     }
 
