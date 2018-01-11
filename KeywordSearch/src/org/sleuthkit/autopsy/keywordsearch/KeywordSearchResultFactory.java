@@ -245,7 +245,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         return hits.values();
     }
 
-    @NbBundle.Messages({"KeywordSearchResultFactory.createNodeForKey.noMatchessFound.text=No matches found."})
+    @NbBundle.Messages({"KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found."})
     @Override
     protected Node createNodeForKey(KeyValue key) {
         Node resultNode;
@@ -260,7 +260,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             resultNode = new KeywordSearchFilterNode(hits, kvNode);
         } else {
             resultNode = new EmptyNode("This Node Is Empty");
-            resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noMatchessFound.text"));
+            resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noResultsFound.text"));
         }
 
         return resultNode;
