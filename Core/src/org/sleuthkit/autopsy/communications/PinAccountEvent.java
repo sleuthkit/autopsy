@@ -11,11 +11,11 @@ import java.util.Collection;
 /**
  *
  */
-class PinAccountEvent {
+final class PinAccountEvent {
 
     private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
 
-    public ImmutableSet<AccountDeviceInstanceKey> getAccountDeviceInstances() {
+    ImmutableSet<AccountDeviceInstanceKey> getAccountDeviceInstances() {
         return accountDeviceInstances;
     }
 

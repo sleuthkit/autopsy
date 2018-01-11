@@ -43,11 +43,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Node for a relationship, as represented by a BlackboardArtifact.
  */
-public class RelationshipNode extends BlackboardArtifactNode {
+final class RelationshipNode extends BlackboardArtifactNode {
 
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
 
-    public RelationshipNode(BlackboardArtifact artifact) {
+     RelationshipNode(BlackboardArtifact artifact) {
         super(artifact);
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message");

@@ -21,14 +21,17 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.eventbus.EventBus;
 
 /**
- * Provide he singleton EventBus.
+ * Provide the singleton EventBus.
  */
 final class CVTEvents {
 
     private final static EventBus cvtEventBus = new EventBus();
 
-    public static EventBus getCVTEventBus() {
+    static EventBus getCVTEventBus() {
         return cvtEventBus;
+    }
+
+    private CVTEvents() {
     }
 
 }
