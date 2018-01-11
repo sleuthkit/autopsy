@@ -25,19 +25,22 @@ import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
+import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
-import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.util.Arrays;
 import java.util.Collection;
+import static java.util.Collections.singleton;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,11 +49,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.AbstractNode;
@@ -128,39 +135,45 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.setCellsDeletable(false);
         graph.setCellsBendable(true);
         graph.setKeepEdgesInBackground(true);
-
-        graphComponent = new mxGraphComponent(graph){
+        graphComponent = new mxGraphComponent(graph) {
             @Override
             public boolean isPanningEvent(MouseEvent event) {
-                return true; //To change body of generated methods, choose Tools | Templates.
+                return true;
             }
-            
+
         };
+
+       
         graphComponent.setAutoScroll(true);
 
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         jPanel1.add(graphComponent, BorderLayout.CENTER);
 
-//        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
-//            @Override
-//            public void mouseReleased(MouseEvent e) {
-//                graphComponent.setPanning(false);
-//            }
-//
-//            @Override
-//            public void mouseMoved(MouseEvent e) {
-//                super.mouseMoved(e);
-//                if (graphComponent.isPanning()) {
-//                    graphComponent.getGraphControl().setTranslate(e.getPoint());
-//                }
-//            }
-//
-//            @Override
-//            public void mousePressed(MouseEvent e) {
-//                graphComponent.setPanning(true);
-//            }
-//        });
+        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
+                    if (cellAt != null && cellAt.isVertex()) {
+                        JPopupMenu jPopupMenu = new JPopupMenu();
+                        jPopupMenu.add(new JMenuItem() {
+                            {
+                                setAction(new AbstractAction("Pin Account " + cellAt.getId()) {
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        pinAccounts(new PinAccountEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
+                                    }
+                                });
+                            }
+                        });
+
+                        jPopupMenu.show(graphComponent.getGraphControl(), e.getX(), e.getY());
+                    }
+                }
+            }
+        });
 
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
         CVTEvents.getCVTEventBus().register(this);
@@ -446,23 +459,31 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void applyOrganicLayout() {
+         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
         new mxOrganicLayout(graph).execute(graph.getDefaultParent());
 
-        mxGraphView view = graphComponent.getGraph().getView();
-        int compLen = graphComponent.getWidth();
-        int viewLen = (int) view.getGraphBounds().getWidth();
-        view.setScale((double) compLen / viewLen * view.getScale());
-        graphComponent.zoomAndCenter();
+        fitGraph();
     }
 
-    private void applyOrthogonalLayout() {
+    private void fitGraph() {
+//        mxGraphView view = graphComponent.getGraph().getView();
+//        int compLen = graphComponent.getWidth();
+//        int viewLen = (int) view.getGraphBounds().getWidth();
+//        view.setScale((double) compLen / viewLen * view.getScale());
+
+    }
+
+    private void applyOrthogonalLayout() { graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
         new mxOrthogonalLayout(graph).execute(graph.getDefaultParent());
-        graphComponent.zoomAndCenter();
+        fitGraph();
     }
 
-    private void applyHierarchicalLayout() {
+    private void applyHierarchicalLayout() { graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
         new mxHierarchicalLayout(graph).execute(graph.getDefaultParent());
-        graphComponent.zoomAndCenter();
+        fitGraph();
     }
 
 
