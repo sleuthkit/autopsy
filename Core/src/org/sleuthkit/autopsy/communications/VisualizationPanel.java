@@ -22,7 +22,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
-import com.mxgraph.layout.mxOrganicLayout;
+import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
@@ -30,6 +30,7 @@ import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -46,7 +47,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -115,6 +115,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final Multimap<BlackboardArtifact, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     private CommunicationsManager commsManager;
+    private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
 
     void setFilterProvider(FilterProvider filterProvider) {
         this.filterProvider = filterProvider;
@@ -139,17 +140,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.setCellsDeletable(false);
         graph.setCellsBendable(true);
         graph.setKeepEdgesInBackground(true);
-        graphComponent = new mxGraphComponent(graph) {
-            @Override
-            public boolean isPanningEvent(MouseEvent event) {
-                return true;
-            }
-
-        };
-
-        graphComponent.setAutoExtend(true);
-        graphComponent.setAutoScroll(true);
-
+        graphComponent = new mxGraphComponent(graph);
+        graphComponent.setConnectable(false);
+        graphComponent.setKeepSelectionVisibleOnZoom(true);
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         jPanel1.add(graphComponent, BorderLayout.CENTER);
@@ -164,7 +157,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         JPopupMenu jPopupMenu = new JPopupMenu();
                         jPopupMenu.add(new JMenuItem(imageIcon) {
                             {
-                                setAction(new AbstractAction("Pin Account " + cellAt.getId()) {
+                                setAction(new AbstractAction("Pin Account " + graph.getLabel(cellAt)) {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
                                         pinAccounts(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
@@ -219,18 +212,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
-        return nodeMap.computeIfAbsent(name, vertexName -> {
+        final mxCell computeIfAbsent = nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
+
             mxCell vertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
                     vertexName, accountDeviceInstanceKey,
-                    new Random().nextInt(200),
-                    new Random().nextInt(200),
+                    0,
+                    0,
                     size,
                     size);
             graph.getView().getState(vertex, true).setLabel(vertexName);
             return vertex;
         });
+        return computeIfAbsent;
     }
 
     @SuppressWarnings("unchecked")
@@ -250,28 +245,27 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Subscribe
     public void pinAccounts(CVTEvents.PinAccountsEvent pinEvent) {
 
-        final Set<AccountDeviceInstanceKey> adiKeys = pinEvent.getAccountDeviceInstances();
         final CommunicationsFilter commsFilter = filterProvider.getFilter();
 
         graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
+                pinnedAccountDevices.clear();
                 clearGraph();
-            } else {
             }
-            for (AccountDeviceInstanceKey adiKey : adiKeys) {
+            pinnedAccountDevices.addAll(pinEvent.getAccountDeviceInstances());
+            for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
                 mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
 
                 List<AccountDeviceInstance> relatedAccountDeviceInstances =
                         commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), commsFilter);
 
                 for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-
+                    long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
                     List<BlackboardArtifact> relationships = commsManager.getRelationships(adiKey.getAccountDeviceInstance(), relatedADI, commsFilter);
 
-                    long communicationsCount = relationships.size();
                     AccountDeviceInstanceKey relatedADIKey =
-                            new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount);
+                            new AccountDeviceInstanceKey(relatedADI, commsFilter, adiRelationshipsCount);
                     mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
                     for (BlackboardArtifact relationship : relationships) {
                         addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
@@ -467,17 +461,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private void applyOrganicLayout() {
         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
-        new mxOrganicLayout(graph).execute(graph.getDefaultParent());
+        new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
 
         fitGraph();
     }
 
     private void fitGraph() {
-//        mxGraphView view = graphComponent.getGraph().getView();
-//        int compLen = graphComponent.getWidth();
-//        int viewLen = (int) view.getGraphBounds().getWidth();
-//        view.setScale((double) compLen / viewLen * view.getScale());
-
+        mxGraphView view = graphComponent.getGraph().getView();
+        int compLen = graphComponent.getWidth();
+        int viewLen = (int) view.getGraphBounds().getWidth();
+        view.setScale((double) compLen / viewLen * view.getScale());
     }
 
     private void applyOrthogonalLayout() {
