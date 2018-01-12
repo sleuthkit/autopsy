@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -27,8 +29,14 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A panel that goes in the Browse tab of the Communications Visualization Tool.
@@ -42,17 +50,18 @@ import org.openide.util.lookup.ProxyLookup;
 public final class AccountsBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(AccountsBrowser.class.getName());
 
     private final Outline outline;
 
     private final ExplorerManager messageBrowserEM = new ExplorerManager();
-    private ExplorerManager accountsTableEM;
+    private final ExplorerManager accountsTableEM = new ExplorerManager();
 
     /*
      * This lookup proxies the selection lookup of both he accounts table and
      * the messages table.
      */
-    private ProxyLookup proxyLookup;
+    private final ProxyLookup proxyLookup;
 
     public AccountsBrowser() {
         initComponents();
@@ -68,11 +77,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
 
-    }
-
-    void init(ExplorerManager tableExplorerManager) {
-        this.accountsTableEM = tableExplorerManager;
-        tableExplorerManager.addPropertyChangeListener(evt -> {
+        accountsTableEM.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
@@ -80,7 +85,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
             }
         });
 
-        jSplitPane1.setRightComponent(new MessageBrowser(tableExplorerManager, messageBrowserEM));
+        jSplitPane1.setRightComponent(new MessageBrowser(accountsTableEM, messageBrowserEM));
 
         proxyLookup = new ProxyLookup(
                 ExplorerUtils.createLookup(messageBrowserEM, getActionMap()),
@@ -108,6 +113,16 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
             columnWidth = Math.min(columnWidth, columnWidthLimit);
 
             outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
+        }
+    }
+
+    @Subscribe
+    public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+        try {
+            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, filterChangeEvent.getNewFilter()), true)));
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
         }
     }
 

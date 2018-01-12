@@ -64,7 +64,6 @@ import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
@@ -116,11 +115,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private CommunicationsManager commsManager;
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
-
-    void setFilterProvider(FilterProvider filterProvider) {
-        this.filterProvider = filterProvider;
-    }
-    private FilterProvider filterProvider;
+    private CommunicationsFilter currentFilter;
 
     public VisualizationPanel() {
         initComponents();
@@ -160,7 +155,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                                 setAction(new AbstractAction("Pin Account " + graph.getLabel(cellAt)) {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
-                                        pinAccounts(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
+                                        handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
                                     }
                                 });
                             }
@@ -173,7 +168,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
 
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
-        CVTEvents.getCVTEventBus().register(this);
 
         graph.setStylesheet(mxStylesheet);
 
@@ -243,9 +237,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    public void pinAccounts(CVTEvents.PinAccountsEvent pinEvent) {
-
-        final CommunicationsFilter commsFilter = filterProvider.getFilter();
+    public void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
 
         graph.getModel().beginUpdate();
         try {
@@ -254,34 +246,55 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 clearGraph();
             }
             pinnedAccountDevices.addAll(pinEvent.getAccountDeviceInstances());
-            for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
-                mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
-
-                List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                        commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), commsFilter);
-
-                for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                    long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
-                    List<BlackboardArtifact> relationships = commsManager.getRelationships(adiKey.getAccountDeviceInstance(), relatedADI, commsFilter);
-
-                    AccountDeviceInstanceKey relatedADIKey =
-                            new AccountDeviceInstanceKey(relatedADI, commsFilter, adiRelationshipsCount);
-                    mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
-                    for (BlackboardArtifact relationship : relationships) {
-                        addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
-                    }
-                }
-            }
+            rebuildGraph();
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error pinning accounts", ex);
         } finally {
             // Updates the display
             graph.getModel().endUpdate();
-
         }
 
         applyOrganicLayout();
         revalidate();
+    }
+
+    @Subscribe
+    public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+        graph.getModel().beginUpdate();
+        try {
+            clearGraph();
+            currentFilter = filterChangeEvent.getNewFilter();
+            rebuildGraph();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error filtering accounts", ex);
+        } finally {
+            // Updates the display
+            graph.getModel().endUpdate();
+        }
+
+        applyOrganicLayout();
+        revalidate();
+    }
+
+    private void rebuildGraph() throws TskCoreException {
+        for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
+            mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
+
+            List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                    commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
+
+            for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+                long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
+                List<BlackboardArtifact> relationships = commsManager.getRelationships(adiKey.getAccountDeviceInstance(), relatedADI, currentFilter);
+
+                AccountDeviceInstanceKey relatedADIKey =
+                        new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
+                mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
+                for (BlackboardArtifact relationship : relationships) {
+                    addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
+                }
+            }
+        }
     }
 
     private void clearGraph() {
