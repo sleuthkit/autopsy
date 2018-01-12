@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
+import java.util.Collection;
 
 /**
  * Provide the singleton EventBus.
@@ -34,4 +36,22 @@ final class CVTEvents {
     private CVTEvents() {
     }
 
+    static final class PinAccountsEvent {
+
+        private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
+        private final boolean replace;
+
+        public boolean isReplace() {
+            return replace;
+        }
+
+        ImmutableSet<AccountDeviceInstanceKey> getAccountDeviceInstances() {
+            return accountDeviceInstances;
+        }
+
+        PinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances, boolean replace) {
+            this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
+            this.replace = replace;
+        }
+    }
 }

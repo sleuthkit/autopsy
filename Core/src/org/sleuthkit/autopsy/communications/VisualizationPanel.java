@@ -50,6 +50,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -88,7 +89,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
-    private Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
+
+    static final private ImageIcon imageIcon =
+            new ImageIcon("images/icons8-neural-network.png");
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
 
@@ -143,7 +147,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         };
 
-       
+        graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
 
         graphComponent.setOpaque(true);
@@ -158,12 +162,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
                     if (cellAt != null && cellAt.isVertex()) {
                         JPopupMenu jPopupMenu = new JPopupMenu();
-                        jPopupMenu.add(new JMenuItem() {
+                        jPopupMenu.add(new JMenuItem(imageIcon) {
                             {
                                 setAction(new AbstractAction("Pin Account " + cellAt.getId()) {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
-                                        pinAccounts(new PinAccountEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
+                                        pinAccounts(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
                                     }
                                 });
                             }
@@ -215,20 +219,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
-        mxCell vertex = nodeMap.get(name);
-        if (vertex == null) {
+        return nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
-            vertex = (mxCell) graph.insertVertex(
+            mxCell vertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
-                    name, accountDeviceInstanceKey,
+                    vertexName, accountDeviceInstanceKey,
                     new Random().nextInt(200),
                     new Random().nextInt(200),
                     size,
                     size);
-            graph.getView().getState(vertex, true).setLabel(name);
-            nodeMap.put(name, vertex);
-        }
-        return vertex;
+            graph.getView().getState(vertex, true).setLabel(vertexName);
+            return vertex;
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -246,17 +248,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    public void pinAccounts(PinAccountEvent pinEvent) {
+    public void pinAccounts(CVTEvents.PinAccountsEvent pinEvent) {
 
         final Set<AccountDeviceInstanceKey> adiKeys = pinEvent.getAccountDeviceInstances();
         final CommunicationsFilter commsFilter = filterProvider.getFilter();
 
         graph.getModel().beginUpdate();
         try {
-            nodeMap.clear();
-            edgeMap.clear();
-            graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
-
+            if (pinEvent.isReplace()) {
+                clearGraph();
+            } else {
+            }
             for (AccountDeviceInstanceKey adiKey : adiKeys) {
                 mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
 
@@ -288,6 +290,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         revalidate();
     }
 
+    private void clearGraph() {
+        nodeMap.clear();
+        edgeMap.clear();
+        graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+    }
+
     @Override
     public void addNotify() {
         super.addNotify();
@@ -305,9 +313,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             graph.getModel().beginUpdate();
             try {
-                nodeMap.clear();
-                edgeMap.clear();
-                graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+                clearGraph();
             } finally {
                 graph.getModel().endUpdate();
             }
@@ -459,7 +465,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void applyOrganicLayout() {
-         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
         new mxOrganicLayout(graph).execute(graph.getDefaultParent());
 
@@ -474,13 +480,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     }
 
-    private void applyOrthogonalLayout() { graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+    private void applyOrthogonalLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
         new mxOrthogonalLayout(graph).execute(graph.getDefaultParent());
         fitGraph();
     }
 
-    private void applyHierarchicalLayout() { graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+    private void applyHierarchicalLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
         new mxHierarchicalLayout(graph).execute(graph.getDefaultParent());
         fitGraph();

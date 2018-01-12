@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ImageIcon;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -113,20 +114,22 @@ final class AccountDeviceInstanceNode extends AbstractNode {
 
         private static final long serialVersionUID = 1L;
         private static PinAccountsAction instance = new PinAccountsAction();
+        static final private ImageIcon imageIcon =
+                new ImageIcon("images/icons8-neural-network.png");
 
         private static PinAccountsAction getInstance() {
             return instance;
         }
 
         private PinAccountsAction() {
-            super("Visualize Account");
+            super("Visualize Account", imageIcon);
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             Collection<? extends AccountDeviceInstanceKey> lookupAll =
                     Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class);
-            CVTEvents.getCVTEventBus().post(new PinAccountEvent(lookupAll));
+            CVTEvents.getCVTEventBus().post(new CVTEvents.PinAccountsEvent(lookupAll, true));
         }
     }
 }

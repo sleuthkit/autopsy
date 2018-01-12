@@ -75,9 +75,10 @@ public final class CVTTopComponent extends TopComponent {
     }
 
     @Subscribe
-    public void pinAccount(PinAccountEvent pinEvent) {
+    public void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
         browseVisualizeTabPane.setSelectedIndex(1);
     }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
