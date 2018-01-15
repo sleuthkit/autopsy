@@ -26,8 +26,11 @@ import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
+import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
@@ -49,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -116,6 +120,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private CommunicationsManager commsManager;
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
     private CommunicationsFilter currentFilter;
+    private final mxRubberband rubberband;
 
     public VisualizationPanel() {
         initComponents();
@@ -132,16 +137,23 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.setEdgeLabelsMovable(false);
         graph.setVertexLabelsMovable(false);
         graph.setAllowDanglingEdges(false);
-        graph.setCellsDeletable(false);
         graph.setCellsBendable(true);
         graph.setKeepEdgesInBackground(true);
+        graph.setStylesheet(mxStylesheet);
         graphComponent = new mxGraphComponent(graph);
+        graphComponent.setAutoExtend(true);
+        graphComponent.setAutoScroll(true);
+        graphComponent.setAutoscrolls(true);
         graphComponent.setConnectable(false);
         graphComponent.setKeepSelectionVisibleOnZoom(true);
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         jPanel1.add(graphComponent, BorderLayout.CENTER);
 
+        //install rubber band selection handler
+        rubberband = new mxRubberband(graphComponent);
+
+        //right click handler
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -169,32 +181,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
 
-        graph.setStylesheet(mxStylesheet);
-
-        graph.getSelectionModel().addListener(null, (sender, evt) -> {
-            Object[] selectionCells = graph.getSelectionCells();
-            if (selectionCells.length == 1) {
-                mxCell selectionCell = (mxCell) selectionCells[0];
-                try {
-
-                    if (selectionCell.isVertex()) {
-                        final AccountDeviceInstanceNode accountDeviceInstanceNode =
-                                new AccountDeviceInstanceNode(((AccountDeviceInstanceKey) selectionCell.getValue()),
-                                        commsManager);
-                        vizEM.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
-                        vizEM.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
-
-                    } else if (selectionCell.isEdge()) {
-                        @SuppressWarnings("unchecked")
-                        AbstractNode abstractNode = new AbstractNode(Children.create(new RelaionshipSetNodeFactory((Set<BlackboardArtifact>) selectionCell.getValue()), true));
-                        vizEM.setRootContext(abstractNode);
-                        vizEM.setSelectedNodes(new Node[]{abstractNode});
-                    }
-                } catch (PropertyVetoException ex) {
-                    logger.log(Level.SEVERE, "Account selection vetoed.", ex);
-                }
-            }
-        });
+        //feed selection to explorermanager
+        graph.getSelectionModel().addListener(null, new SelectionListener());
     }
 
     @Override
@@ -238,7 +226,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @Subscribe
     public void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
-
         graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
@@ -255,11 +242,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         applyOrganicLayout();
-        revalidate();
     }
 
     @Subscribe
     public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+
         graph.getModel().beginUpdate();
         try {
             clearGraph();
@@ -273,7 +260,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         applyOrganicLayout();
-        revalidate();
     }
 
     private void rebuildGraph() throws TskCoreException {
@@ -300,7 +286,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private void clearGraph() {
         nodeMap.clear();
         edgeMap.clear();
-        graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+        graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
     }
 
     @Override
@@ -483,7 +469,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         mxGraphView view = graphComponent.getGraph().getView();
         int compLen = graphComponent.getWidth();
         int viewLen = (int) view.getGraphBounds().getWidth();
-        view.setScale((double) compLen / viewLen * view.getScale());
+//        view.setScale((double) compLen / viewLen * view.getScale());
+
     }
 
     private void applyOrthogonalLayout() {
@@ -523,6 +510,49 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         private SimpleParentNode(Children children) {
             super(children);
+        }
+    }
+
+    private class SelectionListener implements mxEventSource.mxIEventListener {
+
+        @Override
+      
+        public void invoke(Object sender, mxEventObject evt) {
+            Object[] selectionCells = graph.getSelectionCells();
+            if (selectionCells.length == 0) {
+                vizEM.setRootContext(Node.EMPTY);
+            } else {
+                Node rootNode;
+                Node[] selectedNodes;
+                mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
+
+                if (Stream.of(selectedCells).allMatch(mxICell::isVertex)) {
+                    HashSet<AccountDeviceInstance> adis = new HashSet<>();
+                    for (mxICell vertex : selectedCells) {
+                        adis.add(((AccountDeviceInstanceKey) vertex.getValue()).getAccountDeviceInstance());
+                    }
+
+                    final AccountDetailsNode accountDeviceInstanceNode =
+                            new AccountDetailsNode(adis, currentFilter, commsManager);
+                    rootNode = SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode);
+                    selectedNodes = new Node[]{accountDeviceInstanceNode};
+
+                } else {
+                    HashSet<BlackboardArtifact> relationshipArtifacts = new HashSet<>();
+                    for (mxICell edge : selectedCells) {
+                        relationshipArtifacts.addAll((Set<BlackboardArtifact>) edge.getValue());
+                    }
+
+                    rootNode = new AbstractNode(Children.create(new RelaionshipSetNodeFactory(relationshipArtifacts), true));
+                    selectedNodes = new Node[]{rootNode};
+                }
+                vizEM.setRootContext(rootNode);
+                try {
+                    vizEM.setSelectedNodes(selectedNodes);
+                } catch (PropertyVetoException ex) {
+                    logger.log(Level.SEVERE, "Account selection vetoed.", ex);
+                }
+            }
         }
     }
 }
