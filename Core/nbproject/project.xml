@@ -333,8 +333,8 @@
                 <binary-origin>release/modules/ext/tika-core-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/Tsk_DataModel_PostgreSQL.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/Tsk_DataModel_PostgreSQL.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
