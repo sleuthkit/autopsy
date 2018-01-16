@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -72,6 +72,7 @@ class ReportHTML implements TableReportModule {
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
     private static ReportHTML instance;
     private static final int MAX_THUMBS_PER_PAGE = 1000;
+    private static final String HTML_SUBDIR = "content";
     private Case currentCase;
     private SleuthkitCase skCase;
     static Integer THUMBNAIL_COLUMNS = 5;
@@ -79,6 +80,7 @@ class ReportHTML implements TableReportModule {
     private Map<String, Integer> dataTypes;
     private String path;
     private String thumbsPath;
+    private String subPath;
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
@@ -107,6 +109,7 @@ class ReportHTML implements TableReportModule {
 
         path = "";
         thumbsPath = "";
+        subPath = "";
         currentDataType = "";
         rowCount = 0;
 
@@ -157,7 +160,7 @@ class ReportHTML implements TableReportModule {
         if (null != artifactType) {
             // set the icon file name
             iconFileName = dataTypeToFileName(artifactType.getDisplayName()) + ".png"; //NON-NLS
-            iconFilePath = path + File.separator + iconFileName;
+            iconFilePath = subPath + File.separator + iconFileName;
 
             // determine the source image to use
             switch (artifactType) {
@@ -268,7 +271,7 @@ class ReportHTML implements TableReportModule {
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
                     iconFileName = "star.png"; //NON-NLS
-                    iconFilePath = path + File.separator + iconFileName;
+                    iconFilePath = subPath + File.separator + iconFileName;
                     break;
             }
         } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
@@ -281,11 +284,11 @@ class ReportHTML implements TableReportModule {
              */
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
             iconFileName = "accounts.png"; //NON-NLS
-            iconFilePath = path + File.separator + iconFileName;
+            iconFilePath = subPath + File.separator + iconFileName;
         } else {  // no defined artifact found for this dataType
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
-            iconFilePath = path + File.separator + iconFileName;
+            iconFilePath = subPath + File.separator + iconFileName;
         }
 
         try {
@@ -325,10 +328,11 @@ class ReportHTML implements TableReportModule {
         // Refresh the HTML report
         refresh();
         // Setup the path for the HTML report
-        this.path = baseReportDir + "HTML Report" + File.separator; //NON-NLS
-        this.thumbsPath = this.path + "thumbs" + File.separator; //NON-NLS
+        this.path = baseReportDir; //NON-NLS
+        this.subPath = this.path + HTML_SUBDIR + File.separator;
+        this.thumbsPath = this.subPath + THUMBS_REL_PATH; //NON-NLS
         try {
-            FileUtil.createFolder(new File(this.path));
+            FileUtil.createFolder(new File(this.subPath));
             FileUtil.createFolder(new File(this.thumbsPath));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to make HTML report folder."); //NON-NLS
@@ -367,7 +371,7 @@ class ReportHTML implements TableReportModule {
     public void startDataType(String name, String description) {
         String title = dataTypeToFileName(name);
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + title + ".html"), "UTF-8")); //NON-NLS
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(subPath + title + ".html"), "UTF-8")); //NON-NLS
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "File not found: {0}", ex); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
@@ -747,7 +751,7 @@ class ReportHTML implements TableReportModule {
         // Make a folder for the local file with the same tagName as the tag.
         StringBuilder localFilePath = new StringBuilder();  // full path
 
-        localFilePath.append(path);
+        localFilePath.append(subPath);
         localFilePath.append(dirName2);
         File localFileFolder = new File(localFilePath.toString());
         if (!localFileFolder.exists()) {
@@ -777,7 +781,7 @@ class ReportHTML implements TableReportModule {
         }
 
         // get the relative path
-        return localFilePath.toString().substring(path.length());
+        return localFilePath.toString().substring(subPath.length());
     }
 
     /**
@@ -795,7 +799,7 @@ class ReportHTML implements TableReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "HTML Report" + File.separator + "index.html"; //NON-NLS
+        return "report.html"; //NON-NLS
     }
 
     @Override
@@ -814,7 +818,7 @@ class ReportHTML implements TableReportModule {
     private void writeCss() {
         Writer cssOut = null;
         try {
-            cssOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.css"), "UTF-8")); //NON-NLS NON-NLS
+            cssOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(subPath + "index.css"), "UTF-8")); //NON-NLS NON-NLS
             String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n"
                     + //NON-NLS
                     "#content {padding: 30px;}\n"
@@ -875,7 +879,7 @@ class ReportHTML implements TableReportModule {
      */
     private void writeIndex() {
         Writer indexOut = null;
-        String indexFilePath = path + "index.html"; //NON-NLS
+        String indexFilePath = path + "report.html"; //NON-NLS
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
@@ -883,7 +887,7 @@ class ReportHTML implements TableReportModule {
             String iconPath = reportBranding.getAgencyLogoPath();
             if (iconPath == null) {
                 // use default Autopsy icon if custom icon is not set
-                iconPath = "favicon.ico";
+                iconPath = HTML_SUBDIR + "favicon.ico";
             } else {
                 iconPath = Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString(); //ref to writeNav() for agency_logo
             }
@@ -895,8 +899,8 @@ class ReportHTML implements TableReportModule {
             index.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             index.append("</head>\n"); //NON-NLS
             index.append("<frameset cols=\"350px,*\">\n"); //NON-NLS
-            index.append("<frame src=\"nav.html\" name=\"nav\">\n"); //NON-NLS
-            index.append("<frame src=\"summary.html\" name=\"content\">\n"); //NON-NLS
+            index.append("<frame src=\"" + HTML_SUBDIR).append(File.separator).append("nav.html\" name=\"nav\">\n"); //NON-NLS
+            index.append("<frame src=\"" + HTML_SUBDIR).append(File.separator).append("summary.html\" name=\"content\">\n"); //NON-NLS
             index.append("<noframes>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.msg")).append("<br />\n"); //NON-NLS
             index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.noFrames.seeNav")).append("<br />\n"); //NON-NLS
             index.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.seeSum")).append("</noframes>\n"); //NON-NLS
@@ -906,7 +910,7 @@ class ReportHTML implements TableReportModule {
             Case.getCurrentCase().addReport(indexFilePath, NbBundle.getMessage(this.getClass(),
                     "ReportHTML.writeIndex.srcModuleName.text"), "");
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error creating Writer for index.html: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error creating Writer for report.html: {0}", ex); //NON-NLS
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", indexFilePath); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
@@ -927,7 +931,7 @@ class ReportHTML implements TableReportModule {
     private void writeNav() {
         Writer navOut = null;
         try {
-            navOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "nav.html"), "UTF-8")); //NON-NLS
+            navOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(subPath + "nav.html"), "UTF-8")); //NON-NLS
             StringBuilder nav = new StringBuilder();
             nav.append("<html>\n<head>\n\t<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeNav.title"))
@@ -972,24 +976,24 @@ class ReportHTML implements TableReportModule {
             String generatorLogoPath = reportBranding.getGeneratorLogoPath();
             if (generatorLogoPath != null && !generatorLogoPath.isEmpty()) {
                 File from = new File(generatorLogoPath);
-                File to = new File(path);
+                File to = new File(subPath);
                 FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "generator_logo"); //NON-NLS
             }
 
             String agencyLogoPath = reportBranding.getAgencyLogoPath();
             if (agencyLogoPath != null && !agencyLogoPath.isEmpty()) {
-                Path destinationPath = Paths.get(path);
+                Path destinationPath = Paths.get(subPath);
                 Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), destinationPath.resolve(Paths.get(agencyLogoPath).getFileName())); //NON-NLS     
             }
 
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico"); //NON-NLS
-            output = new FileOutputStream(new File(path + File.separator + "favicon.ico"));
+            output = new FileOutputStream(new File(subPath + "favicon.ico"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
 
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png"); //NON-NLS
-            output = new FileOutputStream(new File(path + File.separator + "summary.png"));
+            output = new FileOutputStream(new File(subPath + "summary.png"));
             FileUtil.copy(in, output);
             in.close();
             output.close();
@@ -1019,7 +1023,7 @@ class ReportHTML implements TableReportModule {
     private void writeSummary() {
         Writer out = null;
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "summary.html"), "UTF-8")); //NON-NLS
+            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(subPath + "summary.html"), "UTF-8")); //NON-NLS
             StringBuilder head = new StringBuilder();
             head.append("<html>\n<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
