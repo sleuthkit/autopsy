@@ -70,7 +70,7 @@ public final class CVTTopComponent extends TopComponent {
     }
 
     @Subscribe
-    public void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
+    void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
         browseVisualizeTabPane.setSelectedIndex(1);
     }
 

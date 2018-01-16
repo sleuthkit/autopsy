@@ -20,9 +20,8 @@ package org.sleuthkit.autopsy.communications;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
@@ -79,26 +78,28 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                     if (selectedNodes.length > 0) {
                         Node rootNode;
                         final Node selectedNode = selectedNodes[0];
-                        String path = selectedNode.getDisplayName();
+
                         if (selectedNode instanceof AccountDeviceInstanceNode) {
                             rootNode = makeRootNodeFromAccountDeviceInstanceNodes(selectedNodes);
                         } else {
                             rootNode = selectedNode;
                         }
-                        messagesResultPanel.setPath(path);
+                        messagesResultPanel.setPath(rootNode.getDisplayName());
                         messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(rootNode, gacExplorerManager), true));
                     }
                 }
             }
 
             private Node makeRootNodeFromAccountDeviceInstanceNodes(final Node[] selectedNodes) {
+                //Use lookup here? 
                 AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
-                final Set<AccountDeviceInstance> accountDeviceInstances;
-                accountDeviceInstances = Stream.of(selectedNodes)
-                        .map(AccountDeviceInstanceNode.class::cast)
-                        .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
-                        .collect(Collectors.toSet());
-                return new AccountDetailsNode(accountDeviceInstances, adiNode.getFilter(), adiNode.getCommsManager());
+
+                final Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
+                for (Node n : selectedNodes) {
+                    //Use lookup here?
+                    accountDeviceInstances.add(((AccountDeviceInstanceNode) n).getAccountDeviceInstance());
+                }
+                return SelectionNode.createFromAccounts(accountDeviceInstances, adiNode.getFilter(), adiNode.getCommsManager());
             }
         });
     }

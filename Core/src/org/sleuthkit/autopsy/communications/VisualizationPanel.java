@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -66,8 +65,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -76,9 +73,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -116,7 +113,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
     private final Map<String, mxCell> nodeMap = new HashMap<>();
-    private final Multimap<BlackboardArtifact, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
+    private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     private CommunicationsManager commsManager;
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
@@ -212,21 +209,21 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @SuppressWarnings("unchecked")
-    private void addEdge(BlackboardArtifact artifact, mxCell pinnedAccountVertex, mxCell relatedAccountVertex) throws TskCoreException {
+    private void addEdge(Content relSource, mxCell pinnedAccountVertex, mxCell relatedAccountVertex) throws TskCoreException {
         Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
         if (edgesBetween.length == 0) {
             final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
-            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, new HashSet<>(Arrays.asList(artifact)), pinnedAccountVertex, relatedAccountVertex);
-            edgeMap.put(artifact, edge);
+            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, new HashSet<>(Arrays.asList(relSource)), pinnedAccountVertex, relatedAccountVertex);
+            edgeMap.put(relSource, edge);
         } else if (edgesBetween.length == 1) {
             final mxCell edge = (mxCell) edgesBetween[0];
-            ((Collection<BlackboardArtifact>) edge.getValue()).add(artifact);
+            ((Collection<Content>) edge.getValue()).add(relSource);
             edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
         }
     }
 
     @Subscribe
-    public void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
+     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
@@ -246,7 +243,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+     void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
 
         graph.getModel().beginUpdate();
         try {
@@ -272,12 +269,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
             for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
                 long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
-                List<BlackboardArtifact> relationships = commsManager.getRelationships(adiKey.getAccountDeviceInstance(), relatedADI, currentFilter);
+                List<Content> relationships = commsManager.getRelationshipSources(adiKey.getAccountDeviceInstance(), relatedADI, currentFilter);
 
                 AccountDeviceInstanceKey relatedADIKey =
                         new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
                 mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
-                for (BlackboardArtifact relationship : relationships) {
+                for (Content relationship : relationships) {
                     addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
                 }
             }
@@ -525,49 +522,28 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    private static class SimpleParentNode extends AbstractNode {
-
-        private static SimpleParentNode createFromChildNodes(Node... nodes) {
-            Children.Array array = new Children.Array();
-            array.add(nodes);
-            return new SimpleParentNode(array);
-        }
-
-        private SimpleParentNode(Children children) {
-            super(children);
-        }
-    }
-
     private class SelectionListener implements mxEventSource.mxIEventListener {
 
         @Override
 
+        @SuppressWarnings("unchecked")
         public void invoke(Object sender, mxEventObject evt) {
             Object[] selectionCells = graph.getSelectionCells();
             Node rootNode = Node.EMPTY;
             Node[] selectedNodes = new Node[0];
             if (selectionCells.length > 0) {
                 mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
-
-                if (Stream.of(selectedCells).allMatch(mxICell::isVertex)) {
-                    HashSet<AccountDeviceInstance> adis = new HashSet<>();
-                    for (mxICell vertex : selectedCells) {
-                        adis.add(((AccountDeviceInstanceKey) vertex.getValue()).getAccountDeviceInstance());
+                HashSet<Content> relationshipSources = new HashSet<>();
+                HashSet<AccountDeviceInstance> adis = new HashSet<>();
+                for (mxICell cell : selectedCells) {
+                    if (cell.isEdge()) {
+                        relationshipSources.addAll((Set<Content>) cell.getValue());
+                    } else if (cell.isVertex()) {
+                        adis.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
                     }
-
-                    final AccountDetailsNode accountDeviceInstanceNode =
-                            new AccountDetailsNode(adis, currentFilter, commsManager);
-                    rootNode = SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode);
-                    selectedNodes = new Node[]{accountDeviceInstanceNode};
-
-                } else if (Stream.of(selectedCells).allMatch(mxICell::isEdge)) {
-                    HashSet<BlackboardArtifact> relationshipArtifacts = new HashSet<>();
-                    for (mxICell edge : selectedCells) {
-                        relationshipArtifacts.addAll((Set<BlackboardArtifact>) edge.getValue());
-                    }
-                    rootNode = new AbstractNode(Children.create(new RelaionshipSetNodeFactory(relationshipArtifacts), true));
-                    selectedNodes = new Node[]{rootNode};
                 }
+                rootNode = SelectionNode.createFromAccountsAndRelationships(relationshipSources, adis, currentFilter, commsManager);
+                selectedNodes = new Node[]{rootNode};
             }
             vizEM.setRootContext(rootNode);
             try {
