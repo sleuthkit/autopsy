@@ -63,7 +63,7 @@ class ReportGenerator {
      */
     private ReportProgressPanel progressPanel;
 
-    private String reportPathFormatString;
+    private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
     private final ReportGenerationPanel reportGenerationPanel = new ReportGenerationPanel();
 
     static final String REPORTS_DIR = "Reports"; //NON-NLS
@@ -89,12 +89,6 @@ class ReportGenerator {
      * Creates a report generator.
      */
     ReportGenerator() {
-        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
-        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
-        Date date = new Date();
-        String dateNoTime = dateFormat.format(date);
-        this.reportPathFormatString = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " %s " + dateNoTime + File.separator;
-
         this.errorList = new ArrayList<>();
     }
 
@@ -138,10 +132,10 @@ class ReportGenerator {
      */
     void generateGeneralReport(GeneralReportModule generalReportModule) throws IOException {
         if (generalReportModule != null) {
-            reportPathFormatString = createReportDirectory(generalReportModule, reportPathFormatString);
-            setupProgressPanel(generalReportModule);
+            String reportDir = createReportDirectory(generalReportModule);
+            setupProgressPanel(generalReportModule, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
-                generalReportModule.generateReport(reportPathFormatString, progressPanel);
+                generalReportModule.generateReport(reportDir, progressPanel);
             });
             worker.execute();
             displayProgressPanel();
@@ -158,10 +152,10 @@ class ReportGenerator {
      */
     void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) throws IOException {
         if (tableReport != null && null != artifactTypeSelections) {
-            reportPathFormatString = createReportDirectory(tableReport, reportPathFormatString);
-            setupProgressPanel(tableReport);
+            String reportDir = createReportDirectory(tableReport);
+            setupProgressPanel(tableReport, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
-                tableReport.startReport(reportPathFormatString);
+                tableReport.startReport(reportDir);
                 TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
                 generator.execute();
                 tableReport.endReport();
@@ -182,14 +176,14 @@ class ReportGenerator {
      */
     void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) throws IOException {
         if (fileReportModule != null && null != enabledInfo) {
-            reportPathFormatString = createReportDirectory(fileReportModule, reportPathFormatString);
+            String reportDir = createReportDirectory(fileReportModule);
             List<FileReportDataTypes> enabled = new ArrayList<>();
             for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
                 if (e.getValue()) {
                     enabled.add(e.getKey());
                 }
             }
-            setupProgressPanel(fileReportModule);
+            setupProgressPanel(fileReportModule, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
                 if (progressPanel.getStatus() != ReportStatus.CANCELED) {
                     progressPanel.start();
@@ -200,7 +194,7 @@ class ReportGenerator {
                 List<AbstractFile> files = getFiles();
                 int numFiles = files.size();
                 if (progressPanel.getStatus() != ReportStatus.CANCELED) {
-                    fileReportModule.startReport(reportPathFormatString);
+                    fileReportModule.startReport(reportDir);
                     fileReportModule.startTable(enabled);
                 }
                 progressPanel.setIndeterminate(false);
@@ -255,17 +249,22 @@ class ReportGenerator {
         }
     }
 
-    private void setupProgressPanel(ReportModule module) {
+    private void setupProgressPanel(ReportModule module, String reportDir) {
         String reportFilePath = module.getRelativeFilePath();
         if (!reportFilePath.isEmpty()) {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), String.format(reportPathFormatString, module.getName()) + reportFilePath);
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
         } else {
             this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
         }
     }
 
-    private static String createReportDirectory(ReportModule module, String pathFormat) throws IOException {
-        String reportPath = String.format(pathFormat, module.getName());
+    private static String createReportDirectory(ReportModule module) throws IOException {
+        Case currentCase = Case.getCurrentCase();
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
+        Date date = new Date();
+        String dateNoTime = dateFormat.format(date);
+        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), module.getName(), dateNoTime);
         // Create the root reports directory.
         try {
             FileUtil.createFolder(new File(reportPath));
