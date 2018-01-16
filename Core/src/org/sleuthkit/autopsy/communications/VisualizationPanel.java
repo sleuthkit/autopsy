@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCompactTreeLayout;
@@ -34,7 +35,6 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
-import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -102,6 +102,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "#000000");
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
+        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
     }
 
     private final ExplorerManager vizEM = new ExplorerManager();
@@ -209,11 +210,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @SuppressWarnings("unchecked")
-    private void addEdge(Content relSource, mxCell pinnedAccountVertex, mxCell relatedAccountVertex) throws TskCoreException {
-        Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
+    private void addEdge(Content relSource, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) throws TskCoreException {
+        mxCell vertex1 = getOrCreateVertex(account1);
+        mxCell vertex2 = getOrCreateVertex(account2);
+        Object[] edgesBetween = graph.getEdgesBetween(vertex1, vertex2);
         if (edgesBetween.length == 0) {
-            final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
-            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, new HashSet<>(Arrays.asList(relSource)), pinnedAccountVertex, relatedAccountVertex);
+            final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
+            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, new HashSet<>(Arrays.asList(relSource)), vertex1, vertex2);
             edgeMap.put(relSource, edge);
         } else if (edgesBetween.length == 1) {
             final mxCell edge = (mxCell) edgesBetween[0];
@@ -223,7 +226,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
+    void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
@@ -239,11 +242,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graph.getModel().endUpdate();
         }
 
-        applyOrganicLayout();
+        applyHierarchicalLayout();
     }
 
     @Subscribe
-     void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+    void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
 
         graph.getModel().beginUpdate();
         try {
@@ -257,26 +260,34 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graph.getModel().endUpdate();
         }
 
-        applyOrganicLayout();
+        applyHierarchicalLayout();
     }
 
     private void rebuildGraph() throws TskCoreException {
+
+        Set<AccountDeviceInstanceKey> allAccounts = new HashSet<>();
         for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
-            mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
+            allAccounts.add(adiKey);
 
             List<AccountDeviceInstance> relatedAccountDeviceInstances =
                     commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
 
             for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
                 long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
-                List<Content> relationships = commsManager.getRelationshipSources(adiKey.getAccountDeviceInstance(), relatedADI, currentFilter);
+                allAccounts.add(new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount));
+            }
+        }
 
-                AccountDeviceInstanceKey relatedADIKey =
-                        new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
-                mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
-                for (Content relationship : relationships) {
-                    addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
-                }
+        Set<List<AccountDeviceInstanceKey>> cartesianProduct = Sets.cartesianProduct(Arrays.asList(allAccounts, allAccounts));
+        for (List<AccountDeviceInstanceKey> pair : cartesianProduct) {
+            AccountDeviceInstanceKey adiKey1 = pair.get(0);
+            AccountDeviceInstanceKey adiKey2 = pair.get(1);
+            List<Content> relationships = commsManager.getRelationshipSources(
+                    adiKey1.getAccountDeviceInstance(),
+                    adiKey2.getAccountDeviceInstance(),
+                    currentFilter);
+            for (Content relationship : relationships) {
+                addEdge(relationship, adiKey1, adiKey2);
             }
         }
     }
@@ -476,36 +487,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 graphComponent.getHeight()));
         new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
 
-        fitGraph();
     }
 
-    private void fitGraph() {
-        mxGraphView view = graphComponent.getGraph().getView();
-        int compLen = graphComponent.getWidth();
-        int viewLen = (int) view.getGraphBounds().getWidth();
-//        view.setScale((double) compLen / viewLen * view.getScale());
-
-    }
 
     private void applyOrthogonalLayout() {
         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
         new mxOrthogonalLayout(graph).execute(graph.getDefaultParent());
-        fitGraph();
     }
 
     private void applyHierarchicalLayout() {
         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
         new mxHierarchicalLayout(graph).execute(graph.getDefaultParent());
-        fitGraph();
     }
 
     private void applyCompactTreeLayout() {
         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
         new mxCompactTreeLayout(graph).execute(graph.getDefaultParent());
-        fitGraph();
     }
 
 
