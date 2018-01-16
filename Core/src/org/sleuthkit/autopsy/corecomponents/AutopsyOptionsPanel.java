@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,9 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "AutopsyOptionsPanel.browseLogosButton.text=Browse",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidPath.text=Path is not valid.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidImageSpecified.text=Invalid image file specified.",
-    "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set."
+    "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set.",
+    "AutopsyOptionsPanel.maxLogFileCount.text=Maximum Log Files:",
+    "AutopsyOptionsPanel.logFileCountAlert.text=A positive integer is required here."
 })
 
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
@@ -110,6 +112,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
+        logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
     }
 
     /**
@@ -309,6 +312,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         specifyLogoRB.setSelected(!useDefault);
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
+        logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -363,6 +367,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCB.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
+        UserPreferences.setLogFileCount(Integer.parseInt(logFileCount.getText()));
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
@@ -540,6 +545,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         memField = new javax.swing.JTextField();
         memFieldValidationLabel = new javax.swing.JLabel();
         maxMemoryUnitsLabel1 = new javax.swing.JLabel();
+        maxLogFileCount = new javax.swing.JLabel();
+        logFileCount = new javax.swing.JTextField();
+        logNumAlert = new javax.swing.JTextField();
 
         jScrollPane1.setBorder(null);
 
@@ -598,7 +606,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(agencyLogoPathFieldValidationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(128, Short.MAX_VALUE))
         );
         logoPanelLayout.setVerticalGroup(
             logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -774,28 +782,50 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(maxMemoryUnitsLabel1, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.maxMemoryUnitsLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(maxLogFileCount, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.maxLogFileCount.text")); // NOI18N
+
+        logFileCount.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
+        logFileCount.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                logFileCountKeyReleased(evt);
+            }
+        });
+
+        logNumAlert.setEditable(false);
+        logNumAlert.setFont(logNumAlert.getFont().deriveFont(logNumAlert.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        logNumAlert.setForeground(new java.awt.Color(255, 0, 0));
+        logNumAlert.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.logNumAlert.text")); // NOI18N
+        logNumAlert.setBorder(null);
+
         javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
         runtimePanel.setLayout(runtimePanelLayout);
         runtimePanelLayout.setHorizontalGroup(
             runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(runtimePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(maxMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(totalMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(memField, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(maxMemoryUnitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(maxMemoryUnitsLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(runtimePanelLayout.createSequentialGroup()
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(maxMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(totalMemoryLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(memField, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(maxMemoryUnitsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(maxMemoryUnitsLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(runtimePanelLayout.createSequentialGroup()
+                        .addComponent(maxLogFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18)
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(logNumAlert)
                     .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 417, Short.MAX_VALUE)
                     .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         runtimePanelLayout.setVerticalGroup(
             runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -813,7 +843,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                         .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(maxMemoryUnitsLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(totalMemoryLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(maxLogFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(logNumAlert, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -834,8 +870,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0)
                 .addComponent(viewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(runtimePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(runtimePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -946,6 +982,26 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_specifyLogoRBActionPerformed
 
+    private void logFileCountKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_logFileCountKeyReleased
+        String count = logFileCount.getText();
+        try {
+            int count_num = Integer.parseInt(count);
+            if (count_num < 1) {
+                logNumAlert.setText(Bundle.AutopsyOptionsPanel_logFileCountAlert_text());
+                return;
+            } else if (count_num == UserPreferences.getDefaultLogFileCount()) {
+                //if it is still the initial value don't fire change
+                logNumAlert.setText("");
+                return;
+        }
+        } catch (NumberFormatException e) {
+            logNumAlert.setText(Bundle.AutopsyOptionsPanel_logFileCountAlert_text());
+            return;
+        }
+        logNumAlert.setText("");
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_logFileCountKeyReleased
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -963,8 +1019,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JRadioButton keepCurrentViewerRB;
+    private javax.swing.JTextField logFileCount;
+    private javax.swing.JTextField logNumAlert;
     private javax.swing.JPanel logoPanel;
     private javax.swing.ButtonGroup logoSourceButtonGroup;
+    private javax.swing.JLabel maxLogFileCount;
     private javax.swing.JLabel maxMemoryLabel;
     private javax.swing.JLabel maxMemoryUnitsLabel;
     private javax.swing.JLabel maxMemoryUnitsLabel1;
