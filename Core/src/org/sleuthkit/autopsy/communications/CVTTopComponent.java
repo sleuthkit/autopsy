@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.ExplorerUtils;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.ProxyLookup;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -36,33 +38,45 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 @TopComponent.Registration(mode = "cvt", openAtStartup = false)
 @RetainLocation("cvt")
 @NbBundle.Messages("CVTTopComponent.name= Communications Visualization")
-public final class CVTTopComponent extends TopComponent implements ExplorerManager.Provider {
+public final class CVTTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    private final ExplorerManager messagesBrowserExplorerManager;
-    private final ExplorerManager acctsBrowserExplorerManager;
+
+    private final ExplorerManager filterToTableEXplorerManager = new ExplorerManager();
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
         setName(Bundle.CVTTopComponent_name());
         /*
-         * Associate an explorer manager with the GlobalActionContext (GAC) for
-         * use by the messages browser so that selections in the messages
-         * browser can be exposed to context-sensitive actions.
+         * Connect the filtersPane and the accountsBrowser via a shared
+         * ExplorerMmanager
          */
-        messagesBrowserExplorerManager = new ExplorerManager();
-        associateLookup(ExplorerUtils.createLookup(messagesBrowserExplorerManager, getActionMap()));
-        splitPane.setRightComponent(new MessageBrowser(messagesBrowserExplorerManager));
+        filtersPane.setExplorerManager(filterToTableEXplorerManager);
+        accountsBrowser.init(filterToTableEXplorerManager);
+
 
         /*
-         * Create a second explorer manager to be discovered by the accounts
-         * browser and the message browser so that the browsers can both listen
-         * for explorer manager property events for the outline view of the
-         * accounts browser. This provides a mechanism for pushing selected
-         * Nodes from the accounts browser to the messages browser.
+         * Associate an Lookup with the GlobalActionContext (GAC) so that
+         * selections in the sub views can be exposed to context-sensitive
+         * actions.
          */
-        acctsBrowserExplorerManager = new ExplorerManager();
+        ProxyLookupImpl proxyLookup = new ProxyLookupImpl(accountsBrowser.getLookup());
+        associateLookup(proxyLookup);
+        // Make sure the GAC is proxying the selection of the active tab.
+        browseVisualizeTabPane.addChangeListener(changeEvent -> {
+            Lookup.Provider selectedComponent = (Lookup.Provider) browseVisualizeTabPane.getSelectedComponent();
+            proxyLookup.changeLookups(selectedComponent.getLookup());
+        });
+
+        vizPanel.setFilterProvider(filtersPane);
+        CVTEvents.getCVTEventBus().register(this);
+
+    }
+
+    @Subscribe
+    public void pinAccount(PinAccountEvent pinEvent) {
+        browseVisualizeTabPane.setSelectedIndex(1);
     }
 
     /**
@@ -73,18 +87,14 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        splitPane = new javax.swing.JSplitPane();
         browseVisualizeTabPane = new javax.swing.JTabbedPane();
         accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
+        vizPanel = new org.sleuthkit.autopsy.communications.VisualizationPanel();
         filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
 
-        splitPane.setDividerLocation(400);
-        splitPane.setResizeWeight(0.7);
-
         browseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
-
-        splitPane.setLeftComponent(browseVisualizeTabPane);
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
 
         filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
 
@@ -94,20 +104,23 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1339, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addComponent(browseVisualizeTabPane, javax.swing.GroupLayout.DEFAULT_SIZE, 786, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(filtersPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(splitPane))
+                .addComponent(filtersPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(5, 5, 5))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(browseVisualizeTabPane)
+                .addContainerGap())
         );
+
+        browseVisualizeTabPane.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -115,18 +128,13 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
     private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
     private javax.swing.JTabbedPane browseVisualizeTabPane;
     private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
-    private javax.swing.JSplitPane splitPane;
+    private org.sleuthkit.autopsy.communications.VisualizationPanel vizPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-    }
-
-    @Override
-    public ExplorerManager getExplorerManager() {
-        return acctsBrowserExplorerManager;
     }
 
     @Override
@@ -150,5 +158,16 @@ public final class CVTTopComponent extends TopComponent implements ExplorerManag
          */
         return modes.stream().filter(mode -> mode.getName().equals("cvt"))
                 .collect(Collectors.toList());
+    }
+
+    final private static class ProxyLookupImpl extends ProxyLookup {
+
+        ProxyLookupImpl(Lookup... l) {
+            super(l);
+        }
+
+        protected void changeLookups(Lookup... l) {
+            setLookups(l);
+        }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,21 +26,34 @@ import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.ProxyLookup;
 
 /**
  * A panel that goes in the Browse tab of the Communications Visualization Tool.
- * Hosts an OutlineView that shows information about Accounts.
+ * Hosts an OutlineView that shows information about Accounts, and a
+ * MessageBrowser for viewing details of communications.
+ *
+ * The Lookup provided by getLookup will be proxied by the lookup of the
+ * CVTTopComponent when this tab is active allowing for context sensitive
+ * actions to work correctly.
  */
-public class AccountsBrowser extends JPanel {
+public final class AccountsBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
 
     private final Outline outline;
-    private ExplorerManager em;
 
-    /**
-     * Creates new form AccountsBrowser
+    private final ExplorerManager messageBrowserEM = new ExplorerManager();
+    private ExplorerManager accountsTableEM;
+
+    /*
+     * This lookup proxies the selection lookup of both he accounts table and
+     * the messages table.
      */
+    private ProxyLookup proxyLookup;
+
     public AccountsBrowser() {
         initComponents();
         outline = outlineView.getOutline();
@@ -54,19 +67,24 @@ public class AccountsBrowser extends JPanel {
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
+
     }
 
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        em = ExplorerManager.find(this);
-        em.addPropertyChangeListener(evt -> {
+    void init(ExplorerManager tableExplorerManager) {
+        this.accountsTableEM = tableExplorerManager;
+        tableExplorerManager.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             }
         });
+
+        jSplitPane1.setRightComponent(new MessageBrowser(tableExplorerManager, messageBrowserEM));
+
+        proxyLookup = new ProxyLookup(
+                ExplorerUtils.createLookup(messageBrowserEM, getActionMap()),
+                ExplorerUtils.createLookup(accountsTableEM, getActionMap()));
     }
 
     private void setColumnWidths() {
@@ -102,28 +120,29 @@ public class AccountsBrowser extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSplitPane1 = new javax.swing.JSplitPane();
         outlineView = new org.openide.explorer.view.OutlineView();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
-        );
+        setLayout(new java.awt.BorderLayout());
+
+        jSplitPane1.setLeftComponent(outlineView);
+
+        add(jSplitPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSplitPane jSplitPane1;
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return accountsTableEM;
+    }
+
+    @Override
+    public Lookup getLookup() {
+        return proxyLookup;
+    }
 }

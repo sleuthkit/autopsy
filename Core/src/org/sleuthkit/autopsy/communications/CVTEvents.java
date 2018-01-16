@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,20 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.beans.PropertyChangeEvent;
-import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
+import com.google.common.eventbus.EventBus;
 
 /**
- * Extends MessageContentViewer so that it implements DataContent and can be set
- * as the only ContentViewer for a DataResultPanel
+ * Provide the singleton EventBus.
  */
-final class MessageDataContent extends MessageContentViewer implements DataContent {
+final class CVTEvents {
 
-    private static final long serialVersionUID = 1L;
+    private final static EventBus cvtEventBus = new EventBus();
 
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    static EventBus getCVTEventBus() {
+        return cvtEventBus;
     }
+
+    private CVTEvents() {
+    }
+
 }

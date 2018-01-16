@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * relationships of all the accounts in this node.
  *
  */
-class AccountDetailsNode extends AbstractNode {
+final class AccountDetailsNode extends AbstractNode {
 
     private final static Logger logger = Logger.getLogger(AccountDetailsNode.class.getName());
 
