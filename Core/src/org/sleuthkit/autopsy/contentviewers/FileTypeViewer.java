@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Defines an interface for application specific content viewer
  *
  */
-interface ContentViewer {
+interface FileTypeViewer {
 
     /**
      * Returns list of MIME types supported by this viewer
