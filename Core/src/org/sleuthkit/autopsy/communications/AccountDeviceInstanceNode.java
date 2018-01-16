@@ -52,6 +52,7 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         this.commsManager = commsManager;
         this.account = accountDeviceInstanceKey.getAccountDeviceInstance().getAccount();
         setName(account.getTypeSpecificID());
+        setDisplayName(getName());
         setIconBaseWithExtension("org/sleuthkit/autopsy/communications/images/" + Utils.getIconFileName(account.getAccountType()));
     }
 

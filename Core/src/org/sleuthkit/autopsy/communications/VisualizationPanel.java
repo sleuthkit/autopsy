@@ -22,6 +22,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
@@ -346,6 +347,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         jButton6 = new JButton();
         jButton1 = new JButton();
         jButton3 = new JButton();
+        jButton7 = new JButton();
         jButton4 = new JButton();
         jButton5 = new JButton();
 
@@ -402,6 +404,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
         jToolBar1.add(jButton3);
 
+        jButton7.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton7.text")); // NOI18N
+        jButton7.setFocusable(false);
+        jButton7.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton7.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton7.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton7);
+
         jButton4.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton4.text")); // NOI18N
         jButton4.setFocusable(false);
         jButton4.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -457,6 +470,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         applyHierarchicalLayout();
     }//GEN-LAST:event_jButton6ActionPerformed
 
+    private void jButton7ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        applyCompactTreeLayout();
+    }//GEN-LAST:event_jButton7ActionPerformed
+
     private void applyOrganicLayout() {
         graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
                 graphComponent.getHeight()));
@@ -487,6 +504,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         fitGraph();
     }
 
+    private void applyCompactTreeLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
+        new mxCompactTreeLayout(graph).execute(graph.getDefaultParent());
+        fitGraph();
+    }
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JButton jButton1;
@@ -495,6 +519,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton jButton4;
     private JButton jButton5;
     private JButton jButton6;
+    private JButton jButton7;
     private JPanel jPanel1;
     private JToolBar jToolBar1;
     private JSplitPane splitPane;
@@ -516,14 +541,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private class SelectionListener implements mxEventSource.mxIEventListener {
 
         @Override
-      
+
         public void invoke(Object sender, mxEventObject evt) {
             Object[] selectionCells = graph.getSelectionCells();
-            if (selectionCells.length == 0) {
-                vizEM.setRootContext(Node.EMPTY);
-            } else {
-                Node rootNode;
-                Node[] selectedNodes;
+            Node rootNode = Node.EMPTY;
+            Node[] selectedNodes = new Node[0];
+            if (selectionCells.length > 0) {
                 mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
 
                 if (Stream.of(selectedCells).allMatch(mxICell::isVertex)) {
@@ -537,21 +560,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     rootNode = SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode);
                     selectedNodes = new Node[]{accountDeviceInstanceNode};
 
-                } else {
+                } else if (Stream.of(selectedCells).allMatch(mxICell::isEdge)) {
                     HashSet<BlackboardArtifact> relationshipArtifacts = new HashSet<>();
                     for (mxICell edge : selectedCells) {
                         relationshipArtifacts.addAll((Set<BlackboardArtifact>) edge.getValue());
                     }
-
                     rootNode = new AbstractNode(Children.create(new RelaionshipSetNodeFactory(relationshipArtifacts), true));
                     selectedNodes = new Node[]{rootNode};
                 }
-                vizEM.setRootContext(rootNode);
-                try {
-                    vizEM.setSelectedNodes(selectedNodes);
-                } catch (PropertyVetoException ex) {
-                    logger.log(Level.SEVERE, "Account selection vetoed.", ex);
-                }
+            }
+            vizEM.setRootContext(rootNode);
+            try {
+                vizEM.setSelectedNodes(selectedNodes);
+            } catch (PropertyVetoException ex) {
+                logger.log(Level.SEVERE, "Selection vetoed.", ex);
             }
         }
     }

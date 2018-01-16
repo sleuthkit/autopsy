@@ -25,6 +25,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.python.google.common.collect.Iterables;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -44,6 +45,10 @@ final class AccountDetailsNode extends AbstractNode {
 
     AccountDetailsNode(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter filter, CommunicationsManager commsManager) {
         super(Children.create(new AccountRelationshipChildren(accountDeviceInstances, commsManager, filter), true));
+        String displayName = (accountDeviceInstances.size() == 1)
+                ? Iterables.getOnlyElement(accountDeviceInstances).getAccount().getTypeSpecificID()
+                : accountDeviceInstances.size() + " accounts";
+        setDisplayName(displayName);
     }
 
     /**
