@@ -204,11 +204,8 @@ class RawText implements IndexedText {
             } else {
                 hasChunks = true;
             }
-        } catch (KeywordSearchModuleException ex) {
-            LOGGER.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
-
-        } catch (NoOpenCoreException ex) {
-            LOGGER.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Could not get number of chunks: ", ex); //NON-NLS		
         }
     }
 
