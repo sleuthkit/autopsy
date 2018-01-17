@@ -295,17 +295,10 @@
                 <package>org.apache.log4j.xml</package>
                 <package>org.apache.poi</package>
                 <package>org.apache.poi.common.usermodel</package>
+                <package>org.apache.poi.common.usermodel.fonts</package>
                 <package>org.apache.poi.ddf</package>
                 <package>org.apache.poi.dev</package>
                 <package>org.apache.poi.extractor</package>
-                <package>org.apache.poi.hdf.event</package>
-                <package>org.apache.poi.hdf.extractor</package>
-                <package>org.apache.poi.hdf.extractor.data</package>
-                <package>org.apache.poi.hdf.extractor.util</package>
-                <package>org.apache.poi.hdf.model</package>
-                <package>org.apache.poi.hdf.model.hdftypes</package>
-                <package>org.apache.poi.hdf.model.hdftypes.definitions</package>
-                <package>org.apache.poi.hdf.model.util</package>
                 <package>org.apache.poi.hdgf</package>
                 <package>org.apache.poi.hdgf.chunks</package>
                 <package>org.apache.poi.hdgf.dev</package>
@@ -313,6 +306,9 @@
                 <package>org.apache.poi.hdgf.extractor</package>
                 <package>org.apache.poi.hdgf.pointers</package>
                 <package>org.apache.poi.hdgf.streams</package>
+                <package>org.apache.poi.hemf.extractor</package>
+                <package>org.apache.poi.hemf.hemfplus.record</package>
+                <package>org.apache.poi.hemf.record</package>
                 <package>org.apache.poi.hmef</package>
                 <package>org.apache.poi.hmef.attribute</package>
                 <package>org.apache.poi.hmef.dev</package>
@@ -325,7 +321,6 @@
                 <package>org.apache.poi.hpsf</package>
                 <package>org.apache.poi.hpsf.extractor</package>
                 <package>org.apache.poi.hpsf.wellknown</package>
-                <package>org.apache.poi.hslf</package>
                 <package>org.apache.poi.hslf.blip</package>
                 <package>org.apache.poi.hslf.dev</package>
                 <package>org.apache.poi.hslf.exceptions</package>
@@ -358,7 +353,11 @@
                 <package>org.apache.poi.hssf.record.crypto</package>
                 <package>org.apache.poi.hssf.record.pivottable</package>
                 <package>org.apache.poi.hssf.usermodel</package>
+                <package>org.apache.poi.hssf.usermodel.helpers</package>
                 <package>org.apache.poi.hssf.util</package>
+                <package>org.apache.poi.hwmf.draw</package>
+                <package>org.apache.poi.hwmf.record</package>
+                <package>org.apache.poi.hwmf.usermodel</package>
                 <package>org.apache.poi.hwpf</package>
                 <package>org.apache.poi.hwpf.converter</package>
                 <package>org.apache.poi.hwpf.dev</package>
@@ -372,18 +371,30 @@
                 <package>org.apache.poi.openxml4j.opc</package>
                 <package>org.apache.poi.openxml4j.opc.internal</package>
                 <package>org.apache.poi.openxml4j.opc.internal.marshallers</package>
-                <package>org.apache.poi.openxml4j.opc.internal.signature</package>
                 <package>org.apache.poi.openxml4j.opc.internal.unmarshallers</package>
-                <package>org.apache.poi.openxml4j.opc.signature</package>
                 <package>org.apache.poi.openxml4j.util</package>
                 <package>org.apache.poi.poifs.common</package>
                 <package>org.apache.poi.poifs.crypt</package>
+                <package>org.apache.poi.poifs.crypt.agile</package>
+                <package>org.apache.poi.poifs.crypt.binaryrc4</package>
+                <package>org.apache.poi.poifs.crypt.cryptoapi</package>
+                <package>org.apache.poi.poifs.crypt.dsig</package>
+                <package>org.apache.poi.poifs.crypt.dsig.facets</package>
+                <package>org.apache.poi.poifs.crypt.dsig.services</package>
+                <package>org.apache.poi.poifs.crypt.standard</package>
+                <package>org.apache.poi.poifs.crypt.temp</package>
+                <package>org.apache.poi.poifs.crypt.xor</package>
                 <package>org.apache.poi.poifs.dev</package>
                 <package>org.apache.poi.poifs.eventfilesystem</package>
                 <package>org.apache.poi.poifs.filesystem</package>
+                <package>org.apache.poi.poifs.macros</package>
                 <package>org.apache.poi.poifs.nio</package>
                 <package>org.apache.poi.poifs.property</package>
                 <package>org.apache.poi.poifs.storage</package>
+                <package>org.apache.poi.sl.draw</package>
+                <package>org.apache.poi.sl.draw.binding</package>
+                <package>org.apache.poi.sl.draw.geom</package>
+                <package>org.apache.poi.sl.image</package>
                 <package>org.apache.poi.sl.usermodel</package>
                 <package>org.apache.poi.ss</package>
                 <package>org.apache.poi.ss.excelant</package>
@@ -401,15 +412,27 @@
                 <package>org.apache.poi.ss.formula.udf</package>
                 <package>org.apache.poi.ss.usermodel</package>
                 <package>org.apache.poi.ss.usermodel.charts</package>
+                <package>org.apache.poi.ss.usermodel.helpers</package>
                 <package>org.apache.poi.ss.util</package>
                 <package>org.apache.poi.ss.util.cellwalk</package>
                 <package>org.apache.poi.util</package>
-                <package>org.apache.poi.xslf</package>
+                <package>org.apache.poi.wp.usermodel</package>
+                <package>org.apache.poi.xdgf.exceptions</package>
+                <package>org.apache.poi.xdgf.extractor</package>
+                <package>org.apache.poi.xdgf.geom</package>
+                <package>org.apache.poi.xdgf.usermodel</package>
+                <package>org.apache.poi.xdgf.usermodel.section</package>
+                <package>org.apache.poi.xdgf.usermodel.section.geometry</package>
+                <package>org.apache.poi.xdgf.usermodel.shape</package>
+                <package>org.apache.poi.xdgf.usermodel.shape.exceptions</package>
+                <package>org.apache.poi.xdgf.util</package>
+                <package>org.apache.poi.xdgf.xml</package>
                 <package>org.apache.poi.xslf.extractor</package>
                 <package>org.apache.poi.xslf.model</package>
-                <package>org.apache.poi.xslf.model.geom</package>
                 <package>org.apache.poi.xslf.usermodel</package>
                 <package>org.apache.poi.xslf.util</package>
+                <package>org.apache.poi.xssf</package>
+                <package>org.apache.poi.xssf.binary</package>
                 <package>org.apache.poi.xssf.dev</package>
                 <package>org.apache.poi.xssf.eventusermodel</package>
                 <package>org.apache.poi.xssf.extractor</package>
@@ -620,6 +643,8 @@
                 <package>org.openxmlformats.schemas.spreadsheetml.x2006.main.impl</package>
                 <package>org.openxmlformats.schemas.wordprocessingml.x2006.main</package>
                 <package>org.openxmlformats.schemas.wordprocessingml.x2006.main.impl</package>
+                <package>org.openxmlformats.schemas.xpackage.x2006.digitalSignature</package>
+                <package>org.openxmlformats.schemas.xpackage.x2006.digitalSignature.impl</package>
                 <package>org.reflections</package>
                 <package>org.reflections.adapters</package>
                 <package>org.reflections.scanners</package>
@@ -643,17 +668,10 @@
                 <package>org.xml.sax.ext</package>
                 <package>org.xml.sax.helpers</package>
                 <package>repackage</package>
-                <package>schemaorg_apache_xmlbeans.system.sE130CAA0A01A7CDE5A2B4FEB8B311707</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLCONFIG</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLLANG</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLSCHEMA</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLTOOLS</package>
-                <package>schemasMicrosoftComOfficeExcel</package>
-                <package>schemasMicrosoftComOfficeExcel.impl</package>
-                <package>schemasMicrosoftComOfficeOffice</package>
-                <package>schemasMicrosoftComOfficeOffice.impl</package>
-                <package>schemasMicrosoftComVml</package>
-                <package>schemasMicrosoftComVml.impl</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.2-sources.jar</runtime-relative-path>
@@ -764,10 +782,6 @@
                 <binary-origin>release/modules/ext/joda-time-2.4-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-excelant-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-excelant-3.15.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-psd-3.2.jar</binary-origin>
             </class-path-extension>
@@ -824,10 +838,6 @@
                 <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-3.15.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
             </class-path-extension>
@@ -852,16 +862,20 @@
                 <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/poi-3.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-3.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-schemas-3.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-scratchpad-3.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-3.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-io-2.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.15.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
@@ -888,6 +902,10 @@
                 <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/poi-excelant-3.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-excelant-3.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
             </class-path-extension>
@@ -900,6 +918,10 @@
                 <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-3.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-3.17.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
             </class-path-extension>
@@ -910,10 +932,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-3.15.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.2.jar</runtime-relative-path>
