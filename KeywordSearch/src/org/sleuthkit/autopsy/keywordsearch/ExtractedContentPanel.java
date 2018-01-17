@@ -648,7 +648,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
 
         @NbBundle.Messages({
-            "ExtractedContentPanel.SetMarkup.error=There was an error getting the text for the selected source."})
+            "ExtractedContentPanel.SetMarkup.error.msg=Error getting text."})
         @Override
         protected void done() {
             super.done();
@@ -665,7 +665,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
-                setPanelText(Bundle.ExtractedContentPanel_SetMarkup_error(), true);
+                setPanelText(NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentPanel.getText.error.msg"), true);
             } // catch and ignore if we were cancelled
             catch (java.util.concurrent.CancellationException ex) {
             }

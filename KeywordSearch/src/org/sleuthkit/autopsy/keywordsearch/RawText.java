@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,14 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * A "source" for the extracted content viewer that displays "raw" (not
@@ -44,7 +42,7 @@ class RawText implements IndexedText {
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
-    private static final Logger logger = Logger.getLogger(RawText.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(RawText.class.getName());
 
     /**
      * Construct a new RawText object for the given content and object id. This
@@ -153,10 +151,10 @@ class RawText implements IndexedText {
             } else if (this.blackboardArtifact != null) {
                 return getArtifactText();
             }
-        } catch (SolrServerException ex) {
-            logger.log(Level.SEVERE, "Couldn't get extracted content", ex); //NON-NLS
+        } catch (SolrServerException | NoOpenCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
         }
-        return NbBundle.getMessage(this.getClass(), "RawText.getText.error.msg");
+        return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewerRawText.getText.error.msg");
     }
 
     @NbBundle.Messages({
@@ -208,10 +206,10 @@ class RawText implements IndexedText {
                 hasChunks = true;
             }
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
+            LOGGER.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
 
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
+            LOGGER.log(Level.WARNING, "Could not get number of chunks: ", ex); //NON-NLS		
         }
     }
 
@@ -225,30 +223,20 @@ class RawText implements IndexedText {
      *                    chunks. This means we need to address the content
      *                    pages specially.
      *
-     * @return the extracted content
+     * @return the extracted text
      *
-     * @throws SolrServerException if something goes wrong
+     * @throws NoOpenCoreException If no Solr core is available.
+     * @throws SolrServerException If there's a Solr communication or parsing issue.
      */
-    private String getContentText(int currentPage, boolean hasChunks) throws SolrServerException {
+    private String getContentText(int currentPage, boolean hasChunks) throws NoOpenCoreException, SolrServerException {
         final Server solrServer = KeywordSearch.getServer();
 
         if (hasChunks == false) {
             //if no chunks, it is safe to assume there is no text content
             //because we are storing extracted text in chunks only
             //and the non-chunk stores meta-data only
-            String name = content.getName();
-            String msg = null;
-            if (content instanceof AbstractFile) {
-                //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
-                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
-                if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.knownFileMsg", name);
-                }
-            }
-            if (msg == null) {
-                msg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.noTxtYetMsg", name);
-            }
-            String htmlMsg = NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
+            String msg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "file");
+            String htmlMsg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
             return htmlMsg;
         }
 
@@ -262,33 +250,33 @@ class RawText implements IndexedText {
         }
 
         //not cached
-        try {
-            String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
-            if (indexedText == null) indexedText = "";
-            cachedString = EscapeUtil.escapeHtml(indexedText).trim();
-            StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-            sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
-            cachedString = sb.toString();
-            cachedChunk = chunkId;
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "No open core", ex); //NON-NLS
-            return "";
-        }
+        String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
+        if (indexedText == null) indexedText = "";
+        cachedString = EscapeUtil.escapeHtml(indexedText).trim();
+        StringBuilder sb = new StringBuilder(cachedString.length() + 20);
+        sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
+        cachedString = sb.toString();
+        cachedChunk = chunkId;
+        
         return cachedString;
     }
     
-    private String getArtifactText() throws SolrServerException{
-        try {
-            String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
-            if (indexedText == null) indexedText = "";
-            indexedText = EscapeUtil.escapeHtml(indexedText).trim();
-            StringBuilder sb = new StringBuilder(indexedText.length() + 20);
-            sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
-            return sb.toString();
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "No open core", ex); //NON-NLS
-            return "";
-        }
+    /**
+     * Get extracted artifact for a node from Solr
+     *
+     * @return the extracted text
+     * 
+     * @throws NoOpenCoreException If no Solr core is available.
+     * @throws SolrServerException If there's a Solr communication or parsing issue.
+     */
+    private String getArtifactText() throws NoOpenCoreException, SolrServerException{
+        String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
+        if (indexedText == null) indexedText = "";
+        indexedText = EscapeUtil.escapeHtml(indexedText).trim();
+        StringBuilder sb = new StringBuilder(indexedText.length() + 20);
+        sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
+        
+        return sb.toString();
     }
     
 }

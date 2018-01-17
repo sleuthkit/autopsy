@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class HighlightedText implements IndexedText {
 
-    private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(HighlightedText.class.getName());
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -140,7 +139,6 @@ class HighlightedText implements IndexedText {
      * This method figures out which pages / chunks have hits. Invoking it a
      * second time has no effect.
      */
-    @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
     synchronized private void loadPageInfo() throws TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
         if (isPageInfoLoaded) {
             return;
@@ -158,7 +156,6 @@ class HighlightedText implements IndexedText {
             this.numberPages = 1;
             this.currentPage = 1;
             numberOfHitsPerPage.put(1, 0);
-            pages.add(1);
             currentHitPerPage.put(1, 0);
             isPageInfoLoaded = true;
         }
@@ -401,7 +398,7 @@ class HighlightedText implements IndexedText {
             // either be a single chunk containing hits or we narrow our
             // query down to the current page/chunk.
             if (response.getResults().size() > 1) {
-                logger.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
+                LOGGER.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
             }
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
@@ -427,8 +424,8 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
-            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
+            LOGGER.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
+            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getText.error.msg");
         }
     }
 
@@ -471,7 +468,7 @@ class HighlightedText implements IndexedText {
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
+            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "document"); // DLG:
         }
 
         // It doesn't make sense for there to be more than a single document in
