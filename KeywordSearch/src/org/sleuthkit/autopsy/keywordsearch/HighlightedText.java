@@ -40,7 +40,6 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
@@ -468,7 +467,7 @@ class HighlightedText implements IndexedText {
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "document"); // DLG:
+            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "document");
         }
 
         // It doesn't make sense for there to be more than a single document in

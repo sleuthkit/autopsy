@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
