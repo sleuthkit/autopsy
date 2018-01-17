@@ -25,6 +25,7 @@ import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
@@ -91,15 +92,15 @@ import org.sleuthkit.datamodel.TskCoreException;
  * actions to work correctly.
  */
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
-
+    
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
-
+    
     static final private ImageIcon imageIcon =
             new ImageIcon("images/icons8-neural-network.png");
-
+    
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
-
+    
     static {
         //initialize defaul cell (Vertex and/or Edge)  properties
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
@@ -107,23 +108,23 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
     }
-
+    
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
     private final ProxyLookup proxyLookup = new ProxyLookup(
             ExplorerUtils.createLookup(gacEM, getActionMap()),
             ExplorerUtils.createLookup(vizEM, getActionMap()));
-
+    
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
     private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
-
+    
     private CommunicationsManager commsManager;
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
     private CommunicationsFilter currentFilter;
     private final mxRubberband rubberband;
-
+    
     public VisualizationPanel() {
         initComponents();
         graph = new mxGraph();
@@ -174,31 +175,31 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                                 });
                             }
                         });
-
+                        
                         jPopupMenu.show(graphComponent.getGraphControl(), e.getX(), e.getY());
                     }
                 }
             }
         });
-
+        
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(null, new SelectionListener());
     }
-
+    
     @Override
     public Lookup getLookup() {
         return proxyLookup;
     }
-
+    
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
         final mxCell computeIfAbsent = nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
-
+            
             mxCell vertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
                     vertexName, accountDeviceInstanceKey,
@@ -211,7 +212,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
         return computeIfAbsent;
     }
-
+    
     @SuppressWarnings("unchecked")
     private void addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) throws TskCoreException {
         mxCell vertex1 = getOrCreateVertex(account1);
@@ -229,7 +230,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
         }
     }
-
+    
     @Subscribe
     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
@@ -249,10 +250,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
 //        applyOrganicLayout();
     }
-
+    
     @Subscribe
     void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
-
+        
         graph.getModel().beginUpdate();
         try {
             clearGraph();
@@ -267,7 +268,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
 //        applyOrganicLayout();
     }
-
+    
     private void rebuildGraph() throws TskCoreException {
 
         /**
@@ -304,31 +305,33 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         adiKey1.getAccountDeviceInstance(),
                         adiKey2.getAccountDeviceInstance(),
                         currentFilter);
-                addEdge(relationships, adiKey1, adiKey2);
+                if (relationships.size() > 0) {
+                    addEdge(relationships, adiKey1, adiKey2);
+                }
             }
         }
     }
-
+    
     private void clearGraph() {
         nodeMap.clear();
         edgeMap.clear();
         graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
     }
-
+    
     @Override
     public void addNotify() {
         super.addNotify();
 //        IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
         try {
             commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-
+            
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
-
+            
         }
-
+        
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             graph.getModel().beginUpdate();
             try {
@@ -346,10 +349,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else {
                 commsManager = null;
             }
-
+            
         });
     }
-
+    
     @Override
     public void removeNotify() {
         super.removeNotify();
@@ -371,6 +374,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         jButton2 = new JButton();
         jButton6 = new JButton();
         jButton1 = new JButton();
+        jButton8 = new JButton();
         jButton3 = new JButton();
         jButton7 = new JButton();
         jButton4 = new JButton();
@@ -417,6 +421,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
         jToolBar1.add(jButton1);
+
+        jButton8.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton8.text")); // NOI18N
+        jButton8.setFocusable(false);
+        jButton8.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton8.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton8.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton8);
 
         jButton3.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton3.text")); // NOI18N
         jButton3.setFocusable(false);
@@ -475,11 +490,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        applyOrganicLayout();
+        applyFastOrganicLayout();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton3ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-
+        
         applyOrthogonalLayout();
     }//GEN-LAST:event_jButton3ActionPerformed
 
@@ -499,22 +514,26 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         morph(new mxCircleLayout(graph));
     }//GEN-LAST:event_jButton7ActionPerformed
 
-    private void applyOrganicLayout() {
-
+    private void jButton8ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph);
+        mxOrganicLayout.setMaxIterations(10);
+        morph(mxOrganicLayout);
+    }//GEN-LAST:event_jButton8ActionPerformed
+    
+    private void applyFastOrganicLayout() {
         morph(new mxFastOrganicLayout(graph));
-
     }
-
+    
     private void applyOrthogonalLayout() {
-
+        
         morph(new mxOrthogonalLayout(graph));
     }
-
+    
     private void applyHierarchicalLayout() {
-
-        morph(new mxHierarchicalLayout(graph));//.execute(graph.getDefaultParent());
+        
+        morph(new mxHierarchicalLayout(graph));
     }
-
+    
     private void morph(mxIGraphLayout layout) {
         // layout using morphing
         graph.getModel().beginUpdate();
@@ -523,14 +542,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         } finally {
             mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
             morph.addListener(mxEvent.DONE, new mxIEventListener() {
-
+                
                 @Override
                 public void invoke(Object sender, mxEventObject event) {
                     graph.getModel().endUpdate();
                     // fitViewport();
                 }
             });
-
+            
             morph.startAnimation();
         }
     }
@@ -543,15 +562,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton jButton5;
     private JButton jButton6;
     private JButton jButton7;
+    private JButton jButton8;
     private JPanel jPanel1;
     private JToolBar jToolBar1;
     private JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
     private class SelectionListener implements mxEventSource.mxIEventListener {
-
+        
         @Override
-
+        
         @SuppressWarnings("unchecked")
         public void invoke(Object sender, mxEventObject evt) {
             Object[] selectionCells = graph.getSelectionCells();
