@@ -178,7 +178,7 @@ final class AddRawImageTask implements Runnable {
             logger.log(Level.SEVERE, errorMessage, ex);
             criticalErrorOccurred = true;
         } finally {
-            caseDatabase.releaseSingleUserCaseReadLock();
+            caseDatabase.releaseSingleUserCaseWriteLock();
         }
 
     }    

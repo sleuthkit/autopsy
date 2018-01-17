@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQueryContent;
@@ -63,21 +64,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Responsible for assembling nodes and columns in the right way and performing
  * lazy queries as needed.
  */
-class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
+class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
-    private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
     //common properties (superset of all Node properties) to be displayed as columns
-    static final List<String> COMMON_PROPERTIES =
-            Stream.concat(
+    static final List<String> COMMON_PROPERTIES
+            = Stream.concat(
                     Stream.of(
                             TSK_KEYWORD,
                             TSK_KEYWORD_REGEXP,
                             TSK_KEYWORD_PREVIEW)
-                            .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
+                    .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
                     Arrays.stream(AbstractAbstractFileNode.AbstractFilePropertyType.values())
-                            .map(Object::toString))
-                    .collect(Collectors.toList());
+                    .map(Object::toString))
+            .collect(Collectors.toList());
 
     private final Collection<QueryRequest> queryRequests;
 
@@ -93,7 +94,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @param toPopulate property set map for a Node
      */
     @Override
-    protected boolean createKeys(List<KeyValueQueryContent> toPopulate) {
+    protected boolean createKeys(List<KeyValue> toPopulate) {
 
         for (QueryRequest queryRequest : queryRequests) {
             /**
@@ -130,7 +131,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @return
      */
     @NbBundle.Messages({"KeywordSearchResultFactory.query.exception.msg=Could not perform the query "})
-    private boolean createFlatKeys(KeywordSearchQuery queryRequest, List<KeyValueQueryContent> toPopulate) {
+    private boolean createFlatKeys(KeywordSearchQuery queryRequest, List<KeyValue> toPopulate) {
 
         /**
          * Execute the requested query.
@@ -139,15 +140,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         try {
             queryResults = queryRequest.performQuery();
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
-        SleuthkitCase tskCase = null;
+        SleuthkitCase tskCase;
         try {
             tskCase = Case.getCurrentCase().getSleuthkitCase();
         } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
             return false;
         }
 
@@ -159,16 +160,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
-            Content content = null;
-            String contentName = "";
+            Content content;
+            String contentName;
             try {
                 content = tskCase.getContentById(hit.getContentID());
                 if (content == null) {
-                    logger.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
                     return false;
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
                 return false;
             }
 
@@ -191,7 +192,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 try {
                     hitName = tskCase.getBlackboardArtifact(hit.getArtifactID().get()).getDisplayName() + " Artifact"; //NON-NLS
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
+                    LOGGER.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
                     return false;
                 }
             } else {
@@ -202,9 +203,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         }
 
-        // Add all the nodes to toPopulate at once. Minimizes node creation
-        // EDT threads, which can slow and/or hang the UI on large queries.
-        toPopulate.addAll(tempList);
+        if (hitNumber == 0) {
+            toPopulate.add(new KeyValue("This KeyValue Is Empty", 0));
+        } else {
+            // Add all the nodes to toPopulate at once. Minimizes node creation
+            // EDT threads, which can slow and/or hang the UI on large queries.
+            toPopulate.addAll(tempList);
+        }
 
         //write to bb
         //cannot reuse snippet in BlackboardResultWriter
@@ -239,15 +244,25 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         return hits.values();
     }
 
+    @NbBundle.Messages({"KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found."})
     @Override
-    protected Node createNodeForKey(KeyValueQueryContent key) {
-        final Content content = key.getContent();
-        QueryResults hits = key.getHits();
+    protected Node createNodeForKey(KeyValue key) {
+        Node resultNode;
 
-        Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(content));
+        if (key instanceof KeyValueQueryContent) {
+            final Content content = ((KeyValueQueryContent) key).getContent();
+            QueryResults hits = ((KeyValueQueryContent) key).getHits();
 
-        //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-        return new KeywordSearchFilterNode(hits, kvNode);
+            Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(content));
+
+            //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
+            resultNode = new KeywordSearchFilterNode(hits, kvNode);
+        } else {
+            resultNode = new EmptyNode("This Node Is Empty");
+            resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noResultsFound.text"));
+        }
+
+        return resultNode;
 
     }
 
@@ -308,7 +323,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      */
     static class BlackboardResultWriter extends SwingWorker<Void, Void> {
 
-        private static final List<BlackboardResultWriter> writers = new ArrayList<>();
+        private static final List<BlackboardResultWriter> WRITERS = new ArrayList<>();
         private ProgressHandle progress;
         private final KeywordSearchQuery query;
         private final QueryResults hits;
@@ -343,24 +358,24 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             try {
                 get();
             } catch (InterruptedException | CancellationException ex) {
-                logger.log(Level.WARNING, "User cancelled writing of ad hoc search query results for '{0}' to the blackboard", query.getQueryString()); //NON-NLS
+                LOGGER.log(Level.WARNING, "User cancelled writing of ad hoc search query results for '{0}' to the blackboard", query.getQueryString()); //NON-NLS
             } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error writing of ad hoc search query results for " + query.getQueryString() + " to the blackboard", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Error writing of ad hoc search query results for " + query.getQueryString() + " to the blackboard", ex); //NON-NLS
             }
         }
 
         private static synchronized void registerWriter(BlackboardResultWriter writer) {
-            writers.add(writer);
+            WRITERS.add(writer);
         }
 
         private static synchronized void deregisterWriter(BlackboardResultWriter writer) {
-            writers.remove(writer);
+            WRITERS.remove(writer);
         }
 
         static synchronized void stopAllWriters() {
-            for (BlackboardResultWriter w : writers) {
+            for (BlackboardResultWriter w : WRITERS) {
                 w.cancel(true);
-                writers.remove(w);
+                WRITERS.remove(w);
             }
         }
     }
