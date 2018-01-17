@@ -68,8 +68,8 @@ public final class UserPreferences {
     public static final String SETTINGS_PROPERTIES = "AutoIngest";
     private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
-    private static final int LOG_FILE_COUNT = 10;
-
+    private static final int LOG_FILE_NUM_INT = 10;
+    private static final String LOG_FILE_NUM_STRING = "10";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -377,15 +377,15 @@ public final class UserPreferences {
      * @return Number of log files
      */
     public static int getLogFileCount() {
-        return preferences.getInt(MAX_NUM_OF_LOG_FILE, LOG_FILE_COUNT);
+        return preferences.getInt(MAX_NUM_OF_LOG_FILE, LOG_FILE_NUM_INT);
     }
     
     /**
      * get the default number of log files to save
      * @return LOG_FILE_COUNT
      */
-    public static int getDefaultLogFileCount() {
-        return LOG_FILE_COUNT;
+    public static String getDefaultLogFileCount() {
+        return LOG_FILE_NUM_STRING;
     }
     /**
      * Set the maximum number of log files to save
