@@ -497,7 +497,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_noValueEntered_text());
             return false;
         } 
-        if (count.replaceAll("[^\\d]", "").length() != count.length()) {
+        if (count.replaceAll("[^\\d]", "").length() != count.length() || count.replaceFirst("^0+", "").length() == 0) {
             logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_invalidInput_text());
             return false;
         }
