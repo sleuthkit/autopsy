@@ -65,7 +65,7 @@
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       <Component id="viewPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="runtimePanel" min="-2" pref="115" max="-2" attributes="0"/>
+                      <Component id="runtimePanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="logoPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -105,7 +105,7 @@
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="agencyLogoPreview" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="128" max="32767" attributes="0"/>
+                          <EmptySpace pref="555" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -440,34 +440,32 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="maxMemoryLabel" min="-2" pref="114" max="-2" attributes="0"/>
-                                      <Component id="totalMemoryLabel" pref="0" max="32767" attributes="0"/>
-                                  </Group>
+                                  <Component id="maxMemoryLabel" min="-2" pref="114" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="systemMemoryTotal" max="32767" attributes="0"/>
-                                      <Component id="memField" pref="37" max="32767" attributes="0"/>
-                                  </Group>
+                                  <Component id="memField" min="-2" pref="37" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="maxMemoryUnitsLabel" min="-2" pref="17" max="-2" attributes="0"/>
-                                      <Component id="maxMemoryUnitsLabel1" min="-2" pref="17" max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="maxMemoryUnitsLabel" min="-2" pref="17" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="totalMemoryLabel" min="-2" pref="114" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="systemMemoryTotal" min="-2" pref="37" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="maxMemoryUnitsLabel1" min="-2" pref="17" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="restartNecessaryWarning" pref="417" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="memFieldValidationLabel" pref="237" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="maxLogFileCount" min="-2" pref="114" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="logFileCount" min="-2" pref="37" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="logNumAlert" max="32767" attributes="0"/>
+                                  <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="logNumAlert" max="32767" attributes="0"/>
-                              <Component id="restartNecessaryWarning" pref="417" max="32767" attributes="0"/>
-                              <Component id="memFieldValidationLabel" max="32767" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -475,30 +473,26 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="maxMemoryUnitsLabel" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
-                                  <Component id="memField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="maxMemoryUnitsLabel" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                                      <Component id="memField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="totalMemoryLabel" alignment="3" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Component id="memFieldValidationLabel" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="maxMemoryLabel" alignment="0" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="memFieldValidationLabel" alignment="0" max="32767" attributes="0"/>
-                              <Component id="maxMemoryLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="maxMemoryUnitsLabel1" min="-2" pref="20" max="-2" attributes="0"/>
+                              <Component id="restartNecessaryWarning" min="-2" pref="20" max="-2" attributes="0"/>
+                              <Component id="systemMemoryTotal" min="-2" pref="20" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                                  <Component id="restartNecessaryWarning" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
-                                  <Component id="maxMemoryUnitsLabel1" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="totalMemoryLabel" alignment="0" max="32767" attributes="0"/>
-                              <Component id="systemMemoryTotal" alignment="0" max="32767" attributes="0"/>
-                          </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="maxLogFileCount" alignment="3" min="-2" pref="19" max="-2" attributes="0"/>
                               <Component id="logFileCount" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="logNumAlert" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
