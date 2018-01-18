@@ -105,7 +105,7 @@
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="agencyLogoPreview" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="555" max="32767" attributes="0"/>
+                          <EmptySpace pref="559" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -448,13 +448,13 @@
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="totalMemoryLabel" min="-2" pref="114" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="systemMemoryTotal" min="-2" pref="23" max="-2" attributes="0"/>
+                                  <Component id="systemMemoryTotal" min="-2" pref="14" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="maxMemoryUnitsLabel1" min="-2" pref="17" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="restartNecessaryWarning" pref="424" max="32767" attributes="0"/>
+                                  <Component id="restartNecessaryWarning" pref="430" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="memFieldValidationLabel" pref="244" max="32767" attributes="0"/>
+                                  <Component id="memFieldValidationLabel" pref="251" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
