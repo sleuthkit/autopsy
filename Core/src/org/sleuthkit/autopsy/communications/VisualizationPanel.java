@@ -26,18 +26,19 @@ import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.layout.mxOrganicLayout;
-import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.swing.util.mxCellOverlay;
 import com.mxgraph.swing.util.mxMorphing;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
-import com.mxgraph.util.mxEventSource.mxIEventListener;
+import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -45,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,39 +94,48 @@ import org.sleuthkit.datamodel.TskCoreException;
  * actions to work correctly.
  */
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
-    
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
-    
-    static final private ImageIcon imageIcon =
-            new ImageIcon("images/icons8-neural-network.png");
-    
+
+    static final private ImageIcon pinIcon =
+            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png"));
+    static final private ImageIcon addPinIcon =
+            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--plus.png"));
+    static final private ImageIcon unpinIcon =
+            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--minus.png"));
+
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
-    
+
     static {
         //initialize defaul cell (Vertex and/or Edge)  properties
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
-        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "#000000");
+        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_PERIMETER, mxConstants.PERIMETER_ELLIPSE);
+        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "000000");
+
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
+//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ROUNDED, true);
+        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_PERIMETER_SPACING, 0);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
+        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
-    
+
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
     private final ProxyLookup proxyLookup = new ProxyLookup(
             ExplorerUtils.createLookup(gacEM, getActionMap()),
             ExplorerUtils.createLookup(vizEM, getActionMap()));
-    
+
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
     private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
-    
+
     private CommunicationsManager commsManager;
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
     private CommunicationsFilter currentFilter;
     private final mxRubberband rubberband;
-    
+
     public VisualizationPanel() {
         initComponents();
         graph = new mxGraph();
@@ -142,7 +153,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.setAllowDanglingEdges(false);
         graph.setCellsBendable(true);
         graph.setKeepEdgesInBackground(true);
+        graph.setResetEdgesOnMove(true);
         graph.setStylesheet(mxStylesheet);
+
         graphComponent = new mxGraphComponent(graph);
         graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
@@ -159,60 +172,91 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         //right click handler
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                super.mouseWheelMoved(e);
+                if (e.getPreciseWheelRotation() > 0) {
+                    graphComponent.zoomIn();
+                } else if (e.getPreciseWheelRotation() < 0) {
+                    graphComponent.zoomOut();
+                }
+
+            }
+
+            @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 if (SwingUtilities.isRightMouseButton(e)) {
                     mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
                     if (cellAt != null && cellAt.isVertex()) {
+
                         JPopupMenu jPopupMenu = new JPopupMenu();
-                        jPopupMenu.add(new JMenuItem(imageIcon) {
-                            {
-                                setAction(new AbstractAction("Pin Account " + graph.getLabel(cellAt)) {
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                        handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
-                                    }
-                                });
-                            }
-                        });
-                        
+
+                        if (pinnedAccountDevices.contains(cellAt.getValue())) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin Account " + graph.getLabel(cellAt), unpinIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
+                                }
+                            }));
+                        } else {
+
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin Account " + graph.getLabel(cellAt), addPinIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
+                                }
+                            }));
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Reset and Pin Account " + graph.getLabel(cellAt), pinIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
+                                }
+                            }));
+                        }
+
                         jPopupMenu.show(graphComponent.getGraphControl(), e.getX(), e.getY());
                     }
                 }
             }
         });
-        
+
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(null, new SelectionListener());
     }
-    
+
     @Override
     public Lookup getLookup() {
         return proxyLookup;
     }
-    
+
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
-        final mxCell computeIfAbsent = nodeMap.computeIfAbsent(name, vertexName -> {
+        final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
-            
-            mxCell vertex = (mxCell) graph.insertVertex(
+
+            mxCell newVertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
                     vertexName, accountDeviceInstanceKey,
                     Math.random() * graphComponent.getWidth(),
                     Math.random() * graphComponent.getHeight(),
                     size,
                     size);
-            graph.getView().getState(vertex, true).setLabel(vertexName);
-            return vertex;
+            graph.getView().getState(newVertex, true).setLabel(vertexName);
+
+            return newVertex;
         });
-        return computeIfAbsent;
+        if (pinnedAccountDevices.contains(accountDeviceInstanceKey)) {
+            graphComponent.addCellOverlay(vertex, new mxCellOverlay(pinIcon, "pinned"));
+        } else {
+            graphComponent.removeCellOverlays(vertex);
+        }
+        return vertex;
     }
-    
+
     @SuppressWarnings("unchecked")
     private void addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) throws TskCoreException {
         mxCell vertex1 = getOrCreateVertex(account1);
@@ -230,7 +274,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
         }
     }
-    
+
+    @Subscribe
+    void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
+        graph.getModel().beginUpdate();
+        try {
+
+            pinnedAccountDevices.removeAll(pinEvent.getAccountDeviceInstances());
+            clearGraph();
+            rebuildGraph();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error pinning accounts", ex);
+        } finally {
+            // Updates the display
+            graph.getModel().endUpdate();
+        }
+
+//        applyOrganicLayout();
+    }
+
     @Subscribe
     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
@@ -250,10 +312,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
 //        applyOrganicLayout();
     }
-    
+
     @Subscribe
     void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
-        
+
         graph.getModel().beginUpdate();
         try {
             clearGraph();
@@ -268,7 +330,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
 //        applyOrganicLayout();
     }
-    
+
     private void rebuildGraph() throws TskCoreException {
 
         /**
@@ -311,27 +373,27 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         }
     }
-    
+
     private void clearGraph() {
         nodeMap.clear();
         edgeMap.clear();
         graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
 //        IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
         try {
             commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            
+
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
-            
+
         }
-        
+
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             graph.getModel().beginUpdate();
             try {
@@ -349,10 +411,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else {
                 commsManager = null;
             }
-            
+
         });
     }
-    
+
     @Override
     public void removeNotify() {
         super.removeNotify();
@@ -371,14 +433,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         splitPane = new JSplitPane();
         jPanel1 = new JPanel();
         jToolBar1 = new JToolBar();
-        jButton2 = new JButton();
         jButton6 = new JButton();
         jButton1 = new JButton();
         jButton8 = new JButton();
-        jButton3 = new JButton();
         jButton7 = new JButton();
-        jButton4 = new JButton();
-        jButton5 = new JButton();
+        jSeparator1 = new JToolBar.Separator();
+        zoomOutButton = new JButton();
+        fitGraphButton = new JButton();
+        zoomInButton = new JButton();
 
         setLayout(new BorderLayout());
 
@@ -388,17 +450,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         jPanel1.setLayout(new BorderLayout());
 
         jToolBar1.setRollover(true);
-
-        jButton2.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton2.text")); // NOI18N
-        jButton2.setFocusable(false);
-        jButton2.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton2.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton2.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(jButton2);
 
         jButton6.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton6.text")); // NOI18N
         jButton6.setFocusable(false);
@@ -433,17 +484,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
         jToolBar1.add(jButton8);
 
-        jButton3.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton3.text")); // NOI18N
-        jButton3.setFocusable(false);
-        jButton3.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton3.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton3.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                jButton3ActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(jButton3);
-
         jButton7.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton7.text")); // NOI18N
         jButton7.setFocusable(false);
         jButton7.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -454,28 +494,43 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
         jToolBar1.add(jButton7);
+        jToolBar1.add(jSeparator1);
 
-        jButton4.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton4.text")); // NOI18N
-        jButton4.setFocusable(false);
-        jButton4.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton4.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton4.addActionListener(new ActionListener() {
+        zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
+        zoomOutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.text")); // NOI18N
+        zoomOutButton.setFocusable(false);
+        zoomOutButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomOutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        zoomOutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                zoomOutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton4);
+        jToolBar1.add(zoomOutButton);
 
-        jButton5.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton5.text")); // NOI18N
-        jButton5.setFocusable(false);
-        jButton5.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton5.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton5.addActionListener(new ActionListener() {
+        fitGraphButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
+        fitGraphButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitGraphButton.text")); // NOI18N
+        fitGraphButton.setFocusable(false);
+        fitGraphButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        fitGraphButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        fitGraphButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                jButton5ActionPerformed(evt);
+                fitGraphButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton5);
+        jToolBar1.add(fitGraphButton);
+
+        zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
+        zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
+        zoomInButton.setFocusable(false);
+        zoomInButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomInButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        zoomInButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                zoomInButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(zoomInButton);
 
         jPanel1.add(jToolBar1, BorderLayout.NORTH);
 
@@ -484,30 +539,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton2ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-//        graphComponent.addMouseListener(new mxPanningHandler(graphComponent));
-        graphComponent.setPanning(true);
-    }//GEN-LAST:event_jButton2ActionPerformed
-
     private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        applyFastOrganicLayout();
+        morph(new mxFastOrganicLayout(graph) {
+            @Override
+            public boolean isVertexMovable(Object vertex) {
+                return super.isVertexMovable(vertex) && false == pinnedAccountDevices.contains((AccountDeviceInstanceKey) ((mxICell) vertex).getValue());
+            }
+        });
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void jButton3ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        
-        applyOrthogonalLayout();
-    }//GEN-LAST:event_jButton3ActionPerformed
-
-    private void jButton5ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+    private void zoomInButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
         graphComponent.zoomIn();
-    }//GEN-LAST:event_jButton5ActionPerformed
+    }//GEN-LAST:event_zoomInButtonActionPerformed
 
-    private void jButton4ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+    private void zoomOutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
         graphComponent.zoomOut();
-    }//GEN-LAST:event_jButton4ActionPerformed
+    }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void jButton6ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        applyHierarchicalLayout();
+        morph(new mxHierarchicalLayout(graph));
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
@@ -519,21 +569,21 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         mxOrganicLayout.setMaxIterations(10);
         morph(mxOrganicLayout);
     }//GEN-LAST:event_jButton8ActionPerformed
-    
-    private void applyFastOrganicLayout() {
-        morph(new mxFastOrganicLayout(graph));
+
+    private void fitGraphButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitGraphButtonActionPerformed
+        fitGraph();
+    }//GEN-LAST:event_fitGraphButtonActionPerformed
+
+    private void fitGraph() {
+        mxGraphView view = graphComponent.getGraph().getView();
+        view.setTranslate(new mxPoint(-view.getGraphBounds().getX(), -view.getGraphBounds().getY()));
+
+//        final double widthFactor = (double) graphComponent.getWidth() / (int) view.getGraphBounds().getWidth();
+//        final double heightFactor = (double) graphComponent.getHeight() / (int) view.getGraphBounds().getHeight();
+//
+//        view.setScale(Math.min(widthFactor, heightFactor) * view.getScale());
     }
-    
-    private void applyOrthogonalLayout() {
-        
-        morph(new mxOrthogonalLayout(graph));
-    }
-    
-    private void applyHierarchicalLayout() {
-        
-        morph(new mxHierarchicalLayout(graph));
-    }
-    
+
     private void morph(mxIGraphLayout layout) {
         // layout using morphing
         graph.getModel().beginUpdate();
@@ -541,37 +591,33 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             layout.execute(graph.getDefaultParent());
         } finally {
             mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
-            morph.addListener(mxEvent.DONE, new mxIEventListener() {
-                
-                @Override
-                public void invoke(Object sender, mxEventObject event) {
-                    graph.getModel().endUpdate();
-                    // fitViewport();
-                }
+            morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
+                graph.getModel().endUpdate();
+//                fitGraph();
             });
-            
+
             morph.startAnimation();
         }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private JButton fitGraphButton;
     private JButton jButton1;
-    private JButton jButton2;
-    private JButton jButton3;
-    private JButton jButton4;
-    private JButton jButton5;
     private JButton jButton6;
     private JButton jButton7;
     private JButton jButton8;
     private JPanel jPanel1;
+    private JToolBar.Separator jSeparator1;
     private JToolBar jToolBar1;
     private JSplitPane splitPane;
+    private JButton zoomInButton;
+    private JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
 
     private class SelectionListener implements mxEventSource.mxIEventListener {
-        
+
         @Override
-        
+
         @SuppressWarnings("unchecked")
         public void invoke(Object sender, mxEventObject evt) {
             Object[] selectionCells = graph.getSelectionCells();
