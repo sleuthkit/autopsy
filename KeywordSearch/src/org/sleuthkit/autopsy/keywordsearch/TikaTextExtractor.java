@@ -33,7 +33,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.ParsingReader;
+import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -47,6 +51,8 @@ class TikaTextExtractor extends FileTextExtractor {
 
     static final private Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
+
+    private final AutoDetectParser parser = new AutoDetectParser();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
             = new Tika().getParser().getSupportedTypes(new ParseContext())
@@ -64,8 +70,18 @@ class TikaTextExtractor extends FileTextExtractor {
         ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
 
         Metadata metadata = new Metadata();
+        ParseContext parseContext = new ParseContext();
+        parseContext.set(Parser.class, parser);
+
+        // Use the more memory efficient Tika SAX parsers for DOCX and
+        // PPTX files (it already uses SAX for XLSX).
+        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
+        officeParserConfig.setUseSAXPptxExtractor(true);
+        officeParserConfig.setUseSAXDocxExtractor(true);
+        parseContext.set(OfficeParserConfig.class, officeParserConfig);
+
         //Parse the file in a task, a convenient way to have a timeout...
-        final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
+        final Future<Reader> future = tikaParseExecutor.submit(() -> new ParsingReader(parser, stream, metadata, parseContext));
         try {
             final Reader tikaReader = future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
 
