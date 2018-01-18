@@ -448,13 +448,13 @@
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="totalMemoryLabel" min="-2" pref="114" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="systemMemoryTotal" min="-2" pref="37" max="-2" attributes="0"/>
+                                  <Component id="systemMemoryTotal" min="-2" pref="23" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="maxMemoryUnitsLabel1" min="-2" pref="17" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="restartNecessaryWarning" pref="417" max="32767" attributes="0"/>
+                                  <Component id="restartNecessaryWarning" pref="424" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="memFieldValidationLabel" pref="237" max="32767" attributes="0"/>
+                                  <Component id="memFieldValidationLabel" pref="244" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
