@@ -652,10 +652,10 @@ class TestData(object):
             # we are looking for is the only one in the self.reports_dir folder
             html_path = ""
             for fs in os.listdir(self.reports_dir):
-                html_path = make_path(self.reports_dir, fs)
-                if os.path.isdir(html_path):
+                if "HTML Report" in fs:
+                    html_path = make_path(self.reports_dir, fs)
                     break
-            return make_path(html_path, os.listdir(html_path)[0])
+            return html_path
 
     def get_sorted_data_path(self, file_type):
         """Get the path to the BlackboardDump file that corresponds to the given DBType.
