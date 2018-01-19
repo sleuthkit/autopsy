@@ -37,10 +37,10 @@ public final class Logger extends java.util.logging.Logger {
 
     private static final String LOG_ENCODING = PlatformUtil.getLogFileEncoding();
     private static final int LOG_SIZE = 0; // In bytes, zero is unlimited
-    private static final String LOG_WITH_STACK_TRACES = "autopsy.log"; //NON-NLS
+    private static final String LOG_FILE_NAME = "autopsy.log"; //NON-NLS
     private static final Map<String, Logger> namesToLoggers = new HashMap<>();
     private static final Handler consoleHandler = new java.util.logging.ConsoleHandler();
-    private static FileHandler userFriendlyHandler = createFileHandlerWithTraces(PlatformUtil.getLogDirectory());
+    private static FileHandler fileHandler = createFileHandlerWithTraces(PlatformUtil.getLogDirectory());
 
     /**
      * Creates a custom file handler with a custom message formatter that
@@ -51,7 +51,7 @@ public final class Logger extends java.util.logging.Logger {
      * @return A custom file handler.
      */
     private static FileHandler createFileHandlerWithTraces(String logDirectory) {
-        String logFilePath = Paths.get(logDirectory, LOG_WITH_STACK_TRACES).toString();
+        String logFilePath = Paths.get(logDirectory, LOG_FILE_NAME).toString();
         try {
             FileHandler fileHandler = new FileHandler(logFilePath, LOG_SIZE, UserPreferences.getLogFileCount());
             fileHandler.setEncoding(LOG_ENCODING);
@@ -99,7 +99,7 @@ public final class Logger extends java.util.logging.Logger {
         FileHandler newUserFriendlyHandler = createFileHandlerWithTraces(directoryPath);
         for (Logger logger : namesToLoggers.values()) {
             logger.addHandler(newUserFriendlyHandler);
-            logger.removeHandler(userFriendlyHandler);
+            logger.removeHandler(fileHandler);
         }
 
         /*
@@ -108,8 +108,8 @@ public final class Logger extends java.util.logging.Logger {
          * and the two overloads of getLogger() are synchronized, serializing
          * access to userFriendlyHandler and developerFriendlyHandler.
          */
-        userFriendlyHandler.close();
-        userFriendlyHandler = newUserFriendlyHandler;
+        fileHandler.close();
+        fileHandler = newUserFriendlyHandler;
     }
 
     /**
@@ -141,7 +141,7 @@ public final class Logger extends java.util.logging.Logger {
     synchronized public static Logger getLogger(String name, String resourceBundleName) {
         if (!namesToLoggers.containsKey(name)) {
             Logger logger = new Logger(name, resourceBundleName);
-            logger.addHandler(userFriendlyHandler);
+            logger.addHandler(fileHandler);
             namesToLoggers.put(name, logger);
         }
         return namesToLoggers.get(name);
