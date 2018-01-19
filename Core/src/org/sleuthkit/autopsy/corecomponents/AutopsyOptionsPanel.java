@@ -924,7 +924,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private void logFileCountKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_logFileCountKeyReleased
         String count = logFileCount.getText();
-        if (count.equals(UserPreferences.getDefaultLogFileCount())) {
+        if (count.equals(String.valueOf(UserPreferences.getDefaultLogFileCount()))) {
             //if it is still the default value don't fire change
             return;
         }

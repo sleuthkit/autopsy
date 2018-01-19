@@ -69,7 +69,6 @@ public final class UserPreferences {
     private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
     private static final int LOG_FILE_NUM_INT = 10;
-    private static final String LOG_FILE_NUM_STRING = "10";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -384,8 +383,8 @@ public final class UserPreferences {
      * get the default number of log files to save
      * @return LOG_FILE_COUNT
      */
-    public static String getDefaultLogFileCount() {
-        return LOG_FILE_NUM_STRING;
+    public static int getDefaultLogFileCount() {
+        return LOG_FILE_NUM_INT;
     }
     /**
      * Set the maximum number of log files to save
