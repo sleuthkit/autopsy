@@ -30,13 +30,13 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
-import com.mxgraph.swing.util.mxCellOverlay;
 import com.mxgraph.swing.util.mxMorphing;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxPoint;
+import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
@@ -48,6 +48,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -97,9 +98,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
-
-    static final private ImageIcon pinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png"));
+    private static final URL MARKER_PIN_URL = VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
+    static final private ImageIcon pinIcon = new ImageIcon(MARKER_PIN_URL);
     static final private ImageIcon addPinIcon =
             new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--plus.png"));
     static final private ImageIcon unpinIcon =
@@ -112,6 +112,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_PERIMETER, mxConstants.PERIMETER_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "000000");
+//        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_WHITE_SPACE, "wrap");
 
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
 //        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ROUNDED, true);
@@ -138,7 +139,27 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     public VisualizationPanel() {
         initComponents();
-        graph = new mxGraph();
+        graph = new mxGraph() {
+            @Override
+            public String convertValueToString(Object cell) {
+                Object value = getModel().getValue(cell);
+                if (value instanceof AccountDeviceInstanceKey) {
+                    final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
+                    final String accountName = adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
+                    String iconFileName = Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType());
+                    String label = "<img src=\""
+                            + VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
+                            + "\">" + accountName;
+                    if (pinnedAccountDevices.contains(adiKey)) {
+                        label += "<img src=\"" + MARKER_PIN_URL + "\">";
+                    }
+                    return "<span>" + label + "</span>";
+                } else {
+                    return "";
+                }
+            }
+
+        };
         graph.setCellsCloneable(false);
         graph.setDropEnabled(false);
         graph.setCellsCloneable(false);
@@ -154,6 +175,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.setCellsBendable(true);
         graph.setKeepEdgesInBackground(true);
         graph.setResetEdgesOnMove(true);
+        graph.setHtmlLabels(true);
         graph.setStylesheet(mxStylesheet);
 
         graphComponent = new mxGraphComponent(graph);
@@ -192,7 +214,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         JPopupMenu jPopupMenu = new JPopupMenu();
 
                         if (pinnedAccountDevices.contains(cellAt.getValue())) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin Account " + graph.getLabel(cellAt), unpinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin Account " + cellAt.getId(), unpinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
@@ -200,13 +222,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             }));
                         } else {
 
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin Account " + graph.getLabel(cellAt), addPinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin Account " + cellAt.getId(), addPinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
                                 }
                             }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Reset and Pin Account " + graph.getLabel(cellAt), pinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Reset and Pin Account " + cellAt.getId(), pinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
@@ -245,15 +267,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     Math.random() * graphComponent.getHeight(),
                     size,
                     size);
-            graph.getView().getState(newVertex, true).setLabel(vertexName);
-
             return newVertex;
         });
-        if (pinnedAccountDevices.contains(accountDeviceInstanceKey)) {
-            graphComponent.addCellOverlay(vertex, new mxCellOverlay(pinIcon, "pinned"));
-        } else {
-            graphComponent.removeCellOverlays(vertex);
-        }
+        final mxCellState state = graph.getView().getState(vertex, true);
+
+        graph.getView().updateLabel(state);
+        graph.getView().updateLabelBounds(state);
         return vertex;
     }
 
@@ -444,7 +463,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         setLayout(new BorderLayout());
 
-        splitPane.setDividerLocation(400);
+        splitPane.setDividerLocation(800);
         splitPane.setResizeWeight(0.5);
 
         jPanel1.setLayout(new BorderLayout());
