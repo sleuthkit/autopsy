@@ -1,21 +1,4 @@
-/*
- * Autopsy Forensic Browser
- *
- * Copyright 2018 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
@@ -27,12 +10,17 @@ import java.util.logging.Level;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import javax.swing.JComboBox;
+import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,20 +32,21 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
     private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
     private Connection connection = null;
-
+    
     private String tmpDBPathName = null;
     private File tmpDBFile = null;
 
-    // TBD: Change the value to be a Array of ColDefs
     Map<String, String> dbTablesMap = new TreeMap<>();
 
+    private static final int ROWS_PER_PAGE = 100;
+    private int numRows;    // num of rows in the selected table
+    private int currPage = 0; // curr page of rows being displayed
+    
     /**
      * Creates new form SQLiteViewer
      */
     public SQLiteViewer() {
         initComponents();
-
-        customizeComponents();
     }
 
     /**
@@ -73,9 +62,15 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         tablesDropdownList = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         numEntriesField = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        currPageLabel = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        numPagesLabel = new javax.swing.JLabel();
+        prevPageButton = new javax.swing.JButton();
+        nextPageButton = new javax.swing.JButton();
         jTableDataPanel = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+
+        jHdrPanel.setPreferredSize(new java.awt.Dimension(536, 40));
 
         tablesDropdownList.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         tablesDropdownList.addActionListener(new java.awt.event.ActionListener() {
@@ -89,9 +84,38 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         numEntriesField.setEditable(false);
         numEntriesField.setText(org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.numEntriesField.text")); // NOI18N
         numEntriesField.setBorder(null);
-        numEntriesField.addActionListener(new java.awt.event.ActionListener() {
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.jLabel2.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(currPageLabel, org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.currPageLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.jLabel3.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(numPagesLabel, org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.numPagesLabel.text")); // NOI18N
+
+        prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(prevPageButton, org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.prevPageButton.text")); // NOI18N
+        prevPageButton.setBorderPainted(false);
+        prevPageButton.setContentAreaFilled(false);
+        prevPageButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        prevPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                numEntriesFieldActionPerformed(evt);
+                prevPageButtonActionPerformed(evt);
+            }
+        });
+
+        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nextPageButton, org.openide.util.NbBundle.getMessage(SQLiteViewer.class, "SQLiteViewer.nextPageButton.text")); // NOI18N
+        nextPageButton.setBorderPainted(false);
+        nextPageButton.setContentAreaFilled(false);
+        nextPageButton.setDisabledSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nextPageButtonActionPerformed(evt);
             }
         });
 
@@ -102,11 +126,23 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             .addGroup(jHdrPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tablesDropdownList, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(23, 23, 23)
+                .addGap(18, 18, 18)
                 .addComponent(numEntriesField, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(130, Short.MAX_VALUE))
+                .addGap(15, 15, 15)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(currPageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(numPagesLabel)
+                .addGap(18, 18, 18)
+                .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(133, Short.MAX_VALUE))
         );
         jHdrPanelLayout.setVerticalGroup(
             jHdrPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -115,39 +151,17 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 .addGroup(jHdrPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tablesDropdownList, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1)
-                    .addComponent(numEntriesField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(16, Short.MAX_VALUE))
-        );
-
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane1.setViewportView(jTable1);
-
-        javax.swing.GroupLayout jTableDataPanelLayout = new javax.swing.GroupLayout(jTableDataPanel);
-        jTableDataPanel.setLayout(jTableDataPanelLayout);
-        jTableDataPanelLayout.setHorizontalGroup(
-            jTableDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jTableDataPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                .addGap(15, 15, 15))
-        );
-        jTableDataPanelLayout.setVerticalGroup(
-            jTableDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jTableDataPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE)
+                    .addComponent(numEntriesField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(currPageLabel)
+                    .addComponent(jLabel3)
+                    .addComponent(numPagesLabel)
+                    .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
+
+        jTableDataPanel.setLayout(new javax.swing.OverlayLayout(jTableDataPanel));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -159,15 +173,39 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jHdrPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jTableDataPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jHdrPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(jTableDataPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 317, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void numEntriesFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numEntriesFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_numEntriesFieldActionPerformed
+    private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
+
+        currPage++;
+        if (currPage * ROWS_PER_PAGE > numRows) {
+            nextPageButton.setEnabled(false);
+        }
+        currPageLabel.setText(Integer.toString(currPage));
+        prevPageButton.setEnabled(true);
+
+        // read and display a page of rows
+        String tableName = (String) this.tablesDropdownList.getSelectedItem();
+        readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
+    }//GEN-LAST:event_nextPageButtonActionPerformed
+
+    private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
+
+        currPage--;
+        if (currPage == 1) {
+            prevPageButton.setEnabled(false);
+        }
+        currPageLabel.setText(Integer.toString(currPage));
+        nextPageButton.setEnabled(true);
+
+        // read and display a page of rows
+        String tableName = (String) this.tablesDropdownList.getSelectedItem();
+        readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
+    }//GEN-LAST:event_prevPageButtonActionPerformed
 
     private void tablesDropdownListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tablesDropdownListActionPerformed
         JComboBox<String> cb = (JComboBox<String>) evt.getSource();
@@ -176,17 +214,21 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             return;
         }
 
-        readTable(tableName);
+        selectTable(tableName);
     }//GEN-LAST:event_tablesDropdownListActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel currPageLabel;
     private javax.swing.JPanel jHdrPanel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jTableDataPanel;
+    private javax.swing.JButton nextPageButton;
     private javax.swing.JTextField numEntriesField;
+    private javax.swing.JLabel numPagesLabel;
+    private javax.swing.JButton prevPageButton;
     private javax.swing.JComboBox<String> tablesDropdownList;
     // End of variables declaration//GEN-END:variables
 
@@ -209,11 +251,11 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     public void resetComponent() {
 
         dbTablesMap.clear();
-
+        
         tablesDropdownList.setEnabled(true);
         tablesDropdownList.removeAllItems();
         numEntriesField.setText("");
-
+        
         // close DB connection to file
         if (null != connection) {
             try {
@@ -229,11 +271,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             tmpDBFile.delete();
             tmpDBFile = null;
         }
-    }
-
-    private void customizeComponents() {
-
-        // add a actionListener to jTablesComboBox
     }
 
     /**
@@ -327,30 +364,26 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                         // RAMAN TBD: parse and save the table schema
                     }
-                } catch (Exception ex) {
+                } catch (SQLException ex) {
                     LOGGER.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
         }
         return true;
     }
 
-    private void readTable(String tableName) {
-        // TBD: need to handle cancelling if one is already in progress
-        
-        new SwingWorker<Integer, Void>() {
+    private void selectTable(String tableName) {
+    new SwingWorker<Integer, Void>() {
             @Override
             protected Integer doInBackground() throws Exception {
 
                 try {
                     Statement statement = connection.createStatement();
                     ResultSet resultSet = statement.executeQuery(
-                            "SELECT COUNT(*) as count FROM " + tableName); //NON-NLS
+                            "SELECT count (*) as count FROM " + tableName); //NON-NLS
 
-                    // TBD: read the rows here and popluate the ExplorerManager. 
-                    
                     return resultSet.getInt("count");
                 } catch (SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
@@ -363,8 +396,70 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             protected void done() {
                 super.done();
                 try {
-                    int numRows = get();
+                   
+                    numRows = get();
                     numEntriesField.setText(numRows + " entries");
+                    
+                    currPage = 1;
+                    currPageLabel.setText(Integer.toString(currPage));
+                    numPagesLabel.setText(Integer.toString((numRows/ROWS_PER_PAGE)+1));
+                        
+                    prevPageButton.setEnabled(false);
+                     
+                    jTableDataPanel.removeAll();
+                    jTableDataPanel.repaint();
+                    
+                    if (numRows > 0) {
+                        nextPageButton.setEnabled(((numRows > ROWS_PER_PAGE)));
+                        readTable(tableName, (currPage-1)*ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
+                    }
+                    else {
+                        nextPageButton.setEnabled(false);
+                    }
+                   
+                    
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
+                }
+            }
+        }.execute(); 
+    }
+    private void readTable(String tableName, int startRow, int numRowsToRead) {
+        
+        // TBD: need to handle cancelling if one is already in progress
+        
+        new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
+            @Override
+            protected ArrayList<Map<String, Object>> doInBackground() throws Exception {
+                try {
+                    Statement statement = connection.createStatement();
+                    ResultSet resultSet = statement.executeQuery(
+                            "SELECT * FROM " + tableName 
+                            + " LIMIT " + Integer.toString(numRowsToRead)
+                            + " OFFSET " + Integer.toString(startRow - 1)
+                    ); //NON-NLS
+
+                    return resultSetToArrayList(resultSet);
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
+                }
+                //NON-NLS
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    ArrayList<Map<String, Object>> rows = get();
+                    if (Objects.nonNull(rows)) {
+                        JPanel selectedTableView  = new SQLiteTableView(rows);
+                        
+                        jTableDataPanel.removeAll();
+                        jTableDataPanel.setLayout(new javax.swing.OverlayLayout(jTableDataPanel));
+                        jTableDataPanel.add(selectedTableView);
+                        jTableDataPanel.repaint();
+                    }
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
                 }
@@ -373,6 +468,29 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     }
 
+     private ArrayList<Map<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
+        ResultSetMetaData md = rs.getMetaData();
+        int columns = md.getColumnCount();
+        ArrayList<Map<String, Object>> arraylist = new ArrayList<>();
+        while (rs.next()) {
+            Map<String, Object> row = new LinkedHashMap<>(columns);
+            for (int i = 1; i <= columns; ++i) {
+                if (rs.getObject(i) == null) {
+                    row.put(md.getColumnName(i), "");
+                } else {
+                    if (md.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
+                        row.put(md.getColumnName(i), "BLOB Data not shown...");
+                    } else {
+                        row.put(md.getColumnName(i), rs.getObject(i));
+                    }
+                }
+            }
+            arraylist.add(row);
+        }
+
+        return arraylist;
+     }
+     
     enum SQLStorageClass {
         NULL,
         INTEGER,
@@ -390,6 +508,13 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             this.colName = colName;
             this.storageClass = sc;
         }
-
+        
+        public String getColName() { 
+            return colName; 
+        }
+        
+        public SQLStorageClass getColStorageClass() { 
+            return storageClass; 
+        }
     }
 }
