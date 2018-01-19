@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @Messages({
     "ExtractedContentViewer.getText.error.msg=Error getting text.",
+    "ExtractedContentViewer.getSolrContent.knownFileMsg=<p style\\=''font-style\\:italic''>{0} is a known file (based on MD5 hash) and does not have text in the index.</p>",
     "ExtractedContentViewer.getSolrContent.noTxtYetMsg=<p style\\=''font-style\\:italic''>There is currently no text in the index for this {0}. It may have no text, it may not have been analyzed yet, there may have been an error extracting text, or keyword search was not enabled during ingest.</p>",
     "ExtractedContentViewer.getSolrContent.txtBodyItal=<span style\\=''font-style\\:italic''>{0}</span>"
 })

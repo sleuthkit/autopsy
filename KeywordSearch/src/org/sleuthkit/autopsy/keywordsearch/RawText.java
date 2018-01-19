@@ -23,8 +23,10 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A "source" for the extracted content viewer that displays "raw" (not
@@ -231,7 +233,18 @@ class RawText implements IndexedText {
             //if no chunks, it is safe to assume there is no text content
             //because we are storing extracted text in chunks only
             //and the non-chunk stores meta-data only
-            String msg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "file");
+            String msg = null;
+            
+            if (content instanceof AbstractFile) {
+                //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
+                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile)content).getKnown());
+                if (isKnown && KeywordSearchSettings.getSkipKnown()) {
+                    msg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.knownFileMsg", content.getName());
+                }
+            }
+            if(msg == null) {
+                msg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "file");
+            }
             String htmlMsg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
             return htmlMsg;
         }
@@ -247,7 +260,10 @@ class RawText implements IndexedText {
 
         //not cached
         String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
-        if (indexedText == null) indexedText = "";
+        if (indexedText == null || indexedText.isEmpty()) {
+            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "file");
+        }
+        
         cachedString = EscapeUtil.escapeHtml(indexedText).trim();
         StringBuilder sb = new StringBuilder(cachedString.length() + 20);
         sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
@@ -267,7 +283,10 @@ class RawText implements IndexedText {
      */
     private String getArtifactText() throws NoOpenCoreException, SolrServerException{
         String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
-        if (indexedText == null) indexedText = "";
+        if (indexedText == null || indexedText.isEmpty()) {
+            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "artifact");
+        }
+        
         indexedText = EscapeUtil.escapeHtml(indexedText).trim();
         StringBuilder sb = new StringBuilder(indexedText.length() + 20);
         sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
