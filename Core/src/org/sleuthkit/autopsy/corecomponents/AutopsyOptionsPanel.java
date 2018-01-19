@@ -75,7 +75,6 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidImageSpecified.text=Invalid image file specified.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set.",
     "AutopsyOptionsPanel.maxLogFileCount.text=Maximum Log Files:",
-    "AutopsyOptionsPanel.logNumAlert.noValueEntered.text=No value entered.",
     "AutopsyOptionsPanel.logNumAlert.invalidInput.text=A positive integer is required here."
 })
 
@@ -493,11 +492,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private boolean isLogNumFieldValid() {
         String count = logFileCount.getText();
         logNumAlert.setText("");
-        if (count.length() == 0) {
-            logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_noValueEntered_text());
-            return false;
-        } 
-        if (count.replaceAll("[^\\d]", "").length() != count.length() || count.replaceFirst("^0+", "").length() == 0) {
+        try {
+            int count_num = Integer.parseInt(count);
+            if (count_num < 1) {
+                logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_invalidInput_text());
+                return false;
+            }
+        } catch (NumberFormatException e) {
             logNumAlert.setText(Bundle.AutopsyOptionsPanel_logNumAlert_invalidInput_text());
             return false;
         }
