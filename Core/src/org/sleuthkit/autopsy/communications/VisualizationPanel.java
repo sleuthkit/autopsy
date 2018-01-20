@@ -159,6 +159,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 }
             }
 
+            @Override
+            public String getToolTipForCell(Object cell) {
+                return ((mxCell) cell).getId();
+            }
+
         };
         graph.setCellsCloneable(false);
         graph.setDropEnabled(false);
@@ -185,6 +190,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.setConnectable(false);
         graphComponent.setKeepSelectionVisibleOnZoom(true);
         graphComponent.setOpaque(true);
+        graphComponent.setToolTips(true);
         graphComponent.setBackground(Color.WHITE);
         jPanel1.add(graphComponent, BorderLayout.CENTER);
 
