@@ -51,6 +51,7 @@ import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.sax.BodyContentHandler;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -231,11 +232,13 @@ class MSOfficeEmbeddedContentExtractor {
         // write limit (which defaults to 100,000 characters.
         ContentHandler contentHandler = new BodyContentHandler(-1);
 
-        // TODO: this will be needed once we upgrade to Tika 1.16 or later.
-        //        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
-        //        officeParserConfig.setUseSAXPptxExtractor(true);
-        //        officeParserConfig.setUseSAXDocxExtractor(true);
-        //        parseContext.set(OfficeParserConfig.class, officeParserConfig);
+        // Use the more memory efficient Tika SAX parsers for DOCX and
+        // PPTX files (it already uses SAX for XLSX).
+        OfficeParserConfig officeParserConfig = new OfficeParserConfig();
+        officeParserConfig.setUseSAXPptxExtractor(true);
+        officeParserConfig.setUseSAXDocxExtractor(true);
+        parseContext.set(OfficeParserConfig.class, officeParserConfig);
+
         EmbeddedDocumentExtractor extractor = new EmbeddedContentExtractor(parseContext);
         parseContext.set(EmbeddedDocumentExtractor.class, extractor);
         ReadContentInputStream stream = new ReadContentInputStream(abstractFile);

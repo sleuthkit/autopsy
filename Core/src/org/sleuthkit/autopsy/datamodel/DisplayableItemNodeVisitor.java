@@ -41,7 +41,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(LocalFileNode dfn);
 
     T visit(VirtualDirectoryNode ldn);
-    
+
     T visit(LocalDirectoryNode ldn);
 
     T visit(DirectoryNode dn);
