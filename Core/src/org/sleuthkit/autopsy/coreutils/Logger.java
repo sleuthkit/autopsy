@@ -30,7 +30,7 @@ import java.util.logging.LogRecord;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
- * Autopsy specialization of the Java Logger class with custom file handlers.
+ * Autopsy specialization of the Java Logger class with a custom file handler.
  * Note that the custom loggers are not obtained from the global log manager.
  */
 public final class Logger extends java.util.logging.Logger {
@@ -40,7 +40,7 @@ public final class Logger extends java.util.logging.Logger {
     private static final String LOG_FILE_NAME = "autopsy.log"; //NON-NLS
     private static final Map<String, Logger> namesToLoggers = new HashMap<>();
     private static final Handler consoleHandler = new java.util.logging.ConsoleHandler();
-    private static FileHandler fileHandler = createFileHandlerWithTraces(PlatformUtil.getLogDirectory());
+    private static FileHandler logFileHandler = createFileHandlerWithTraces(PlatformUtil.getLogDirectory());
 
     /**
      * Creates a custom file handler with a custom message formatter that
@@ -88,7 +88,7 @@ public final class Logger extends java.util.logging.Logger {
      */
     synchronized public static void setLogDirectory(String directoryPath) {
         /*
-         * Create file handlers for the new directory and swap them into all of
+         * Create a file handler for the new directory and swap it into all of
          * the existing loggers using thread-safe Logger methods. The new
          * handlers are added before the old handlers so that no messages will
          * be lost, but this makes it possible for log messages to be written
@@ -99,17 +99,17 @@ public final class Logger extends java.util.logging.Logger {
         FileHandler newFileHandler = createFileHandlerWithTraces(directoryPath);
         for (Logger logger : namesToLoggers.values()) {
             logger.addHandler(newFileHandler);
-            logger.removeHandler(fileHandler);
+            logger.removeHandler(logFileHandler);
         }
 
         /*
-         * Close the old file handlers and save references to the new handlers
+         * Close the old file handler and save reference to the new handler
          * so they can be added to any new loggers. This swap is why this method
          * and the two overloads of getLogger() are synchronized, serializing
-         * access to userFileHandler.
+         * access to logFileHandler.
          */
-        fileHandler.close();
-        fileHandler = newFileHandler;
+        logFileHandler.close();
+        logFileHandler = newFileHandler;
     }
 
     /**
@@ -141,7 +141,7 @@ public final class Logger extends java.util.logging.Logger {
     synchronized public static Logger getLogger(String name, String resourceBundleName) {
         if (!namesToLoggers.containsKey(name)) {
             Logger logger = new Logger(name, resourceBundleName);
-            logger.addHandler(fileHandler);
+            logger.addHandler(logFileHandler);
             namesToLoggers.put(name, logger);
         }
         return namesToLoggers.get(name);
