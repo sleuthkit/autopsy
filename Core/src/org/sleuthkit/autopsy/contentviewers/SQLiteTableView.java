@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -48,8 +49,11 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
         this.tableRows = rows;
         
         outlineView = new org.openide.explorer.view.OutlineView();
-         
+        outlineView.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        
         initComponents();
+        
+        add(outlineView,BorderLayout.CENTER);
         
         outline = outlineView.getOutline();
         outlineView.setPropertyColumns();   // column headers will be set later
@@ -60,11 +64,12 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
 
     private void customize() {
       
-        tableScrollPane.setViewportView(outlineView);
+        //tableScrollPane.setViewportView(outlineView);
+        
         this.setVisible(true);
         outline.setRowSelectionAllowed(false);
         outline.setRootVisible(false); 
-     
+    
         explorerManager = new ExplorerManager();
         explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows), true)));
         
@@ -95,7 +100,7 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
         outlineView.setPropertyColumns(propStrings);
         
         // RAMAN TBD: Set width based on actual data in the top N rows??
-        // TBD: Cant seem to geta horizontal scroll bar
+        // TBD: Can't seem to geta horizontal scroll bar
         for (int col = 0; col< outline.getModel().getColumnCount(); col++) {
             outline.getColumnModel().getColumn(col).setMinWidth(50);
         }
@@ -116,18 +121,8 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        tableScrollPane = new javax.swing.JScrollPane();
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-        );
+        setPreferredSize(new java.awt.Dimension(600, 400));
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
                
@@ -138,6 +133,5 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane tableScrollPane;
     // End of variables declaration//GEN-END:variables
 }
