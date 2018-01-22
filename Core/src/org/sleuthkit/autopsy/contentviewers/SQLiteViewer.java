@@ -1,3 +1,21 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package org.sleuthkit.autopsy.contentviewers;
 
@@ -42,6 +60,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
     
+    private SwingWorker<ArrayList<Map<String, Object>>, Void> worker;
     /**
      * Creates new form SQLiteViewer
      */
@@ -352,21 +371,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 String tableSQL = resultSet.getString("sql"); //NON-NLS
 
                 dbTablesMap.put(tableName, tableSQL);
-                String query = "PRAGMA table_info(" + tableName + ")"; //NON-NLS
-                ResultSet rs2;
-                try {
-                    Statement statement2 = connection.createStatement();
-                    rs2 = statement2.executeQuery(query);
-                    while (rs2.next()) {
-
-                        // System.out.println("RAMAN: Col Name = " + rs2.getString("name"));
-                        // System.out.println("RAMAN: Col Type = " + rs2.getString("type"));
-
-                        // RAMAN TBD: parse and save the table schema
-                    }
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
-                }
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
@@ -426,9 +430,12 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }
     private void readTable(String tableName, int startRow, int numRowsToRead) {
         
-        // TBD: need to handle cancelling if one is already in progress
-        
-        new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
+        if (worker != null && !worker.isDone()) {
+            worker.cancel(false);
+            worker = null;
+        }
+         
+        worker = new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
             @Override
             protected ArrayList<Map<String, Object>> doInBackground() throws Exception {
                 try {
@@ -449,6 +456,11 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             @Override
             protected void done() {
+                
+                if (isCancelled()) {
+                    return;
+                }
+                
                 super.done();
                 try {
                     ArrayList<Map<String, Object>> rows = get();
@@ -464,8 +476,9 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
                 }
             }
-        }.execute();
-
+        };
+        
+        worker.execute();
     }
 
      private ArrayList<Map<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
@@ -490,31 +503,4 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         return arraylist;
      }
-     
-    enum SQLStorageClass {
-        NULL,
-        INTEGER,
-        REAL,
-        TEXT,
-        BLOB
-    };
-
-    private class SQLColDef {
-
-        private final String colName;
-        private final SQLStorageClass storageClass;
-
-        SQLColDef(String colName, SQLStorageClass sc) {
-            this.colName = colName;
-            this.storageClass = sc;
-        }
-        
-        public String getColName() { 
-            return colName; 
-        }
-        
-        public SQLStorageClass getColStorageClass() { 
-            return storageClass; 
-        }
-    }
 }

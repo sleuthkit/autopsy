@@ -99,8 +99,8 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
         
         outlineView.setPropertyColumns(propStrings);
         
-        // RAMAN TBD: Set width based on actual data in the top N rows??
-        // TBD: Can't seem to geta horizontal scroll bar
+        // TBD: Set width based on actual data in the top N rows??
+        // TBD: Can't seem to get the horizontal scrollbar working
         for (int col = 0; col< outline.getModel().getColumnCount(); col++) {
             outline.getColumnModel().getColumn(col).setMinWidth(50);
         }
