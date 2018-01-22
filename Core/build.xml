@@ -17,6 +17,8 @@
             <fileset dir="{basedir}/../../InternalPythonModules"/>
         </copy>
     </target>
+	
+	<property name="VERSION" value="4.6.0"/>
     
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
         <!--Copy openCV dependencies to release-->
@@ -52,8 +54,8 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar" 
-              tofile="${ext.dir}/Tsk_DataModel_PostgreSQL.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${VERSION}.jar" 
+              tofile="${ext.dir}/sleuthkit-postgresql-${VERSION}.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.8.11.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013 - 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ class ReportGenerator {
      */
     private ReportProgressPanel progressPanel;
 
-    private final String reportPath;
+    private static final String REPORT_PATH_FMT_STR = "%s" + File.separator + "%s %s %s" + File.separator;
     private final ReportGenerationPanel reportGenerationPanel = new ReportGenerationPanel();
 
     static final String REPORTS_DIR = "Reports"; //NON-NLS
@@ -89,22 +89,9 @@ class ReportGenerator {
      * Creates a report generator.
      */
     ReportGenerator() {
-        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
-        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
-        Date date = new Date();
-        String dateNoTime = dateFormat.format(date);
-        this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " " + dateNoTime + File.separator;
-
         this.errorList = new ArrayList<>();
-
-        // Create the root reports directory.
-        try {
-            FileUtil.createFolder(new File(this.reportPath));
-        } catch (IOException ex) {
-            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedMakeRptFolder"));
-            logger.log(Level.SEVERE, "Failed to make report folder, may be unable to generate reports.", ex); //NON-NLS
-        }
     }
+
 
     /**
      * Display the progress panels to the user, and add actions to close the
@@ -143,11 +130,12 @@ class ReportGenerator {
     /**
      * Run the GeneralReportModules using a SwingWorker.
      */
-    void generateGeneralReport(GeneralReportModule generalReportModule) {
+    void generateGeneralReport(GeneralReportModule generalReportModule) throws IOException {
         if (generalReportModule != null) {
-            setupProgressPanel(generalReportModule);
+            String reportDir = createReportDirectory(generalReportModule);
+            setupProgressPanel(generalReportModule, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
-                generalReportModule.generateReport(reportPath, progressPanel);
+                generalReportModule.generateReport(reportDir, progressPanel);
             });
             worker.execute();
             displayProgressPanel();
@@ -162,11 +150,12 @@ class ReportGenerator {
      * @param tagSelections          the enabled/disabled state of the tag names
      *                               to be included in the report
      */
-    void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) {
+    void generateTableReport(TableReportModule tableReport, Map<BlackboardArtifact.Type, Boolean> artifactTypeSelections, Map<String, Boolean> tagNameSelections) throws IOException {
         if (tableReport != null && null != artifactTypeSelections) {
-            setupProgressPanel(tableReport);
+            String reportDir = createReportDirectory(tableReport);
+            setupProgressPanel(tableReport, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
-                tableReport.startReport(reportPath);
+                tableReport.startReport(reportDir);
                 TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
                 generator.execute();
                 tableReport.endReport();
@@ -185,15 +174,16 @@ class ReportGenerator {
      * @param enabledInfo the Information that should be included about each
      *                    file in the report.
      */
-    void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) {
+    void generateFileListReport(FileReportModule fileReportModule, Map<FileReportDataTypes, Boolean> enabledInfo) throws IOException {
         if (fileReportModule != null && null != enabledInfo) {
+            String reportDir = createReportDirectory(fileReportModule);
             List<FileReportDataTypes> enabled = new ArrayList<>();
             for (Entry<FileReportDataTypes, Boolean> e : enabledInfo.entrySet()) {
                 if (e.getValue()) {
                     enabled.add(e.getKey());
                 }
             }
-            setupProgressPanel(fileReportModule);
+            setupProgressPanel(fileReportModule, reportDir);
             ReportWorker worker = new ReportWorker(() -> {
                 if (progressPanel.getStatus() != ReportStatus.CANCELED) {
                     progressPanel.start();
@@ -204,7 +194,7 @@ class ReportGenerator {
                 List<AbstractFile> files = getFiles();
                 int numFiles = files.size();
                 if (progressPanel.getStatus() != ReportStatus.CANCELED) {
-                    fileReportModule.startReport(reportPath);
+                    fileReportModule.startReport(reportDir);
                     fileReportModule.startTable(enabled);
                 }
                 progressPanel.setIndeterminate(false);
@@ -259,15 +249,31 @@ class ReportGenerator {
         }
     }
 
-    private void setupProgressPanel(ReportModule module) {
+    private void setupProgressPanel(ReportModule module, String reportDir) {
         String reportFilePath = module.getRelativeFilePath();
         if (!reportFilePath.isEmpty()) {
-            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportPath + reportFilePath);
+            this.progressPanel = reportGenerationPanel.addReport(module.getName(), reportDir + reportFilePath);
         } else {
             this.progressPanel = reportGenerationPanel.addReport(module.getName(), null);
         }
     }
 
+    private static String createReportDirectory(ReportModule module) throws IOException {
+        Case currentCase = Case.getCurrentCase();
+        // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
+        Date date = new Date();
+        String dateNoTime = dateFormat.format(date);
+        String reportPath = String.format(REPORT_PATH_FMT_STR, currentCase.getReportDirectory(), currentCase.getDisplayName(), module.getName(), dateNoTime);
+        // Create the root reports directory.
+        try {
+            FileUtil.createFolder(new File(reportPath));
+        } catch (IOException ex) {
+            throw new IOException("Failed to make report folder, unable to generate reports.", ex);
+        }
+        return reportPath;    
+    }
+    
     private class ReportWorker extends SwingWorker<Void, Void> {
 
         private final Runnable doInBackground;

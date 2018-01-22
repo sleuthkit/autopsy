@@ -22,8 +22,8 @@
 
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.8.1"/>
 
-        <dependency conf="core->default" org="org.apache.tika" name="tika-core" rev="1.14"/>
-        <dependency conf="core->default" org="org.apache.tika" name="tika-parsers" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.tika" name="tika-core" rev="1.17"/>
+        <dependency conf="core->default" org="org.apache.tika" name="tika-parsers" rev="1.17"/>
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
 

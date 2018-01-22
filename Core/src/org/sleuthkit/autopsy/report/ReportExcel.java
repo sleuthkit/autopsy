@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ class ReportExcel implements TableReportModule {
     public void startReport(String baseReportDir) {
         // Set the path and save it for when the report is written to disk.
         this.reportPath = baseReportDir + getRelativeFilePath();
-
+ 
         // Make a workbook.
         wb = new XSSFWorkbook();
 
