@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private List<FileTextExtractor> textExtractors;
+    private List<ContentTextExtractor> textExtractors;
     private StringsTextExtractor stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
@@ -422,10 +422,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            FileTextExtractor extractor = null;
+            ContentTextExtractor extractor = null;
 
             //go over available text extractors in order, and pick the first one (most specific one)
-            for (FileTextExtractor fe : textExtractors) {
+            for (ContentTextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
                     extractor = fe;
                     break;
@@ -515,7 +515,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (FileTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
+            if (ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;
