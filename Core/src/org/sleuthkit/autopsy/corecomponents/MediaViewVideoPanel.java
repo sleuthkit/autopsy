@@ -151,7 +151,7 @@ public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture
         if (AUDIO_EXTENSIONS.contains("." + extension) || getExtensionsList().contains("." + extension)) {
             SortedSet<String> mimeTypes = new TreeSet<>(getMimeTypes());
             try {
-                String mimeType = new FileTypeDetector().detectMIMEType(file);
+                String mimeType = new FileTypeDetector().getMIMEType(file);
                 return mimeTypes.contains(mimeType);
             } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);

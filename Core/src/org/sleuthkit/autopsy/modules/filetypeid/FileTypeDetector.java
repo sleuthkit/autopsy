@@ -171,14 +171,15 @@ public class FileTypeDetector {
     }
 
     /**
-     * Detects the MIME type of a file.
+     * Detects the MIME type of a file, then writes it the AbstractFile object
+     * representing the file and also returns it.
      *
      * @param file The file to test.
      *
      * @return A MIME type name. If file type could not be detected, or results
      *         were uncertain, octet-stream is returned.
      */
-    public String detectMIMEType(AbstractFile file) {
+    public String getMIMEType(AbstractFile file) {
         /*
          * Check to see if the file has already been typed.
          */
@@ -250,6 +251,11 @@ public class FileTypeDetector {
             }
         }
 
+        /*
+         * Documented side effect: write the result to the AbstractFile object.
+         */
+        file.setMIMEType(mimeType);
+
         return mimeType;
     }
 
@@ -293,7 +299,7 @@ public class FileTypeDetector {
                         attributes.add(setNameAttribute);
                         BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
                         attributes.add(ruleNameAttribute);
-                        artifact.addAttributes(attributes);                        
+                        artifact.addAttributes(attributes);
                         try {
                             Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
                         } catch (Blackboard.BlackboardException ex) {
@@ -393,7 +399,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
-        String fileType = detectMIMEType(file);
+        String fileType = getMIMEType(file);
         file.setMIMEType(fileType);
         file.save();
         return fileType;
@@ -417,7 +423,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String getFileType(AbstractFile file) throws TskCoreException {
-        String fileType = detectMIMEType(file);
+        String fileType = getMIMEType(file);
         file.setMIMEType(fileType);
         file.save();
         return fileType;
@@ -437,7 +443,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String detect(AbstractFile file) throws TskCoreException {
-        String fileType = detectMIMEType(file);
+        String fileType = getMIMEType(file);
         return fileType;
     }
 

@@ -169,7 +169,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         if (settings.skipFilesWithNoExtension() && currActualExt.isEmpty()) {
             return false;
         }
-        String currActualSigType = detector.detectMIMEType(abstractFile);
+        String currActualSigType = detector.getMIMEType(abstractFile);
         if (settings.getCheckType() != CHECK_TYPE.ALL) {
             if (settings.getCheckType() == CHECK_TYPE.NO_TEXT_FILES) {
                 if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
