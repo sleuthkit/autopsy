@@ -172,7 +172,7 @@ public class FileTypeDetector {
 
     /**
      * Detects the MIME type of a file, then writes it the AbstractFile object
-     * representing the file and also returns it.
+     * representing the file and returns the detected type.
      *
      * @param file The file to test.
      *
