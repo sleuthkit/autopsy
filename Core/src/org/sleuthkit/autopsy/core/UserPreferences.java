@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2017 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,7 +67,9 @@ public final class UserPreferences {
     private static final String APP_NAME = "AppName";
     public static final String SETTINGS_PROPERTIES = "AutoIngest";
     private static final String MODE = "AutopsyMode"; // NON-NLS
-
+    private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
+    private static final int LOG_FILE_NUM_INT = 10;
+    
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -369,4 +371,26 @@ public final class UserPreferences {
         preferences.put(APP_NAME, name);
     }
 
+    /**
+     * get the maximum number of log files to save
+     * @return Number of log files
+     */
+    public static int getLogFileCount() {
+        return preferences.getInt(MAX_NUM_OF_LOG_FILE, LOG_FILE_NUM_INT);
+    }
+    
+    /**
+     * get the default number of log files to save
+     * @return LOG_FILE_COUNT
+     */
+    public static int getDefaultLogFileCount() {
+        return LOG_FILE_NUM_INT;
+    }
+    /**
+     * Set the maximum number of log files to save
+     * @param count number of log files
+     */
+    public static void setLogFileCount(int count) {
+        preferences.putInt(MAX_NUM_OF_LOG_FILE, count);
+    }
 }
