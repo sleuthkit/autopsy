@@ -187,7 +187,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                         /*
                          * Qualify the MIME type.
                          */
-                        String mimeType = fileTypeDetector.detectMIMEType(file);
+                        String mimeType = fileTypeDetector.getMIMEType(file);
                         if (mimeType.equals("application/octet-stream")) {
                             possiblyEncrypted = true;
                         }
