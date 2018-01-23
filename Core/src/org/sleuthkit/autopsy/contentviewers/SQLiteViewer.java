@@ -227,7 +227,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     private void tablesDropdownListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tablesDropdownListActionPerformed
-        JComboBox<String> cb = (JComboBox<String>) evt.getSource();
+        JComboBox<?> cb = (JComboBox<?>) evt.getSource();
         String tableName = (String) cb.getSelectedItem();
         if (null == tableName) {
             return;
