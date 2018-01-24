@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.QueryContent;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -95,7 +94,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         Lookup nodeLookup = node.getLookup();
-        AbstractContent content = nodeLookup.lookup(AbstractFile.class);
+        AbstractFile content = nodeLookup.lookup(AbstractFile.class);
 
         /*
          * Assemble a collection of all of the indexed text "sources" for the
