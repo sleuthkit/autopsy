@@ -52,6 +52,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import static java.util.Collections.singleton;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -59,20 +60,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
+import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import org.jdesktop.layout.GroupLayout;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
@@ -115,6 +125,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 //        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_WHITE_SPACE, "wrap");
 
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
+//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_OPACITY, 50        );
 //        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ROUNDED, true);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_PERIMETER_SPACING, 0);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
@@ -192,7 +203,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.setOpaque(true);
         graphComponent.setToolTips(true);
         graphComponent.setBackground(Color.WHITE);
-        jPanel1.add(graphComponent, BorderLayout.CENTER);
+        layeredPane.add(graphComponent, new Integer(0));
+        layeredPane.remove(progressOverlay);
 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
@@ -358,45 +370,73 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void rebuildGraph() throws TskCoreException {
 
-        /**
-         * set to keep track of accounts related to pinned accounts
-         */
-        Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
-        for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
-            List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                    commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
+        ProgressHandle handle = ProgressHandleFactory.createHandle("Rebuiling graph");
+        layeredPane.add(progressOverlay, new Integer(1));
+        new SwingWorker<Set<RelationshipModel>, Void>() {
+            @Override
+            protected Set<RelationshipModel> doInBackground() throws Exception {
+                handle.start();
+                Set<RelationshipModel> relationshipModels = new HashSet<>();
+                try {
 
-            //get accounts related to pinned account
-            for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
-                final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
+                    /**
+                     * set to keep track of accounts related to pinned accounts
+                     */
+                    Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
+                    for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
+                        List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                                commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
 
-                //add and edge between pinned and related accounts
-                List<Content> relationships = commsManager.getRelationshipSources(
-                        adiKey.getAccountDeviceInstance(),
-                        relatedADIKey.getAccountDeviceInstance(),
-                        currentFilter);
-                addEdge(relationships, adiKey, relatedADIKey);
-                relatedAccounts.add(relatedADIKey); //store related accounts
+                        relatedAccounts.add(adiKey);
+                        //get accounts related to pinned account
+                        for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+//                            handle.progress(1);
+                            long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
+                            final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
+                            relatedAccounts.add(relatedADIKey); //store related accounts
+                        }
+                    }
+
+                    //for each pair of related accounts add edges if they are related o each other.
+                    // this is O(n^2) in the number of related accounts!!!
+                    List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
+                    for (int i = 0; i < relatedAccountsList.size(); i++) {
+                        for (int j = i; j < relatedAccountsList.size(); j++) {
+                            AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
+                            AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
+                            List<Content> relationships = commsManager.getRelationshipSources(
+                                    adiKey1.getAccountDeviceInstance(),
+                                    adiKey2.getAccountDeviceInstance(),
+                                    currentFilter);
+                            if (relationships.size() > 0) {
+                                relationshipModels.add(new RelationshipModel(relationships, adiKey1, adiKey2));
+                            }
+                        }
+                    }
+                } catch (TskCoreException tskCoreException) {
+                    logger.log(Level.SEVERE, "Error", tskCoreException);
+                } finally {
+                }
+                return relationshipModels;
             }
-        }
 
-        //for each pair of related accounts add edges if they are related o each other.
-        // this is O(n^2) in the number of related accounts!!!
-        List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
-        for (int i = 0; i < relatedAccountsList.size(); i++) {
-            for (int j = i; j < relatedAccountsList.size(); j++) {
-                AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
-                AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
-                List<Content> relationships = commsManager.getRelationshipSources(
-                        adiKey1.getAccountDeviceInstance(),
-                        adiKey2.getAccountDeviceInstance(),
-                        currentFilter);
-                if (relationships.size() > 0) {
-                    addEdge(relationships, adiKey1, adiKey2);
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    Set<RelationshipModel> get = get();
+                    for (RelationshipModel r : get) {
+                        addEdge(r.getSources(), r.getAccount1(), r.getAccount2());
+                    }
+                } catch (InterruptedException | ExecutionException | TskCoreException ex) {
+                    Exceptions.printStackTrace(ex);
+                } finally {
+                    handle.finish();
+                    layeredPane.remove(progressOverlay);
                 }
             }
-        }
+        }.execute();
+
     }
 
     private void clearGraph() {
@@ -466,6 +506,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         zoomOutButton = new JButton();
         fitGraphButton = new JButton();
         zoomInButton = new JButton();
+        layeredPane = new JLayeredPane();
+        progressOverlay = new JPanel();
+        jProgressBar1 = new JProgressBar();
 
         setLayout(new BorderLayout());
 
@@ -559,6 +602,27 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         jPanel1.add(jToolBar1, BorderLayout.NORTH);
 
+        layeredPane.setLayout(new OverlayLayout(layeredPane));
+
+        GroupLayout progressOverlayLayout = new GroupLayout(progressOverlay);
+        progressOverlay.setLayout(progressOverlayLayout);
+        progressOverlayLayout.setHorizontalGroup(progressOverlayLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, progressOverlayLayout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jProgressBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        progressOverlayLayout.setVerticalGroup(progressOverlayLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, progressOverlayLayout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jProgressBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        layeredPane.add(progressOverlay);
+
+        jPanel1.add(layeredPane, BorderLayout.CENTER);
+
         splitPane.setLeftComponent(jPanel1);
 
         add(splitPane, BorderLayout.CENTER);
@@ -632,8 +696,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton jButton7;
     private JButton jButton8;
     private JPanel jPanel1;
+    private JProgressBar jProgressBar1;
     private JToolBar.Separator jSeparator1;
     private JToolBar jToolBar1;
+    private JLayeredPane layeredPane;
+    private JPanel progressOverlay;
     private JSplitPane splitPane;
     private JButton zoomInButton;
     private JButton zoomOutButton;
@@ -669,5 +736,31 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 logger.log(Level.SEVERE, "Selection vetoed.", ex);
             }
         }
+    }
+
+    private static class RelationshipModel {
+
+        private final List<Content> relationshipSources;
+        private final AccountDeviceInstanceKey adiKey1;
+        private final AccountDeviceInstanceKey adiKey2;
+
+        private RelationshipModel(List<Content> relationships, AccountDeviceInstanceKey adiKey1, AccountDeviceInstanceKey adiKey2) {
+            this.relationshipSources = relationships;
+            this.adiKey1 = adiKey1;
+            this.adiKey2 = adiKey2;
+        }
+
+        public List<Content> getSources() {
+            return Collections.unmodifiableList(relationshipSources);
+        }
+
+        public AccountDeviceInstanceKey getAccount1() {
+            return adiKey1;
+        }
+
+        public AccountDeviceInstanceKey getAccount2() {
+            return adiKey2;
+        }
+
     }
 }
