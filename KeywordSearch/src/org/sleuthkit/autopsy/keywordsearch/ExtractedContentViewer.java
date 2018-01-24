@@ -113,14 +113,18 @@ public class ExtractedContentViewer implements DataContentViewer {
             if (artifact != null) {
                 if (artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
                     try {
-                        // if the artifact is an account artifact, get an account text.
+                        /*
+                         * Generate AccountsText for the account artifact.
+                         */
                         highlightedHitText = getAccountsText(content, nodeLookup);
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
                     }
                 } else if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
                     try {
-                        //if there is kwh artifact use that to construct the HighlightedText
+                        /*
+                         * Generate HighlightedText for the keyword hit artifact.
+                         */
                         highlightedHitText = new HighlightedText(artifact);
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
@@ -137,11 +141,6 @@ public class ExtractedContentViewer implements DataContentViewer {
             if (null != content && solrHasContent(content.getId())) {
                 QueryResults queryResults = queryContent.getResults();
                 if (queryResults != null) {
-                    /*
-                     * If there's a QueryContent object in the lookup, use that.
-                     * This happens when a user selects a row in an ad-hoc
-                     * search result.
-                     */
                     highlightedHitText = new HighlightedText(queryContent.getSolrObjectId(), queryResults);
                 }
             }
