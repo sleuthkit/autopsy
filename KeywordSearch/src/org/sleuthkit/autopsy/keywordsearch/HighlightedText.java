@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class HighlightedText implements IndexedText {
 
-    private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(HighlightedText.class.getName());
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -70,7 +69,7 @@ class HighlightedText implements IndexedText {
 
     final private Server solrServer = KeywordSearch.getServer();
 
-    private final long objectId;
+    private final long solrObjectId;
     /*
      * The keywords to highlight
      */
@@ -106,14 +105,14 @@ class HighlightedText implements IndexedText {
      * search results. In that case we have the entire QueryResults object and
  need to arrange the paging.
      *
-     * @param objectId     The objectID of the content whose text will be
+     * @param solrObjectId The solrObjectId of the content whose text will be
      *                     highlighted.
      * @param QueryResults The QueryResults for the ad-hoc search from whose
                      results a selection was made leading to this
                      HighlightedText.
      */
-    HighlightedText(long objectId, QueryResults hits) {
-        this.objectId = objectId;
+    HighlightedText(long solrObjectId, QueryResults hits) {
+        this.solrObjectId = solrObjectId;
         this.hits = hits;
     }
 
@@ -129,9 +128,9 @@ class HighlightedText implements IndexedText {
         this.artifact = artifact;
         BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT);
         if (attribute != null) {
-            this.objectId = attribute.getValueLong();
+            this.solrObjectId = attribute.getValueLong();
         } else {
-            this.objectId = artifact.getObjectID();
+            this.solrObjectId = artifact.getObjectID();
         }
 
     }
@@ -146,7 +145,7 @@ class HighlightedText implements IndexedText {
             return;
         }
 
-        this.numberPages = solrServer.queryNumFileChunks(this.objectId);
+        this.numberPages = solrServer.queryNumFileChunks(this.solrObjectId);
 
         if (artifact != null) {
             loadPageInfoFromArtifact();
@@ -194,7 +193,7 @@ class HighlightedText implements IndexedText {
         // Run a query to figure out which chunks for the current object have
         // hits for this keyword.
 
-        chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
+        chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.solrObjectId));
 
         hits = chunksQuery.performQuery();
         loadPageInfoFromHits();
@@ -216,7 +215,7 @@ class HighlightedText implements IndexedText {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
                 if (artifact != null) {
-                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
+                    if (chunkID != 0 && this.solrObjectId == hit.getSolrObjectId()) {
                         String hit1 = hit.getHit();
                         if (keywords.stream().anyMatch(hit1::contains)) {
                             numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
@@ -225,7 +224,7 @@ class HighlightedText implements IndexedText {
                         }
                     }
                 } else {
-                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
+                    if (chunkID != 0 && this.solrObjectId == hit.getSolrObjectId()) {
 
                         numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
                         currentHitPerPage.put(chunkID, 0); //set current hit to 0th
@@ -354,7 +353,7 @@ class HighlightedText implements IndexedText {
             SolrQuery q = new SolrQuery();
             q.setShowDebugInfo(DEBUG); //debug
 
-            String contentIdStr = Long.toString(this.objectId);
+            String contentIdStr = Long.toString(this.solrObjectId);
             if (numberPages != 0) {
                 chunkID = Integer.toString(this.currentPage);
                 contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
@@ -401,7 +400,7 @@ class HighlightedText implements IndexedText {
             // either be a single chunk containing hits or we narrow our
             // query down to the current page/chunk.
             if (response.getResults().size() > 1) {
-                logger.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
+                LOGGER.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
             }
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
@@ -427,7 +426,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }

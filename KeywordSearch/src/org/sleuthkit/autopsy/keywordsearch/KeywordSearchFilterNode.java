@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.QueryContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -52,12 +53,18 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- *
+ * FilterNode containing data pertaining to keyword search.
  */
 class KeywordSearchFilterNode extends FilterNode {
 
-    KeywordSearchFilterNode(QueryResults highlights, Node original) {
-        super(original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
+    /**
+     * Instantiate a KeywordSearchFilterNode.
+     * 
+     * @param queryContent The query content.
+     * @param original The original source node.
+     */
+    KeywordSearchFilterNode(QueryContent queryContent, Node original) {
+        super(original, null, new ProxyLookup(Lookups.singleton(queryContent), original.getLookup()));
     }
 
     @Override

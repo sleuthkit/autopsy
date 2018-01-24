@@ -250,13 +250,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         Node resultNode;
 
         if (key instanceof KeyValueQueryContent) {
-            final Content content = ((KeyValueQueryContent) key).getContent();
-            QueryResults hits = ((KeyValueQueryContent) key).getHits();
+            QueryContent queryContent = new QueryContent((KeyValueQueryContent) key);
 
-            Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(content));
+            Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(queryContent));
 
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            resultNode = new KeywordSearchFilterNode(hits, kvNode);
+            resultNode = new KeywordSearchFilterNode(queryContent, kvNode);
         } else {
             resultNode = new EmptyNode("This Node Is Empty");
             resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noResultsFound.text"));
@@ -264,6 +263,56 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
         return resultNode;
 
+    }
+    
+    /**
+     * This class encapsulates content, query results, and an associated Solr
+     * object ID for storing in the Lookup to be read later.
+     */
+    class QueryContent {
+        private final long solrObjectId;
+        private final Content content;
+        private final QueryResults results;
+        
+        /**
+         * Instantiate a QueryContent object.
+         * 
+         * @param solrObjectId The Solr object ID associated with the content.
+         * @param content The content for the query result.
+         * @param results The query results.
+         */
+        QueryContent(KeyValueQueryContent key) {
+            this.solrObjectId = key.getSolrObjectId();
+            this.content = key.getContent();
+            this.results = key.getHits();
+        }
+        
+        /**
+         * Get the Solr object ID associated with the content.
+         * 
+         * @return The Solr object ID.
+         */
+        long getSolrObjectId() {
+            return solrObjectId;
+        }
+        
+        /**
+         * Get the content for the query result.
+         * 
+         * @return The content.
+         */
+        Content getContent() {
+            return content;
+        }
+        
+        /**
+         * Get the query results.
+         * 
+         * @return The query results.
+         */
+        QueryResults getResults() {
+            return results;
+        }
     }
 
     /**

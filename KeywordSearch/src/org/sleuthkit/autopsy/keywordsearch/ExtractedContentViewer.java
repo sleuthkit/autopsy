@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,8 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.QueryContent;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -50,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
 
-    private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ExtractedContentViewer.class.getName());
 
     private static final long INVALID_DOCUMENT_ID = 0L;
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
@@ -93,7 +95,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         Lookup nodeLookup = node.getLookup();
-        AbstractFile content = nodeLookup.lookup(AbstractFile.class);
+        AbstractContent content = nodeLookup.lookup(AbstractFile.class);
 
         /*
          * Assemble a collection of all of the indexed text "sources" for the
@@ -104,41 +106,56 @@ public class ExtractedContentViewer implements DataContentViewer {
         IndexedText rawContentText = null;
 
         if (null != content && solrHasContent(content.getId())) {
-            QueryResults hits = nodeLookup.lookup(QueryResults.class);
-            BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
-            if (hits != null) {
-                /*
-                 * if there is a QueryReslt object, in the lookup use that. This
-                 * happens when a user selects a row in an ad-hoc search result
-                 */
-                highlightedHitText = new HighlightedText(content.getId(), hits);
-            } else if (artifact != null
-                    && artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
-                try {
-                    // if the artifact is an account artifact, get an account text .
-                    highlightedHitText = getAccountsText(content, nodeLookup);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
-
-                }
-            } else if (artifact != null
-                    && artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
-                try {
-                    //if there is kwh artifact use that to construct the HighlightedText
-                    highlightedHitText = new HighlightedText(artifact);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
-                }
-            }
-
-            if (highlightedHitText != null) {
-                sources.add(highlightedHitText);
-            }
-
             /*
-             * Next, add the "raw" (not highlighted) text, if any, for any
-             * content associated with the node.
+             * Results for Keyword Hits.
              */
+            BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+            if (artifact != null) {
+                if (artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
+                    try {
+                        // if the artifact is an account artifact, get an account text.
+                        highlightedHitText = getAccountsText(content, nodeLookup);
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
+                    }
+                } else if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+                    try {
+                        //if there is kwh artifact use that to construct the HighlightedText
+                        highlightedHitText = new HighlightedText(artifact);
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
+                    }
+                }
+            }
+        } else {
+            /*
+             * Results for ad-hoc search.
+             */
+            QueryContent queryContent = nodeLookup.lookup(QueryContent.class);
+            content = (AbstractFile) queryContent.getContent();
+            
+            if (null != content && solrHasContent(content.getId())) {
+                QueryResults queryResults = queryContent.getResults();
+                if (queryResults != null) {
+                    /*
+                     * If there's a QueryContent object in the lookup, use that.
+                     * This happens when a user selects a row in an ad-hoc
+                     * search result.
+                     */
+                    highlightedHitText = new HighlightedText(queryContent.getSolrObjectId(), queryResults);
+                }
+            }
+        }
+
+        if (highlightedHitText != null) {
+            sources.add(highlightedHitText);
+        }
+
+        /*
+         * Next, add the "raw" (not highlighted) text, if any, for any
+         * content associated with the node.
+         */
+        if (content != null) {
             rawContentText = new RawText(content, content.getId());
             sources.add(rawContentText);
         }
@@ -151,7 +168,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             rawArtifactText = getRawArtifactText(nodeLookup);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating RawText for " + content, ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error creating RawText for " + content, ex); //NON-NLS
 
         }
         if (rawArtifactText != null) {
@@ -288,7 +305,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                             return true;
                         }
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + art.getArtifactID(), ex);
+                        LOGGER.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + art.getArtifactID(), ex);
                     }
                 } else if (artifactTypeID == TSK_KEYWORD_HIT.getTypeID()) {
                     return true;
@@ -352,7 +369,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
             return false;
         }
     }
@@ -386,7 +403,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                         return blackboardAttribute.getValueLong();
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
             }
         }
@@ -398,6 +415,13 @@ public class ExtractedContentViewer implements DataContentViewer {
          * handled above.
          */
         Content content = node.getLookup().lookup(Content.class);
+        if (content == null) {
+            QueryContent queryContent = node.getLookup().lookup(QueryContent.class);
+            if (queryContent != null) {
+                content = queryContent.getContent();
+            }
+        }
+        
         if (content != null) {
             return content.getId();
         }
