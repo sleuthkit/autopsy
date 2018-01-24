@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,9 +30,9 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 public class SQLiteTableRowFactory extends ChildFactory<Integer> {
 
-    private final ArrayList<Map<String, Object>> rows;
+    private final List<Map<String, Object>> rows;
 
-    public SQLiteTableRowFactory(ArrayList<Map<String, Object>> rows) {
+    public SQLiteTableRowFactory(List<Map<String, Object>> rows) {
         this.rows = rows;
     }
 
@@ -62,7 +61,7 @@ class SQLiteTableRowNode extends AbstractNode {
 
     private final Map<String, Object> row;
 
-    public SQLiteTableRowNode(Map<String, Object> row) {
+    SQLiteTableRowNode(Map<String, Object> row) {
         super(Children.LEAF);
         this.row = row;
     }
