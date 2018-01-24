@@ -19,10 +19,13 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.BorderLayout;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
@@ -31,73 +34,64 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 
+class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
 
-public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManager.Provider {
-
-    private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
-    private ExplorerManager explorerManager;
+    private final Outline outline;
+    private final ExplorerManager explorerManager;
 
-    private final ArrayList<Map<String, Object>> tableRows;
-    
     /**
      * Creates new form SQLiteTableView
-     * @param rows
+     *
      */
-    public SQLiteTableView(ArrayList<Map<String, Object>> rows) {
-        
-        this.tableRows = rows;
-        
-        outlineView = new org.openide.explorer.view.OutlineView();
-        outlineView.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        
+    SQLiteTableView() {
+
         initComponents();
-        
-        add(outlineView,BorderLayout.CENTER);
-        
-        outline = outlineView.getOutline();
+        outlineView = new org.openide.explorer.view.OutlineView();
+        add(outlineView, BorderLayout.CENTER);
         outlineView.setPropertyColumns();   // column headers will be set later
+        outlineView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        outlineView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+        outline = outlineView.getOutline();
+
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
-        customize();
+        outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        outline.setRowSelectionAllowed(false);
+        outline.setRootVisible(false);
+
+        explorerManager = new ExplorerManager();
     }
 
-    private void customize() {
-      
-        //tableScrollPane.setViewportView(outlineView);
-        
-        this.setVisible(true);
-        outline.setRowSelectionAllowed(false);
-        outline.setRootVisible(false); 
-    
-        explorerManager = new ExplorerManager();
-        explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows), true)));
-        
-        setupColumns();
-    }
-    
     /**
      * Sets up the columns in the display table
+     *
+     * @param tableRows
      */
-    private void setupColumns() {
-        if (Objects.isNull(tableRows) || tableRows.isEmpty()) 
-            return;
-            
-        Map<String, Object> row = tableRows.get(0);
-                
-        // Get the columns setup with respect to names and sortability
-        String[] propStrings = new String[row.size() * 2];
-        
-        int i = 0;
-        for (Map.Entry<String, Object > col: row.entrySet()) {
+    void setupTable(List<Map<String, Object>> tableRows) {
+
+        explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows), true)));
+
+        if (Objects.isNull(tableRows) || tableRows.isEmpty()) {
+            outlineView.setPropertyColumns();
+//            return;
+        } else {
+
+            Map<String, Object> row = tableRows.get(0);
+
+            // Get the columns setup with respect to names and sortability
+            String[] propStrings = new String[row.size() * 2];
+
+            int i = 0;
+            for (Map.Entry<String, Object> col : row.entrySet()) {
                 String colName = col.getKey();
                 propStrings[2 * i] = colName;
                 propStrings[2 * i + 1] = colName;
                 i++;
+            }
+
+            outlineView.setPropertyColumns(propStrings);
         }
-         
-        
-        outlineView.setPropertyColumns(propStrings);
         
         // TBD: Set width based on actual data in the top N rows??
         // TBD: Can't seem to get the horizontal scrollbar working
@@ -109,9 +103,9 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
         TableColumnModel columnModel = outline.getColumnModel();
         ETableColumn column = (ETableColumn) columnModel.getColumn(0);
         ((ETableColumnModel) columnModel).setColumnHidden(column, true);
-        
+
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -121,12 +115,9 @@ public class SQLiteTableView extends javax.swing.JPanel implements ExplorerManag
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setPreferredSize(new java.awt.Dimension(600, 400));
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
-               
- 
     @Override
     public ExplorerManager getExplorerManager() {
         return explorerManager;
