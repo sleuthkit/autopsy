@@ -36,12 +36,13 @@ import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxPoint;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
-import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -65,20 +66,16 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
-import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.jdesktop.layout.GroupLayout;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
@@ -203,8 +200,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.setOpaque(true);
         graphComponent.setToolTips(true);
         graphComponent.setBackground(Color.WHITE);
-        layeredPane.add(graphComponent, new Integer(0));
-        layeredPane.remove(progressOverlay);
+        borderLayoutPanel.add(graphComponent, BorderLayout.CENTER);
+        progressBar.setVisible(false);
 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
@@ -219,7 +216,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 } else if (e.getPreciseWheelRotation() < 0) {
                     graphComponent.zoomOut();
                 }
-
             }
 
             @Override
@@ -291,6 +287,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         graph.getView().updateLabel(state);
         graph.getView().updateLabelBounds(state);
+        graph.getView().updateBoundingBox(state);
+        
         return vertex;
     }
 
@@ -314,7 +312,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @Subscribe
     void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
-        graph.getModel().beginUpdate();
+//        graph.getModel().beginUpdate();
         try {
 
             pinnedAccountDevices.removeAll(pinEvent.getAccountDeviceInstances());
@@ -324,7 +322,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             logger.log(Level.SEVERE, "Error pinning accounts", ex);
         } finally {
             // Updates the display
-            graph.getModel().endUpdate();
+//            graph.getModel().endUpdate();
         }
 
 //        applyOrganicLayout();
@@ -332,7 +330,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @Subscribe
     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
-        graph.getModel().beginUpdate();
+//        graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
                 pinnedAccountDevices.clear();
@@ -344,7 +342,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             logger.log(Level.SEVERE, "Error pinning accounts", ex);
         } finally {
             // Updates the display
-            graph.getModel().endUpdate();
+//            graph.getModel().endUpdate();
         }
 
 //        applyOrganicLayout();
@@ -370,12 +368,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void rebuildGraph() throws TskCoreException {
 
-        ProgressHandle handle = ProgressHandleFactory.createHandle("Rebuiling graph");
-        layeredPane.add(progressOverlay, new Integer(1));
-        new SwingWorker<Set<RelationshipModel>, Void>() {
+        progressBar.setVisible(true);
+        new SwingWorker<Set<RelationshipModel>, RelationshipModel>() {
             @Override
             protected Set<RelationshipModel> doInBackground() throws Exception {
-                handle.start();
+                progressBar.setIndeterminate(true);
+                progressBar.setStringPainted(false);
                 Set<RelationshipModel> relationshipModels = new HashSet<>();
                 try {
 
@@ -400,18 +398,29 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     //for each pair of related accounts add edges if they are related o each other.
                     // this is O(n^2) in the number of related accounts!!!
                     List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
+
+                    progressBar.setString("");
+                    progressBar.setStringPainted(true);
+                    progressBar.setValue(0);
+                    progressBar.setMaximum(relatedAccountsList.size());
+                    progressBar.setIndeterminate(false);
+
                     for (int i = 0; i < relatedAccountsList.size(); i++) {
+                        AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
+                        progressBar.setString(adiKey1.getAccountDeviceInstance().getAccount().getTypeSpecificID());
                         for (int j = i; j < relatedAccountsList.size(); j++) {
-                            AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
+
                             AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
                             List<Content> relationships = commsManager.getRelationshipSources(
                                     adiKey1.getAccountDeviceInstance(),
                                     adiKey2.getAccountDeviceInstance(),
                                     currentFilter);
                             if (relationships.size() > 0) {
-                                relationshipModels.add(new RelationshipModel(relationships, adiKey1, adiKey2));
+                                RelationshipModel relationshipModel = new RelationshipModel(relationships, adiKey1, adiKey2);
+                                publish(relationshipModel);
                             }
                         }
+                        progressBar.setValue(i);
                     }
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error", tskCoreException);
@@ -421,18 +430,30 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
 
             @Override
+            protected void process(List<RelationshipModel> chunks) {
+                super.process(chunks);
+                for (RelationshipModel relationShipModel : chunks) {
+                    try {
+                        addEdge(relationShipModel.getSources(), relationShipModel.adiKey1, relationShipModel.adiKey2);
+
+                    } catch (TskCoreException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+                mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph);
+                mxOrganicLayout.setMaxIterations(1);
+                morph(mxOrganicLayout);
+            }
+
+            @Override
             protected void done() {
                 super.done();
                 try {
-                    Set<RelationshipModel> get = get();
-                    for (RelationshipModel r : get) {
-                        addEdge(r.getSources(), r.getAccount1(), r.getAccount2());
-                    }
-                } catch (InterruptedException | ExecutionException | TskCoreException ex) {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
                     Exceptions.printStackTrace(ex);
                 } finally {
-                    handle.finish();
-                    layeredPane.remove(progressOverlay);
+                    progressBar.setVisible(false);
                 }
             }
         }.execute();
@@ -496,7 +517,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private void initComponents() {
 
         splitPane = new JSplitPane();
-        jPanel1 = new JPanel();
+        borderLayoutPanel = new JPanel();
         jToolBar1 = new JToolBar();
         jButton6 = new JButton();
         jButton1 = new JButton();
@@ -506,16 +527,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         zoomOutButton = new JButton();
         fitGraphButton = new JButton();
         zoomInButton = new JButton();
-        layeredPane = new JLayeredPane();
-        progressOverlay = new JPanel();
-        jProgressBar1 = new JProgressBar();
+        statusPanel = new JPanel();
+        progressBar = new JProgressBar();
 
         setLayout(new BorderLayout());
 
         splitPane.setDividerLocation(800);
         splitPane.setResizeWeight(0.5);
 
-        jPanel1.setLayout(new BorderLayout());
+        borderLayoutPanel.setLayout(new BorderLayout());
 
         jToolBar1.setRollover(true);
 
@@ -600,30 +620,28 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
         jToolBar1.add(zoomInButton);
 
-        jPanel1.add(jToolBar1, BorderLayout.NORTH);
+        borderLayoutPanel.add(jToolBar1, BorderLayout.NORTH);
 
-        layeredPane.setLayout(new OverlayLayout(layeredPane));
+        progressBar.setMaximumSize(new Dimension(200, 14));
 
-        GroupLayout progressOverlayLayout = new GroupLayout(progressOverlay);
-        progressOverlay.setLayout(progressOverlayLayout);
-        progressOverlayLayout.setHorizontalGroup(progressOverlayLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, progressOverlayLayout.createSequentialGroup()
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jProgressBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        GroupLayout statusPanelLayout = new GroupLayout(statusPanel);
+        statusPanel.setLayout(statusPanelLayout);
+        statusPanelLayout.setHorizontalGroup(statusPanelLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, statusPanelLayout.createSequentialGroup()
+                .addContainerGap(516, Short.MAX_VALUE)
+                .add(progressBar, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
-        progressOverlayLayout.setVerticalGroup(progressOverlayLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, progressOverlayLayout.createSequentialGroup()
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jProgressBar1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        statusPanelLayout.setVerticalGroup(statusPanelLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, statusPanelLayout.createSequentialGroup()
+                .add(3, 3, 3)
+                .add(progressBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(3, 3, 3))
         );
 
-        layeredPane.add(progressOverlay);
+        borderLayoutPanel.add(statusPanel, BorderLayout.SOUTH);
 
-        jPanel1.add(layeredPane, BorderLayout.CENTER);
-
-        splitPane.setLeftComponent(jPanel1);
+        splitPane.setLeftComponent(borderLayoutPanel);
 
         add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
@@ -664,9 +682,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_fitGraphButtonActionPerformed
 
     private void fitGraph() {
-        mxGraphView view = graphComponent.getGraph().getView();
-        view.setTranslate(new mxPoint(-view.getGraphBounds().getX(), -view.getGraphBounds().getY()));
-
+        final Object[] childVertices = graph.getChildVertices(graph.getDefaultParent());
+        final mxRectangle boundsForCells = graph.getBoundsForCells(childVertices,true, true,true);
+        graph.getView().setTranslate(new mxPoint(-boundsForCells.getX(), -boundsForCells.getY()));
+        
 //        final double widthFactor = (double) graphComponent.getWidth() / (int) view.getGraphBounds().getWidth();
 //        final double heightFactor = (double) graphComponent.getHeight() / (int) view.getGraphBounds().getHeight();
 //
@@ -682,7 +701,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
             morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
                 graph.getModel().endUpdate();
-//                fitGraph();
+                fitGraph();
             });
 
             morph.startAnimation();
@@ -690,18 +709,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private JPanel borderLayoutPanel;
     private JButton fitGraphButton;
     private JButton jButton1;
     private JButton jButton6;
     private JButton jButton7;
     private JButton jButton8;
-    private JPanel jPanel1;
-    private JProgressBar jProgressBar1;
     private JToolBar.Separator jSeparator1;
     private JToolBar jToolBar1;
-    private JLayeredPane layeredPane;
-    private JPanel progressOverlay;
+    private JProgressBar progressBar;
     private JSplitPane splitPane;
+    private JPanel statusPanel;
     private JButton zoomInButton;
     private JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
