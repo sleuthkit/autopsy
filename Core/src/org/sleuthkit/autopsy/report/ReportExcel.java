@@ -34,6 +34,7 @@ class ReportExcel implements TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
+    private static final int EXCEL_CELL_MAXIMUM_SIZE = 36767;
 
     private Workbook wb;
     private Sheet sheet;
@@ -236,10 +237,23 @@ class ReportExcel implements TableReportModule {
      * @param row cells to add
      */
     @Override
+    @NbBundle.Messages({
+        "ReportExcel.exceptionMessage.dataTooLarge=Value is too long to fit into an Excel cell. ",
+        "ReportExcel.exceptionMessage.errorText=Error showing data into an Excel cell."
+    })
+
     public void addRow(List<String> rowData) {
         Row row = sheet.createRow(rowIndex);
         for (int i = 0; i < rowData.size(); ++i) {
-            row.createCell(i).setCellValue(rowData.get(i));
+            try {
+                row.createCell(i).setCellValue(rowData.get(i));
+            } catch (Exception e) {
+                if (e instanceof java.lang.IllegalArgumentException && rowData.get(i).length() > EXCEL_CELL_MAXIMUM_SIZE) {
+                    row.getCell(i).setCellValue(Bundle.ReportExcel_exceptionMessage_dataTooLarge() + e.getMessage());
+                } else {
+                    row.getCell(i).setCellValue(Bundle.ReportExcel_exceptionMessage_errorText());
+                }
+            }
         }
         ++rowIndex;
     }

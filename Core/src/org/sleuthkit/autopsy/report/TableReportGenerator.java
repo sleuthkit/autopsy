@@ -666,8 +666,7 @@ class TableReportGenerator {
                     tableModule.startTable(columnHeaderNames);
                 }
 
-                String previewreplace = EscapeUtil.escapeHtml(preview);
-                tableModule.addRow(Arrays.asList(new String[]{previewreplace.replaceAll("<!", ""), uniquePath, tagsList}));
+                tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsList}));
             }
 
             // Finish the current data type
