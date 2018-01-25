@@ -50,6 +50,10 @@ public class CorrelationCase implements Serializable {
      * @param caseUUID Globally unique identifier
      * @param displayName 
      */    
+    public CorrelationCase(String caseUUID, String displayName) {
+        this(-1, caseUUID, displayName);
+    }
+    
     CorrelationCase(int ID, String caseUUID, String displayName) {
         this(ID, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
     }
@@ -156,7 +160,7 @@ public class CorrelationCase implements Serializable {
     /**
      * @return the database ID for the case or -1 if it is unknown (or not in the DB)
      */
-    int getID() {
+    public int getID() {
         // @@@ Should probably have some lazy logic here to lead the ID from the DB if it is -1
         return databaseId;
     }
