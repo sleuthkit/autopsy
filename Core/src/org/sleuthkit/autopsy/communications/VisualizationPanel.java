@@ -39,6 +39,7 @@ import com.mxgraph.util.mxPoint;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxLayoutManager;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -205,7 +206,26 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
+        new mxLayoutManager(graph) {
+            final private mxOrganicLayout layout;
+            {
+                this.layout = new mxOrganicLayout(graph);
+            }
 
+            @Override
+            protected void executeLayout(mxIGraphLayout layout, Object parent) {
+                super.executeLayout(layout, parent);
+                fitGraph();
+            }
+
+            @Override
+            public mxIGraphLayout getLayout(Object parent) {
+                if (graph.getModel().getChildCount(parent) > 0) {
+                    return layout;
+                }
+                return null;
+            }
+        };
         //right click handler
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
@@ -271,7 +291,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
-       
+
         final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
 
@@ -294,19 +314,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @SuppressWarnings("unchecked")
-    private mxCell addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) throws TskCoreException {
+    private mxCell addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) {
         mxCell vertex1 = getOrCreateVertex(account1);
         mxCell vertex2 = getOrCreateVertex(account2);
         Object[] edgesBetween = graph.getEdgesBetween(vertex1, vertex2);
         mxCell edge;
-
         if (edgesBetween.length == 0) {
             final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
             final HashSet<Content> hashSet = new HashSet<>(relSources);
             //            edgeMap.put(relSource, edge);
             edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
                     "strokeWidth=" + Math.sqrt(hashSet.size()));
-        } else  {
+        } else {
             edge = (mxCell) edgesBetween[0];
             ((Collection<Content>) edge.getValue()).addAll(relSources);
             edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
@@ -329,7 +348,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graph.getModel().endUpdate();
         }
 
-        applyOrganicLayout();
+        applyOrganicLayout(10);
     }
 
     @Subscribe
@@ -349,7 +368,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graph.getModel().endUpdate();
         }
 
-        applyOrganicLayout();
+        applyOrganicLayout(10);
     }
 
     @Subscribe
@@ -367,7 +386,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graph.getModel().endUpdate();
         }
 
-        applyOrganicLayout();
+        applyOrganicLayout(10);
     }
 
     private void rebuildGraph() throws TskCoreException {
@@ -440,17 +459,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             protected void process(List<RelationshipModel> chunks) {
                 super.process(chunks);
                 for (RelationshipModel relationShipModel : chunks) {
-                    try {
-                        mxCell addEdge = addEdge(relationShipModel.getSources(),
-                                relationShipModel.getAccount1(),
-                                relationShipModel.getAccount2());
-                        progressBar.setString(addEdge.getId());
-
-                    } catch (TskCoreException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+                    mxCell addEdge = addEdge(relationShipModel.getSources(),
+                            relationShipModel.getAccount1(),
+                            relationShipModel.getAccount2());
+                    progressBar.setString(addEdge.getId());
                 }
-                applyOrganicLayout();
             }
 
             @Override
@@ -680,12 +693,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton8ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        applyOrganicLayout();
+        applyOrganicLayout(10);
     }//GEN-LAST:event_jButton8ActionPerformed
 
-    private void applyOrganicLayout() {
+    private void applyOrganicLayout(int iterations) {
         mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph);
-        mxOrganicLayout.setMaxIterations(10);
+        mxOrganicLayout.setMaxIterations(iterations);
         morph(mxOrganicLayout);
     }
 
@@ -695,16 +708,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void fitGraph() {
         final Object[] childVertices = graph.getChildVertices(graph.getDefaultParent());
-         mxRectangle boundsForCells = graph.getBoundsForCells(childVertices, true, true, true);
-        if (boundsForCells == null){
+        mxRectangle boundsForCells = graph.getBoundsForCells(childVertices, true, true, true);
+        if (boundsForCells == null) {
             boundsForCells = new mxRectangle();
         }
         mxPoint translate = graph.getView().getTranslate();
-        if(translate == null){
+        if (translate == null) {
             translate = new mxPoint();
         }
 
-        graph.getView().setTranslate(new mxPoint(translate.getX()-boundsForCells.getX(),translate.getY() -boundsForCells.getY()));
+        graph.getView().setTranslate(new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY()));
 //        graph.moveCells(childVertices, -boundsForCells.getX(), -boundsForCells.getY());
 
 //        final double widthFactor = (double) graphComponent.getWidth() / (int) view.getGraphBounds().getWidth();
@@ -803,6 +816,5 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         public AccountDeviceInstanceKey getAccount2() {
             return adiKey2;
         }
-
     }
 }
