@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -665,9 +665,13 @@ class TableReportGenerator {
                     columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
                     tableModule.startTable(columnHeaderNames);
                 }
-
-                String previewreplace = EscapeUtil.escapeHtml(preview);
-                tableModule.addRow(Arrays.asList(new String[]{previewreplace.replaceAll("<!", ""), uniquePath, tagsList}));
+                
+                if (tableModule instanceof ReportHTML) { 
+                    String previewreplace = EscapeUtil.escapeHtml(preview);
+                    tableModule.addRow(Arrays.asList(new String[]{previewreplace, uniquePath, tagsList}));
+                } else {
+                    tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsList}));
+                }
             }
 
             // Finish the current data type
