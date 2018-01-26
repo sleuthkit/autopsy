@@ -245,13 +245,14 @@ class ReportExcel implements TableReportModule {
     public void addRow(List<String> rowData) {
         Row row = sheet.createRow(rowIndex);
         for (int i = 0; i < rowData.size(); ++i) {
+            Cell excelCell = row.createCell(i);
             try {
-                row.createCell(i).setCellValue(rowData.get(i));
+                excelCell.setCellValue(rowData.get(i));
             } catch (Exception e) {
                 if (e instanceof java.lang.IllegalArgumentException && rowData.get(i).length() > EXCEL_CELL_MAXIMUM_SIZE) {
-                    row.getCell(i).setCellValue(Bundle.ReportExcel_exceptionMessage_dataTooLarge() + e.getMessage());
+                    excelCell.setCellValue(Bundle.ReportExcel_exceptionMessage_dataTooLarge() + e.getMessage());
                 } else {
-                    row.getCell(i).setCellValue(Bundle.ReportExcel_exceptionMessage_errorText());
+                    excelCell.setCellValue(Bundle.ReportExcel_exceptionMessage_errorText());
                 }
             }
         }
