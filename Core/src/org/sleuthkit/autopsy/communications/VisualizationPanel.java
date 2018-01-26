@@ -271,6 +271,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
+       
         final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
 
@@ -288,31 +289,34 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getView().updateLabel(state);
         graph.getView().updateLabelBounds(state);
         graph.getView().updateBoundingBox(state);
-        
+
         return vertex;
     }
 
     @SuppressWarnings("unchecked")
-    private void addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) throws TskCoreException {
+    private mxCell addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) throws TskCoreException {
         mxCell vertex1 = getOrCreateVertex(account1);
         mxCell vertex2 = getOrCreateVertex(account2);
         Object[] edgesBetween = graph.getEdgesBetween(vertex1, vertex2);
+        mxCell edge;
+
         if (edgesBetween.length == 0) {
             final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
             final HashSet<Content> hashSet = new HashSet<>(relSources);
-            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
+            //            edgeMap.put(relSource, edge);
+            edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
                     "strokeWidth=" + Math.sqrt(hashSet.size()));
-//            edgeMap.put(relSource, edge);
-        } else if (edgesBetween.length == 1) {
-            final mxCell edge = (mxCell) edgesBetween[0];
+        } else  {
+            edge = (mxCell) edgesBetween[0];
             ((Collection<Content>) edge.getValue()).addAll(relSources);
             edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
         }
+        return edge;
     }
 
     @Subscribe
     void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
-//        graph.getModel().beginUpdate();
+        graph.getModel().beginUpdate();
         try {
 
             pinnedAccountDevices.removeAll(pinEvent.getAccountDeviceInstances());
@@ -322,15 +326,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             logger.log(Level.SEVERE, "Error pinning accounts", ex);
         } finally {
             // Updates the display
-//            graph.getModel().endUpdate();
+            graph.getModel().endUpdate();
         }
 
-//        applyOrganicLayout();
+        applyOrganicLayout();
     }
 
     @Subscribe
     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
-//        graph.getModel().beginUpdate();
+        graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
                 pinnedAccountDevices.clear();
@@ -342,10 +346,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             logger.log(Level.SEVERE, "Error pinning accounts", ex);
         } finally {
             // Updates the display
-//            graph.getModel().endUpdate();
+            graph.getModel().endUpdate();
         }
 
-//        applyOrganicLayout();
+        applyOrganicLayout();
     }
 
     @Subscribe
@@ -363,17 +367,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graph.getModel().endUpdate();
         }
 
-//        applyOrganicLayout();
+        applyOrganicLayout();
     }
 
     private void rebuildGraph() throws TskCoreException {
 
         progressBar.setVisible(true);
+        progressBar.setIndeterminate(true);
+        progressBar.setStringPainted(false);
+
         new SwingWorker<Set<RelationshipModel>, RelationshipModel>() {
             @Override
             protected Set<RelationshipModel> doInBackground() throws Exception {
-                progressBar.setIndeterminate(true);
-                progressBar.setStringPainted(false);
                 Set<RelationshipModel> relationshipModels = new HashSet<>();
                 try {
 
@@ -398,16 +403,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     //for each pair of related accounts add edges if they are related o each other.
                     // this is O(n^2) in the number of related accounts!!!
                     List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
-
-                    progressBar.setString("");
-                    progressBar.setStringPainted(true);
-                    progressBar.setValue(0);
-                    progressBar.setMaximum(relatedAccountsList.size());
-                    progressBar.setIndeterminate(false);
-
+                    SwingUtilities.invokeLater(() -> {
+                        progressBar.setString("");
+                        progressBar.setStringPainted(true);
+                        progressBar.setValue(0);
+                        progressBar.setMaximum(relatedAccountsList.size());
+                        progressBar.setIndeterminate(false);
+                    });
                     for (int i = 0; i < relatedAccountsList.size(); i++) {
                         AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
-                        progressBar.setString(adiKey1.getAccountDeviceInstance().getAccount().getTypeSpecificID());
                         for (int j = i; j < relatedAccountsList.size(); j++) {
 
                             AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
@@ -420,7 +424,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                                 publish(relationshipModel);
                             }
                         }
-                        progressBar.setValue(i);
+                        final int p = i;
+                        SwingUtilities.invokeLater(() -> {
+                            progressBar.setValue(p);
+                        });
                     }
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error", tskCoreException);
@@ -434,15 +441,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 super.process(chunks);
                 for (RelationshipModel relationShipModel : chunks) {
                     try {
-                        addEdge(relationShipModel.getSources(), relationShipModel.adiKey1, relationShipModel.adiKey2);
+                        mxCell addEdge = addEdge(relationShipModel.getSources(),
+                                relationShipModel.getAccount1(),
+                                relationShipModel.getAccount2());
+                        progressBar.setString(addEdge.getId());
 
                     } catch (TskCoreException ex) {
                         Exceptions.printStackTrace(ex);
                     }
                 }
-                mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph);
-                mxOrganicLayout.setMaxIterations(1);
-                morph(mxOrganicLayout);
+                applyOrganicLayout();
             }
 
             @Override
@@ -672,10 +680,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton8ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        applyOrganicLayout();
+    }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void applyOrganicLayout() {
         mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph);
         mxOrganicLayout.setMaxIterations(10);
         morph(mxOrganicLayout);
-    }//GEN-LAST:event_jButton8ActionPerformed
+    }
 
     private void fitGraphButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitGraphButtonActionPerformed
         fitGraph();
@@ -683,9 +695,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void fitGraph() {
         final Object[] childVertices = graph.getChildVertices(graph.getDefaultParent());
-        final mxRectangle boundsForCells = graph.getBoundsForCells(childVertices,true, true,true);
-        graph.getView().setTranslate(new mxPoint(-boundsForCells.getX(), -boundsForCells.getY()));
-        
+         mxRectangle boundsForCells = graph.getBoundsForCells(childVertices, true, true, true);
+        if (boundsForCells == null){
+            boundsForCells = new mxRectangle();
+        }
+        mxPoint translate = graph.getView().getTranslate();
+        if(translate == null){
+            translate = new mxPoint();
+        }
+
+        graph.getView().setTranslate(new mxPoint(translate.getX()-boundsForCells.getX(),translate.getY() -boundsForCells.getY()));
+//        graph.moveCells(childVertices, -boundsForCells.getX(), -boundsForCells.getY());
+
 //        final double widthFactor = (double) graphComponent.getWidth() / (int) view.getGraphBounds().getWidth();
 //        final double heightFactor = (double) graphComponent.getHeight() / (int) view.getGraphBounds().getHeight();
 //
@@ -701,6 +722,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
             morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
                 graph.getModel().endUpdate();
+                fitGraph();
+            });
+            morph.addListener(mxEvent.EXECUTE, (Object sender, mxEventObject event) -> {
                 fitGraph();
             });
 
