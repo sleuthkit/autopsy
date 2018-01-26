@@ -118,7 +118,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
-                mimeType = fileTypeDetector.detectMIMEType(file);
+                mimeType = fileTypeDetector.getMIMEType(file);
             }catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
                 return;
@@ -191,7 +191,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", aFile.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
-                mimeType = fileTypeDetector.detectMIMEType(aFile);
+                mimeType = fileTypeDetector.getMIMEType(aFile);
             }catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
                 return false;
@@ -215,7 +215,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
             LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
-                mimeType = fileTypeDetector.detectMIMEType(file);
+                mimeType = fileTypeDetector.getMIMEType(file);
             }catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize FileTypeDetector.", ex); //NON-NLS
                 return 0;
