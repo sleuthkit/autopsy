@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.eventbus.Subscribe;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.openide.explorer.ExplorerManager;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
@@ -42,22 +41,13 @@ public final class CVTTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
 
-    private final ExplorerManager filterToTableEXplorerManager = new ExplorerManager();
-
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public CVTTopComponent() {
         initComponents();
         setName(Bundle.CVTTopComponent_name());
-        /*
-         * Connect the filtersPane and the accountsBrowser via a shared
-         * ExplorerMmanager
-         */
-        filtersPane.setExplorerManager(filterToTableEXplorerManager);
-        accountsBrowser.init(filterToTableEXplorerManager);
-
 
         /*
-         * Associate an Lookup with the GlobalActionContext (GAC) so that
+         * Associate a Lookup with the GlobalActionContext (GAC) so that
          * selections in the sub views can be exposed to context-sensitive
          * actions.
          */
@@ -69,13 +59,18 @@ public final class CVTTopComponent extends TopComponent {
             proxyLookup.changeLookups(selectedComponent.getLookup());
         });
 
-        vizPanel.setFilterProvider(filtersPane);
-        CVTEvents.getCVTEventBus().register(this);
 
+        /*
+         * Connect the filtersPane to the accountsBrowser and visualizaionPanel
+         * via an Eventbus
+         */
+        CVTEvents.getCVTEventBus().register(this);
+        CVTEvents.getCVTEventBus().register(vizPanel);
+        CVTEvents.getCVTEventBus().register(accountsBrowser);
     }
 
     @Subscribe
-    public void pinAccount(PinAccountEvent pinEvent) {
+    void pinAccount(CVTEvents.PinAccountsEvent pinEvent) {
         browseVisualizeTabPane.setSelectedIndex(1);
     }
 

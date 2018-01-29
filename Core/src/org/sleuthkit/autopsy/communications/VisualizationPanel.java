@@ -18,32 +18,56 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
-import com.mxgraph.layout.mxOrganicLayout;
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.layout.mxCompactTreeLayout;
+import com.mxgraph.layout.mxFastOrganicLayout;
+import com.mxgraph.layout.orthogonal.mxOrthogonalLayout;
 import com.mxgraph.model.mxCell;
+import com.mxgraph.model.mxICell;
+import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
+import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxEventSource;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
+import java.util.Arrays;
+import java.util.Collection;
+import static java.util.Collections.singleton;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -51,10 +75,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * * A panel that goes in the Visualize tab of the Communications Visualization
+ * A panel that goes in the Visualize tab of the Communications Visualization
  * Tool. Hosts an JGraphX mxGraphComponent that host the communications network
  * visualization and a MessageBrowser for viewing details of communications.
  *
@@ -65,13 +90,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
-    private Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
+
+    static final private ImageIcon imageIcon =
+            new ImageIcon("images/icons8-neural-network.png");
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
 
     static {
         //initialize defaul cell (Vertex and/or Edge)  properties
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
+        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "#000000");
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
     }
 
@@ -84,17 +113,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxGraphComponent graphComponent;
     private final mxGraph graph;
     private final Map<String, mxCell> nodeMap = new HashMap<>();
+    private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     private CommunicationsManager commsManager;
-
-    void setFilterProvider(FilterProvider filterProvider) {
-        this.filterProvider = filterProvider;
-    }
-    private FilterProvider filterProvider;
+    private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
+    private CommunicationsFilter currentFilter;
+    private final mxRubberband rubberband;
 
     public VisualizationPanel() {
         initComponents();
         graph = new mxGraph();
+        graph.setCellsCloneable(false);
+        graph.setDropEnabled(false);
+        graph.setCellsCloneable(false);
         graph.setCellsEditable(false);
         graph.setCellsResizable(false);
         graph.setCellsMovable(true);
@@ -103,40 +134,53 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.setDisconnectOnMove(false);
         graph.setEdgeLabelsMovable(false);
         graph.setVertexLabelsMovable(false);
-        graph.setAutoOrigin(true);
+        graph.setAllowDanglingEdges(false);
+        graph.setCellsBendable(true);
+        graph.setKeepEdgesInBackground(true);
+        graph.setStylesheet(mxStylesheet);
         graphComponent = new mxGraphComponent(graph);
+        graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
-
+        graphComponent.setAutoscrolls(true);
+        graphComponent.setConnectable(false);
+        graphComponent.setKeepSelectionVisibleOnZoom(true);
         graphComponent.setOpaque(true);
         graphComponent.setBackground(Color.WHITE);
         jPanel1.add(graphComponent, BorderLayout.CENTER);
-        splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
-        CVTEvents.getCVTEventBus().register(this);
 
-        graph.setStylesheet(mxStylesheet);
+        //install rubber band selection handler
+        rubberband = new mxRubberband(graphComponent);
 
-        graph.getSelectionModel().addListener(null, (sender, evt) -> {
-            Object[] selectionCells = graph.getSelectionCells();
-            if (selectionCells.length == 1) {
-                mxCell selectionCell = (mxCell) selectionCells[0];
-                try {
+        //right click handler
+        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
+                    if (cellAt != null && cellAt.isVertex()) {
+                        JPopupMenu jPopupMenu = new JPopupMenu();
+                        jPopupMenu.add(new JMenuItem(imageIcon) {
+                            {
+                                setAction(new AbstractAction("Pin Account " + graph.getLabel(cellAt)) {
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
+                                    }
+                                });
+                            }
+                        });
 
-                    if (selectionCell.isVertex()) {
-                        final AccountDeviceInstanceNode accountDeviceInstanceNode =
-                                new AccountDeviceInstanceNode(((AccountDeviceInstanceKey) selectionCell.getValue()),
-                                        commsManager);
-                        vizEM.setRootContext(SimpleParentNode.createFromChildNodes(accountDeviceInstanceNode));
-                        vizEM.setSelectedNodes(new Node[]{accountDeviceInstanceNode});
-
-                    } else if (selectionCell.isEdge()) {
-                        System.out.println(selectionCell.getId());
-//                        explorerManager.setRootContext(new CommunicationsBundleNode(adiKey, commsManager));
+                        jPopupMenu.show(graphComponent.getGraphControl(), e.getX(), e.getY());
                     }
-                } catch (PropertyVetoException ex) {
-                    logger.log(Level.SEVERE, "Account selection vetoed.", ex);
                 }
             }
         });
+
+        splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
+
+        //feed selection to explorermanager
+        graph.getSelectionModel().addListener(null, new SelectionListener());
     }
 
     @Override
@@ -144,75 +188,103 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         return proxyLookup;
     }
 
-    @Subscribe
-    public void pinAccounts(PinAccountEvent pinEvent) {
-
-        final Set<AccountDeviceInstanceKey> adiKeys = pinEvent.getAccountDeviceInstances();
-        final CommunicationsFilter commsFilter = filterProvider.getFilter();
-
-        graph.getModel().beginUpdate();
-        try {
-            nodeMap.clear();
-            graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
-
-            for (AccountDeviceInstanceKey adiKey : adiKeys) {
-                mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
-
-                List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                        commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), commsFilter);
-
-                for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                    long communicationsCount = commsManager.getRelationshipSourcesCount(relatedADI, commsFilter);
-                    AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, commsFilter, communicationsCount);
-                    mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
-
-                    addEdge(pinnedAccountVertex, relatedAccountVertex);
-                }
-            }
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        } finally {
-            // Updates the display
-            graph.getModel().endUpdate();
-
-        }
-
-        applyOrganicLayout();
-        revalidate();
-    }
-
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
                 accountDeviceInstance.getAccount().getTypeSpecificID();
-        mxCell vertex = nodeMap.get(name);
-        if (vertex == null) {
+        final mxCell computeIfAbsent = nodeMap.computeIfAbsent(name, vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
-            vertex = (mxCell) graph.insertVertex(
+
+            mxCell vertex = (mxCell) graph.insertVertex(
                     graph.getDefaultParent(),
-                    name, accountDeviceInstanceKey,
-                    new Random().nextInt(200),
-                    new Random().nextInt(200),
+                    vertexName, accountDeviceInstanceKey,
+                    0,
+                    0,
                     size,
                     size);
-            graph.getView().getState(vertex, true).setLabel(name);
-            nodeMap.put(name, vertex);
-        }
-        return vertex;
+            graph.getView().getState(vertex, true).setLabel(vertexName);
+            return vertex;
+        });
+        return computeIfAbsent;
     }
 
-    private void addEdge(mxCell pinnedAccountVertex, mxCell relatedAccountVertex) {
-
+    @SuppressWarnings("unchecked")
+    private void addEdge(Content relSource, mxCell pinnedAccountVertex, mxCell relatedAccountVertex) throws TskCoreException {
         Object[] edgesBetween = graph.getEdgesBetween(pinnedAccountVertex, relatedAccountVertex);
-
         if (edgesBetween.length == 0) {
             final String edgeName = pinnedAccountVertex.getId() + " <-> " + relatedAccountVertex.getId();
-            graph.insertEdge(graph.getDefaultParent(), edgeName, 1d, pinnedAccountVertex, relatedAccountVertex);
+            mxCell edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, new HashSet<>(Arrays.asList(relSource)), pinnedAccountVertex, relatedAccountVertex);
+            edgeMap.put(relSource, edge);
         } else if (edgesBetween.length == 1) {
             final mxCell edge = (mxCell) edgesBetween[0];
-            edge.setValue(1d + (double) edge.getValue());
-            edge.setStyle("strokeWidth=" + Math.log((double) edge.getValue()));
+            ((Collection<Content>) edge.getValue()).add(relSource);
+            edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
         }
+    }
+
+    @Subscribe
+     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
+        graph.getModel().beginUpdate();
+        try {
+            if (pinEvent.isReplace()) {
+                pinnedAccountDevices.clear();
+                clearGraph();
+            }
+            pinnedAccountDevices.addAll(pinEvent.getAccountDeviceInstances());
+            rebuildGraph();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error pinning accounts", ex);
+        } finally {
+            // Updates the display
+            graph.getModel().endUpdate();
+        }
+
+        applyOrganicLayout();
+    }
+
+    @Subscribe
+     void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+
+        graph.getModel().beginUpdate();
+        try {
+            clearGraph();
+            currentFilter = filterChangeEvent.getNewFilter();
+            rebuildGraph();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error filtering accounts", ex);
+        } finally {
+            // Updates the display
+            graph.getModel().endUpdate();
+        }
+
+        applyOrganicLayout();
+    }
+
+    private void rebuildGraph() throws TskCoreException {
+        for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
+            mxCell pinnedAccountVertex = getOrCreateVertex(adiKey);
+
+            List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                    commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
+
+            for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+                long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
+                List<Content> relationships = commsManager.getRelationshipSources(adiKey.getAccountDeviceInstance(), relatedADI, currentFilter);
+
+                AccountDeviceInstanceKey relatedADIKey =
+                        new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
+                mxCell relatedAccountVertex = getOrCreateVertex(relatedADIKey);
+                for (Content relationship : relationships) {
+                    addEdge(relationship, pinnedAccountVertex, relatedAccountVertex);
+                }
+            }
+        }
+    }
+
+    private void clearGraph() {
+        nodeMap.clear();
+        edgeMap.clear();
+        graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
     }
 
     @Override
@@ -232,8 +304,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             graph.getModel().beginUpdate();
             try {
-                nodeMap.clear();
-                graph.removeCells(graph.getChildCells(graph.getDefaultParent(), true, true));
+                clearGraph();
             } finally {
                 graph.getModel().endUpdate();
             }
@@ -266,85 +337,220 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        splitPane = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
-        jToolBar1 = new javax.swing.JToolBar();
-        jButton2 = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
+        splitPane = new JSplitPane();
+        jPanel1 = new JPanel();
+        jToolBar1 = new JToolBar();
+        jButton2 = new JButton();
+        jButton6 = new JButton();
+        jButton1 = new JButton();
+        jButton3 = new JButton();
+        jButton7 = new JButton();
+        jButton4 = new JButton();
+        jButton5 = new JButton();
 
-        setLayout(new java.awt.BorderLayout());
+        setLayout(new BorderLayout());
 
-        jPanel1.setLayout(new java.awt.BorderLayout());
+        splitPane.setDividerLocation(400);
+        splitPane.setResizeWeight(0.5);
+
+        jPanel1.setLayout(new BorderLayout());
 
         jToolBar1.setRollover(true);
 
-        jButton2.setText(org.openide.util.NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton2.text")); // NOI18N
+        jButton2.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton2.text")); // NOI18N
         jButton2.setFocusable(false);
-        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jButton2.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton2.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton2.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 jButton2ActionPerformed(evt);
             }
         });
         jToolBar1.add(jButton2);
 
-        jButton1.setText(org.openide.util.NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton1.text")); // NOI18N
+        jButton6.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton6.text")); // NOI18N
+        jButton6.setFocusable(false);
+        jButton6.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton6.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton6.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton6);
+
+        jButton1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton1.text")); // NOI18N
         jButton1.setFocusable(false);
-        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jButton1.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton1.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
         jToolBar1.add(jButton1);
 
-        jPanel1.add(jToolBar1, java.awt.BorderLayout.PAGE_START);
+        jButton3.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton3.text")); // NOI18N
+        jButton3.setFocusable(false);
+        jButton3.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton3.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton3.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton3);
+
+        jButton7.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton7.text")); // NOI18N
+        jButton7.setFocusable(false);
+        jButton7.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton7.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton7.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton7);
+
+        jButton4.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton4.text")); // NOI18N
+        jButton4.setFocusable(false);
+        jButton4.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton4.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton4.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton4);
+
+        jButton5.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton5.text")); // NOI18N
+        jButton5.setFocusable(false);
+        jButton5.setHorizontalTextPosition(SwingConstants.CENTER);
+        jButton5.setVerticalTextPosition(SwingConstants.BOTTOM);
+        jButton5.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton5);
+
+        jPanel1.add(jToolBar1, BorderLayout.NORTH);
 
         splitPane.setLeftComponent(jPanel1);
 
-        add(splitPane, java.awt.BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void jButton2ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
 //        graphComponent.addMouseListener(new mxPanningHandler(graphComponent));
-        graphComponent.getPanningHandler().setEnabled(true);
+        graphComponent.setPanning(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         applyOrganicLayout();
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void applyOrganicLayout() {
-        new mxOrganicLayout(graph).execute(graph.getDefaultParent());
+    private void jButton3ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
 
+        applyOrthogonalLayout();
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton5ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        graphComponent.zoomIn();
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton4ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        graphComponent.zoomOut();
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton6ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        applyHierarchicalLayout();
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void jButton7ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        applyCompactTreeLayout();
+    }//GEN-LAST:event_jButton7ActionPerformed
+
+    private void applyOrganicLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
+        new mxFastOrganicLayout(graph).execute(graph.getDefaultParent());
+
+        fitGraph();
+    }
+
+    private void fitGraph() {
         mxGraphView view = graphComponent.getGraph().getView();
         int compLen = graphComponent.getWidth();
         int viewLen = (int) view.getGraphBounds().getWidth();
-        view.setScale((double) compLen / viewLen * view.getScale());
-        graphComponent.zoomAndCenter();
+//        view.setScale((double) compLen / viewLen * view.getScale());
+
+    }
+
+    private void applyOrthogonalLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
+        new mxOrthogonalLayout(graph).execute(graph.getDefaultParent());
+        fitGraph();
+    }
+
+    private void applyHierarchicalLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
+        new mxHierarchicalLayout(graph).execute(graph.getDefaultParent());
+        fitGraph();
+    }
+
+    private void applyCompactTreeLayout() {
+        graph.setMaximumGraphBounds(new mxRectangle(0, 0, graphComponent.getWidth(),
+                graphComponent.getHeight()));
+        new mxCompactTreeLayout(graph).execute(graph.getDefaultParent());
+        fitGraph();
     }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JToolBar jToolBar1;
-    private javax.swing.JSplitPane splitPane;
+    private JButton jButton1;
+    private JButton jButton2;
+    private JButton jButton3;
+    private JButton jButton4;
+    private JButton jButton5;
+    private JButton jButton6;
+    private JButton jButton7;
+    private JPanel jPanel1;
+    private JToolBar jToolBar1;
+    private JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    private static class SimpleParentNode extends AbstractNode {
+    private class SelectionListener implements mxEventSource.mxIEventListener {
 
-        private static SimpleParentNode createFromChildNodes(Node... nodes) {
-            Children.Array array = new Children.Array();
-            array.add(nodes);
-            return new SimpleParentNode(array);
-        }
+        @Override
 
-        private SimpleParentNode(Children children) {
-            super(children);
+        @SuppressWarnings("unchecked")
+        public void invoke(Object sender, mxEventObject evt) {
+            Object[] selectionCells = graph.getSelectionCells();
+            Node rootNode = Node.EMPTY;
+            Node[] selectedNodes = new Node[0];
+            if (selectionCells.length > 0) {
+                mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
+                HashSet<Content> relationshipSources = new HashSet<>();
+                HashSet<AccountDeviceInstance> adis = new HashSet<>();
+                for (mxICell cell : selectedCells) {
+                    if (cell.isEdge()) {
+                        relationshipSources.addAll((Set<Content>) cell.getValue());
+                    } else if (cell.isVertex()) {
+                        adis.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
+                    }
+                }
+                rootNode = SelectionNode.createFromAccountsAndRelationships(relationshipSources, adis, currentFilter, commsManager);
+                selectedNodes = new Node[]{rootNode};
+            }
+            vizEM.setRootContext(rootNode);
+            try {
+                vizEM.setSelectedNodes(selectedNodes);
+            } catch (PropertyVetoException ex) {
+                logger.log(Level.SEVERE, "Selection vetoed.", ex);
+            }
         }
     }
 }

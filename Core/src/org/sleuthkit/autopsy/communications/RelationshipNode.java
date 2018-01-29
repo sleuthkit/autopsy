@@ -47,7 +47,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
 
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
 
-     RelationshipNode(BlackboardArtifact artifact) {
+    RelationshipNode(BlackboardArtifact artifact) {
         super(artifact);
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message");
@@ -144,4 +144,14 @@ final class RelationshipNode extends BlackboardArtifactNode {
         }
     }
 
+    /**
+     * Circumvent DataResultFilterNode's slightly odd delegation to
+     * BlackboardArtifactNode.getSourceName().
+     *
+     * @return the displayName of this Node, which is the type.
+     */
+    @Override
+    public String getSourceName() {
+        return getDisplayName();
+    }
 }

@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.Collections;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
@@ -31,8 +31,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
-import org.sleuthkit.datamodel.CommunicationsFilter;
-import org.sleuthkit.datamodel.CommunicationsManager;
 
 /**
  * The right hand side of the CVT. Has a DataResultPanel to show messages and
@@ -57,7 +55,7 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
      *                           context-sensitive actions.
      */
     @NbBundle.Messages({"MessageBrowser.DataResultViewerTable.title=Messages"})
-     MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
+    MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
         this.tableEM = tableEM;
         this.gacExplorerManager = gacExplorerManager;
         initComponents();
@@ -69,42 +67,39 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                 Bundle.MessageBrowser_DataResultViewerTable_title()));
         messagesResultPanel.open();
 
-        this.tableEM.addPropertyChangeListener(pce -> {
-            if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] selectedNodes = this.tableEM.getSelectedNodes();
-
-                messagesResultPanel.setNumMatches(0);
-                messagesResultPanel.setNode(null);
-
-                if (selectedNodes.length == 0) {
-                    //reset panel when there is no selection
+        this.tableEM.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent pce) {
+                if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                    final Node[] selectedNodes = MessageBrowser.this.tableEM.getSelectedNodes();
+                    messagesResultPanel.setNumMatches(0);
+                    messagesResultPanel.setNode(null);
                     messagesResultPanel.setPath("");
-                } else {
-                    final Node selectedNode = selectedNodes[0];
-                    if (selectedNode instanceof AccountDeviceInstanceNode) {
-                        AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNode;
-                        CommunicationsFilter filter = adiNode.getFilter();
-                        CommunicationsManager commsManager = adiNode.getCommsManager();
-                        final Set<AccountDeviceInstance> accountDeviceInstances;
+                    if (selectedNodes.length > 0) {
+                        Node rootNode;
+                        final Node selectedNode = selectedNodes[0];
 
-                        if (selectedNodes.length == 1) {
-                            final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
-                            accountDeviceInstances = Collections.singleton(accountDeviceInstance);
-                            messagesResultPanel.setPath(accountDeviceInstance.getAccount().getTypeSpecificID());
+                        if (selectedNode instanceof AccountDeviceInstanceNode) {
+                            rootNode = makeRootNodeFromAccountDeviceInstanceNodes(selectedNodes);
                         } else {
-                            accountDeviceInstances = Stream.of(selectedNodes)
-                                    .map(node -> (AccountDeviceInstanceNode) node)
-                                    .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
-                                    .collect(Collectors.toSet());
-                            messagesResultPanel.setPath(selectedNodes.length + " accounts");
+                            rootNode = selectedNode;
                         }
-                        AccountDetailsNode accountDetailsNode =
-                                new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
-                        TableFilterNode wrappedNode =
-                                new TableFilterNode(new DataResultFilterNode(accountDetailsNode, gacExplorerManager), true);
-                        messagesResultPanel.setNode(wrappedNode);
+                        messagesResultPanel.setPath(rootNode.getDisplayName());
+                        messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(rootNode, gacExplorerManager), true));
                     }
                 }
+            }
+
+            private Node makeRootNodeFromAccountDeviceInstanceNodes(final Node[] selectedNodes) {
+                //Use lookup here? 
+                AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
+
+                final Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
+                for (Node n : selectedNodes) {
+                    //Use lookup here?
+                    accountDeviceInstances.add(((AccountDeviceInstanceNode) n).getAccountDeviceInstance());
+                }
+                return SelectionNode.createFromAccounts(accountDeviceInstances, adiNode.getFilter(), adiNode.getCommsManager());
             }
         });
     }

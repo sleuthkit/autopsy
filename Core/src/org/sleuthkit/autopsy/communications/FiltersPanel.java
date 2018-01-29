@@ -31,9 +31,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
-import org.openide.explorer.ExplorerManager;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -49,7 +46,6 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
@@ -60,12 +56,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel that holds the Filter control widgets and triggers queries against the
  * CommunicationsManager on user filtering changes.
  */
-final public class FiltersPanel extends JPanel implements FilterProvider {
+final public class FiltersPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
-
-    private ExplorerManager em;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
@@ -134,10 +128,6 @@ final public class FiltersPanel extends JPanel implements FilterProvider {
         refreshButton.addActionListener(e -> applyFilters());
     }
 
-    void setExplorerManager(ExplorerManager explorerManager) {
-        em = explorerManager;
-    }
-
     /**
      * Validate that filters are in a consistent state and will result in some
      * results. Checks that at least one device and at least one account type is
@@ -161,9 +151,7 @@ final public class FiltersPanel extends JPanel implements FilterProvider {
      */
     void updateAndApplyFilters() {
         updateFilters();
-        if (em != null) {
-            applyFilters();
-        }
+        applyFilters();
     }
 
     private void updateTimeZone() {
@@ -224,8 +212,7 @@ final public class FiltersPanel extends JPanel implements FilterProvider {
                     return jCheckBox;
                 });
             }
-        }
-        );
+        });
     }
 
     /**
@@ -490,27 +477,15 @@ final public class FiltersPanel extends JPanel implements FilterProvider {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Push a new root AccountDeviceInstanceNodeFactory with he current filters
-     * into the explorer manager. The factory will do he actual queries.
-     *
-     *
+     * Post an event with the new filters.
      */
     private void applyFilters() {
-        CommunicationsFilter commsFilter = getFilter();
-
-        try {
-            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            em.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, commsFilter), true)));
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
-        }
-
+        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter()));
         needsRefresh = false;
         validateFilters();
     }
 
-    @Override
-    public CommunicationsFilter getFilter() {
+   private CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
