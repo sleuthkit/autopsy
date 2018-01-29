@@ -153,35 +153,148 @@ public class CentralRepoDatamodelTest extends TestCase {
             FileUtils.deleteDirectory(testDirectory.toFile());
 
         } catch (EamDbException | CaseActionException | IOException ex) {
-        //} catch (EamDbException | CaseActionException ex) {
+            //} catch (EamDbException | CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
         assertFalse("Error deleting test directory " + testDirectory.toString(), testDirectory.toFile().exists());
     }
 
+    public void testDataSources() {
+        final String dataSourceAname = "dataSourceA";
+        final String dataSourceAid = "dataSourceA_deviceID";
+        CorrelationDataSource dataSourceA;
+        CorrelationDataSource dataSourceB;
+
+        // Test creating a data source with valid case, name, and ID
+        try {
+            dataSourceA = new CorrelationDataSource(case2.getID(), dataSourceAid, dataSourceAname);
+            EamDb.getInstance().newDataSource(dataSourceA);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test creating a data source with the same case, name, and ID
+        try {
+            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), dataSourceAid, dataSourceAname);
+            EamDb.getInstance().newDataSource(temp);
+            Assert.fail("newDataSource did not throw exception from duplicate data source");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+        
+        // Test creating a data source with the same name and ID but different case
+        try {
+            dataSourceB = new CorrelationDataSource(case1.getID(), dataSourceAid, dataSourceAname);
+            EamDb.getInstance().newDataSource(dataSourceB);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+
+        // Test creating a data source with an invalid case ID
+        try {
+            CorrelationDataSource temp = new CorrelationDataSource(5000, "tempID", "tempName");
+            EamDb.getInstance().newDataSource(temp);
+            Assert.fail("newDataSource did not throw exception from invalid case ID");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+
+        // Test creating a data source with null device ID
+        try {
+            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), null, "tempName");
+            EamDb.getInstance().newDataSource(temp);
+            Assert.fail("newDataSource did not throw exception from null device ID");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+
+        // Test creating a data source with null device ID
+        try {
+            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), "tempID", null);
+            EamDb.getInstance().newDataSource(temp);
+            Assert.fail("newDataSource did not throw exception from null name");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+
+        // Test getting a data source with valid case and ID
+        try {
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, dataSourceAid);
+            assertTrue("Failed to get data source", temp != null);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+
+        // Test getting a data source with non-existent ID
+        try {
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, "badID");
+            assertTrue("getDataSource returned non-null value for non-existent data source", temp == null);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+
+        // Test getting a data source with a null case
+        try {
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(null, dataSourceAid);
+            Assert.fail("getDataSource did not throw exception from null case");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+
+        // Test getting a data source with null ID
+        try {
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, null);
+            assertTrue("getDataSource returned non-null value for null data source", temp == null);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+
+        // Test getting the list of data sources
+        // There should be three data sources, and we'll check for the expected device IDs
+        try {
+            List<CorrelationDataSource> dataSources = EamDb.getInstance().getDataSources();
+            List<String> devIdList
+                    = dataSources.stream().map(c -> c.getDeviceID()).collect(Collectors.toList());
+            assertTrue("getDataSources returned unexpected number of data sources", dataSources.size() == 4);
+            assertTrue("getDataSources is missing expected data sources",
+                    devIdList.contains(dataSourceAid)
+                    && devIdList.contains(dataSource1fromCase1.getDeviceID())
+                    && devIdList.contains(dataSource2fromCase1.getDeviceID()));
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test the data source count
+        try {
+            assertTrue("getCountUniqueDataSources returned unexpected number of data sources", 
+                    EamDb.getInstance().getCountUniqueDataSources() == 4);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
     /**
      * Test method for the methods related to the cases table
-     * newCase(CorrelationCase eamCase) tests:
-     *   - Test valid data
-     *   - Test null UUID
-     *   - Test null case name
-     *   - Test repeated UUID
-     * newCase(Case autopsyCase) tests:
-     *   - Test valid data
-     *   - Test null autopsyCase
-     * updateCase(CorrelationCase eamCase) tests:
-     *   - Test with valid data, checking all fields
-     *   - Test null eamCase
-     * getCase(Case autopsyCase) tests:
-     *   - Test ??
-     * getCaseByUUID(String caseUUID) getCases()
-     *   - Test with UUID that is in the database
-     *   - Test with UUID that is not in the database
-     *   - Test with null UUID
-     * bulkInsertCases(List<CorrelationCase> cases)
-     *   - Test on a list of cases larger than the bulk insert threshold.
-     *   - Test on a null list
+     * newCase(CorrelationCase eamCase) tests: - Test valid data - Test null
+     * UUID - Test null case name - Test repeated UUID newCase(Case autopsyCase)
+     * tests: - Test valid data - Test null autopsyCase
+     * updateCase(CorrelationCase eamCase) tests: - Test with valid data,
+     * checking all fields - Test null eamCase getCase(Case autopsyCase) tests:
+     * - Test with current Autopsy case getCaseByUUID(String caseUUID)
+     * getCases() - Test with UUID that is in the database - Test with UUID that
+     * is not in the database - Test with null UUID
+     * bulkInsertCases(List<CorrelationCase> cases) - Test on a list of cases
+     * larger than the bulk insert threshold. - Test on a null list
      */
     public void testCases() {
         final String caseAname = "caseA";
@@ -301,15 +414,15 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             // This is the expected behavior
         }
-        
+
         // Test getting a case from an Autopsy case
         try {
             CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getCurrentCase());
             assertTrue("getCase returned null for current Autopsy case", tempCase != null);
-        }  catch (EamDbException ex){
+        } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }    
+        }
 
         // Test getting a case by UUID
         try {
@@ -376,7 +489,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        
+
         // Test bulk case insert with null list
         try {
             EamDb.getInstance().bulkInsertCases(null);

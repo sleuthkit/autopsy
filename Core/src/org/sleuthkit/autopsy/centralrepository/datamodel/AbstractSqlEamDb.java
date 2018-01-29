@@ -448,6 +448,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+        if(correlationCase == null) {
+            throw new EamDbException("CorrelationCase argument is null");
+        }
+        
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
