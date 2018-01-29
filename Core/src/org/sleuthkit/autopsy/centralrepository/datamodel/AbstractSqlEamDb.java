@@ -271,6 +271,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateCase(CorrelationCase eamCase) throws EamDbException {
+        if(eamCase == null) {
+            throw new EamDbException("CorrelationCase argument is null");
+        }
+        
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -929,12 +933,16 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException {
-        Connection conn = connect();
-
+        if(cases == null) {
+            throw new EamDbException("cases argument is null");
+        }
+        
         if (cases.isEmpty()) {
             return;
         }
 
+        Connection conn = connect();
+        
         int counter = 0;
         PreparedStatement bulkPs = null;
         try {
@@ -1012,11 +1020,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
-        Connection conn = connect();
-
         if (1 != eamArtifact.getInstances().size()) {
             throw new EamDbException("Error: Artifact must have exactly one (1) Artifact Instance to set as notable."); // NON-NLS
         }
+        
+        Connection conn = connect();        
 
         List<CorrelationAttributeInstance> eamInstances = eamArtifact.getInstances();
         CorrelationAttributeInstance eamInstance = eamInstances.get(0);
