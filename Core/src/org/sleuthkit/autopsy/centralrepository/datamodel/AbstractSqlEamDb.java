@@ -1617,6 +1617,18 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+        if(eamGlobalSet == null){
+            throw new EamDbException("EamGlobalSet argument is null");
+        }
+        
+        if(eamGlobalSet.getFileKnownStatus() == null){
+            throw new EamDbException("File known status on the EamGlobalSet is null");
+        }
+        
+        if(eamGlobalSet.getType() == null){
+            throw new EamDbException("Type on the EamGlobalSet is null");
+        }
+        
         Connection conn = connect();
 
         PreparedStatement preparedStatement1 = null;
@@ -1678,8 +1690,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement1 = conn.prepareStatement(sql1);
             preparedStatement1.setInt(1, referenceSetID);
             resultSet = preparedStatement1.executeQuery();
-            resultSet.next();
-            return getEamGlobalSetFromResultSet(resultSet);
+            if(resultSet.next()) {
+                return getEamGlobalSetFromResultSet(resultSet);
+            } else {
+                return null;
+            }
 
         } catch (SQLException ex) {
             throw new EamDbException("Error getting reference set by id.", ex); // NON-NLS
@@ -1701,6 +1716,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
+        
+        if(correlationType == null){
+            throw new EamDbException("Correlation type is null");
+        }
+        
         List<EamGlobalSet> results = new ArrayList<>();
         Connection conn = connect();
 

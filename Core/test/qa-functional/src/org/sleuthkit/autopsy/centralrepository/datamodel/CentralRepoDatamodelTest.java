@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  *
@@ -150,6 +151,13 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             EamDb.getInstance().shutdownConnections();
             Case.closeCurrentCase();
+            
+            // This seems to help in allowing the Autopsy case to be deleted
+            try{
+            Thread.sleep(2000);
+            } catch (Exception ex){
+                
+            }
             FileUtils.deleteDirectory(testDirectory.toFile());
 
         } catch (EamDbException | CaseActionException | IOException ex) {
@@ -159,7 +167,263 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
         assertFalse("Error deleting test directory " + testDirectory.toString(), testDirectory.toFile().exists());
     }
-
+    
+    /**
+     * Test method for the methods related to reference sets
+     */
+    public void testReferenceSets() {
+        String set1name = "referenceSet1";
+        String set1version = "1.0";
+        EamGlobalSet set1;
+        int set1id;
+        String set2name = "referenceSet2";
+        EamGlobalSet set2;
+        int set2id;
+        EamGlobalSet set3;
+        int set3id;
+        
+        // Store the file type object to save time
+        CorrelationAttribute.Type fileType;
+        try{
+            fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            assertTrue("In testReferenceSets, getCorrelationTypeById(FILES_TYPE_ID) returned null", fileType != null);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test creating a notable reference set
+        try {
+            set1 = new EamGlobalSet(org1.getOrgID(), set1name, set1version, TskData.FileKnown.BAD, false, fileType);
+            set1id = EamDb.getInstance().newReferenceSet(set1);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test creating a known reference set
+        try {
+            set2 = new EamGlobalSet(org2.getOrgID(), set2name, "", TskData.FileKnown.KNOWN, false, fileType);
+            set2id = EamDb.getInstance().newReferenceSet(set2);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test creating a reference set with the same name and version
+        try {
+            EamGlobalSet temp = new EamGlobalSet(org1.getOrgID(), set1name, "1.0", TskData.FileKnown.BAD, false, fileType);
+            EamDb.getInstance().newReferenceSet(temp);
+            Assert.fail("newReferenceSet failed to throw exception from duplicate name/version pair");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test creating a reference set with the same name but different version
+        try {
+            set3 = new EamGlobalSet(org1.getOrgID(), set1name, "2.0", TskData.FileKnown.BAD, false, fileType);
+            set3id = EamDb.getInstance().newReferenceSet(set3);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test creating a reference set with invalid org ID
+        try {
+            EamGlobalSet temp = new EamGlobalSet(5000, "tempName", "", TskData.FileKnown.BAD, false, fileType);
+            EamDb.getInstance().newReferenceSet(temp);
+            Assert.fail("newReferenceSet failed to throw exception from invalid org ID");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test creating a reference set with null name
+        try {
+            EamGlobalSet temp = new EamGlobalSet(org2.getOrgID(), null, "", TskData.FileKnown.BAD, false, fileType);
+            EamDb.getInstance().newReferenceSet(temp);
+            Assert.fail("newReferenceSet failed to throw exception from null name");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test creating a reference set with null version
+        try {
+            EamGlobalSet temp = new EamGlobalSet(org2.getOrgID(), "tempName", null, TskData.FileKnown.BAD, false, fileType);
+            EamDb.getInstance().newReferenceSet(temp);
+            Assert.fail("newReferenceSet failed to throw exception from null version");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test creating a reference set with null file known status
+        try {
+            EamGlobalSet temp = new EamGlobalSet(org2.getOrgID(), "tempName", "", null, false, fileType);
+            EamDb.getInstance().newReferenceSet(temp);
+            Assert.fail("newReferenceSet failed to throw exception from null file known status");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test creating a reference set with null file type
+        try {
+            EamGlobalSet temp = new EamGlobalSet(org2.getOrgID(), "tempName", "", TskData.FileKnown.BAD, false, null);
+            EamDb.getInstance().newReferenceSet(temp);
+            Assert.fail("newReferenceSet failed to throw exception from null file type");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test validation with a valid reference set
+        try {
+            assertTrue("referenceSetIsValid returned false for valid reference set", EamDb.getInstance().referenceSetIsValid(set1id, set1name, set1version));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test validation with an invalid reference set
+        try {
+            assertFalse("referenceSetIsValid returned true for invalid reference set", EamDb.getInstance().referenceSetIsValid(5000, set1name, set1version));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test validation with a null name
+        try {
+            assertFalse("referenceSetIsValid returned true with null name", EamDb.getInstance().referenceSetIsValid(set1id, null, set1version));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test validation with a null version
+        try {
+            assertFalse("referenceSetIsValid returned true with null version", EamDb.getInstance().referenceSetIsValid(set1id, set1name, null));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test existence with a valid reference set
+        try {
+            assertTrue("referenceSetExists returned false for valid reference set", EamDb.getInstance().referenceSetExists(set1name, set1version));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test existence with an invalid reference set
+        try {
+            assertFalse("referenceSetExists returned true for invalid reference set", EamDb.getInstance().referenceSetExists(set1name, "5.5"));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test existence with null name
+        try {
+            assertFalse("referenceSetExists returned true for null name", EamDb.getInstance().referenceSetExists(null, "1.0"));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test existence with null version
+        try {
+            assertFalse("referenceSetExists returned true for null version", EamDb.getInstance().referenceSetExists(set1name, null));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting global set with valid ID
+        try {
+            EamGlobalSet temp = EamDb.getInstance().getReferenceSetByID(set1id);
+            assertTrue("getReferenceSetByID returned null for valid ID", temp != null);
+            assertTrue("getReferenceSetByID returned set with incorrect name and/or version", 
+                    set1name.equals(temp.getSetName()) && set1version.equals(temp.getVersion()));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting global set with invalid ID
+        try {
+            EamGlobalSet temp = EamDb.getInstance().getReferenceSetByID(1234);
+            assertTrue("getReferenceSetByID returned non-null result for invalid ID", temp == null);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting all file reference sets
+        try {
+            List<EamGlobalSet> referenceSets = EamDb.getInstance().getAllReferenceSets(fileType);
+            assertTrue("getAllReferenceSets(FILES) returned unexpected number", referenceSets.size() == 3);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting all email reference sets
+        try {
+            List<EamGlobalSet> referenceSets = EamDb.getInstance().getAllReferenceSets(EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.EMAIL_TYPE_ID));
+            assertTrue("getAllReferenceSets(EMAIL) returned unexpected number", referenceSets.isEmpty());
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }        
+        
+        // Test null argument to getAllReferenceSets
+        try {
+            EamDb.getInstance().getAllReferenceSets(null);
+            Assert.fail("getAllReferenceSets failed to throw exception from null type argument");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }  
+        
+        // Test deleting an existing reference set
+        // First: create a new reference set, check that it's in the database, and get the number of reference sets
+        // Second: delete the reference set, check that it is no longer in the database, and the total number of sets decreased by one
+        try {
+            EamGlobalSet setToDelete = new EamGlobalSet(org1.getOrgID(), "deleteThis", "deleteThisVersion", TskData.FileKnown.BAD, false, fileType);
+            int setToDeleteID = EamDb.getInstance().newReferenceSet(setToDelete);
+            assertTrue("setToDelete wasn't found in database", EamDb.getInstance().referenceSetIsValid(setToDeleteID, setToDelete.getSetName(), setToDelete.getVersion()));
+            int currentCount = EamDb.getInstance().getAllReferenceSets(fileType).size();
+            
+            
+            
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }  
+        
+    }
+    
+    /**
+     * Test method for the methods related to the data sources table
+     * newDataSource(CorrelationDataSource eamDataSource) tests:
+     * - Test with valid data
+     * - Test with duplicate data
+     * - Test with duplicate device ID and name but different case
+     * - Test with invalid case ID
+     * - Test with null device ID
+     * - Test with null name
+     *  getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) tests:
+     * - Test with valid data
+     * - Test with non-existent data
+     * - Test with null correlationCase
+     * - Test with null device ID
+    * List<CorrelationDataSource> getDataSources()tests:
+    *  - Test that the count and device IDs are as expected
+    * Long getCountUniqueDataSources() tests:
+    * - Test that the result is as expected
+    */
     public void testDataSources() {
         final String dataSourceAname = "dataSourceA";
         final String dataSourceAid = "dataSourceA_deviceID";
@@ -213,7 +477,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // This is the expected behavior
         }
 
-        // Test creating a data source with null device ID
+        // Test creating a data source with null name
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), "tempID", null);
             EamDb.getInstance().newDataSource(temp);
