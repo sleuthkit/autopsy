@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -998,17 +998,16 @@ public class Case {
         }
     }
 
-    private static String getNameForTitle(){
+    private static String getNameForTitle() {
         //Method should become unnecessary once technical debt story 3334 is done.
-        if (UserPreferences.getAppName().equals(Version.getName())){
+        if (UserPreferences.getAppName().equals(Version.getName())) {
             //Available version number is version number for this application
             return String.format("%s %s", UserPreferences.getAppName(), Version.getVersion());
-        }
-        else {
+        } else {
             return UserPreferences.getAppName();
         }
     }
-    
+
     /**
      * Update the GUI to to reflect the current case.
      */
@@ -1526,7 +1525,25 @@ public class Case {
      * @throws TskCoreException if there is a problem adding the report to the
      *                          case database.
      */
-    public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+    public Report addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+        return addReport(localPath, srcModuleName, reportName, null);
+    }
+
+    /**
+     * Adds a report to the case.
+     *
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
+     * @param srcModuleName The name of the module that created the report.
+     * @param reportName    The report name, may be empty.
+     * @param source        The Content used to create the report, may be empty.
+     *
+     * @return The new Report instance.
+     *
+     * @throws TskCoreException if there is a problem adding the report to the
+     *                          case database.
+     */
+    public Report addReport(String localPath, String srcModuleName, String reportName, Content source) throws TskCoreException {
         String normalizedLocalPath;
         try {
             normalizedLocalPath = Paths.get(localPath).normalize().toString();
@@ -1536,6 +1553,7 @@ public class Case {
         }
         Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName);
         eventPublisher.publish(new ReportAddedEvent(report));
+        return report;
     }
 
     /**
@@ -1616,13 +1634,14 @@ public class Case {
     /**
      * Constructs a Case object for a new Autopsy case.
      *
-     * @param caseType        The type of case (single-user or multi-user).
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
-     * @param caseDetails     Contains details of the case, such as examiner, display name, etc
-     *                        
+     * @param caseType    The type of case (single-user or multi-user).
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
+     * @param caseDetails Contains details of the case, such as examiner,
+     *                    display name, etc
+     *
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
         metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);
