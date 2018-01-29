@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,22 +19,16 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MimeTypes;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -48,8 +42,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class FileTypeDetector {
 
-    private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
-    private static final Tika tika = new Tika();
+    private static final Logger LOGGER = Logger.getLogger(FileTypeDetector.class.getName());
+    private static final Tika TIKA = new Tika();
     private static final int SLACK_FILE_THRESHOLD = 4096;
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
@@ -227,7 +221,7 @@ public class FileTypeDetector {
             ReadContentInputStream stream = new ReadContentInputStream(file);
 
             try (TikaInputStream tikaInputStream = TikaInputStream.get(stream)) {
-                String tikaType = tika.detect(tikaInputStream, file.getName());
+                String tikaType = TIKA.detect(tikaInputStream, file.getName());
 
                 /*
                  * Remove the Tika suffix from the MIME type name.
@@ -270,52 +264,29 @@ public class FileTypeDetector {
     }
 
     /**
-     * Determines whether or not the a file matches a user-defined custom file
-     * type. If the file matches and corresponds to an interesting files type
-     * rule, this method has the side effect of creating an interesting files
-     * hit artifact and indexing that artifact for keyword search.
+     * Determines whether or not a file matches a user-defined custom file type.
      *
      * @param file The file to test.
      *
-     * @return The file type name string or null, if no match is detected.
-     *
-     * @throws TskCoreException
+     * @return The MIME type as a string if a match is found; otherwise null.
      */
     private String detectUserDefinedType(AbstractFile file) {
+        String retValue = null;
+        
         for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
-                if (fileType.createInterestingFileHit()) {
-                    try {
-                        BlackboardArtifact artifact;
-                        artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                        BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName());
-                        attributes.add(setNameAttribute);
-                        BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
-                        attributes.add(ruleNameAttribute);
-                        artifact.addAttributes(attributes);                        
-                        try {
-                            Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
-                        } catch (Blackboard.BlackboardException ex) {
-                            logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
-                        }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
-                    }
-                }
-                return fileType.getMimeType();
+                retValue = fileType.getMimeType();
             }
         }
-        return null;
+        return retValue;
     }
 
     /**
-     * Determines whether or not the a file matches a custom file type defined
-     * by Autopsy.
+     * Determines whether or not a file matches a custom file type defined by Autopsy.
      *
      * @param file The file to test.
      *
-     * @return The file type name string or null, if no match is detected.
+     * @return The MIME type as a string if a match is found; otherwise null.
      */
     private String detectAutopsyDefinedType(AbstractFile file) {
         for (FileType fileType : autopsyDefinedFileTypes) {
