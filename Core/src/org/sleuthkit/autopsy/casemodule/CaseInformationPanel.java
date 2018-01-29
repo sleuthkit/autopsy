@@ -61,6 +61,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
             @Override
             public void stateChanged(ChangeEvent e) {
                 tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
+                if (tabbedPane.getSelectedComponent() instanceof CasePropertiesPanel) {
+                    editDetailsButton.setVisible(true);
+                } else {
+                    editDetailsButton.setVisible(false);
+                }
             }
         });
     }
