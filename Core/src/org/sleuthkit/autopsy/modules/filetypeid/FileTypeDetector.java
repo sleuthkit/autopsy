@@ -276,6 +276,7 @@ public class FileTypeDetector {
         for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
                 retValue = fileType.getMimeType();
+                break;
             }
         }
         return retValue;

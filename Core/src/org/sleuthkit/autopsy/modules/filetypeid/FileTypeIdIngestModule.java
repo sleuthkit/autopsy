@@ -49,8 +49,8 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     private static final Logger LOGGER = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private long jobId;
-    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private static final HashMap<Long, IngestJobTotals> INGEST_JOB_TOTALS = new HashMap<>();
+    private static final IngestModuleReferenceCounter REF_COUNTER = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
 
     /**
@@ -82,7 +82,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        refCounter.incrementAndGet(jobId);
+        REF_COUNTER.incrementAndGet(jobId);
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
@@ -131,6 +131,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         for (FileType fileType : fileTypesList) {
             if (fileType.matches(file)) {
                 retValue = fileType;
+                break;
             }
         }
 
@@ -169,10 +170,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          * If this is the instance of this module for this ingest job, post a
          * summary message to the ingest messages box.
          */
-        if (refCounter.decrementAndGet(jobId) == 0) {
+        if (REF_COUNTER.decrementAndGet(jobId) == 0) {
             IngestJobTotals jobTotals;
             synchronized (this) {
-                jobTotals = totalsForIngestJobs.remove(jobId);
+                jobTotals = INGEST_JOB_TOTALS.remove(jobId);
             }
             if (jobTotals != null) {
                 StringBuilder detailsSb = new StringBuilder();
@@ -201,15 +202,15 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * @param matchTimeInc Amount of time to add.
      */
     private static synchronized void addToTotals(long jobId, long matchTimeInc) {
-        IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(jobId);
+        IngestJobTotals ingestJobTotals = INGEST_JOB_TOTALS.get(jobId);
         if (ingestJobTotals == null) {
             ingestJobTotals = new IngestJobTotals();
-            totalsForIngestJobs.put(jobId, ingestJobTotals);
+            INGEST_JOB_TOTALS.put(jobId, ingestJobTotals);
         }
 
         ingestJobTotals.matchTime += matchTimeInc;
         ingestJobTotals.numFiles++;
-        totalsForIngestJobs.put(jobId, ingestJobTotals);
+        INGEST_JOB_TOTALS.put(jobId, ingestJobTotals);
     }
 
     private static class IngestJobTotals {
