@@ -24,7 +24,7 @@
   <rule ref="rulesets/java/migrating_to_14.xml"/>
   <rule ref="rulesets/java/migrating_to_15.xml"/>
   <rule ref="rulesets/java/naming.xml">
-	<exclude name="MethodNamingConvertions"/>
+	<exclude name="MethodNamingConventions"/>
   </rule>
   <rule ref="rulesets/java/optimizations.xml"/>
   <rule ref="rulesets/java/strictexception.xml">
