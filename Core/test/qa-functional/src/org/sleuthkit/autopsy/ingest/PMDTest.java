@@ -6,7 +6,8 @@
 package org.sleuthkit.autopsy.ingest;
 
 import org.netbeans.jemmy.Timeout; //unused import
-import java.lang.*;
+import java.lang.*; //avoid import java lo
+import org.sleuthkit.autopsy.ingest.IngestFileFiltersTest; //unused import
 /**
  *
  * @author 
