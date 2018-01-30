@@ -102,16 +102,20 @@
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
+        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
-        <if>
-            <equals arg1="${os.family}" arg2="mac"/>
-            <then>
-                <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J-Xdock:name=${app.title}&quot;" />
-            </then>
-            <else>
-                <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication&quot;" />
-            </else>
-        </if>        
+        
+            
+            <if>
+                <equals arg1="${os.family}" arg2="mac"/>
+                <then>
+                    <property name="jvm.options" value="&quot;${jvm-value} -J-Xdock:name=${app.title}&quot;"/>
+                </then>
+                <else>
+                    <property name="jvm.options" value="&quot;${jvm-value}&quot;"/>
+                </else>
+            </if>
+                
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
