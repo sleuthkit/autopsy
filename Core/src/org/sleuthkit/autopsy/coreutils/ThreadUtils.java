@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /*
@@ -48,6 +49,35 @@ final public class ThreadUtils {
                  */
             }
         }
+    }
+
+    /**
+     * A thread factory that allows for the creation of distinctly named task
+     * threads by an ExecutorService constructed using an Executors factory
+     * method. Each thread created using the factory will be named using the
+     * thread name and a numerical suffix.
+     */
+    public static class NamedThreadFactory implements ThreadFactory {
+
+        private final String threadName;
+
+        /**
+         * Contructs a thread factory that allows for the creation of distinctly
+         * named task threads by an ExecutorService constructed using an
+         * Executors factory method. Each thread created using the factory will
+         * be named using the thread name and a numerical suffix.
+         *
+         * @param threadName The name of the threads.
+         */
+        public NamedThreadFactory(String threadName) {
+            this.threadName = threadName;
+        }
+
+        @Override
+        public Thread newThread(Runnable task) {
+            return new Thread(task, threadName);
+        }
+
     }
 
     private ThreadUtils() {
