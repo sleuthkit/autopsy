@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWO
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -50,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
 
-    private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ExtractedContentViewer.class.getName());
 
     private static final long INVALID_DOCUMENT_ID = 0L;
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
@@ -93,7 +94,19 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         Lookup nodeLookup = node.getLookup();
-        AbstractFile content = nodeLookup.lookup(AbstractFile.class);
+
+        /**
+         * Get artifact (if any), query results (if any) and source content from
+         * Lookup.
+         */
+        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+        Content sourceContent = nodeLookup.lookup(AbstractFile.class);
+
+        // The source may be either a file or a report.
+        if (sourceContent == null) {
+            sourceContent = nodeLookup.lookup(Report.class);
+        }
+        QueryResults hits = nodeLookup.lookup(QueryResults.class);
 
         /*
          * Assemble a collection of all of the indexed text "sources" for the
@@ -103,43 +116,36 @@ public class ExtractedContentViewer implements DataContentViewer {
         IndexedText highlightedHitText = null;
         IndexedText rawContentText = null;
 
-        if (null != content && solrHasContent(content.getId())) {
-            QueryResults hits = nodeLookup.lookup(QueryResults.class);
-            BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
-            if (hits != null) {
-                /*
-                 * if there is a QueryReslt object, in the lookup use that. This
-                 * happens when a user selects a row in an ad-hoc search result
-                 */
-                highlightedHitText = new HighlightedText(content.getId(), hits);
-            } else if (artifact != null
-                    && artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
-                try {
-                    // if the artifact is an account artifact, get an account text .
-                    highlightedHitText = getAccountsText(content, nodeLookup);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
-
-                }
-            } else if (artifact != null
-                    && artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
-                try {
-                    //if there is kwh artifact use that to construct the HighlightedText
-                    highlightedHitText = new HighlightedText(artifact);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
-                }
-            }
-
-            if (highlightedHitText != null) {
-                sources.add(highlightedHitText);
-            }
-
-            /*
-             * Next, add the "raw" (not highlighted) text, if any, for any
-             * content associated with the node.
+        if (artifact != null && sourceContent != null) {
+            /**
+             * Viewing keyword hits from the Results tree. Both the Artifact and
+             * Content need to be in the Lookup for this to work.
              */
-            rawContentText = new RawText(content, content.getId());
+            try {
+                if (artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
+                    // if the artifact is an account artifact, get an account text .
+                    highlightedHitText = getAccountsText(sourceContent, nodeLookup);
+                } else if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+                    highlightedHitText = new HighlightedText(artifact);
+                }
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS                
+            }
+        } else if (hits != null && sourceContent != null) {
+            // Viewing keyword hits from ad-hoc search results.
+            highlightedHitText = new HighlightedText(sourceContent.getId(), hits);
+        }
+
+        if (highlightedHitText != null) {
+            sources.add(highlightedHitText);
+        }
+
+        /*
+         * Next, add the "raw" (not highlighted) text, if any, for any content
+         * associated with the node.
+         */
+        if (sourceContent != null) {
+            rawContentText = new RawText(sourceContent, sourceContent.getId());
             sources.add(rawContentText);
         }
 
@@ -149,11 +155,11 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         IndexedText rawArtifactText = null;
         try {
-            rawArtifactText = getRawArtifactText(nodeLookup);
+            rawArtifactText = getRawArtifactText(artifact);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating RawText for " + content, ex); //NON-NLS
-
+            LOGGER.log(Level.SEVERE, "Error creating RawText for " + sourceContent, ex); //NON-NLS
         }
+        
         if (rawArtifactText != null) {
             sources.add(rawArtifactText);
         }
@@ -177,16 +183,15 @@ public class ExtractedContentViewer implements DataContentViewer {
         panel.updateControls(currentSource);
 
         String contentName = "";
-        if (content != null) {
-            contentName = content.getName();
+        if (sourceContent != null) {
+            contentName = sourceContent.getName();
         }
         setPanel(contentName, sources);
 
     }
 
-    static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
+    static private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException {
         IndexedText rawArtifactText = null;
-        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         if (null != artifact) {
             /*
              * For keyword hit artifacts, add the text of the artifact that hit,
@@ -288,7 +293,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                             return true;
                         }
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + art.getArtifactID(), ex);
+                        LOGGER.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + art.getArtifactID(), ex);
                     }
                 } else if (artifactTypeID == TSK_KEYWORD_HIT.getTypeID()) {
                     return true;
@@ -352,7 +357,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
             return false;
         }
     }
@@ -386,7 +391,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                         return blackboardAttribute.getValueLong();
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
             }
         }

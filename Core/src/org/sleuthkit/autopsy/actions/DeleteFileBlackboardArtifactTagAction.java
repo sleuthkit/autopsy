@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,9 +38,9 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -100,12 +100,12 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
 
                 // Pull the from the global context to avoid unnecessary calls
                 // to the database.
-                final Collection<AbstractFile> selectedFilesList
-                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                AbstractFile file = selectedFilesList.iterator().next();
+                final Collection<Content> selectedContent
+                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(Content.class));
+                Content content = selectedContent.iterator().next();
 
                 try {
-                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
+                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), content.getName()}); //NON-NLS
                     tagsManager.deleteBlackboardArtifactTag(artifactTag);
                 } catch (TskCoreException tskCoreException) {
                     LOGGER.log(Level.SEVERE, "Error untagging artifact", tskCoreException); //NON-NLS
