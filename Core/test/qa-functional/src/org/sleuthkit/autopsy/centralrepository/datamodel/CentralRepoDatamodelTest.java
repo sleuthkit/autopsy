@@ -9,11 +9,12 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
@@ -25,6 +26,8 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskData;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
 /**
  *
@@ -33,7 +36,8 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     private static final String PROPERTIES_FILE = "CentralRepository";
     private static final String CR_DB_NAME = "testcentralrepo.db";
-    private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
+    //private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
+    private static final Path testDirectory = Paths.get("C:", "Work", "CRDatamodelTest");
     SqliteEamDbSettings dbSettingsSqlite;
 
     private CorrelationCase case1;
@@ -42,6 +46,7 @@ public class CentralRepoDatamodelTest extends TestCase {
     private CorrelationDataSource dataSource2fromCase1;
     private EamOrganization org1;
     private EamOrganization org2;
+    CorrelationAttribute.Type fileType;
 
     private Map<String, String> propertiesMap = null;
 
@@ -124,6 +129,10 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             org2 = new EamOrganization("org2");
             org2.setOrgID((int) EamDb.getInstance().newOrganization(org2));
+            
+            // Store the file type object for later use
+            fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            assertTrue("getCorrelationTypeById(FILES_TYPE_ID) returned null", fileType != null);
 
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -141,12 +150,11 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Close and delete the test case and central repo db
         try {
             EamDb.getInstance().shutdownConnections();
-            Case.closeCurrentCase(); // There shouldn't be a case open, but it's fine to call this anyway
                         
             FileUtils.deleteDirectory(testDirectory.toFile());
 
-        } catch (EamDbException | CaseActionException | IOException ex) {
-            //} catch (EamDbException | CaseActionException ex) {
+        } catch (EamDbException | IOException ex) {
+        //    } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -154,7 +162,370 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
     
     /**
+     * Tests for adding / retrieving reference instances
+     * Only the files type is currently implemented
+     * addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) tests:
+     * - Test adding multiple valid entries
+     * - Test invalid reference set ID
+     * - Test null hash (EamGlobalFileInstance constructor)
+     * - Test null known status (EamGlobalFileInstance constructor)
+     * - Test null correlation type
+    * bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances,  CorrelationAttribute.Type contentType) tests:
+    *  - Test with large valid list
+    *  - Test with null list
+    *  - Test with invalid reference set ID
+    *  - Test with null correlation type
+    * getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) tests: 
+    *  - Test with valid entries
+    *  - Test with non-existent value
+    *  - Test with invalid type
+    *  - Test with null type
+    *  - Test with null value
+    * isFileHashInReferenceSet(String hash, int referenceSetID)tests:
+    *  - Test existing hash/ID
+    *  - Test non-existent (but valid) hash/ID
+    *  - Test invalid ID
+    *  - Test null hash
+    * isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) tests:
+    *  - Test existing value/ID
+    *  - Test non-existent (but valid) value/ID
+    *  - Test invalid ID
+    *  - Test null value
+    *  - Test invalid type ID
+    * isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) tests:
+    *  - Test notable value
+    *  - Test known value
+    *  - Test non-existent value
+    *  - Test null value
+    *  - Test null type
+    *  - Test invalid type
+     */
+    public void testReferenceSetInstances(){
+        
+        // After the two initial testing blocks, the reference sets should contain:
+        // notableSet1 - notableHash1, inAllSetsHash
+        // notableSet2 - inAllSetsHash
+        // knownSet1 - knownHash1, inAllSetsHash
+        EamGlobalSet notableSet1;
+        int notableSet1id;
+        EamGlobalSet notableSet2;
+        int notableSet2id;
+        EamGlobalSet knownSet1;
+        int knownSet1id;
+        
+        String notableHash1 =  "d46feecd663c41648dbf690d9343cf4b";
+        String knownHash1 =    "39c844daee70485143da4ff926601b5b";
+        String inAllSetsHash = "6449b39bb23c42879fa0c243726e27f7";
+        
+        CorrelationAttribute.Type emailType;
+        
+        // Store the email type object for later use
+        try{ 
+            emailType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.EMAIL_TYPE_ID);
+            assertTrue("getCorrelationTypeById(EMAIL_TYPE_ID) returned null", emailType != null);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+                
+        // Set up a few reference sets
+        try {
+            notableSet1 = new EamGlobalSet(org1.getOrgID(), "notable set 1", "1.0", TskData.FileKnown.BAD, false, fileType);
+            notableSet1id = EamDb.getInstance().newReferenceSet(notableSet1);
+            notableSet2 = new EamGlobalSet(org1.getOrgID(), "notable set 2", "2.4", TskData.FileKnown.BAD, false, fileType);
+            notableSet2id = EamDb.getInstance().newReferenceSet(notableSet2);
+            knownSet1 = new EamGlobalSet(org1.getOrgID(), "known set 1", "5.5.4", TskData.FileKnown.KNOWN, false, fileType);
+            knownSet1id = EamDb.getInstance().newReferenceSet(knownSet1);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test adding file instances with valid data
+        try {
+            EamGlobalFileInstance temp = new EamGlobalFileInstance(notableSet1id, inAllSetsHash, TskData.FileKnown.BAD, "comment1");
+            EamDb.getInstance().addReferenceInstance(temp, fileType);
+            
+            temp = new EamGlobalFileInstance(notableSet2id, inAllSetsHash, TskData.FileKnown.BAD, "comment2");
+            EamDb.getInstance().addReferenceInstance(temp, fileType);
+            
+            temp = new EamGlobalFileInstance(knownSet1id, inAllSetsHash, TskData.FileKnown.KNOWN, "comment3");
+            EamDb.getInstance().addReferenceInstance(temp, fileType);
+            
+            temp = new EamGlobalFileInstance(notableSet1id, notableHash1, TskData.FileKnown.BAD, "comment4");
+            EamDb.getInstance().addReferenceInstance(temp, fileType);
+            
+            temp = new EamGlobalFileInstance(knownSet1id, knownHash1, TskData.FileKnown.KNOWN, "comment5");
+            EamDb.getInstance().addReferenceInstance(temp, fileType);            
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test adding file instance with invalid reference set ID
+        try {
+            EamGlobalFileInstance temp = new EamGlobalFileInstance(2345, inAllSetsHash, TskData.FileKnown.BAD, "comment");
+            EamDb.getInstance().addReferenceInstance(temp, fileType);  
+            Assert.fail("addReferenceInstance failed to throw exception for invalid ID");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test creating file instance with null hash
+        // Since it isn't possible to get a null hash into the EamGlobalFileInstance, skip trying to
+        // call addReferenceInstance and just test the EamGlobalFileInstance constructor
+        try {
+            EamGlobalFileInstance temp = new EamGlobalFileInstance(notableSet1id, null, TskData.FileKnown.BAD, "comment");
+            Assert.fail("EamGlobalFileInstance failed to throw exception for null hash");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test adding file instance with null known status
+        // Since it isn't possible to get a null known status into the EamGlobalFileInstance, skip trying to
+        // call addReferenceInstance and just test the EamGlobalFileInstance constructor
+        try {
+            EamGlobalFileInstance temp = new EamGlobalFileInstance(notableSet1id, inAllSetsHash, null, "comment"); 
+            Assert.fail("EamGlobalFileInstance failed to throw exception for null type");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test adding file instance with null correlation type
+        try {
+            EamGlobalFileInstance temp = new EamGlobalFileInstance(notableSet1id, inAllSetsHash, TskData.FileKnown.BAD, "comment");
+            EamDb.getInstance().addReferenceInstance(temp, null);  
+            Assert.fail("addReferenceInstance failed to throw exception for null type");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test bulk insert with large valid set
+        try {
+            // Create a list of global file instances. Make enough that the bulk threshold should be hit once.
+            Set<EamGlobalFileInstance> instances = new HashSet<>();
+            String bulkTestHash = "bulktesthash_";
+            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
+                String hash = bulkTestHash + String.valueOf(i);
+                instances.add(new EamGlobalFileInstance(notableSet2id, hash, TskData.FileKnown.BAD, null));
+            }
+            
+            // Insert the list
+            EamDb.getInstance().bulkInsertReferenceTypeEntries(instances, fileType);
+            
+            // There's no way to get a count of the number of entries in the database, so just do a spot check
+            if(dbSettingsSqlite.getBulkThreshold() > 10){
+                String hash = bulkTestHash + "10";
+                assertTrue("Sample bulk insert instance not found", EamDb.getInstance().isFileHashInReferenceSet(hash, notableSet2id));
+            }
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test bulk add file instance with null list
+        try {
+            EamDb.getInstance().bulkInsertReferenceTypeEntries(null, fileType);  
+            Assert.fail("bulkInsertReferenceTypeEntries failed to throw exception for null list");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test bulk add file instance with invalid reference set ID
+        try {
+            Set<EamGlobalFileInstance> tempSet = new HashSet<>(Arrays.asList(new EamGlobalFileInstance(2345, inAllSetsHash, TskData.FileKnown.BAD, "comment")));
+            EamDb.getInstance().bulkInsertReferenceTypeEntries(tempSet, fileType);
+            Assert.fail("bulkInsertReferenceTypeEntries failed to throw exception for invalid ID");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test bulk add file instance with null correlation type
+        try {
+            Set<EamGlobalFileInstance> tempSet = new HashSet<>(Arrays.asList(new EamGlobalFileInstance(notableSet1id, inAllSetsHash, TskData.FileKnown.BAD, "comment")));
+            EamDb.getInstance().bulkInsertReferenceTypeEntries(tempSet, null);  
+            Assert.fail("bulkInsertReferenceTypeEntries failed to throw exception for null type");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test getting reference instances with valid data
+        try {
+            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(fileType, inAllSetsHash);
+            assertTrue("getReferenceInstancesByTypeValue returned " + temp.size() + " instances - expected 3", temp.size() == 3);
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting reference instances with non-existent data
+        try {
+            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(fileType, "testHash");
+            assertTrue("getReferenceInstancesByTypeValue returned " + temp.size() + " instances for non-existent value - expected 0", temp.isEmpty());
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting reference instances an invalid type (the email table is not yet implemented)
+        try {
+            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(emailType, inAllSetsHash);
+            Assert.fail("getReferenceInstancesByTypeValue failed to throw exception for invalid table");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test getting reference instances with null type
+        try {
+            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(null, inAllSetsHash);
+            Assert.fail("getReferenceInstancesByTypeValue failed to throw exception for null type");
+        }catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test getting reference instances with null value
+        try {
+            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(fileType, null);
+            assertTrue("getReferenceInstancesByTypeValue returned non-empty list given null value", temp.isEmpty());
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking existing hash/ID
+        try {
+            assertTrue("isFileHashInReferenceSet returned false for valid data", EamDb.getInstance().isFileHashInReferenceSet(knownHash1, knownSet1id));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking non-existent (but valid) hash/ID
+        try {
+            assertFalse("isFileHashInReferenceSet returned true for non-existent data", EamDb.getInstance().isFileHashInReferenceSet(knownHash1, notableSet1id));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking invalid reference set ID
+        try {
+            assertFalse("isFileHashInReferenceSet returned true for invalid data", EamDb.getInstance().isFileHashInReferenceSet(knownHash1, 5678));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking null hash
+        try {
+            assertFalse("isFileHashInReferenceSet returned true for null hash", EamDb.getInstance().isFileHashInReferenceSet(null, knownSet1id));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking existing hash/ID
+        try {
+            assertTrue("isValueInReferenceSet returned false for valid data", 
+                    EamDb.getInstance().isValueInReferenceSet(knownHash1, knownSet1id, fileType.getId()));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking non-existent (but valid) hash/ID
+        try {
+            assertFalse("isValueInReferenceSet returned true for non-existent data", 
+                    EamDb.getInstance().isValueInReferenceSet(knownHash1, notableSet1id, fileType.getId()));
+        }catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking invalid reference set ID
+        try {
+            assertFalse("isValueInReferenceSet returned true for invalid data", 
+                    EamDb.getInstance().isValueInReferenceSet(knownHash1, 5678, fileType.getId()));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking null hash
+        try {
+            assertFalse("isValueInReferenceSet returned true for null value", 
+                    EamDb.getInstance().isValueInReferenceSet(null, knownSet1id, fileType.getId()));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test checking invalid type
+        try {
+            EamDb.getInstance().isValueInReferenceSet(knownHash1, knownSet1id, emailType.getId());
+            Assert.fail("isValueInReferenceSet failed to throw exception for invalid type");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test known bad with notable data
+        try {
+            assertTrue("isArtifactKnownBadByReference returned false for notable value", 
+                    EamDb.getInstance().isArtifactKnownBadByReference(fileType, notableHash1));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test known bad with known data
+        try {
+            assertFalse("isArtifactKnownBadByReference returned true for known value", 
+                    EamDb.getInstance().isArtifactKnownBadByReference(fileType, knownHash1));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test known bad with non-existent data
+        try {
+            assertFalse("isArtifactKnownBadByReference returned true for non-existent value", 
+                    EamDb.getInstance().isArtifactKnownBadByReference(fileType, "abcdef"));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test known bad with null hash
+        try {
+            assertFalse("isArtifactKnownBadByReference returned true for null value", 
+                    EamDb.getInstance().isArtifactKnownBadByReference(fileType, null));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test known bad with null type
+        try {
+            EamDb.getInstance().isArtifactKnownBadByReference(null, knownHash1);
+            Assert.fail("isArtifactKnownBadByReference failed to throw exception from null type");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test known bad with invalid type
+        try {
+            assertFalse("isArtifactKnownBadByReference returned true for invalid type", EamDb.getInstance().isArtifactKnownBadByReference(emailType, null));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+    
+    /**
      * Test method for the methods related to reference sets (does not include instance testing)
+     * Only the files type is currently implemented
      * newReferenceSet(EamGlobalSet eamGlobalSet) tests:
      * - Test creating notable reference set
      * - Test creating known reference set
@@ -200,16 +571,6 @@ public class CentralRepoDatamodelTest extends TestCase {
         EamGlobalSet set3;
         int set3id;
         
-        // Store the file type object to save time
-        CorrelationAttribute.Type fileType;
-        try{
-            fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            assertTrue("In testReferenceSets, getCorrelationTypeById(FILES_TYPE_ID) returned null", fileType != null);
-        } catch (EamDbException ex){
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-            return;
-        }
         
         // Test creating a notable reference set
         try {
@@ -449,8 +810,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamOrganization org = EamDb.getInstance().getReferenceSetOrganization(4567);
             Assert.fail("getReferenceSetOrganization failed to throw exception for invalid reference set ID");
         } catch (EamDbException ex){
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            // This is the expected behavior
         }         
     }
     

@@ -1394,6 +1394,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {
+        if(aType == null) {
+            throw new EamDbException("null correlation type");
+        }
 
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttribute.FILES_TYPE_ID) {
@@ -1758,6 +1761,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException {
+        if(eamGlobalFileInstance.getKnownStatus() == null){
+            throw new EamDbException("known status of EamGlobalFileInstance is null");
+        }
+        if(correlationType == null){
+            throw new EamDbException("Correlation type is null");
+        }
+        
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -1821,6 +1831,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttribute.Type contentType) throws EamDbException {
+        if(contentType == null) {
+            throw new EamDbException("Null correlation type");
+        }
+        if(globalInstances == null) {
+            throw new EamDbException("Null set of EamGlobalFileInstance");
+        }
+
         Connection conn = connect();
 
         PreparedStatement bulkPs = null;
@@ -1834,6 +1851,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
             bulkPs = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(contentType)));
 
             for (EamGlobalFileInstance globalInstance : globalInstances) {
+                if(globalInstance.getKnownStatus() == null){
+                    throw new EamDbException("EamGlobalFileInstance with value " + globalInstance.getMD5Hash() + " has null known status");
+                }
+                
                 bulkPs.setInt(1, globalInstance.getGlobalSetID());
                 bulkPs.setString(2, globalInstance.getMD5Hash());
                 bulkPs.setByte(3, globalInstance.getKnownStatus().getFileKnownValue());
@@ -1843,7 +1864,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
             bulkPs.executeBatch();
             conn.commit();
-        } catch (SQLException ex) {
+        } catch (SQLException | EamDbException ex) {
             try {
                 conn.rollback();
             } catch (SQLException ex2) {
@@ -1868,6 +1889,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException {
+        if(aType == null) {
+            throw new EamDbException("correlation type is null");
+        }
+        
         Connection conn = connect();
 
         List<EamGlobalFileInstance> globalFileInstances = new ArrayList<>();
@@ -2251,7 +2276,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamGlobalSet;
     }
 
-    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
         if (null == resultSet) {
             return null;
         }
