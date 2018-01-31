@@ -107,59 +107,90 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer {
                 LOGGER.log(Level.SEVERE, "Error reading bytes of plist file.", ex);
             }
             
-        HashMap<String, Object> map = parsePList(buf);
+        List<PropKeyValue> plist = parsePList(buf);
         
-        System.out.println("Map size = " + map.size());
+        System.out.println("List size = " + plist.size());
         
         // RAMAN TBD: populate the display table 
-        for (String key : map.keySet()) {
-            printValue(key, map.get(key));
+        for (PropKeyValue pkv : plist) {
+            printValue(pkv);
         }
         
     }
     
-    private void printValue(String key, Object value) {
-        if (value == null) {
+    private void printValue(PropKeyValue pkv) {
+        if (pkv == null) {
             return;
         }
         
         System.out.println("");
-        System.out.println("Key = " + key);
-        System.out.println("Value Type = " + value.getClass().getSimpleName());
-        System.out.println("Value = " + value.toString());
+        System.out.println("Key = " + pkv.getKey());
+        String type = pkv.getType();
+        System.out.println("Value Type = " + type);
         
-        // TBD: handle the array and Dictionary type
+        if (type.equalsIgnoreCase("array")) {
+            
+            System.out.println("BEGIN Array");
+            List<PropKeyValue> array = (List<PropKeyValue>)pkv.getValue();
+            for (int i = 0; i < array.size(); i++) {
+                printValue(array.get(i));
+            }
+            System.out.println("End Array");
+        }
+        else if (type.equalsIgnoreCase("Dictionary")) {
+            
+            System.out.println("BEGIN Dictionary");
+            List<PropKeyValue> dict = (List<PropKeyValue>)pkv.getValue();
+            
+            for (PropKeyValue pkv2 : dict) {
+                printValue(pkv2);
+            }
+            
+            System.out.println("End Dictionary");
+            
+        } else {
+            System.out.println("Value = " + pkv.getValue().toString());
+        }
        
     }
-    private <T> T castValue(NSObject value) {
+    private <T> PropKeyValue<T> castValue(String key, NSObject value) {
         if (value == null) {
             return null;
         } else if (value instanceof NSString) {
-            return (T) value.toString();
+            return new PropKeyValue(key, "String", (T) value.toString());
+            //return (T) value.toString();
         } else if (value instanceof NSNumber) {
             NSNumber number = (NSNumber) value;
             if (number.isInteger()) {
-                return (T) new Long(number.longValue());
+                return new PropKeyValue(key, "Number", (T) new Long(number.longValue()) );
+                //return (T) new Long(number.longValue());
             } else if (number.isBoolean()) {
-                return (T) new Boolean(number.boolValue());
+                return new PropKeyValue(key, "Boolean", (T) new Boolean(number.boolValue()) );
+                //return (T) new Boolean(number.boolValue());
             } else {
                 // TODO can be long, float or double 
-                return (T) new Float(number.floatValue());
+                return new PropKeyValue(key, "Number", (T) new Float(number.floatValue())) ;
+                //return (T) new Float(number.floatValue());
             }
         } else if (value instanceof NSArray) {
-            List<T> res = new ArrayList<T>();
+            List<PropKeyValue<T>> res = new ArrayList<>();
             NSArray array = (NSArray) value;
             for (int i = 0; i < array.count(); i++) {
-                res.add((T) castValue(array.objectAtIndex(i)));
+                res.add(castValue("", array.objectAtIndex(i)));
+                //res.add((T) castValue(array.objectAtIndex(i)));
             }
-            return (T) res;
+            
+            return new PropKeyValue(key, "Array", (T) res);
+            
+            //return (T) res;
         } else if (value instanceof NSDictionary) {
-            Map<String, Object> res = new HashMap<String, Object>();
-            for (String key : ((NSDictionary) value).allKeys()) {
-                NSObject o = ((NSDictionary) value).objectForKey(key);
-                res.put(key, castValue(o));
+            List<PropKeyValue> dict = new ArrayList<PropKeyValue>();
+            for (String key2 : ((NSDictionary) value).allKeys()) {
+                NSObject o = ((NSDictionary) value).objectForKey(key2);
+                dict.add(castValue(key2, o));
             }
-            return (T) res;
+             return new PropKeyValue(key, "Dictionary", (T) dict);
+            //return (T) res;
         } else {
             LOGGER.severe("Can't cast from " + value.getClass());
         }
@@ -167,9 +198,9 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer {
         return null;
     }
     
-    private  HashMap<String, Object> parsePList(byte[] plistbytes) {
+    private List<PropKeyValue> parsePList(byte[] plistbytes) {
 
-        HashMap<String, Object> map = new HashMap<>();
+        List<PropKeyValue> plist = new ArrayList<>();
 
         try {
             NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
@@ -184,11 +215,11 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer {
                 System.out.println("Found Key = " + keys[i]);
                 System.out.println("Value class = " + object.getClass().toString());
                    
-                Object value = castValue(rootDict.objectForKey(keys[i]));
-                if (null != value) { 
-                    map.put(keys[i], value);
+                PropKeyValue pkv = castValue(keys[i], rootDict.objectForKey(keys[i]));
+                if (null != pkv) { 
+                    plist.add(pkv);
                     
-                    System.out.println("Value = " + value.toString());
+                    //System.out.println("Value = " + pvalue.toString());
                 }
                  
                 /****
@@ -248,9 +279,39 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer {
             return null;
         }
 
-        return map;
+        return plist;
     }
     
+    /**
+     * 
+     *
+     * @param <T> the type of the value 
+     */
+    public class PropKeyValue<T> {
+        // T stands for "Type"
+
+        private String key;
+        private String type;
+        private T value;
+
+        PropKeyValue(String key, String type, T value) {
+            this.key = key;
+            this.type = type;
+            this.value = value;
+        }
+        
+        String getKey() {
+            return this.key;
+        }
+        String getType() {
+            return this.type;
+        }
+        
+        T getValue() {
+            return this.value;
+        }
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 }
