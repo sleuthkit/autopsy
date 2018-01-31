@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +27,8 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingWorker;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
@@ -70,18 +73,14 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
      */
     void setupTable(List<Map<String, Object>> tableRows) {
 
-        explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows), true)));
-
+     
         if (Objects.isNull(tableRows) || tableRows.isEmpty()) {
             outlineView.setPropertyColumns();
-//            return;
         } else {
 
+            // Set up the column names
             Map<String, Object> row = tableRows.get(0);
-
-            // Get the columns setup with respect to names and sortability
             String[] propStrings = new String[row.size() * 2];
-
             int i = 0;
             for (Map.Entry<String, Object> col : row.entrySet()) {
                 String colName = col.getKey();
@@ -93,19 +92,55 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
             outlineView.setPropertyColumns(propStrings);
         }
         
-        // TBD: Set width based on actual data in the top N rows??
-        // TBD: Can't seem to get the horizontal scrollbar working
-        for (int col = 0; col< outline.getModel().getColumnCount(); col++) {
-            outline.getColumnModel().getColumn(col).setMinWidth(50);
-        }
-        
         // Hide the 'Nodes' column
         TableColumnModel columnModel = outline.getColumnModel();
         ETableColumn column = (ETableColumn) columnModel.getColumn(0);
         ((ETableColumnModel) columnModel).setColumnHidden(column, true);
 
+        // Set the Nodes for the ExplorerManager.
+        // The Swingworker ensures that setColumnWidths() is called after all nodes have been created.
+        new SwingWorker<Boolean, Void>() {
+            @Override
+            protected Boolean doInBackground() throws Exception {
+
+                explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows), true)));
+                return false;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                
+                setColumnWidths();
+            }
+        }.execute();
+        
     }
 
+    private void setColumnWidths() {
+        int margin = 4;
+        int padding = 8;
+
+         // find the maximum width needed to fit the values for the first N rows, at most
+        final int rows = Math.min(20, outline.getRowCount());
+        for (int col = 1; col < outline.getColumnCount(); col++) {
+            int columnWidthLimit = 500;
+            int columnWidth = 50;
+
+            for (int row = 0; row < rows; row++) {
+                TableCellRenderer renderer = outline.getCellRenderer(row, col);
+                Component comp = outline.prepareRenderer(renderer, row, col);
+          
+                columnWidth = Math.max(comp.getPreferredSize().width, columnWidth);
+            }
+
+            columnWidth += 2 * margin + padding; // add margin and regular padding
+            columnWidth = Math.min(columnWidth, columnWidthLimit);
+            outline.getColumnModel().getColumn(col).setPreferredWidth(columnWidth);
+        }
+    }
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
