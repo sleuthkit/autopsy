@@ -196,8 +196,8 @@
                                   <Component id="ingestWarningLabel" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="setDescScrollPanel" pref="45" max="32767" attributes="0"/>
-                              <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+                              <Component id="setDescScrollPanel" pref="69" max="32767" attributes="0"/>
+                              <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="ignoreKnownFilesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ingoreUnallocCheckbox" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
@@ -205,7 +205,7 @@
                               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                               <Component id="rulesListLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="rulesListScrollPane" min="-2" pref="81" max="-2" attributes="0"/>
+                              <Component id="rulesListScrollPane" pref="61" max="32767" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="newRuleButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -425,7 +425,7 @@
                       </FontInfo>
                     </Property>
                     <Property name="lineWrap" type="boolean" value="true"/>
-                    <Property name="rows" type="int" value="8"/>
+                    <Property name="rows" type="int" value="6"/>
                     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                       <Dimension value="[10, 22]"/>
                     </Property>
