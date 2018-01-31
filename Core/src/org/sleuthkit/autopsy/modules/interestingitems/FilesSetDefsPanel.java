@@ -251,7 +251,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.fileNameRegexCheckbox.setSelected(false);
         this.filesRadioButton.setSelected(true);
         this.rulePathConditionTextField.setText("");
-        this.daysAgoTextField.setText("");
+        this.daysIncludedTextField.setText("");
         this.rulePathConditionRegexCheckBox.setSelected(false);
         this.mimeTypeComboBox.setSelectedIndex(0);
         this.equalitySignComboBox.setSelectedIndex(2);
@@ -374,10 +374,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     FilesSetDefsPanel.this.fileSizeSpinner.setValue(0);
                 }
                 if (dateCondition != null){
-                     FilesSetDefsPanel.this.daysAgoTextField.setText(Integer.toString(dateCondition.getDaysAgo()));
+                     FilesSetDefsPanel.this.daysIncludedTextField.setText(Integer.toString(dateCondition.getDaysIncluded()));
                 }
                 else {
-                     FilesSetDefsPanel.this.daysAgoTextField.setText("");
+                     FilesSetDefsPanel.this.daysIncludedTextField.setText("");
                 }
                 // Enable the new, edit and delete rule buttons.
                 FilesSetDefsPanel.this.newRuleButton.setEnabled(true && canBeEnabled);
@@ -597,8 +597,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         importSetButton = new javax.swing.JButton();
         exportSetButton = new javax.swing.JButton();
         modifiedDateLabel = new javax.swing.JLabel();
-        daysAgoTextField = new javax.swing.JTextField();
-        daysAgoLabel = new javax.swing.JLabel();
+        daysIncludedTextField = new javax.swing.JTextField();
+        daysIncludedLabel = new javax.swing.JLabel();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -852,14 +852,14 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.modifiedDateLabel.text")); // NOI18N
 
-        daysAgoTextField.setEditable(false);
-        daysAgoTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        daysAgoTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.daysAgoTextField.text")); // NOI18N
-        daysAgoTextField.setMinimumSize(new java.awt.Dimension(60, 20));
-        daysAgoTextField.setPreferredSize(new java.awt.Dimension(60, 20));
+        daysIncludedTextField.setEditable(false);
+        daysIncludedTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
+        daysIncludedTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.daysIncludedTextField.text")); // NOI18N
+        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
+        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
 
-        org.openide.awt.Mnemonics.setLocalizedText(daysAgoLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.daysAgoLabel.text")); // NOI18N
-        daysAgoLabel.setEnabled(false);
+        org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.daysIncludedLabel.text")); // NOI18N
+        daysIncludedLabel.setEnabled(false);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -918,9 +918,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                             .addComponent(fileNameRadioButton)
                                             .addComponent(rulePathConditionRegexCheckBox)
                                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(daysAgoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(daysAgoLabel))
+                                                .addComponent(daysIncludedLabel))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1024,8 +1024,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(modifiedDateLabel)
-                            .addComponent(daysAgoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(daysAgoLabel))
+                            .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(daysIncludedLabel))
                         .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1278,8 +1278,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;
     private javax.swing.JButton copySetButton;
-    private javax.swing.JLabel daysAgoLabel;
-    private javax.swing.JTextField daysAgoTextField;
+    private javax.swing.JLabel daysIncludedLabel;
+    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JButton deleteSetButton;
     private javax.swing.JRadioButton dirsRadioButton;

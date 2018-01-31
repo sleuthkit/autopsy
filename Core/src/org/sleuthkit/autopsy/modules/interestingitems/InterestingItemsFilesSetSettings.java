@@ -68,7 +68,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final String FILE_SET_TAG = "INTERESTING_FILE_SET"; //NON-NLS
     private static final String NAME_RULE_TAG = "NAME"; //NON-NLS
     private static final String NAME_ATTR = "name"; //NON-NLS
-    private static final String DAYS_AGO_ATTR = "daysAgo";
+    private static final String DAYS_INCLUDED_ATTR = "daysIncluded";
     private static final String MIME_ATTR = "mimeType";
     private static final String FS_COMPARATOR_ATTR = "comparatorSymbol";
     private static final String FS_SIZE_ATTR = "sizeValue";
@@ -183,14 +183,14 @@ class InterestingItemsFilesSetSettings implements Serializable {
         // Read in the optional path condition. Null is o.k., but if the attribute
         // is there, be sure it is not malformed.
         DateCondition dateCondition = null;
-        if (!ruleElement.getAttribute(DAYS_AGO_ATTR).isEmpty()) {
-            String daysAgo = ruleElement.getAttribute(DAYS_AGO_ATTR);
-            if (!daysAgo.isEmpty()) {
+        if (!ruleElement.getAttribute(DAYS_INCLUDED_ATTR).isEmpty()) {
+            String daysIncluded = ruleElement.getAttribute(DAYS_INCLUDED_ATTR);
+            if (!daysIncluded.isEmpty()) {
                 try {
-                    dateCondition = new DateCondition(Integer.parseInt(daysAgo));
+                    dateCondition = new DateCondition(Integer.parseInt(daysIncluded));
                 } catch (NumberFormatException ex) {
-                    logger.log(Level.SEVERE, "Error creating condition for " + daysAgo + ", ignoring malformed date condition definition", ex); // NON-NLS
-                    throw new FilesSetsManager.FilesSetsManagerException(String.format("error compiling %s regex", DAYS_AGO_ATTR), ex);
+                    logger.log(Level.SEVERE, "Error creating condition for " + daysIncluded + ", ignoring malformed date condition definition", ex); // NON-NLS
+                    throw new FilesSetsManager.FilesSetsManagerException(String.format("error compiling %s regex", DAYS_INCLUDED_ATTR), ex);
                 }
             }
         }

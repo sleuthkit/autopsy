@@ -283,7 +283,7 @@ public final class FilesSet implements Serializable {
         }
 
         @NbBundle.Messages({
-            "# {0} - daysAgo",
+            "# {0} - daysIncluded",
             "FilesSet.rule.dateRule.toString=(modified within {0} day(s))"
         })
         @Override
@@ -300,7 +300,7 @@ public final class FilesSet implements Serializable {
                 return this.ruleName + " (" + fileSizeCondition.getComparator().getSymbol() + " " + fileSizeCondition.getSizeValue()
                         + " " + fileSizeCondition.getUnit().getName() + ")";
             } else if (this.dateCondition != null) {
-                return this.ruleName + Bundle.FilesSet_rule_dateRule_toString(dateCondition.getDaysAgo());
+                return this.ruleName + Bundle.FilesSet_rule_dateRule_toString(dateCondition.getDaysIncluded());
             } else {
                 return this.ruleName + " ()";
             }
@@ -763,7 +763,7 @@ public final class FilesSet implements Serializable {
 
             private final static long DAY_IN_S = 60 * 60 * 24;
 
-            private int daysAgo;
+            private int daysIncluded;
 
             /**
              * Construct a new DateCondition
@@ -772,7 +772,7 @@ public final class FilesSet implements Serializable {
              *             number of days will pass
              */
             DateCondition(int days) {
-                daysAgo = days;
+                daysIncluded = days;
             }
 
             /**
@@ -780,13 +780,13 @@ public final class FilesSet implements Serializable {
              *
              * @return integer value of the number days which will pass
              */
-            int getDaysAgo() {
-                return daysAgo;
+            int getDaysIncluded() {
+                return daysIncluded;
             }
 
             @Override
             public boolean passes(AbstractFile file) {
-                long dateThreshold = System.currentTimeMillis() / 1000 - daysAgo * DAY_IN_S;
+                long dateThreshold = System.currentTimeMillis() / 1000 - daysIncluded * DAY_IN_S;
                 if (file.getCrtime() > dateThreshold || file.getMtime() > dateThreshold) {
                     return true;
                 }

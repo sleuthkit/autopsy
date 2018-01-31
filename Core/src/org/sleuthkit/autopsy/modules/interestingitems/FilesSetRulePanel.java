@@ -49,8 +49,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.NoMimeTypeError=Please select a valid MIME type.",
         "FilesSetRulePanel.NoNameError=Name cannot be empty",
         "FilesSetRulePanel.NoPathError=Path cannot be empty",
-        "FilesSetRulePanel.DaysAgoEmptyError=Number of days ago cannot be empty.",
-        "FilesSetRulePanel.DaysAgoInvalidError=Number of days ago must be a positive integer.",
+        "FilesSetRulePanel.DaysIncludedEmptyError=Number of days included cannot be empty.",
+        "FilesSetRulePanel.DaysIncludedInvalidError=Number of days included must be a positive integer.",
         "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected)."
     })
 
@@ -289,7 +289,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         if (dateCondition != null) {
             this.dateCheck.setSelected(true);
             this.dateCheckActionPerformed(null);
-            this.daysAgoTextField.setText(Integer.toString(dateCondition.getDaysAgo()));
+            this.daysIncludedTextField.setText(Integer.toString(dateCondition.getDaysIncluded()));
         }
     }
 
@@ -387,19 +387,19 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         }
 
         if (this.dateCheck.isSelected()) {
-            if (this.daysAgoTextField.getText().isEmpty()) {
+            if (this.daysIncludedTextField.getText().isEmpty()) {
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                        Bundle.FilesSetRulePanel_DaysAgoEmptyError(),
+                        Bundle.FilesSetRulePanel_DaysIncludedEmptyError(),
                         NotifyDescriptor.WARNING_MESSAGE);
                 DialogDisplayer.getDefault().notify(notifyDesc);
                 return false;
             }
             try {
-                Integer.parseInt(daysAgoTextField.getText());
+                Integer.parseInt(daysIncludedTextField.getText());
             } catch (NumberFormatException e) {
                 //field did not contain an integer
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                        Bundle.FilesSetRulePanel_DaysAgoInvalidError(),
+                        Bundle.FilesSetRulePanel_DaysIncludedInvalidError(),
                         NotifyDescriptor.WARNING_MESSAGE);
                 DialogDisplayer.getDefault().notify(notifyDesc);
                 return false;
@@ -553,8 +553,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     FilesSet.Rule.DateCondition getDateCondition() {
         FilesSet.Rule.DateCondition dateCondition = null;
-        if (!daysAgoTextField.getText().isEmpty()) {
-            dateCondition = new FilesSet.Rule.DateCondition(Integer.parseInt(daysAgoTextField.getText()));
+        if (!daysIncludedTextField.getText().isEmpty()) {
+            dateCondition = new FilesSet.Rule.DateCondition(Integer.parseInt(daysIncludedTextField.getText()));
         }
         return dateCondition;
     }
@@ -637,8 +637,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         filesRadioButton = new javax.swing.JRadioButton();
         dirsRadioButton = new javax.swing.JRadioButton();
         allRadioButton = new javax.swing.JRadioButton();
-        daysAgoTextField = new javax.swing.JTextField();
-        daysAgoLabel = new javax.swing.JLabel();
+        daysIncludedTextField = new javax.swing.JTextField();
+        daysIncludedLabel = new javax.swing.JLabel();
         dateCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameLabel.text")); // NOI18N
@@ -738,11 +738,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         });
 
-        daysAgoTextField.setEnabled(false);
-        daysAgoTextField.setMinimumSize(new java.awt.Dimension(60, 20));
-        daysAgoTextField.setPreferredSize(new java.awt.Dimension(60, 20));
+        daysIncludedTextField.setEnabled(false);
+        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
+        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
 
-        org.openide.awt.Mnemonics.setLocalizedText(daysAgoLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.daysAgoLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.daysIncludedLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(dateCheck, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.dateCheck.text")); // NOI18N
         dateCheck.addActionListener(new java.awt.event.ActionListener() {
@@ -779,9 +779,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(layout.createSequentialGroup()
-                                                .addComponent(daysAgoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(daysAgoLabel))
+                                                .addComponent(daysIncludedLabel))
                                             .addComponent(ruleNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
                                             .addGroup(layout.createSequentialGroup()
                                                 .addComponent(fullNameRadioButton)
@@ -856,8 +856,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     .addComponent(fileSizeCheck))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(daysAgoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(daysAgoLabel)
+                    .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(daysIncludedLabel)
                     .addComponent(dateCheck))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -914,12 +914,12 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     private void dateCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateCheckActionPerformed
         if (!this.dateCheck.isSelected()) {
-            this.daysAgoTextField.setEnabled(false);
-            this.daysAgoLabel.setEnabled(false);
-            this.daysAgoTextField.setText("");
+            this.daysIncludedTextField.setEnabled(false);
+            this.daysIncludedLabel.setEnabled(false);
+            this.daysIncludedTextField.setText("");
         } else {
-            this.daysAgoTextField.setEnabled(true);
-            this.daysAgoLabel.setEnabled(true);
+            this.daysIncludedTextField.setEnabled(true);
+            this.daysIncludedLabel.setEnabled(true);
         }
         this.setOkButton();
     }//GEN-LAST:event_dateCheckActionPerformed
@@ -951,8 +951,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;
     private javax.swing.JCheckBox dateCheck;
-    private javax.swing.JLabel daysAgoLabel;
-    private javax.swing.JTextField daysAgoTextField;
+    private javax.swing.JLabel daysIncludedLabel;
+    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JRadioButton dirsRadioButton;
     private javax.swing.JComboBox<String> equalitySymbolComboBox;
     private javax.swing.JRadioButton extensionRadioButton;
