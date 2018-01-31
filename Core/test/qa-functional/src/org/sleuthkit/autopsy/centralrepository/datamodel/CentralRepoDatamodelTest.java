@@ -71,16 +71,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         assertTrue("Unable to create test directory", testDirectory.toFile().exists());
 
         // Save the current central repo settings
-        propertiesMap = ModuleSettings.getConfigSettings(PROPERTIES_FILE);
-
-        // Set up an Autopsy case for testing
-        try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, testDirectory.toString(), new CaseDetails("CentralRepoDatamodelTestCase"));
-        } catch (CaseActionException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-        assertTrue("Failed to create test case", testDirectory.toFile().exists());
+        propertiesMap = ModuleSettings.getConfigSettings(PROPERTIES_FILE);        
 
         try {
             dbSettingsSqlite.setDbName(CR_DB_NAME);
@@ -150,14 +141,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Close and delete the test case and central repo db
         try {
             EamDb.getInstance().shutdownConnections();
-            Case.closeCurrentCase();
-            
-            // This seems to help in allowing the Autopsy case to be deleted
-            try{
-            Thread.sleep(2000);
-            } catch (Exception ex){
-                
-            }
+            Case.closeCurrentCase(); // There shouldn't be a case open, but it's fine to call this anyway
+                        
             FileUtils.deleteDirectory(testDirectory.toFile());
 
         } catch (EamDbException | CaseActionException | IOException ex) {
@@ -169,7 +154,40 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
     
     /**
-     * Test method for the methods related to reference sets
+     * Test method for the methods related to reference sets (does not include instance testing)
+     * newReferenceSet(EamGlobalSet eamGlobalSet) tests:
+     * - Test creating notable reference set
+     * - Test creating known reference set
+     * - Test creating duplicate reference set
+     * - Test creating almost duplicate reference set
+     * - Test with invalid org ID
+     * - Test with null name
+     * - Test with null version
+     * - Test with null known status
+     * - Test with null file type
+    * referenceSetIsValid(int referenceSetID, String referenceSetName, String version) tests:
+    *  - Test on existing reference set
+    * - Test on invalid reference set
+    * - Test with null name
+    * - Test with null version
+    * referenceSetExists(String referenceSetName, String version) tests:
+    *  - Test on existing reference set
+    * - Test on invalid reference set
+    * - Test with null name
+    * - Test with null version
+    * getReferenceSetByID(int globalSetID) tests:
+    * - Test with valid ID
+    * - Test with invalid ID
+    * getAllReferenceSets(CorrelationAttribute.Type correlationType) tests:
+    * - Test getting all file sets
+    * - Test getting all email sets
+    * - Test with null type parameter
+    * deleteReferenceSet(int referenceSetID) tests:
+    * - Test on valid reference set ID
+    * - Test on invalid reference set ID
+    * getReferenceSetOrganization(int referenceSetID) tests:
+    * - Test on valid reference set ID
+    * - Test on invalid reference set ID
      */
     public void testReferenceSets() {
         String set1name = "referenceSet1";
@@ -396,13 +414,44 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("setToDelete wasn't found in database", EamDb.getInstance().referenceSetIsValid(setToDeleteID, setToDelete.getSetName(), setToDelete.getVersion()));
             int currentCount = EamDb.getInstance().getAllReferenceSets(fileType).size();
             
-            
+            EamDb.getInstance().deleteReferenceSet(setToDeleteID);            
+            assertFalse("Deleted reference set was found in database", EamDb.getInstance().referenceSetIsValid(setToDeleteID, setToDelete.getSetName(), setToDelete.getVersion()));
+            assertTrue("Unexpected number of reference sets in database after deletion", currentCount - 1 == EamDb.getInstance().getAllReferenceSets(fileType).size());
             
         } catch (EamDbException ex){
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }  
         
+        // Test deleting a non-existent reference set
+        // The expectation is that nothing will happen
+        try {
+            int currentCount = EamDb.getInstance().getAllReferenceSets(fileType).size();            
+            EamDb.getInstance().deleteReferenceSet(1234);            
+            assertTrue("Number of reference sets changed after deleting non-existent set", currentCount == EamDb.getInstance().getAllReferenceSets(fileType).size());            
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }  
+        
+        // Test getting reference set organization for valid ID with org set
+        try {
+            EamOrganization org = EamDb.getInstance().getReferenceSetOrganization(set1id);
+            assertTrue("getReferenceSetOrganization returned null for valid set", org != null);
+            assertTrue("getReferenceSetOrganization returned the incorrect organization", org.getOrgID() == org1.getOrgID());
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        } 
+        
+        // Test getting reference set organization for non-existent reference set
+        try {
+            EamOrganization org = EamDb.getInstance().getReferenceSetOrganization(4567);
+            Assert.fail("getReferenceSetOrganization failed to throw exception for invalid reference set ID");
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }         
     }
     
     /**
@@ -565,201 +614,225 @@ public class CentralRepoDatamodelTest extends TestCase {
         final String caseAuuid = "caseA_uuid";
         CorrelationCase caseA;
         CorrelationCase caseB;
-
-        // Test creating a case with valid name and uuid
+        
         try {
-            caseA = new CorrelationCase(caseAuuid, caseAname);
-            caseA = EamDb.getInstance().newCase(caseA);
-            assertTrue("Failed to create case", caseA != null);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-            return;
-        }
+            // Set up an Autopsy case for testing
+            try {
+                Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, testDirectory.toString(), new CaseDetails("CentralRepoDatamodelTestCase"));
+            } catch (CaseActionException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+            assertTrue("Failed to create test case", testDirectory.toFile().exists());
 
-        // Test null uuid
-        try {
-            CorrelationCase tempCase = new CorrelationCase(null, "nullUuidCase");
-            tempCase = EamDb.getInstance().newCase(tempCase);
-            Assert.fail("newCase did not throw expected exception from null uuid");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-        }
-
-        // Test null name
-        try {
-            CorrelationCase tempCase = new CorrelationCase("nullCaseUuid", null);
-            tempCase = EamDb.getInstance().newCase(tempCase);
-            Assert.fail("newCase did not throw expected exception from null name");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-        }
-
-        // Test creating a case with an already used UUID
-        // This should just return the existing case object. Check that the total 
-        // number of cases does not increase.
-        try {
-            int nCases = EamDb.getInstance().getCases().size();
-            CorrelationCase tempCase = new CorrelationCase(caseAuuid, "newCaseWithSameUUID");
-            tempCase = EamDb.getInstance().newCase(tempCase);
-            assertTrue("newCase returned null for existing UUID", tempCase != null);
-            assertTrue("newCase created a new case for an already existing UUID", nCases == EamDb.getInstance().getCases().size());
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test creating a case from an Autopsy case
-        // The case may already be in the database - the result is the same either way
-        try {
-            caseB = EamDb.getInstance().newCase(Case.getCurrentCase());
-            assertTrue("Failed to create correlation case from Autopsy case", caseB != null);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-            return;
-        }
-
-        // Test null Autopsy case
-        try {
-            Case nullCase = null;
-            CorrelationCase tempCase = EamDb.getInstance().newCase(nullCase);
-            Assert.fail("newCase did not throw expected exception from null case");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-        }
-
-        // Test update case
-        // Will update the fields of an existing case object, save it, and then
-        // pull a new copy out of the database
-        try {
-            assertTrue(caseA != null);
-            String caseNumber = "12-34-56";
-            String creationDate = "01/12/2018";
-            String displayName = "Test Case";
-            String examinerEmail = "john@sample.com";
-            String examinerName = "John Doe";
-            String examinerPhone = "123-555-4567";
-            String notes = "Notes";
-
-            caseA.setCaseNumber(caseNumber);
-            caseA.setCreationDate(creationDate);
-            caseA.setDisplayName(displayName);
-            caseA.setExaminerEmail(examinerEmail);
-            caseA.setExaminerName(examinerName);
-            caseA.setExaminerPhone(examinerPhone);
-            caseA.setNotes(notes);
-            caseA.setOrg(org1);
-
-            EamDb.getInstance().updateCase(caseA);
-
-            // Retrievex a new copy of the case from the database to check that the 
-            // fields were properly updated
-            CorrelationCase updatedCase = EamDb.getInstance().getCaseByUUID(caseA.getCaseUUID());
-
-            assertTrue("updateCase failed to update case number", caseNumber.equals(updatedCase.getCaseNumber()));
-            assertTrue("updateCase failed to update creation date", creationDate.equals(updatedCase.getCreationDate()));
-            assertTrue("updateCase failed to update display name", displayName.equals(updatedCase.getDisplayName()));
-            assertTrue("updateCase failed to update examiner email", examinerEmail.equals(updatedCase.getExaminerEmail()));
-            assertTrue("updateCase failed to update examiner name", examinerName.equals(updatedCase.getExaminerName()));
-            assertTrue("updateCase failed to update examiner phone number", examinerPhone.equals(updatedCase.getExaminerPhone()));
-            assertTrue("updateCase failed to update notes", notes.equals(updatedCase.getNotes()));
-            assertTrue("updateCase failed to update org (org is null)", updatedCase.getOrg() != null);
-            assertTrue("updateCase failed to update org (org ID is wrong)", org1.getOrgID() == updatedCase.getOrg().getOrgID());
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test update case with null case
-        try {
-            EamDb.getInstance().updateCase(null);
-            Assert.fail("updateCase did not throw expected exception from null case");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-        }
-
-        // Test getting a case from an Autopsy case
-        try {
-            CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getCurrentCase());
-            assertTrue("getCase returned null for current Autopsy case", tempCase != null);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test getting a case by UUID
-        try {
-            CorrelationCase tempCase = EamDb.getInstance().getCaseByUUID(caseAuuid);
-            assertTrue("Failed to get case by UUID", tempCase != null);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test getting a case with a non-existent UUID
-        try {
-            CorrelationCase tempCase = EamDb.getInstance().getCaseByUUID("badUUID");
-            assertTrue("getCaseByUUID returned non-null case for non-existent UUID", tempCase == null);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test getting a case with null UUID
-        try {
-            CorrelationCase tempCase = EamDb.getInstance().getCaseByUUID(null);
-            assertTrue("getCaseByUUID returned non-null case for null UUID", tempCase == null);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test getting the list of cases
-        // The test is to make sure the three cases we know are in the database are in the list
-        try {
-            List<CorrelationCase> caseList = EamDb.getInstance().getCases();
-            List<String> uuidList
-                    = caseList.stream().map(c -> c.getCaseUUID()).collect(Collectors.toList());
-            assertTrue("getCases is missing data for existing cases", uuidList.contains(case1.getCaseUUID())
-                    && uuidList.contains(case2.getCaseUUID()) && (uuidList.contains(caseA.getCaseUUID()))
-                    && uuidList.contains(caseB.getCaseUUID()));
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
-        // Test bulk case insert
-        try {
-            // Create a list of correlation cases. Make enough that the bulk threshold should be hit once.
-            List<CorrelationCase> cases = new ArrayList<>();
-            String bulkTestUuid = "bulkTestUUID_";
-            String bulkTestName = "bulkTestName_";
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
-                String name = bulkTestUuid + String.valueOf(i);
-                String uuid = bulkTestName + String.valueOf(i);
-                cases.add(new CorrelationCase(uuid, name));
+            // Test creating a case with valid name and uuid
+            try {
+                caseA = new CorrelationCase(caseAuuid, caseAname);
+                caseA = EamDb.getInstance().newCase(caseA);
+                assertTrue("Failed to create case", caseA != null);
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+                return;
             }
 
-            // Get the current case count
-            int nCases = EamDb.getInstance().getCases().size();
+            // Test null uuid
+            try {
+                CorrelationCase tempCase = new CorrelationCase(null, "nullUuidCase");
+                tempCase = EamDb.getInstance().newCase(tempCase);
+                Assert.fail("newCase did not throw expected exception from null uuid");
+            } catch (EamDbException ex) {
+                // This is the expected behavior
+            }
 
-            // Insert the big list of cases
-            EamDb.getInstance().bulkInsertCases(cases);
+            // Test null name
+            try {
+                CorrelationCase tempCase = new CorrelationCase("nullCaseUuid", null);
+                tempCase = EamDb.getInstance().newCase(tempCase);
+                Assert.fail("newCase did not throw expected exception from null name");
+            } catch (EamDbException ex) {
+                // This is the expected behavior
+            }
 
-            // Check that the case count is what is expected
-            assertTrue("bulkInsertCases did not insert the expected number of cases", nCases + cases.size() == EamDb.getInstance().getCases().size());
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
+            // Test creating a case with an already used UUID
+            // This should just return the existing case object. Check that the total 
+            // number of cases does not increase.
+            try {
+                int nCases = EamDb.getInstance().getCases().size();
+                CorrelationCase tempCase = new CorrelationCase(caseAuuid, "newCaseWithSameUUID");
+                tempCase = EamDb.getInstance().newCase(tempCase);
+                assertTrue("newCase returned null for existing UUID", tempCase != null);
+                assertTrue("newCase created a new case for an already existing UUID", nCases == EamDb.getInstance().getCases().size());
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
 
-        // Test bulk case insert with null list
-        try {
-            EamDb.getInstance().bulkInsertCases(null);
-            Assert.fail("bulkInsertCases did not throw expected exception from null list");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
+            // Test creating a case from an Autopsy case
+            // The case may already be in the database - the result is the same either way
+            try {
+                caseB = EamDb.getInstance().newCase(Case.getCurrentCase());
+                assertTrue("Failed to create correlation case from Autopsy case", caseB != null);
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+                return;
+            }
+
+            // Test null Autopsy case
+            try {
+                Case nullCase = null;
+                CorrelationCase tempCase = EamDb.getInstance().newCase(nullCase);
+                Assert.fail("newCase did not throw expected exception from null case");
+            } catch (EamDbException ex) {
+                // This is the expected behavior
+            }
+
+            // Test update case
+            // Will update the fields of an existing case object, save it, and then
+            // pull a new copy out of the database
+            try {
+                assertTrue(caseA != null);
+                String caseNumber = "12-34-56";
+                String creationDate = "01/12/2018";
+                String displayName = "Test Case";
+                String examinerEmail = "john@sample.com";
+                String examinerName = "John Doe";
+                String examinerPhone = "123-555-4567";
+                String notes = "Notes";
+
+                caseA.setCaseNumber(caseNumber);
+                caseA.setCreationDate(creationDate);
+                caseA.setDisplayName(displayName);
+                caseA.setExaminerEmail(examinerEmail);
+                caseA.setExaminerName(examinerName);
+                caseA.setExaminerPhone(examinerPhone);
+                caseA.setNotes(notes);
+                caseA.setOrg(org1);
+
+                EamDb.getInstance().updateCase(caseA);
+
+                // Retrievex a new copy of the case from the database to check that the 
+                // fields were properly updated
+                CorrelationCase updatedCase = EamDb.getInstance().getCaseByUUID(caseA.getCaseUUID());
+
+                assertTrue("updateCase failed to update case number", caseNumber.equals(updatedCase.getCaseNumber()));
+                assertTrue("updateCase failed to update creation date", creationDate.equals(updatedCase.getCreationDate()));
+                assertTrue("updateCase failed to update display name", displayName.equals(updatedCase.getDisplayName()));
+                assertTrue("updateCase failed to update examiner email", examinerEmail.equals(updatedCase.getExaminerEmail()));
+                assertTrue("updateCase failed to update examiner name", examinerName.equals(updatedCase.getExaminerName()));
+                assertTrue("updateCase failed to update examiner phone number", examinerPhone.equals(updatedCase.getExaminerPhone()));
+                assertTrue("updateCase failed to update notes", notes.equals(updatedCase.getNotes()));
+                assertTrue("updateCase failed to update org (org is null)", updatedCase.getOrg() != null);
+                assertTrue("updateCase failed to update org (org ID is wrong)", org1.getOrgID() == updatedCase.getOrg().getOrgID());
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test update case with null case
+            try {
+                EamDb.getInstance().updateCase(null);
+                Assert.fail("updateCase did not throw expected exception from null case");
+            } catch (EamDbException ex) {
+                // This is the expected behavior
+            }
+
+            // Test getting a case from an Autopsy case
+            try {
+                CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                assertTrue("getCase returned null for current Autopsy case", tempCase != null);
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test getting a case by UUID
+            try {
+                CorrelationCase tempCase = EamDb.getInstance().getCaseByUUID(caseAuuid);
+                assertTrue("Failed to get case by UUID", tempCase != null);
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test getting a case with a non-existent UUID
+            try {
+                CorrelationCase tempCase = EamDb.getInstance().getCaseByUUID("badUUID");
+                assertTrue("getCaseByUUID returned non-null case for non-existent UUID", tempCase == null);
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test getting a case with null UUID
+            try {
+                CorrelationCase tempCase = EamDb.getInstance().getCaseByUUID(null);
+                assertTrue("getCaseByUUID returned non-null case for null UUID", tempCase == null);
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test getting the list of cases
+            // The test is to make sure the three cases we know are in the database are in the list
+            try {
+                List<CorrelationCase> caseList = EamDb.getInstance().getCases();
+                List<String> uuidList
+                        = caseList.stream().map(c -> c.getCaseUUID()).collect(Collectors.toList());
+                assertTrue("getCases is missing data for existing cases", uuidList.contains(case1.getCaseUUID())
+                        && uuidList.contains(case2.getCaseUUID()) && (uuidList.contains(caseA.getCaseUUID()))
+                        && uuidList.contains(caseB.getCaseUUID()));
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test bulk case insert
+            try {
+                // Create a list of correlation cases. Make enough that the bulk threshold should be hit once.
+                List<CorrelationCase> cases = new ArrayList<>();
+                String bulkTestUuid = "bulkTestUUID_";
+                String bulkTestName = "bulkTestName_";
+                for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
+                    String name = bulkTestUuid + String.valueOf(i);
+                    String uuid = bulkTestName + String.valueOf(i);
+                    cases.add(new CorrelationCase(uuid, name));
+                }
+
+                // Get the current case count
+                int nCases = EamDb.getInstance().getCases().size();
+
+                // Insert the big list of cases
+                EamDb.getInstance().bulkInsertCases(cases);
+
+                // Check that the case count is what is expected
+                assertTrue("bulkInsertCases did not insert the expected number of cases", nCases + cases.size() == EamDb.getInstance().getCases().size());
+            } catch (EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+
+            // Test bulk case insert with null list
+            try {
+                EamDb.getInstance().bulkInsertCases(null);
+                Assert.fail("bulkInsertCases did not throw expected exception from null list");
+            } catch (EamDbException ex) {
+                // This is the expected behavior
+            }
+        } finally {
+            try {
+                Case.closeCurrentCase();
+                // This seems to help in allowing the Autopsy case to be deleted
+                try{
+                Thread.sleep(2000);
+                } catch (Exception ex){
+
+                }
+            } catch (CaseActionException ex){
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
         }
     }
 

@@ -1541,6 +1541,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
     public EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException {
 
         EamGlobalSet globalSet = getReferenceSetByID(referenceSetID);
+        if(globalSet == null) {
+            throw new EamDbException("Reference set with ID " + referenceSetID + " not found");
+        }
         return (getOrganizationByID(globalSet.getOrgID()));
     }
 
