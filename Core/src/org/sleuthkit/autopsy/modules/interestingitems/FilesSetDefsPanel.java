@@ -652,7 +652,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setDescriptionTextArea.setColumns(20);
         setDescriptionTextArea.setFont(setDescriptionTextArea.getFont().deriveFont(setDescriptionTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         setDescriptionTextArea.setLineWrap(true);
-        setDescriptionTextArea.setRows(10);
+        setDescriptionTextArea.setRows(8);
         setDescriptionTextArea.setMinimumSize(new java.awt.Dimension(10, 22));
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
@@ -920,7 +920,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(daysAgoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(daysAgoLabel)))
+                                                .addComponent(daysAgoLabel))
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(dirsRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(allRadioButton)))
                                         .addGap(0, 0, Short.MAX_VALUE)))))
                         .addGap(8, 8, 8))
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -936,13 +942,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                     .addComponent(jLabel6))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(ingestWarningLabel))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(95, 95, 95)
-                                .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(dirsRadioButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(allRadioButton))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(174, 174, 174)
                                 .addComponent(fileNameExtensionRadioButton)
