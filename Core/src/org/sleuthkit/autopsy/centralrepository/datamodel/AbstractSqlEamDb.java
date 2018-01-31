@@ -1439,6 +1439,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public long newOrganization(EamOrganization eamOrg) throws EamDbException {
+        if(eamOrg == null) {
+            throw new EamDbException("EamOrganization is null");
+        }
+        
         Connection conn = connect();
         ResultSet generatedKeys = null;
         PreparedStatement preparedStatement = null;
@@ -1560,6 +1564,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
+        if(updatedOrganization == null) {
+            throw new EamDbException("null updatedOrganization");
+        }
+        
         Connection conn = connect();
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE organizations SET org_name = ?, poc_name = ?, poc_email = ?, poc_phone = ? WHERE id = ?";

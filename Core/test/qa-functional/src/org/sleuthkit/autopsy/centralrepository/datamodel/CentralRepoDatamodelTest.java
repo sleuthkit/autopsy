@@ -162,6 +162,162 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
     
     /**
+     * 
+     */
+    public void testOrganizations() {
+        
+        EamOrganization orgA;
+        String orgAname = "orgA";
+        EamOrganization orgB;
+        String orgBname = "orgB";
+        String orgBpocName = "pocName";
+        String orgBpocEmail = "pocEmail";
+        String orgBpocPhone = "pocPhone";
+        
+        // Test adding a basic organization
+        try{ 
+            orgA = new EamOrganization(orgAname);
+            orgA.setOrgID((int) EamDb.getInstance().newOrganization(orgA));
+            assertTrue("Organization ID is still -1 after adding to db", orgA.getOrgID() != -1);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test adding an organization with additional fields
+        try{ 
+            orgB = new EamOrganization(orgBname, orgBpocName, orgBpocEmail, orgBpocPhone);
+            orgB.setOrgID((int) EamDb.getInstance().newOrganization(orgB));
+            assertTrue("Organization ID is still -1 after adding to db", orgB.getOrgID() != -1);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test adding a duplicate organization
+        try{
+            EamOrganization temp = new EamOrganization(orgAname);
+            EamDb.getInstance().newOrganization(temp);
+            Assert.fail("newOrganization failed to throw exception for duplicate org name");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test adding null organization
+        try{
+            EamDb.getInstance().newOrganization(null);
+            Assert.fail("newOrganization failed to throw exception for null org");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test adding organization with null name
+        try{
+            EamOrganization temp = new EamOrganization(null);
+            EamDb.getInstance().newOrganization(temp);
+            Assert.fail("newOrganization failed to throw exception for null name");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test getting organizations
+        // We expect five - the default org, two from setUp, and two from this method
+        try{ 
+            List<EamOrganization> orgs = EamDb.getInstance().getOrganizations();
+            assertTrue("getOrganizations returned null list", orgs != null);
+            assertTrue("getOrganizations returned " + orgs.size() + " orgs - expected 5", orgs.size() == 5);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting org with valid ID
+        try{ 
+            EamOrganization temp = EamDb.getInstance().getOrganizationByID(orgB.getOrgID());
+            assertTrue("getOrganizationByID returned null for valid ID", temp != null);
+            assertTrue("getOrganizationByID returned unexpected name for organization", orgBname.equals(temp.getName()));
+            assertTrue("getOrganizationByID returned unexpected poc name for organization", orgBpocName.equals(temp.getPocName()));
+            assertTrue("getOrganizationByID returned unexpected poc email for organization", orgBpocEmail.equals(temp.getPocEmail()));
+            assertTrue("getOrganizationByID returned unexpected poc phone for organization", orgBpocPhone.equals(temp.getPocPhone()));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting org with invalid ID
+        try{ 
+            EamOrganization temp = EamDb.getInstance().getOrganizationByID(12345);
+            Assert.fail("getOrganizationByID failed to throw exception for invalid ID");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test updating valid org
+        try{ 
+            String newName = "newOrgName";
+            String newPocName = "newPocName";
+            String newPocEmail = "newPocEmail";
+            String newPocPhone = "newPocPhone";
+            orgA.setName(newName);
+            orgA.setPocName(newPocName);
+            orgA.setPocEmail(newPocEmail);
+            orgA.setPocPhone(newPocPhone);
+            
+            EamDb.getInstance().updateOrganization(orgA);
+            
+            EamOrganization copyOfA = EamDb.getInstance().getOrganizationByID(orgA.getOrgID());
+            
+            assertTrue("getOrganizationByID returned null for valid ID", copyOfA != null);
+            assertTrue("updateOrganization failed to update org name", newName.equals(copyOfA.getName()));
+            assertTrue("updateOrganization failed to update poc name", newPocName.equals(copyOfA.getPocName()));
+            assertTrue("updateOrganization failed to update poc email", newPocEmail.equals(copyOfA.getPocEmail()));
+            assertTrue("updateOrganization failed to update poc phone", newPocPhone.equals(copyOfA.getPocPhone()));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test updating invalid org
+        // Shouldn't do anything
+        try{ 
+            EamOrganization temp = new EamOrganization("invalidOrg");
+            temp.setOrgID(3434);
+            EamDb.getInstance().updateOrganization(temp);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test updating null org
+        try{ 
+            EamDb.getInstance().updateOrganization(null);
+            Assert.fail("updateOrganization failed to throw exception for null org");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test updating org to null name
+        try{ 
+            EamOrganization copyOfA = EamDb.getInstance().getOrganizationByID(orgA.getOrgID());
+            copyOfA.setName(null);
+            EamDb.getInstance().updateOrganization(copyOfA);
+            Assert.fail("updateOrganization failed to throw exception for null name");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test deleting existing org that isn't in use
+        
+        // Test deleting existing org that is in use
+        
+        // Test deleting non-existent org
+        
+        // Test deleting null org
+    }
+    
+    /**
      * Tests for adding / retrieving reference instances
      * Only the files type is currently implemented
      * addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) tests:
