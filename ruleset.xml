@@ -184,7 +184,7 @@
   <rule ref="rulesets/java/migrating.xml/LongInstantiation"/>
   <rule ref="rulesets/java/naming.xml/VariableNamingConventions"/>
   <rule ref="rulesets/java/naming.xml/AvoidDollarSigns"/>
-  <rule ref="rulesets/java/naming.xml/AbstractNaming/">
+  <rule ref="rulesets/java/naming.xml/AbstractNaming"/>
   <rule ref="rulesets/java/naming.xml/SuspiciousHashcodeMethodName"/>
   <rule ref="rulesets/java/naming.xml/SuspiciousConstantFieldName"/>
   <rule ref="rulesets/java/naming.xml/SuspiciousEqualsMethodName"/>
