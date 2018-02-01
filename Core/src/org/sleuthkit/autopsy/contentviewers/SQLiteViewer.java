@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import javax.swing.SwingWorker;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -457,7 +458,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                     return resultSetToArrayList(resultSet);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
                 }
                 //NON-NLS
                 return null;
@@ -479,7 +480,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         selectedTableView.setupTable(Collections.emptyList());
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
                 }
             }
         };
@@ -487,26 +488,27 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         worker.execute();
     }
 
+    @NbBundle.Messages("SQLiteViewer.BlobNotShown.message=BLOB Data not shown")
     private ArrayList<Map<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
-        ResultSetMetaData md = rs.getMetaData();
-        int columns = md.getColumnCount();
-        ArrayList<Map<String, Object>> arraylist = new ArrayList<>();
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columns = metaData.getColumnCount();
+        ArrayList<Map<String, Object>> rowlist = new ArrayList<>();
         while (rs.next()) {
             Map<String, Object> row = new LinkedHashMap<>(columns);
             for (int i = 1; i <= columns; ++i) {
                 if (rs.getObject(i) == null) {
-                    row.put(md.getColumnName(i), "");
+                    row.put(metaData.getColumnName(i), "");
                 } else {
-                    if (md.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
-                        row.put(md.getColumnName(i), "BLOB Data not shown...");
+                    if (metaData.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
+                        row.put(metaData.getColumnName(i), Bundle.SQLiteViewer_BlobNotShown_message());
                     } else {
-                        row.put(md.getColumnName(i), rs.getObject(i));
+                        row.put(metaData.getColumnName(i), rs.getObject(i));
                     }
                 }
             }
-            arraylist.add(row);
+            rowlist.add(row);
         }
 
-        return arraylist;
+        return rowlist;
     }
 }
