@@ -164,20 +164,37 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
     
     /**
-     *  newCorrelationType(CorrelationAttribute.Type newType)
-getDefinedCorrelationTypes()
-getEnabledCorrelationTypes()
-getSupportedCorrelationTypes()
-* getCorrelationTypeById(int typeId)
-updateCorrelationType(CorrelationAttribute.Type aType)
+     * Test methods related to correlation types
+     *  newCorrelationType(CorrelationAttribute.Type newType) tests:
+     * - Test with valid data
+     * - Test with duplicate data
+     * - Test with null name
+     * - Test with null db name
+     * - Test with null type
+    * getDefinedCorrelationTypes() tests:
+    * - Test that the expected number are returned
+    * getEnabledCorrelationTypes() tests:
+    * - Test that the expected number are returned
+    * getSupportedCorrelationTypes() tests:
+    * - Test that the expected number are returned
+    * getCorrelationTypeById(int typeId) tests:
+    * - Test with valid ID
+    * - Test with invalid ID
+    * updateCorrelationType(CorrelationAttribute.Type aType) tests:
+    * - Test with existing type
+    * - Test with non-existent type
+    * - Test updating to null name
+    * - Test with null type
      */
     public void testCorrelationTypes() {
         
         CorrelationAttribute.Type customType;
+        String customTypeName = "customType";
+        String customTypeDb = "custom_type";
         
         // Test new type with valid data
         try{
-            customType = new CorrelationAttribute.Type("customType", "custom_type", false, false);
+            customType = new CorrelationAttribute.Type(customTypeName, customTypeDb, false, false);
             customType.setId(EamDb.getInstance().newCorrelationType(customType));
         } catch (EamDbException ex){
             Exceptions.printStackTrace(ex);
@@ -187,29 +204,140 @@ updateCorrelationType(CorrelationAttribute.Type aType)
         
         // Test new type with duplicate data
         try{
-            CorrelationAttribute.Type temp = new CorrelationAttribute.Type("customType", "custom_type", false, false);
+            CorrelationAttribute.Type temp = new CorrelationAttribute.Type(customTypeName, customTypeDb, false, false);
             EamDb.getInstance().newCorrelationType(temp);
+            Assert.fail("newCorrelationType failed to throw exception for duplicate name/db table");
         } catch (EamDbException ex){
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            // This is the expected behavior
         }
         
         // Test new type with null name
         try{
             CorrelationAttribute.Type temp = new CorrelationAttribute.Type(null, "temp_type", false, false);
             EamDb.getInstance().newCorrelationType(temp);
+            Assert.fail("newCorrelationType failed to throw exception for null name table");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test new type with null db name
+        // The constructor should fail in this case
+        try{
+            CorrelationAttribute.Type temp = new CorrelationAttribute.Type("temp", null, false, false);
+            Assert.fail("CorrelationAttribute.Type failed to throw exception for null db table name");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test new type with null type
+        try{
+            EamDb.getInstance().newCorrelationType(null);
+            Assert.fail("newCorrelationType failed to throw exception for null type");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test getting all correlation types
+        try{
+            List<CorrelationAttribute.Type> types = EamDb.getInstance().getDefinedCorrelationTypes();
+            
+            // We expect 6 total - 5 default and the custom one made earlier
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 6", types.size() == 6);
         } catch (EamDbException ex){
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
         
-        // Test new type with null db name
+        // Test getting enabled correlation types
         try{
-            CorrelationAttribute.Type temp = new CorrelationAttribute.Type("temp", null, false, false);
-            EamDb.getInstance().newCorrelationType(temp);
+            List<CorrelationAttribute.Type> types = EamDb.getInstance().getEnabledCorrelationTypes();
+            
+            // We expect 5 - the custom type is disabled
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 5", types.size() == 5);
         } catch (EamDbException ex){
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
+        }
+        
+        // Test getting supported correlation types
+        try{
+            List<CorrelationAttribute.Type> types = EamDb.getInstance().getSupportedCorrelationTypes();
+            
+            // We expect 5 - the custom type is not supported
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 5", types.size() == 5);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting the type with a valid ID
+        try{
+            CorrelationAttribute.Type temp = EamDb.getInstance().getCorrelationTypeById(customType.getId());
+            assertTrue("getCorrelationTypeById returned type with unexpected name " + temp.getDisplayName(), customTypeName.equals(temp.getDisplayName()));
+            assertTrue("getCorrelationTypeById returned type with unexpected db table name " + temp.getDbTableName(), customTypeDb.equals(temp.getDbTableName()));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting the type with a invalid ID
+        try{
+            CorrelationAttribute.Type temp = EamDb.getInstance().getCorrelationTypeById(5555);
+            Assert.fail("getCorrelationTypeById failed to throw exception for invalid ID");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+
+        // Test updating a valid type
+        try{
+            String newName = "newName";
+            String newDbTable = "new_db_table";
+            customType.setDisplayName(newName);
+            customType.setDbTableName(newDbTable);
+            customType.setEnabled(true); // These were originally false
+            customType.setSupported(true);
+            
+            EamDb.getInstance().updateCorrelationType(customType);
+            
+            // Get a fresh copy from the database
+            CorrelationAttribute.Type temp = EamDb.getInstance().getCorrelationTypeById(customType.getId());
+            
+            assertTrue("updateCorrelationType failed to update name", newName.equals(temp.getDisplayName()));
+            assertTrue("updateCorrelationType failed to update db table name", newDbTable.equals(temp.getDbTableName()));
+            assertTrue("updateCorrelationType failed to update enabled status", temp.isEnabled());
+            assertTrue("updateCorrelationType failed to update supported status", temp.isSupported());
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test updating a type with an invalid ID
+        // Nothing should happen
+        try{
+            CorrelationAttribute.Type temp= new CorrelationAttribute.Type(customTypeName, customTypeDb, false, false);
+            temp.setId(12345);
+            EamDb.getInstance().updateCorrelationType(temp);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test updating a type to a null name
+        try{
+            customType.setDisplayName(null);
+            EamDb.getInstance().updateCorrelationType(customType);
+            Assert.fail("updateCorrelationType failed to throw exception for null name");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        // Test updating a null type
+        try{
+            customType.setDisplayName(null);
+            EamDb.getInstance().updateCorrelationType(customType);
+            Assert.fail("updateCorrelationType failed to throw exception for null type");
+        } catch (EamDbException ex){
+            // This is the expected behavior
         }
     }
     

@@ -1325,7 +1325,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public boolean referenceSetIsValid(int referenceSetID, String setName, String version) throws EamDbException {
         EamGlobalSet refSet = this.getReferenceSetByID(referenceSetID);
-        if (refSet == null) {
+        if(refSet == null) {
             return false;
         }
 
@@ -1941,6 +1941,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public int newCorrelationType(CorrelationAttribute.Type newType) throws EamDbException {
+        if (newType == null) {
+            throw new EamDbException("null correlation type");
+        }
+        
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -1955,7 +1959,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         } else {
             insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
         }
-        querySql = "SELECT id FROM correlation_types WHERE display_name=? AND db_table_name=?";
+        querySql = "SELECT * FROM correlation_types WHERE display_name=? AND db_table_name=?";
 
         try {
             preparedStatement = conn.prepareStatement(insertSql);
@@ -2145,9 +2149,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, typeId);
             resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            aType = getCorrelationTypeFromResultSet(resultSet);
-            return aType;
+            if(resultSet.next()) {
+                aType = getCorrelationTypeFromResultSet(resultSet);
+                return aType;
+            } else {
+                throw new EamDbException("Failed to find entry for correlation type ID = " + typeId);
+            }
 
         } catch (SQLException ex) {
             throw new EamDbException("Error getting correlation type by id.", ex); // NON-NLS

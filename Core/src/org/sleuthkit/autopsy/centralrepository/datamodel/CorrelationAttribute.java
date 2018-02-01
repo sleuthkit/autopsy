@@ -184,6 +184,9 @@ public class CorrelationAttribute implements Serializable {
          * @param enabled       Is this Type currently enabled.
          */
         public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
+            if(dbTableName == null) {
+                throw new EamDbException("dbTableName is null");
+            }
             this.id = id;
             this.displayName = displayName;
             this.dbTableName = dbTableName;
