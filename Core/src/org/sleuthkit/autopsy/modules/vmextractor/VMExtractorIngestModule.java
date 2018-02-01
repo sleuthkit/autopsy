@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2016 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.TskDataException;
 })
 final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
 
-    private static final Logger logger = Logger.getLogger(VMExtractorIngestModule.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(VMExtractorIngestModule.class.getName());
     private IngestJobContext context;
     private Path ingestJobOutputDir;
     private String parentDeviceId;
@@ -108,19 +108,19 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         // Not sure how long it will take for search to complete.
         progressBar.switchToIndeterminate();
 
-        logger.log(Level.INFO, "Looking for virtual machine files in data source {0}", dataSource.getName()); //NON-NLS
+        LOGGER.log(Level.INFO, "Looking for virtual machine files in data source {0}", dataSource.getName()); //NON-NLS
 
         try {
             // look for all VM files
             vmFiles = findVirtualMachineFiles(dataSource);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error querying case database", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error querying case database", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
 
         if (vmFiles.isEmpty()) {
             // no VM files found
-            logger.log(Level.INFO, "No virtual machine files found in data source {0}", dataSource.getName()); //NON-NLS
+            LOGGER.log(Level.INFO, "No virtual machine files found in data source {0}", dataSource.getName()); //NON-NLS
             return ProcessResult.OK;
         }
         // display progress for saving each VM file to disk
@@ -133,7 +133,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                 break;
             }
 
-            logger.log(Level.INFO, "Saving virtual machine file {0} to disk", vmFile.getName()); //NON-NLS
+            LOGGER.log(Level.INFO, "Saving virtual machine file {0} to disk", vmFile.getName()); //NON-NLS
 
             // get vmFolderPathInsideTheImage to the folder where VM is located 
             String vmFolderPathInsideTheImage = vmFile.getParentPath();
@@ -155,7 +155,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Failed to write virtual machine file " + vmFile.getName() + " to folder " + outputFolderForThisVM, ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Failed to write virtual machine file " + vmFile.getName() + " to folder " + outputFolderForThisVM, ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
                         NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             }
@@ -164,7 +164,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             numFilesSaved++;
             progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.exportingToDisk.message"), numFilesSaved);
         }
-        logger.log(Level.INFO, "Finished saving virtual machine files to disk"); //NON-NLS
+        LOGGER.log(Level.INFO, "Finished saving virtual machine files to disk"); //NON-NLS
 
         // update progress bar
         progressBar.switchToDeterminate(imageFolderToOutputFolder.size());
@@ -179,16 +179,16 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             List<String> vmFilesToIngest = VirtualMachineFinder.identifyVirtualMachines(Paths.get(folder));
             for (String file : vmFilesToIngest) {
                 try {
-                    logger.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
+                    LOGGER.log(Level.INFO, "Ingesting virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
 
                     // for extracted virtual machines there is no manifest XML file to read data source ID from so use parent data source ID.
                     // ingest the data sources  
                     ingestVirtualMachineImage(Paths.get(folder, file));
-                    logger.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
+                    LOGGER.log(Level.INFO, "Ingest complete for virtual machine file {0} in folder {1}", new Object[]{file, folder}); //NON-NLS
                 } catch (InterruptedException ex) {
-                    logger.log(Level.INFO, "Interrupted while ingesting virtual machine file " + file + " in folder " + folder, ex); //NON-NLS
+                    LOGGER.log(Level.INFO, "Interrupted while ingesting virtual machine file " + file + " in folder " + folder, ex); //NON-NLS
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Failed to ingest virtual machine file " + file + " in folder " + folder, ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Failed to ingest virtual machine file " + file + " in folder " + folder, ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.title.txt"),
                             NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.msg.txt", file));
                 }
@@ -197,7 +197,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             numJobsQueued++;
             progressBar.progress(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.queuingIngestJobs.message"), numJobsQueued);
         }
-        logger.log(Level.INFO, "VMExtractorIngestModule completed processing of data source {0}", dataSource.getName()); //NON-NLS
+        LOGGER.log(Level.INFO, "VMExtractorIngestModule completed processing of data source {0}", dataSource.getName()); //NON-NLS
         return ProcessResult.OK;
     }
 
@@ -276,7 +276,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             List<Content> dataSourceContent = new ArrayList<>(dspCallback.vmDataSources);
             IngestJobSettings ingestJobSettings = new IngestJobSettings(context.getExecutionContext());
             for (String warning : ingestJobSettings.getWarnings()) {
-                logger.log(Level.WARNING, String.format("Ingest job settings warning for virtual machine file %s : %s", vmFile.toString(), warning)); //NON-NLS
+                LOGGER.log(Level.WARNING, String.format("Ingest job settings warning for virtual machine file %s : %s", vmFile.toString(), warning)); //NON-NLS
             }
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(IngestMessage.MessageType.INFO,
                     VMExtractorIngestModuleFactory.getModuleName(),
@@ -330,9 +330,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             for (String error : errList) {
                 String logMessage = String.format("Data source processor error for virtual machine file %s: %s", vmFile.toString(), error); //NON-NLS
                 if (DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS == result) {
-                    logger.log(Level.SEVERE, logMessage);
+                    LOGGER.log(Level.SEVERE, logMessage);
                 } else {
-                    logger.log(Level.WARNING, logMessage);
+                    LOGGER.log(Level.WARNING, logMessage);
                 }
             }
 
