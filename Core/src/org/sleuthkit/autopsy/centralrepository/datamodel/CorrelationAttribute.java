@@ -181,7 +181,7 @@ public class CorrelationAttribute implements Serializable {
          *                      Must start with a lowercase letter and only contain
          *                      lowercase letters, numbers, and '_' characters.
          * @param supported     Is this Type currently supported
-         * @param enabled       Is this Type currentl enabled.
+         * @param enabled       Is this Type currently enabled.
          */
         public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this.id = id;
@@ -195,7 +195,7 @@ public class CorrelationAttribute implements Serializable {
         }
 
         /**
-         * Constructior for custom types where we do not know the Type ID until
+         * Constructor for custom types where we do not know the Type ID until
          * the row has been entered into the correlation_types table
          * in the central repository.
          * 
@@ -204,7 +204,7 @@ public class CorrelationAttribute implements Serializable {
          *                      Must start with a lowercase letter and only contain
          *                      lowercase letters, numbers, and '_' characters.
          * @param supported     Is this Type currently supported
-         * @param enabled       Is this Type currentl enabled.
+         * @param enabled       Is this Type currently enabled.
          */
         public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this(-1, displayName, dbTableName, supported, enabled);

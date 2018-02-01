@@ -28,6 +28,8 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskData;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
 /**
  *
@@ -159,6 +161,56 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail(ex);
         }
         assertFalse("Error deleting test directory " + testDirectory.toString(), testDirectory.toFile().exists());
+    }
+    
+    /**
+     *  newCorrelationType(CorrelationAttribute.Type newType)
+getDefinedCorrelationTypes()
+getEnabledCorrelationTypes()
+getSupportedCorrelationTypes()
+* getCorrelationTypeById(int typeId)
+updateCorrelationType(CorrelationAttribute.Type aType)
+     */
+    public void testCorrelationTypes() {
+        
+        CorrelationAttribute.Type customType;
+        
+        // Test new type with valid data
+        try{
+            customType = new CorrelationAttribute.Type("customType", "custom_type", false, false);
+            customType.setId(EamDb.getInstance().newCorrelationType(customType));
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
+        
+        // Test new type with duplicate data
+        try{
+            CorrelationAttribute.Type temp = new CorrelationAttribute.Type("customType", "custom_type", false, false);
+            EamDb.getInstance().newCorrelationType(temp);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test new type with null name
+        try{
+            CorrelationAttribute.Type temp = new CorrelationAttribute.Type(null, "temp_type", false, false);
+            EamDb.getInstance().newCorrelationType(temp);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test new type with null db name
+        try{
+            CorrelationAttribute.Type temp = new CorrelationAttribute.Type("temp", null, false, false);
+            EamDb.getInstance().newCorrelationType(temp);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
     }
     
     /**
