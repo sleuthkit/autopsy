@@ -34,7 +34,7 @@ class ReportExcel implements TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
-    private static final int EXCEL_CELL_MAXIMUM_SIZE = 36767;
+    private static final int EXCEL_CELL_MAXIMUM_SIZE = 36767; //Specified at:https://poi.apache.org/apidocs/org/apache/poi/ss/SpreadsheetVersion.html
 
     private Workbook wb;
     private Sheet sheet;
