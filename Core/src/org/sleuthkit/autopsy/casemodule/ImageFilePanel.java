@@ -49,7 +49,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     private static final Logger LOGGER = Logger.getLogger(ImageFilePanel.class.getName());
     private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
-    private static final String[] SECTOR_SIZE_CHOICES = {"Autodetect", "512", "1024", "2048", "4096"};
+    private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
 
     private final JFileChooser fileChooser = new JFileChooser();
 
