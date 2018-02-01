@@ -76,7 +76,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         // set the selected timezone to the current timezone
         timeZoneComboBox.setSelectedItem(timeZoneToString(Calendar.getInstance().getTimeZone()));
-        
+
         // Populate the drop down list of sector size options
         for (String choice : SECTOR_SIZE_CHOICES) {
             sectorSizeComboBox.addItem(choice);
@@ -271,20 +271,20 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public void setContentPath(String s) {
         pathTextField.setText(s);
     }
-    
+
     /**
      * Get the sector size.
-     * 
+     *
      * @return 0 if autodetect; otherwise the value selected.
      */
     public int getSectorSize() {
         int sectorSizeSelectionIndex = sectorSizeComboBox.getSelectedIndex();
-        
+
         if (sectorSizeSelectionIndex == 0) {
             return 0;
         }
-        
-        return Integer.valueOf((String)sectorSizeComboBox.getSelectedItem());
+
+        return Integer.valueOf((String) sectorSizeComboBox.getSelectedItem());
     }
 
     public String getTimeZone() {
@@ -300,7 +300,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         //reset the UI elements to default 
         pathTextField.setText(null);
     }
-    
+
     /**
      * Should we enable the next button of the wizard?
      *
@@ -319,7 +319,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             pathErrorLabel.setVisible(true);
             pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
         }
-        
+
         return new File(path).isFile()
                 || DriveUtils.isPhysicalDrive(path)
                 || DriveUtils.isPartition(path);
