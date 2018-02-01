@@ -63,6 +63,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     private String deviceId;
     private String imagePath;
+    private int sectorSize;
     private String timeZone;
     private boolean ignoreFatOrphanFiles;
     private boolean setDataSourceOptionsCalled;
@@ -157,10 +158,11 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             configPanel.storeSettings();
             deviceId = UUID.randomUUID().toString();
             imagePath = configPanel.getContentPaths();
+            sectorSize = configPanel.getSectorSize();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
         }
-        run(deviceId, imagePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
     }
 
     /**
@@ -184,8 +186,36 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
+    @Deprecated
     public void run(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, timeZone, ignoreFatOrphanFiles, null, progressMonitor, callback);
+        addImageTask = new AddImageTask(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, progressMonitor, callback);
+        new Thread(addImageTask).start();
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
+     *
+     * @param deviceId             An ASCII-printable identifier for the device
+     *                             associated with the data source that is
+     *                             intended to be unique across multiple cases
+     *                             (e.g., a UUID).
+     * @param imagePath            Path to the image file.
+     * @param sectorSize           The sector size (use '0' for autodetect).
+     * @param timeZone             The time zone to use when processing dates
+     *                             and times for the image, obtained from
+     *                             java.util.TimeZone.getID.
+     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
+     *                             FAT filesystem.
+     * @param progressMonitor      Progress monitor for reporting progress
+     *                             during processing.
+     * @param callback             Callback to call when processing is done.
+     */
+    public void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 
@@ -251,12 +281,36 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+        process(deviceId, dataSourcePath, 0, progressMonitor, callBack);
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread by calling DataSourceProcessor.run() method. Returns as
+     * soon as the background task is started. The background task uses a
+     * callback object to signal task completion and return results. Method can
+     * throw an exception for a system level problem. The exception should not
+     * be thrown for an issue related to bad input data.
+     *
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param dataSourcePath  Path to the data source.
+     * @param sectorSize      The sector size (use '0' for autodetect).
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * @throws org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    public void process(String deviceId, Path dataSourcePath, int sectorSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
+        this.sectorSize = sectorSize;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
-        run(deviceId, dataSourcePath.toString(), timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
+        run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
     }
     
     /**
@@ -276,6 +330,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
         this.deviceId = UUID.randomUUID().toString();
         this.imagePath = imagePath;
+        this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         setDataSourceOptionsCalled = true;

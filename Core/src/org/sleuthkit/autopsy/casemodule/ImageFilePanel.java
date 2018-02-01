@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +76,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         // set the selected timezone to the current timezone
         timeZoneComboBox.setSelectedItem(timeZoneToString(Calendar.getInstance().getTimeZone()));
 
-        errorLabel.setVisible(false);
+        pathErrorLabel.setVisible(false);
 
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -101,6 +101,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         instance.pathTextField.getDocument().addDocumentListener(instance);
+        instance.sectorSizeTextField.getDocument().addDocumentListener(instance);
         return instance;
     }
 
@@ -116,10 +117,14 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         browseButton = new javax.swing.JButton();
         pathTextField = new javax.swing.JTextField();
         timeZoneLabel = new javax.swing.JLabel();
-        timeZoneComboBox = new javax.swing.JComboBox<String>();
+        timeZoneComboBox = new javax.swing.JComboBox<>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         descLabel = new javax.swing.JLabel();
-        errorLabel = new javax.swing.JLabel();
+        pathErrorLabel = new javax.swing.JLabel();
+        useSpecifiedSectorSizeCheckbox = new javax.swing.JCheckBox();
+        sectorSizeTextField = new javax.swing.JTextField();
+        bytesLabel = new javax.swing.JLabel();
+        sectorSizeErrorLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -144,8 +149,24 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.descLabel.text")); // NOI18N
 
-        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.errorLabel.text")); // NOI18N
+        pathErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(pathErrorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathErrorLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(useSpecifiedSectorSizeCheckbox, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.useSpecifiedSectorSizeCheckbox.text")); // NOI18N
+        useSpecifiedSectorSizeCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useSpecifiedSectorSizeCheckboxActionPerformed(evt);
+            }
+        });
+
+        sectorSizeTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sectorSizeTextField.text")); // NOI18N
+        sectorSizeTextField.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(bytesLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.bytesLabel.text")); // NOI18N
+        bytesLabel.setEnabled(false);
+
+        sectorSizeErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(sectorSizeErrorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sectorSizeErrorLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -167,8 +188,17 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
                         .addComponent(descLabel))
-                    .addComponent(errorLabel))
-                .addGap(0, 20, Short.MAX_VALUE))
+                    .addComponent(pathErrorLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(useSpecifiedSectorSizeCheckbox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(sectorSizeErrorLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(sectorSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(bytesLabel)))))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -179,7 +209,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     .addComponent(browseButton)
                     .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(3, 3, 3)
-                .addComponent(errorLabel)
+                .addComponent(pathErrorLabel)
                 .addGap(1, 1, 1)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
@@ -188,6 +218,13 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(useSpecifiedSectorSizeCheckbox)
+                    .addComponent(sectorSizeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(bytesLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sectorSizeErrorLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -222,15 +259,25 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         updateHelper();
     }//GEN-LAST:event_browseButtonActionPerformed
 
+    private void useSpecifiedSectorSizeCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useSpecifiedSectorSizeCheckboxActionPerformed
+        boolean enableSpecifiedSectorSize = useSpecifiedSectorSizeCheckbox.isSelected();
+        sectorSizeTextField.setEnabled(enableSpecifiedSectorSize);
+        bytesLabel.setEnabled(enableSpecifiedSectorSize);
+    }//GEN-LAST:event_useSpecifiedSectorSizeCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.JLabel bytesLabel;
     private javax.swing.JLabel descLabel;
-    private javax.swing.JLabel errorLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
+    private javax.swing.JLabel pathErrorLabel;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
+    private javax.swing.JLabel sectorSizeErrorLabel;
+    private javax.swing.JTextField sectorSizeTextField;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
+    private javax.swing.JCheckBox useSpecifiedSectorSizeCheckbox;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -249,6 +296,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     public void setContentPath(String s) {
         pathTextField.setText(s);
+    }
+    
+    public int getSectorSize() {
+        return useSpecifiedSectorSizeCheckbox.isSelected() ? Integer.valueOf(sectorSizeTextField.getText()) : 0;
     }
 
     public String getTimeZone() {
@@ -270,23 +321,67 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    @NbBundle.Messages("DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on \"C:\" drive")
     public boolean validatePanel() {
-        errorLabel.setVisible(false);
+        boolean pathValid = validatePathTextField();
+        boolean sectorSizeValid = validateSectorSizeTextField();
+        
+        return pathValid && sectorSizeValid;
+    }
+    
+    /**
+     * Validate the path input.
+     * 
+     * @return True if valid; false otherwise.
+     */
+    @NbBundle.Messages("ImageFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive")
+    private boolean validatePathTextField() {
+        pathErrorLabel.setVisible(false);
         String path = getContentPaths();
         if (StringUtils.isBlank(path)) {
             return false;
         }
 
-        // display warning if there is one (but don't disable "next" button)
+        // Display warning if there is one (but don't disable "next" button)
         if (false == PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
-            errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
+            pathErrorLabel.setVisible(true);
+            pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
         }
-
+        
         return new File(path).isFile()
                 || DriveUtils.isPhysicalDrive(path)
                 || DriveUtils.isPartition(path);
+    }
+    
+    /**
+     * Validate the sector size input.
+     * 
+     * @return True if valid; false otherwise.
+     */
+    @NbBundle.Messages("ImageFilePanel.sectorSizeValidation.sectorSizeError=Sector size must be an integer between 512 and 4096 that is a multiple of 512.")
+    private boolean validateSectorSizeTextField() {
+        sectorSizeErrorLabel.setVisible(false);
+        if (useSpecifiedSectorSizeCheckbox.isSelected()) {
+            String text = sectorSizeTextField.getText();
+            
+            if (text.isEmpty()) {
+                return false;
+            }
+            
+            try {
+                int value = Integer.valueOf(text);
+                if (value % 512 != 0 || value < 512 || value > 4096) {
+                    sectorSizeErrorLabel.setVisible(true);
+                }
+            } catch (NumberFormatException ex) {
+                sectorSizeErrorLabel.setVisible(true);
+            }
+        }
+        
+        if (sectorSizeErrorLabel.isVisible()) {
+            sectorSizeErrorLabel.setText(Bundle.ImageFilePanel_sectorSizeValidation_sectorSizeError());
+        }
+        
+        return !sectorSizeErrorLabel.isVisible();
     }
 
     public void storeSettings() {
