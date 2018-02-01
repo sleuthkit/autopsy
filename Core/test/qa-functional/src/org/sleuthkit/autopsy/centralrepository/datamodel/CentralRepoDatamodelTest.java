@@ -162,7 +162,28 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
     
     /**
-     * 
+     * Test the methods related to organizations
+     * newOrganization(EamOrganization eamOrg) tests:
+     * - Test with just org name
+     * - Test with org name and poc info
+     * - Test adding duplicate org
+     * - Test adding null org
+     * - Test adding org with null name
+    * getOrganizations() tests:
+    * - Test getting the list of orgs
+* getOrganizationByID(int orgID) tests:
+* - Test with valid ID
+* - Test with invalid ID
+* updateOrganization(EamOrganization updatedOrganization) tests:
+* - Test updating valid org
+* - Test updating invalid org
+* - Test updating null org
+* - Test updating org to null name
+* deleteOrganization(EamOrganization organizationToDelete) tests:
+* - Test deleting org that isn't in use
+* - Test deleting org that is in use
+* - Test deleting invalid org
+* - Test deleting null org
      */
     public void testOrganizations() {
         
@@ -309,12 +330,53 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
         
         // Test deleting existing org that isn't in use
+        try{ 
+            EamOrganization orgToDelete = new EamOrganization("deleteThis");
+            orgToDelete.setOrgID((int)EamDb.getInstance().newOrganization(orgToDelete));
+            int orgCount = EamDb.getInstance().getOrganizations().size();
+            
+            EamDb.getInstance().deleteOrganization(orgToDelete);
+            assertTrue("getOrganizations returned unexpected count after deletion", orgCount - 1 == EamDb.getInstance().getOrganizations().size());
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
         
         // Test deleting existing org that is in use
+        try{ 
+            // Make a new org
+            EamOrganization inUseOrg = new EamOrganization("inUseOrg");
+            inUseOrg.setOrgID((int)EamDb.getInstance().newOrganization(inUseOrg));
+            
+            // Make a reference set that uses it
+            EamGlobalSet tempSet = new EamGlobalSet(inUseOrg.getOrgID(), "inUseOrgTest", "1.0", TskData.FileKnown.BAD, false, fileType);
+            EamDb.getInstance().newReferenceSet(tempSet);
+            
+            // It should now throw an exception if we try to delete it
+            EamDb.getInstance().deleteOrganization(inUseOrg);
+            Assert.fail("deleteOrganization failed to throw exception for in use organization");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }        
         
         // Test deleting non-existent org
+        // Should do nothing
+        try{ 
+            EamOrganization temp = new EamOrganization("temp");
+            temp.setOrgID(9876);
+            EamDb.getInstance().deleteOrganization(temp);
+        } catch (EamDbException ex){
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }        
         
         // Test deleting null org
+        try{ 
+            EamDb.getInstance().deleteOrganization(null);
+            Assert.fail("deleteOrganization failed to throw exception for null organization");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        } 
     }
     
     /**

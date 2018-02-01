@@ -1592,6 +1592,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
         "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
     @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
+        if(organizationToDelete == null) {
+            throw new EamDbException("Organization to delete is null");
+        }
+        
         Connection conn = connect();
         PreparedStatement checkIfUsedStatement = null;
         ResultSet resultSet = null;
