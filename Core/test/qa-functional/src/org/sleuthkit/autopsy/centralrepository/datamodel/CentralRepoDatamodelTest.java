@@ -28,8 +28,6 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskData;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 
 /**
  *
@@ -39,7 +37,7 @@ public class CentralRepoDatamodelTest extends TestCase {
     private static final String PROPERTIES_FILE = "CentralRepository";
     private static final String CR_DB_NAME = "testcentralrepo.db";
     //private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
-    private static final Path testDirectory = Paths.get("C:", "Work", "CRDatamodelTest");
+    private static final Path testDirectory = Paths.get("C:", "Work", "CRDatamodelTest"); // TEMP EASIER FOR TESTING
     SqliteEamDbSettings dbSettingsSqlite;
 
     private CorrelationCase case1;
@@ -156,11 +154,18 @@ public class CentralRepoDatamodelTest extends TestCase {
             FileUtils.deleteDirectory(testDirectory.toFile());
 
         } catch (EamDbException | IOException ex) {
-        //    } catch (EamDbException ex) {
+        //    } catch (EamDbException ex) {  // TEMP FOR LOOKING AT DB
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
         assertFalse("Error deleting test directory " + testDirectory.toString(), testDirectory.toFile().exists());
+    }
+    
+    /**
+     * Test the module settings
+     */
+    public void testSettings(){
+        // Maybe
     }
     
     /**
