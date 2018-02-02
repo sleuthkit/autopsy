@@ -1000,38 +1000,24 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     @Messages({
         "HashLookupSettingsPanel.promptTitle.deleteHashDb=Delete Hash Database from Configuration",
-        "HashLookupSettingsPanel.promptTitle.deleteCentralRepoHashDb=Delete Hash Database",
-        "HashLookupSettingsPanel.promptMessage.deleteHashDb=This will make the hash database unavailable for lookup. Do you want to proceed?\n\nNote: The hash database can still be re-added later.",
-        "HashLookupSettingsPanel.promptMessage.deleteCentralRepoHashDb=This will permanently remove the central repository hash database. Do you want to proceed?"
+        "HashLookupSettingsPanel.promptMessage.deleteHashDb=This will make the hash database unavailable for lookup. Do you want to proceed?\n\nNote: The hash database can still be re-imported later."
     })
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
-        HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
-
-        if (hashDb == null) {
-            return;
-        }
-
-        String dialogTitle;
-        String dialogMessage;
-
-        if (hashDb instanceof CentralRepoHashSet) {
-            dialogTitle = Bundle.HashLookupSettingsPanel_promptTitle_deleteCentralRepoHashDb();
-            dialogMessage = Bundle.HashLookupSettingsPanel_promptMessage_deleteCentralRepoHashDb();
-        } else {
-            dialogTitle = Bundle.HashLookupSettingsPanel_promptTitle_deleteHashDb();
-            dialogMessage = Bundle.HashLookupSettingsPanel_promptMessage_deleteHashDb();
-        }
-
-        if (JOptionPane.showConfirmDialog(null, dialogMessage, dialogTitle,
+        if (JOptionPane.showConfirmDialog(null,
+                Bundle.HashLookupSettingsPanel_promptMessage_deleteHashDb(),
+                Bundle.HashLookupSettingsPanel_promptTitle_deleteHashDb(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
-            try {
-                hashSetManager.removeHashDatabaseNoSave(hashDb);
-            } catch (HashDbManager.HashDbManagerException ex) {
-                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+            HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
+            if (hashDb != null) {
+                try {
+                    hashSetManager.removeHashDatabaseNoSave(hashDb);
+                } catch (HashDbManager.HashDbManagerException ex) {
+                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                }
+                hashSetTableModel.refreshModel();
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
-            hashSetTableModel.refreshModel();
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_deleteDatabaseButtonActionPerformed
 
