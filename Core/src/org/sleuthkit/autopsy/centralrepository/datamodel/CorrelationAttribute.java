@@ -28,7 +28,7 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Represents a type and value pair that can be used for correlation. 
  * CorrelationAttributeInstances store information about the actual
- * occurences of the attribute. 
+ * occurrences of the attribute. 
  */
 public class CorrelationAttribute implements Serializable {
 
@@ -66,7 +66,10 @@ public class CorrelationAttribute implements Serializable {
         return DEFAULT_CORRELATION_TYPES;
     }
 
-    public CorrelationAttribute(Type correlationType, String correlationValue) {
+    public CorrelationAttribute(Type correlationType, String correlationValue) throws EamDbException {
+        if(correlationValue == null) { 
+            throw new EamDbException ("Correlation value is null");
+        }
         this.ID = "";
         this.correlationType = correlationType;
         // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
