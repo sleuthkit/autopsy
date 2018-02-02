@@ -175,7 +175,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the database is updateable.", ex); //NON-NLS
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the hash set is updateable.", ex); //NON-NLS
             addHashesToDatabaseButton.setEnabled(false);
         }
 
@@ -192,7 +192,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting hash set path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
                 hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
             }
 

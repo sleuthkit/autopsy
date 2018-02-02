@@ -420,7 +420,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                 }
                 ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             } catch (IOException ex) {
-                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); //NON-NLS
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected hash set", ex); //NON-NLS
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbImportDatabaseDialog.failedToGetDbPathMsg"));

@@ -149,7 +149,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 if (null != md5Hash) {
                     // don't let them add the hash for an empty file to the DB
                     if (HashUtility.isNoDataMd5(md5Hash)) { //NON-NLS
-                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)"); //NON-NLS
+                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to hash set (empty content)"); //NON-NLS
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
                                         "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",

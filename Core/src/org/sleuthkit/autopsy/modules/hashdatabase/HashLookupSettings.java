@@ -80,7 +80,7 @@ final class HashLookupSettings implements Serializable {
             try{
                 dbInfoList.add(new HashDbInfo(db));
             } catch (TskCoreException ex){
-                logger.log(Level.SEVERE, "Could not load database settings for {0}", db.getHashSetName());
+                logger.log(Level.SEVERE, "Could not load hash set settings for {0}", db.getHashSetName());
             }
         }
         return dbInfoList;
