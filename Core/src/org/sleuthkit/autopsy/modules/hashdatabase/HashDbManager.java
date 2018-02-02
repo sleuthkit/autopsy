@@ -320,7 +320,7 @@ public class HashDbManager implements PropertyChangeListener {
                         hashSetPaths.add(indexPath);
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash database after indexing", ex); //NON-NLS
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDb.getHashSetName() + " hash set after indexing", ex); //NON-NLS
                 }
             }
         }
@@ -363,7 +363,7 @@ public class HashDbManager implements PropertyChangeListener {
                     hashSetPaths.remove(hashDatabase.getIndexPath());
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDatabase.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting index path of " + hashDatabase.getHashSetName() + " hash set when removing the database", ex); //NON-NLS
             }        
 
             try {
@@ -371,13 +371,13 @@ public class HashDbManager implements PropertyChangeListener {
                     hashSetPaths.remove(hashDatabase.getDatabasePath());
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting database path of " + hashDatabase.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error getting database path of " + hashDatabase.getHashSetName() + " hash set when removing the database", ex); //NON-NLS
             }
         
             try {
                 hashDatabase.close();
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash database when removing the database", ex); //NON-NLS
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + hashDb.getHashSetName() + " hash set when removing the database", ex); //NON-NLS
             }
         }
 
@@ -480,7 +480,7 @@ public class HashDbManager implements PropertyChangeListener {
                     updateableDbs.add(db);
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error checking updateable status of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error checking updateable status of " + db.getHashSetName() + " hash set", ex); //NON-NLS
             }
         }
         return updateableDbs;
@@ -532,7 +532,7 @@ public class HashDbManager implements PropertyChangeListener {
                 try {
                     ((SleuthkitHashSet)database).close();
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash database", ex); //NON-NLS
+                    Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error closing " + database.getHashSetName() + " hash set", ex); //NON-NLS
                 }
             }
         }
@@ -578,7 +578,7 @@ public class HashDbManager implements PropertyChangeListener {
                     }
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
                 JOptionPane.showMessageDialog(null,
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
@@ -592,7 +592,7 @@ public class HashDbManager implements PropertyChangeListener {
             try{
                 updateHashSetsFromCentralRepository();
             } catch (TskCoreException ex){
-                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
+                Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
                 
                 JOptionPane.showMessageDialog(null,
                         Bundle.HashDbManager_centralRepoLoadError_message(),
@@ -615,7 +615,7 @@ public class HashDbManager implements PropertyChangeListener {
                 allDatabasesLoadedCorrectly = true;
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
                 allDatabasesLoadedCorrectly = false;
-                logger.log(Level.SEVERE, "Could not overwrite hash database settings.", ex);
+                logger.log(Level.SEVERE, "Could not overwrite hash set settings.", ex);
             }
         }
     }
@@ -1344,7 +1344,7 @@ public class HashDbManager implements PropertyChangeListener {
             try{
                 return EamDb.getInstance().referenceSetIsValid(this.referenceSetID, this.hashSetName, this.version);
             } catch (EamDbException ex){
-                Logger.getLogger(CentralRepoHashSet.class.getName()).log(Level.SEVERE, "Error validating hash database " + hashSetName, ex); //NON-NLS
+                Logger.getLogger(CentralRepoHashSet.class.getName()).log(Level.SEVERE, "Error validating hash set " + hashSetName, ex); //NON-NLS
                 return false;
             }
         }

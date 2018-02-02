@@ -128,7 +128,7 @@ final class HashLookupSettings implements Serializable {
                 return filesSetsSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
-            throw new HashLookupSettingsException("Could not read hash database settings.", ex);
+            throw new HashLookupSettingsException("Could not read hash set settings.", ex);
         }
     }
 
@@ -285,7 +285,7 @@ final class HashLookupSettings implements Serializable {
             out.writeObject(settings);
             return true;
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Could not write hash database settings.");
+            logger.log(Level.SEVERE, "Could not write hash set settings.");
             return false;
         }
     }
