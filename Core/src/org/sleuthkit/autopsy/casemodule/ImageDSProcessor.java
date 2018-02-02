@@ -48,13 +48,13 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
-    private static final List<String> ALL_EXT = new ArrayList<>();
-    private static final GeneralFilter RAW_FILTER = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
-    private static final GeneralFilter ENCASE_FILTER = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
-    private static final GeneralFilter VIRTUAL_MACHINE_FILTER = new GeneralFilter(GeneralFilter.VIRTUAL_MACHINE_EXTS, GeneralFilter.VIRTUAL_MACHINE_DESC);
+    private static final List<String> allExt = new ArrayList<>();
+    private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
+    private static final GeneralFilter virtualMachineFilter = new GeneralFilter(GeneralFilter.VIRTUAL_MACHINE_EXTS, GeneralFilter.VIRTUAL_MACHINE_DESC);
     private static final String ALL_DESC = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
-    private static final GeneralFilter ALL_FILTER = new GeneralFilter(ALL_EXT, ALL_DESC);
-    private static final List<FileFilter> FILTERS_LIST = new ArrayList<>();
+    private static final GeneralFilter allFilter = new GeneralFilter(allExt, ALL_DESC);
+    private static final List<FileFilter> filtersList = new ArrayList<>();
     private final ImageFilePanel configPanel;
     private AddImageTask addImageTask;
     /*
@@ -69,13 +69,13 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private boolean setDataSourceOptionsCalled;
 
     static {
-        FILTERS_LIST.add(ALL_FILTER);
-        FILTERS_LIST.add(RAW_FILTER);
-        FILTERS_LIST.add(ENCASE_FILTER);
-        FILTERS_LIST.add(VIRTUAL_MACHINE_FILTER);
-        ALL_EXT.addAll(GeneralFilter.RAW_IMAGE_EXTS);
-        ALL_EXT.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
-        ALL_EXT.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
+        filtersList.add(allFilter);
+        filtersList.add(rawFilter);
+        filtersList.add(encaseFilter);
+        filtersList.add(virtualMachineFilter);
+        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
+        allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
     }
 
     /**
@@ -85,7 +85,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * allow it to be used independently of the wizard.
      */
     public ImageDSProcessor() {
-        configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), FILTERS_LIST);
+        configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
 
     /**
@@ -260,7 +260,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
         
         // check file extension for supported types
-        if (!isAcceptedByFiler(dataSourcePath.toFile(), FILTERS_LIST)) {
+        if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
             return 0;
         }
         
