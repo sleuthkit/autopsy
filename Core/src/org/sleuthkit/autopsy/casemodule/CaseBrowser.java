@@ -209,28 +209,34 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
             List<String> nodeList = CoordinationService.getInstance().getNodeList(CoordinationService.CategoryNode.CASES);
 
             for (String node : nodeList) {
-                Path casePath = Paths.get(node);
-                File caseFolder = casePath.toFile();
-                if (caseFolder.exists()) {
-                    /*
-                     * Search for '*.aut' files.
-                     */
-                    File[] fileArray = caseFolder.listFiles();
-                    if (fileArray == null) {
-                        continue;
-                    }
-                    String autFilePath = null;
-                    for (File file : fileArray) {
-                        String name = file.getName().toLowerCase();
-                        if (autFilePath == null && name.endsWith(".aut")) {
-                            try {
-                                caseList.add(new CaseMetadata(Paths.get(file.getAbsolutePath()).toRealPath(LinkOption.NOFOLLOW_LINKS)));
-                            } catch (CaseMetadata.CaseMetadataException | IOException ex) {
-                                LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
-                            } 
-                            break;
+                Path casePath;
+                try {
+                    casePath = Paths.get(node).toRealPath(LinkOption.NOFOLLOW_LINKS);
+
+                    File caseFolder = casePath.toFile();
+                    if (caseFolder.exists()) {
+                        /*
+                         * Search for '*.aut' files.
+                         */
+                        File[] fileArray = caseFolder.listFiles();
+                        if (fileArray == null) {
+                            continue;
+                        }
+                        String autFilePath = null;
+                        for (File file : fileArray) {
+                            String name = file.getName().toLowerCase();
+                            if (autFilePath == null && name.endsWith(".aut")) {
+                                try {
+                                    caseList.add(new CaseMetadata(Paths.get(file.getAbsolutePath())));
+                                } catch (CaseMetadata.CaseMetadataException ex) {
+                                    LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
+                                }
+                                break;
+                            }
                         }
                     }
+                } catch (IOException ignore) {
+                    //if a path could not be resolved to a real path do add it to the caseList
                 }
             }
             return caseList;
