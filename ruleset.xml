@@ -53,7 +53,13 @@
   <rule ref="rulesets/java/codesize.xml/NcssTypeCount"/>
   <rule ref="rulesets/java/codesize.xml/NcssConstructorCount"/>
   <rule ref="rulesets/java/codesize.xml/TooManyMethods"/>
-  <rule ref="rulesets/java/comments.xml/CommentRequired"/>
+  <rule ref="rulesets/java/comments.xml/CommentRequired">
+	  <properties>
+		  <property name="fieldCommentRequirement" value="Unwanted"/>
+		  <property name="protectedMethodCommentRequirement" value="Unwanted"/>
+		  <property name="enumCommentRequirement" value="Unwanted"/>
+	  </properties>
+  </rule>
   <rule ref="rulesets/java/comments.xml/CommentSize"/>
   <rule ref="rulesets/java/comments.xml/CommentContent"/>
   <rule ref="rulesets/java/comments.xml/CommentDefaultAccessModifier"/>
