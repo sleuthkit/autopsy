@@ -92,7 +92,8 @@
   <rule ref="rulesets/java/coupling.xml/ExcessiveImports"/>
   <rule ref="rulesets/java/coupling.xml/LooseCoupling"/>
   <rule ref="rulesets/java/coupling.xml/LoosePackageCoupling"/>
-  <rule ref="rulesets/java/coupling.xml/LawOfDemeter"/>
+  <!-- Commented out because we have not enforced this in the past
+  <rule ref="rulesets/java/coupling.xml/LawOfDemeter"/> -->
   <rule ref="rulesets/java/design.xml/UseUtilityClass"/>
   <rule ref="rulesets/java/design.xml/AvoidDeeplyNestedIfStmts"/>
   <rule ref="rulesets/java/design.xml/SwitchDensity"/>
@@ -176,7 +177,8 @@
   <rule ref="rulesets/java/imports.xml/DuplicateImports"/>
   <rule ref="rulesets/java/imports.xml/DontImportJavaLang"/>
   <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>
-  <rule ref="rulesets/java/javabeans.xml/BeanMembersShouldSerialize"/>
+  <!-- Disabled because it generated a lot of errors for non-Beans
+  <rule ref="rulesets/java/javabeans.xml/BeanMembersShouldSerialize"/>-->
   <rule ref="rulesets/java/javabeans.xml/MissingSerialVersionUID"/>
   <rule ref="rulesets/java/logging-java.xml/MoreThanOneLogger"/>
   <rule ref="rulesets/java/logging-java.xml/LoggerIsNotStaticFinal"/>
