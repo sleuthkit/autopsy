@@ -53,10 +53,18 @@
   <rule ref="rulesets/java/codesize.xml/NcssTypeCount"/>
   <rule ref="rulesets/java/codesize.xml/NcssConstructorCount"/>
   <rule ref="rulesets/java/codesize.xml/TooManyMethods"/>
-  <rule ref="rulesets/java/comments.xml/CommentRequired"/>
-  <rule ref="rulesets/java/comments.xml/CommentSize"/>
+  <rule ref="rulesets/java/comments.xml/CommentRequired">
+    <properties>            
+      <!-- Disabled because we have lots of undocumented fields -->
+      <property name="fieldCommentRequirement" value="Unwanted"/>
+    </properties>
+  </rule>
+  <!-- Commented out because it was flagged some of our header / copyright comments
+  <rule ref="rulesets/java/comments.xml/CommentSize"/> -->
   <rule ref="rulesets/java/comments.xml/CommentContent"/>
   <rule ref="rulesets/java/comments.xml/CommentDefaultAccessModifier"/>
+  <!--
+    Commented out because they are controversial and we want basics right now.
   <rule ref="rulesets/java/controversial.xml/NullAssignment"/>
   <rule ref="rulesets/java/controversial.xml/OnlyOneReturn"/>
   <rule ref="rulesets/java/controversial.xml/AssignmentInOperand"/>
@@ -79,6 +87,7 @@
   <rule ref="rulesets/java/controversial.xml/OneDeclarationPerLine"/>
   <rule ref="rulesets/java/controversial.xml/DefaultPackage"/>
   <rule ref="rulesets/java/controversial.xml/UnnecessaryConstructor"/>
+  -->
   <rule ref="rulesets/java/coupling.xml/CouplingBetweenObjects"/>
   <rule ref="rulesets/java/coupling.xml/ExcessiveImports"/>
   <rule ref="rulesets/java/coupling.xml/LooseCoupling"/>
@@ -122,7 +131,9 @@
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAnyMethod"/>
   <rule ref="rulesets/java/design.xml/TooFewBranchesForASwitchStatement"/>
   <rule ref="rulesets/java/design.xml/UseVarargs"/>
-  <rule ref="rulesets/java/design.xml/FieldDeclarationsShouldBeAtStartOfClass"/>
+  <!-- Commented out because it flagged many of the NetBeans created UI classes that place
+    fields at various places in the class
+    <rule ref="rulesets/java/design.xml/FieldDeclarationsShouldBeAtStartOfClass"/> -->
   <rule ref="rulesets/java/design.xml/GodClass"/>
   <rule ref="rulesets/java/design.xml/AvoidProtectedMethodInFinalClassNotExtending"/>
   <rule ref="rulesets/java/design.xml/ConstantsInInterface"/>
@@ -182,7 +193,8 @@
   <rule ref="rulesets/java/migrating.xml/ByteInstantiation"/>
   <rule ref="rulesets/java/migrating.xml/ShortInstantiation"/>
   <rule ref="rulesets/java/migrating.xml/LongInstantiation"/>
-  <rule ref="rulesets/java/naming.xml/VariableNamingConventions"/>
+  <!-- Disabled because it wanted all private static to be caps 
+  <rule ref="rulesets/java/naming.xml/VariableNamingConventions"/> -->
   <rule ref="rulesets/java/naming.xml/AvoidDollarSigns"/>
   <rule ref="rulesets/java/naming.xml/AbstractNaming"/>
   <rule ref="rulesets/java/naming.xml/SuspiciousHashcodeMethodName"/>
@@ -258,7 +270,8 @@
   <rule ref="rulesets/java/unnecessary.xml/UnnecessaryReturn"/>
   <rule ref="rulesets/java/unusedcode.xml/UnusedModifier"/>
   <rule ref="rulesets/java/unusedcode.xml/UnusedLocalVariable"/>
-  <rule ref="rulesets/java/unusedcode.xml/UnusedFormalParameter"/>
+  <!-- Commented out because it flagged many event listeners and other interfaces.
+  <rule ref="rulesets/java/unusedcode.xml/UnusedFormalParameter"/> -->
   <rule ref="rulesets/java/unusedcode.xml/UnusedPrivateField"/>
   <rule ref="rulesets/java/unusedcode.xml/UnusedPrivateMethod"/>
 
