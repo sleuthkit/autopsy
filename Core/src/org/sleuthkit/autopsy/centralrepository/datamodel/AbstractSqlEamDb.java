@@ -710,6 +710,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if(aType == null) {
             throw new EamDbException("Correlation type is null");
         }
+        if(value == null) {
+            throw new EamDbException("Correlation value is null");
+        }
         
         Connection conn = connect();
 
@@ -725,7 +728,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, value);
+            preparedStatement.setString(1, value.toLowerCase());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
@@ -742,6 +745,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     @Override
     public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException {
+        if (corAttr == null) {
+            throw new EamDbException("Correlation attribute is null");
+        }
         Double uniqueTypeValueTuples = getCountUniqueCaseDataSourceTuplesHavingTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).doubleValue();
         Double uniqueCaseDataSourceTuples = getCountUniqueDataSources().doubleValue();
         Double commonalityPercentage = uniqueTypeValueTuples / uniqueCaseDataSourceTuples * 100;
@@ -760,6 +766,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
+        if(aType == null) { 
+            throw new EamDbException("Correlation type is null");
+        }
+        
         Connection conn = connect();
 
         Long instanceCount = 0L;
@@ -881,6 +891,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void prepareBulkArtifact(CorrelationAttribute eamArtifact) throws EamDbException {
 
+        if(eamArtifact.getCorrelationType() == null) { 
+            throw new EamDbException("Correlation type is null");
+        }
+        
         synchronized (bulkArtifacts) {
             bulkArtifacts.get(eamArtifact.getCorrelationType().getDbTableName()).add(eamArtifact);
             bulkArtifactsCount++;

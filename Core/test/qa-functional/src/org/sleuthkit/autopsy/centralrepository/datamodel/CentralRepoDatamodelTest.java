@@ -173,7 +173,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             FileUtils.deleteDirectory(testDirectory.toFile());
 
         } catch (EamDbException | IOException ex) {
-         //   } catch (EamDbException ex) {  // TEMP FOR LOOKING AT DB
+          //  } catch (EamDbException ex) {  // TEMP FOR LOOKING AT DB
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -183,8 +183,95 @@ public class CentralRepoDatamodelTest extends TestCase {
     /**
      * Test the module settings
      */
-    public void testSettings(){
+    public void atestSettings(){
         // Maybe
+    }
+    
+    /**
+     * Test the methods associated with bulk artifacts
+     * First test the normal use case of a large number of valid artifacts getting added
+     * Next test the error conditions:
+     * 
+     */
+    public void testBulkArtifacts() {
+                
+        // Test bulk artifacts
+        // Steps:
+        // - Make a list of artifacts roughly half the threshold size
+        // - Call prepareBulkArtifact on all of them
+        // - Verify that nothing has been written to the database
+        // - Make a list of artifacts equal to the threshold size
+        // - Call prepareBulkArtifact on all of them
+        // - Verify that the bulk threshold number of them were written to the database
+        // - Call bulkInsertArtifacts to insert the remainder
+        // - Verify that the database now has all the artifacts
+        try {
+            // Make sure there are no artifacts in the database to start
+            long originalArtifactCount = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
+            assertTrue("getCountArtifactInstancesByCaseDataSource returned non-zero count", originalArtifactCount == 0);
+            
+            // Create the first list, which will have (bulkThreshold / 2) entries
+            List<CorrelationAttribute> list1 = new ArrayList<>();
+            for(int i = 0; i < dbSettingsSqlite.getBulkThreshold() / 2;i++) {
+                String value = "bulkInsertValue1_" + String.valueOf(i);
+                String path = "C:\\bulkInsertPath1\\file" + String.valueOf(i);
+                
+                CorrelationAttribute attr = new CorrelationAttribute(fileType, value);
+                attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, path));
+                list1.add(attr);
+            }
+            
+            // Queue up the current list. There should not be enough to trigger the insert
+            for(CorrelationAttribute attr:list1){
+                EamDb.getInstance().prepareBulkArtifact(attr);
+            }
+            
+            // Check that nothing has been written yet
+            assertTrue("Artifacts written to database before threshold was reached", 
+                    originalArtifactCount == EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID()));
+
+            // Make a second list with length equal to bulkThreshold
+            List<CorrelationAttribute> list2 = new ArrayList<>();
+            for(int i = 0; i < dbSettingsSqlite.getBulkThreshold();i++) {
+                String value = "bulkInsertValue2_" + String.valueOf(i);
+                String path = "C:\\bulkInsertPath2\\file" + String.valueOf(i);
+                
+                CorrelationAttribute attr = new CorrelationAttribute(fileType, value);
+                attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, path));
+                list2.add(attr);
+            }
+            
+            // Queue up the current list. This will trigger an insert partway through
+            for(CorrelationAttribute attr:list2){
+                EamDb.getInstance().prepareBulkArtifact(attr);
+            }
+            
+            // There should now be bulkThreshold artifacts in the database
+            long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
+            assertTrue("Artifact count " + count + " does not match bulkThreshold " + dbSettingsSqlite.getBulkThreshold(), count == dbSettingsSqlite.getBulkThreshold());
+            
+            // Now call bulkInsertArtifacts() to insert the rest of queue
+            EamDb.getInstance().bulkInsertArtifacts();
+            count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
+            int expectedCount = list1.size() + list2.size();
+            assertTrue("Artifact count " + count + " does not match expected count " + expectedCount, count == expectedCount);
+            
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test preparing artifact with null type
+        try{
+            CorrelationAttribute attr = new CorrelationAttribute(null, "value");
+            EamDb.getInstance().prepareBulkArtifact(attr);
+            Assert.fail("prepareBulkArtifact failed to throw exception for null type");
+        } catch (EamDbException ex){
+            // This is the expected behavior
+        }
+        
+        
+        
     }
     
     /**
@@ -209,6 +296,17 @@ public class CentralRepoDatamodelTest extends TestCase {
         String domainPath = "C:\\files\\domainPath.txt";
         String devIdValue = "94B21234";
         String devIdPath = "C:\\files\\devIdPath.txt";
+        
+        // Store the email type
+        CorrelationAttribute.Type emailType;
+        
+        try {
+            emailType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.EMAIL_TYPE_ID);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return;
+        }
         
         // Test adding attribute with one instance
         try{
@@ -252,8 +350,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding the other types
         // Test adding an email artifact
         try{
-            CorrelationAttribute attr = new CorrelationAttribute(EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.EMAIL_TYPE_ID), 
-                    emailValue);
+            CorrelationAttribute attr = new CorrelationAttribute(emailType, emailValue);
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, dataSource1fromCase1, emailPath);
             attr.addInstance(inst);
             EamDb.getInstance().addArtifact(attr);
@@ -409,7 +506,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting instances expecting no results
         try {
             List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(
-                    EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.EMAIL_TYPE_ID), inAllDataSourcesHash);
+                    emailType, inAllDataSourcesHash);
             assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -470,7 +567,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         
         // Test getting instance count with path that should produce results
         try {
-            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, inAllDataSourcesPath);
+            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, inAllDataSourcesHash);
             assertTrue("getCountArtifactInstancesByTypeValue returned " + count + " - expected 3", count == 3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -488,7 +585,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         
         // Test getting instance count with null type
         try {
-            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(null, inAllDataSourcesPath);
+            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
             Assert.fail("getCountArtifactInstancesByTypeValue failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -502,7 +599,133 @@ public class CentralRepoDatamodelTest extends TestCase {
             // This is the expected behavior
         }
         
+        // Test getting frequency of value that is in all three data sources
+        try {
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, inAllDataSourcesHash);
+            int freq = EamDb.getInstance().getFrequencyPercentage(attr);
+            assertTrue("getFrequencyPercentage returned " + freq + " - expected 100", freq == 100);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
         
+        // Test getting frequency of value that appears twice in a single data source
+        try {
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, inDataSource1twiceHash);
+            int freq = EamDb.getInstance().getFrequencyPercentage(attr);
+            assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting frequency of non-file type
+        try {
+            CorrelationAttribute attr = new CorrelationAttribute(emailType, emailValue);
+            int freq = EamDb.getInstance().getFrequencyPercentage(attr);
+            assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting frequency of non-existent value
+        try {
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, "randomValue");
+            int freq = EamDb.getInstance().getFrequencyPercentage(attr);
+            assertTrue("getFrequencyPercentage returned " + freq + " - expected 0", freq == 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting frequency with null type
+        try {
+            CorrelationAttribute attr = new CorrelationAttribute(null, "randomValue");
+            int freq = EamDb.getInstance().getFrequencyPercentage(attr);
+            Assert.fail("getFrequencyPercentage failed to throw exception for null type");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+        
+        // Test getting frequency with null attribute
+        try {
+            int freq = EamDb.getInstance().getFrequencyPercentage(null);
+            Assert.fail("getFrequencyPercentage failed to throw exception for null attribute");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+        
+        // Test getting count for dataSource1fromCase1 (includes all types)
+        try {
+            long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
+            assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 7", count == 7);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting count with null case UUID
+        try {
+            long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(null, dataSource1fromCase1.getDeviceID());
+            assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 0", count == 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting count with null data source ID
+        try {
+            long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), null);
+            assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 0", count == 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting data source count for entry that is in all three
+        try {
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, inAllDataSourcesHash);
+            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 3", count == 3);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting data source count for entry that is in one data source twice
+        try {
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, inDataSource1twiceHash);
+            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 1", count == 1);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting data source count for entry that is not in any data sources
+        try {
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, "abcdef");
+            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 0", count == 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        
+        // Test getting data source count for null type
+        try {
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, "abcdef");
+            Assert.fail("getCountUniqueCaseDataSourceTuplesHavingTypeValue failed to throw exception for null type");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+        }
+        
+        // Test getting data source count for null value
+        try {
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, null);
+            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 0", count == 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
     }
     
     /**
