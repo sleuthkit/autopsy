@@ -29,6 +29,8 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.nodes.Node;
 import java.awt.EventQueue;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -222,10 +224,10 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
                         String name = file.getName().toLowerCase();
                         if (autFilePath == null && name.endsWith(".aut")) {
                             try {
-                                caseList.add(new CaseMetadata(Paths.get(file.getAbsolutePath())));
-                            } catch (CaseMetadata.CaseMetadataException ex) {
+                                caseList.add(new CaseMetadata(Paths.get(file.getAbsolutePath()).toRealPath(LinkOption.NOFOLLOW_LINKS)));
+                            } catch (CaseMetadata.CaseMetadataException | IOException ex) {
                                 LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
-                            }
+                            } 
                             break;
                         }
                     }
