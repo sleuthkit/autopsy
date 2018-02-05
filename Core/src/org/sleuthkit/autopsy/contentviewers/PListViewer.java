@@ -24,20 +24,15 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import java.util.Arrays;
 import com.dd.plist.*;
-import java.awt.BorderLayout;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.table.TableColumnModel;
+import javax.swing.SwingWorker;
+import javax.swing.table.TableCellRenderer;
 import javax.xml.parsers.ParserConfigurationException;
-import org.netbeans.swing.etable.ETableColumn;
-import org.netbeans.swing.etable.ETableColumnModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
@@ -104,7 +99,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         
         plistTableScrollPane.setViewportView(outlineView);
         
-        //outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        outline.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         
         this.setVisible(true);
         outline.setRowSelectionAllowed(false);
@@ -162,9 +157,24 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             LOGGER.log(Level.SEVERE, "Error reading bytes of plist file.", ex);
         }
 
+        
         List<PropKeyValue> plist = parsePList(buf);
         
-        setupTable(plist);
+         new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+
+                setupTable(plist);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                setColumnWidths();
+            }
+        }.execute();
+        
     }
     
     
@@ -178,27 +188,51 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         explorerManager.setRootContext(new AbstractNode(Children.create(new PListRowFactory(tableRows), true)));
     }
     
+    private void setColumnWidths() {
+        int margin = 4;
+        int padding = 8;
+
+         // find the maximum width needed to fit the values for the first N rows, at most
+        final int rows = Math.min(20, outline.getRowCount());
+        for (int col = 0; col < outline.getColumnCount(); col++) {
+            int columnWidthLimit = 2000;
+            int columnWidth = 0;
+
+            for (int row = 0; row < rows; row++) {
+                TableCellRenderer renderer = outline.getCellRenderer(row, col);
+                Component comp = outline.prepareRenderer(renderer, row, col);
+          
+                columnWidth = Math.max(comp.getPreferredSize().width, columnWidth);
+            }
+
+            columnWidth += 2 * margin + padding; // add margin and regular padding
+            columnWidth = Math.min(columnWidth, columnWidthLimit);
+            outline.getColumnModel().getColumn(col).setPreferredWidth(columnWidth);
+        }
+    }
     
-   
+   @NbBundle.Messages({"PListViewer.DataType.message=Binary Data value not shown"})
     private PropKeyValue parseProperty(String key, NSObject value) {
         if (value == null) {
             return null;
         } else if (value instanceof NSString) {
-            return new PropKeyValue(key, "String", value.toString());
+            return new PropKeyValue(key, PropertyType.STRING, value.toString());
         } else if (value instanceof NSNumber) {
             NSNumber number = (NSNumber) value;
             if (number.isInteger()) {
-                return new PropKeyValue(key, "Number",  new Long(number.longValue()) );
+                return new PropKeyValue(key, PropertyType.NUMBER,  new Long(number.longValue()) );
             } else if (number.isBoolean()) {
-                return new PropKeyValue(key, "Boolean",  new Boolean(number.boolValue()) );
+                return new PropKeyValue(key, PropertyType.BOOLEAN,  new Boolean(number.boolValue()) );
             } else {
-                return new PropKeyValue(key, "Number",  new Float(number.floatValue())) ;
+                return new PropKeyValue(key, PropertyType.NUMBER,  new Float(number.floatValue())) ;
             }
+        } else if (value instanceof NSData ) {
+            return new PropKeyValue(key, PropertyType.DATA, Bundle.PListViewer_DataType_message());
         } else if (value instanceof NSArray) {
             List<PropKeyValue> children = new ArrayList<>();
             NSArray array = (NSArray) value;
             
-            PropKeyValue pkv = new PropKeyValue(key, "Array", array);
+            PropKeyValue pkv = new PropKeyValue(key, PropertyType.ARRAY, array);
             for (int i = 0; i < array.count(); i++) {
                 children.add(parseProperty("", array.objectAtIndex(i)));
             }
@@ -209,7 +243,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             List<PropKeyValue> children = new ArrayList<>();
             NSDictionary dict = (NSDictionary) value;
             
-            PropKeyValue pkv = new PropKeyValue(key, "Dictionary", dict);
+            PropKeyValue pkv = new PropKeyValue(key, PropertyType.DICTIONARY, dict);
             for (String key2 : ((NSDictionary) value).allKeys()) {
                 NSObject o = ((NSDictionary) value).objectForKey(key2);
                 children.add(parseProperty(key2, o));
@@ -218,7 +252,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             pkv.setChildren(children.toArray(new PropKeyValue[0] ));
             return pkv;
         } else {
-            LOGGER.severe("Can't cast from " + value.getClass());
+            LOGGER.severe("Can't parse Plist for key = " + key  + " value from " + value.getClass());
         }
         
         return null;
@@ -232,15 +266,8 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
 
             String[] keys = rootDict.allKeys();
-            for (int i = 0; i < keys.length; i++) {
-
-                NSObject object = rootDict.objectForKey(keys[i]);
-                
-                System.out.println("");       
-                System.out.println("Found Key = " + keys[i]);
-                System.out.println("Value class = " + object.getClass().toString());
-                   
-                PropKeyValue pkv = parseProperty(keys[i], rootDict.objectForKey(keys[i]));
+            for (String key : keys) {
+                PropKeyValue pkv = parseProperty(key, rootDict.objectForKey(key));
                 if (null != pkv) { 
                     plist.add(pkv);
                 }   
@@ -259,30 +286,33 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         return explorerManager;
     }
     
-    
+    enum PropertyType {
+            STRING, 
+            NUMBER, 
+            BOOLEAN, 
+            DATA,
+            ARRAY,
+            DICTIONARY
+    };
+        
     class PropKeyValue {
    
-        // RAMAN TBD: define an enmum for type??
-        
-        
         private final String key;
-        private final String type;
+        private final PropertyType type;
         private final Object value;
 
-        private PropKeyValue[] children;
+        private PropKeyValue[] children = null;
         
-        PropKeyValue(String key, String type, Object value) {
+        PropKeyValue(String key, PropertyType type, Object value) {
             this.key = key;
             this.type = type;
             this.value = value;
-            
-            this.children = null;
         }
         
         String getKey() {
             return this.key;
         }
-        String getType() {
+        PropertyType getType() {
             return this.type;
         }
         

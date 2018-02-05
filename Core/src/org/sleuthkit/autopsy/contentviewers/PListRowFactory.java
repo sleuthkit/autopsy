@@ -27,6 +27,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.contentviewers.PListViewer.PropKeyValue;
+import org.sleuthkit.autopsy.contentviewers.PListViewer.PropertyType;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 public class PListRowFactory extends ChildFactory<Integer> {
@@ -66,9 +67,18 @@ class PListNode extends AbstractNode {
 
         this.propKeyVal = propKeyVal;
 
+        
         super.setName(propKeyVal.getKey());
         setName(propKeyVal.getKey());
         setDisplayName(propKeyVal.getKey());
+        if (propKeyVal.getType() == PropertyType.ARRAY) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keychain-16.png");
+        } else if (propKeyVal.getType() == PropertyType.DICTIONARY) {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keys-dict-16.png");
+        } else  {
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/key-16.png");
+        }
+       
     }
 
     @Override
@@ -81,12 +91,12 @@ class PListNode extends AbstractNode {
             s.put(properties);
         }
 
-        properties.put(new NodeProperty<>(org.openide.util.NbBundle.getMessage(PListViewer.class, "PListNode.TypeCol"),
+        properties.put(new NodeProperty<>(Bundle.PListNode_TypeCol(),
                 Bundle.PListNode_TypeCol(),
                 Bundle.PListNode_TypeCol(),
-                propKeyVal.getType())); // NON-NLS
+                propKeyVal.getType().name())); // NON-NLS
 
-        properties.put(new NodeProperty<>(org.openide.util.NbBundle.getMessage(PListViewer.class, "PListNode.ValueCol"),
+        properties.put(new NodeProperty<>(Bundle.PListNode_ValueCol(),
                 Bundle.PListNode_ValueCol(),
                 Bundle.PListNode_ValueCol(),
                 (propKeyVal.getChildren() == null) ? propKeyVal.getValue() : "")); // NON-NLS
