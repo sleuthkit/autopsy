@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,10 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dimension;
+import java.awt.DisplayMode;
+import java.awt.Frame;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -52,7 +56,8 @@ final class CasePropertiesAction extends CallableSystemAction {
     public void performAction() {
         SwingUtilities.invokeLater(() -> {
             String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
-            casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, true);
+            Frame mainWindow = WindowManager.getDefault().getMainWindow();
+            casePropertiesDialog = new JDialog(mainWindow, title, true);
             CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
             caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
                 casePropertiesDialog.setVisible(false);
@@ -61,10 +66,11 @@ final class CasePropertiesAction extends CallableSystemAction {
             casePropertiesDialog.setResizable(true);
             casePropertiesDialog.pack();
 
-            Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-            double w = casePropertiesDialog.getSize().getWidth();
-            double h = casePropertiesDialog.getSize().getHeight();
-            casePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+            int posX = (int) ((mainWindow.getX() + ((mainWindow.getWidth() - casePropertiesDialog.getSize().getWidth()) / 2)));
+            int posY = (int) ((mainWindow.getY() + ((mainWindow.getHeight() - casePropertiesDialog.getSize().getHeight()) / 2)));
+            casePropertiesDialog.setLocation(posX, posY);
+            
+            casePropertiesDialog.setLocation(posX, posY);
             casePropertiesDialog.setVisible(true);
             casePropertiesDialog.toFront();
         });
