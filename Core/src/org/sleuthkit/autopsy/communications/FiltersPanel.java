@@ -78,6 +78,7 @@ final public class FiltersPanel extends JPanel {
      * results)
      */
     private final ItemListener validationListener;
+    private boolean deviceAccountTypeEnabled = false;
 
     @NbBundle.Messages({"refreshText=Refresh Results",
         "applyText=Apply"})
@@ -196,8 +197,8 @@ final public class FiltersPanel extends JPanel {
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
             if (type.equals(Account.Type.CREDIT_CARD)) {
                 //don't show a check box for credit cards
-            } else if (type.equals(Account.Type.DEVICE)) {
-                //don't show a check box fro device
+//            } else if (type.equals(Account.Type.DEVICE)) {
+//                //don't show a check box fro device
             } else {
                 accountTypeMap.computeIfAbsent(type, t -> {
                     final JCheckBox jCheckBox = new JCheckBox(
@@ -209,6 +210,9 @@ final public class FiltersPanel extends JPanel {
                     );
                     jCheckBox.addItemListener(validationListener);
                     accountTypePane.add(jCheckBox);
+                    if (t.equals(Account.Type.DEVICE)) {
+                        jCheckBox.setEnabled(deviceAccountTypeEnabled);
+                    }
                     return jCheckBox;
                 });
             }
@@ -485,7 +489,7 @@ final public class FiltersPanel extends JPanel {
         validateFilters();
     }
 
-   private CommunicationsFilter getFilter() {
+    private CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
@@ -618,4 +622,11 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
 
+    void setDeviceAccountTypeEnabled(boolean enableDeviceAccountType) {
+        deviceAccountTypeEnabled = enableDeviceAccountType;
+        JCheckBox deviceCheckbox = accountTypeMap.get(Account.Type.DEVICE);
+        if (deviceCheckbox != null) {
+            deviceCheckbox.setEnabled(deviceAccountTypeEnabled);
+        }
+    }
 }

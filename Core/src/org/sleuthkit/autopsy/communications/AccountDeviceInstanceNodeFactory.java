@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -53,8 +54,11 @@ final class AccountDeviceInstanceNodeFactory extends ChildFactory<AccountDeviceI
             final List<AccountDeviceInstance> accountDeviceInstancesWithRelationships =
                     commsManager.getAccountDeviceInstancesWithRelationships(commsFilter);
             for (AccountDeviceInstance accountDeviceInstance : accountDeviceInstancesWithRelationships) {
-                long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
-                accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount));
+                //Filter out device accounts, in the table.
+                if (Account.Type.DEVICE.equals(accountDeviceInstance.getAccount().getAccountType()) ==false) {
+                    long communicationsCount = commsManager.getRelationshipSourcesCount(accountDeviceInstance, commsFilter);
+                    accountDeviceInstanceKeys.add(new AccountDeviceInstanceKey(accountDeviceInstance, commsFilter, communicationsCount));
+                }
             }
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Error getting filtered account device instances", tskCoreException);
