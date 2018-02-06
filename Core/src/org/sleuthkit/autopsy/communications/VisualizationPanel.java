@@ -122,6 +122,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.setAutoScroll(true);
         graphComponent.setAutoscrolls(true);
         graphComponent.setConnectable(false);
+        graphComponent.setDragEnabled(false);
         graphComponent.setKeepSelectionVisibleOnZoom(true);
         graphComponent.setOpaque(true);
         graphComponent.setToolTips(true);
