@@ -352,7 +352,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting notable instances with null type
         try {
-            List<CorrelationAttributeInstance> attrs = EamDb.getInstance().getArtifactInstancesKnownBad(null, notableHashInOneCaseKnownOther);
+            EamDb.getInstance().getArtifactInstancesKnownBad(null, notableHashInOneCaseKnownOther);
             Assert.fail("getArtifactInstancesKnownBad failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -361,7 +361,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting notable instances with null value (should work fine)
         try {
             List<CorrelationAttributeInstance> attrs = EamDb.getInstance().getArtifactInstancesKnownBad(fileType, null);
-            assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected ", attrs.size() == 0);
+            assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected ", attrs.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -857,7 +857,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting instances with null type
         try {
-            List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
+            EamDb.getInstance().getArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
             Assert.fail("getArtifactInstancesByTypeValue failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -901,7 +901,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting instances with null path
         try {
-            List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByPath(fileType, null);
+            EamDb.getInstance().getArtifactInstancesByPath(fileType, null);
             Assert.fail("getArtifactInstancesByPath failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -927,7 +927,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting instance count with null type
         try {
-            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
+            EamDb.getInstance().getCountArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
             Assert.fail("getCountArtifactInstancesByTypeValue failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -935,7 +935,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting instance count with null value
         try {
-            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, null);
+            EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, null);
             Assert.fail("getCountArtifactInstancesByTypeValue failed to throw exception for null value");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -984,7 +984,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting frequency with null type
         try {
             CorrelationAttribute attr = new CorrelationAttribute(null, "randomValue");
-            int freq = EamDb.getInstance().getFrequencyPercentage(attr);
+            EamDb.getInstance().getFrequencyPercentage(attr);
             Assert.fail("getFrequencyPercentage failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -992,7 +992,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting frequency with null attribute
         try {
-            int freq = EamDb.getInstance().getFrequencyPercentage(null);
+            EamDb.getInstance().getFrequencyPercentage(null);
             Assert.fail("getFrequencyPercentage failed to throw exception for null attribute");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1054,7 +1054,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting data source count for null type
         try {
-            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, "abcdef");
+            EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, "abcdef");
             Assert.fail("getCountUniqueCaseDataSourceTuplesHavingTypeValue failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1189,7 +1189,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting the type with a invalid ID
         try {
-            CorrelationAttribute.Type temp = EamDb.getInstance().getCorrelationTypeById(5555);
+            EamDb.getInstance().getCorrelationTypeById(5555);
             Assert.fail("getCorrelationTypeById failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1356,7 +1356,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting org with invalid ID
         try {
-            EamOrganization temp = EamDb.getInstance().getOrganizationByID(12345);
+            EamDb.getInstance().getOrganizationByID(12345);
             Assert.fail("getOrganizationByID failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1676,7 +1676,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting reference instances an invalid type (the email table is not yet implemented)
         try {
-            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(emailType, inAllSetsHash);
+            EamDb.getInstance().getReferenceInstancesByTypeValue(emailType, inAllSetsHash);
             Assert.fail("getReferenceInstancesByTypeValue failed to throw exception for invalid table");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1684,7 +1684,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting reference instances with null type
         try {
-            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(null, inAllSetsHash);
+            EamDb.getInstance().getReferenceInstancesByTypeValue(null, inAllSetsHash);
             Assert.fail("getReferenceInstancesByTypeValue failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1872,9 +1872,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         int set1id;
         String set2name = "referenceSet2";
         EamGlobalSet set2;
-        int set2id;
         EamGlobalSet set3;
-        int set3id;
 
         // Test creating a notable reference set
         try {
@@ -1889,7 +1887,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a known reference set
         try {
             set2 = new EamGlobalSet(org2.getOrgID(), set2name, "", TskData.FileKnown.KNOWN, false, fileType);
-            set2id = EamDb.getInstance().newReferenceSet(set2);
+            EamDb.getInstance().newReferenceSet(set2);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -1908,7 +1906,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a reference set with the same name but different version
         try {
             set3 = new EamGlobalSet(org1.getOrgID(), set1name, "2.0", TskData.FileKnown.BAD, false, fileType);
-            set3id = EamDb.getInstance().newReferenceSet(set3);
+            EamDb.getInstance().newReferenceSet(set3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -2111,7 +2109,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting reference set organization for non-existent reference set
         try {
-            EamOrganization org = EamDb.getInstance().getReferenceSetOrganization(4567);
+            EamDb.getInstance().getReferenceSetOrganization(4567);
             Assert.fail("getReferenceSetOrganization failed to throw exception for invalid reference set ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -2219,7 +2217,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting a data source with a null case
         try {
-            CorrelationDataSource temp = EamDb.getInstance().getDataSource(null, dataSourceAid);
+            EamDb.getInstance().getDataSource(null, dataSourceAid);
             Assert.fail("getDataSource did not throw exception from null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -2316,7 +2314,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Test null uuid
             try {
                 CorrelationCase tempCase = new CorrelationCase(null, "nullUuidCase");
-                tempCase = EamDb.getInstance().newCase(tempCase);
+                EamDb.getInstance().newCase(tempCase);
                 Assert.fail("newCase did not throw expected exception from null uuid");
             } catch (EamDbException ex) {
                 // This is the expected behavior
@@ -2325,7 +2323,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Test null name
             try {
                 CorrelationCase tempCase = new CorrelationCase("nullCaseUuid", null);
-                tempCase = EamDb.getInstance().newCase(tempCase);
+                EamDb.getInstance().newCase(tempCase);
                 Assert.fail("newCase did not throw expected exception from null name");
             } catch (EamDbException ex) {
                 // This is the expected behavior
@@ -2359,7 +2357,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Test null Autopsy case
             try {
                 Case nullCase = null;
-                CorrelationCase tempCase = EamDb.getInstance().newCase(nullCase);
+                EamDb.getInstance().newCase(nullCase);
                 Assert.fail("newCase did not throw expected exception from null case");
             } catch (EamDbException ex) {
                 // This is the expected behavior
