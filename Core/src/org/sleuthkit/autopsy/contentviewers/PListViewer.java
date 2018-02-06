@@ -24,13 +24,17 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import java.util.Arrays;
 import com.dd.plist.*;
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.logging.Level;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.xml.parsers.ParserConfigurationException;
 import org.netbeans.swing.outline.DefaultOutlineModel;
@@ -38,7 +42,9 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -53,6 +59,8 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     private final Outline outline;
     private ExplorerManager explorerManager;
     
+    //private byte[] plistFileBuf = null;
+    NSDictionary rootDict = null;
     /**
      * Creates new form PListViewer
      */
@@ -113,12 +121,101 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanel1 = new javax.swing.JPanel();
         plistTableScrollPane = new javax.swing.JScrollPane();
+        hdrPanel = new javax.swing.JPanel();
+        exportButton = new javax.swing.JButton();
 
-        setLayout(new java.awt.BorderLayout());
-        add(plistTableScrollPane, java.awt.BorderLayout.CENTER);
+        jPanel1.setLayout(new java.awt.BorderLayout());
+        jPanel1.add(plistTableScrollPane, java.awt.BorderLayout.CENTER);
+
+        org.openide.awt.Mnemonics.setLocalizedText(exportButton, org.openide.util.NbBundle.getMessage(PListViewer.class, "PListViewer.exportButton.text")); // NOI18N
+        exportButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout hdrPanelLayout = new javax.swing.GroupLayout(hdrPanel);
+        hdrPanel.setLayout(hdrPanelLayout);
+        hdrPanelLayout.setHorizontalGroup(
+            hdrPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(hdrPanelLayout.createSequentialGroup()
+                .addGap(330, 330, 330)
+                .addComponent(exportButton))
+        );
+        hdrPanelLayout.setVerticalGroup(
+            hdrPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(hdrPanelLayout.createSequentialGroup()
+                .addGap(10, 10, 10)
+                .addComponent(exportButton))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(hdrPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(3, 3, 3)
+                .addComponent(hdrPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
     }// </editor-fold>//GEN-END:initComponents
 
+    @NbBundle.Messages({"PListViewer.ExportSuccess.message=Plist file exported successfully",
+    "PListViewer.ExportFailed.message=Plist file export failed.",
+    })
+     
+    private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
+       
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
+
+        int returnVal = fileChooser.showSaveDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+            File selectedFile = fileChooser.getSelectedFile();
+            if (!selectedFile.getName().endsWith(".xml")) { // NON-NLS
+                selectedFile = new File(selectedFile.toString() + ".xml"); // NON-NLS
+            }
+
+            try {
+            //Save the propery list
+            PropertyListParser.saveAsXML(this.rootDict, selectedFile);
+            
+            JOptionPane.showMessageDialog(this,
+                            String.format("Plist file exported successfully to %s ", selectedFile.getName() ),
+                            Bundle.PListViewer_ExportSuccess_message(),
+                            JOptionPane.INFORMATION_MESSAGE);
+             
+        } catch (IOException ex) {
+            // RAMAN TBD: pop up a error dialog?
+            JOptionPane.showMessageDialog(this,
+                            String.format("Failed to export plist file to %s ", selectedFile.getName() ),
+                            Bundle.PListViewer_ExportFailed_message(),
+                            JOptionPane.ERROR_MESSAGE);
+            
+            LOGGER.log(Level.SEVERE, "Error exporting plist to XML file " + selectedFile.getName(), ex);
+        } 
+            
+        }
+    }//GEN-LAST:event_exportButtonActionPerformed
+
+    private void writeToXML(File outFile) {
+        
+        // RAMAN TBD
+        System.out.println("RAMAN: Exporting to XML.");
+        
+        
+    }
+    
     @Override
     public List<String> getSupportedMIMETypes() {
          return Arrays.asList(SUPPORTED_MIMETYPES);
@@ -137,7 +234,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     @Override
     public void resetComponent() {
         // RAMAN TBD
-       
+       rootDict = null;
     }
 
     
@@ -150,15 +247,15 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      */
     private void processPlist(AbstractFile plistFile) {
        
-        byte[] buf = new byte[(int) plistFile.getSize()];
+        byte[] plistFileBuf = new byte[(int) plistFile.getSize()];
         try {
-            final int bytesRead = plistFile.read(buf, 0, plistFile.getSize());
+            plistFile.read(plistFileBuf, 0, plistFile.getSize());
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error reading bytes of plist file.", ex);
         }
 
         
-        List<PropKeyValue> plist = parsePList(buf);
+        List<PropKeyValue> plist = parsePList(plistFileBuf);
         
          new SwingWorker<Void, Void>() {
             @Override
@@ -263,7 +360,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         List<PropKeyValue> plist = new ArrayList<>();
 
         try {
-            NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
+            rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
 
             String[] keys = rootDict.allKeys();
             for (String key : keys) {
@@ -330,6 +427,9 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton exportButton;
+    private javax.swing.JPanel hdrPanel;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane plistTableScrollPane;
     // End of variables declaration//GEN-END:variables
 }
