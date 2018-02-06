@@ -167,7 +167,6 @@ final class mxGraphImpl extends mxGraph {
         lockedAccountDevices.clear();
     }
 
-
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
         final String name =// accountDeviceInstance.getDeviceId() + ":"                +
@@ -214,6 +213,9 @@ final class mxGraphImpl extends mxGraph {
         return edge;
     }
 
+    boolean hasPinnedAccounts() {
+        return pinnedAccountDevices.isEmpty() == false;  }
+
     class SwingWorkerImpl extends SwingWorker<Void, Void> {
 
         private final ProgressIndicator progress;
@@ -228,7 +230,6 @@ final class mxGraphImpl extends mxGraph {
 
         @Override
         protected Void doInBackground() throws Exception {
-
             progress.start("Loading accounts", pinnedAccountDevices.size());
             int i = 0;
             try {
@@ -264,7 +265,7 @@ final class mxGraphImpl extends mxGraph {
                                 adiKey2.getAccountDeviceInstance(),
                                 currentFilter);
                         if (relationships.size() > 0) {
-                            mxCell addEdge = addEdge(relationships,adiKey1,adiKey2);
+                            mxCell addEdge = addEdge(relationships, adiKey1, adiKey2);
                             progress.progress(addEdge.getId());
                         }
                     }

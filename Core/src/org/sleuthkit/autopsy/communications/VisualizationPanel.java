@@ -52,16 +52,19 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.jdesktop.layout.GroupLayout;
+import org.jdesktop.layout.LayoutStyle;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
@@ -289,11 +292,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     private void rebuildGraph() throws TskCoreException {
-
-        SwingWorker<?, ?> rebuild = graph.rebuild(new ProgressIndicatorImpl(), commsManager, currentFilter);
-
-        rebuild.execute();
-
+        if (graph.hasPinnedAccounts()) {
+            borderLayoutPanel.remove(jPanel1);
+            borderLayoutPanel.add(graphComponent, BorderLayout.CENTER);
+            SwingWorker<?, ?> rebuild = graph.rebuild(new ProgressIndicatorImpl(), commsManager, currentFilter);
+            rebuild.execute();
+        } else {
+            borderLayoutPanel.remove(graphComponent);
+            borderLayoutPanel.add(jPanel1, BorderLayout.CENTER);
+        }
     }
 
     @Override
@@ -348,7 +355,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         splitPane = new JSplitPane();
         borderLayoutPanel = new JPanel();
-        jToolBar1 = new JToolBar();
+        jToolBar2 = new JToolBar();
+        statusLabel = new JLabel();
+        progresPanel = new JPanel();
+        progressBar = new JProgressBar();
+        jPanel1 = new JPanel();
+        jTextArea1 = new JTextArea();
+        jPanel2 = new JPanel();
+        jLabel1 = new JLabel();
         hierarchyLayoutButton = new JButton();
         fastOrganicLayoutButton = new JButton();
         OrganicLayoutButton = new JButton();
@@ -358,8 +372,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         zoomInButton = new JButton();
         zoomActualButton = new JButton();
         fitZoomButton = new JButton();
-        statusPanel = new JPanel();
-        progressBar = new JProgressBar();
 
         setLayout(new BorderLayout());
 
@@ -368,7 +380,56 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         borderLayoutPanel.setLayout(new BorderLayout());
 
-        jToolBar1.setRollover(true);
+        jToolBar2.setFloatable(false);
+        jToolBar2.setRollover(true);
+
+        statusLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.statusLabel.text")); // NOI18N
+        jToolBar2.add(statusLabel);
+
+        progressBar.setMaximumSize(new Dimension(200, 14));
+        progressBar.setStringPainted(true);
+
+        GroupLayout progresPanelLayout = new GroupLayout(progresPanel);
+        progresPanel.setLayout(progresPanelLayout);
+        progresPanelLayout.setHorizontalGroup(progresPanelLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, progresPanelLayout.createSequentialGroup()
+                .add(0, 651, Short.MAX_VALUE)
+                .add(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        );
+        progresPanelLayout.setVerticalGroup(progresPanelLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, progresPanelLayout.createSequentialGroup()
+                .add(0, 0, 0)
+                .add(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        );
+
+        jToolBar2.add(progresPanel);
+
+        borderLayoutPanel.add(jToolBar2, BorderLayout.PAGE_END);
+
+        jTextArea1.setBackground(new Color(240, 240, 240));
+        jTextArea1.setColumns(20);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setRows(5);
+        jTextArea1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jTextArea1.text")); // NOI18N
+
+        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(213, Short.MAX_VALUE)
+                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 372, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(214, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(200, Short.MAX_VALUE)
+                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(200, Short.MAX_VALUE))
+        );
+
+        borderLayoutPanel.add(jPanel1, BorderLayout.CENTER);
+
+        jLabel1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jLabel1.text")); // NOI18N
 
         hierarchyLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.hierarchyLayoutButton.text")); // NOI18N
         hierarchyLayoutButton.setFocusable(false);
@@ -379,7 +440,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 hierarchyLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(hierarchyLayoutButton);
 
         fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
         fastOrganicLayoutButton.setFocusable(false);
@@ -390,7 +450,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 fastOrganicLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(fastOrganicLayoutButton);
 
         OrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.OrganicLayoutButton.text")); // NOI18N
         OrganicLayoutButton.setFocusable(false);
@@ -401,7 +460,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 OrganicLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(OrganicLayoutButton);
 
         circleLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.circleLayoutButton.text")); // NOI18N
         circleLayoutButton.setFocusable(false);
@@ -412,8 +470,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 circleLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(circleLayoutButton);
-        jToolBar1.add(jSeparator1);
 
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
         zoomOutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.text")); // NOI18N
@@ -425,7 +481,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 zoomOutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(zoomOutButton);
 
         zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
         zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
@@ -437,7 +492,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 zoomInButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(zoomInButton);
 
         zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
         zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N
@@ -449,7 +503,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 zoomActualButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(zoomActualButton);
 
         fitZoomButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
         fitZoomButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.text")); // NOI18N
@@ -461,38 +514,64 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 fitZoomButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(fitZoomButton);
 
-        borderLayoutPanel.add(jToolBar1, BorderLayout.NORTH);
-
-        progressBar.setMaximumSize(new Dimension(200, 14));
-        progressBar.setStringPainted(true);
-
-        GroupLayout statusPanelLayout = new GroupLayout(statusPanel);
-        statusPanel.setLayout(statusPanelLayout);
-        statusPanelLayout.setHorizontalGroup(statusPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, statusPanelLayout.createSequentialGroup()
-                .addContainerGap(516, Short.MAX_VALUE)
-                .add(progressBar, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-        statusPanelLayout.setVerticalGroup(statusPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, statusPanelLayout.createSequentialGroup()
+        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(jPanel2Layout.createParallelGroup(GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
                 .add(3, 3, 3)
-                .add(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .add(jLabel1)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(fastOrganicLayoutButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(OrganicLayoutButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(hierarchyLayoutButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(circleLayoutButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(zoomOutButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(zoomInButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(214, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(jPanel2Layout.createParallelGroup(GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .add(3, 3, 3)
+                .add(jPanel2Layout.createParallelGroup(GroupLayout.CENTER)
+                    .add(jLabel1, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+                    .add(hierarchyLayoutButton)
+                    .add(fastOrganicLayoutButton)
+                    .add(OrganicLayoutButton)
+                    .add(circleLayoutButton)
+                    .add(jSeparator1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(zoomOutButton)
+                    .add(zoomInButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(zoomActualButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(fitZoomButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(3, 3, 3))
         );
 
-        borderLayoutPanel.add(statusPanel, BorderLayout.SOUTH);
+        borderLayoutPanel.add(jPanel2, BorderLayout.PAGE_START);
 
         splitPane.setLeftComponent(borderLayoutPanel);
 
         add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
-        morph(new mxFastOrganicLayout(graph));
-    }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
+    private void fitZoomButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitZoomButtonActionPerformed
+        fitGraph();
+    }//GEN-LAST:event_fitZoomButtonActionPerformed
+
+    private void zoomActualButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomActualButtonActionPerformed
+        graphComponent.zoomActual();
+    }//GEN-LAST:event_zoomActualButtonActionPerformed
 
     private void zoomInButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
         graphComponent.zoomIn();
@@ -502,10 +581,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.zoomOut();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
-    private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
-        morph(new mxHierarchicalLayout(graph));
-    }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
-
     private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
         morph(new mxCircleLayout(graph));
     }//GEN-LAST:event_circleLayoutButtonActionPerformed
@@ -513,6 +588,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private void OrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_OrganicLayoutButtonActionPerformed
         applyOrganicLayout(10);
     }//GEN-LAST:event_OrganicLayoutButtonActionPerformed
+
+    private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
+        morph(new mxFastOrganicLayout(graph));
+    }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
+
+    private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
+        morph(new mxHierarchicalLayout(graph));
+    }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
     private void applyOrganicLayout(int iterations) {
         mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph) {
@@ -526,14 +609,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         morph(mxOrganicLayout);
     }
 
-    private void fitZoomButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitZoomButtonActionPerformed
-        fitGraph();
-    }//GEN-LAST:event_fitZoomButtonActionPerformed
-
-    private void zoomActualButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomActualButtonActionPerformed
-        graphComponent.zoomActual();
-    }//GEN-LAST:event_zoomActualButtonActionPerformed
-
     private void fitGraph() {
         final Object[] childVertices = graph.getChildVertices(graph.getDefaultParent());
         mxRectangle boundsForCells = graph.getBoundsForCells(childVertices, true, true, true);
@@ -546,10 +621,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         graph.getView().setTranslate(new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY()));
-
-//        graphComponent.zoomActual();
-//        graphComponent.zoomAndCenter();
-//        graph.getGraphBounds().getWidth()
     }
 
     private void morph(mxIGraphLayout layout) {
@@ -583,11 +654,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton fastOrganicLayoutButton;
     private JButton fitZoomButton;
     private JButton hierarchyLayoutButton;
+    private JLabel jLabel1;
+    private JPanel jPanel1;
+    private JPanel jPanel2;
     private JToolBar.Separator jSeparator1;
-    private JToolBar jToolBar1;
+    private JTextArea jTextArea1;
+    private JToolBar jToolBar2;
+    private JPanel progresPanel;
     private JProgressBar progressBar;
     private JSplitPane splitPane;
-    private JPanel statusPanel;
+    private JLabel statusLabel;
     private JButton zoomActualButton;
     private JButton zoomInButton;
     private JButton zoomOutButton;
