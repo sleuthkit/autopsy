@@ -51,6 +51,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
@@ -554,7 +555,8 @@ class ReportHTML implements TableReportModule {
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n"); //NON-NLS
         for (String cell : row) {
-            builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
+            String escapeHTMLCell = EscapeUtil.escapeHtml(cell);
+            builder.append("\t\t<td>").append(escapeHTMLCell).append("</td>\n"); //NON-NLS
         }
         builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
