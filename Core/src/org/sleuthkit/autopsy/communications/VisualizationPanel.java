@@ -43,7 +43,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
-import java.net.URL;
 import java.util.Arrays;
 import static java.util.Collections.singleton;
 import java.util.EnumSet;
@@ -92,13 +91,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
-
-    private static final URL MARKER_PIN_URL = VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
-    static final private ImageIcon pinIcon = new ImageIcon(MARKER_PIN_URL);
+    private static final String BASE_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images";
+    static final private ImageIcon pinIcon =
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--pin.png"));
     static final private ImageIcon addPinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--plus.png"));
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--plus.png"));
     static final private ImageIcon unpinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--minus.png"));
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--minus.png"));
+    static final private ImageIcon unlockIcon =
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
+    static final private ImageIcon lockIcon =
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
 
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
@@ -186,14 +189,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             }));
                         } else {
 
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock Account " + cellAt.getId(), addPinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock Account " + cellAt.getId(), unlockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     graph.lockAccount((AccountDeviceInstanceKey) cellAt.getValue());
                                 }
                             }));
 
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock Account " + cellAt.getId(), addPinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock Account " + cellAt.getId(), lockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     graph.unlockAccount((AccountDeviceInstanceKey) cellAt.getValue());
@@ -254,7 +257,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             if (pinEvent.isReplace()) {
                 graph.resetGraph();
             }
-            
+
             graph.pinAccount(pinEvent.getAccountDeviceInstances());
             rebuildGraph();
         } catch (TskCoreException ex) {
@@ -287,13 +290,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void rebuildGraph() throws TskCoreException {
 
-        SwingWorker<?,?> rebuild = graph.rebuild(new ProgressIndicatorImpl(), commsManager, currentFilter);
+        SwingWorker<?, ?> rebuild = graph.rebuild(new ProgressIndicatorImpl(), commsManager, currentFilter);
 
         rebuild.execute();
 
     }
-
-  
 
     @Override
     public void addNotify() {
@@ -528,7 +529,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         graph.getView().setTranslate(new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY()));
-
 
 //        graphComponent.zoomActual();
 //        graphComponent.zoomAndCenter();
