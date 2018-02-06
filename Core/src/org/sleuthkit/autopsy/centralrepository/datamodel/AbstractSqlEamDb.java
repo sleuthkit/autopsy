@@ -948,6 +948,17 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                         for (CorrelationAttributeInstance eamInstance : eamInstances) {
                             if (!eamArtifact.getCorrelationValue().isEmpty()) {
+                                
+                                if(eamInstance.getCorrelationCase() == null) {
+                                    throw new EamDbException("Correlation attribute instance has null case");
+                                }
+                                if(eamInstance.getCorrelationDataSource() == null) {
+                                    throw new EamDbException("Correlation attribute instance has null data source");
+                                }
+                                if(eamInstance.getKnownStatus()== null) {
+                                    throw new EamDbException("Correlation attribute instance has null known known status");
+                                }
+                                
                                 bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
                                 bulkPs.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
                                 bulkPs.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
@@ -1071,14 +1082,27 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
+        if(eamArtifact == null) {
+            throw new EamDbException("Correlation attribute is null");
+        }
+        if(knownStatus == null) {
+            throw new EamDbException("Known status is null");
+        }
         if (1 != eamArtifact.getInstances().size()) {
             throw new EamDbException("Error: Artifact must have exactly one (1) Artifact Instance to set as notable."); // NON-NLS
         }
         
-        Connection conn = connect();        
-
         List<CorrelationAttributeInstance> eamInstances = eamArtifact.getInstances();
         CorrelationAttributeInstance eamInstance = eamInstances.get(0);
+
+        if(eamInstance.getCorrelationCase() == null) {
+            throw new EamDbException("Correlation case is null");
+        }
+        if(eamInstance.getCorrelationDataSource() == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+        
+        Connection conn = connect();        
 
         PreparedStatement preparedUpdate = null;
         PreparedStatement preparedQuery = null;
@@ -1162,6 +1186,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
+        if(aType == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+        
         Connection conn = connect();
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
@@ -1212,6 +1240,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
+        if(aType == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+        
         Connection conn = connect();
 
         Long badInstances = 0L;
@@ -1256,6 +1288,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
+        if(aType == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+        
         Connection conn = connect();
 
         Collection<String> caseNames = new LinkedHashSet<>();
