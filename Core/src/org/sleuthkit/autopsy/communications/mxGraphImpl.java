@@ -30,7 +30,6 @@ import com.mxgraph.view.mxStylesheet;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -77,6 +76,7 @@ final class mxGraphImpl extends mxGraph {
 
     public mxGraphImpl() {
         super(mxStylesheet);
+        setAutoSizeCells(true);
         setCellsCloneable(false);
         setDropEnabled(false);
         setCellsCloneable(false);
@@ -167,37 +167,6 @@ final class mxGraphImpl extends mxGraph {
         lockedAccountDevices.clear();
     }
 
-    private static class RelationshipModel {
-
-        @Override
-        public String toString() {
-            return adiKey1.getAccountDeviceInstance().getAccount().getTypeSpecificID()
-                    + "<-" + relationshipSources.size() + "->"
-                    + adiKey2.getAccountDeviceInstance().getAccount().getTypeSpecificID();
-        }
-
-        private final List<Content> relationshipSources;
-        private final AccountDeviceInstanceKey adiKey1;
-        private final AccountDeviceInstanceKey adiKey2;
-
-        private RelationshipModel(List<Content> relationships, AccountDeviceInstanceKey adiKey1, AccountDeviceInstanceKey adiKey2) {
-            this.relationshipSources = relationships;
-            this.adiKey1 = adiKey1;
-            this.adiKey2 = adiKey2;
-        }
-
-        public List<Content> getSources() {
-            return Collections.unmodifiableList(relationshipSources);
-        }
-
-        public AccountDeviceInstanceKey getAccount1() {
-            return adiKey1;
-        }
-
-        public AccountDeviceInstanceKey getAccount2() {
-            return adiKey2;
-        }
-    }
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
@@ -245,7 +214,7 @@ final class mxGraphImpl extends mxGraph {
         return edge;
     }
 
-    class SwingWorkerImpl extends SwingWorker<Set<mxGraphImpl.RelationshipModel>, mxGraphImpl.RelationshipModel> {
+    class SwingWorkerImpl extends SwingWorker<Void, Void> {
 
         private final ProgressIndicator progress;
         private final CommunicationsManager commsManager;
@@ -258,11 +227,10 @@ final class mxGraphImpl extends mxGraph {
         }
 
         @Override
-        protected Set<mxGraphImpl.RelationshipModel> doInBackground() throws Exception {
+        protected Void doInBackground() throws Exception {
 
             progress.start("Loading accounts", pinnedAccountDevices.size());
             int i = 0;
-            Set<mxGraphImpl.RelationshipModel> relationshipModels = new HashSet<>();
             try {
                 /**
                  * set to keep track of accounts related to pinned accounts
@@ -296,9 +264,8 @@ final class mxGraphImpl extends mxGraph {
                                 adiKey2.getAccountDeviceInstance(),
                                 currentFilter);
                         if (relationships.size() > 0) {
-                            mxGraphImpl.RelationshipModel relationshipModel = new RelationshipModel(relationships, adiKey1, adiKey2);
-                            publish(relationshipModel);
-                            progress.progress(relationshipModel.toString());
+                            mxCell addEdge = addEdge(relationships,adiKey1,adiKey2);
+                            progress.progress(addEdge.getId());
                         }
                     }
                     progress.progress(i);
@@ -307,17 +274,7 @@ final class mxGraphImpl extends mxGraph {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
             } finally {
             }
-            return relationshipModels;
-        }
-
-        @Override
-        protected void process(List<mxGraphImpl.RelationshipModel> chunks) {
-            super.process(chunks);
-            for (mxGraphImpl.RelationshipModel relationShipModel : chunks) {
-                mxCell addEdge = addEdge(relationShipModel.getSources(),
-                        relationShipModel.getAccount1(),
-                        relationShipModel.getAccount2());
-            }
+            return null;
         }
 
         @Override
