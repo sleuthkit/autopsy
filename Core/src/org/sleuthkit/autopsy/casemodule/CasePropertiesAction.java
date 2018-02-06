@@ -18,12 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dimension;
-import java.awt.DisplayMode;
 import java.awt.Frame;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.EnumSet;
@@ -65,12 +60,7 @@ final class CasePropertiesAction extends CallableSystemAction {
             casePropertiesDialog.add(caseInformationPanel);
             casePropertiesDialog.setResizable(true);
             casePropertiesDialog.pack();
-
-            int posX = (int) ((mainWindow.getX() + ((mainWindow.getWidth() - casePropertiesDialog.getSize().getWidth()) / 2)));
-            int posY = (int) ((mainWindow.getY() + ((mainWindow.getHeight() - casePropertiesDialog.getSize().getHeight()) / 2)));
-            casePropertiesDialog.setLocation(posX, posY);
-            
-            casePropertiesDialog.setLocation(posX, posY);
+            casePropertiesDialog.setLocationRelativeTo(mainWindow);
             casePropertiesDialog.setVisible(true);
             casePropertiesDialog.toFront();
         });
