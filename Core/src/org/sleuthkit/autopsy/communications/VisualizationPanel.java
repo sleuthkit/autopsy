@@ -349,14 +349,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         splitPane = new JSplitPane();
         borderLayoutPanel = new JPanel();
         jToolBar1 = new JToolBar();
-        jButton6 = new JButton();
-        jButton1 = new JButton();
-        jButton8 = new JButton();
-        jButton7 = new JButton();
+        hierarchyLayoutButton = new JButton();
+        fastOrganicLayoutButton = new JButton();
+        OrganicLayoutButton = new JButton();
+        circleLayoutButton = new JButton();
         jSeparator1 = new JToolBar.Separator();
         zoomOutButton = new JButton();
-        fitGraphButton = new JButton();
         zoomInButton = new JButton();
+        zoomActualButton = new JButton();
+        fitZoomButton = new JButton();
         statusPanel = new JPanel();
         progressBar = new JProgressBar();
 
@@ -369,49 +370,49 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         jToolBar1.setRollover(true);
 
-        jButton6.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton6.text")); // NOI18N
-        jButton6.setFocusable(false);
-        jButton6.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton6.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton6.addActionListener(new ActionListener() {
+        hierarchyLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.hierarchyLayoutButton.text")); // NOI18N
+        hierarchyLayoutButton.setFocusable(false);
+        hierarchyLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        hierarchyLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        hierarchyLayoutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                jButton6ActionPerformed(evt);
+                hierarchyLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton6);
+        jToolBar1.add(hierarchyLayoutButton);
 
-        jButton1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton1.text")); // NOI18N
-        jButton1.setFocusable(false);
-        jButton1.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton1.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton1.addActionListener(new ActionListener() {
+        fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
+        fastOrganicLayoutButton.setFocusable(false);
+        fastOrganicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        fastOrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        fastOrganicLayoutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                fastOrganicLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton1);
+        jToolBar1.add(fastOrganicLayoutButton);
 
-        jButton8.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton8.text")); // NOI18N
-        jButton8.setFocusable(false);
-        jButton8.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton8.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton8.addActionListener(new ActionListener() {
+        OrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.OrganicLayoutButton.text")); // NOI18N
+        OrganicLayoutButton.setFocusable(false);
+        OrganicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        OrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        OrganicLayoutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                jButton8ActionPerformed(evt);
+                OrganicLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton8);
+        jToolBar1.add(OrganicLayoutButton);
 
-        jButton7.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jButton7.text")); // NOI18N
-        jButton7.setFocusable(false);
-        jButton7.setHorizontalTextPosition(SwingConstants.CENTER);
-        jButton7.setVerticalTextPosition(SwingConstants.BOTTOM);
-        jButton7.addActionListener(new ActionListener() {
+        circleLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.circleLayoutButton.text")); // NOI18N
+        circleLayoutButton.setFocusable(false);
+        circleLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        circleLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        circleLayoutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                jButton7ActionPerformed(evt);
+                circleLayoutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton7);
+        jToolBar1.add(circleLayoutButton);
         jToolBar1.add(jSeparator1);
 
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
@@ -426,18 +427,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
         jToolBar1.add(zoomOutButton);
 
-        fitGraphButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
-        fitGraphButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitGraphButton.text")); // NOI18N
-        fitGraphButton.setFocusable(false);
-        fitGraphButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        fitGraphButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        fitGraphButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                fitGraphButtonActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(fitGraphButton);
-
         zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
         zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
         zoomInButton.setFocusable(false);
@@ -449,6 +438,30 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
         jToolBar1.add(zoomInButton);
+
+        zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
+        zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N
+        zoomActualButton.setFocusable(false);
+        zoomActualButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomActualButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        zoomActualButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                zoomActualButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(zoomActualButton);
+
+        fitZoomButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
+        fitZoomButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.text")); // NOI18N
+        fitZoomButton.setFocusable(false);
+        fitZoomButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        fitZoomButton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        fitZoomButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                fitZoomButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(fitZoomButton);
 
         borderLayoutPanel.add(jToolBar1, BorderLayout.NORTH);
 
@@ -477,9 +490,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
         morph(new mxFastOrganicLayout(graph));
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
     private void zoomInButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
         graphComponent.zoomIn();
@@ -489,17 +502,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.zoomOut();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
-    private void jButton6ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+    private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
         morph(new mxHierarchicalLayout(graph));
-    }//GEN-LAST:event_jButton6ActionPerformed
+    }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
-    private void jButton7ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+    private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
         morph(new mxCircleLayout(graph));
-    }//GEN-LAST:event_jButton7ActionPerformed
+    }//GEN-LAST:event_circleLayoutButtonActionPerformed
 
-    private void jButton8ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+    private void OrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_OrganicLayoutButtonActionPerformed
         applyOrganicLayout(10);
-    }//GEN-LAST:event_jButton8ActionPerformed
+    }//GEN-LAST:event_OrganicLayoutButtonActionPerformed
 
     private void applyOrganicLayout(int iterations) {
         mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph) {
@@ -513,9 +526,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         morph(mxOrganicLayout);
     }
 
-    private void fitGraphButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitGraphButtonActionPerformed
+    private void fitZoomButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fitZoomButtonActionPerformed
         fitGraph();
-    }//GEN-LAST:event_fitGraphButtonActionPerformed
+    }//GEN-LAST:event_fitZoomButtonActionPerformed
+
+    private void zoomActualButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomActualButtonActionPerformed
+        graphComponent.zoomActual();
+    }//GEN-LAST:event_zoomActualButtonActionPerformed
 
     private void fitGraph() {
         final Object[] childVertices = graph.getChildVertices(graph.getDefaultParent());
@@ -560,17 +577,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private JButton OrganicLayoutButton;
     private JPanel borderLayoutPanel;
-    private JButton fitGraphButton;
-    private JButton jButton1;
-    private JButton jButton6;
-    private JButton jButton7;
-    private JButton jButton8;
+    private JButton circleLayoutButton;
+    private JButton fastOrganicLayoutButton;
+    private JButton fitZoomButton;
+    private JButton hierarchyLayoutButton;
     private JToolBar.Separator jSeparator1;
     private JToolBar jToolBar1;
     private JProgressBar progressBar;
     private JSplitPane splitPane;
     private JPanel statusPanel;
+    private JButton zoomActualButton;
     private JButton zoomInButton;
     private JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
