@@ -43,6 +43,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import static java.util.Collections.singleton;
 import java.util.EnumSet;
@@ -138,41 +139,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
-//        new mxLayoutManager(graph) {
-//            final private mxOrganicLayout layout;
-//            private int counter;
-//            {
-//                this.layout = new mxOrganicLayout(graph);
-//                this.layout.setMaxIterations(1);
-//            }
-//
-//            @Override
-//            protected void executeLayout(mxIGraphLayout layout, Object parent) {
-//                if (counter % 10 == 0)
-//                {
-//                    super.executeLayout(layout, parent);
-////                fitGraph();
-//                }
-//                counter++;
-//            }
-//
-//            @Override
-//            public mxIGraphLayout getLayout(Object parent) {
-//                if (graph.getModel().getChildCount(parent) > 0) {
-//                    return layout;
-//                }
-//                return null;
-//            }
-//        };
-        //right click handler
-        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
+
+        graph.getView().addListener(mxEvent.SCALE, (Object sender, mxEventObject evt) -> {
+            zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getScale()));
+        });
+
+        graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, (Object sender, mxEventObject evt) -> {
+            zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getScale()));
+        });
+        final MouseAdapter mouseAdapter = new MouseAdapter() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 super.mouseWheelMoved(e);
                 if (e.getPreciseWheelRotation() > 0) {
-                    graphComponent.zoomIn();
+                    graphComponent.zoomTo(graph.getScale() / graphComponent.getZoomFactor(), true);
+//                    graphComponent.zoomIn();
                 } else if (e.getPreciseWheelRotation() < 0) {
-                    graphComponent.zoomOut();
+                    graphComponent.zoomTo(graph.getScale() * graphComponent.getZoomFactor(), true);
+//                    graphComponent.zoomOut();
+
                 }
             }
 
@@ -192,14 +177,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             }));
                         } else {
 
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock Account " + cellAt.getId(), unlockIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock Account " + cellAt.getId(), lockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     graph.lockAccount((AccountDeviceInstanceKey) cellAt.getValue());
                                 }
                             }));
 
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock Account " + cellAt.getId(), lockIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock Account " + cellAt.getId(), unlockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     graph.unlockAccount((AccountDeviceInstanceKey) cellAt.getValue());
@@ -223,7 +208,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     }
                 }
             }
-        });
+        };
+        //right click handler
+        graphComponent.getGraphControl().addMouseWheelListener(mouseAdapter);
+        graphComponent.getGraphControl().addMouseListener(mouseAdapter);
 
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
 
@@ -372,6 +360,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         zoomInButton = new JButton();
         zoomActualButton = new JButton();
         fitZoomButton = new JButton();
+        jLabel2 = new JLabel();
+        zoomLabel = new JLabel();
 
         setLayout(new BorderLayout());
 
@@ -515,6 +505,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
 
+        jLabel2.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jLabel2.text")); // NOI18N
+
+        zoomLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomLabel.text")); // NOI18N
+
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(jPanel2Layout.createParallelGroup(GroupLayout.LEADING)
@@ -539,7 +533,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(214, Short.MAX_VALUE))
+                .addPreferredGap(LayoutStyle.RELATED, 110, Short.MAX_VALUE)
+                .add(jLabel2)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(zoomLabel)
+                .add(27, 27, 27))
         );
         jPanel2Layout.setVerticalGroup(jPanel2Layout.createParallelGroup(GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
@@ -554,7 +552,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     .add(zoomOutButton)
                     .add(zoomInButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(zoomActualButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(fitZoomButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(fitZoomButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel2)
+                    .add(zoomLabel))
                 .add(3, 3, 3))
         );
 
@@ -610,17 +610,31 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     private void fitGraph() {
-        final Object[] childVertices = graph.getChildVertices(graph.getDefaultParent());
-        mxRectangle boundsForCells = graph.getBoundsForCells(childVertices, true, true, true);
-        if (boundsForCells == null) {
-            boundsForCells = new mxRectangle();
-        }
+
         mxPoint translate = graph.getView().getTranslate();
-        if (translate == null) {
+        if (translate == null || Double.isNaN(translate.getX()) || Double.isNaN(translate.getY())) {
             translate = new mxPoint();
         }
 
+        mxRectangle boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
+        if (boundsForCells == null||Double.isNaN( boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
+            boundsForCells = new mxRectangle(0,0,1,1);
+        }
         graph.getView().setTranslate(new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY()));
+
+        boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
+       if (boundsForCells == null||Double.isNaN( boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
+             boundsForCells = new mxRectangle(0,0,1,1);
+        }
+
+        Dimension size = graphComponent.getSize();
+
+        double widthFactor = size.getWidth() / boundsForCells.getWidth();
+//        widthFactor = boundsForCells.getWidth() / size.getWidth();
+
+        graphComponent.zoom(widthFactor);
+
+//        bounds = graph.getGraphBounds();
     }
 
     private void morph(mxIGraphLayout layout) {
@@ -655,6 +669,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton fitZoomButton;
     private JButton hierarchyLayoutButton;
     private JLabel jLabel1;
+    private JLabel jLabel2;
     private JPanel jPanel1;
     private JPanel jPanel2;
     private JToolBar.Separator jSeparator1;
@@ -666,6 +681,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JLabel statusLabel;
     private JButton zoomActualButton;
     private JButton zoomInButton;
+    private JLabel zoomLabel;
     private JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
 
