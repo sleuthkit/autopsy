@@ -245,8 +245,7 @@ class RawText implements IndexedText {
             if (msg == null) {
                 msg = Bundle.IndexedText_warningMessage_noTextAvailable();
             }
-            String htmlMsg = Bundle.IndexedText_htmlStyle_textBodyItalics(msg);
-            return htmlMsg;
+            return msg;
         }
 
         int chunkId = currentPage;

@@ -648,9 +648,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             return source.getText();
         }
 
-        @NbBundle.Messages({
-            "ExtractedContentPanel.getText.error=Error getting text."
-        })
         @Override
         protected void done() {
             super.done();
@@ -667,7 +664,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
             } catch (InterruptedException | CancellationException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
-                setPanelText(Bundle.ExtractedContentPanel_getText_error(), true);
+                setPanelText(Bundle.IndexedText_errorMessage_errorGettingText(), true);
             }
 
             updateControls(source);

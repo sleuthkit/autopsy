@@ -27,10 +27,9 @@ import org.openide.util.NbBundle;
  * view the stored text.
  */
 @NbBundle.Messages({
-    "IndexedText.errorMessage.errorGettingText=<p style\\=''font-style\\:italic''>Error retrieving indexed text.</p>",
-    "IndexedText.warningMessage.knownFile=<p style\\=''font-style\\:italic''>This file is a known file (based on MD5 hash) and does not have indexed text.</p>",
-    "IndexedText.warningMessage.noTextAvailable=<p style\\=''font-style\\:italic''>No indexed text for this file.</p>",
-    "IndexedText.htmlStyle.textBodyItalics=<span style\\=''font-style\\:italic''>{0}</span>"
+    "IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>",
+    "IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>",
+    "IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>"
 })
 interface IndexedText {
 
