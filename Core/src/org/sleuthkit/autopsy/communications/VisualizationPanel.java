@@ -140,27 +140,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
 
-        graph.getView().addListener(mxEvent.SCALE, (Object sender, mxEventObject evt) -> {
-            zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getScale()));
-        });
+        final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt) ->
+                zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getScale()));
+        graph.getView().addListener(mxEvent.SCALE, scaleListener);
+        graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, scaleListener);
 
-        graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, (Object sender, mxEventObject evt) -> {
-            zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getScale()));
-        });
-        final MouseAdapter mouseAdapter = new MouseAdapter() {
+        //right click handler
+        graphComponent.getGraphControl().addMouseWheelListener(new MouseAdapter() {
             @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
+            public void mouseWheelMoved(final MouseWheelEvent e) {
                 super.mouseWheelMoved(e);
                 if (e.getPreciseWheelRotation() > 0) {
                     graphComponent.zoomTo(graph.getScale() / graphComponent.getZoomFactor(), true);
-//                    graphComponent.zoomIn();
                 } else if (e.getPreciseWheelRotation() < 0) {
                     graphComponent.zoomTo(graph.getScale() * graphComponent.getZoomFactor(), true);
-//                    graphComponent.zoomOut();
-
                 }
             }
+        });
 
+        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
@@ -168,8 +166,27 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
                     if (cellAt != null && cellAt.isVertex()) {
                         JPopupMenu jPopupMenu = new JPopupMenu();
-                        if (graph.isAccountPinned((AccountDeviceInstanceKey) cellAt.getValue())) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin Account " + cellAt.getId(), unpinIcon) {
+                        AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+
+                        if (graph.isAccountLocked(adiKey)) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    graph.unlockAccount((AccountDeviceInstanceKey) cellAt.getValue());
+                                }
+                            }));
+
+                        }else {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    graph.lockAccount((AccountDeviceInstanceKey) cellAt.getValue());
+                                }
+                            }));
+
+                        }
+                        if (graph.isAccountPinned(adiKey))  {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
@@ -177,26 +194,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             }));
                         } else {
 
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock Account " + cellAt.getId(), lockIcon) {
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    graph.lockAccount((AccountDeviceInstanceKey) cellAt.getValue());
-                                }
-                            }));
-
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock Account " + cellAt.getId(), unlockIcon) {
-                                @Override
-                                public void actionPerformed(ActionEvent e) {
-                                    graph.unlockAccount((AccountDeviceInstanceKey) cellAt.getValue());
-                                }
-                            }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin Account " + cellAt.getId(), addPinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
                                 }
                             }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Reset and Pin Account " + cellAt.getId(), pinIcon) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
                                     handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
@@ -208,10 +212,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     }
                 }
             }
-        };
-        //right click handler
-        graphComponent.getGraphControl().addMouseWheelListener(mouseAdapter);
-        graphComponent.getGraphControl().addMouseListener(mouseAdapter);
+        });
 
         splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
 
@@ -582,7 +583,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
-        morph(new mxCircleLayout(graph));
+        final mxCircleLayout mxCircleLayout = new mxCircleLayout(graph);
+        mxCircleLayout.setResetEdges(true);
+        morph(mxCircleLayout);
     }//GEN-LAST:event_circleLayoutButtonActionPerformed
 
     private void OrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_OrganicLayoutButtonActionPerformed
@@ -590,11 +593,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_OrganicLayoutButtonActionPerformed
 
     private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
-        morph(new mxFastOrganicLayout(graph));
+        final mxFastOrganicLayout mxFastOrganicLayout = new mxFastOrganicLayout(graph);
+
+        morph(mxFastOrganicLayout);
     }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
     private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
-        morph(new mxHierarchicalLayout(graph));
+        final mxHierarchicalLayout mxHierarchicalLayout = new mxHierarchicalLayout(graph);
+        morph(mxHierarchicalLayout);
     }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
     private void applyOrganicLayout(int iterations) {
@@ -605,6 +611,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
 
         };
+        mxOrganicLayout.setResetEdges(true);
         mxOrganicLayout.setMaxIterations(iterations);
         morph(mxOrganicLayout);
     }
@@ -617,14 +624,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         mxRectangle boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
-        if (boundsForCells == null||Double.isNaN( boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
-            boundsForCells = new mxRectangle(0,0,1,1);
+        if (boundsForCells == null || Double.isNaN(boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
+            boundsForCells = new mxRectangle(0, 0, 1, 1);
         }
         graph.getView().setTranslate(new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY()));
 
         boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
-       if (boundsForCells == null||Double.isNaN( boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
-             boundsForCells = new mxRectangle(0,0,1,1);
+        if (boundsForCells == null || Double.isNaN(boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
+            boundsForCells = new mxRectangle(0, 0, 1, 1);
         }
 
         Dimension size = graphComponent.getSize();

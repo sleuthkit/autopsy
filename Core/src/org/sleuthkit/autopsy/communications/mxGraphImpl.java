@@ -50,7 +50,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class mxGraphImpl extends mxGraph {
 
     private static final Logger logger = Logger.getLogger(mxGraphImpl.class.getName());
-    private static final URL MARKER_PIN_URL = VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
+    private static final URL MARKER_PIN_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
+    private static final URL LOCK_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/lock_large_locked.png");
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
@@ -128,8 +129,14 @@ final class mxGraphImpl extends mxGraph {
         if (mxCell.isEdge()) {
             return super.isCellMovable(cell);
         } else {
-            return super.isCellMovable(cell)
-                    && false == lockedAccountDevices.contains((AccountDeviceInstanceKey) mxCell.getValue());
+            final boolean cellMovable = super.isCellMovable(cell);
+            final boolean unlocked = false == lockedAccountDevices.contains((AccountDeviceInstanceKey) mxCell.getValue());
+
+            if (cellMovable && unlocked) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -151,12 +158,15 @@ final class mxGraphImpl extends mxGraph {
             final String accountName = adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
             String iconFileName = Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType());
             String label = "<img src=\""
-                    + VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
+                    + mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
                     + "\">" + accountName;
             if (pinnedAccountDevices.contains(adiKey)) {
                 label += "<img src=\"" + MARKER_PIN_URL + "\">";
             }
-            return "<span>" + label + "</span>";
+            if (lockedAccountDevices.contains(adiKey)) {
+                label += "<img src=\"" + LOCK_URL + "\">";
+            }
+            return "<div width=\"" + (Math.sqrt(adiKey.getMessageCount()) + 10) + "\">" + label + "</div>";
         } else {
             return "";
         }
@@ -231,11 +241,11 @@ final class mxGraphImpl extends mxGraph {
             final HashSet<Content> hashSet = new HashSet<>(relSources);
             //            edgeMap.put(relSource, edge);
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
-                    "strokeWidth=" + Math.sqrt(hashSet.size()));
+                    "strokeWidth=" + (Math.log(hashSet.size())+1));
         } else {
             edge = (mxCell) edgesBetween[0];
             ((Collection<Content>) edge.getValue()).addAll(relSources);
-            edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
+            edge.setStyle("strokeWidth=" +( Math.log(((Collection) edge.getValue()).size())+1));
         }
         return edge;
     }
@@ -248,7 +258,11 @@ final class mxGraphImpl extends mxGraph {
         return getView().getScale();
     }
 
-    class SwingWorkerImpl extends SwingWorker<Void, Void> {
+    boolean isAccountLocked(AccountDeviceInstanceKey adiKey) {
+        return lockedAccountDevices.contains(adiKey);
+    }
+
+    private class SwingWorkerImpl extends SwingWorker<Void, Void> {
 
         private final ProgressIndicator progress;
         private final CommunicationsManager commsManager;
