@@ -33,6 +33,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
@@ -96,7 +97,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     private void customize() {
         
         //outlineView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        //outlineView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        //outlineView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
          
@@ -105,8 +106,11 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
            explorerManager = new ExplorerManager();
         }
         
+        outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+         
         plistTableScrollPane.setViewportView(outlineView);
         
+       
         outline.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         
         this.setVisible(true);
@@ -127,6 +131,8 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         exportButton = new javax.swing.JButton();
 
         jPanel1.setLayout(new java.awt.BorderLayout());
+
+        plistTableScrollPane.setBorder(null);
         jPanel1.add(plistTableScrollPane, java.awt.BorderLayout.CENTER);
 
         org.openide.awt.Mnemonics.setLocalizedText(exportButton, org.openide.util.NbBundle.getMessage(PListViewer.class, "PListViewer.exportButton.text")); // NOI18N
@@ -140,14 +146,15 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         hdrPanel.setLayout(hdrPanelLayout);
         hdrPanelLayout.setHorizontalGroup(
             hdrPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(hdrPanelLayout.createSequentialGroup()
-                .addGap(330, 330, 330)
-                .addComponent(exportButton))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, hdrPanelLayout.createSequentialGroup()
+                .addContainerGap(320, Short.MAX_VALUE)
+                .addComponent(exportButton)
+                .addContainerGap())
         );
         hdrPanelLayout.setVerticalGroup(
             hdrPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(hdrPanelLayout.createSequentialGroup()
-                .addGap(10, 10, 10)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, hdrPanelLayout.createSequentialGroup()
+                .addGap(0, 6, Short.MAX_VALUE)
                 .addComponent(exportButton))
         );
 
@@ -155,16 +162,18 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(hdrPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(hdrPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(5, 5, 5))
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(3, 3, 3)
                 .addComponent(hdrPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(6, 6, 6)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -323,7 +332,11 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             } else {
                 return new PropKeyValue(key, PropertyType.NUMBER,  new Float(number.floatValue())) ;
             }
-        } else if (value instanceof NSData ) {
+        } else if (value instanceof NSDate) {
+            NSDate date = (NSDate) value;
+            return (new PropKeyValue(key, PropertyType.DATE,  date.toString()));
+        }
+        else if (value instanceof NSData ) {
             return new PropKeyValue(key, PropertyType.DATA, Bundle.PListViewer_DataType_message());
         } else if (value instanceof NSArray) {
             List<PropKeyValue> children = new ArrayList<>();
@@ -387,6 +400,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             STRING, 
             NUMBER, 
             BOOLEAN, 
+            DATE,
             DATA,
             ARRAY,
             DICTIONARY
