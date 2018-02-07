@@ -227,7 +227,6 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-            return;
         }
 
         // Add two instances with one notable, one known
@@ -253,7 +252,6 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-            return;
         }
 
         // Add an artifact and then update its status
@@ -271,7 +269,6 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-            return;
         }
 
         // Try to update artifact with two CorrelationAttributeInstance instances
@@ -893,7 +890,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting instances with null type
         try {
-            List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByPath(null, inAllDataSourcesPath);
+            EamDb.getInstance().getArtifactInstancesByPath(null, inAllDataSourcesPath);
             Assert.fail("getArtifactInstancesByPath failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
