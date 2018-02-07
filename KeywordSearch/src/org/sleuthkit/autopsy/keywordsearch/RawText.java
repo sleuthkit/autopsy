@@ -43,7 +43,7 @@ class RawText implements IndexedText {
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
-    private static final Logger LOGGER = Logger.getLogger(RawText.class.getName());
+    private static final Logger logger = Logger.getLogger(RawText.class.getName());
 
     /**
      * Construct a new RawText object for the given content and object id. This
@@ -153,9 +153,9 @@ class RawText implements IndexedText {
                 return getArtifactText();
             }
         } catch (SolrServerException | NoOpenCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
         }
-        return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewerRawText.getText.error.msg");
+        return Bundle.ExtractedContentViewer_getText_error_msg();
     }
 
     @NbBundle.Messages({
@@ -207,7 +207,7 @@ class RawText implements IndexedText {
                 hasChunks = true;
             }
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Could not get number of chunks: ", ex); //NON-NLS		
+            logger.log(Level.SEVERE, "Could not get number of chunks: ", ex); //NON-NLS		
         }
     }
 
@@ -239,13 +239,13 @@ class RawText implements IndexedText {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile)content).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.knownFileMsg", content.getName());
+                    msg = Bundle.ExtractedContentViewer_getSolrContent_knownFileMsg(content.getName());
                 }
             }
             if(msg == null) {
-                msg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "file");
+                msg = Bundle.ExtractedContentViewer_getSolrContent_noTxtYetMsg("file");
             }
-            String htmlMsg = NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.txtBodyItal", msg);
+            String htmlMsg = Bundle.ExtractedContentViewer_getSolrContent_txtBodyItal(msg);
             return htmlMsg;
         }
 
@@ -284,7 +284,7 @@ class RawText implements IndexedText {
     private String getArtifactText() throws NoOpenCoreException, SolrServerException{
         String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
         if (indexedText == null || indexedText.isEmpty()) {
-            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "artifact");
+            return Bundle.ExtractedContentViewer_getSolrContent_noTxtYetMsg("artifact");
         }
         
         indexedText = EscapeUtil.escapeHtml(indexedText).trim();

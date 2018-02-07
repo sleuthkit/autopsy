@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JTextPane;
@@ -648,7 +649,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
 
         @NbBundle.Messages({
-            "ExtractedContentPanel.SetMarkup.error.msg=Error getting text."})
+            "ExtractedContentPanel.getText.error=Error getting text."
+        })
         @Override
         protected void done() {
             super.done();
@@ -663,11 +665,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     setPanelText("", false);
                 }
 
-            } catch (InterruptedException | ExecutionException ex) {
+            } catch (InterruptedException | CancellationException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
-                setPanelText(NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentPanel.getText.error.msg"), true);
-            } // catch and ignore if we were cancelled
-            catch (java.util.concurrent.CancellationException ex) {
+                setPanelText(Bundle.ExtractedContentPanel_getText_error(), true);
             }
 
             updateControls(source);

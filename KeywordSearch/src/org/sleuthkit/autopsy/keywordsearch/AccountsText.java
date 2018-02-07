@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class AccountsText implements IndexedText {
 
-    private static final Logger LOGGER = Logger.getLogger(AccountsText.class.getName());
+    private static final Logger logger = Logger.getLogger(AccountsText.class.getName());
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";
@@ -311,8 +311,8 @@ class AccountsText implements IndexedText {
             // extracted content (minus highlight tags) is HTML-escaped
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
-            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getText.error.msg");
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
+            return Bundle.ExtractedContentViewer_getText_error_msg();
         }
     }
 
