@@ -76,7 +76,7 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
-    final private static String PERL = "perl ";
+    private static String PERL = "perl ";
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
@@ -107,8 +107,7 @@ class ExtractRegistry extends Extract {
         }
 
         if (!PlatformUtil.isWindowsOS()) {
-            RR_PATH = PERL + RR_PATH;
-            RR_FULL_PATH = PERL + RR_FULL_PATH;
+            PERL = "/usr/bin/perl";
         }
     }
 
@@ -281,6 +280,7 @@ class ExtractRegistry extends Extract {
     private void executeRegRipper(String regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             List<String> commandLine = new ArrayList<>();
+            commandLine.add(PERL);
             commandLine.add(regRipperPath);
             commandLine.add("-r"); //NON-NLS
             commandLine.add(hiveFilePath);
@@ -288,6 +288,7 @@ class ExtractRegistry extends Extract {
             commandLine.add(hiveFileType);
 
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+            System.out.println(processBuilder.command());
             processBuilder.directory(regRipperHomeDir.toFile()); // RegRipper 2.8 has to be run from its own directory
             processBuilder.redirectOutput(new File(outputFile));
             processBuilder.redirectError(new File(errFile));
