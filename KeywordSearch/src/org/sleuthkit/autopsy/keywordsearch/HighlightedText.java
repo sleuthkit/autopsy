@@ -102,13 +102,13 @@ class HighlightedText implements IndexedText {
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
      * search results. In that case we have the entire QueryResults object and
- need to arrange the paging.
+     * need to arrange the paging.
      *
      * @param objectId     The objectID of the content whose text will be
      *                     highlighted.
      * @param QueryResults The QueryResults for the ad-hoc search from whose
-                     results a selection was made leading to this
-                     HighlightedText.
+     *                     results a selection was made leading to this
+     *                     HighlightedText.
      */
     HighlightedText(long objectId, QueryResults hits) {
         this.objectId = objectId;
@@ -203,10 +203,10 @@ class HighlightedText implements IndexedText {
         isLiteral = hits.getQuery().isLiteral();
 
         /**
-         * Organize the hits by page, filter as needed.
-         * We process *every* keyword here because in the case of a regular
-         * expression search there may be multiple different keyword
-         * hits located in different chunks for the same file/artifact.
+         * Organize the hits by page, filter as needed. We process *every*
+         * keyword here because in the case of a regular expression search there
+         * may be multiple different keyword hits located in different chunks
+         * for the same file/artifact.
          */
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
@@ -424,13 +424,13 @@ class HighlightedText implements IndexedText {
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
-            return Bundle.ExtractedContentViewer_getText_error();
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
     }
 
     @Override
     public String toString() {
-        return Bundle.HighlightedMatchesSource_toString();
+        return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.toString");
     }
 
     @Override
@@ -462,12 +462,13 @@ class HighlightedText implements IndexedText {
      *                         to a Solr query. We expect there to only ever be
      *                         a single document.
      *
-     * @return Either a string with the keyword highlighted via HTML span tags or a string
-     *         indicating that we did not find a hit in the document.
+     * @return Either a string with the keyword highlighted via HTML span tags
+     *         or a string indicating that we did not find a hit in the
+     *         document.
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return Bundle.ExtractedContentViewer_getSolrContent_noTxtYetMsg("document");
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
 
         // It doesn't make sense for there to be more than a single document in

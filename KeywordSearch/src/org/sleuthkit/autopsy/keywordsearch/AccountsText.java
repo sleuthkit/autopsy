@@ -312,7 +312,7 @@ class AccountsText implements IndexedText {
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
-            return Bundle.ExtractedContentViewer_getText_error_msg();
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
     }
 

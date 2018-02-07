@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
@@ -48,12 +47,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * A content viewer that displays the indexed text associated with a file or an
  * artifact, possibly marked up with HTML to highlight keyword hits.
  */
-@Messages({
-    "ExtractedContentViewer.getText.error.msg=Error getting text.",
-    "ExtractedContentViewer.getSolrContent.knownFileMsg=<p style\\=''font-style\\:italic''>{0} is a known file (based on MD5 hash) and does not have text in the index.</p>",
-    "ExtractedContentViewer.getSolrContent.noTxtYetMsg=<p style\\=''font-style\\:italic''>There is currently no text in the index for this {0}. It may have no text, it may not have been analyzed yet, there may have been an error extracting text, or keyword search was not enabled during ingest.</p>",
-    "ExtractedContentViewer.getSolrContent.txtBodyItal=<span style\\=''font-style\\:italic''>{0}</span>"
-})
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
 

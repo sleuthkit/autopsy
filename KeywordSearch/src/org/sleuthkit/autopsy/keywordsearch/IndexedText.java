@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,20 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
+
 /**
  * Interface to provide HTML text to display in ExtractedContentViewer. There is
  * a SOLR implementation of this that interfaces with SOLR to highlight the
  * keyword hits and a version that does not do markup so that you can simply
  * view the stored text.
  */
+@NbBundle.Messages({
+    "IndexedText.errorMessage.errorGettingText=<p style\\=''font-style\\:italic''>Error retrieving indexed text.</p>",
+    "IndexedText.warningMessage.knownFile=<p style\\=''font-style\\:italic''>This file is a known file (based on MD5 hash) and does not have indexed text.</p>",
+    "IndexedText.warningMessage.noTextAvailable=<p style\\=''font-style\\:italic''>No indexed text for this file.</p>",
+    "IndexedText.htmlStyle.textBodyItalics=<span style\\=''font-style\\:italic''>{0}</span>"
+})
 interface IndexedText {
 
     /**

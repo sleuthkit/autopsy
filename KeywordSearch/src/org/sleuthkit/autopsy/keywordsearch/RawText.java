@@ -155,7 +155,7 @@ class RawText implements IndexedText {
         } catch (SolrServerException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
         }
-        return Bundle.ExtractedContentViewer_getText_error_msg();
+        return Bundle.IndexedText_errorMessage_errorGettingText();
     }
 
     @NbBundle.Messages({
@@ -184,7 +184,6 @@ class RawText implements IndexedText {
     public int getNumberHits() {
         return 0;
     }
-
 
     @Override
     public int getNumberPages() {
@@ -224,7 +223,8 @@ class RawText implements IndexedText {
      * @return the extracted text
      *
      * @throws NoOpenCoreException If no Solr core is available.
-     * @throws SolrServerException If there's a Solr communication or parsing issue.
+     * @throws SolrServerException If there's a Solr communication or parsing
+     *                             issue.
      */
     private String getContentText(int currentPage, boolean hasChunks) throws NoOpenCoreException, SolrServerException {
         final Server solrServer = KeywordSearch.getServer();
@@ -234,18 +234,18 @@ class RawText implements IndexedText {
             //because we are storing extracted text in chunks only
             //and the non-chunk stores meta-data only
             String msg = null;
-            
+
             if (content instanceof AbstractFile) {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
-                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile)content).getKnown());
+                boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = Bundle.ExtractedContentViewer_getSolrContent_knownFileMsg(content.getName());
+                    msg = Bundle.IndexedText_warningMessage_knownFile();
                 }
             }
-            if(msg == null) {
-                msg = Bundle.ExtractedContentViewer_getSolrContent_noTxtYetMsg("file");
+            if (msg == null) {
+                msg = Bundle.IndexedText_warningMessage_noTextAvailable();
             }
-            String htmlMsg = Bundle.ExtractedContentViewer_getSolrContent_txtBodyItal(msg);
+            String htmlMsg = Bundle.IndexedText_htmlStyle_textBodyItalics(msg);
             return htmlMsg;
         }
 
@@ -260,38 +260,45 @@ class RawText implements IndexedText {
 
         //not cached
         String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
-        if (indexedText == null || indexedText.isEmpty()) {
-            return NbBundle.getMessage(ExtractedContentViewer.class, "ExtractedContentViewer.getSolrContent.noTxtYetMsg", "file");
+        if (indexedText == null) {
+            if (content instanceof AbstractFile) {
+                return Bundle.IndexedText_errorMessage_errorGettingText();
+            } else {
+                return Bundle.IndexedText_warningMessage_noTextAvailable();
+            }
+        } else if (indexedText.isEmpty()) {
+            return Bundle.IndexedText_warningMessage_noTextAvailable();
         }
-        
+
         cachedString = EscapeUtil.escapeHtml(indexedText).trim();
         StringBuilder sb = new StringBuilder(cachedString.length() + 20);
         sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
         cachedString = sb.toString();
         cachedChunk = chunkId;
-        
+
         return cachedString;
     }
-    
+
     /**
      * Get extracted artifact for a node from Solr
      *
      * @return the extracted text
-     * 
+     *
      * @throws NoOpenCoreException If no Solr core is available.
-     * @throws SolrServerException If there's a Solr communication or parsing issue.
+     * @throws SolrServerException If there's a Solr communication or parsing
+     *                             issue.
      */
-    private String getArtifactText() throws NoOpenCoreException, SolrServerException{
+    private String getArtifactText() throws NoOpenCoreException, SolrServerException {
         String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
         if (indexedText == null || indexedText.isEmpty()) {
-            return Bundle.ExtractedContentViewer_getSolrContent_noTxtYetMsg("artifact");
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
-        
+
         indexedText = EscapeUtil.escapeHtml(indexedText).trim();
         StringBuilder sb = new StringBuilder(indexedText.length() + 20);
         sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
-        
+
         return sb.toString();
     }
-    
+
 }
