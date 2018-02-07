@@ -135,7 +135,7 @@ class MSOfficeEmbeddedContentExtractor {
      *         supported. Else it returns false.
      */
     boolean isContentExtractionSupported(AbstractFile abstractFile) {
-        String abstractFileMimeType = fileTypeDetector.detectMIMEType(abstractFile);
+        String abstractFileMimeType = fileTypeDetector.getMIMEType(abstractFile);
         for (SupportedExtractionFormats s : SupportedExtractionFormats.values()) {
             if (s.toString().equals(abstractFileMimeType)) {
                 abstractFileExtractionFormat = s;
