@@ -33,7 +33,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
@@ -43,7 +42,6 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -51,17 +49,21 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
 
 
+/**
+ * PListViewer - a file viewer for binary plist files. 
+ *
+ */
 public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
 
-    public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-bplist"};
+    private static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-bplist"};
     private static final Logger LOGGER = Logger.getLogger(PListViewer.class.getName());
     
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
+   
+    private NSDictionary rootDict = null;
     
-    //private byte[] plistFileBuf = null;
-    NSDictionary rootDict = null;
     /**
      * Creates new form PListViewer
      */
@@ -73,31 +75,23 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         
         initComponents();
          
-        //add(outlineView, BorderLayout.CENTER);
-        
         outline = outlineView.getOutline();
         
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Key"); 
         
         Bundle.PListNode_KeyCol();
         outlineView.setPropertyColumns(
-                //"Key", Bundle.PListNode_KeyCol(),
                 "Type", Bundle.PListNode_TypeCol(),
                 "Value", Bundle.PListNode_ValueCol());
          
         customize();
-        
     }
 
     @NbBundle.Messages({"PListNode.KeyCol=Key",
-    "PListNode.TypeCol=Type",
-    "PListNode.ValueCol=Value" })
-    
-    
+                        "PListNode.TypeCol=Type",
+                        "PListNode.ValueCol=Value" })
+       
     private void customize() {
-        
-        //outlineView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        //outlineView.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
          
@@ -106,11 +100,10 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
            explorerManager = new ExplorerManager();
         }
         
-        outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        //outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
          
         plistTableScrollPane.setViewportView(outlineView);
         
-       
         outline.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         
         this.setVisible(true);
@@ -196,34 +189,22 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             }
 
             try {
-            //Save the propery list
-            PropertyListParser.saveAsXML(this.rootDict, selectedFile);
-            
-            JOptionPane.showMessageDialog(this,
-                            String.format("Plist file exported successfully to %s ", selectedFile.getName() ),
-                            Bundle.PListViewer_ExportSuccess_message(),
-                            JOptionPane.INFORMATION_MESSAGE);
-             
-        } catch (IOException ex) {
-            // RAMAN TBD: pop up a error dialog?
-            JOptionPane.showMessageDialog(this,
+                //Save the propery list as XML
+                PropertyListParser.saveAsXML(this.rootDict, selectedFile);
+                JOptionPane.showMessageDialog(this,
+                                String.format("Plist file exported successfully to %s ", selectedFile.getName() ),
+                                Bundle.PListViewer_ExportSuccess_message(),
+                                JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
                             String.format("Failed to export plist file to %s ", selectedFile.getName() ),
                             Bundle.PListViewer_ExportFailed_message(),
                             JOptionPane.ERROR_MESSAGE);
             
-            LOGGER.log(Level.SEVERE, "Error exporting plist to XML file " + selectedFile.getName(), ex);
-        } 
-            
+                LOGGER.log(Level.SEVERE, "Error exporting plist to XML file " + selectedFile.getName(), ex);
+            } 
         }
     }//GEN-LAST:event_exportButtonActionPerformed
-
-    private void writeToXML(File outFile) {
-        
-        // RAMAN TBD
-        System.out.println("RAMAN: Exporting to XML.");
-        
-        
-    }
     
     @Override
     public List<String> getSupportedMIMETypes() {
@@ -242,7 +223,6 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
 
     @Override
     public void resetComponent() {
-        // RAMAN TBD
        rootDict = null;
     }
 
@@ -362,7 +342,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             pkv.setChildren(children.toArray(new PropKeyValue[0] ));
             return pkv;
         } else {
-            LOGGER.severe("Can't parse Plist for key = " + key  + " value from " + value.getClass());
+            LOGGER.severe("Can't parse Plist for key = " + key  + " value of type " + value.getClass());
         }
         
         return null;
@@ -392,7 +372,6 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
 
     @Override
     public ExplorerManager getExplorerManager() {
-        
         return explorerManager;
     }
     
@@ -423,6 +402,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         String getKey() {
             return this.key;
         }
+        
         PropertyType getType() {
             return this.type;
         }
