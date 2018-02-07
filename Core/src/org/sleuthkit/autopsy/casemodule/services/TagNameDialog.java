@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -136,7 +136,7 @@ final class TagNameDialog extends javax.swing.JDialog {
             String newTagDisplayName = tagNameTextField.getText().trim();
             String descriptionText = descriptionTextArea.getText();
             if (newTagDisplayName.isEmpty()) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.message"),
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagNameEmpty.title"),
                         JOptionPane.ERROR_MESSAGE);
@@ -144,14 +144,14 @@ final class TagNameDialog extends javax.swing.JDialog {
             }
             //if a tag name contains illegal characters and is not the name of one of the standard tags
             if (TagsManager.containsIllegalCharacters(newTagDisplayName) && !TagNameDefinition.getStandardTagNames().contains(newTagDisplayName)) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message"),
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return;
             } else if (descriptionText.contains(",")
                     || descriptionText.contains(";")) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.message"),
                         NbBundle.getMessage(TagNameDialog.class, "TagNameDialog.JOptionPane.tagDescriptionIllegalCharacters.title"),
                         JOptionPane.ERROR_MESSAGE);

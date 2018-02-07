@@ -350,7 +350,7 @@ public final class ManageOrganizationsDialog extends JDialog {
                     EamDb.getInstance().deleteOrganization(orgToDelete);
                     populateList();
                 } catch (EamDbException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(this,
                             ex.getMessage(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);
                     LOGGER.log(Level.INFO, "Was unable to delete organization from central repository", ex);
                 }
