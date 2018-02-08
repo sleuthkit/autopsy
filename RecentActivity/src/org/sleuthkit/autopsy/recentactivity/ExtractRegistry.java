@@ -288,7 +288,6 @@ class ExtractRegistry extends Extract {
             commandLine.add(hiveFileType);
 
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-            System.out.println(processBuilder.command());
             processBuilder.directory(regRipperHomeDir.toFile()); // RegRipper 2.8 has to be run from its own directory
             processBuilder.redirectOutput(new File(outputFile));
             processBuilder.redirectError(new File(errFile));
