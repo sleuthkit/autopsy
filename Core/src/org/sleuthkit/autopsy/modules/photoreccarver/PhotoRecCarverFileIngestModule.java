@@ -82,8 +82,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
-    private static final String PHOTOREC_LINUX_DIRECTORY = "photorec_binary";
-    private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec_static";
+    private static final String PHOTOREC_LINUX_DIRECTORY = "/usr/bin/";
+    private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
     private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
@@ -450,34 +450,21 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws IngestModuleException
      */
     public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException, IOException {
-       
-        // Must be running under a Windows operating system.
-        //if (!PlatformUtil.isWindowsOS()) {
-          //  exeFile=InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverIngestModule.class.getPackage().getName(), false);
-        //}
-        //if(exeFile != null){
-          //  System.out.println(exeFile.toString());
-        //}
+        File exeFile = null;
+      
+        if(PlatformUtil.isWindowsOS()){
+            exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
+        }
+        
+        if(!PlatformUtil.isWindowsOS()){
+            exeFile = new File(executableToFindName);
+        }
 
-        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         if (null == exeFile) {
             throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
         }
         
-        if(!PlatformUtil.isWindowsOS()){
-            Set<PosixFilePermission> perms = new HashSet<>();
-            perms.add(PosixFilePermission.OWNER_READ);
-            perms.add(PosixFilePermission.OWNER_WRITE);
-            perms.add(PosixFilePermission.OWNER_EXECUTE);
-            perms.add(PosixFilePermission.GROUP_READ);
-            perms.add(PosixFilePermission.GROUP_EXECUTE);
-            perms.add(PosixFilePermission.OTHERS_READ);
-            perms.add(PosixFilePermission.OTHERS_EXECUTE);
-            
-            Files.setPosixFilePermissions(exeFile.toPath(), perms);
-            System.out.println("file permissions");
-            }
-
+       
         if (!exeFile.canExecute()) {
             throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
         }
