@@ -1,4 +1,4 @@
-#! c:\perl\bin\perl.exe
+#! /usr/bin/perl
 #-------------------------------------------------------------------------
 # Rip - RegRipper, CLI version
 # Use this utility to run a plugins file or a single plugin against a Reg
