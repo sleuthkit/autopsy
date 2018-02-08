@@ -1,0 +1,6234 @@
+
+2015-04-16 - Christophe Grenier
+    PC/Intel partition table parsing: fix an endless loop found by afl-fuzz
+
+2015-04-16 - Christophe Grenier
+    Report pdcurses/ncurses library version
+
+2015-04-16 - Christophe Grenier
+    PhotoRec: set a minimum size for .par2 files
+
+2015-04-16 - Christophe Grenier
+    Reserve more bytes for partition information
+
+2015-04-14 - Christophe Grenier
+    Workaround ncurses 5.9 env variable cache. May introduced a 2s sleep at startup
+
+2015-04-14 - Christophe Grenier
+    Fix compilation parameters when using cygwin. Update various libraries
+
+2015-04-14 - Christophe Grenier
+    Replace "no free space available" by "not enough free space available"
+
+2015-04-14 - Christophe Grenier
+    turn off a compiler warning in screen_buffer_add()
+
+2015-04-14 - Christophe Grenier
+    add missing return to new line at the end of LBA48 support message
+    Search for backup partition when EFI GPT is selected
+
+2015-04-14 - Christophe Grenier
+    PhotoRec: add minimal size for xfs structure
+
+2015-04-14 - Christophe Grenier
+    new prototype for jpg_check_sof0()
+
+2015-04-14 - Christophe Grenier
+    PhotoRec: fix for qcow1 size detection
+
+2015-04-14 - Christophe Grenier
+    FAT listing: fix when non utf-8 char is detected in a deleted filename
+
+2015-04-14 - Christophe Grenier
+    dir_aff_ncurses: remove useless variable affectations
+
+2015-04-14 - Christophe Grenier
+    src/bsd.h: OpenBSD partition may contain more slices than FreeBSD one
+
+2015-04-11 - Christophe Grenier
+    add gcc_struct attribute to all __packed__ structure
+    do not use fseeko() with mingw32 gcc compiler
+
+2015-04-11 - Christophe Grenier
+    Report Windows 8 and Windows server 2012 by name
+
+2015-04-11 - Christophe Grenier
+    Fix buffer overflow in check_HPFS()
+
+2015-04-11 - Christophe Grenier
+    Fix Testdisk check_OS2MB Stack Buffer overflow found by Denis Andzakovic <denis.andzakovic@security-assessment.com>
+
+2015-04-11 - Christophe Grenier
+    Update generic INSTALL instruction
+
+2015-04-11 - Christophe Grenier
+    Enable gcc stack protection by default
+
+2015-04-11 - Christophe Grenier
+    configure.ac: use g++ when checking additional CXXFLAGS
+
+2015-04-09 - Christophe Grenier
+    Check that disk sector_size is 512 bytes at least
+
+2015-04-09 - Christophe Grenier
+    rebuild_NTFS_BS: add a safety check for mft_record_size
+
+2015-04-09 - Christophe Grenier
+    src/fat_unformat.c: use buffer_start instead of buffer variable (style)
+
+2015-04-09 - Christophe Grenier
+    fat32_set_part_name(): define a const variable to hold the cluster size (style)
+
+2015-04-09 - Christophe Grenier
+    get_next_cluster(): move memory allocation (style)
+
+2015-04-09 - Christophe Grenier
+    disk_image(): add assertion
+
+2015-04-05 - Christophe Grenier
+    PhotoRec: recover Mac OS .plist as .plist and not .abcdp
+
+2015-04-05 - Christophe Grenier
+    PhotoRec: recover xfs structure. Should help to recover files from XFS filesystem.
+
+2015-04-05 - Christophe Grenier
+    PhotoRec: recover RT60 .idx files
+
+2015-04-05 - Christophe Grenier
+    PhotoRec:recover Ciel.sgtca files
+
+2015-04-05 - Christophe Grenier
+    PhotoRec: recover .gsm files (prone to false positive)
+
+2015-04-05 - Christophe Grenier
+    PhotoRec: do not always try to complete the recovery of the previous file when a file is recovered
+
+2015-04-05 - Christophe Grenier
+    new prototype for menu_choose_blocksize()
+
+2015-04-05 - Christophe Grenier
+    src/file_jpg.c: Remove redundant DHT check
+
+2015-04-05 - Christophe Grenier
+    interface_editor_location(): move variable definition (code style)
+
+2015-04-05 - Christophe Grenier
+    Distinguish between file listing not implemented and missing library
+
+2015-03-12 - Andrei GUDIU
+    When asked for a pattern, raise the limit from 40 to 120 chars.
+
+2015-03-12 - Christophe Grenier
+    File listing: use '/', 'n' and 'N' to search for a user specified name
+
+2015-03-12 - Andrei GUDIU
+    File listing: use 'F' key to mark all files matching a user-specified filter.
+    This way it's easier to copy them.
+
+2015-03-12 - Christophe Grenier
+    file_block_truncate_and_move(): check fseek() return value (code cosmetic)
+
+2015-03-12 - Christophe Grenier
+    file_test_availability: discard the buffer content if less than 512 bytes has been read
+
+2015-03-12 - Christophe Grenier
+    jpg_check_sof0(): fix a warning reported by Coverity.
+    Code introduced in commit 285aa471329d4df7ae3b22cde2cae9ddf0f7e11c
+
+2015-03-12 - Christophe Grenier
+    ext2/3/4 file listing: discard entries without inode information
+
+2015-03-08 - Christophe Grenier
+    NTFS listing: return the error message when ntfs_readdir() failed.
+
+2015-03-08 - Christophe Grenier
+    Fix check in file_win32_disk_get_model() and add more checks.
+    Thanks to "dmex" for reporting the incorrect check.
+
+2015-03-08 - Christophe Grenier
+    Avoid potential out of bound read access in screen_buffer_add()
+
+2015-02-25 - Christophe Grenier
+    PhotoRec: recover FrontPage Pro 12 files as .f12 instead of .fp7
+
+2015-02-25 - Christophe Grenier
+    Workaround gcc bug 52991
+
+2015-02-25 - Christophe Grenier
+    PhotoRec: avoid a potential out of bound read memory access while checking TIFF
+
+2015-02-25 - Christophe Grenier
+    PhotoRec check SOF0 while recovering jpg
+
+2015-02-25 - Christophe Grenier
+    PhotoRec FAT unformat: report read errors if any
+
+2014-12-06 - Christophe Grenier
+    FAT: allow listing of deleted directory
+
+2014-11-15 - Christophe Grenier
+    PhotoRec: recover ZeroCad .z2d
+
+2014-11-15 - Christophe Grenier
+    Stricter check for .E01 when used as disk image
+
+2014-11-15 - Christophe Grenier
+    src/file_jpg.c: avoid some FP permitted by commit 4c5fcd4164b7fd06eafa54fa44ecfb9fb2d02d00
+
+2014-11-15 - Christophe Grenier
+    interface_options_photorec_log() was never called
+
+2014-11-15 - Christophe Grenier
+    src/intrfn.c: don't forget null byte when using strncat
+
+2014-11-15 - Christophe Grenier
+    file_tiff.c: constify some variables and turn off some sign compare warnings
+
+2014-11-15 - Christophe Grenier
+    file_fh5.c: turn off a sign/unsigned warning
+
+2014-11-15 - Christophe Grenier
+    file_exe.c, parthumax.c: remove dead code
+
+2014-11-15 - Christophe Grenier
+    Turn off various signed/unsigned comparaison warnings
+
+2014-11-15 - Christophe Grenier
+    header_check_ape: remove dead code
+
+2014-11-15 - Christophe Grenier
+    file_check_ace(): avoid a gcc warning
+
+2014-11-15 - Christophe Grenier
+    Swap gcc warning by another in exfat_ucstoutf8()
+
+2014-11-15 - Christophe Grenier
+    Modify set_part_name() and set_part_name_chomp() prototype
+
+2014-11-15 - Christophe Grenier
+    Add missing ctype.h include
+
+2014-11-02 - Christophe Grenier
+    Create qphotorec.desktop
+
+2014-11-02 - Christophe Grenier
+    Rename ico directory to icons
+
+2014-11-02 - Christophe Grenier
+    man page for qphotorec
+
+2014-11-02 - Christophe Grenier
+    Use "g++ -mwindows" when compiling qphotorec under Windows
+
+2014-10-28 - François Revol
+    configure.ac: Do the AM_CONDITIONAL() after finally setting the variable
+
+2014-10-28 - Christophe Grenier
+    PhotoRec: initialize the blocksize in photorec_find_blocksize()
+
+2014-10-28 - Christophe Grenier
+    PhotoRec: fix file descriptor leak when bruteforce mode is enabled
+
+2014-10-28 - Christophe Grenier
+    PhotoRec: rewrite jpg_check_dht()
+
+2014-10-28 - Christophe Grenier
+    PhotoRec: recover .dv using PAL format
+
+2014-10-13 - Christophe Grenier
+    Update man pages
+
+2014-10-13 - Christophe Grenier
+    Implement help and version parameters for fidentify and qphotorec
+
+2014-10-12 - Christophe Grenier
+    Add zh_CN man pages
+
+2014-10-11 - Christophe Grenier
+    PhotoRec: fix .spe file recovery on big endian arch
+
+2014-10-11 - Christophe Grenier
+    Enable automake silent rules and fix the description of qt compilation as it is compiled by default.
+    Thanks to Alexandre Franke for reporting the problem.
+
+2014-10-06 - Christophe Grenier
+    PhotoRec: ignore jpeg header beginning by a DQT if PhotoRec is already saving a file
+    See commit 4c5fcd4164b7fd06eafa54fa44ecfb9fb2d02d00
+
+2014-10-05 - Christophe Grenier
+    PhotoRec: constify some variables in photorec_check_header()
+
+2014-10-05 - Christophe Grenier
+    PhotoRec: fix ELF size detection
+
+2014-10-05 - Christophe Grenier
+    PhotoRec: remove useless file_recovery NULL check
+
+2014-10-05 - Christophe Grenier
+    configure: new option --enable-gprof
+
+2014-10-05 - Christophe Grenier
+    PhotoRec: recover LUKS encrypted file
+
+2014-10-05 - Christophe Grenier
+    PhotoRec: recover Revelation password file
+
+2014-10-05 - Christophe Grenier
+    PhotoRec: recover Berkeley little endian database 8 and 9 files
+
+2014-10-04 - Christophe Grenier
+    PhotoRec: speedup file_block_remove_from_sp() function introduced by commit b47b36998a17dccb922bc8a9591c8071f951c14f
+    b47b36998a17dccb922bc8a9591c8071f951c14f
+
+2014-10-04 - Christophe Grenier
+    PhotoRec: limit to 200 MB when searching the previous unrecovered file
+
+2014-10-04 - Christophe Grenier
+    Use fseeko() instead of fseek().
+    Fix 2GB per file limit on Windows for some file types.
+
+2014-10-02 - Christophe Grenier
+    PhotoRec: relax jpg header detection
+
+2014-09-24 - Christophe Grenier
+    PhotoRec: fix potential out of bound read-access affecting 32-bit version when checking asf/wmv/wma files
+    Bug introduced in commit #cc3b8dada5ad9f17d557bbe03a38dc23ee6e8b6c
+
+2014-09-17 - Christophe Grenier
+    Write dmsetup commands in the log file for Linux advanced users
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: stricter check for various txt/tx? signatures
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: stricter check for .png end of file detection
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: recover Magic Lantern Video .mlv file
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: fix jpg recovery when blocksize is 1 byte
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: stricter check for .ico
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: stricter check for FAT image recovery
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: stricter check for .bmp
+
+2014-09-17 - Christophe Grenier
+    PhotoRec: stricter check for .ab file
+
+2014-09-17 - Christophe Grenier
+    PhotoRec recover ARRI Raw Video .ari file
+
+2014-09-17 - Christophe Grenier
+    Add the filename in the error message when ntfs_inode_open() failed
+
+2014-09-17 - Christophe Grenier
+    cygwin: use cygwin_conv_path() instead of cygwin_conv_to_posix_path()
+
+2014-09-17 - Christophe Grenier
+    When selecting multiple files, deleted ot not, display them in green
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .xv
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .tph
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .frm
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .drw
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .asm
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .x3f
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .wv
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .torrent
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .sqlite
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .rm
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .flp
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .evt
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .dat
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .rpm, get the package name
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: increase .qxd minimal filesize
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .psp
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .psb and .psd
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .pdf
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .par2
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: define a minimal filesize for .nds
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: update the method to find .indd file size
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .icc
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .hds
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: stricter check for .gif
+
+2014-08-13 - Christophe Grenier
+    PhotoRec: detect .amr file size
+
+2014-08-09 - Christophe Grenier
+     scan for Linux Xen /dev/xvd? device
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: fix avi stream recovery
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: define a minimal size for .flac
+
+2014-08-09 - Christophe Grenier
+    src/fat_adv.c: rework a for loop in find_dir_entries()
+
+2014-08-09 - Christophe Grenier
+    configure: remove check for libcarvpath.h, it's not used currently
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: try to detect .wim size
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .vmdk
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: better check for ogm/ogv/ogg extension detection
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: define a minimal size for .fob
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for ELF binary detection
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .dmp
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: Fix .dcm file recovery
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .djv
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: define a minimal size for recovered .dat
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .dad
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: define a minimal size for recovered .cow
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .bkf
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .bac
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .axx
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: distinguish between asf/wma/wmv extensions
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for Unix Archive/Debian package
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter checl for .7z
+
+2014-08-09 - Christophe Grenier
+    PhotoRec: stricter check for .3dm
+
+2014-07-26 - Christophe Grenier
+    Display number of sectors as long long unsigned integer
+    see 179ddff52b82753def3b15d38b3f8a18173e46d7
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: fix when using a blocksize of 1 byte
+
+2014-07-26 - Christophe Grenier
+    Some partitions weren't marked as D(eleted)
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .xpt
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .mov files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .xcf
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .wv
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .wtv
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .wpd
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .woff
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .wmf files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .wdp
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: code cleanup for .tib
+
+2014-07-26 - Christophe Grenier
+    Fix potential integer overflow
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .veg
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .vdi
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .tiff
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .swf
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .rx2
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .rw2
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for files from RIFF familly
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .raf
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .r3d
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: define minimal size for .qxd
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: code clean in src/file_qbb.c
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: define a minimal size for .pzh files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .pst files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .psp
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .psd files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .psb files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for pbm/pgm/ppm files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .png
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter checl for .pfx
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .pct
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .par2 files for small blocksiz
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: code cleanup for .pap
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .one
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .oci
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .myo
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .mpg files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .mp3 files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .mid
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for Zope .fs
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .mb files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .m2ts files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter checl for .lxo files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for itune files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .iso
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .gif files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter checl for .hdf files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: code cleanup for .fob recovery
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .fh5 files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: code cleanup for .dxf recovery
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .caf files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable data check of .blender files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable check of .flv for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable check of .fits for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .evt files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check for .emf files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: stricter check .eCryptfs files
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable check of .dv files for small blocksize
+
+2014-07-26 - Christophe Grenier
+    PhotoRec: disable check of .dad for small blocksize
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: remove useless check for .dwg
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter checl for .dss
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .dpx
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .dex
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .dat
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .d2s
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .cwk
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: limit data check for .bac to compatible blocksize
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .ape
+
+2014-07-24 - Christophe Grenier
+    PhotoRec: stricter check for .1cd file
+
+2014-07-23 - Christophe Grenier
+    PhotoRec: Fix commit 840b9f74e2eecb2a608c8020cb30bb802c00e9b8 for .caf recovery
+
+2014-07-21 - Christophe Grenier
+    PhotoRec: stricter check for .chm
+
+2014-07-21 - Christophe Grenier
+    PhotoRec: stricter check for .caf
+
+2014-07-21 - Christophe Grenier
+    PhotoRec; stricter check for .cab
+
+2014-07-21 - Christophe Grenier
+    PhotoRec: stricter check for .au
+
+2014-07-21 - Christophe Grenier
+    PhotoRec: stricter check for .asf
+
+2014-07-21 - Christophe Grenier
+    PhotoRec: stricter check for .arj
+
+2014-07-21 - Christophe Grenier
+    PhotoRec: stricter check for .aif
+
+2014-07-21 - Christophe Grenier
+    Check version in VMFS header
+
+2014-07-21 - Christophe Grenier
+    Dsplay number of sectors as long long unsigned integer
+
+2014-07-21 - Christophe Grenier
+    Add missing reference to help-about.png and image-x-generic.png
+
+2014-06-14 - Christophe Grenier
+    TestDisk: fix rare crash when listing NTFS directories
+
+2014-06-14 - Christophe Grenier
+    PhotoRec: recover SMART Notebook .notebook (zip familly)
+
+2014-06-14 - Christophe Grenier
+    PhotoRec: raise .flac filesize limit
+
+2014-06-14 - Christophe Grenier
+    exFAT: support for non-ascii charset
+
+2014-05-29 - Christophe Grenier
+    Move photorec_64x64.png to the correct directory
+    Commit f9500b9b19764cac4ed108d5e982a5ee67a91d0b wasn't fixing the issue
+
+2014-05-27 - Christophe Grenier
+    log when disk image is using EWF
+
+2014-05-27 - Christophe Grenier
+    PhotoRec: recover .woff Web Open Font Format
+
+2014-05-27 - Christophe Grenier
+    PhotoRec: recover .dad Micae DVR files
+
+2014-05-27 - Christophe Grenier
+    include ntfs-3g/types.h to fix compilation when s64 type isn't defined
+
+2014-05-27 - Christophe Grenier
+    Add files presents in .tar.bz2 but missing in git
+
+2014-05-18 - Christophe Grenier
+    TestDisk: check presence of HFS+ backup superblock
+
+2014-05-18 - Christophe Grenier
+    PhotoRec: detect MPEG filesize
+
+2014-05-18 - Christophe Grenier
+    Replace drive by disk in message
+
+2014-04-27 - Christophe Grenier
+    XFS: stricter check for superblock detection
+
+2014-04-23 - Christophe Grenier
+    PhotoRec: move cli parsing from phrecn.c and ppartseln.c to phcli.c
+
+2014-04-23 - Christophe Grenier
+    PhotoRec: fix reggression, "stop" works again
+
+2014-04-23 - Christophe Grenier
+    rename src/ppartsel.c to src/ppartseln.c
+    rename src/ppartsel.h to src/ppartseln.h
+
+2014-04-21 - Christophe Grenier
+    create src/pdisksel.c with photorec_disk_selection_cli()
+
+2014-04-21 - Christophe Grenier
+    rename src/pdisksel.c to src/pdiskseln.c
+
+2014-04-20 - Christophe Grenier
+    QPhotoRec: add About and File Formats interfaces
+
+2014-04-20 - Christophe Grenier
+    PhotoRec: recover Krita .kra and Mypaint .ora files (zip archives)
+
+2014-04-20 - Christophe Grenier
+    src/exfat.c: fix commit #24d570d6635c918dd2d2b26a7c4195231d2268f5
+
+2014-04-13 - Christophe Grenier
+    QPhotoRec: fix selection of whole disk
+
+2014-04-13 - Christophe Grenier
+    PhotoRec: parse .flv files to get the correct filesize
+
+2014-04-02 - Christophe Grenier
+    Revert part of commit a23c1b5a884bd22aa0eb9d9889c2e3980126925e
+
+2014-03-31 - Christophe Grenier
+    Use .ogv instead of .ogm for Ogg Video
+
+2014-03-30 - Christophe Grenier
+    PhotoRec: when a file is recovered, check again each block after the end of the recovered file
+
+2014-03-30 - Christophe Grenier
+    PhotoRec: do not check for foreign txt inside zip archive
+
+2014-03-30 - Christophe Grenier
+    PhotoRec: better check to avoid to concat mp3 files
+
+2014-03-29 - Christophe Grenier
+    QPhotoRec: handle no space left and non-writable destination
+
+2014-03-29 - Christophe Grenier
+    PhotoRec: better file check for gif files
+
+2014-03-29 - Christophe Grenier
+    Disable assert() code when compiling for powerpc-apple-darwin
+
+2014-03-24 - Christophe Grenier
+    src/exfat.c: report EXFAT blocksize
+
+2014-03-21 - Christophe Grenier
+    src/exfat_dir.c: exFAT cluster number is using 32 bits, fix EOC detection
+
+2014-03-21 - Christophe Grenier
+    src/qmainrec.cpp: Simplify the code starting PhotoRec when DISPLAY is not set.
+
+2014-03-21 - Christophe Grenier
+    src/file_gz.c: use a structure to access mtime
+
+2014-03-21 - Christophe Grenier
+    Add assert() to document function assumptions in MALLOC(), pfind_sectors_per_cluster() and search_part()
+
+2014-03-16 - Christophe Grenier
+    src/misc.c: HAVE_UNAME wasn't used
+
+2014-03-16 - Christophe Grenier
+    src/file_jpg.c: fix potential out of bound read access
+
+2014-03-16 - Christophe Grenier
+    configure.ac: new options --without-zlib and --without-uuid
+
+2014-03-16 - Christophe Grenier
+    Fix "./configure --enable-coverage" when building qphotorec
+
+2014-03-12 - Christophe Grenier
+    PhotoRec: modify how JPEG Multi-Picture Format are detected
+
+2014-03-12 - Christophe Grenier
+    PhotoRec: when checking the TIFF file, return -1 if an error is present, the maximum data offset referenced otherwise, 0 potentially
+
+2014-03-12 - Christophe Grenier
+    PhotoRec: some data_check_() were stopping too late
+
+2014-03-12 - Christophe Grenier
+    header_check_dbf:fix year check again
+    see previous commit d4ad15178882c3570cad9908a88ad75328b6d918
+
+2014-03-11 - Christophe Grenier
+    PhotoRec: recover .red RED2 video format
+
+2014-03-11 - Christophe Grenier
+    PhotoRec: avoid false positive between mp3 header and tiff data
+
+2014-03-11 - Christophe Grenier
+    PhotoRec: fix .gif filesize detection
+
+2014-02-02 - Christophe Grenier
+    src/file_e01.c: fix file_check_e01()
+
+2014-02-02 - Christophe Grenier
+    PhotoRec: rewrote brute-force mode to use file_block_append()
+
+2014-02-02 - Christophe Grenier
+    move bitmap variable in exfat_remove_used_space()
+
+2014-02-02 - Christophe Grenier
+    src/intrface.c: remove current_cmd parameter from ask_structure_ncurses prototype
+
+2014-02-02 - Christophe Grenier
+    src/file_jpg.c: remove logically dead code
+
+2014-02-02 - Christophe Grenier
+    PhotoRec: recover Camtasia Studio .camrec file
+
+2014-02-02 - Christophe Grenier
+    header_check_dbf: fix year check (was always true)
+
+2014-02-02 - Christophe Grenier
+    src/file_ab.c: rewrite it to use a data structure
+
+2014-02-02 - Christophe Grenier
+    src/ntfs.c: move lcn variable in ntfs_get_first_rl_element()
+
+2014-02-02 - Christophe Grenier
+    TestDisk: add 'addpart' in CLI command
+
+2014-02-01 - Christophe Grenier
+    move log_disk_list() to src/fnctdsk.c
+    return non zero error code in PhotoRec main to signal some errors
+
+2014-02-01 - Christophe Grenier
+    src/ewf.c: Handle failed libewf_handle_open() in RW mode
+
+2014-02-01 - Christophe Grenier
+    TestDisk: add missing log_close() in main()
+
+2014-02-01 - Christophe Grenier
+    PhotoRec: rename mov file according to first atom
+
+2014-01-25 - Christophe Grenier
+    PhotoRec: Remove FAT copies and boot sector when searching from FAT32 free space
+
+2014-01-25 - Christophe Grenier
+    header_check_ecryptfs: code style modification
+
+2014-01-25 - Christophe Grenier
+    report blocksize and offset in update_blocksize() instead of menu_choose_blocksize()
+
+2014-01-25 - Christophe Grenier
+    Avoid additional NULL pointer derefence when localtime() failed
+
+2014-01-25 - Christophe Grenier
+    src/fat_adv.c: NULL pointer dereference if localtime() returns NULL
+    Thanks to Graham Sutherland for reporting this bug
+
+2014-01-25 - Christophe Grenier
+    PhotoRec: rewrote update_blocksize() function
+
+2014-01-25 - Christophe Grenier
+    PhotoRec: check the first jpg in mpo file
+
+2014-01-25 - Christophe Grenier
+    PhotoRec: disable recovery of FAT filesystem raw image by default
+
+2014-01-11 - Christophe Grenier
+    TestDisk: when deleting PC/Intel partition list, remove Mac, Sun and XBOX signature if present.
+
+2014-01-11 - Christophe Grenier
+    Fix check before falling back in readonly mode
+
+2014-01-11 - Christophe Grenier
+    We are in 2014 now
+
+2014-01-07 - Christophe Grenier
+    update_blocksize: Resize the last sectors range
+
+2014-01-07 - Christophe Grenier
+    Fix bug in file_block_remove_from_sp() and file_block_truncate_zero()
+
+2014-01-05 - Christophe Grenier
+    remove redondant check in photorec_bf()
+
+2014-01-05 - Christophe Grenier
+    PhotoRec: recover Digital Imaging and Communications in Medicine (DICOM) .dcm files
+
+2014-01-05 - Christophe Grenier
+    PhotoRec: recover Rhino / openNURBS .3dm files
+
+2014-01-05 - Christophe Grenier
+    new prototype for file_finish2()
+
+2014-01-05 - Christophe Grenier
+    new prototype for file_block_truncate()
+
+2014-01-05 - Christophe Grenier
+    Remove file_size_on_disk field from struct file_recovery_struct
+
+2014-01-05 - Christophe Grenier
+    Add missing comma in generated photorec.ses
+
+2014-01-05 - Christophe Grenier
+    move code from photorec_bf() to a new function get_offset_next_file()
+
+2013-12-21 - Christophe Grenier
+    Remove loc field from struct file_recovery_struct, use location instead
+
+2013-12-21 - Christophe Grenier
+    src/phrecn.c: Remove some code in comment
+
+2013-12-14 - Christophe Grenier
+    src/psearchn.c: use data_check_t type
+
+2013-12-14 - Christophe Grenier
+    PhotoRec: use an enum for values returned by data_check()
+    rename .m2ts and .ts using pid from header
+
+2013-12-14 - Christophe Grenier
+    QPhotoRec: fix "Reading sector" display
+
+2013-12-14 - Christophe Grenier
+    src/partnone.c: add missing header
+
+2013-12-14 - Christophe Grenier
+    PhotoRec: fix recovery of some mpo files
+
+2013-12-14 - Christophe Grenier
+    Fix typo in src/phrecn.c
+
+2013-12-14 - Christophe Grenier
+    constify the local variable old_offset
+
+2013-12-08 - Christophe Grenier
+    PhotoRec: recover .vbm Veeam Backup Metadata file
+
+2013-12-08 - Christophe Grenier
+    src/file_one.c: code cleanup
+
+2013-12-08 - Christophe Grenier
+    src/file_chm.c: code cleanup
+
+2013-12-08 - Christophe Grenier
+    fat32_get_free_count() and fat32_get_next_free() - code style
+
+2013-11-03 - Christophe Grenier
+    TestDisk: remove align parameter from write_part() function
+
+2013-11-03 - Christophe Grenier
+    fix minor code defects
+
+2013-11-01 - Christophe Grenier
+    src/file_lxo.c: rewrote to use a data structure
+
+2013-11-01 - Christophe Grenier
+    new functions is_fat_directory() and fat_get_cluster_from_entry()
+    rename sectors() to fat_sectors()
+
+2013-11-01 - Christophe Grenier
+    "testdisk -lu" now displays a warning if no disk is found.
+
+2013-11-01 - Christophe Grenier
+    Fix various issues reported by Coverity scan
+
+2013-11-01 - Christophe Grenier
+    code style: ignore some function return value
+
+2013-11-01 - Christophe Grenier
+    src/file_zip.c: fix memory leak in error path reported by Coverity scan
+
+2013-11-01 - Christophe Grenier
+    src/file_tib.c: stricter check for fread error
+
+2013-11-01 - Christophe Grenier
+    src/file_sig.c: fix memory leak in error paths
+
+2013-11-01 - Christophe Grenier
+    PhotoRec: detect filesize for some Fuji RAF files
+
+2013-11-01 - Christophe Grenier
+    PhotoRec: detect filesize for RealAudio3
+
+2013-11-01 - Christophe Grenier
+    src/file_psp.c: rewrote to use data structure
+
+2013-11-01 - Christophe Grenier
+    src/file_psb.c and src/file_psd.c: rewrote to use data structure
+
+2013-11-01 - Christophe Grenier
+    src/file_png.c: rewrote to use data structure
+
+2013-11-01 - Christophe Grenier
+    src/file_pdf.c: check ftell returned value for error code
+
+2013-11-01 - Christophe Grenier
+    src/file_evt.c: rewrote to use a data structure
+
+2013-11-01 - Christophe Grenier
+    src/file_doc.c: fix memory leak reported by coverity scan
+
+2013-11-01 - Christophe Grenier
+    src/file_d2s.c: rewrote to use a structure
+
+2013-11-01 - Christophe Grenier
+    fidentify: Fix memory leak in error path reported by Coverity scan
+
+2013-11-01 - Christophe Grenier
+    Fix bug introduced in commit cf700c77551b30d9c62104adaf47ebbf26774fcc
+
+2013-11-01 - Christophe Grenier
+    code style fix when using set_mode()
+
+2013-11-01 - Christophe Grenier
+    src/dfxml.c: fix check for filename
+
+2013-11-01 - Christophe Grenier
+    set_part_name_chomp: fix potential off-by-one in set_part_name_chomp()
+
+2013-11-01 - Christophe Grenier
+    src/askloc.c: Fix memory leak in error path reported by Coverity scan
+
+2013-10-20 - Christophe Grenier
+    Force white on black in (n)curses interface.
+    In some cases, the display was white on white.
+
+2013-10-20 - Christophe Grenier
+    Remove unneeded reference to arch_i386 in tdiskop.c
+
+2013-10-20 - Christophe Grenier
+    QPhotoRec: automatically select the image disk after addiing it
+
+2013-10-20 - Christophe Grenier
+    PhotoRec: avoid a false positive (.tiff) during .raf recovery
+
+2013-10-20 - Christophe Grenier
+    PhotoRec: fix Windows 9x .reg bound checking
+
+2013-10-20 - Christophe Grenier
+    FAT12 media descriptor should be 0xf0. FAT32 Drive number should be 0 or between 0x80 and 0x87.
+
+2013-10-20 - Christophe Grenier
+    Allow ext2/3/4 filesystem with 16kb and 32kb block
+
+2013-10-20 - Christophe Grenier
+    Add missing dots in testdisk.spec file
+
+2013-10-20 - Christophe Grenier
+    Compile QT interface by default
+
+2013-10-05 - Christophe Grenier
+    TestDisk: define nodump, align, noalign, expert, noexpert options in scripted run
+
+2013-09-12 - Christophe Grenier
+    TestDisk: use read_blk64() and write_blk64() to deal with ext4 64-bits blocks
+
+2013-09-12 - Christophe Grenier
+    Windows device like "\\.\D:" usually have no partition table
+
+2013-09-12 - Christophe Grenier
+    Fix erronous return value when writting ie 512 byte on 4096-byte sector
+
+2013-08-31 - Christophe Grenier
+    TestDisk: replace ntfs_get_attr() by several functions to parse MFT record
+
+2013-08-31 - Christophe Grenier
+    PhotoRec: better date/time extraction for JPG file
+
+2013-08-31 - Christophe Grenier
+    allow 64 KiB ext4 blocksize
+
+2013-08-28 - Christophe Grenier
+    TestDisk: handle ext4 with 64 bit blocks (EXT4_FEATURE_INCOMPAT_64BIT)
+
+2013-08-28 - Christophe Grenier
+    TestDisk: parse FAT when dealing with exFAT
+
+2013-08-28 - Christophe Grenier
+    TestDisk & PhotoRec 7.0-WIP
+
+2013-07-30 - Christophe Grenier
+    TestDisk & PhotoRec 6.14
+
+
+2013-07-30 - Christophe Grenier
+    JFS filesystem: check blocksize
+
+2013-07-30 - Christophe Grenier
+    src/file_lnk.c: rename time fields
+
+2013-07-30 - Christophe Grenier
+    PhotoRec: use .jpg file extension instead of .mpo
+
+2013-07-30 - Christophe Grenier
+    file_doc.c: compilation fix when DEBUG_OLE is defined
+
+2013-06-26 - Christophe Grenier
+    PhotoRec: recover .psb Adobe Photoshop Image
+
+2013-06-26 - James Holodnak
+    PhotoRec: recover .nes iNES/iNES 2.0 ROM image
+
+2013-06-26 - James Holodnak
+    PhotoRec: recover .fds fwNES Disk Image (with header)
+
+2013-06-26 - Christophe Grenier
+    PhotoRec: recover PTGui .pts project file
+
+2013-06-08 - Christophe Grenier
+    QPhotoRec: open a file explorer when the destination folder is clicked
+
+2013-06-08 - Christophe Grenier
+    QPhotoRec: select the disk image after addition if no disk was present
+
+2013-06-08 - Christophe Grenier
+    QPhotoRec: try to start photorec if DISPLAY variable isn't present for a X11 system
+
+2013-06-06 - Christophe Grenier
+    QPhotoRec: add raw files as source
+
+2013-06-04 - Christophe Grenier
+    qphotorec: redirect stderr to the log file only if it exists
+
+2013-06-04 - Christophe Grenier
+    Fix double free() - regression introduced in bf83ac26623fc2743ec041b8f502636074ffe69c
+
+2013-06-01 - Christophe Grenier
+    constify more variables
+
+2013-05-26 - Christophe Grenier
+    Constify some variables
+
+2013-05-25 - Christophe Grenier
+    TestDisk: if the user stops the partition search, check anyway the remaining promising locations
+
+2013-05-25 - Christophe Grenier
+    Fix various warning reported by gcc
+
+2013-05-25 - Christophe Grenier
+    PhotoRec: fix regression (crash) in header_check_txt
+
+2013-05-25 - Christophe Grenier
+    Fix regression introduced in eb3b555b50e2c82f67559472bdf0a1d54325550f
+
+2013-05-25 - Christophe Grenier
+    remove always enabled "interface" parameter from search_part() prototype
+
+2013-05-25 - Christophe Grenier
+    TestDisk: Also search for backup boot sector/backup superblock during Quick Search
+
+2013-05-25 - Christophe Grenier
+    Fix criteria for FAT backup and ext2/3/4 backup superblock search
+
+2013-05-25 - Christophe Grenier
+    New function search_add_hints()
+    Add hints for NTFS backup
+
+2013-05-25 - Christophe Grenier
+    Remove some dead code in search_part()
+
+2013-05-25 - Christophe Grenier
+    New function get_min_location() to get the minimal offset of a partition
+
+2013-05-25 - Christophe Grenier
+    New function get_location_boundary()
+
+2013-05-25 - Christophe Grenier
+    edit.c: Constify another variable
+
+2013-05-24 - Christophe Grenier
+    "FAT found using backup sector!" message should be set by recover_FAT(), not by search_FAT_backup()
+
+2013-05-24 - Christophe Grenier
+    Fix dir_partition_exfat_init() return value
+
+2013-05-24 - Christophe Grenier
+    Get rid of pread_fast(), it's too error prone
+
+2013-05-23 - Christophe Grenier
+    replace tab_insert() by hint_insert()
+
+2013-05-22 - Christophe Grenier
+    Makefile.am: Fix typo
+
+2013-05-22 - Christophe Grenier
+    qphotorec: configure the text when asking for a directory destination
+
+2013-05-22 - Christophe Grenier
+    Compare dir_partition_ntfs_init() return value with enum constant instead of direct value
+
+2013-05-22 - Christophe Grenier
+    Declare as const some static variables
+
+2013-05-22 - Christophe Grenier
+    Enable Qphotorec compilation under cygwin
+Merge: 52a3073 4bf7587
+
+2013-05-19 - Christophe Grenier
+    Merge branch 'master' of ssh://git.cgsecurity.org/home/gitcg/public_html/testdisk
+
+2013-05-19 - Christophe Grenier
+    QPhotoRec: functional version
+
+2013-05-19 - Christophe Grenier
+    Add graphical ressources for QPhotoRec
+
+2013-05-19 - Christophe Grenier
+    photorec(): fix logic when ncurses is missing for an hypotical user stop request
+
+2013-05-19 - Christophe Grenier
+    Fix windows compilation regression introduced in 1471f47a5c5b9d69863ec496bd7a57a9b0081d89
+
+2013-05-19 - Christophe Grenier
+    Fix compilation when using mingw c++
+
+2013-05-19 - Christophe Grenier
+    Fix memory leak when freeing device
+
+2013-05-19 - Christophe Grenier
+    Fix memory leak when freeing device
+
+2013-05-19 - Christophe Grenier
+    TestDisk, Advanced, List will now always display files or a warning message
+
+2013-05-19 - Christophe Grenier
+    ppartsel.c: use init_mode_t instead of int type
+
+2013-05-19 - Christophe Grenier
+    fat_dir.c: use fat_method_t instead of int type
+
+2013-05-19 - Christophe Grenier
+    fat_adv.c: use fat_status_t and fat_repair_t instead of int type
+
+2013-05-19 - Christophe Grenier
+    exfat_dir.c: use exfat_method_t instead of int type
+
+2013-05-19 - Christophe Grenier
+    configure.ac: use "gcc -Wunreachable-code" if available
+
+2013-05-17 - Christophe Grenier
+    interface_load(): use log_all_partitions()
+
+2013-05-17 - Christophe Grenier
+    menu_disk_cli(): make some variables more local
+
+2013-05-17 - Christophe Grenier
+    reiser_copy(): remove unread "offset" variable
+
+2013-05-17 - Christophe Grenier
+    Remove unused function write_stats_stdout()
+
+2013-05-17 - Christophe Grenier
+    Add missing filesystem check for non partionned media
+
+2013-05-17 - Christophe Grenier
+    init_structure_i386(): make some variables more local
+
+2013-05-17 - Christophe Grenier
+    get_parent_name(), calc_percentage(): make some variables more local
+
+2013-05-17 - Christophe Grenier
+    ntfs_get_attr_aux(): make "attr_type" variable more local
+
+2013-05-17 - Christophe Grenier
+    menu_write_ntfs_boot_sector_ncurses(): make "command" variable more local
+
+2013-05-17 - Christophe Grenier
+    Disable menu_to_command() compilation if ENABLE_MOUSE is undefined.
+    Remove ask_confirmation_with_default() function
+    wmenuSimple(): make some variables more local
+
+2013-05-17 - Christophe Grenier
+    remove screen_buffer_to_stdout() function
+
+2013-05-17 - Christophe Grenier
+    ask_mbr_order_i386(): make some variables more local
+
+2013-05-17 - Christophe Grenier
+    change_geometry_ncurses(): make some variables more local
+
+2013-05-17 - Christophe Grenier
+    get_geometry_from_list_part: make "score" variable more local
+
+2013-05-17 - Christophe Grenier
+    file_swf.c: disable compilation of some unused code
+
+2013-05-17 - Christophe Grenier
+    file_mov.c: remove unused variable
+
+2013-05-17 - Christophe Grenier
+    file_check_axx: make some variables more local
+
+2013-05-17 - Christophe Grenier
+    Disable compilation of exfat16_towchar(), an unused function
+
+2013-05-17 - Christophe Grenier
+    Check ZFS filesystem when detected
+
+2013-05-17 - Christophe Grenier
+    Fix regression introduced in commit d4c1e0ec98dd42d74eb058c041ece12aa48d2830
+
+2013-05-16 - Christophe Grenier
+    move ind_block(), file_recovery_cpy() and file_add_data() to psearch.h and photorec_aux() to psearchn.c
+
+2013-05-16 - Christophe Grenier
+    photorec.h: safety guard against double inclusion
+
+2013-05-16 - Christophe Grenier
+    Refactor code in photorec_info()
+
+2013-05-16 - Christophe Grenier
+    Remove some unnecessary includes from phbs.c
+
+2013-05-16 - Christophe Grenier
+    Fix potential null pointer dereference introduced in commit 38084f56e0fea23249b010f0fc37c20c33871840
+
+2013-05-15 - Christophe Grenier
+    qphotorec: run full screen by default
+
+2013-05-15 - Christophe Grenier
+    Use its own resource file for qphotorec
+
+2013-05-15 - Christophe Grenier
+    configure.ac: Detect Qt rcc
+
+2013-05-15 - Christophe Grenier
+    Avoid double inclusion
+
+2013-05-15 - Christophe Grenier
+    Compilation fix when curses interface is missing
+
+2013-05-15 - Christophe Grenier
+    split add_partition() into add_partition_cli() and add_partition_ncurses()
+
+2013-05-15 - Christophe Grenier
+    move from change_part_type() to change_part_type_ncurses()
+
+2013-05-15 - Christophe Grenier
+    split interface_partition_type() into change_arch_type_cli() and change_arch_type_ncurses()
+
+2013-05-15 - Christophe Grenier
+    New functions log_all_partitions() and init_list_part()
+
+2013-05-15 - Christophe Grenier
+    Split change_geometry() into change_geometry_cli() and change_geometry_ncurses()
+
+2013-05-15 - Christophe Grenier
+    session_save(): returns if STATUS_QUIT
+
+2013-05-15 - Christophe Grenier
+    Harmonize photorec_progressbar() and fat_unformat_aux() code
+
+2013-05-15 - Christophe Grenier
+    New function status_inc() to increment params->status
+
+2013-05-15 - Christophe Grenier
+    Move interface_options_photorec_cli() and interface_options_photorec_log() to src/poptions.c
+
+2013-05-14 - Christophe Grenier
+    fix switch warning in photorec_bf_frag()
+
+2013-05-14 - Christophe Grenier
+    code cleanup: new enum type pstatus_t
+
+2013-05-14 - Christophe Grenier
+    Additional length check in set_part_name() and set_part_name_chomp()
+
+2013-05-14 - Christophe Grenier
+    Move some code to new functions params_reset() and status_to_name()
+
+2013-05-14 - Christophe Grenier
+    Move some code to new function get_partition_status()
+
+2013-05-08 - Christophe Grenier
+    Fix file copy regression by removing static declaration of file_info_t structure
+
+2013-05-05 - Christophe Grenier
+    NTFS file listing: sort files
+
+2013-05-05 - Christophe Grenier
+    PhotoRec: Better ext2 superblock size detection
+
+2013-05-05 - Christophe Grenier
+    Better handle long directory name when asking for the destination
+
+2013-05-05 - Christophe Grenier
+    Migrate from file_data to file_info structure
+
+2013-05-05 - Christophe Grenier
+    Include stdarg.h in src/askloc.c
+
+2013-05-05 - Christophe Grenier
+    PhotoRec: recover LZH/LArc archive
+
+2013-04-28 - Christophe Grenier
+    PhotoRec: add boundary check in src/file_mkv.c
+
+2013-04-27 - Christophe Grenier
+    filesort(): better handle . and .. directory entries
+
+2013-04-27 - Christophe Grenier
+    Use the correct value of errno to display a warning when log file creation failed
+
+2013-04-21 - Christophe Grenier
+    comment: ttd are tiny tag data file
+
+2013-04-21 - Christophe Grenier
+    src/sudo.c: avoid a warning about SUDO_BIN
+
+2013-04-21 - Christophe Grenier
+    src/file_sit.c: code cleanup
+
+2013-04-21 - Christophe Grenier
+    Fix display of number of good/bad files copied
+
+2013-04-21 - Christophe Grenier
+    src/file_cow.c: make two variables locale
+
+2013-04-21 - Christophe Grenier
+    src/fat_unformat.c: compilation fix, add missing ifdef
+
+2013-04-19 - Christophe Grenier
+    Remove unnecessary time.h header inclusion
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: distinguish iWork .pages file from .zip
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get .zip file date from most recent file
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: src/file_ses.c code reorganisation
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get .dmp file date from header
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get .dpx file date from header
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get date from COW1 file header, remove file size test for COW2 file
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get .arj date from file header
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get .asf date from file header
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: fix regression from commit 0f70bee69a6ce66c2b2798d09235439924906a0b
+
+2013-04-19 - Christophe Grenier
+    PhotoRec: get .reg file date from header
+
+2013-04-19 - Christophe Grenier
+    Move td_ntfs2utc() to src/common.c
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: add two new signatures for html files
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: check sooner if a file is currently recovered when detecting a potential new txt file
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: a text file must contains several lines
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: modify header_check_perlm() to use UTFsize() instead of UTF2Lat()
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: modify data_check_txt() to use UTFsize() instead of UTF2Lat()
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: use UTFsize() instead of UTF2Lat() to detect html end
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: add several signatures for mbox recovery
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: recover Armory bitcoin wallet
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: modify mp3 signature - reduce the number of time where header_check_mp3 is called
+
+2013-04-11 - Christophe Grenier
+    If no disk is detected, the user isn't root and TestDisk/PhotoRec are compiled with sudo support, restart using sudo without asking first the user.
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: detect .qcp File Format for Speech Data.
+    Add a FourCC check.
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: remove .jp2 filesize detection
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: fix .fits filesize detection
+
+2013-04-11 - Christophe Grenier
+    PhotoRec: extract date/time from Windows PE exe/dll
+
+2013-03-31 - Christophe Grenier
+    PhotoRec: recover Shorten .shn audio file
+
+2013-03-31 - Christophe Grenier
+    PhotoRec: limit the number of times PhotoRec moves backward to recover to the previous fragmented files
+
+2013-03-31 - Christophe Grenier
+    PhotoRec: only save the blocksize in photorec.ses if positive
+
+2013-03-31 - Christophe Grenier
+    When splitting block, define them as holding data
+
+2013-03-31 - Christophe Grenier
+    FAT unformat: fix cluster check to not discard first-level directories
+
+2013-03-31 - Christophe Grenier
+    PhotoRec: Recover Autogen .agn and .mdl files
+
+2013-03-31 - Christophe Grenier
+    PhotoRec: add HDPR signature for m2ts
+
+2013-03-31 - Christophe Grenier
+    src/fat_cluster.c: improve readibility
+
+2013-03-31 - Christophe Grenier
+    Display number of file copied in real-time
+
+2013-03-31 - Christophe Grenier
+    Display information during Image Creation
+
+2013-03-24 - Christophe Grenier
+    PhotoRec: save current progress every 5 minutes
+
+2013-03-24 - Christophe Grenier
+    src/hdaccess.c: remove unnecessary variable allocation
+
+2013-03-24 - Christophe Grenier
+    src/file_gz.c: move tar_header_posix definition
+
+2013-03-23 - Christophe Grenier
+    src/file_swf.c: fix compilation warning
+
+2013-03-23 - Christophe Grenier
+    src/file_reg.c: fix compilation warning
+
+2013-03-23 - Christophe Grenier
+    src/file_par2.c: fix compilation warning
+
+2013-03-23 - Christophe Grenier
+    src/file_ogg.c: fix warning about missing parenthesis
+
+2013-03-23 - Christophe Grenier
+    src/file_gpg.c: turn off compilation warning
+
+2013-03-23 - Christophe Grenier
+    src/file_flac.c: add missing return value (bug introduced in 5f635200cf8795e91b8baebdadf5fe094e6ecfbd)
+
+2013-03-23 - Christophe Grenier
+    src/file_elf.c: fix header size (buggy commit 358269b5aeb979a5b9e858f0dbdaf3c19ec00f19)
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: add missing include ctype.h
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better check for STL in ascii format
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: less false positive when .asp/.jsp detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: reduce false positive when detecting .bat
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: disable html detection during mbox recovery
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: filtre() in file_txt.c now takes an integer parameter
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better detection of .sldprt and StarImpress .sdd
+
+2013-03-23 - Christophe Grenier
+    Update INSTALL file
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better check for .stl binary format detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: src/file_mp3.c code reorganisation
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: fix OLE .doc/.xls/.ppt filesize detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better signature for .max file detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: disable recovery of Nikon .DSC file by default
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better check for .ds2 file detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better signature for .vmdk detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better checks for .swf and .swc Flash file detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: fix cpr size detection (regression introduced in commit 622e8c7f19ff7dc9287fb5a43452d876c4d979a8)
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: stricter check for .reg detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: disable .psf detection during .psf recovery
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better signature for .orf detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: stricter check for .ogg detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: stricter check for .mpg mpeg-1 system header start code detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: recover mov file using "M4A " atom as .m4p
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: disable jpg detection during .albm file recovery
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: stricter check for Impulse audio .it file
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: check Multiple Precision Integer (MPI) used in public key crypto during .gpg detection
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: avoid spliting .edb file when detecting the backup header
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: better for .ddf detection. Add support for DDF_05
+
+2013-03-23 - Christophe Grenier
+    PhotoRec: stricter check for .asf detection
+
+2013-03-10 - Christophe Grenier
+    Use Ctrl+L to redraw the screen when listing files
+
+2013-03-10 - Christophe Grenier
+    Remove problematic debug code in pnext.h
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: better .pcap signature
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: better .orf signature
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix ogg recovery when blocksize=1
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix mp3 recovery when blocksize=1
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: stricter check for .wmf detection
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: better .riff signature
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: more robust signature for .spss
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix .ani recovery when blocksize=1
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: stricter .nsf check
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: rewrote mpg detection
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: stricter checks for .mov recovery
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix .mig recovery when blocksize=1
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix .m2ts recovery when blocksize=1
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: better signature for .flac
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: stricter checks for .exs
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: add checks for .emf header validation
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: better signatures for ELF
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix .bac recovery when blocksize=1
+
+2013-03-10 - Christophe Grenier
+    PhotoRec: fix .ace recovery when blocksize=1
+
+2013-02-16 - Christophe Grenier
+    PhotoRec: rewrite doc/xls/ppt/... detection. Add TurboCAD recovery
+
+2013-02-16 - Christophe Grenier
+    PhotoRec: stricter check for .gz file
+
+2013-02-16 - Christophe Grenier
+    HFS and HFS+ blocksize must be a multiple of 512
+
+2013-02-16 - Christophe Grenier
+    PhotoRec: recover FictionBook .fb2
+
+2013-02-16 - Christophe Grenier
+    PhotoRec: close PDF file before renaming it
+
+2013-01-19 - Christophe Grenier
+    When copying files, ask for the target directory again if the source directory has changed
+
+2013-01-19 - Christophe Grenier
+    PhotoRec: Blacklist "<>|" chars in filenames
+
+2013-01-19 - Christophe Grenier
+    Fix header_check_par2() function
+
+2013-01-19 - Christophe Grenier
+    Add xml_clear_command_line() function
+
+2012-12-23 - Christophe Grenier
+    "fidentify -check" identifies and checks the files
+
+2012-12-23 - Christophe Grenier
+    Reduce unnecessary interactivity in scripted run
+
+2012-12-23 - Christophe Grenier
+    file_search_lc_footer() isn't used, disable its compilation for the moment
+
+2012-12-23 - Christophe Grenier
+    Settings in TestDisk options menu can be set via command line
+
+2012-12-23 - Christophe Grenier
+    move testdisk.log file creation a little bit earlier
+
+2012-12-23 - Christophe Grenier
+    Avoid underflow when using TestDisk on file smaller than 512 bytes
+
+2012-12-23 - Christophe Grenier
+    PhotoRec: fix 64 bit zip recovery
+
+2012-12-23 - Christophe Grenier
+    PhotoRec: add http cache data recovery for forensics purpose
+
+2012-12-23 - Christophe Grenier
+    PhotoRec: add another signature for NFPKDDAT .dat history
+
+2012-12-23 - Christophe Grenier
+    Hide/unhide NTFS Alternate Data Stream
+
+2012-12-23 - Christophe Grenier
+    List Undelete in exFAT menu
+
+2012-12-23 - Christophe Grenier
+    Add "configure --enable-coverage=yes" option
+
+2012-12-08 - Christophe Grenier
+    PhotoRec: detect .MPO (3D jpeg)  filesize
+
+2012-12-08 - Christophe Grenier
+    Windows: workaround for NTFS Alternate Data Stream creation
+    fopen() creates normal files instead of ADS with ':' replaced by an UTF char
+    replace ':' by '_' instead
+
+2012-12-08 - Christophe Grenier
+    Detect alternate EFI GPT
+
+2012-12-08 - Christophe Grenier
+    Android: also compile testdisk
+
+2012-12-08 - Christophe Grenier
+    PhotoRec: better size detection using TileOffsets and TileByteCounts
+
+2012-12-08 - Christophe Grenier
+    various code cleanup
+
+2012-12-08 - Christophe Grenier
+    Android: timezone symbol isn't defined, do not use it
+
+2012-11-06 - Christophe Grenier
+    Preliminary work for Android integration
+
+2012-11-06 - Christophe Grenier
+    PhotoRec: Recover Windows imaging (WIM) image
+
+2012-11-06 - Christophe Grenier
+    Don't depend on "struct stat" for storing information about files, this
+    fix inode truncation when compiled with cygwin
+
+2012-11-06 - Christophe Grenier
+    PhotoRec: add another exception for text that can be present in jpg
+
+2012-11-06 - Christophe Grenier
+    PhotoRec: return libjpeg-turbo version
+
+2012-11-06 - Christophe Grenier
+    PhotoRec: remove 7z file restriction
+
+2012-11-06 - Christophe Grenier
+    Update INSTALL file
+
+2012-10-25 - Christophe Grenier
+    List UFS and UFS 2 Little endian filesystemtype correctly when no partition table is used
+
+2012-10-21 - Christophe Grenier
+    PhotoRec: txt file recovery code cleanup
+
+2012-10-21 - Christophe Grenier
+    PhotoRec: rewrote GPG file recovery
+
+2012-10-21 - Christophe Grenier
+    PhotoRec: fix "Align partition: No" display in Options menu
+
+2012-10-21 - Christophe Grenier
+    PhotoRec: fix recovered .hdf file
+
+2012-10-21 - Christophe Grenier
+    Minor code cleanup
+
+2012-10-14 - Christophe Grenier
+    PhotoRec: fix SolidWorks .sldprt detection
+
+2012-10-14 - Christophe Grenier
+    PhotoRec: fix Windows Autorun .inf detection and stricter check for java detection
+
+2012-10-14 - Christophe Grenier
+    PhotoRec: fix zip detection
+    a zip file begins by ZIP_FILE_ENTRY, this signature can also be
+    found for each compressed file
+
+2012-10-14 - Christophe Grenier
+    Fix regression introduced in f29c37c87b097e8761ec359165f27a0ff786368f
+
+2012-10-14 - Christophe Grenier
+    FIX: call libewf_handle_initialize() before each libewf_handle_open()
+
+2012-09-30 - Christophe Grenier
+    PhotoRec: fix a display problem in FileOpts after choosing to save new defaults
+
+2012-09-30 - Christophe Grenier
+    PhotoRec: don't override user supplied blocksize by blocksize found when scanning free space only
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: recover .tpl Adobe Tool Preset
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: recover .kdbx KeePassX
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: recover .csh Adobe Custom shapes
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: recover .asl Adobe Layer Style
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: recover .ado Adobe Duotone Options
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: recover .acb Adobe Color Book
+
+2012-09-22 - Christophe Grenier
+    update two source code comments
+
+2012-09-22 - Christophe Grenier
+    PhotoRec: try to keep file directory structure during FAT unformat
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: recover Adobe Brush .abr
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: detect HFSP/HFSX superblock
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: detect NTFS MFT record
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: recover SymBackup .fbf files
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: recover ZoomBrowser Thumbnail info
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: recover v2i backup files
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: detects ext2 Linked List Directory
+
+2012-09-16 - Christophe Grenier
+    PhotoRec: better detection of FAT directory
+
+2012-09-16 - Christophe Grenier
+    src/file_lnk.c: generate log only if DEBUG_LNK is defined
+
+2012-09-16 - Christophe Grenier
+    move date_dos2unix() and set_secwest() to src/common.c
+
+2012-09-10 - Christophe Grenier
+    PhotoRec: recover .binvox Voxel files
+
+2012-09-10 - Christophe Grenier
+    PhotoRec: don't return date for year 0000
+
+2012-09-10 - Christophe Grenier
+    PhotoRec: recover scribus .sla files
+
+2012-09-10 - Christophe Grenier
+    PhotoRec: recover Minecraft .schematic file
+
+2012-09-10 - Christophe Grenier
+    Make some variables more local
+
+2012-09-10 - Christophe Grenier
+    Check i before using it as index
+
+2012-09-10 - Christophe Grenier
+    turn off two gcc warnings
+
+2012-09-10 - Christophe Grenier
+    constify a few variables
+
+2012-08-15 - Christophe Grenier
+    PhotoRec: recover Designer, a Photobook Designer Software, .dp files
+
+2012-08-15 - Christophe Grenier
+    PhotoRec: recover Windows Migration Backup .mig files
+
+2012-08-12 - Christophe Grenier
+    generated moc_qphotorec.cpp must not be distributed
+
+2012-08-12 - Christophe Grenier
+    TestDisk: reports UFS1 and UFS2 blocksize
+
+2012-08-12 - Christophe Grenier
+    TestDisk: add Linux swap using 8k pagefile detection
+
+2012-08-12 - Christophe Grenier
+    TestDisk: detects cramfs filesystem with offset 0
+
+2012-08-12 - Christophe Grenier
+    Return blocksize for XFS filesystem
+
+2012-08-12 - Christophe Grenier
+    Return blocksize for reiserfs filesystem
+
+2012-08-12 - Christophe Grenier
+    Return blocksize for ISO9660 filesystem
+
+2012-08-12 - Christophe Grenier
+    Return blocksize for HFS filesystem
+
+2012-08-12 - Christophe Grenier
+    Fix ext3/ext4 dedicated journal partition detection
+
+2012-08-12 - Christophe Grenier
+    Return blocksize for XFS filesystem
+
+2012-08-09 - Christophe Grenier
+    PhotoRec: less strict check for .pst files
+
+2012-08-09 - Christophe Grenier
+    qphotorec: display partition list
+
+2012-08-09 - Christophe Grenier
+    PhotoRec: recover .xz compressed archive
+
+2012-08-09 - Christophe Grenier
+    List the number of sectors when head per cylinder and sector per head are 1
+    TestDisk: Display the sector size
+
+2012-08-09 - Christophe Grenier
+    godmode.c: Translate comment from French to English
+
+2012-08-09 - Christophe Grenier
+    PhotoRec: recover .kmz Zipped Keyhole Markup Language (KML) used by Google Earth
+
+2012-08-09 - Christophe Grenier
+    src/file_txt.c: switch comments to utf-8
+
+2012-08-09 - Christophe Grenier
+    diskcp.c: translate comment from French to English
+
+2012-07-14 - Christophe Grenier
+    Move insert_error variable definition
+
+2012-07-14 - Christophe Grenier
+    PhotoRec: modify how FileOpts settings are saved in session file
+
+2012-07-14 - Christophe Grenier
+    TestDisk: always search for partition aligned on 1 MB boundaries
+
+2012-07-14 - Christophe Grenier
+    Display that the number of heads per cylinder is between 1 and 255
+
+2012-06-28 - Christophe Grenier
+    when HDCLONING is defined, remove open() O_EXCL parameter and save partial read data
+
+2012-06-28 - Christophe Grenier
+    TestDisk: If user press enter when asked for partition created unde Vista or later, default to yes
+
+2012-06-28 - Christophe Grenier
+    move prototypes of function using ncurses from src/intrf.h to src/intrfn.h
+
+2012-06-28 - Christophe Grenier
+    move get_default_location() from src/intrf.c to src/askloc.c
+
+2012-06-27 - Christophe Grenier
+    TestDisk: update filesystem list in help message
+
+2012-06-27 - Christophe Grenier
+    filegen.c: make some variables more local
+
+2012-06-27 - Christophe Grenier
+    phbf.c, phbs.c: constify some variables
+
+2012-06-27 - Christophe Grenier
+    PhotoRec: update csectDir checks
+
+2012-06-18 - Christophe Grenier
+    qphotorec: new clearWidgets() function
+
+2012-06-18 - Christophe Grenier
+    zeroed file_recovery structure to get easier to read stack trace under gdb
+
+2012-06-18 - Christophe Grenier
+    PhotoRec: fix potential out-of-bound read access in *.hdf file recovery
+
+2012-06-18 - Christophe Grenier
+    make clean should remove generated moc*.cpp
+
+2012-06-18 - Christophe Grenier
+    configure.ac: don't add Qt libs to CXXFLAGS
+
+2012-06-09 - Christophe Grenier
+    Cleanup some constants in src/common.h
+
+2012-06-09 - Christophe Grenier
+    Windows UAC may be used in Vista and later
+
+2012-06-09 - Christophe Grenier
+    Add write support for EWF .E01 files
+
+2012-06-09 - Christophe Grenier
+    Improve cross-compilation when calling moc-qt4/moc
+
+2012-05-21 - Christophe Grenier
+    qphotorec: signal slot is now handled
+
+2012-05-18 - Christophe Grenier
+    qphotorec: fix compilation since hparse() and hd_update_all_geometry() new prototypes
+
+2012-05-18 - Christophe Grenier
+    PhotoRec: const'ify some code
+
+2012-05-18 - Christophe Grenier
+    PhotoRec: avoid to stop the recovery of jpg containing text file with "xmp:CreatorTool>"
+
+2012-05-18 - Christophe Grenier
+    PhotoRec: avoid to recover jpg that are parts of mov files
+
+2012-05-18 - Christophe Grenier
+    configure.ac: add flags to CXXFLAGS, check for fdatasync, ftruncate, memchr...
+
+2012-05-18 - Christophe Grenier
+    compile.sh: use libewf 20120504 and e2fsprogs 1.42.2 when possible
+
+2012-05-08 - Christophe Grenier
+    Avoid a buffer overflow in Linux Raid information reporting
+
+2012-05-08 - Christophe Grenier
+    PhotoRec: default to docx for MS Office 2010 documents when the extension can't be determined
+
+2012-05-01 - Christophe Grenier
+    PhotoRec: recover Mobi e-book .mobi
+
+2012-05-01 - Christophe Grenier
+    PhotoRec: recover Microsoft ITOL/ITLS .lit (eBooks)
+
+2012-05-01 - Christophe Grenier
+    PhotoRec: recover FRWD Sports Computer .fwd files
+
+2012-05-01 - Christophe Grenier
+    PhotoRec: Reject more invalid TIFF files
+
+2012-05-01 - Christophe Grenier
+    Avoid to truncate files that will get deleted.
+    It seems to give better performance on journalized filesystem.
+
+2012-05-01 - Christophe Grenier
+    Report Linux raid md endianness
+
+2012-05-01 - Christophe Grenier
+    Report HFS+/HFSX blocksize
+
+2012-05-01 - Christophe Grenier
+    Add missing files so "make dist-bzip2" works
+
+2012-05-01 - Christophe Grenier
+    documentation.html: doc is online
+
+2012-05-01 - Christophe Grenier
+    configure: add uuid-lib and uuid-includes arg
+
+2012-04-21 - Christophe Grenier
+    Add the possibility to save the results from Quick or Deeper Search by pressing
+    the 'b' key
+
+2012-04-21 - Christophe Grenier
+    "testdisk -l" will list the partition info if available
+
+2012-04-21 - Christophe Grenier
+    LUKS filesystem, list data size unknown only if the partition size is unknown
+
+2012-04-21 - Christophe Grenier
+    Remove useless affectation
+
+2012-04-21 - Christophe Grenier
+    Jpg thumbnails (t*.jpg) will also get the date/time from the EXIF information
+
+2012-04-21 - Christophe Grenier
+    Add blocksize in filesystem description
+
+2012-04-15 - Christophe Grenier
+    Remove unnecessary function declarations
+
+2012-04-15 - Christophe Grenier
+    Remove unused parameter from set_WBFS_info()
+
+2012-04-15 - Christophe Grenier
+    remove unsued parameters from check_btrfs() and recover_ISO()
+
+2012-04-14 - Christophe Grenier
+    Rewrote register_header_check_fasttxt() in src/file_txt.c
+
+2012-04-14 - Christophe Grenier
+    Make set_next_status_i386() and set_prev_status_i386() C++ compatible
+
+2012-04-14 - Christophe Grenier
+    Modify register_header_check(), file_rename() and file_rename_unicode() prototype to use void*
+
+2012-04-14 - Christophe Grenier
+    Fix two gcc warnings in src/ntfs_dir.c
+
+2012-04-14 - Christophe Grenier
+    declare file_check_size_rifx() as static
+
+2012-04-14 - Christophe Grenier
+    code cleanup: remove unused but set variables
+
+2012-04-14 - Christophe Grenier
+    New function td_list_entry_const()
+
+2012-03-25 - Christophe Grenier
+    fix compilation bug in src/diskcp.c (dead code)
+
+2012-03-25 - Christophe Grenier
+    Documentation is online only
+
+2012-03-25 - Christophe Grenier
+    PhotoRec: fix .rtf identification and disable data_check for .proproj text files
+
+2012-03-25 - Christophe Grenier
+    PhotoRec: recover Zotope, Audio Repair Software,.rx2 files
+
+2012-03-10 - Christophe Grenier
+    PhotoRec: modify Olympus orf recovery to use TIFF recovery functions
+
+2012-03-10 - Christophe Grenier
+    PhotoRec: fix tiff recovery, 64-bit version wasn't affected
+
+2012-03-10 - Christophe Grenier
+    partnone.c: add missing include wbfs.h
+
+2012-02-25 - Christophe Grenier
+    Improve default partition table selection
+
+2012-02-24 - Christophe Grenier
+    Fix crc in EFI backup GPT
+
+2012-02-24 - Christophe Grenier
+    PhotoRec: improve MinManager .mmap detection
+
+2012-02-11 - Christophe Grenier
+    PhotoRec: recover AxCrypt .axx files
+
+2012-02-11 - Christophe Grenier
+    PhotoRec: identify MindManager as .mmap files instead of .zip
+
+2012-02-11 - Christophe Grenier
+    PhotoRec: avoid some html to be identified as .java
+
+2012-02-11 - Christophe Grenier
+    PhotoRec: recover .aep After Effects
+
+2012-02-11 - Christophe Grenier
+    PhotoRec: Some JPG have two APP1 markers, avoid to dicard the first one - part 2
+
+2012-02-11 - Christophe Grenier
+    PhotoRec: avoid successive '_' chars in filenames
+
+2012-02-07 - Christophe Grenier
+    TestDisk /list now displays the disk model, serial number, firmware version and hpa or dco presence if detected
+
+2012-02-07 - Christophe Grenier
+    PhotoRec: recover Gerber Graphix Advantage .plt files
+
+2012-02-07 - Christophe Grenier
+    PhotoRec: recover Windows Sticky Notes .snt files
+
+2012-02-07 - Christophe Grenier
+    PhotoRec: fix thumbs.db recovery, avoid some false positive with .doc
+
+2012-01-27 - Christophe Grenier
+    PhotoRec: AutoCAD dwg filesize limit has been raised to 20MB
+
+2012-01-27 - Christophe Grenier
+    PhotoRec: Own custom signatures can now be enabled/disabled using the "custom" name in scripted run.
+
+2012-01-27 - Christophe Grenier
+    ntfs_copy() make two variables more locals (code style)
+
+2012-01-27 - Christophe Grenier
+    PhotoRec: if less than 10 file famillies are enabled, display the results even if zero file have been found yet.
+
+2012-01-27 - Christophe Grenier
+    move ask_int_ncurses() and ask_string_ncurses() to src/intrfn.c
+    add a minimalist find in file listing
+
+2012-01-27 - Christophe Grenier
+    TestDisk: display the partition table type if autodetected
+
+2012-01-27 - Christophe Grenier
+    openssl isn't used, don't link with it
+
+2012-01-16 - Christophe Grenier
+    Fix hexdump interface
+
+2012-01-16 - Christophe Grenier
+    Fix header in wbfs.h
+
+2012-01-16 - Christophe Grenier
+    Minor code cleanup in file_test_availability()
+
+2012-01-16 - Christophe Grenier
+    PhotoRec: better check (WP Mac/WP5/WP6) for Corel Documents .wpd files
+
+2012-01-16 - Christophe Grenier
+    Recover WBFS (Wii Backup File System) partition
+
+2012-01-07 - Christophe Grenier
+    Make FAT RebuildBS works when there is a single FAT table
+
+2012-01-02 - Christophe Grenier
+    Add filename and filesize filters in NTFS undelete
+
+2012-01-02 - Christophe Grenier
+    6.14-WIP version
+
+2012-01-01 - Christophe Grenier
+    Add WINDOW *window argument to get_string()
+
+2012-01-01 - Christophe Grenier
+    Modify warning about mismatching geometry between FAT and NTFS boot sector and HD geometry
+
+2011-12-28 - Christophe Grenier
+    blocs_to_skip is now unsigned
+
+2011-12-28 - Christophe Grenier
+    Avoid some signed/unsigned values checks
+
+2011-12-28 - Christophe Grenier
+    Add missing header
+
+2011-12-28 - Christophe Grenier
+    Check wctomb() return value
+
+2011-12-28 - Christophe Grenier
+    Use more recent C convention for members of struct_io_manager
+
+2011-12-28 - Christophe Grenier
+    Rewrote how TestDisk aligns partition on cylinder or 1MB boundary
+
+2011-12-08 - Christophe Grenier
+    Remove "Allow partial last cylinder" option
+
+2011-12-08 - Christophe Grenier
+    Code cleanup: remove constant argument 'align" from add_ext_part_i386()
+
+2011-12-03 - Christophe Grenier
+    PhotoRec: recover Premiere .proproj files
+
+2011-12-03 - Christophe Grenier
+    Before removing allocated from PhotoRec search space, check the sector size stored in FAT boot sector
+
+2011-12-03 - Christophe Grenier
+    Display "No file selected" if no file have been selected for the copy operation
+
+2011-11-22 - Christophe Grenier
+    src/hdcache.c code cleanup
+
+2011-11-22 - Christophe Grenier
+    Fix a disk cache issue due to bad sectors
+
+2011-11-22 - Christophe Grenier
+    Cygwin version: get better ReadFile error message
+
+2011-11-22 - Christophe Grenier
+    Update description in RPM spec file
+
+2011-11-22 - Christophe Grenier
+    PhotoRec: avoid an endless loop during .caf recovery
+
+2011-11-15 - Christophe Grenier
+    TestDisk & PhotoRec 6.13
+
+
+2011-11-15 - Christophe Grenier
+    Fix a potential endless loop (PhotoRec 6.12 affected, not 6.11.3)
+
+2011-11-15 - Christophe Grenier
+    Use "./configure --disable-dfxml" to disable DFXML feature
+
+2011-11-06 - Christophe Grenier
+    Handle x86_64-w64-mingw32 compilation target
+
+2011-11-06 - Christophe Grenier
+    PhotoRec: fix MS Compress signature
+
+2011-11-06 - Christophe Grenier
+    Remove unused variable
+
+2011-11-06 - Nick Schrader
+    PhotoRec: minimal EBML decoder to recover .mkv and .webm files
+
+2011-11-05 - Christophe Grenier
+    When listing ADS, free the stream name after usage
+
+2011-11-05 - Christophe Grenier
+    Remove memory leak in error paths in file_sig.c
+
+2011-11-05 - Christophe Grenier
+    Close a file descriptor leak in diskcp.c
+
+2011-11-05 - Christophe Grenier
+    Modify xml_set_command_line to avoid using realloc
+
+2011-11-02 - Christophe Grenier
+    PhotoRec: fix OpenDocument extension detection
+    Regression introduced in #bfa7d012cffb1b6ef60fba4c8b526ef9c3aaad4f
+
+2011-11-02 - Christophe Grenier
+    file_tib.c Fix regression introduced in #c63960562842934ff3929b2d537ecd901027d5cb
+
+2011-11-02 - Christophe Grenier
+    PhotoRec: fix Assassin's Creed II .save recovery
+
+2011-11-02 - Christophe Grenier
+    file_riff.c: Fix regression introduced in #bd92f8847e15aadfe676e7e56e3f934547dd762b
+
+2011-11-02 - Christophe Grenier
+    file_ace.c Fix regression introduced in #bbd33e63af7fb5f51de719a986f52f00bc6ce614
+
+2011-11-01 - Christophe Grenier
+    PhotoRec: recover CATIA .catdrawing
+
+2011-11-01 - Christophe Grenier
+    Search for Linux /dev/md* device instead of /dev/md?
+
+2011-10-31 - Christophe Grenier
+    Avoid a potential out of bound read access in debug code
+
+2011-10-31 - Christophe Grenier
+    Restrict variable context
+
+2011-10-31 - Christophe Grenier
+    Restrict variable context
+
+2011-10-30 - Christophe Grenier
+    PhotoRec: check rotation field when recovering .x3f Sigma raw
+
+2011-10-30 - Christophe Grenier
+    PhotoRec: stricter check for compressed flash .swc
+
+2011-10-30 - Christophe Grenier
+    PhotoRec: modify .pyc recovery to recover Python byte-compiled 2.6, 2.7, 3.0, 3.1 and 3.2
+
+2011-10-30 - Christophe Grenier
+    PhotoRec: allow more crypto algorithms in .gpg detection
+
+2011-10-25 - Christophe Grenier
+    Show Alternate Data Stream from NTFS directory
+
+2011-10-25 - Christophe Grenier
+    PhotoRec: Partition table need to be read again if sector size has been changed,
+    so force the user to select again the disk.
+
+2011-10-25 - Christophe Grenier
+    Use "int" instead of "boolean" in src/file_jpg.c
+
+2011-10-25 - Christophe Grenier
+    Don't follow ".." when listing the whole filesystem
+
+2011-10-17 - Christophe Grenier
+    DOS/DJGPP: Fix NTFS Alternate Data Stream filesize
+
+2011-10-17 - Christophe Grenier
+    ntfs_mbstoucs takes 2 parameters in ntfs-3g and 3 in ntfsprogs
+
+2011-10-17 - Christophe Grenier
+    NTFS listing: display Alternate Data Stream (ADS)
+
+2011-10-17 - Christophe Grenier
+    NTFS undelete: list Alternate Data Stream (ADS)
+
+2011-10-16 - Christophe Grenier
+    NTFS undelete: fix filesize display
+
+2011-10-16 - Christophe Grenier
+    Remove EWF pathname limit
+    Reorder src/ewf.c for HAVE_LIBEWF_V2_API
+
+2011-10-15 - Christophe Grenier
+    Fix detection of empty list when loading partitions list from backup.log
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: add missing return value to header_check_lxo()
+
+2011-10-15 - Joachim Metz
+    Deal with libewf v2 new API
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: recover SeeNezSST and snz text files
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in zip file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in tiff file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in tib file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in psf file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in pzh file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in pdf file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in nk2 file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in jpg file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check that buffer_size >= 0 in file_rename() and file_rename_unicode()
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in DOC file validation
+
+2011-10-15 - Christophe Grenier
+    PhotoRec: check fseek return value in ACE file validation
+
+2011-10-10 - Christophe Grenier
+    PhotoRec: update dwg signature
+
+2011-10-10 - Christophe Grenier
+    Use inode number in filename when undeleting NTFS file if no name has been found.
+
+2011-10-10 - Christophe Grenier
+    PhotoRec: fix destination path when creating image_remaining.dd
+
+2011-09-23 - Christophe Grenier
+    Speedup file sorting in NTFS undelete and local file listing by using merge sort instead of insertion sort
+
+2011-09-23 - Christophe Grenier
+    Fix dependancies on list.[ch] files
+
+2011-09-23 - Christophe Grenier
+    PhotoRec: recover pds sonar data files created by Reson software
+
+2011-09-23 - Christophe Grenier
+    PhotoRec: recover lxo/lwo 3d model files
+
+2011-09-23 - Christophe Grenier
+    PhotoRec: fix RIFF filesize detection
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: rename pdf using the title
+    The pdf isn't decoded, so it's not 100% reliable.
+
+2011-09-17 - Christophe Grenier
+    new function file_rsearch() to search a pattern in a file from the end
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: when renaming file, filter out name with too much bad chars
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: recover Assassin's Creed II .save backup
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: recover dar3 .dar archive
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: recover Core Audio Format .caf files
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: better detection of new mpg
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: Some JPG have two APP1 markers, avoid to dicard the first one
+
+2011-09-17 - Christophe Grenier
+    PhotoRec: recover 3ds .max file
+
+2011-08-28 - Christophe Grenier
+    PhotoRec: detect IFO file size
+
+2011-08-28 - Christophe Grenier
+    Locate lost GFS2 partition but not yet the size
+
+2011-08-28 - Christophe Grenier
+    PhotoRec session management: restart PhotoRec at the same location than previously
+
+2011-08-24 - Christophe Grenier
+    PhotoRec: remove some useless steps when carving ext2/3/4 filesystem and keeping corrupted files
+
+2011-08-24 - Christophe Grenier
+    common.c was missing ctype.h header
+
+2011-08-20 - Christophe Grenier
+    Huge code cleanup for Photorec: reduce the numbers of parameters of some functions
+
+2011-08-20 - Christophe Grenier
+    strip_dup(): return NULL for empty string
+
+2011-07-31 - Christophe Grenier
+    Check for both uuid_create() and uuid_generate() to solve a compilation issue on Mac OS X 10.8
+
+2011-07-21 - Christophe Grenier
+    PhotoRec: recover Sweet Home 3D .sh3d files
+
+2011-07-21 - Christophe Grenier
+    PhotoRec: choose the partition table type only in expert mode
+
+2011-07-21 - Christophe Grenier
+    PhotoRec: fix bug introduce by commit a217bf73ff63bde0b73acfb6232631b7e06e3d8e
+
+2011-07-21 - Christophe Grenier
+    PhotoRec: use a single parameter to forward the options (code cleanup)
+
+2011-07-20 - Christophe Grenier
+    Add detection of Vmware VMFS partition
+
+2011-07-15 - Christophe Grenier
+    PhotoRec: recover Hierarchical Data Format 4 .hdf
+
+2011-07-15 - Christophe Grenier
+    PhotoRec: recover Didson Data File .ddf (v3 and v4)
+
+2011-07-15 - Christophe Grenier
+    New scarrier message for NTFS MFT fixing
+
+2011-07-15 - Christophe Grenier
+    PhotoRec: stricter signature for Fujifilm Raw file (.raf)
+
+2011-07-15 - Christophe Grenier
+    PhotoRec: avoid '*' in filename
+
+2011-07-15 - Christophe Grenier
+    Allow booting from FAT logical partition by setting FAT hidden field in the same way than for primary partition.
+
+2011-06-30 - Christophe Grenier
+    Fix typo: mathlab -> matlab
+
+2011-06-30 - Christophe Grenier
+    Check exFAT boot sector validity when listing files
+
+2011-06-30 - Christophe Grenier
+    Fix ntfsprogs support when using mingw compiler
+
+2011-06-30 - Christophe Grenier
+    PhotoRec: recover ENVI .hdr file
+
+2011-06-30 - Christophe Grenier
+    PhotoRec: "ftyp" must only be seen at the beginning of .mov
+
+2011-06-30 - Christophe Grenier
+    Log HDD serial number and firmware revision
+
+2011-06-30 - Christophe Grenier
+    Read HDD serial number and firmware revision (Windows)
+
+2011-06-30 - Christophe Grenier
+    Read HDD serial number and firmware revision (Linux)
+
+2011-06-17 - Christophe Grenier
+    Enable gcc -Wformat=2 checks during compilation
+
+2011-06-17 - Sander Lepik
+    Turn off an error if -Werror=format-security is enforced
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: recover .wpb OpenCanvas files
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: recover .vmg Nokia Text Message
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: recover .TiVo video record
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: recover .par2 parchive
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: recover .oci OpenCanvas Image
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: use a bigger buffer to detect Illustrator .ai
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: handle .mov files using 64-bit atom size
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: handle large avi files using "AVIX"
+
+2011-06-17 - Christophe Grenier
+    PhotoRec: identify Delcam Powershape .psmodel files from first entry in OLE document
+
+2011-06-17 - Christophe Grenier
+    txt recovery: remove an unwanted debug line
+
+2011-06-17 - Christophe Grenier
+    MPG recovery: try to avoid to concatenate several MPG files
+
+2011-06-17 - Christophe Grenier
+    jpg recovery: use jpg size to avoid to recover the thumb instead of the jpg file itself
+
+2011-06-17 - Christophe Grenier
+    getpwuid() isn't static binary friendly, avoid this function
+
+2011-06-17 - Christophe Grenier
+    update configure.ac to avoid a warning with autoconf 2.68
+
+2011-06-02 - Christophe Grenier
+    PhotoRec: recover Games Factory .gam files
+
+2011-06-02 - Christophe Grenier
+    PhotoRec: workaroud in progress bar when time goes backward
+
+2011-06-02 - Christophe Grenier
+    Fix manifests for UAC
+
+2011-06-02 - Christophe Grenier
+    PhotoRec: recover .gcs GCstart (personal collections manager) files
+
+2011-06-02 - Christophe Grenier
+    PhotoRec: recover Delcam PowerSHAPE .psmodel files
+
+2011-06-02 - Christophe Grenier
+    Image Creation creates an image file if missing
+    Fix bug introduced by commit #1115ff8b64c468b704e895e324eeea39aba194cd
+
+2011-05-11 - Christophe Grenier
+    TestDisk & PhotoRec 6.12
+
+2011-05-11 - Christophe Grenier
+    Add TestDisk 6.12 news
+
+2011-05-11 - Christophe Grenier
+    Update spec file: remove testdisk-doc, replace ntfsprogs-devel by ntfs-3g-devel
+
+2011-05-11 - Christophe Grenier
+    PhotoRec: handle several lines of comment in custom signature file
+
+2011-05-10 - Christophe Grenier
+    File listing: add the possibility to copy select several files and copy all them
+
+2011-05-10 - Christophe Grenier
+    NTFS undelete - Fix message when selecting destination
+
+2011-05-10 - Christophe Grenier
+    Fix some compilation warning
+
+2011-05-06 - Christophe Grenier
+    Add forgotten dfxml change required by commit 5118568923556949fa5e7b6657cabd1ebf490ae1
+
+2011-05-02 - Christophe Grenier
+    PhotoRec: stricter check for BMP files
+
+2011-04-28 - Christophe Grenier
+    dfxml report was missing the first byte_run, fix it.
+
+2011-04-27 - Christophe Grenier
+    PhotoRec: generates Digital Forensics XML report
+
+2011-04-27 - Christophe Grenier
+    Recover XFI Electronic Fuel Injection Systems .xfi, .gct and .ttd
+
+2011-04-27 - Christophe Grenier
+    During Image Creation, refresh the display each 0.01%
+
+2011-04-25 - Christophe Grenier
+    Fix read error detection in exfat_copy()
+
+2011-04-25 - Christophe Grenier
+    When selecting undelete for an exFAT partition, avoid to redirect to NTFS undelete
+
+2011-04-24 - Christophe Grenier
+    Try to convert the compilation date to the ISO format
+
+2011-04-23 - Christophe Grenier
+    rework some if/then/else statements, add a few comments
+
+2011-04-23 - Christophe Grenier
+    Reject sector size reported by Windows if bigger than 16MB
+
+2011-04-23 - Christophe Grenier
+    Workaround a bug in wine, append to file doesn't always work.
+
+2011-04-23 - Christophe Grenier
+    Add get_compilation_date() and td_jpeg_version() functions
+
+2011-04-21 - Christophe Grenier
+    Workaround for Dos/DJGPP, stat.st_size seems to be 31 bits only.
+
+2011-04-21 - Christophe Grenier
+    When write failed during the copy of a file, log the strerror message
+
+2011-04-21 - Christophe Grenier
+    Reserve 9 digits instead of 7 to display file size in directory listing
+
+2011-04-21 - Christophe Grenier
+    Fix listing of exFAT subdirectories
+
+2011-04-19 - Christophe Grenier
+    PhotoRec: fix for custom signature using hexa
+
+2011-04-19 - Christophe Grenier
+    PhotoRec: don't limit Quickbooks to 30MB
+
+2011-04-19 - Christophe Grenier
+    Add the possibility to stop (Quit) the FAT32 root cluster search
+
+2011-04-06 - Christophe Grenier
+    Support for ntfs-3g_ntfsprogs
+
+2011-04-03 - Christophe Grenier
+    Should TestDisk search for partition created under Vista or later
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: recover McAfee Anti-Theft/FileVault .vault files
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: recover Pro Tools session File .ptf files
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: recover Apple Logic .exs
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: Move custom signature at the top of the list in FileOpts
+
+2011-04-03 - Christophe Grenier
+    NTFS - Use date/time from AT_STANDARD_INFORMATION instead of AT_FILE_NAME
+
+2011-04-03 - Christophe Grenier
+    qphotorec: add Proceed and Quit button
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: remove useless log_info()
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: when using custom signature, avoid pointer to memory that can be reallocated
+
+2011-04-03 - Christophe Grenier
+    Add warning or workaround for libjpeg-turbo
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: new template file
+
+2011-04-03 - Christophe Grenier
+    Minor optimisation in NTFS undelete
+
+2011-04-03 - Christophe Grenier
+    Add the possibility to clone read sectors (Disabled at compile time by default).
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: Fix custom signature parser
+
+2011-04-03 - Christophe Grenier
+    PhotoRec: distinguish Apple .acc from .mp4
+
+2011-04-03 - Christophe Grenier
+    When listing corrupted ext2/3/4 filesystem, fix handle leak.
+
+2011-04-03 - Christophe Grenier
+    libewf: Fix compile.sh script, don't be verbose by default
+
+2011-04-03 - Christophe Grenier
+    Copy files from reiserfs. Need patched progsreiserfs
+
+2011-03-28 - Christophe Grenier
+    Fix to deal with ncurses 5.8 API violation, newwin(0,0,0,0) doesn't create a new full-screen window anymore.
+
+2011-03-25 - Christophe Grenier
+    PhotoRec: recover MPEG transport stream .ts (disabled by default)
+
+2011-03-25 - Christophe Grenier
+    PhotoRec: fix file_rename() and file_rename_unicode() to allocate space for new file instead of using stack, add fallback if renamed failed
+
+2011-03-25 - Christophe Grenier
+    PhotoRec: Call reset_list_file_enable() in main() instead of file_options_load_aux()
+
+2011-03-25 - Christophe Grenier
+    Fix md 0.9 uuid copy
+
+2011-03-25 - Christophe Grenier
+    PhhotoRec: recover .xlsx witht the correct extension
+
+2011-03-25 - Christophe Grenier
+    PhotoRec: parse Paint Shop Pro to get the filesize
+
+2011-03-25 - Christophe Grenier
+    PhotoRec: use "%llu" instead of "%lu" to display sectors offset
+
+2011-03-19 - Christophe Grenier
+    PhotoRec: fix potential out of bound read during recovery of corrupted jpeg
+
+2011-03-19 - Christophe Grenier
+    Warn that fixing MFT using MFT mirror is a non reversible operation.
+
+2011-03-19 - Christophe Grenier
+    PhotoRec: some pdf were erroneously saved as Illusatrtor .ai
+
+2011-03-19 - Christophe Grenier
+    Recent version of libewf have removed LIBEWF_HANDLE type, use libewf_handle_t is available
+
+2011-03-06 - Christophe Grenier
+    Add missing src/exfat_dir.[ch] files since 2011-02-07
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: recover Windows Media Center TV .wtv files
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: recover Impulse Tracker .it files
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: recover Filevault .sparseimage
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: recover Oracle dump file .dmp
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: Limit file size to 4G when recovering from a FAT
+
+2011-03-05 - Christophe Grenier
+    Allow sector size up to 8192 bytes
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: for zip archive, set the filename according to the first file in the archive
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: try to recover LilyPond .ly text file
+
+2011-03-05 - Christophe Grenier
+    PhotoRec: recover gpg file when data has been encrypted with a symmetric cipher using a passphrase
+
+2011-03-05 - Christophe Grenier
+    Modify file_search_footer() prototype
+
+2011-03-05 - Christophe Grenier
+    FAT: handle filesystem sector size different than media sector size
+
+2011-03-05 - Christophe Grenier
+    Fix for HPA and DCO detection (again)
+
+2011-03-05 - Christophe Grenier
+    For non partionned media formated as FAT, set bytes per sector according
+    to FAT boot sector information.
+
+2011-03-05 - Christophe Grenier
+    TestDisk: try to avoid endless directory loop when copying directory
+    when damaged filesystem
+
+2011-03-05 - Christophe Grenier
+    TestDisk: recover btrfs, a GPL-licensed copy-on-write file system for Linux.
+
+2011-02-07 - Christophe Grenier
+    Minimal support to list and copy files from exFAT for TestDisk.
+    PhotoRec:Can carve files from exFAT free space only
+
+2011-01-10 - Christophe Grenier
+    Add mising file_lso.c file since commit 58fb3eaccbe01ba0867631956a58ad37c19ea1df
+
+2011-01-07 - Christophe Grenier
+    On non-partionned media, discovers exFAT filesystem using backup sector.
+
+2011-01-07 - Christophe Grenier
+    Fix exFAT recovery using backup boot sector
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: recover Torrent files
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: recover Freeway 5 pro files
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: recover lzo archive
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: argument signess fix in a log_info() call
+
+2011-01-05 - Christophe Grenier
+    Detect ext2/3/4 filesystem using group 3 backup superblock when main superblock is damaged in non-partionned media.
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: distinguish zip archive from Mozilla Cross-Platform Install .xpi
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: recover MS Internet Shortcut .url files and avoid some false positives with text files and Fortran .f
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: recover recents version of Acronis .tib files
+
+2011-01-05 - Christophe Grenier
+    PhotoRec: allows atom size up to 2GB
+
+2010-12-23 - Christophe Grenier
+    PhotoRec: detect Page Maker .p65 files
+
+2010-12-23 - Christophe Grenier
+    PhotoRec: fix the order of file checks
+
+2010-12-16 - Christophe Grenier
+    List and undelete filesystem using alternate superblock if necessary
+
+2010-12-16 - Christophe Grenier
+    Set alternate superblock information when available
+
+2010-12-05 - Christophe Grenier
+    PhotoRec: handle fill bytes before JPG markers
+    See B.1.1.2 Markers in http://www.w3.org/Graphics/JPEG/itu-t81.pdf
+
+2010-11-29 - Christophe Grenier
+    Compilation fix when ncurses is disabled
+
+2010-11-29 - Christophe Grenier
+    Try to locate truecrypt logical partition by using the logical partition entry.
+
+2010-11-29 - Christophe Grenier
+    Check wctomb() availability
+
+2010-11-22 - Christophe Grenier
+    PhotoRec: recover Lotus Notes .nsf and cdl/cdt/cdd Concept Draw files
+
+2010-11-22 - Christophe Grenier
+    PhotoRec: fix template
+
+2010-11-22 - Christophe Grenier
+    PhotoRec: recover Pretty Good Privacy pgp files
+
+2010-11-22 - Christophe Grenier
+    Reduce memory usage during NTFS undelete
+
+2010-11-20 - Christophe Grenier
+    Add the possibility to list NTFS partition in the Advanced menu
+
+2010-11-11 - Christophe Grenier
+    PhotoRec: display the data size and store image_remaining.dd where the files are recovered
+
+2010-11-11 - Christophe Grenier
+    Log ewflib error messages to stderr
+
+2010-11-11 - Christophe Grenier
+    TestDisk Image Creation: display the data size
+
+2010-11-09 - Christophe Grenier
+    Can list ext3/ext4 in TestDisk Advanced menu
+
+2010-11-09 - Christophe Grenier
+    When a key is pressed in a menu, default to the corresponding item.
+
+2010-11-09 - Christophe Grenier
+    PhotoRec: additional signature for HTML files
+
+2010-11-09 - Christophe Grenier
+    PhotoRec: avoid to truncate the file too short when there isn't enough data to read
+
+2010-11-07 - Christophe Grenier
+    PhotoRec: add carve free space only from FAT12 possibility
+
+2010-11-07 - Christophe Grenier
+    PhotoRec: avoid a false positive due to APP12 marker in jpeg recovery
+
+2010-11-07 - Christophe Grenier
+    PhotoRec: detect asf/wmv video file size
+
+2010-11-05 - Christophe Grenier
+    PhotoRec: user can choose to run sudo via the interface if he isn't root
+
+2010-11-05 - Christophe Grenier
+    NTFS Rebuild BS: fix the potential partition location (Visible in log file only)
+
+2010-11-05 - Christophe Grenier
+    Introduce pread_fast(), a function that can return a pointer to the data in cache
+    instead of using memcpy to fill the buffer with a copy of the data
+
+2010-10-31 - Christophe Grenier
+    PhotoRec: remove has_value field in file_check_list_t
+
+2010-10-31 - Christophe Grenier
+    Search for FAT32 and NTFS backup boot sector when checking if the partition table type is None
+
+2010-10-31 - Christophe Grenier
+    Fix file_rename() and file_rename_unicode()
+
+2010-10-31 - Christophe Grenier
+    Affect default values to mft_lcn and mftmirr_lcn that may be used uninitialized otherwise.
+
+2010-10-31 - Christophe Grenier
+    PhotoRec: speedup optimization by avoiding some useless call to header_check_txt()
+
+2010-10-31 - Christophe Grenier
+    file_riff.c: remove unused variable affectation
+
+2010-10-31 - Christophe Grenier
+    file_pdf.c: removed useless affectation
+
+2010-10-31 - Christophe Grenier
+    Don't dereference disk if disk parameter is NULL
+
+2010-10-31 - Christophe Grenier
+    file_doc.c: remove useless code
+
+2010-10-24 - Christophe Grenier
+    PhotoRec: use signatures defined in photorec.sig file.
+
+2010-10-24 - Christophe Grenier
+    New prototype for size_to_unit()
+
+2010-10-23 - Christophe Grenier
+    PhotoRec: recover lzo compressed archive
+
+2010-10-23 - Christophe Grenier
+    PhotoRec: recover Print Shop .psf files
+
+2010-10-23 - Christophe Grenier
+    Modified interface when prompting for a destination to store data
+
+2010-10-23 - Christophe Grenier
+    Support cygwin's libncursesw10
+
+2010-10-23 - Christophe Grenier
+    Use "make -j 2" in compile.sh
+
+2010-09-24 - Christophe Grenier
+    Fix grammar in TestDisk first screen
+
+2010-09-24 - Christophe Grenier
+    PhotoRec: handle another version of Acronis True Image
+
+2010-09-24 - Christophe Grenier
+    PhotoRec: test chunk type while parsing PNG file
+
+2010-09-24 - Christophe Grenier
+    Assume utf8 filenames in FAT
+
+2010-09-19 - Christophe Grenier
+    aff_copy_short(): a 1-line banner
+
+2010-09-19 - Christophe Grenier
+    TestDisk: when manually adding a partition, the proposed partition is now by default the biggest free space.
+
+2010-09-19 - Christophe Grenier
+    src/log.c: refactor code by using log_open()
+
+2010-09-19 - Christophe Grenier
+    PhotoRec: recover raw avi stream
+
+2010-09-11 - Christophe Grenier
+    If compiled with "./configure --enable-mouse", most PhotoRec screens can be driven by mouse.
+    gpm library is dynamicaly loaded by ncurses, so this option isn't compatible with static binaries.
+
+2010-09-11 - Christophe Grenier
+    Remove reference to jpegmmx-lib
+
+2010-09-11 - Christophe Grenier
+    PhotoRec: in bruteforce mode, assume the error location is never after the estimated error location
+
+2010-09-11 - Christophe Grenier
+    PhotoRec: during the bruteforce mode, try to handle situation where the error is located before the previous estimation.
+    It still need work.
+
+2010-09-11 - Christophe Grenier
+    PhotoRec: improve jpeg localisation of erronous data, usefull for the bruteforce mode
+
+2010-09-11 - Christophe Grenier
+    PhotoRec: recover Quantum GIS (QGIS), Open Source Geographic Information System files and firefox sessionstore files
+
+2010-09-11 - Christophe Grenier
+    Move binaries from sbin to bin
+
+2010-09-11 - Christophe Grenier
+    Update spec file to be a closer match to fedora 14 package
+
+2010-09-11 - Christophe Grenier
+    Add fidentify man page, fix the section number of testdisk and photorec
+
+2010-09-11 - Christophe Grenier
+    Don't check for varargs.h presence
+
+2010-09-11 - Christophe Grenier
+    Fix for x86_64-pc-mingw32
+
+2010-09-11 - Christophe Grenier
+    Warn the user that there is no echo when using sudo
+
+2010-08-26 - Christophe Grenier
+    PhotoRec: code cleanup - use enum value for return value in src/phbf.c
+
+2010-08-23 - Christophe Grenier
+    PhotoRec: fix dgn detection and the wrong argument to OLE_parse_summary() function
+
+2010-08-23 - Christophe Grenier
+    Code cleanup
+
+2010-08-23 - Christophe Grenier
+    Update TestDisk man page to include ext4 and undelete feature
+
+2010-08-23 - Christophe Grenier
+    PhotoRec: fix the reported error location when EXIF information are corrupted
+
+2010-08-23 - Christophe Grenier
+    PhotoRec: add http cache file detection
+
+2010-08-20 - Christophe Grenier
+    PhotoRec: better detection of corrupted EXIF information
+
+2010-08-18 - Christophe Grenier
+    MBRCode: Avoid to replace the disk signature used by Vista and later
+
+2010-08-16 - Steven Mestdagh
+    Detect vnd (virtual node driver) devices that provides interface to disk image file.
+
+2010-07-23 - Christophe Grenier
+    PhotoRec: recover Virtual desktop infrastructure 1.1 .vdi files
+
+2010-07-23 - Christophe Grenier
+    PhotoRec: recover RoboForm .rfp files
+
+2010-07-23 - Christophe Grenier
+    PhotoRec: recover Apple QuickTake 100 files
+
+2010-07-23 - Christophe Grenier
+    PhotoRec: recover Broadcast Interface Module .bim files
+
+2010-07-23 - Christophe Grenier
+    Fix NTFS undelete of sparse file
+
+2010-07-23 - Christophe Grenier
+    PhotoRec: parse PNG/JNG/MNG files
+
+2010-06-22 - Christophe Grenier
+    PhotoRec: allow carving on non sector boundary (experimental)
+
+2010-06-22 - Christophe Grenier
+    Code cleanup
+
+2010-06-22 - Christophe Grenier
+    PhotoRec: distinguish jar from zip archive (fix)
+
+2010-06-22 - Christophe Grenier
+    PhotoRec: remove a check that was preventing some mov file bigger than 1GB to be recovered
+
+2010-06-22 - Christophe Grenier
+    PhotoRec: relax check for PE exe
+
+2010-06-22 - Christophe Grenier
+    PhotoRec: fix Dalvik .dex detection
+
+2010-06-22 - Christophe Grenier
+    Space and name cleanup
+
+2010-06-22 - Christophe Grenier
+    Handle Humax partition table
+
+2010-06-22 - Christophe Grenier
+    TestDisk: reduce the number of read operations
+
+2010-06-22 - Christophe Grenier
+    TestDisk: fix HFSP detection
+    Regression introduced in commit 183a66798e1ddbfd62c56e1d34287fddb0a4d3e7
+
+2010-05-21 - Christophe Grenier
+    Another fix for DCO/HPA detection
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .wpd
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: recover Synchronized Multimedia Integration Language .smil
+    - VBooKMark .url
+    - utf-8 .xml
+    - Java Application Descriptor .jad
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: fix oversized file detection for .arw
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .swf/.swc
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .res
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: .ps file recovery - handle very small buffersize
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .prc - extract the modification date
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .pcx
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .mpg
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: mp3 recovery - code cleanup
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .lnk
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .ico
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: extract the exe filename from InteralName if available
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: recover Bentley Systems' MicroStation .dgn file format
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: recover history.dat file from Sony Ericson phone
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .au and extract the filesize
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: stricter check for .arj
+
+2010-05-21 - Christophe Grenier
+    PhotoRec: add information about amr file format
+
+2010-05-21 - Christophe Grenier
+    Mark as "const" a variable
+
+2010-05-21 - Christophe Grenier
+    Prefix highligted selection by ">", so screen reader software find the
+    interface less confusing.
+
+2010-04-27 - Christophe Grenier
+    Update TestDisk date, add photorecf
+    Add Windows Server 2008 and Windows 7 in description
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: recover Dalvik .dex files
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: recover DriftBox .dbn files
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: recover Netpbm (PBM/PGM/PPM) files
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: improve jpg file recovery in brute-force mode
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: modify internals for brute-force recovery
+
+2010-04-27 - Christophe Grenier
+    Fix detection of Encase 6
+    Fix detection of OpenBSD SCSI device
+
+2010-04-27 - Christophe Grenier
+    xfs, code cleanup
+
+2010-04-27 - Christophe Grenier
+    Remove redundant location hints used by partition search (speedup)
+
+2010-04-27 - Christophe Grenier
+    md 0.9: fix out of bound write memory operation
+
+2010-04-27 - Christophe Grenier
+    luks: code cleanup
+
+2010-04-27 - Christophe Grenier
+    Press 'F' during deeper partition search to continue after the end of the last found partition
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: recover another mbox (mailbox) folder file format
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: add another signature for Quickbooks qbw
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: fix gpg recovery
+
+2010-04-27 - Christophe Grenier
+    PhotoRec: recover Quickbook qbb files based on OLE/Microsoft Compound Document file format
+
+2010-04-27 - Christophe Grenier
+    Use destination offset instead of source offset when creating a partition image (Fix)
+
+2010-04-27 - Christophe Grenier
+    Add specific tests (ie magic value) before checking for a filesystem (Use less CPU)
+
+2010-04-27 - Christophe Grenier
+    Add a header needed under Solaris
+
+2010-03-16 - Christophe Grenier
+    Interface need 24 lines to work correctly
+
+2010-03-16 - Christophe Grenier
+    PhotoRec: recover Extended Renoise song .xrns files
+
+2010-03-16 - Christophe Grenier
+    PhotoRec: stricter check for MPG file beginning by MPEG-4 visual object start code
+
+2010-03-16 - Christophe Grenier
+    NTFS undelete: 'a' to select/deselect all files
+
+2010-03-16 - Christophe Grenier
+    PhotoRec: recover Mind Your Own Business .myo files
+
+2010-01-24 - Christophe Grenier
+    Rename sun_partition to sun_disklabel
+
+2010-01-24 - Christophe Grenier
+    When deleting an Intel partition table, remove the EFI signature if present.
+
+2010-01-24 - Christophe Grenier
+    Improve log file creation
+
+2010-01-24 - Christophe Grenier
+    Add Windows manifest in the exe files itself (cygwin compilation)
+
+2010-01-24 - Christophe Grenier
+    PhotoRec: recover encrypted rar files
+
+2010-01-24 - Christophe Grenier
+    file_exe.c: rename a file structure
+
+2010-01-24 - Christophe Grenier
+    PhotoRec: Improve .dv Digital Video file recovery to get the filesize
+
+2010-01-24 - Christophe Grenier
+    Modify compile.sh to handle cross-compilation for arm-marvell-linux-gnu
+    used bySynology CS407
+
+2010-01-24 - Christophe Grenier
+    Add missing files
+
+2009-12-28 - Christophe Grenier
+    Fix a warning when running the cygwin version under Wine
+
+2009-12-28 - Christophe Grenier
+    PhotoRec: recover FontLab .vfb files
+
+2009-12-28 - Christophe Grenier
+    PhotoRec: recover Presto .pzh files
+
+2009-12-28 - Christophe Grenier
+    PhotoRec: recover Game Maker .gm6 and .gmd files
+
+2009-12-28 - Christophe Grenier
+    PhotoRec: recover ext[234] filesystem file image
+
+2009-12-28 - Christophe Grenier
+    Recommand using parted under Linux to recreate missing partition
+    when Mac partition table is used.
+
+2009-12-28 - Christophe Grenier
+    Better check for HPA/DCO reporting
+
+2009-12-28 - Christophe Grenier
+    PhotoRec: return immediatly when date/time has been found in pdf
+
+2009-12-28 - Christophe Grenier
+    PhotoRec: avoid out of bound read access when using OLE ministream (doc/ppt/xls...)
+
+2009-12-28 - Christophe Grenier
+    TestDisk: when search an ext[234] superblock, display the corresponding
+    fsck.ext3 command to use the superblock parameters
+
+2009-12-11 - Christophe Grenier
+    Cygwin: use posix path when creating a log file
+
+2009-12-11 - Christophe Grenier
+    Detect disks when compiled for Haiku (free open source operating system compatible with BeOS)
+
+2009-12-11 - Christophe Grenier
+    PhotoRec: stricter check for Mysql .frm files
+
+2009-12-11 - Christophe Grenier
+    PhotoRec: recover Wilcom ES .emb files
+
+2009-12-11 - Christophe Grenier
+    fidentify: enable all file formats
+
+2009-12-11 - Christophe Grenier
+    Enable -Wc++-compat compilation warning
+
+2009-12-11 - Christophe Grenier
+    Enable sudo for i686-apple-darwin9 binaries
+
+2009-11-01 - Christophe Grenier
+    Avoid some .ini, .java and .txt false positifs
+
+2009-11-01 - Christophe Grenier
+    Add missing fwrite return check
+
+2009-11-01 - Christophe Grenier
+    PhotoRec: when no partition table is found, default to none
+
+2009-11-01 - Christophe Grenier
+    Remove unused disk_car argument from test_ISO() function
+
+2009-11-01 - Christophe Grenier
+    Fix header definition for function taking no argument
+
+2009-11-01 - Christophe Grenier
+    Add offset in hfs+ structure comment
+
+2009-11-01 - Christophe Grenier
+    PhotoRec: handle miniFAT when extracting doc/xls/ppt title from summary
+
+2009-11-01 - Christophe Grenier
+    PhotoRec: stricter check for .dbf files
+
+2009-11-01 - Christophe Grenier
+    PhotoRec: record last valid offset of a file, will be usefull for bruteforce
+
+2009-11-01 - Christophe Grenier
+    TestDisk: fix ext2/ext3/ext4 superblock detection for 1024b block
+
+2009-11-01 - Christophe Grenier
+    Define _FORTIFY_SOURCE during compilation to enable more source code warnings
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: recover Opera preferences .win files
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: recover encrypted file by eCryptfs
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: recover Adobe's Extensible Metadata Platform .xmp files
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: make atd_header static
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: don'tinclude iso9660.h in iso.h
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: better detection of docx/xlsx/pptx
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: fix MPEG-1 system header start code detection
+
+2009-10-25 - Christophe Grenier
+    PhotoRec: try to detect Microsoft Tape .bkf end of file
+
+2009-10-25 - Christophe Grenier
+    Code cleanup
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: recover Nintendo DS Game ROM Image .nds
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: recover Matlab .mat files
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: recover Color profiles .icc
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: recover File Maker Pro .fp5
+
+2009-10-19 - Christophe Grenier
+    Identify ISO9660 image as non-partitionned media
+
+2009-10-19 - Christophe Grenier
+    Move fat_set_part_name() to src/common.c and rename it to set_part_name_chomp()
+
+2009-10-19 - Christophe Grenier
+    List 0xFB PC/Intel partition id as VMFS, VMware FileSystem
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: do not parse TIFF Makernotes
+
+2009-10-19 - Christophe Grenier
+    Log syntax error in command line
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: minimal detection of file size of Adobe Photoshop Image .psd
+
+2009-10-19 - Christophe Grenier
+    PhotoRec: search for JPEG beginning by SOI + APP12
+
+2009-10-06 - Christophe Grenier
+    PhotoRec: recover Mathlab model .mdl
+
+2009-10-06 - Christophe Grenier
+    PhotoRec: distinguish .xml.gz from .gz
+
+2009-10-06 - Christophe Grenier
+    Scan for the first 20 disks under Mac OS X instead of 10 (fix)
+
+2009-09-30 - Christophe Grenier
+    dir.c: little code reorganisation
+
+2009-09-30 - Christophe Grenier
+    Scan for the first 20 disks under Mac OS X instead of 10
+
+2009-09-05 - Christophe Grenier
+    file_template is a model for adding a new file format to PhotoRec
+
+2009-09-04 - Christophe Grenier
+    Detect Windows server 2008 and Windows server 2008 R2 - compilation fix
+
+2009-09-03 - Christophe Grenier
+    Detect Windows server 2008 and Windows server 2008 R2
+
+2009-09-03 - Christophe Grenier
+    Fix HPA/DCO detection for some big disks (ie 1.5TB)
+
+2009-09-03 - Christophe Grenier
+    PhotoRec: recover Mnemosyne .mem files
+
+2009-09-03 - Christophe Grenier
+    PhotoRec: recover Bacula backup .bac and Qemu image .cow (COW and COW2)
+
+2009-08-27 - Christophe Grenier
+    Log the machine architecture
+
+2009-08-27 - Christophe Grenier
+    TestDisk: don't display "Structure: Ok" if there is no partition. Users are confused otherwise.
+
+2009-08-27 - Christophe Grenier
+    PhotoRec: stricter check for PowerTab .ptb files
+
+2009-08-27 - Christophe Grenier
+    PhotoRec: recover Xournal .xoj files
+
+2009-08-20 - Christophe Grenier
+    Fix for Device Configuration Overlay detection when LBA48 isn't enabled
+
+2009-08-20 - Christophe Grenier
+    PhotoRec: recover JPEG XR .wdp files
+
+2009-08-18 - Christophe Grenier
+    TestDisk: locate ZFS partition beginning
+
+2009-08-18 - Christophe Grenier
+    unicode.c: shutdown a warning
+
+2009-08-18 - Christophe Grenier
+    PhotoRec: print an error if /cmd parameter hasn't been fully processed (work still needed)
+
+2009-08-18 - Christophe Grenier
+    photorec.c: add missing setdate.h header
+
+2009-08-18 - Christophe Grenier
+    PhotoRec: use a short extension when recovering sqlite files with DOS version
+
+2009-08-18 - Christophe Grenier
+    PhotoRec: identify Ogg data/Theora video .ogm files
+
+2009-08-18 - Christophe Grenier
+    PhotoRec: extract date/time and title from Word document
+    better doc / xls / ppt / ... identification
+    recover SigmaPlot.jnb files
+
+2009-08-18 - Christophe Grenier
+    file_rename() and file_rename_unicode() new prototype
+
+2009-08-18 - Christophe Grenier
+    Fix a double free when ext2fs_open() failed
+
+2009-08-18 - Christophe Grenier
+    Faster search for backup ext2/ext3/ext4 superblock
+
+2009-08-18 - Christophe Grenier
+    Fix small memory leak when copying files
+
+2009-08-12 - Christophe Grenier
+    Move set_date() to a separate file
+
+2009-07-31 - Christophe Grenier
+    qphotorec: fix the device list
+
+2009-07-31 - Christophe Grenier
+    PhotoRec: avoid extension with more than 3 letters for DOS/DJGPP version
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: recover GraphPrism 4 .pzf files
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: recover deleted Encase EWF (.e01, .e02...) files
+
+2009-07-26 - Christophe Grenier
+    Move write_part_gpt() in a separate file, so PhotoRec doesn't depend of
+    uuid_generate, uuidgen or uuid_create function
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: fix FAT unformat but scan the whole partition
+
+2009-07-26 - Christophe Grenier
+    Code style cleanup
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: Log the sector number when a FAT directory is found
+
+2009-07-26 - Christophe Grenier
+    TestDisk: add a boundary check when searching NTFS MFT
+
+2009-07-26 - Christophe Grenier
+    Stricter check for EWF files - workaround a bug in libewf-20090510 when opening a file segment other than .e01
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: recover the following text files
+    - .emka EMKA IOX - Pharmacology & toxicology files
+    - .java JAVA source
+    - .json JavaScript Object Notation
+    - .ksh Korn Shell script
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: try to extract the date/time from pdf files
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: file_mov.c - define some variables as const
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: recover R, language and environment for statistical computing and graphics, .RData files
+
+2009-07-26 - Christophe Grenier
+    Fix the spec file: TestDisk & PhotoRec man pages are moved to
+    "8 System Administration tools and Deamons" instead of "1 User Commands"
+
+2009-07-26 - Christophe Grenier
+    PhotoRec: When manually selecting the blocksize and offset in expert mode, fix the offset
+
+2009-07-16 - Christophe Grenier
+    PhotoRec: improve Adobe Photoshop Image .psd file signature
+
+2009-07-16 - Christophe Grenier
+    PhotoRec: handle TIFF tag IMPrint, some improvements to get a better filesize
+
+2009-07-16 - Christophe Grenier
+    TestDisk & PhotoRec man pages are moved to "8 System Administration tools and Deamons"
+    instead of "1 User Commands"
+
+2009-07-16 - Christophe Grenier
+    Update acx_pthread.m4 to not use AC_LANG_SAVE, AC_LANG_C and AC_TRY_LINK deprecated macros
+
+2009-07-06 - Christophe Grenier
+    PhotoRec: recover RED r3d camera videos
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: recover Guitar Pro 5 .gp5 files
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: recover Russian Finance 1C:Enterprise 8 .1cd files
+
+2009-07-03 - Christophe Grenier
+    HPA/DOC detection, handle the case where native_max is null.
+
+2009-07-03 - Christophe Grenier
+    TestDisk: additional control to avoid that the extended partition ends after the end of the disk
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: identify Windows Internet Shortcut .url, Visual Basic .vb
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: identify several RIFF files:
+    - MIDI sound file .mid
+    - MIDI MIDI Instruments Definition File .idf
+    - Windows Animated Cursor .ani
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: distinguish .html.gz from .gz
+
+2009-07-03 - Christophe Grenier
+    PhotoRec .gpg: check publickey algo for Public-Key Encrypted Session Key Packet v3
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: recover 16 bits (MZ NE) windows executable
+
+2009-07-03 - Christophe Grenier
+    PhotoRec: stricter check for .ape, Monkey's Audio compressed format
+
+2009-07-03 - Christophe Grenier
+    TestDisk: Convert the directory name when it can't be created (Cygwin version)
+
+2009-06-21 - Christophe Grenier
+    PhotoRec: recover FAT filesystem (ie. floppy image)
+    Note, you should disable the recovery of other filetypes
+
+2009-06-21 - Christophe Grenier
+    PhotoRec: recover Quattro Pro spreadsheet qpw
+
+2009-06-21 - Christophe Grenier
+    PhotoRec: check for EFBIG (file too large) error when writing files
+
+2009-06-21 - Christophe Grenier
+    Update configure.ac to not use the deprecated AC_TRY_COMPILE macro,
+    don't use nested function
+
+2009-06-12 - Christophe Grenier
+    PhotoRec: extract time from JPEG (fix), better detect end of file
+
+2009-06-12 - Christophe Grenier
+    TestDisk: Skip 10MB if a read error occurs during image creation.
+
+2009-06-12 - Christophe Grenier
+    PhotoRec: limit to 1GB when searching the previous unrecovered file
+
+2009-06-12 - Christophe Grenier
+    PhotoRec: try to detect MPEG end of file
+
+2009-06-12 - Christophe Grenier
+    Always include stdio.h before ncurses header and types.h
+
+2009-06-11 - Christophe Grenier
+    md.c: add boundary checking
+
+2009-06-11 - Christophe Grenier
+    PhotoRec: recover phpMyAdmin, MySQL and postgreSQL dumps with .sql
+
+2009-06-11 - Christophe Grenier
+    Build fidentify by default
+
+2009-05-27 - Christophe Grenier
+    PhotoRec: fix ending sector in log message
+
+2009-05-27 - Christophe Grenier
+    PhotoRec: fix blocksize detection (regression introduce in 6.11)
+
+2009-05-27 - Christophe Grenier
+    PhotoRec: when a ne file is found, mark the area as data
+
+2009-05-27 - Christophe Grenier
+    PhotoRec: file_search_footer() gets a new parameter
+
+2009-05-27 - Christophe Grenier
+    Remove unecessary memmem.h include
+
+2009-05-27 - Christophe Grenier
+    Flush stderr before and after listing files
+
+2009-05-24 - Christophe Grenier
+    PhotoRec: Fix Panasonic rw2 recovery
+
+2009-05-24 - Christophe Grenier
+    Fix EFI partition table backup
+
+2009-05-24 - Christophe Grenier
+    Repla ce "Estimated time for achievement" by "Estimated time to completion"
+
+2009-05-24 - Christophe Grenier
+    If the destination is full, PhotoRec ask for a new location and it defaults
+    to the actual location instead of the default one.
+
+2009-05-05 - Christophe Grenier
+    PhotoRec: move photorec_bf() to a separate file,
+    idem for photorec_find_blocksize() and file_found()
+    move photorec_info() and photorec_progressbar() to src/phnc.c
+
+2009-05-05 - Christophe Grenier
+    "photorec /?" returns the help message
+
+2009-05-05 - Christophe Grenier
+    move set_filename() from src/phrecn.c to src/photorec.c
+
+2009-05-05 - Christophe Grenier
+    Limit the scope of several variables
+
+2009-05-05 - Christophe Grenier
+    move autoset_unit() to a separate file
+
+2009-05-05 - Christophe Grenier
+    PhotoRec: recover Scalable Vector Graphics .SVG files
+
+2009-05-05 - Christophe Grenier
+    PhotoRec: Add boundary checking when parsing EXIF data (again)
+
+2009-04-27 - Christophe Grenier
+    PhotoRec: add some texts that can be found in jpg modified by Adobe to avoid to reject the file
+
+2009-04-27 - Christophe Grenier
+    PhotoRec: Recover MPEG .tod files
+
+2009-04-27 - Christophe Grenier
+    PhotoRec: Add boundary checking when parsing EXIF data
+
+2009-04-27 - Christophe Grenier
+    PhotoRec: recover SolidWorks .sldprt
+
+2009-04-27 - Christophe Grenier
+    Avoid "return function()" in function returning void
+
+2009-04-19 - Christophe Grenier
+    TestDisk & PhotoRec 6.11-WIP
+
+2009-04-18 - Christophe Grenier
+    Clear the handle when the log is closed
+
+2009-04-18 - Christophe Grenier
+    Handle more than 80 columns
+
+2009-04-18 - Christophe Grenier
+    Handle Ctrl+C
+
+2009-04-14 - Christophe Grenier
+    Code cleanup: remove unused variable in src/ntfs_dir.c
+    Make fd variable more local in src/ntfs_udl.c
+
+2009-04-14 - Christophe Grenier
+    TestDisk: when searching partition near the end of the disk, stops if there is a read error
+
+2009-04-14 - Christophe Grenier
+    PhotoRec: identify DNG (raw tiff)
+
+2009-04-14 - Christophe Grenier
+    TestDisk: hexdump can use more than 24 lines
+
+2009-04-14 - Christophe Grenier
+    TestDisk: Force screen redraw
+
+2009-04-12 - Christophe Grenier
+    PhotoRec: recover TZif2 timeinfo zone files
+
+2009-04-12 - Christophe Grenier
+    PhotoRec: fix Macintosh Picture .pct size detection
+
+2009-04-12 - Christophe Grenier
+    Cylinder is now long unsigned int. Fix a parameter inversion for the DOS version.
+
+2009-04-12 - Christophe Grenier
+    Don't forget the string format when logging an error, patch from Pascal Terjan
+
+2009-04-12 - Christophe Grenier
+    PhotoRec: use tgz instead of tar.gz extension when recovering file for DOS DJGPP version
+
+2009-04-12 - Christophe Grenier
+    Replace '/' and '\' by '_' when extracting the original filename from a file
+
+2009-04-12 - Christophe Grenier
+    Code cleanup: remove unused variable
+
+2009-04-12 - Christophe Grenier
+    Add PhotoRec name in testdisk.spec description
+
+2009-04-08 - Christophe Grenier
+    PhotoRec: in expert mode, ask if the user want to create a file with all the unidentified sectors.
+    Add some code to modify PhotoRec to skip some sectors or recover a file with a known location,
+    it can be usefull for known fragmented file
+
+2009-04-08 - Christophe Grenier
+    JPG, check the JPG structure before using libjpeg
+
+2009-04-08 - Christophe Grenier
+    PhotoRec: fix the recovery of sr2 and arw TIFF
+
+2009-04-08 - Christophe Grenier
+    FAT: Fix the check when listing deleted "." and ".." entries
+
+2009-04-05 - Christophe Grenier
+    Windows, fix the argument order
+
+2009-04-05 - Christophe Grenier
+    PhotoRec: sector number in filename is now prefixed with several 0, so the files can be sorted by name without problem
+
+2009-04-05 - Christophe Grenier
+    file_mov.c: add "jP  " header
+
+2009-04-05 - Christophe Grenier
+    file_doc.c: better check for thumbs.db
+
+2009-04-05 - Christophe Grenier
+    We are now in 2009
+
+2009-03-25 - Christophe Grenier
+    PhotoRec: recover AutoSketch drawing .skd
+
+2009-03-25 - Christophe Grenier
+    PhotoRec: recovers Thumbs.db with a .db extension instead of a .doc
+
+2009-03-25 - Christophe Grenier
+    Stop FAT directory listing when a entry begins by a null char
+
+2009-03-25 - Christophe Grenier
+    Compilation fix
+
+2009-03-25 - Christophe Grenier
+    libewf project has moved to sourceforge
+
+2009-03-22 - Christophe Grenier
+    Fix sign/unsigness problem
+
+2009-03-22 - Christophe Grenier
+    Redraw the full screen after a file listing
+
+2009-03-22 - Christophe Grenier
+    PhotoRec: allow R(egistered) char in txt file
+
+2009-03-22 - Christophe Grenier
+    PhotoRec: reorganize how TIFF tag are searched
+
+2009-03-22 - Christophe Grenier
+    PhotoRec: bugfix, reset file_rename pointer in reset_file_recovery()
+
+2009-03-22 - Christophe Grenier
+    PhotoRec: modify Canon Raw picture .crw EOF footer detection
+
+2009-03-22 - Christophe Grenier
+    TestDisk: recover exFAT partition
+
+2009-03-15 - Christophe Grenier
+    PhotoRec: fix for TIFF .fff
+
+2009-03-15 - Christophe Grenier
+    PhotoRec: limit recursion depth and loop count when checking exe information
+
+2009-03-13 - Christophe Grenier
+    file_exe.c: Add missing boundary checks
+
+2009-03-11 - Christophe Grenier
+    PhotoRec: log the correct sector numbers during FAT unformat in expert mode
+
+2009-03-06 - Christophe Grenier
+    code cleanup: remove unused verbose parameter to disk_get_hpa_dco()
+
+2009-03-06 - Christophe Grenier
+    code cleanup, fix signed/unsigned warnings
+
+2009-03-06 - Christophe Grenier
+    code cleanup: remove verbose argument to fewf_init
+
+2009-03-06 - Christophe Grenier
+    code cleanup: remove verbose argument to add_partition_*()
+
+2009-03-06 - Christophe Grenier
+    PhotoRec: avoid a false positive with some jpg inside avi
+
+2009-03-01 - Christophe Grenier
+    PhotoRec: when loading a previous session, avoid sscanf() and strtol() for better performance
+
+2009-03-01 - Christophe Grenier
+    PhotoRec: Use "Disk identification, please wait..." and "Filesystem analysis, please wait..." messages
+
+2009-02-27 - Christophe Grenier
+    find_blocksize: fix a bug introduced yesterday
+
+2009-02-26 - Christophe Grenier
+    PhotoRec: bugfix, don't reset the blocksize if it's already known
+
+2009-02-26 - Christophe Grenier
+    PhotoRec file_exe.c: Get the original filename from PE fileinfo structure
+
+2009-02-26 - Christophe Grenier
+    find_blocksize() cleanup
+
+2009-02-26 - Christophe Grenier
+    PhotoRec: recover some "DB" files
+
+2009-02-26 - Christophe Grenier
+    file_ace.c: read 4096 bytes instead of 256 when checking the header
+
+2009-02-26 - Christophe Grenier
+    Use e2fsprogs 1.41.4 instead of 1.41.0 if no version is installed
+
+2009-02-22 - Christophe Grenier
+    PhotoRec: add the possibility to do a FAT unformat in expert mode
+
+2009-02-22 - Christophe Grenier
+    Add PE information when building windows binaries
+
+2009-02-20 - Christophe Grenier
+    TIFF: remove redundant define
+
+2009-02-20 - Christophe Grenier
+    PhotoRec: extract the filename from the gzip header if available
+
+2009-02-20 - Christophe Grenier
+    PhotoRec: extract the filename from Diablo II .d2 content
+
+2009-02-20 - Christophe Grenier
+    PhotoRec: create the infrastructure to set a filename using the file content
+
+2009-02-20 - Christophe Grenier
+    fidentify: log debug information
+
+2009-02-20 - Christophe Grenier
+    export find_sectors_per_cluster_aux()
+
+2009-02-18 - Christophe Grenier
+    PhotoRec: recover Diablo II .d2s and .mk5 files generated by a custom CAD-CAM software
+
+2009-02-18 - Christophe Grenier
+    PhotoRec: search Ableton Lives Sets .als footer
+
+2009-02-17 - Christophe Grenier
+    PhotoRec: move get_next_header() and get_next_sector() to the new file pnext.h
+
+2009-02-16 - Christophe Grenier
+    Fix PhotoRec FAT free space carving, the first sector of cluster 2 was erronously removed from the disk space to analyse.
+
+2009-02-16 - Christophe Grenier
+    Move find_sectors_per_cluster() and no_of_cluster2part_type() to a separated file
+
+2009-02-16 - Christophe Grenier
+    PhotoRec: new prototype "void update_blocksize(...)"
+
+2009-02-16 - Christophe Grenier
+    PhotoRec: add missing description in File Maker Pro 7 .fp7
+
+2009-02-15 - Christophe Grenier
+    PhotoRec: recover AppleSingle/AppleDouble, File Maker Pro .fp7, Heredis - Genealogy .hr9 and Microsoft SQL Server Log Data File .ldf
+
+2009-02-15 - Christophe Grenier
+    PhotoRec: add a debug message about the initial sector reading
+
+2009-02-15 - Christophe Grenier
+    PhotoRec: modify Ableton Live Sets detection
+
+2009-02-15 - Christophe Grenier
+    fidentify.c: Fix a warning
+
+2009-02-11 - Christophe Grenier
+    update_search_space_aux(): scan the list backward as the last item is often the one that is searched.
+
+2009-02-11 - Christophe Grenier
+    If compiled with sudo support, add a sudo menu item for non-root user even if device list isn't empty.
+
+2009-02-11 - Christophe Grenier
+    PhotoRec: when excluding NTFS allocated space, abort if an error occurs instead of skipping the problem.
+
+2009-02-11 - Christophe Grenier
+    Add the first sectors number to the log message when copying files from a FAT.
+
+2009-02-11 - Christophe Grenier
+    PhotoRec: Recovers mov files that begin by a "mdat" container
+
+2009-02-09 - Christophe Grenier
+    Log error message when fwrite failed
+
+2009-02-09 - Christophe Grenier
+    Remove unecessary return value for del_search_space()
+
+2009-02-09 - Christophe Grenier
+    Add manifest files to request highest available execution level under Windows Vista UAC
+
+2009-02-03 - Christophe Grenier
+    PhotoRec: fix Windows PE .exe file identification bug and recover i386-COFF executable
+
+2009-02-03 - Christophe Grenier
+    PhotoRec: recover Mozilla XPCOM Type Library .xpt
+
+2009-02-03 - Christophe Grenier
+    hdaccess.c: fix compilation for cygwin (breakage introduced when fixing compilation warning)
+
+2009-02-03 - Christophe Grenier
+    PhotoRec: Office document are still not well distinguished between themself...
+
+2009-02-03 - Christophe Grenier
+    PhotoRec: recover Outlook Nickfile .nk2
+
+2009-02-03 - Christophe Grenier
+    Fix some compilation warnings
+
+2009-02-03 - Christophe Grenier
+    PhotoRec: recover MS Visio with .vsd extension
+
+2009-02-03 - Christophe Grenier
+    configure.ac: libewf checks HAVE_OFF64_T, so defines it
+
+2009-02-01 - Christophe Grenier
+    Define as static some functions
+
+2009-02-01 - Christophe Grenier
+    Fix some missing headers for cygwin
+
+2009-02-01 - Christophe Grenier
+    PhotoRec: recover Fruity Loop .flp files
+
+2009-02-01 - Christophe Grenier
+    PhotoRec: recover Exchange Database .edb
+
+2009-01-31 - Christophe Grenier
+    PhotoRec: recover more Pentax .tif as .pef, add missing header
+
+2009-01-31 - Christophe Grenier
+    Cache optimisation: data is probably in the last buffers
+
+2009-01-31 - Christophe Grenier
+    comp_FAT() cleanup
+
+2009-01-31 - Christophe Grenier
+    Use pread() and pwrite() argument style for internal I/O
+
+2009-01-30 - Christophe Grenier
+    TestDisk: fix name in log
+
+2009-01-29 - Christophe Grenier
+    Fix a few memory leaks found using Coccinelle, http://www.emn.fr/x-info/coccinelle/
+
+2009-01-27 - Christophe Grenier
+    src/diskacc.c: Fix typo in warning message
+
+2009-01-27 - Christophe Grenier
+    Under Windows, use aligned memory for memory allocation bigger than 512 bytes
+
+2009-01-26 - Christophe Grenier
+    TestDisk: fix a little bug when no log is asked
+
+2009-01-26 - Christophe Grenier
+    Fix display of partition bigger than 2GB
+
+2009-01-26 - Christophe Grenier
+    PhotoRec: fix an invalid boundary check when inserting signature
+
+2009-01-26 - Christophe Grenier
+    Remove redundant check
+
+2009-01-26 - Christophe Grenier
+    PhotoRec: identify LyX .lyx files
+
+2009-01-22 - Christophe Grenier
+    Remove duplicated include in src/hdaccess.c
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: recover APA Style Helper .apa and Cool Edit/Adobe Audition session .ses
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: recover Lotus Data Interchange Format .dif
+    Moving Picture Experts Group Audio Layer 3 Uniform Resource Locator.m3u
+    Reaper Project rpp
+    Windows Play List.wpl
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: an icon should be square and 16 pixels minimum
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: remove useless include
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: add boundary checking for gz, jpg and pdf
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: fix endless loop
+
+2009-01-22 - Christophe Grenier
+    PhotoRec: identified some constants as is
+
+2009-01-20 - Christophe Grenier
+    PhotoRec: recover Java .class, Python Compiled Script .pyc, Timezone info and XV thumbnail image
+
+2009-01-18 - Christophe Grenier
+    PhotoRec: recover Windows ico icons
+
+2009-01-18 - Christophe Grenier
+    PhotoRec: recover TrueType Font .ttf files
+
+2009-01-18 - Christophe Grenier
+    PhotoRec: recover Drawing Interchange File .dxf files
+
+2009-01-18 - Christophe Grenier
+    fidentify: determine file type using PhotoRec signatures
+
+2009-01-18 - Christophe Grenier
+    PhotoRec: move init_file_stats() to filegen.c
+    photorec_bf() prototype cleanup
+
+2009-01-18 - Christophe Grenier
+    src/ext2.c: code cleanup
+
+2009-01-18 - Christophe Grenier
+    file_ext.c: remove a dependency to ext2.c
+
+2009-01-18 - Christophe Grenier
+    Add missing header
+
+2009-01-18 - Christophe Grenier
+    PhotoRec: allow "uuid" type in mov files
+
+2009-01-14 - Christophe Grenier
+    PhotoRec: recover .hds Parallels disk image and .mxf Material Exchange Format video
+
+2009-01-14 - Christophe Grenier
+    Add multiple file selection in NTFS undelete
+
+2009-01-14 - Christophe Grenier
+    qphotorec: non-fonctionnal QT prototype of PhotoRec
+
+2009-01-14 - Christophe Grenier
+    Split ncurses text interface from functions
+
+2009-01-14 - Christophe Grenier
+    Let the user choose to fix or not the MFT only if file can be listed.
+
+2009-01-14 - Christophe Grenier
+    Don't recover NTFS partition with 0 data sector
+
+2009-01-14 - Christophe Grenier
+    PhotoRec: try to find ShadowProtect spf filesize (Recovered file may be truncated)
+
+2009-01-14 - Christophe Grenier
+    PhotoRec: check Outlook dbx filesize
+
+2009-01-10 - Christophe Grenier
+    Modify header files for C function declaration if C++ compilation
+
+2009-01-10 - Christophe Grenier
+    HFS+, HFSX: check the version field to reduce false positive
+
+2009-01-04 - Christophe Grenier
+    Fix for C++ compilation
+
+2009-01-04 - Christophe Grenier
+    PhotoRec: recover ape Monkey's Audio compressed format and mfa, The Games Factory Multimedia Fusion Files
+
+2009-01-04 - Christophe Grenier
+    PhotoRec: uses TIFF tag to detect the filesize, get the picture date/time and the camera manufacturer.
+
+2009-01-04 - Christophe Grenier
+    PhotoRec: detect gif filesize
+
+2009-01-04 - Christophe Grenier
+    Fix for C++ compilation
+
+2009-01-04 - Christophe Grenier
+    Fix warning for automake 1.10.1
+    Don't generate an error when windres is missing
+    Search uuid_create and uuid_generate first in C standard library before using other library
+    e2fsprogs 1.41.3 may use pthread, so when creating a static version, pthread flags must be added
+
+2008-12-29 - Christophe Grenier
+    Do not allow HFS partition with 0 allocation block.
+
+2008-12-29 - Christophe Grenier
+    Set a 0 sector size in TestDisk FAT boot sector code.
+    This way no FAT is reported when scanning TestDisk executable
+
+2008-12-16 - Christophe Grenier
+    PhotoRec: recover ShadowProtect spf and APple Logic Studio files
+
+2008-11-28 - Christophe Grenier
+    NTFS MFT repair: Warn if the file listing doesn't contain more than 2 directory entries '.' and '..'
+
+2008-11-28 - Christophe Grenier
+    Close the log file before exit().
+
+2008-11-18 - Christophe Grenier
+    PhotoRec: recover Agelong Tree Database/Abs0luteDatabase .atd files
+
+2008-11-18 - Christophe Grenier
+    PhotoRec: Don't marked as D(eleted) an entry (ie. whole disk) that is not a partition
+
+2008-11-18 - Christophe Grenier
+    When searching for a partition, TestDisk can read up to one cylinder after
+    the supposed end of disk.
+
+2008-11-18 - Christophe Grenier
+    ext2/ext3/ext4 superblock research, display partition name
+
+2008-11-18 - Christophe Grenier
+    dir.c: code cleanup
+
+2008-11-16 - Christophe Grenier
+    Fix a bug in gzip parser discovered by LLVM/Clang Static Analyzer
+
+2008-11-16 - Christophe Grenier
+    Code cleanup after using LLVM/Clang Static Analyzer
+
+2008-11-16 - Christophe Grenier
+    When copying filenames, try to deal more efficently with filename restriction
+
+2008-11-13 - Christophe Grenier
+    NTFS file copy: fix memory leak when copied failed.
+
+2008-11-13 - Christophe Grenier
+    PhotoRec: recover WavPack, Hybrid Lossless Wavefile Compressor, .wv files
+
+2008-11-13 - Christophe Grenier
+    Move attr variable definition more local in ntfs_utl.c
+
+2008-11-13 - Christophe Grenier
+    PhotoRec: recover Cue sheet .cue files
+
+2008-11-13 - Christophe Grenier
+    PhotoRec: declare as const some variables in file_mp3.c
+
+2008-11-13 - Christophe Grenier
+    Update release to November 2008
+
+2008-11-10 - Christophe Grenier
+    Under Windows, if log file can't be created in current directory, try to create it in home directory.
+
+2008-11-10 - Christophe Grenier
+    Additional tests for device configuration identify (DCO) results
+
+2008-11-10 - Christophe Grenier
+    TestDisk: identify Linux md created on big endian architecture
+
+2008-11-10 - Christophe Grenier
+    Defined more functions as static
+
+2008-10-28 - Christophe Grenier
+    PhotoRec: distinguish .csv from .txt
+
+2008-10-28 - Christophe Grenier
+    PhotoRec:recover .sqm Windows Live Messenger Log File
+
+2008-10-28 - Christophe Grenier
+    FAT1x directory listing, check for valid root directory size
+
+2008-10-28 - Christophe Grenier
+    TestDisk, replace "Do you want to save disk file image.dd" by "Do you want to save partition file image.dd"
+
+2008-10-08 - Christophe Grenier
+    PhotoRec: recover tar.gz with the correct extension instead of .gz
+
+2008-10-07 - Christophe Grenier
+    PhotoRec: recover Php Video Pro .pvp files
+
+2008-10-07 - Christophe Grenier
+    TestDisk: Add fullpathname parameter to display filename with the pathname
+    ie "testdisk /cmd device advanced,list,recursive,fullpathname"
+
+2008-10-07 - Christophe Grenier
+    Display a warning if HPA or DCO is present
+
+2008-10-07 - Christophe Grenier
+    Store hpa and dco values in the disk internal structure
+
+2008-10-07 - Christophe Grenier
+    TestDisk: distinguish between "advanced,list" and "advanced,undelete"
+
+2008-10-06 - Christophe Grenier
+    Linux version: log Host Protect Area (HPA) and Device Configuration Overlay (DCO) information
+
+2008-10-06 - Christophe Grenier
+    PhotoRec: recover Turbo Tax .tax files
+
+2008-10-06 - Christophe Grenier
+    Portability fixes for OpenBSD when e2fsprogs port is used
+
+2008-10-06 - Christophe Grenier
+    List deleted files instead of normal files when choosing Undelete for a partition forced as NTFS
+
+2008-10-06 - Christophe Grenier
+    Add logname option, usefull for people running several testdisk or photorec at once
+
+2008-10-06 - Christophe Grenier
+    NTFS undelete: display "c to copy" only if files have been found.
+
+2008-09-26 - Christophe Grenier
+    PhotoRec: for jpeg, get the date/time from the photo itself instead of the first date/time present in the EXIF header
+
+2008-09-23 - Christophe Grenier
+    PhotoRec: add Sisporto sp3/spm file recovery
+
+2008-09-23 - Christophe Grenier
+    Don't split read access if the two previous read IO have failed.
+
+2008-09-23 - Christophe Grenier
+    Avoid a division by zero when a value of 0 cylinder is returned.
+
+2008-09-18 - Christophe Grenier
+    PhotoRec: add Apple binary property list .abcdp recovery
+
+2008-09-18 - Christophe Grenier
+    TestDisk: in Advanced menu, 'a' may be used to temporary add a partition
+
+2008-09-18 - Christophe Grenier
+    Remove unexpected global variable in md.c
+
+2008-09-11 - Christophe Grenier
+    PhotoRec: fix header check order
+
+2008-09-10 - Christophe Grenier
+    Create the partition image in the current directory when "/cmd device advanced,copy" is used
+
+2008-09-10 - Christophe Grenier
+    ext2 file listing: fix a one byte overflow
+
+2008-09-09 - Christophe Grenier
+    PhotoRec: avoid an out of bound read access when parsing some corrupted doc/xls/... document
+
+2008-09-08 - Christophe Grenier
+    PhotoRec: modify internal representation of files during recovery
+
+2008-08-31 - Christophe Grenier
+    PhotoRec: better signature for Pentax .pef
+
+2008-08-31 - Christophe Grenier
+    PhotoRec: avoid out-of-bound read access when extracting jpeg date
+
+2008-08-31 - Christophe Grenier
+    Less strict check on "." and ".." entries for FAT directory
+
+2008-08-30 - Christophe Grenier
+    PhotoRec: When only free space is carved, after the data search,
+    return to the partition selection as list_search_space has been modified
+
+2008-08-28 - Christophe Grenier
+    win32: add debug code in disk_get_sector_size_win32
+
+2008-08-25 - Christophe Grenier
+    Split the interface in several files, part 2
+    Text interface needs 24 lines instead of 25
+
+2008-08-25 - Christophe Grenier
+    May want to use carvpath for in-place carving in the futur
+
+2008-08-25 - Christophe Grenier
+    Fix for NTFS undelete when filename isn't found
+
+2008-08-24 - Christophe Grenier
+    Split the interface in several files
+    Initial work to handle 24 lines and more than 25
+
+2008-08-22 - Christophe Grenier
+    PhotoRec: code cleanup, use common list in alloc_list_t structure
+
+2008-08-22 - Christophe Grenier
+    PhotoRec: little optimisation when searching a pattern in zip file
+
+2008-08-22 - Christophe Grenier
+    PhotoRec: get the extension from name listed in OLE root directory
+
+2008-08-21 - Christophe Grenier
+    PhotoRec: index pattern search to speedup operation
+
+2008-08-21 - Christophe Grenier
+    PhotoRec: minor optimisation for zip recovery
+
+2008-08-21 - Christophe Grenier
+    PhotoRec: add specific header for mov identification
+
+2008-08-14 - Christophe Grenier
+    PhotoRec: convert the structure holding the list of filechecks
+
+2008-08-14 - Christophe Grenier
+    PhotoRec: code cleanup, a specific function to search for blocksize has been created.
+
+2008-08-14 - Christophe Grenier
+    PhotoRec: create a specific function to set the recovered filename
+
+2008-08-14 - Christophe Grenier
+    PhotoRec: recover MS compress file (SZDD)
+
+2008-08-14 - Christophe Grenier
+    Enable MFT repair in expert mode when the NTFS boot sector is ok even if its backup isn't
+
+2008-08-11 - Christophe Grenier
+    Sort deleted NTFS files
+
+2008-08-09 - Christophe Grenier
+    Remove unused code in NTFS undelete
+
+2008-08-09 - Christophe Grenier
+    Rename filestat to stat in struct dir_data
+
+2008-08-09 - Christophe Grenier
+    NTFS undelete: filename in the root directory should start by "/" and not "./"
+
+2008-08-07 - Christophe Grenier
+    Log sector size and disk model when rejecting a device with a size of 0 byte.
+
+2008-08-07 - Christophe Grenier
+    PhotoRec: recover ER Mapper Rasters (ERS) ascii header
+
+2008-08-07 - Christophe Grenier
+    TestDisk: When copying deleted file from NTFS partition, create the sub-directories on the destination if missing.
+    Convert filenames if needed.
+
+2008-08-06 - Christophe Grenier
+    EFI GPT: when changing the partition type, select by default the current type
+
+2008-08-05 - Christophe Grenier
+    TestDisk: add initial support for NTFS undelete
+
+2008-08-05 - Christophe Grenier
+    PhotoRec: add support for
+    - Ahnenblatt .ahn
+    - Microsoft Dynamics NAV (MS Navision) fbk/fdb/fob
+    - Wink .wnk
+    - tcpdump capture file .pcap
+
+2008-08-05 - Christophe Grenier
+    Fix some compilation warning when ncurses isn't used
+
+2008-08-05 - Christophe Grenier
+    TestDisk: add hints to locate partition beginning at 0/1/1 even if the geometry is wrong
+
+2008-08-05 - Christophe Grenier
+    PhotoRec: fix search for "!/bin/bash" shell script
+
+2008-07-30 - Christophe Grenier
+    PhotoRec: avoid to split mov, stricter check for m2ts, m2t, ogg anti-split check
+
+2008-07-30 - Christophe Grenier
+    PhotoRec: search for "!/bin/bash" shell script
+    Try to improve emlx mail recovery
+
+2008-07-30 - Christophe Grenier
+    Allow to navigate in some menus using 2, 4, 5, 6 and 8 keys instead of arrow keys
+
+2008-07-18 - Christophe Grenier
+    Store disk geometry in cylinders/heads_per_cylinder/sectors_per_head instead of CHS
+
+2008-07-17 - Christophe Grenier
+    Fix RPM spec file
+
+2008-07-17 - Christophe Grenier
+    TestDisk & PhotoRec 6.10 release
+
+2008-07-17 - Christophe Grenier
+    PhotoRec: add Sibelius .sib file format
+
+2008-07-17 - Christophe Grenier
+    Cleanup compile.sh script
+
+2008-07-14 - Christophe Grenier
+    Distinguish ext4 from ext3 filesystem
+
+2008-07-14 - Christophe Grenier
+    PhotoRec: avoid false positive when recovering MS Publisher files
+
+2008-07-13 - Christophe Grenier
+    Fix compilation for FreeBSD
+
+2008-07-13 - Christophe Grenier
+    Add missing include
+
+2008-07-13 - Christophe Grenier
+    Remove unused function declaration
+
+2008-07-13 - Christophe Grenier
+    FAT directory listing, raise the maximum number of cluster for a single directory to 30 clusters instead of 10.
+
+2008-07-13 - Christophe Grenier
+    When listing files, very long filenames may corrupted the screen. Rewrite the bottom of the screen.
+
+2008-07-07 - Christophe Grenier
+    PhotoRec: add "/cmd device ext2_group,group_nr,search" to carve the corresponding ext2/ext3 group number
+    or "/cmd device ext2_inode,inode_nr,search" to carve the group holding the specified inode
+
+2008-07-07 - Christophe Grenier
+    PhotoRec: add Paint Shop Pro .psp Image File
+
+2008-07-07 - Christophe Grenier
+    TestDisk: add /cmd device advanced,list parameter
+
+2008-07-07 - Christophe Grenier
+    PhotoRec: decompress found gzip to check for KMyMoney .kmy
+
+2008-07-07 - Christophe Grenier
+    Add -v[ersion] parameter to TestDisk & PhotoRec
+
+2008-07-05 - Christophe Grenier
+    FAT: Fix confusion between cluster_size and sectors_per_cluster
+
+2008-07-05 - Christophe Grenier
+    PhotoRec: add missing free_search_space() header
+
+2008-07-03 - Christophe Grenier
+    PhotoRec: organize how the range of sectors to carve is initialized.
+
+2008-07-03 - Christophe Grenier
+    TestDisk: add Undelete in the Advanced menu for FAT and ext2
+
+2008-07-03 - Christophe Grenier
+    File undelete for ext2
+
+2008-07-03 - Christophe Grenier
+    Source cleanup in ext2p.[ch]
+
+2008-06-30 - Christophe Grenier
+    When searching for the first partition, try to deal with incorrect geometry
+
+2008-06-30 - Christophe Grenier
+    Mac partition table, don't forget to list FAT32
+
+2008-06-30 - Christophe Grenier
+    Code cleanup in interface_partition_type_ncurses()
+
+2008-06-30 - Christophe Grenier
+    Autoset the CHS/sector unit when geometry is changed.
+
+2008-06-30 - Christophe Grenier
+    PhotoRec: recover Olympus Raw File .orf begiining by "IIRO"
+
+2008-06-30 - Christophe Grenier
+    FAT32 partition named EFI are now set as GPT_ENT_TYPE_EFI by default
+
+2008-06-30 - Christophe Grenier
+    Users can change the EFI partition type and the filesystem type for GPT
+
+2008-06-30 - Christophe Grenier
+    When using libncurses.a under MacOS X, users may be unable to use the arrow keys.
+    Don't use libncurses.a by default
+
+2008-06-23 - Christophe Grenier
+    Make the code less C++ hostile
+
+2008-06-23 - Christophe Grenier
+    Mac: ncurses static library may be used
+    PhotoRec: add Ableton Live Sets .als file format
+    PhotoRec: safer prototype for del_search_space() and update_search_space_aux()
+
+2008-06-23 - Christophe Grenier
+    PhotoRec: code cleanup in ntfs_remove_used_space()
+
+2008-06-23 - Christophe Grenier
+    When rebuilding the NTFS boot sector, log the information before the read()
+    operation
+
+2008-06-23 - Christophe Grenier
+    When navigating, allow to follow symlink
+
+2008-06-23 - Christophe Grenier
+    PhotoRec: add file format name near the extension
+
+2008-06-13 - Christophe Grenier
+    PhotoRec, add support for
+    - AlphaCAM amd/amt/atd/att
+    - arj Archive
+    - asm Pro/ENGINEER Assembly
+    - chm MS Windows HtmlHelp Data
+    - drw Pro/ENGINEER Drawing
+    - frm Pro/ENGINEER Drawing Form
+    - mfg Pro/ENGINEER Manufacturing
+    - prt Pro/ENGINEER Model
+    - stl Stereolithography CAD
+    - tph Pro/ENGINEER ToolPath
+    - wks Lotus 1-2-3
+
+2008-06-13 - Christophe Grenier
+    PhotoRec: support for Standard for the Exchange of Product model data (stp) and
+    StereoLithography (STL) Ascii format
+
+2008-06-13 - Christophe Grenier
+    Fix description for Mysql
+
+2008-06-13 - Christophe Grenier
+    PhotoRec: add Licom AlphaCAM amb support
+
+2008-06-13 - Christophe Grenier
+    PhotoRec: define constants so filesize can be limited to 16 or 32 bits
+
+2008-06-11 - Christophe Grenier
+    PhotoRec: add more command line parameters for "/cmd" and sessions
+
+2008-06-11 - Christophe Grenier
+    PhotoRec: recover Opera Hotlist .adr
+
+2008-06-10 - Christophe Grenier
+    PhotoRec: it's not possible to get the file size for encrypted GnuPG message without the password
+
+2008-06-10 - Christophe Grenier
+    PhotoRec: fix out of bound read access
+
+2008-06-10 - Christophe Grenier
+    Update to e2fsprogs 1.40.10
+
+2008-06-02 - Christophe Grenier
+    Fix filenames when copying accentuated filenames from a FAT under MacOSX
+
+2008-06-01 - Christophe Grenier
+    Compilation fix for system without ncurses
+
+2008-06-01 - Christophe Grenier
+    Portability fix for system missing S_IRUSR, S_IWUSR, S_IXUSR...
+
+2008-06-01 - Christophe Grenier
+    sleep() doesn't exist under mingw32
+
+2008-06-01 - Christophe Grenier
+    PhotoRec: recover Digital Speech Standard v2 .ds2 files
+
+2008-05-30 - Christophe Grenier
+    PhotoRec: check the algo value used by public key packet
+
+2008-05-30 - Christophe Grenier
+    Log the partition table type autodetected
+
+2008-05-30 - Christophe Grenier
+    Detect Software (ATA)Raid configured (disk level) via dmraid
+
+2008-05-30 - Christophe Grenier
+    PhotoRec: Stricter check for Fortran recovery
+
+2008-05-30 - Christophe Grenier
+    Fix Real Audio .ra recovery
+
+2008-05-30 - Christophe Grenier
+    PhotoRec: Better signature for .pcx bitmap images
+
+2008-05-30 - Christophe Grenier
+    PhotoRec: Better signature for Mac Picture .pct
+
+2008-05-30 - Christophe Grenier
+    Better signature for MPEG file beginning by a system header start code
+
+2008-05-30 - Christophe Grenier
+    PhotoRec: Incredimail recovery wasn't working, fix it
+
+2008-05-30 - Christophe Grenier
+    Extract date/time from Digital Speech Standard dss files
+
+2008-05-30 - Christophe Grenier
+    bugfix: TestDisk can be compiled without e2fsprogs again
+
+2008-05-28 - Christophe Grenier
+    PhotoRec: support for Sony Vegas .veg and SQLite database
+
+2008-05-28 - Christophe Grenier
+    Update libewf to 20080501 in Linux RPM spec file
+
+2008-05-27 - Christophe Grenier
+    PhotoRec: recover Adaptive Multi-Rate .amr audio file and Personal Ancestral File .paf
+
+2008-05-27 - Christophe Grenier
+    wgetch_nodelay() and wmenuUpdate() can be static
+
+2008-05-27 - Christophe Grenier
+    Keep corrupted files by default
+
+2008-05-27 - Christophe Grenier
+    Scan for /dev/mmcblk?
+
+2008-05-27 - Christophe Grenier
+    PhotoRec: distinguish Fortran from .txt
+
+2008-05-27 - Christophe Grenier
+    More robust mp3 detection
+
+2008-05-27 - Christophe Grenier
+    PhotoRec: m2t support
+
+2008-05-27 - Christophe Grenier
+    support for file copy from ext2/ext3
+
+2008-05-27 - Christophe Grenier
+    Update PhotoRec man page, device can be a parameter
+
+2008-05-27 - Christophe Grenier
+    Test chmod function availability
+
+2008-05-19 - Christophe Grenier
+    PhotoRec: FileOpts can use more than 25 lines
+
+2008-05-19 - Christophe Grenier
+    Antivirus under Windows can conflict with PhotoRec when PhotoRec tries
+    to overwrite a file it has recovered a few secondes before.
+    Introduce a retry when opening files
+
+2008-05-19 - Christophe Grenier
+    PhotoRec: recover DVD Video manager or title set .ifo
+
+2008-05-19 - Christophe Grenier
+    Disable RepairMFT if partition has been found using backup boot sector.
+
+2008-05-18 - Christophe Grenier
+    PhotoRec: support for vcalendar .ics and Mozilla "mork database" .msf files
+
+2008-05-18 - Christophe Grenier
+    Support for OpenBSD uuid library
+
+2008-05-14 - Christophe Grenier
+    PhotoRec: partial support for GPG/OpenPGP file recovery
+
+2008-05-14 - Christophe Grenier
+    Fix filename_to_directory() for cygwin
+
+2008-05-14 - Christophe Grenier
+    PhotoRec: distinguish Sony ARW from TIFF
+
+2008-05-06 - Christophe Grenier
+    Display full filename when terminfo file (ie testdisk-6.10-WIP/win/c/cygwin) is missing
+
+2008-05-06 - Christophe Grenier
+    Display a warning about the geometry after Quick Search and Deeper Search if necessary (Fix regression in 6.9)
+
+2008-05-06 - Christophe Grenier
+    PhotoRec: recover jpeg files that begin by a COM marker
+
+2008-05-06 - Christophe Grenier
+    Update to libewf 20080501
+
+2008-05-01 - Christophe Grenier
+    Update to "May 2008"
+
+2008-05-01 - Christophe Grenier
+    Fix a warning in Linux software RAID md
+
+2008-05-01 - Christophe Grenier
+    Uses Mac OS specific function to get device sector size and device size
+    Fix compute_device_size() incorrect pread return value check
+
+2008-05-01 - Christophe Grenier
+    When listing local directories, directories first, files next, both sorted by name (. and .. always first)
+    Allow navigation using numerical keys
+    Fix for DOS version
+
+2008-05-01 - Christophe Grenier
+    Add td_list_add_sorted() function for insertion in a sorted list
+
+2008-04-29 - Christophe Grenier
+    PhotoRec: recover NASA Flexible Image Transport System (FITS) and Blu-ray MPEG-2 m2ts
+
+2008-04-29 - Christophe Grenier
+    Deleted files can be shown or not when listing files.
+
+2008-04-29 - Christophe Grenier
+    Log error string when a file can't be created
+
+2008-04-29 - Christophe Grenier
+    Software Raid md 1.x chunksize can be 0
+
+2008-04-29 - Christophe Grenier
+    Update to libewf 20080322
+
+2008-04-29 - Christophe Grenier
+    Bugfix: add missing fewf_sync() function to EWF
+    Fix reported size (2048 TB instead of 0) for some broken USB device under Windows
+
+2008-04-22 - Christophe Grenier
+    PhotoRec: recover Microsoft Works Database .wdb
+
+2008-04-22 - Christophe Grenier
+    Geometry menu can be used to force a 256 bytes sector size.
+    Current geometry is logged prior modification.
+    PhotoRec: Handle 256 bytes blocksize to recover files inside MS Backup archive
+    PhotoRec: When expert mode is enabled, it's possible to change the blocksize even
+    if blocksize was already known from filesystem.
+
+2008-04-22 - Christophe Grenier
+    Icons have been moved in a separate directory
+
+2008-04-22 - Christophe Grenier
+    Update readme.txt for darwin, dos and win
+
+2008-04-16 - Christophe Grenier
+    PhotoRec: add recovery of pfx files holding PKCS#12 keys
+
+2008-04-16 - Christophe Grenier
+    RIFF Cubase cpr filesize is big-endian
+
+2008-04-14 - Christophe Grenier
+    Allow left, right and enter key while selecting a partition type
+
+2008-04-14 - Christophe Grenier
+    Detect ncursesw/ncurses.h header presence
+
+2008-04-14 - Christophe Grenier
+    Use IOCTL_DISK_GET_LENGTH_INFO to get disk size under Windows, it works with
+    Windows Dynamic Disk.
+
+2008-04-11 - Christophe Grenier
+    Log compilation date/time
+
+2008-04-11 - Christophe Grenier
+    Reorganize how disk geometry, size and sector size is gathered
+
+2008-04-11 - Christophe Grenier
+    Avoid unused variable when not using sudo
+
+2008-04-11 - Christophe Grenier
+    Don't display harddisk geometry in the warning message about read-only device
+
+2008-04-11 - Christophe Grenier
+    Try to better deal with partition ending near disk size limit
+
+2008-04-11 - Christophe Grenier
+    PhotoRec: Fix when only txt and/or mov files are selected for recovery.
+
+2008-04-11 - Christophe Grenier
+    FAT32 partition listing: apply bit-mask to inode number, check for "." entry before listing files
+
+2008-04-11 - Christophe Grenier
+    Allow pathname up to 1024 chars instead of 255
+
+2008-04-11 - Christophe Grenier
+    Add td_min(), td_max() functions
+
+2008-04-11 - Christophe Grenier
+    Partition type modification: only use number for Intel and Sun, otherwise select in a list.
+
+2008-04-11 - Christophe Grenier
+    Can list by pressing 'l' in the Advanced menu (key usage not displayed)
+
+2008-04-11 - Christophe Grenier
+    Update header checks
+
+2008-04-09 - Christophe Grenier
+    Search for /dev/mapper/* and /dev/md? device under Linux
+    Under Windows, compare the device model to avoid disk duplicate
+
+2008-04-09 - Christophe Grenier
+    Limit recovered .xcf filesize to 1GB
+
+2008-04-07 - Christophe Grenier
+    PhotoRec: fix for zip recovery on 64-bits plateform
+
+2008-04-07 - Christophe Grenier
+    PhotoRec: fix html signature detection
+
+2008-04-07 - Christophe Grenier
+    PhotoRec: distinguish Debian Archive .deb from .a
+
+2008-04-07 - Christophe Grenier
+    code cleanup: rename aff_buffer() fixup
+
+2008-04-03 - Christophe Grenier
+    code cleanup: rename aff_buffer()
+
+2008-04-02 - Christophe Grenier
+    PhotoRec: detect .iso filesize
+
+2008-04-02 - Christophe Grenier
+    PhotoRec: read 512k chunks instead of 128k
+
+2008-04-02 - Christophe Grenier
+    Resize HD cache buffer when request is too big for the current buffer instead of splitting the request
+
+2008-04-02 - Christophe Grenier
+    tab_insert() is static
+
+2008-04-02 - Christophe Grenier
+    For text recovery only check the first 2048 bytes
+
+2008-04-02 - Christophe Grenier
+    In testdisk.spec add BuildRequires: ntfsprogs-devel
+    Don't build static by default
+
+2008-04-02 - Christophe Grenier
+    Disable crypto for ntfsprogs compilation
+    Fix configure --enable-sudo and --enable-missing-uuid-ok
+    Check io.h header for mingw
+
+2008-03-29 - Christophe Grenier
+    Add .iso file support (Don't always work)
+
+2008-03-29 - Christophe Grenier
+    Add Windows RE(store) partition type for PC/Intel partition
+
+2008-03-29 - Christophe Grenier
+    PhotoRec: for JPEG files, fix conversion from time/date store in Exif header to Unix time
+
+2008-03-29 - Christophe Grenier
+    PhotoRec: for gzip files, extract the time/date from header and set the file time
+
+2008-03-25 - Christophe Grenier
+    Need debug>1 to display an hexdump of windows IOCTL_STORAGE_QUERY_PROPERTY buffer
+
+2008-03-25 - Christophe Grenier
+    Fix TestDisk welcome message
+
+2008-03-24 - Christophe Grenier
+    Fix for NTFS listing: only hides system files beginning by '$' (not . and ..)
+
+2008-03-24 - Christophe Grenier
+    Reports OS version and compiler version
+
+2008-03-24 - Christophe Grenier
+    Move rebuild_FAT_BS, FAT_init_rootdir and repair_FAT_table headers to fat_adv.h
+
+2008-03-24 - Christophe Grenier
+    Don't define menuNTFS/menuEXT2 if libntfs/libext2 is missing
+
+2008-03-24 - Christophe Grenier
+    Fix preprocessor directive in partgpt.c
+
+2008-03-24 - Christophe Grenier
+    add a cast for iconv call
+
+2008-03-24 - Christophe Grenier
+    add a format attribute to log_handler()
+
+2008-03-24 - Christophe Grenier
+    make vaff_txt() static
+
+2008-03-24 - Christophe Grenier
+    fsync function may be missing, fix for mingw
+
+2008-03-24 - Christophe Grenier
+    Search for a partition where Vista usually creates the first one even if the user don't enable Vista search
+
+2008-03-24 - Christophe Grenier
+    include mingw/io.h for mkdir()
+
+2008-03-24 - Christophe Grenier
+    check for cygwin/version.h, windows.h headers and fsync()
+    Add some compiler warning flags
+
+2008-03-23 - Christophe Grenier
+    Links to tinfo library if available, solves "make static" under F-7
+
+2008-03-23 - Christophe Grenier
+    Fix compile.sh
+
+2008-03-20 - Christophe Grenier
+    Log the partition table type autodetected
+
+2008-03-20 - Christophe Grenier
+    Don't scan too much after the end of the disk as defined by the user
+
+2008-03-20 - Christophe Grenier
+    Use LIBEWF_VERSION_STRING instead of LIBEWF_VERSION if available
+
+2008-03-20 - Christophe Grenier
+    Update compile.sh to avoid unnecessary download
+
+2008-03-14 - Christophe Grenier
+    PhotoRec: for JPEG files, extract the time/date from Exif header and set the file time
+
+2008-03-14 - Christophe Grenier
+    When loading FileOpts saved options, don't log the option by default
+
+2008-03-14 - Christophe Grenier
+    Better description about MFT fixing
+
+2008-03-14 - Christophe Grenier
+    After writing a new partition table don't prompt the user when TestDisk execution is driven by command line arguments
+
+2008-03-14 - Christophe Grenier
+    Fix SC V10 .dc header
+
+2008-03-14 - Christophe Grenier
+    PhotoRec: identify MS Publisher .pub files
+
+2008-03-14 - Christophe Grenier
+    In latest libewf beta, libewf_get_bytes_per_sector() and libewf_get_media_size() take 2 arguments
+
+2008-03-10 - Christophe Grenier
+    PhotoRec: add Ghost .gho recovery
+
+2008-03-10 - Christophe Grenier
+    PhotoRec: Load and save FileOpts settings
+
+2008-03-10 - Christophe Grenier
+    Add a warning when fixing MFT
+
+2008-03-10 - Christophe Grenier
+    Get disk model under Windows
+
+2008-03-09 - Christophe Grenier
+    TSCe Survey Controller DC v10.0 recovery
+
+2008-03-09 - Christophe Grenier
+    Add /cmd device ...,list,recursive support
+
+2008-03-09 - Christophe Grenier
+    Update headers check and e2fsprogs version
+
+2008-02-28 - Christophe Grenier
+    Remove the possibility to add a partition for non-partionned disk
+
+2008-02-28 - Christophe Grenier
+    Hide NTFS system files but not files beginning by '$'
+
+2008-02-27 - Christophe Grenier
+    Use better description in Advanced menu
+
+2008-02-27 - Christophe Grenier
+    PhotoRec: in FileOpts, press  's' to deselect all files or reset to default settings
+
+2008-02-27 - Christophe Grenier
+    Change the display unit when changing the partition type
+
+2008-02-27 - Christophe Grenier
+    partmac.c: code cleanup
+
+2008-02-27 - Christophe Grenier
+    HFS/HFS+: replace superblock by volume header name
+
+2008-02-25 - Christophe Grenier
+    PhotoRec: Flow Cytometry Standard 3.0 recovery support
+
+2008-02-25 - Christophe Grenier
+    Remove Mac and Sun partition signature when writing an Intel partition table
+
+2008-02-25 - Christophe Grenier
+    file undelete for FAT filesystem
+
+2008-02-20 - Christophe Grenier
+    PhotoRec: add VectorWorks .mcd support
+    file_doc.c: fix unchecked return value of fread
+    file_mcd.c: fix invalid initialization
+
+2008-02-20 - Christophe Grenier
+    TestDisk 6.9 released
+
+2008-02-13 - Christophe Grenier
+    Fix memory leak in file_zip.c, uninitialized variable in phrrecn.c and invalid ncurses usage in dimage.c
+
+2008-02-11 - Christophe Grenier
+    Bugfix for invalid ncurses usage after disk imaging
+
+2008-02-10 - Christophe Grenier
+    Compatibility fix for e2fsprogs 1.40.6
+    Fix some gcc warnings
+
+2008-02-08 - Christophe Grenier
+    Mix interactive and cli mode in PhotoRec
+
+2008-02-08 - Christophe Grenier
+    Windows Enhanced MetaFile .emf support for PhotoRec
+
+2008-02-05 - Christophe Grenier
+    Use IOCTL_DISK_GET_DRIVE_GEOMETRY_EX under Windows to get disk size (Fix boggus size with some internal USB card reader)
+    Report disk model under Linux
+
+2008-02-05 - Christophe Grenier
+    Fix recovery of UTF8 text file
+    Fix ask_testdisk_log_creation prototype
+
+2008-02-05 - Christophe Grenier
+    PhotoRec: Macintosh Picture.pct support
+    PhotoRec: SunPCI Disk Image
+
+2008-02-01 - Christophe Grenier
+    MS Windows Link support
+    XBOX GTA San Andreas Save File support
+
+2008-02-01 - Christophe Grenier
+    PhotoRec pseudo partition Whole Disk listed as "No partition"
+    Add comments about MS Office document maximal size
+
+2008-02-01 - Christophe Grenier
+    Update spec file to add libewf support in RPM
+    Drop dos/testdisk.bat
+
+2008-01-14 - Christophe Grenier
+    PhotoRec: expert can stop pass 0 and set the blocksize
+
+2008-01-11 - Christophe Grenier
+    PhotoRec: Final Cut Pro .fcp support
+
+2008-01-11 - Christophe Grenier
+    fix session error message
+
+2008-01-11 - Christophe Grenier
+    PhotoRec: Digital Speech Standard (.dss) support
+
+2008-01-10 - Christophe Grenier
+    Rename variable interface to ncurses_interface as interface may be defined
+
+2008-01-09 - Christophe Grenier
+    Fix log creation
+
+2008-01-09 - Christophe Grenier
+    add image file creation from partition
+
+2008-01-09 - Christophe Grenier
+    Add image parameter in photorec man page
+    fix typo in PhotoRec
+
+2008-01-04 - Christophe Grenier
+    TestDisk FAT and NTFS Advanced boot menu interface, automaticaly positioned to BackupBS or OrgBS
+    TestDisk Update the disk size if head count is modified
+    PhotoRec: display "Next" if necessary in file list
+    PhotoRec: recover Internet Explorer index.dat file
+    PhotoRec: "Mode EXT2/EXT3" option -> "Ext2/ext3 mode"
+
+2007-12-28 - Christophe Grenier
+    Add new parameter to enable/disable all filetype recovery: photorec /cmd device ...,fileopts,everything,disable"
+    MPG recovery: check size defined by video sequence start code
+
+2007-12-28 - Christophe Grenier
+    Support for file copy from FAT filesystem
+
+2007-12-28 - Christophe Grenier
+    Fix compilation problem with "gcc -O0" (no optimisation)
+
+2007-12-28 - Christophe Grenier
+    com_err library may be needed by ext2fs library
+
+2007-12-23 - Christophe Grenier
+    Remove header_check from struct file_hint_struct
+    Add Microsoft Visual Studio Resource file .res support
+
+2007-12-23 - Christophe Grenier
+    Rename find_in_mem() to td_memmem()
+    Add Maya .mb and .mp file support to PhotoRec
+
+2007-12-21 - Christophe Grenier
+    Add Outlook .msg, MS VB .cls detection in PhotoRec
+
+2007-12-21 - Christophe Grenier
+    In expert mode during RepairMFT, user can choose between MFT and MFTmirror if TestDisk can't find the correct one.
+
+2007-12-15 - Christophe Grenier
+    Fix for read-only loopback device, thanks to Andries Brouwer for reporting the problem.
+
+2007-12-15 - Christophe Grenier
+    Fix write for DOS version
+
+2007-12-06 - Christophe Grenier
+    Move string/mem search in a separate file
+
+2007-12-06 - Christophe Grenier
+    Avoid malloc(0) in NTFS code
+
+2007-12-06 - Christophe Grenier
+    Better handle FAT filenames
+    Rename filenames while copying under Dos and Windows
+
+2007-12-06 - Christophe Grenier
+    "testdisk -lu device" will list the partition with sector unit
+
+2007-12-05 - Christophe Grenier
+    Handle Mac partition table partially overwritten by an Intel partition
+
+2007-12-05 - Christophe Grenier
+    Fix some FAT & NTFS read/write
+
+2007-12-05 - Christophe Grenier
+    Fix disk cache sync and disk error handling
+
+2007-12-02 - Christophe Grenier
+    PhotoRec: add support for Microsoft OneNOte .one file
+
+2007-12-02 - Christophe Grenier
+    Add some synchronisation points, should help to deal with unexpected program termination
+
+2007-12-02 - Christophe Grenier
+    Start to reorganise how disk/file access works
+
+2007-11-28 - Christophe Grenier
+    PhotoRec: fix txt and non-linearized pdf recovery
+
+2007-11-28 - Christophe Grenier
+    Can use sudo if user is not root
+
+2007-11-27 - Christophe Grenier
+    PhotoRec: detect HP Photosmart Photo Printing Album .albm files
+
+2007-11-27 - Christophe Grenier
+    PhotoRec: check blender .bld content
+
+2007-11-27 - Christophe Grenier
+    Use e2fsprogs 1.40.2
+
+2007-11-21 - Christophe Grenier
+    Fix fat32_get_prev_cluster and FAT code cleanup
+
+2007-11-19 - Christophe Grenier
+    Fix for type change when there is no partition table
+
+2007-11-19 - Christophe Grenier
+    Add KeepAssX .kdb support to PhotoRec
+
+2007-11-19 - Christophe Grenier
+    FAT volume name may contain lowercase chars
+
+2007-11-16 - Christophe Grenier
+    Add ncurses parameters in configure
+
+2007-11-16 - Christophe Grenier
+    Fix for big FAT filesystem
+
+2007-11-13 - Christophe Grenier
+    IO redirection for alt. superblock/bs is enabled before file listing
+
+2007-11-13 - Christophe Grenier
+    Use BLKROGET ioctl call to detect read-only loop device under Linux
+
+2007-11-13 - Christophe Grenier
+    Add support for Corel Documents .wpd
+
+2007-11-13 - Christophe Grenier
+    Remove src/Makefile.in, it's a generated file
+
+2007-11-07 - Christophe Grenier
+    NTFS: log more information when repairing MFT
+
+2007-11-06 - Christophe Grenier
+    Handle unicode filenames in display and when copying files from an NTFS partition
+    Thanks to Kenneth, C H LEE for the first patch
+
+2007-11-02 - Christophe Grenier
+    - Use wprintw ncurses function instead of a custom one
+    - src/file_mov.c: Fix a compilation error if DEBUG_MOV is defined
+
+29/10/2007 - 6.9-WIP
+- PhotoRec: fix .mov recovery
+- PhotoRec: add Acronis True Image .tib
+
+28/10/2007 - 6.9-WIP
+- PhotoRec: raise maximum file size limit
+
+23/10/2007 - 6.9-WIP
+- PhotoRec: add Vmware .vmdk detection
+- TestDisk: replace "Proceed" and "Search!" by "Quick Search" and "Deeper Search" in the interface
+
+17/10/2007 - 6.9-WIP
+- TestDisk: replace non valid chars in filenames when copying files.
+- TestDisk: add a warning screen when the media is in read-only.
+- Identify DOS_FAT_32 correctly under Mac
+
+15/10/2007 - 6.9-WIP
+- TestDisk: Linux md 1.0/1.1/1.2 software raid detection.
+
+14/10/2007 - 6.9-WIP
+- lot of endianess fix on big endian CPU
+
+13/10/2007 - 6.9-WIP
+- PhotoRec: Allow to search in ext2/ext3 unallocated space only.
+
+11/10/2007 - 6.9-WIP
+- Additional fix for ntfsprogs 2.0
+
+04/10/2007 - 6.9-WIP
+- Mac HFSX partition support
+
+03/10/2007 - 6.9-WIP
+- EFI GPT write support
+
+01/10/2007 - 6.9-WIP
+- PhotoRec: add SketchUp .skp
+
+30/09/2007 - 6.9-WIP
+- Modify list.[ch] to avoid a conflict with ntfsprogs 2.0
+
+25/09/2007 - 6.9-WIP
+- PhotoRec: distinguish QuickBook .fst from XML.
+
+12/09/2007 - 6.9-WIP
+- PhotoRec: fix session support for big size
+- PhotoRec: add WinSpec .spe file recovery
+- PhotoRec: add file check to FastTrackerII Extended Module .xm recovery
+- MacOSX: can force the terminal settings (TERM) if necessary
+
+07/09/2007 - 6.9-WIP
+- PhotoRec: better zip file check
+
+05/09/2007 - 6.9-WIP
+- Improve the code to select FAT1 and FAT2 location during FAT boot sector rebuild
+- Source: create a separate file for CRC
+- TestDisk: add Luks partition recovery
+
+02/09/2007 - 6.9-WIP
+- PhotoRec: fix and improve the ACE archive parser using Christophe Gisquet work.
+
+31/08/2007 - 6.9-WIP
+- TestDisk, menu Advanced, add possibility to list FAT partition
+- TestDisk, menu Advanced, fix NTFS partition listing using NTFS backup boot sector
+- Fix in FAT get_next_cluster and set_next_cluster if sector_size!=512
+- PhotoRec: Fix utils_cluster_in_use(), in previous version, NTFS carving may miss some files.
+
+30/08/2007 - 6.9-WIP
+- bugfix, avoid to access a free'd memory when adding several times the same partition.
+- TestDisk, add more checks to UFS and UFS2 identification.
+- TestDisk, change some FAT read error message
+
+27/08/2007 - 6.9-WIP
+- PhotoRec: add Comic Life .comicdoc header detection
+- PhotoRec: create directory with 0775 permission instead of 0700 (Unix/Linux/BSD/Mac/Sun)
+
+23/08/2007 - 6.9-WIP
+- Add minimal EFI Guid Partition Table (GPT) support
+- PhotoRec: fix Outlook 64-bits .pst size detection
+
+21/08/2007 - 6.9-WIP
+- PhotoRec: fix Mac Address Book recovery, improve .mov recovery
+
+20/08/2007 - 6.9-WIP
+- PhotoRec: ask for another directory if PhotoRec failed to write files.
+
+19/08/2007 - 6.9-WIP
+- Work on ncurses specific code split
+
+16/08/2007 - 6.9-WIP
+- PhotoRec: add .dpx Cineon image file/SMTPE DPX
+
+14/08/2007 - 6.9-WIP
+- PhotoRec: add AutoCAD .dwg and PowerTab .ptb detection
+
+13/08/2007 - 6.8
+- TestDisk & PhotoRec 6.8 release
+
+20/07/2007 - 6.8-WIP
+- PhotoRec: add .dta and .spss file formats
+
+19/07/2007 - 6.8-WIP
+- PhotoRec: search .rar footer, get .7z and .cab filesize
+- PhotoRec: fix a false positive problem
+
+18/07/2007 - 6.8-WIP
+- Fix highlighting when screen, screen manager with VT100/ANSI terminal emulation, is used (Replace A_STANDOUT by A_REVERSE).
+- TestDisk: HFS detection has been improved to avoid false positive
+
+17/07/2007 - 6.8-WIP
+- PhotoRec: fix bruteforce recovery
+
+10/07/2007 - 6.8-WIP
+- PhotoRec: update tar (better signature) and cab file (filesize) detection
+- Page up/down is now handled in disk selection
+
+05/07/2007 - 6.8-WIP
+- PhotoRec: fix a bug while updating the list of the HD space to carve.
+
+04/07/2007 - 6.8-WIP
+- Log potential NTFS partition location from MFT & MFTMirr location while rebuilding NTFS boot sector
+- Autodetect the partition type
+
+02/07/2007 - 6.8-WIP
+- Mac: fix cylinder in disk geometry
+- PhotoRec: try to detect LaTeX .tex file
+
+26/06/2007 - 6.7
+- TestDisk & Photorec Release
+
+20/06/2007 - 6.7-WIP
+- PhotoRec: add Matroska .mkv file format
+
+19/06/2007 - 6.7-WIP
+- TestDisk: try to find valid partition table (D,L,P,*) for Vista partition
+
+18/06/2007 - 6.7-WIP
+- TestDisk: fix load backup
+
+12/06/2007 - 6.7-WIP
+- TestDisk: ask the user if it should search for partition created under Vista or not.
+
+06/06/2007 - 6.7-WIP
+- PhotoRec: recovery can use bruteforce (disabled by default) to recover more fragmented JPG
+
+28/05/2007 - 6.7-WIP
+- PhotoRec: add MSOffice "Open" XML detection
+
+23/05/2007 - 6.7-WIP
+- Refresh the display less often when searching for NTFS MFT and FAT32 root directory
+- Modify how partition type are presented
+- Distinguish between HFS and HFS+ in Advanced
+
+22/05/2007 - 6.7-WIP
+- Only warn about possibly incorrect disk geometry for Intel and Sun partition table
+
+15/05/2007 - 6.7-WIP
+- PhotoRec: add ELF and wps file format
+- Under Windows, avoid to discard some valid devices (digital camera)
+
+13/05/2007 - 6.7-WIP
+- PhotoRec: optimize how read operation is performed
+
+10/05/2007 - 6.7-WIP
+- TestDisk, fix a little bug introduce in prior modification
+
+04/05/2007 - 6.7-WIP
+- TestDisk "Search!" should require less CPU now.
+
+30/04/2007 - 6.7-WIP
+- Vista doesn't always created partition on cylinder boundaries, search partitions at 1MB cylinder boundaries
+
+25/04/2007 - 6.7-WIP
+- Begin to separate code that is ncurses specific
+
+21/04/2007 - 6.7-WIP
+- PhotoRec: Apply Igor Vallee patch to handle Lyrics3 / Lyrics3v2, APE Tagv2, ID3v1 (TAG) in mp3
+
+19/04/2007 - 6.7-WIP
+- PhotoRec: Allow to search in NTFS unallocated space only.
+
+17/04/2007 - 6.7-WIP
+- PhotoRec: internal modification, new header_check() prototype
+- PhotoRec: add Mac AddressBook detection
+
+16/04/2007 - 6.7-WIP
+- PhotoRec: detect RIFF avi filesize
+
+15/04/2007 - 6.7-WIP
+- PhotoRec: add Real Audio .rm, CD Audio .cda, compressed Flash .swc, Macromedia .flv
+Linux archive .a, archive .ace, MS cabinet archive .cab, RPM package .rpm,
+MS Windows Metafile .wmf, FastTrackerII Extended Module .xm
+- Improve mp3 and pcx file recovery
+
+11/04/2007 - 6.7-WIP
+- Improve NTFS partition location detection using backup boot sector or MFT
+
+10/04/2007 - 6.7-WIP
+- Windows: Drive detected as \\.\PhysicalDrive0 should now be writable
+
+07/04/2007 - 6.7-WIP
+- Fix a bug where "List" in the Advanced menu wasn't working.
+
+03/04/2007 - 6.7-WIP
+- Keep date & time while copying files from NTFS
+
+29/03/2007 - 6.7-WIP
+- PhotoRec: add Quickbooks .qbb and .qbw support
+
+28/03/2007 - 6.7-WIP
+- PhotoRec: add PaperPort .max file support
+
+26/03/2007 - 6.7-WIP
+- PhotoRec: try to detect Perl module .pm
+
+21/03/2007 - 6.7-WIP
+- PhotoRec: add Mac OS .emlx mail format
+
+20/03/2007 - 6.7-WIP
+- Improve FAT32 root directory detection
+- PhotoRec: add NJStar Document .njx detection
+
+12/03/2007 - 6.7-WIP
+- PhotoRec: add 3ds max file support
+
+08/03/2007 - 6.7-WIP
+- Windows: Don't use pread/pwrite if cygwin compiler is used, I have found a bug.
+
+06/03/2007 - 6.7-WIP
+- PhotoRec: add Macromedia Freehand 5 (.fh5) & 10 (.fh10) and InDesign file support .indd
+
+04/03/2007 - 6.7-WIP
+- PhotoRec: distinguish registry config file .reg from text.
+- PhotoRec: add basic Windows registry header detection and Event Log .evt support
+
+01/03/2007 - 6.7-WIP
+- Fix how the advanced menu works
+
+26/02/2007 - 6.7-WIP
+- Add noconfirm command parameter to be able to write the new partition table without confirmation.
+
+22/02/2007 - 6.7-WIP
+- Change how sys/mount.h header file is detected
+
+21/02/2007 - 6.7-WIP
+- PhotoRec: support for MS PE executable and MP3 with ID3 header
+
+17/02/2007 - 6.6
+- TestDisk & Photorec Release
+
+16/02/2007 - 6.6-WIP
+- Fix Reiserfs directry listing (Bug introduced in 6.5)
+
+13/02/2007 - 6.6-WIP
+- Fallback to malloc() if posix_memalign() failed
+- PhotoRec: Improve Inbox mail recovery
+
+12/02/2007 - 6.6-WIP
+- PhotoRec: fix DIF Digital Video .dv recovery
+
+11/02/2007 - 6.6-WIP
+- PhotoRec: Recovery of some JPEG with Exif information was broken: Fix it.
+
+09/02/2007 - 6.6-WIP
+- PhotoRec: Add Minolta .mrw filesize detection
+- PhotoRec: Add .sit StuffIt support
+
+08/02/2007 - 6.6-WIP
+- Windows version: cdrom support was gone in 6.5, it's back
+- PhotoRec: Add Macromedia Flash .swf file support
+- PhotoRec: Distinguish vcard .vcf from text .txt file
+
+07/02/2007 - 6.6-WIP
+- Fix some typo
+
+06/02/2007 - 6.6-WIP
+- FAT RebuildBS: improve heuristics to find the first FAT
+
+05/02/2007 - 6.6-WIP
+- Fix some typo
+- Fix support for multiple EWF files
+
+24/01/2007 - 6.6-WIP
+- Windows version: Use \\.\PhysicalDrive0 to open disk device (Vista compatibility)
+- Support for multiple EWF files
+
+22/01/2007 - 6.6-WIP
+- DOS version: Fix invalid drive selection
+
+15/01/2007 - 6.6-WIP
+- PhotoRec: Allow to search in FAT16/FAT32 unallocated space only.
+
+05/01/2007 - 6.6-WIP
+- PhotoRec: Add .flac audi and .cam image detection
+
+04/01/2007 - 6.6-WIP
+- PhotoRec: Add .3g2 detection (mov file familly)
+
+27/12/2006 - 6.6-WIP
+- PhotoRec: Add "Previous" and "Next" text in File options.
+
+20/12/2006 - 6.6-WIP
+- Fix the order of libraries for libewf support
+
+19/12/2006 - 6.6-WIP
+- Initial EWF support
+
+12/12/2006 - 6.6-WIP
+- Fix the previous fallback
+
+10/12/2006 - 6.6-WIP
+- pread/pwrite fallback to read/write method
+
+03/12/2006 - 6.6-WIP
+- PhotoRec: add Microsoft SQL mdf support
+
+30/11/2006 - 6.6-WIP
+- If TERM variable is set to a bad value, try a default value.
+
+24/11/2006 - 6.6-WIP
+- TestDisk: use location of current partitions as hint during partition search
+- TestDisk: warn if LBA48 support seems missing
+
+15/11/2006 - 6.6-WIP
+- PhotoRec: add Cubase Song format .all and .cpr detection
+
+12/11/2006 - 6.6-WIP
+- PhotoRec: update Excel file detection
+
+10/11/2006 - 6.6-WIP
+- PhotoRec: bugfix in blocksize detection
+
+06/11/2006 - 6.6-WIP
+- Use another method to read the NTFS data if MFT are corrupted.
+
+05/11/2006 - 6.6-WIP
+- PhotoRec: modify how data are parsed
+- PhotoRec: add Apple Audio .aif file support
+
+29/10/2006 - 6.6-WIP
+- PhotoRec: add blender .blend file support
+
+28/10/2006 - 6.6-WIP
+- Fix a typo that prevent compilation for OS/2
+
+22/10/2006 - 6.5
+6.5 release
+
+09/10/2006 - 6.5-WIP
+- Add folder selection when copying files in directory listing
+- PhotoRec: identify .ram file by the rtsp:// address
+
+28/09/2006 - 6.5-WIP
+- Use latest postal address of FSF in COPYING and in source files
+
+25/09/2006 - 6.5-WIP
+- PhotoRec: add DIF Digital Video .dv and Real Media .rm file format
+
+21/09/2006 - 6.5-WIP
+- Split some headers to handle some compilation problem with boggus old libntfs
+
+18/09/2006 - 6.5-WIP
+- PhotoRec: add AppleWorks .cwk file support
+
+14/09/2006 - 6.5-WIP
+- NTFS directory listing is now faster
+
+12/09/2006 - 6.5-WIP
+- NTFS boot sector rebuild: better handle some error
+
+11/09/2006 - 6.5-WIP
+- Update the cache engine to also cache read failure
+
+10/09/2006 - 6.5-WIP
+- PhotoRec: Add a lowmem option, recovery is monopass.
+- PhotoRec: Add xml identification
+
+07/09/2006 - 6.5-WIP
+- Fix NTFS code
+
+06/09/2006 - 6.5-WIP
+- PhotoRec: fix an endless loop in mov parser
+
+05/09/2006 - 6.5-WIP
+- Menu Advanced, display a message if no partition is avaible.
+
+02/09/2006 - 6.5-WIP
+- New NTFS MFT repair function
+
+30/08/2006 - 6.5-WIP
+- photorec: add detection of ruby .rb and DjVu .djv file
+
+27/08/2006 - 6.5-WIP
+- photorec: add support for iTunes mhbd file format
+
+21/08/2006 - 6.5-WIP
+- add "noconfirm" and "write" command in FAT and NTFS rebuild
+- remove custom free function
+
+11/08/2006 - 6.5-WIP
+- photorec: update BMP, PDF and Gif filesize detection
+
+10/08/2006 - 6.5-WIP
+- photorec: update the internal structure, fix some bugs
+
+07/08/2006 - 6.5-WIP
+- photorec: add Incredimail (imm, imb) support
+- photorec: update bzip2 header detection
+
+19/07/2006 - 6.5-WIP
+- photorec: add Reason .rns, Finale .mus, MIDI .mid support
+
+18/07/2006 - 6.5-WIP
+- update the terminal initialisation code
+
+13/07/2006 - 6.5-WIP
+- photorec: replace doc/OLE filesize detection algo, add Double Indirect FAT support
+
+11/07/2006 - 6.5-WIP
+- photorec: add doc/OLE filesize detection
+
+09/07/2006 - 6.5-WIP
+- photorec: add MS Backup file detection
+
+28/06/2006 - 6.5-WIP
+- photorec: update txt support to not break zip including noncompressed text.
+- photorec: update mov support
+
+25/06/2006 - 6.5-WIP
+- photorec: fix a memory leak
+
+21/06/2006 - 6.4
+TestDisk and PhotoRec 6.4 release
+
+20/06/2006 - 6.4-WIP
+- photorec: add support for Access MDB
+
+19/06/2006 - 6.4-WIP
+- photorec: update XCF to handle version 1 (Thanks to Jeffrey Brent McBeth
+for reporting the problem)
+- photorec: little fix for jpeg EOF detection
+
+16/06/2006 - 6.4-WIP
+- photorec: fix the comment if user isn't root under MacOSX
+
+14/06/2006 - 6.4-WIP
+- Experimental copy support from NTFS is avaible
+- Get the geometry from FAT or NTFS filesystem for non-partionned media
+
+11/06/2006 - 6.4-WIP
+- If necessary, search termcap info in the directory where the binary is
+instead of current directory
+- photorec: When "/d" parameter is used, avoid to create "hidden" directories
+(directories that begins by a ".")
+
+01/06/2006 - 6.4-WIP
+- photorec: update text/html support
+
+23/05/2006 - 6.4-WIP
+- photorec: update zip support to detect end of file marker
+- photorec: update jpeg support to detect end of file marker
+- photorec: update text/html support
+- photorec: add support for Panasonic/Leica ".raw"
+
+20/05/2006 - 6.4-WIP
+- photorec: modify the JPEG size limit
+- photorec: fix a bug in multiple jpeg passes
+- disk caching: fix in a bug occuring with bad sectors and end of disk
+
+16/05/2006 - 6.4-WIP
+- photorec: Add an expert mode to select the blocksize and the offset
+
+04/05/2006 - 6.4-WIP
+- photorec: Update TIFF support to detect Canon RAW ".cr2"
+
+01/05/2006 - 6.4-WIP
+- photorec: Update TIFF support to detect Nikon RAW ".nef"
+
+30/04/2006 - 6.4-WIP
+- bugfix: disk description is now always updated when geometry is changed
+
+25/04/2006 - 6.4-WIP
+- photorec: Update TIFF support to detect Pentax ".pef", Kodak ".dcr" and Sony ".sr2"
+
+19/04/2006 - 6.4-WIP
+- support for Reiser 4
+- photorec: support for PCX
+
+18/04/2006 - 6.4-WIP
+- photorec: Thanks to Holger Klemm for JNG (JPEG Network Graphics)
+and MNG (Multiple-Image Network Graphics) support
+- fat_dir.c: list directories using to 10 clusters instead of 5
+
+14/04/2006 - 6.4-WIP
+- ntfs_adv.c: RebuildBS, distinguish between failed and aborted MFT search.
+
+12/04/2006 - 6.4-WIP
+- hdaccess.c: identify if the device is in read-only access mode (Unix).
+
+03/04/2006 - 6.4-WIP
+- fix Makefile.am since documentation has been updated
+
+01/04/2006 - 6.4-WIP
+- PhotoRec: add Gimp XCF File and QuarkXpress Document (.qxp) format support
+
+31/03/2006 - 6.4-WIP
+- PhotoRec: add Flash (.fla) and QuarkXpress Document (.qxd) support 
+
+30/03/2006 - 6.4-WIP
+- PhotoRec: add MySQL support (.frm and .MYI)
+
+22/03/2006 - 6.4-WIP
+- PhotoRec: add CorelDraw (cdr) and Adobe Photoshop Image (psd) file support
+
+13/03/2006 - 6.4-WIP
+- PhotoRec: add prc PalmOS application support
+
+01/03/2005 - 6.3
+TestDisk and PhotoRec 6.3 release
+
+28/02/2006 - 6.3-WIP
+- fix configure.ac to properly detect ntfs_libntfs_version
+
+20/02/2006 - 6.3-WIP
+- PhotoRec: add support for ISO Media, Mpeg4 file format
+
+16/02/2006 - 6.3-WIP
+- Small user interface modification
+
+14/02/2006 - 6.3-WIP
+- Photorec: fix a little bug in session
+
+12/02/2006 - 6.3-WIP
+- Photorec: Linux support for fast blanked CR-RW
+- scan FreeBSD cdrom device /dev/acd* 
+
+04/02/2006 - 6.3-WIP
+- fix for IA64
+
+03/02/2006 - 6.3-WIP
+- fix FAT boot sector rebuild on 64 bits processor
+
+30/01/2006 - 6.3-WIP
+- PhotoRec: add support for Quicken file
+
+29/01/2006 - 6.3-WIP
+- If no disk found, display a message in the ncurses interface
+
+28/01/2006 - 6.3-WIP
+- PhotoRec: add support for OpenDocument file format
+
+06/01/2006 - 6.3-WIP
+- PhotoRec: update support for mp3 and ogg
+
+04/01/2006 - 6.3-WIP
+- PhotoRec: add support for StarOffice file format
+
+03/01/2006 - 6.3-WIP
+- PhotoRec: add session support
+
+29/12/2005 - 6.3-WIP
+- PhotoRec: fix an endless loop
+
+21-23/12/2005 - 6.3-WIP
+- PhotoRec: update to handle more than one file extension per file type
+
+18/12/2005 - 6.3-WIP
+- PhotoRec: add Encapsulated PostScript and PostScript file format
+
+12/12/2005 - 6.3-WIP
+- PhotoRec: add cdrom support for Windows version (Linux and BSD already have it)
+
+08/12/2005 - 6.3-WIP
+- FAT: improve FAT RebuildBS
+
+07/12/2005 - 6.3-WIP
+- PhotoRec: add gif and gz file detection
+- PhotoRec: update mov file detection
+
+06/12/2005 - 6.2
+TestDisk & PhotoRec release
+
+30/11/2005 - 6.2-WIP
+- Interface, update the Advanced/Boot menu
+- PhotoRec: update bmp file detection
+
+29/11/2005 - 6.2-WIP
+- Add disk cache and read ahead to improve performance
+
+27/11/2005 - 6.2-WIP
+- Apple version is now identified in the log file
+- Handle more than 10 media in the main menu
+- Apple partition map: for Apple_HFS partition, check for HFS and HFS+ filesystem
+- Photorec: add .sit Mikron file format
+
+23/11/2005 - 6.2-WIP
+- Photorec doesn't try any write access on the media to examine, so open device in read only mode.
+
+18/11/2005 - 6.2-WIP
+- TestDisk MBR code doesn't halt anymore if a key is press at startup.
+
+16/11/2005 - 6.2-WIP
+- Partition found during search are displayed in real time. They are not
+  marked with D(eleted) any more.
+
+09/11/2005 - 6.2-WIP
+- Interface update. Thanks to Daniel, the Starman.
+- Experimental HFS+ backup boot sector support
+
+05/11/2005 - 6.2-WIP
+- NTFS test and NTFS RebuildBS: Check the number of sectors per cluster
+
+03/11/2005 - 6.2-WIP
+- FAT and NTFS: fix for hidden_sectors field in boot sector after RebuildBS
+
+01/11/2005 - 6.2-WIP
+- Update the message when a partition is found and that doesn't fit in the HD
+
+31/11/2005 - 6.2-WIP
+- Add Acronis partition in Intel partition list
+
+24/10/2005 - 6.2-WIP
+- Add XBOX and FATX support but no test has been done
+
+18/10/2005 - 6.2-WIP
+- TestDisk: NTFS endianess fix
+- PhotoRec: fix for reporting in log file
+- Sun Solaris: ufs header, workaround a bug in gcc 3.4
+
+17/10/2005 - 6.2-WIP
+- TestDisk: FAT and NTFS endianess fix
+- Photorec: Avoid null pointer in printf
+
+14/10/2005 - 6.2-WIP
+- Photorec: tiff support, detect EOI (End Of Image)
+
+13/10/2005 - 6.2-WIP
+- Add delete and mbr_code to cmd mode
+
+10/10/2005 - 6.2-WIP
+- In dir_partition_ext2, dir_partition_ntfs, dir_partition_reiser, if library isn't present,
+  don't prompt the user in cmd mode
+
+08/10/2005 - 6.1
+- TestDisk & Photorec Release
+
+08/10/2005 - 6.1-WIP
+- Don't display "Partition : Write error" erroneously if there is no logical partition
+
+07/10/2005 - 6.1-WIP
+- Get NTFS library version if avaible
+
+06/10/2005 - 6.1-WIP
+- MacOS X: use a little trick to get disk size
+
+05/10/2005 - 6.0
+- TestDisk & Photorec Release
+
+05/10/2005 - 6.0-WIP
+- Can stop the search for software Raid partition
+
+04/10/2005 - 6.0-WIP
+- Add some color output
+- Modify RPM spec to produce static binary
+- Fix TestDisk menu for Dos version
+
+30/09/2005 - 5.9
+- TestDisk & Photorec Release
+
+27/09/2005 - 5.9-WIP
+- PhotoRec: add Papyrus and 7zip support
+
+23/09/2005 - 5.9-WIP
+- Fix a small memory leak in io_redir.c
+
+22/09/2005 - 5.9-WIP
+- Add libraries information to log file
+
+14/09/2005 - 5.9-WIP
+- Modify generic function write_MBR_code and erase_list_part parameters
+
+06/09/2005 - 5.9-WIP
+- Photorec: add texte file recovery
+
+30/08/2005 - 5.9-WIP
+- FAT: fix directory listing time using timezone
+
+26/08/2005 - 5.9-WIP
+- Small User interface improvements
+
+25/08/2005 - 5.9-WIP
+- Modify the internal representation of partition type, now there
+  is one type per partition architecture
+
+17/08/2005 - 5.9-WIP
+- PhotoRec: add a little trick for ext2/ext3 filesystem
+- PhotoRec: code cleanup
+
+10/08/2005 - 5.9-WIP
+- Minimal support for mac partition map
+
+13/07/2005 - 5.9-WIP
+- Small fixes for cross-compilation
+
+08/07/2005 - 5.9-WIP
+- PhotoRec: add support for OGG audio files
+
+28/06/2005 - 5.9-WIP
+- PhotoRec: add support for RAR files
+
+20/06/2005 - 5.9-WIP
+- NTFS boot sector: copy boot sector over backup boot sector now works
+
+11/06/2005 - 5.9-WIP
+- DOS version: use disk_clean function instead of file_clean
+
+09/06/2005 - 5.9-WIP
+- Introduce new menu
+- Linux Raid: fix regression from 5.8, Raid 1 is again detected.
+- FAT: fix a bug in expert mode
+
+08/06/2005 - 5.9-WIP
+- FAT: better check for directory attribut
+- dump: use highlighting to show the differences between two objets
+- Photorec: add a default file size limit of 2GB
+- Try Direct IO (Need a lot of fixes)
+
+04/06/2005 - 5.9-WIP
+- Photorec: add support for ZIP files starting with PK00 (packed to removable disk)
+
+30/05/2005 - 5.8
+TestDisk 5.8 released
+
+24/05/2005 - 5.8-WIP
+- Photorec: Recognize php header
+
+01/05/2005 - 5.8-WIP
+- NTFS: Fix a bug in NTFS rebuilding introduced in 5.7
+
+30/04/2005 - 5.8-WIP
+- UFS2: Add support for UFS2
+
+29/04/2005 - 5.8-WIP
+- Photorec: MPG format is using streaming
+
+26-29/04/2005 - 5.8-WIP
+- Solaris: Add support for Intel version of the superblock
+
+23/04/2005 - 5.8-WIP
+- HFS+: Add support for HFS+
+
+22/04/2005 - 5.8-WIP
+- EXT2: e2fsprogs-1.36 parses the device name given in ext2fs_open, give a string instead of the io_channel.
+- FAT: fix the cleaning function
+
+10/04/2005 - 5.8-WIP
+- Fix a memory freed problem when detecting if a partition can be Primary, Logical...
+- Linux Raid: Add some code to detect Raid 5 earlier
+
+07-09/04/2005 - 5.8-WIP
+- FAT: Update the cleaning FAT function to repair FAT table (Expert mode only)
+
+05/04/2005 - 5.8-WIP
+- NTFS: Minor change to reported information
+
+02/04/2005 - 5.7
+TestDisk 5.7 release
+
+30/03/2005 - 5.7-WIP
+- FAT12/16: Add the possibility to initialize FAT root directory (Delete everything,
+  Expert mode only)
+- FAT32: Fix for last FAT sector while cleaning the FAT (Expert mode only)
+
+28/03/2005 - 5.7-WIP
+- Directory listing: little UI modification
+
+26/03/2005 - 5.7-WIP
+- EXT2/EXT3: while listing filename permit to list file where inode information is unavaible.
+
+24/03/2005 - 5.7-WIP
+- Directory lising: force a ncurses redrawn of the screen, refresh is not always suffisant.
+- EXT2/EXT3: read error code return by some ext2fs functions
+
+23/03/2005 - 5.7-WIP
+- FAT: Support for FAT without FAT12 (ie DOS 3.30), FAT16 or FAT32 mark.
+
+22/03/2005 - 5.7-WIP
+- FAT, NTFS: Update some error message, don't halt on boot sector read error.
+- TestDisk: Updated MBR i386 boot code.
+
+19/03/2005 - 5.7-WIP
+- Dos version: fix read/write error message
+
+16/03/2005 - 5.7-WIP
+- PhotoRec: incremental directory name for recovery
+- TestDisk: If partition table type is none, avoid to display warning twice.
+- FAT: add support for one FAT only in boot sector rebuilding (need expert mode)
+- FAT: fix for directory listing in boot sector rebuilding.
+
+14/03/2005 - 5.7-WIP
+- Photorec: update the warning message
+
+11/03/2005 - 5.7-WIP
+- Photorec: add support for a bunch of other file format
+
+10/03/2005 - 5.7-WIP
+- FAT: add support for one FAT only (instead of usual 2) in directory listing
+
+09/03/2005 - 5.7-WIP
+- Modify RPM spec file to get non-empty debug-info rpm
+- Replace standard MBR i386 boot sector code by a GPL one
+
+05/03/2005 - 5.7-WIP
+- Stats for photorec
+- configure.ac, compile.sh: remove --enable-debug option
+- TestDisk: don't display a warning about the number of heads per cylinder if partition list is empty.
+
+03/03/2005 - 5.7-WIP
+- Photorec: a lot of code cleaning
+
+22/02/2005 -5.7-WIP
+- HFS detection has been improved to avoid false positive
+- Doesn't halt if TestDisk can't create the log file
+
+14/02/2005 - 5.6
+TestDisk & PhotoRec 5.6 released
+
+09/11/2004 - 5.5
+TestDisk & PhotoRec 5.5 released
+
+01/10/2004 - 5.4
+TestDisk 5.4 released
+
+xx/02/2004 - 5.2
+Can rebuild NTFS boot sector
+Can align partition to cylinder boundary or to head boundary.
+Windows (NT 4/2000/2003/XP) version of TestDisk
+Linux Debian package
+Doesn't abort while writing partitions if read failed.
+JFS partition recovery
+

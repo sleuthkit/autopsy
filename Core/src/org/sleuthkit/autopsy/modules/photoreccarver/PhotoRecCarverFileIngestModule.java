@@ -26,17 +26,21 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -78,6 +82,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
+    private static final String PHOTOREC_LINUX_DIRECTORY = "photorec_binary";
+    private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec_static";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
     private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
@@ -135,9 +141,17 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
 
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
-
+        
+        //Set photorec executable directory based on operating system.
         Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
-        executableFile = locateExecutable(execName.toString());
+        if(!PlatformUtil.isWindowsOS()){
+            execName= Paths.get(PHOTOREC_LINUX_DIRECTORY, PHOTOREC_LINUX_EXECUTABLE);
+        }
+        try {
+            executableFile = locateExecutable(execName.toString());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
 
         if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.jobId) == 1) {
             try {
@@ -219,16 +233,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             Path outputDirPath = Paths.get(paths.getOutputDirPath().toString(), file.getName());
             Files.createDirectory(outputDirPath);
             File log = new File(Paths.get(outputDirPath.toString(), LOG_FILE).toString()); //NON-NLS
-
+            
             // Scan the file with Unallocated Carver.
             ProcessBuilder processAndSettings = new ProcessBuilder(
-                    "\"" + executableFile + "\"",
+                    executableFile.toString(),
                     "/d", // NON-NLS
-                    "\"" + outputDirPath.toAbsolutePath() + File.separator + PHOTOREC_RESULTS_BASE + "\"",
+                      outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
-                    "\"" + tempFilePath.toFile() + "\"",
+                     tempFilePath.toFile().toString(),
                     "search");  // NON-NLS
-
+            
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
             processAndSettings.redirectErrorStream(true);
@@ -435,16 +449,34 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      *
      * @throws IngestModuleException
      */
-    public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException {
+    public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException, IOException {
+       
         // Must be running under a Windows operating system.
-        if (!PlatformUtil.isWindowsOS()) {
-            throw new IngestModule.IngestModuleException(Bundle.unsupportedOS_message());
-        }
+        //if (!PlatformUtil.isWindowsOS()) {
+          //  exeFile=InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverIngestModule.class.getPackage().getName(), false);
+        //}
+        //if(exeFile != null){
+          //  System.out.println(exeFile.toString());
+        //}
 
         File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         if (null == exeFile) {
             throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
         }
+        
+        if(!PlatformUtil.isWindowsOS()){
+            Set<PosixFilePermission> perms = new HashSet<>();
+            perms.add(PosixFilePermission.OWNER_READ);
+            perms.add(PosixFilePermission.OWNER_WRITE);
+            perms.add(PosixFilePermission.OWNER_EXECUTE);
+            perms.add(PosixFilePermission.GROUP_READ);
+            perms.add(PosixFilePermission.GROUP_EXECUTE);
+            perms.add(PosixFilePermission.OTHERS_READ);
+            perms.add(PosixFilePermission.OTHERS_EXECUTE);
+            
+            Files.setPosixFilePermissions(exeFile.toPath(), perms);
+            System.out.println("file permissions");
+            }
 
         if (!exeFile.canExecute()) {
             throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
