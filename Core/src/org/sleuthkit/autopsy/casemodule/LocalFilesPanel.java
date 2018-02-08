@@ -111,6 +111,7 @@ final class LocalFilesPanel extends JPanel {
     }
 
     public void select() {
+        localRadioButton.setSelected(true);
         reset();
     }
 
@@ -144,14 +145,16 @@ final class LocalFilesPanel extends JPanel {
         localFileChooser = new javax.swing.JFileChooser();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
+        fileTypeButtonGroup = new javax.swing.ButtonGroup();
         selectButton = new javax.swing.JButton();
-        infoLabel = new javax.swing.JLabel();
         clearButton = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         selectedPaths = new javax.swing.JTextArea();
         errorLabel = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
+        localRadioButton = new javax.swing.JRadioButton();
+        logicalEvidenceRadioButton = new javax.swing.JRadioButton();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -170,8 +173,6 @@ final class LocalFilesPanel extends JPanel {
                 selectButtonActionPerformed(evt);
             }
         });
-
-        org.openide.awt.Mnemonics.setLocalizedText(infoLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.infoLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(clearButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.clearButton.text")); // NOI18N
         clearButton.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.clearButton.toolTipText")); // NOI18N
@@ -199,16 +200,29 @@ final class LocalFilesPanel extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.displayNameLabel.text")); // NOI18N
 
+        fileTypeButtonGroup.add(localRadioButton);
+        localRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(localRadioButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localRadioButton.text_1")); // NOI18N
+        localRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                localRadioButtonActionPerformed(evt);
+            }
+        });
+
+        fileTypeButtonGroup.add(logicalEvidenceRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(logicalEvidenceRadioButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.logicalEvidenceRadioButton.text")); // NOI18N
+        logicalEvidenceRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                logicalEvidenceRadioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(infoLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -222,11 +236,18 @@ final class LocalFilesPanel extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton1)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(localRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(logicalEvidenceRadioButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(infoLabel)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(localRadioButton)
+                    .addComponent(logicalEvidenceRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
@@ -286,17 +307,31 @@ final class LocalFilesPanel extends JPanel {
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void logicalEvidenceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logicalEvidenceRadioButtonActionPerformed
+        reset();
+    }//GEN-LAST:event_logicalEvidenceRadioButtonActionPerformed
+
+    private void localRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_localRadioButtonActionPerformed
+        reset();
+    }//GEN-LAST:event_localRadioButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
     private javax.swing.JLabel displayNameLabel;
     private javax.swing.JLabel errorLabel;
-    private javax.swing.JLabel infoLabel;
+    private javax.swing.ButtonGroup fileTypeButtonGroup;
     private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JFileChooser localFileChooser;
+    private javax.swing.JRadioButton localRadioButton;
+    private javax.swing.JRadioButton logicalEvidenceRadioButton;
     private javax.swing.JButton selectButton;
     private javax.swing.JTextArea selectedPaths;
     // End of variables declaration//GEN-END:variables
+
+    boolean contentsAreL01() {
+        return (logicalEvidenceRadioButton.isSelected());
+    }
 }

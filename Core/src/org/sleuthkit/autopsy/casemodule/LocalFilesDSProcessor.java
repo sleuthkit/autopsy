@@ -18,17 +18,23 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 
 /**
@@ -37,9 +43,10 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * integration with the add data source wizard. It also provides a run method
  * overload to allow it to be used independently of the wizard.
  */
-@ServiceProviders(value={
-    @ServiceProvider(service=DataSourceProcessor.class),
-    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+@ServiceProviders(value = {
+    @ServiceProvider(service = DataSourceProcessor.class)
+    ,
+    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
 )
 public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
@@ -129,8 +136,55 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             localFilePaths = configPanel.getContentPaths();
+            if (configPanel.contentsAreL01()) {//if the L01 option was chosen
+                localFilePaths = extractL01Contents(localFilePaths);
+            }
         }
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
+    }
+
+    private List<String> extractL01Contents(List<String> l01FilePaths) {
+        final String EWFEXPORT_EXE = "C:\\project_libs\\libewf_64bit\\msvscpp\\x64\\Release\\ewfexport.exe";
+        List<String> extractedPaths = new ArrayList<>();
+
+        for (String l01Path : l01FilePaths) {
+            List<String> command = new ArrayList<>();
+            command.add(EWFEXPORT_EXE);
+            command.add("-f");
+            command.add("files");
+            command.add("-t");
+            File l01Dir = new File(Case.getCurrentCase().getCaseDirectory(), "ModuleOutput\\L01");
+            if (!l01Dir.exists()) {
+                l01Dir.mkdir();
+            }
+
+            Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + System.currentTimeMillis());
+
+            command.add(dirPath.toString());
+            command.add(l01Path);
+
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(l01Dir);
+            try {
+                //
+//        // redirect BE stdout and stderr to txt files
+//        Path logFileName = Paths.get(outputDirPath.getParent().toString(), outputDirPath.getFileName().toString() + "_out.txt");
+//            File logFile = new File(logFileName.toString());
+//            Path errFileName = Paths.get(outputDirPath.getParent().toString(), outputDirPath.getFileName().toString() + "_err.txt");
+//            File errFile = new File(errFileName.toString());
+//            processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
+//            processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
+// Scan the file with Bulk Extractor.
+//terminator?
+                ExecUtil.execute(processBuilder);
+                extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString());
+            } catch (SecurityException ex) {
+                System.out.println("SECURITY EXECEPTION " + ex);
+            } catch (IOException ex) {
+                System.out.println("IOEXECEPTION " + ex);
+            }
+        }
+        return extractedPaths;
     }
 
     /**
@@ -180,7 +234,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      */
     @Override
     public void reset() {
-        configPanel.reset();
+        configPanel.select();
         localFilePaths = null;
         setDataSourceOptionsCalled = false;
     }
@@ -219,5 +273,5 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         this.localFilePaths = Arrays.asList(paths.split(","));
         setDataSourceOptionsCalled = true;
     }
-    
+
 }
