@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,8 @@ final class EncryptionDetectionIngestJobSettings implements IngestModuleIngestJo
 
     private static final long serialVersionUID = 1L;
 
-    private double minimumEntropy;
-    private int minimumFileSize;
+    private String minimumEntropy = null;
+    private String minimumFileSize = null;
     private boolean fileSizeMultipleEnforced;
     private boolean slackFilesAllowed;
 
@@ -51,7 +51,7 @@ final class EncryptionDetectionIngestJobSettings implements IngestModuleIngestJo
      *                                 processed.
      * @param slackFilesAllowed        Slack files can be processed.
      */
-    EncryptionDetectionIngestJobSettings(double minimumEntropy, int minimumFileSize, boolean fileSizeMultipleEnforced, boolean slackFilesAllowed) {
+    EncryptionDetectionIngestJobSettings(String minimumEntropy, String minimumFileSize, boolean fileSizeMultipleEnforced, boolean slackFilesAllowed) {
         this.minimumEntropy = minimumEntropy;
         this.minimumFileSize = minimumFileSize;
         this.fileSizeMultipleEnforced = fileSizeMultipleEnforced;
@@ -69,7 +69,7 @@ final class EncryptionDetectionIngestJobSettings implements IngestModuleIngestJo
      *
      * @return The minimum entropy.
      */
-    double getMinimumEntropy() {
+    String getMinimumEntropy() {
         return minimumEntropy;
     }
 
@@ -77,25 +77,25 @@ final class EncryptionDetectionIngestJobSettings implements IngestModuleIngestJo
      * Set the minimum entropy necessary for the creation of blackboard
      * artifacts.
      */
-    void setMinimumEntropy(double minimumEntropy) {
+    void setMinimumEntropy(String minimumEntropy) {
         this.minimumEntropy = minimumEntropy;
     }
 
     /**
-     * Get the minimum file size necessary for the creation of blackboard
-     * artifacts.
+     * Get the minimum file size (in megabytes) necessary for the creation of
+     * blackboard artifacts.
      *
      * @return The minimum file size.
      */
-    int getMinimumFileSize() {
+    String getMinimumFileSize() {
         return minimumFileSize;
     }
 
     /**
-     * Set the minimum file size necessary for the creation of blackboard
-     * artifacts.
+     * Set the minimum file size (in megabytes) necessary for the creation of
+     * blackboard artifacts.
      */
-    void setMinimumFileSize(int minimumFileSize) {
+    void setMinimumFileSize(String minimumFileSize) {
         this.minimumFileSize = minimumFileSize;
     }
 

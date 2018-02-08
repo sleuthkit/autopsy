@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -27,11 +25,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * Ingest job settings panel for the Encryption Detection module.
  */
 final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
-
-    private static final int MEGABYTE_SIZE = 1048576;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
-    private static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
 
     /**
      * Instantiate the ingest job settings panel.
@@ -50,61 +43,18 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
      */
     private void customizeComponents(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropyTextbox.setText(String.valueOf(settings.getMinimumEntropy()));
-        minimumFileSizeTextbox.setText(String.valueOf(settings.getMinimumFileSize() / MEGABYTE_SIZE));
+        minimumFileSizeTextbox.setText(String.valueOf(settings.getMinimumFileSize()));
         fileSizeMultiplesEnforcedCheckbox.setSelected(settings.isFileSizeMultipleEnforced());
         slackFilesAllowedCheckbox.setSelected(settings.isSlackFilesAllowed());
     }
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        validateMinimumEntropy();
-        validateMinimumFileSize();
-
         return new EncryptionDetectionIngestJobSettings(
-                Double.valueOf(minimumEntropyTextbox.getText()),
-                Integer.valueOf(minimumFileSizeTextbox.getText()) * MEGABYTE_SIZE,
+                minimumEntropyTextbox.getText(),
+                minimumFileSizeTextbox.getText(),
                 fileSizeMultiplesEnforcedCheckbox.isSelected(),
                 slackFilesAllowedCheckbox.isSelected());
-    }
-
-    /**
-     * Validate the minimum entropy input.
-     *
-     * @throws IllegalArgumentException If the input is empty, invalid, or out
-     *                                  of range.
-     */
-    @Messages({
-        "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text=Minimum entropy input must be a number between 6.0 and 8.0."
-    })
-    private void validateMinimumEntropy() throws IllegalArgumentException {
-        try {
-            double minimumEntropy = Double.valueOf(minimumEntropyTextbox.getText());
-            if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text"));
-            }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text"));
-        }
-    }
-
-    /**
-     * Validate the minimum file size input.
-     *
-     * @throws IllegalArgumentException If the input is empty, invalid, or out
-     *                                  of range.
-     */
-    @Messages({
-        "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text=Minimum file size input must be an integer (in megabytes) of 1 or greater."
-    })
-    private void validateMinimumFileSize() throws IllegalArgumentException {
-        try {
-            int minimumFileSize = Integer.valueOf(minimumFileSizeTextbox.getText());
-            if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text"));
-            }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text"));
-        }
     }
 
     /**
