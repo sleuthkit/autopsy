@@ -90,8 +90,6 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             validateMinimumFileSize();
             blackboard = Case.getCurrentCase().getServices().getBlackboard();
             fileTypeDetector = new FileTypeDetector();
-        } catch (EncrpytionDetectionSettingsValidationException ex) {
-            throw new IngestModule.IngestModuleException(ex.getMessage());
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
         }
@@ -114,42 +112,40 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     /**
      * Validate the minimum entropy input.
      *
-     * @throws EncrpytionDetectionSettingsValidationException If the input is
-     *                                                        empty, invalid, or
-     *                                                        out of range.
+     * @throws IngestModule.IngestModuleException If the input is empty,
+     *                                            invalid, or out of range.
      */
     @NbBundle.Messages({
         "EncryptionDetectionFileIngestModule.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0."
     })
-    private void validateMinimumEntropy() throws EncrpytionDetectionSettingsValidationException {
+    private void validateMinimumEntropy() throws IngestModule.IngestModuleException {
         try {
             double value = Double.valueOf(minimumEntropy);
             if (value < MINIMUM_ENTROPY_INPUT_RANGE_MIN || value > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
-                throw new EncrpytionDetectionSettingsValidationException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput());
+                throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput());
             }
         } catch (NumberFormatException ex) {
-            throw new EncrpytionDetectionSettingsValidationException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput(), ex);
+            throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput(), ex);
         }
     }
 
     /**
      * Validate the minimum file size input.
      *
-     * @throws EncrpytionDetectionSettingsValidationException If the input is
-     *                                                        empty, invalid, or
-     *                                                        out of range.
+     * @throws IngestModule.IngestModuleException If the input is empty,
+     *                                            invalid, or out of range.
      */
     @NbBundle.Messages({
         "EncryptionDetectionFileIngestModule.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater."
     })
-    private void validateMinimumFileSize() throws EncrpytionDetectionSettingsValidationException {
+    private void validateMinimumFileSize() throws IngestModule.IngestModuleException {
         try {
             int value = Integer.valueOf(minimumFileSizeMb);
             if (value < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
-                throw new EncrpytionDetectionSettingsValidationException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput());
+                throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput());
             }
         } catch (NumberFormatException ex) {
-            throw new EncrpytionDetectionSettingsValidationException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput(), ex);
+            throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput(), ex);
         }
     }
 
@@ -233,7 +229,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  * Qualify the size.
                  */
                 long contentSize = file.getSize();
-                if (contentSize >= getMinimumFileSizeInBytes()) {
+                if (contentSize >= Integer.valueOf(minimumFileSizeMb) * MEGABYTE_SIZE) {
                     if (!fileSizeMultipleEnforced || (contentSize % FILE_SIZE_MODULUS) == 0) {
                         /*
                          * Qualify the MIME type.
@@ -250,7 +246,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         if (possiblyEncrypted) {
             try {
                 calculatedEntropy = calculateEntropy(file);
-                if (calculatedEntropy >= getMinimumEntropy()) {
+                if (calculatedEntropy >= Double.valueOf(minimumEntropy)) {
                     return true;
                 }
             } catch (IOException ex) {
@@ -322,40 +318,5 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 throw new IOException("Failed to close InputStream.", ex);
             }
         }
-    }
-    
-    /**
-     * Get the minimum entropy as a double.
-     * 
-     * @return The minimum entropy.
-     */
-    private double getMinimumEntropy() {
-        return Double.valueOf(minimumEntropy);
-    }
-    
-    /**
-     * Get the minimum file size in bytes as an integer.
-     * 
-     * @return The minimum file size.
-     */
-    private int getMinimumFileSizeInBytes() {
-        return Integer.valueOf(minimumFileSizeMb) * MEGABYTE_SIZE;
-    }
-
-    /**
-     * Exception thrown when validation of settings fails.
-     */
-    static final class EncrpytionDetectionSettingsValidationException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        private EncrpytionDetectionSettingsValidationException(String message) {
-            super(message);
-        }
-
-        private EncrpytionDetectionSettingsValidationException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
     }
 }
