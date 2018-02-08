@@ -25,8 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -49,7 +47,6 @@ final class MultiUserNode extends AbstractNode {
 
     @Messages({"CaseNode.column.name=Name",
         "CaseNode.column.createdTime=Created Time",
-        "CaseNode.column.status=Status",
         "CaseNode.column.metadataFilePath=Path"})
     private static final Logger LOGGER = Logger.getLogger(MultiUserNode.class.getName());
     private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
@@ -57,31 +54,30 @@ final class MultiUserNode extends AbstractNode {
     /**
      * Provides a root node with children which each represent a case.
      *
-     * @param caseMap the map of cases and a boolean indicating if they have an
-     *                alert
+     * @param caseList the list of CaseMetadata objects representing the cases
      */
-    MultiUserNode(Map<CaseMetadata, Boolean> caseMap) {
-        super(Children.create(new MultiUserNodeChildren(caseMap), true));
+    MultiUserNode(List<CaseMetadata> caseList) {
+        super(Children.create(new MultiUserNodeChildren(caseList), true));
     }
 
-    static class MultiUserNodeChildren extends ChildFactory<Entry<CaseMetadata, Boolean>> {
+    static class MultiUserNodeChildren extends ChildFactory<CaseMetadata> {
 
-        private final Map<CaseMetadata, Boolean> caseMap;
+        private final List<CaseMetadata> caseList;
 
-        MultiUserNodeChildren(Map<CaseMetadata, Boolean> caseMap) {
-            this.caseMap = caseMap;
+        MultiUserNodeChildren(List<CaseMetadata> caseList) {
+            this.caseList = caseList;
         }
 
         @Override
-        protected boolean createKeys(List<Entry<CaseMetadata, Boolean>> list) {
-            if (caseMap != null && caseMap.size() > 0) {
-                list.addAll(caseMap.entrySet());
+        protected boolean createKeys(List<CaseMetadata> list) {
+            if (caseList != null && caseList.size() > 0) {
+                list.addAll(caseList);
             }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(Entry<CaseMetadata, Boolean> key) {
+        protected Node createNodeForKey(CaseMetadata key) {
             return new MultiUserCaseNode(key);
         }
 
@@ -95,19 +91,17 @@ final class MultiUserNode extends AbstractNode {
         private final String caseName;
         private final String caseCreatedDate;
         private final String caseMetadataFilePath;
-        private final boolean caseHasAlert;
         private final Path caseLogFilePath;
 
-        MultiUserCaseNode(Entry<CaseMetadata, Boolean> multiUserCase) {
+        MultiUserCaseNode(CaseMetadata multiUserCase) {
             super(Children.LEAF);
-            caseName = multiUserCase.getKey().getCaseDisplayName();
-            caseCreatedDate = multiUserCase.getKey().getCreatedDate();
-            caseHasAlert = multiUserCase.getValue();
+            caseName = multiUserCase.getCaseDisplayName();
+            caseCreatedDate = multiUserCase.getCreatedDate();
             super.setName(caseName);
             setName(caseName);
             setDisplayName(caseName);
-            caseMetadataFilePath = multiUserCase.getKey().getFilePath().toString();
-            caseLogFilePath = Paths.get(multiUserCase.getKey().getCaseDirectory(), LOG_FILE_NAME);
+            caseMetadataFilePath = multiUserCase.getFilePath().toString();
+            caseLogFilePath = Paths.get(multiUserCase.getCaseDirectory(), LOG_FILE_NAME);
         }
         
         /**
@@ -119,7 +113,6 @@ final class MultiUserNode extends AbstractNode {
             return new OpenMultiUserCaseAction(caseMetadataFilePath);
         }
 
-        @Messages({"MultiUserNode.AlertColumn.text=Alert"})  //text to display when there is an alert present
         @Override
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
@@ -132,8 +125,6 @@ final class MultiUserNode extends AbstractNode {
                     caseName));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
                     caseCreatedDate));
-            ss.put(new NodeProperty<>(Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(), Bundle.CaseNode_column_status(),
-                    (caseHasAlert == true ? Bundle.MultiUserNode_AlertColumn_text() : "")));
             ss.put(new NodeProperty<>(Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(),
                     caseMetadataFilePath));
             return s;
