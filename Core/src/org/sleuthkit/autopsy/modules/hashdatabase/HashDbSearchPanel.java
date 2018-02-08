@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -297,7 +297,7 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
             if (HashDbSearcher.countFilesMd5Hashed() > 0) {
                 return doSearch();
             } else {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbSearchPanel.noFilesHaveMD5HashMsg"),
                         NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.dlgMsg.title"),

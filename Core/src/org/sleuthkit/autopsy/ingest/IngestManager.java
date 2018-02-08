@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@ import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -107,7 +108,7 @@ import org.sleuthkit.datamodel.Content;
 @ThreadSafe
 public class IngestManager {
 
-    private final static Logger LOGGER = Logger.getLogger(IngestManager.class.getName());
+    private final static Logger logger = Logger.getLogger(IngestManager.class.getName());
     private final static String INGEST_JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
     private final static Set<String> INGEST_JOB_EVENT_NAMES = Stream.of(IngestJobEvent.values()).map(IngestJobEvent::toString).collect(Collectors.toSet());
     private final static String INGEST_MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events"; //NON-NLS
@@ -197,12 +198,12 @@ public class IngestManager {
                 }
 
                 String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
-                LOGGER.log(Level.SEVERE, "Service {0} is down, cancelling all running ingest jobs", serviceDisplayName); //NON-NLS
+                logger.log(Level.SEVERE, "Service {0} is down, cancelling all running ingest jobs", serviceDisplayName); //NON-NLS
                 if (isIngestRunning() && RuntimeProperties.runningWithGUI()) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            JOptionPane.showMessageDialog(null,
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                     NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
                                     NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
                                     JOptionPane.ERROR_MESSAGE);
@@ -257,7 +258,7 @@ public class IngestManager {
                 moduleEventPublisher.openRemoteEventChannel(String.format(INGEST_MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
         } catch (IllegalStateException | AutopsyEventException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.ErrMsg"));
         }
@@ -355,7 +356,7 @@ public class IngestManager {
                                 @Override
                                 public void run() {
                                     String serviceDisplayName = ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName();
-                                    JOptionPane.showMessageDialog(null,
+                                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                             NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
                                             NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
                                             JOptionPane.ERROR_MESSAGE);
@@ -377,13 +378,13 @@ public class IngestManager {
             errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
-                IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
+                IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
             } else {
                 this.ingestJobsById.remove(job.getId());
                 for (IngestModuleError error : errors) {
-                    LOGGER.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
                 }
-                IngestManager.LOGGER.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
+                IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.runningWithGUI()) {
                     final StringBuilder message = new StringBuilder(1024);
                     message.append(Bundle.IngestManager_startupErr_dlgMsg()).append("\n"); //NON-NLS
@@ -396,7 +397,7 @@ public class IngestManager {
                     }
                     message.append("\n\n");
                     EventQueue.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, message, Bundle.IngestManager_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, Bundle.IngestManager_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
                     });
                 }
                 return new IngestJobStartResult(null, new IngestManagerException("Errors occurred while starting ingest"), errors); //NON-NLS
@@ -415,10 +416,10 @@ public class IngestManager {
         long jobId = job.getId();
         ingestJobsById.remove(jobId);
         if (!job.isCancelled()) {
-            IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
             fireIngestJobCompleted(jobId);
         } else {
-            IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
             fireIngestJobCancelled(jobId);
         }
     }

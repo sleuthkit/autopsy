@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -340,7 +340,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 hashSetManager.save();
             } catch (HashDbManager.HashDbManagerException ex) {
                 SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
                 });
             }
         }
@@ -388,7 +388,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
             } catch (HashDbManager.HashDbManagerException ex) {
-                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
             }
         }
         hashSetTableModel.refreshModel();
@@ -432,7 +432,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             hashSetManager.save();
         } catch (HashDbManager.HashDbManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1000,7 +1000,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
 
     @Messages({})
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null,
+        if (JOptionPane.showConfirmDialog(this,
                 NbBundle.getMessage(this.getClass(),
                         "HashDbConfigPanel.deleteDbActionConfirmMsg"),
                 NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
@@ -1011,7 +1011,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 try {
                     hashSetManager.removeHashDatabaseNoSave(hashDb);
                 } catch (HashDbManager.HashDbManagerException ex) {
-                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                    JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
                 }
                 hashSetTableModel.refreshModel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -1026,7 +1026,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 try {
                     hashSetManager.removeHashDatabaseNoSave(hashDb);
                 } catch (HashDbManager.HashDbManagerException ex) {
-                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                    JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
                 }
                 hashSetTableModel.refreshModel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);

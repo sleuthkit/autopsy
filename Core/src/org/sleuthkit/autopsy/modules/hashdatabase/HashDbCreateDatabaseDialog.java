@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -121,8 +119,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     }
 
     private void display() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
     
@@ -165,7 +162,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
                 selectedOrg = orgs.get(0);
             }
         } catch (EamDbException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.HashDbCreateDatabaseDialog_populateOrgsError_message());
+            JOptionPane.showMessageDialog(this, Bundle.HashDbCreateDatabaseDialog_populateOrgsError_message());
             Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Failure loading organizations", ex);
         }
     }    

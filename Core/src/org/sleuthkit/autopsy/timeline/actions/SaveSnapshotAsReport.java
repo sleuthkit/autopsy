@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.controlsfx.validation.ValidationResult;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -192,22 +193,22 @@ public class SaveSnapshotAsReport extends Action {
                 try {
                     Desktop.getDesktop().open(reportHTMLFIle.toFile());
                 } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.OpenReportAction_NoAssociatedEditorMessage(),
                             Bundle.OpenReportAction_MessageBoxTitle(),
                             JOptionPane.ERROR_MESSAGE);
                 } catch (UnsupportedOperationException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.OpenReportAction_NoOpenInEditorSupportMessage(),
                             Bundle.OpenReportAction_MessageBoxTitle(),
                             JOptionPane.ERROR_MESSAGE);
                 } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.OpenReportAction_MissingReportFileMessage(),
                             Bundle.OpenReportAction_MessageBoxTitle(),
                             JOptionPane.ERROR_MESSAGE);
                 } catch (SecurityException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.OpenReportAction_ReportFileOpenPermissionDeniedMessage(),
                             Bundle.OpenReportAction_MessageBoxTitle(),
                             JOptionPane.ERROR_MESSAGE);

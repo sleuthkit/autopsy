@@ -95,7 +95,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             boolean result = EamDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             if(! result){
-                JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this),
+                JOptionPane.showMessageDialog(this,
                                         NbBundle.getMessage(this.getClass(),
                                                 "GlobalSettingsPanel.updateFailed.message"),
                                         NbBundle.getMessage(this.getClass(),

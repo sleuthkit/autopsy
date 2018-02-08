@@ -29,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.datamodel.TskData;
 
 @Messages({"TagNameDialog.descriptionLabel.text=Description:",
@@ -76,10 +77,7 @@ final class TagNameDialog extends javax.swing.JDialog {
         /*
          * Center the dialog
          */
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = this.getSize().width;
-        int height = this.getSize().height;
-        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         /*
          * Add a handler for when the dialog window is closed directly.

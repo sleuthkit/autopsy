@@ -328,7 +328,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 updatePanel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
-                JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this),
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message"),
                         NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);

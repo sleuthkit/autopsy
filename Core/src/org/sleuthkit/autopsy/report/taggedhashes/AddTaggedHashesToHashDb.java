@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
@@ -96,14 +97,14 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                                     failedExports.add(tag.getContent().getName());
                                 }
                             } else {
-                                JOptionPane.showMessageDialog(null, "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash database. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash database. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
                         }
                     }
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);
-                    JOptionPane.showMessageDialog(null, "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
             if (!failedExports.isEmpty()) {
@@ -117,7 +118,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                         errorMessage.append(".");
                     }
                 }
-                JOptionPane.showMessageDialog(null, errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
             }
         }
         progressPanel.setIndeterminate(false);
