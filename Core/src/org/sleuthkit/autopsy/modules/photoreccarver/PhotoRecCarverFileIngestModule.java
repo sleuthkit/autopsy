@@ -26,16 +26,13 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -82,7 +79,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
-    private static final String PHOTOREC_LINUX_DIRECTORY = "/usr/bin/";
+    private static String photorec_linux_directory;
     private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
@@ -141,14 +138,10 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
 
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
-        
+
         //Set photorec executable directory based on operating system.
-        Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
-        if(!PlatformUtil.isWindowsOS()){
-            execName= Paths.get(PHOTOREC_LINUX_DIRECTORY, PHOTOREC_LINUX_EXECUTABLE);
-        }
         try {
-            executableFile = locateExecutable(execName.toString());
+            executableFile = locateExecutable();
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
@@ -233,16 +226,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             Path outputDirPath = Paths.get(paths.getOutputDirPath().toString(), file.getName());
             Files.createDirectory(outputDirPath);
             File log = new File(Paths.get(outputDirPath.toString(), LOG_FILE).toString()); //NON-NLS
-            
+
             // Scan the file with Unallocated Carver.
             ProcessBuilder processAndSettings = new ProcessBuilder(
                     executableFile.toString(),
                     "/d", // NON-NLS
-                      outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
+                    outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
-                     tempFilePath.toFile().toString(),
+                    tempFilePath.toFile().toString(),
                     "search");  // NON-NLS
-            
+            System.out.println(processAndSettings.command());
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
             processAndSettings.redirectErrorStream(true);
@@ -449,27 +442,49 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      *
      * @throws IngestModuleException
      */
-    public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException, IOException {
+    public static File locateExecutable() throws IngestModule.IngestModuleException, IOException {
         File exeFile = null;
-      
-        if(PlatformUtil.isWindowsOS()){
-            exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
-        }
-        
-        if(!PlatformUtil.isWindowsOS()){
-            exeFile = new File(executableToFindName);
+        Path execName = null;
+
+        if (PlatformUtil.isWindowsOS()) {
+            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
+            exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
+        } else {
+            if (checkPhotorec("photorec", new File("/usr/bin"))) {
+                photorec_linux_directory = "/usr/bin";
+            }else if(checkPhotorec("photorec", new File("/usr/local/bin"))){
+                photorec_linux_directory = "/usr/local/bin";
+            }else{
+                exeFile = null;
+            }
+            execName = Paths.get(photorec_linux_directory, PHOTOREC_LINUX_EXECUTABLE);
+            exeFile = new File(execName.toString());
         }
 
         if (null == exeFile) {
             throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
         }
         
-       
+        
         if (!exeFile.canExecute()) {
             throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
         }
 
         return exeFile;
+    }
+
+    public static boolean checkPhotorec(String name, File file) {
+        File[] list = file.listFiles();
+        if (list != null) {
+            for (File fil : list) {
+                if (fil.isDirectory()) {
+                    checkPhotorec(name, fil);
+                } else if (name.equals(fil.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }
