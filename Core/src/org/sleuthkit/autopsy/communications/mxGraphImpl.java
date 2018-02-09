@@ -144,12 +144,12 @@ final class mxGraphImpl extends mxGraph {
                     + mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
                     + "\">" + accountName;
             if (pinnedAccountDevices.contains(adiKey)) {
-                label += "<img src=\"" + MARKER_PIN_URL + "\">";
+                label = "<img src=\"" + MARKER_PIN_URL + "\">"+label;
             }
             if (lockedVertices.contains((mxCell) cell)) {
                 label += "<img src=\"" + LOCK_URL + "\">";
             }
-            return "<div style=\"  font-size:      "+ (Math.log(adiKey.getMessageCount())+10)+ "px;\" >" + label + "</div>";
+            return "<div style=\"font-size:"+ (Math.log(adiKey.getMessageCount())+5)+ "px;\" >" + label + "</div>";
         } else {
             return "";
         }

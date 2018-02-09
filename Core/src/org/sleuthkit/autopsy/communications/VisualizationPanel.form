@@ -59,13 +59,19 @@
                   </Properties>
                 </Component>
                 <Container class="javax.swing.JPanel" name="progresPanel">
+                  <Properties>
+                    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                      <Dimension value="[0, 20]"/>
+                    </Property>
+                    <Property name="name" type="java.lang.String" value="" noResource="true"/>
+                  </Properties>
 
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="651" max="32767" attributes="0"/>
-                              <Component id="progressBar" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="447" max="32767" attributes="0"/>
+                              <Component id="progressBar" min="-2" pref="350" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>

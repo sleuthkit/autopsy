@@ -34,6 +34,7 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxPoint;
 import com.mxgraph.util.mxRectangle;
+import com.mxgraph.view.mxGraph;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -119,11 +120,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private CommunicationsManager commsManager;
     private CommunicationsFilter currentFilter;
     private final mxRubberband rubberband;
+    private mxFastOrganicLayout mxFastOrganicLayout;
+    private mxCircleLayout mxCircleLayout;
+    private final mxOrganicLayout mxOrganicLayout;
+    private mxHierarchicalLayout mxHierarchicalLayout;
 
     public VisualizationPanel() {
         initComponents();
         graph = new mxGraphImpl();
 
+        mxFastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
+        mxCircleLayout = new mxCircleLayoutImpl(graph);
+        mxOrganicLayout = new mxOrganicLayoutImpl(graph);
+        mxHierarchicalLayout = new mxHierarchicalLayoutImpl(graph);
+        
         graphComponent = new mxGraphComponent(graph);
         graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
@@ -377,6 +387,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         statusLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.statusLabel.text")); // NOI18N
         jToolBar2.add(statusLabel);
 
+        progresPanel.setMinimumSize(new Dimension(0, 20));
+        progresPanel.setName(""); // NOI18N
+
         progressBar.setMaximumSize(new Dimension(200, 14));
         progressBar.setStringPainted(true);
 
@@ -384,8 +397,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         progresPanel.setLayout(progresPanelLayout);
         progresPanelLayout.setHorizontalGroup(progresPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(GroupLayout.TRAILING, progresPanelLayout.createSequentialGroup()
-                .add(0, 651, Short.MAX_VALUE)
-                .add(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .add(0, 447, Short.MAX_VALUE)
+                .add(progressBar, GroupLayout.PREFERRED_SIZE, 350, GroupLayout.PREFERRED_SIZE))
         );
         progresPanelLayout.setVerticalGroup(progresPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(GroupLayout.TRAILING, progresPanelLayout.createSequentialGroup()
@@ -583,23 +596,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
-        final mxCircleLayout mxCircleLayout = new mxCircleLayout(graph) {
-            @Override
-            public boolean isVertexIgnored(Object vertex) {
-                return super.isVertexIgnored(vertex)
-                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
-            }
-
-            @Override
-            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-                if (isVertexIgnored(vertex)) {
-                    return getVertexBounds(vertex);
-                } else {
-                    return super.setVertexLocation(vertex, x, y);
-                }
-            }
-        };
-        mxCircleLayout.setResetEdges(true);
         morph(mxCircleLayout);
     }//GEN-LAST:event_circleLayoutButtonActionPerformed
 
@@ -608,64 +604,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_OrganicLayoutButtonActionPerformed
 
     private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
-        final mxFastOrganicLayout mxFastOrganicLayout = new mxFastOrganicLayout(graph) {
-            @Override
-            public boolean isVertexIgnored(Object vertex) {
-                return super.isVertexIgnored(vertex)
-                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
-            }
-
-            @Override
-            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-                if (isVertexIgnored(vertex)) {
-                    return getVertexBounds(vertex);
-                } else {
-                    return super.setVertexLocation(vertex, x, y);
-                }
-            }
-        };
 
         morph(mxFastOrganicLayout);
     }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
     private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
-        final mxHierarchicalLayout mxHierarchicalLayout = new mxHierarchicalLayout(graph) {
-            @Override
-            public boolean isVertexIgnored(Object vertex) {
-                return super.isVertexIgnored(vertex)
-                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
-            }
 
-            @Override
-            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-                if (isVertexIgnored(vertex)) {
-                    return getVertexBounds(vertex);
-                } else {
-                    return super.setVertexLocation(vertex, x, y);
-                }
-            }
-        };
         morph(mxHierarchicalLayout);
     }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
     private void applyOrganicLayout(int iterations) {
-        mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph) {
-            @Override
-            public boolean isVertexIgnored(Object vertex) {
-                return super.isVertexIgnored(vertex)
-                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
-            }
-
-            @Override
-            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-                if (isVertexIgnored(vertex)) {
-                    return getVertexBounds(vertex);
-                } else {
-                    return super.setVertexLocation(vertex, x, y);
-                }
-            }
-        };
-        mxOrganicLayout.setResetEdges(true);
         mxOrganicLayout.setMaxIterations(iterations);
         morph(mxOrganicLayout);
     }
@@ -848,6 +796,100 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 progressBar.setValue(progressBar.getValue());
                 progressBar.setVisible(false);
             });
+        }
+    }
+
+    private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
+
+        public mxFastOrganicLayoutImpl(mxGraph graph) {
+            super(graph);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
+        }
+    }
+
+    private class mxCircleLayoutImpl extends mxCircleLayout {
+
+        public mxCircleLayoutImpl(mxGraph graph) {
+            super(graph);
+        }
+        {
+            setResetEdges(true);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
+        }
+    }
+
+    private class mxOrganicLayoutImpl extends mxOrganicLayout {
+
+        public mxOrganicLayoutImpl(mxGraph graph) {
+            super(graph);
+        }
+        {
+            setResetEdges(true);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
+        }
+    }
+
+    private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
+
+        public mxHierarchicalLayoutImpl(mxGraph graph) {
+            super(graph);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
         }
     }
 }
