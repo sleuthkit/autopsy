@@ -810,7 +810,7 @@ class TestConfiguration(object):
             if parsed_config.getElementsByTagName("singleUser_golddir"):
                 self.singleUser_gold = parsed_config.getElementsByTagName("singleUser_golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("timing"):
-                self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
+                self.timing = ("True" == parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8"))
             if parsed_config.getElementsByTagName("autopsyPlatform"):
                 self.autopsyPlatform = parsed_config.getElementsByTagName("autopsyPlatform")[0].getAttribute("value").encode().decode("utf_8")
             # Multi-user settings
@@ -1392,7 +1392,7 @@ class Logs(object):
         try:
             Logs._fill_ingest_data(test_data)
         except Exception as e:
-            Errors.print_error("Error: Unknown fatal error when filling test_config data.")
+            Errors.print_error("Error when filling test_config data.")
             Errors.print_error(str(e) + "\n")
             logging.critical(traceback.format_exc())
         # If running in verbose mode (-v)
@@ -1469,7 +1469,6 @@ class Logs(object):
             test_data.heap_space = search_logs("Heap memory usage:", test_data)[0].rstrip().split(": ")[1]
             ingest_line = search_logs("Ingest (including enqueue)", test_data)[0]
             test_data.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
-
             message_line_count = find_msg_in_log_set("Ingest messages count:", test_data)
             test_data.indexed_files = message_line_count
 

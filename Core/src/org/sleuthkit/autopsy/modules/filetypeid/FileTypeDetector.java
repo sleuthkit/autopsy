@@ -165,14 +165,17 @@ public class FileTypeDetector {
     }
 
     /**
-     * Detects the MIME type of a file.
+     * Detects the MIME type of a file, then writes it the AbstractFile object
+     * representing the file and returns the detected type.
      *
      * @param file The file to test.
      *
      * @return A MIME type name. If file type could not be detected, or results
      *         were uncertain, octet-stream is returned.
+     * 
+ 
      */
-    public String detectMIMEType(AbstractFile file) {
+    public String getMIMEType(AbstractFile file) {
         /*
          * Check to see if the file has already been typed.
          */
@@ -243,6 +246,11 @@ public class FileTypeDetector {
                 mimeType = MimeTypes.OCTET_STREAM;
             }
         }
+
+        /*
+         * Documented side effect: write the result to the AbstractFile object.
+         */
+        file.setMIMEType(mimeType);
 
         return mimeType;
     }
@@ -365,7 +373,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String detectAndPostToBlackboard(AbstractFile file) throws TskCoreException {
-        String fileType = detectMIMEType(file);
+        String fileType = getMIMEType(file);
         file.setMIMEType(fileType);
         file.save();
         return fileType;
@@ -389,7 +397,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String getFileType(AbstractFile file) throws TskCoreException {
-        String fileType = detectMIMEType(file);
+        String fileType = getMIMEType(file);
         file.setMIMEType(fileType);
         file.save();
         return fileType;
@@ -409,7 +417,7 @@ public class FileTypeDetector {
      */
     @Deprecated
     public String detect(AbstractFile file) throws TskCoreException {
-        String fileType = detectMIMEType(file);
+        String fileType = getMIMEType(file);
         return fileType;
     }
 
