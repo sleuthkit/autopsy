@@ -452,8 +452,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             return;
         }
 
-        Lookup lookup = selectedNode.getLookup();
-        Content content = lookup.lookup(Content.class);
+        Content content = DataContentViewerUtility.getDefaultContent(selectedNode);
         if (content != null) {
             this.setDataView(content, 0);
             return;
