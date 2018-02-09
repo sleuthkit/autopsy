@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! c:\perl\bin\perl.exe
 #-----------------------------------------------------------
 # Registry Ripper
 # Parse a Registry hive file for data pertinent to an investigation

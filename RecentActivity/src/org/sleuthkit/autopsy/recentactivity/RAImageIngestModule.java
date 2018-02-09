@@ -23,9 +23,11 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -57,7 +59,12 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
 
-        Extract registry = new ExtractRegistry();
+        Extract registry = null;
+        try {
+            registry = new ExtractRegistry();
+        } catch (FileNotFoundException ex) {
+            Exceptions.printStackTrace(ex);
+        }
         Extract iexplore = new ExtractIE();
         Extract recentDocuments = new RecentDocumentsByLnk();
         Extract chrome = new Chrome();

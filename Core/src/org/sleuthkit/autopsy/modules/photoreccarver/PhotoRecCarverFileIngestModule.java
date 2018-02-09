@@ -79,7 +79,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
-    private static String photorec_linux_directory;
     private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
@@ -445,14 +444,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     public static File locateExecutable() throws IngestModule.IngestModuleException, IOException {
         File exeFile = null;
         Path execName = null;
-
+        String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
             execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
             exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         } else {
-            if (checkPhotorec("photorec", new File("/usr/bin"))) {
+            File usrBin = new File("/usr/bin/photorec");
+            File usrLocalBin = new File("/usr/local/bin/photorec");
+            if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
                 photorec_linux_directory = "/usr/bin";
-            }else if(checkPhotorec("photorec", new File("/usr/local/bin"))){
+            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
                 photorec_linux_directory = "/usr/local/bin";
             }else{
                 exeFile = null;
@@ -471,20 +472,6 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
 
         return exeFile;
-    }
-
-    public static boolean checkPhotorec(String name, File file) {
-        File[] list = file.listFiles();
-        if (list != null) {
-            for (File fil : list) {
-                if (fil.isDirectory()) {
-                    checkPhotorec(name, fil);
-                } else if (name.equals(fil.getName())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 }
