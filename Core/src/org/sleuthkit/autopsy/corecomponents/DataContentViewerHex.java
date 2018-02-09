@@ -453,7 +453,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             return;
         }
 
-        Content content = (selectedNode).getLookup().lookup(Content.class);
+        Content content = DataContentViewerUtility.getDefaultContent(selectedNode);
         if (content == null) {
             resetComponent();
             return;

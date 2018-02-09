@@ -365,81 +365,84 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         chooser.addChoosableFileFilter(autopsyFilter);
         chooser.addChoosableFileFilter(encaseFilter);
         chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setMultiSelectionEnabled(true);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
         String listName = null;
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File selFile = chooser.getSelectedFile();
-            if (selFile == null) {
-                return;
-            }
+            File[] selFiles = chooser.getSelectedFiles();
 
-            //force append extension if not given
-            String fileAbs = selFile.getAbsolutePath();
+            for (File file : selFiles) {
+                if (file == null) {
+                    continue; 
+                }
+                
+                //force append extension if not given
+                String fileAbs = file.getAbsolutePath();
+                final KeywordSearchList reader;
 
-            final KeywordSearchList reader;
-
-            if (KeywordSearchUtil.isXMLList(fileAbs)) {
-                reader = new XmlKeywordSearchList(fileAbs);
-            } else {
-                reader = new EnCaseKeywordSearchList(fileAbs);
-            }
-
-            if (!reader.load()) {
-                KeywordSearchUtil.displayDialog(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
-                return;
-            }
-
-            List<KeywordList> toImport = reader.getListsL();
-            List<KeywordList> toImportConfirmed = new ArrayList<>();
-
-            final XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-
-            for (KeywordList list : toImport) {
-                //check name collisions
-                listName = list.getName();
-                if (writer.listExists(listName)) {
-                    String[] options;
-                    if (toImport.size() == 1) { //only give them cancel and yes buttons for single list imports
-                        options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};  
-                    } else {
-                        options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
-                    }
-                    int choice = JOptionPane.showOptionDialog(this,
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
-                            JOptionPane.YES_NO_CANCEL_OPTION,
-                            JOptionPane.QUESTION_MESSAGE,
-                            null,
-                            options,
-                            options[0]);
-                    if (choice == JOptionPane.OK_OPTION) {
-                        toImportConfirmed.add(list);
-                    } else if (choice == JOptionPane.CANCEL_OPTION) {
-                        break;
-                    }
-
+                if (KeywordSearchUtil.isXMLList(fileAbs)) {
+                    reader = new XmlKeywordSearchList(fileAbs);
                 } else {
-                    //no conflict
-                    toImportConfirmed.add(list);
+                    reader = new EnCaseKeywordSearchList(fileAbs);
                 }
 
-            }
+                if (!reader.load()) {
+                    KeywordSearchUtil.displayDialog(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                    return;
+                }
 
-            if (toImportConfirmed.isEmpty()) {
-                return;
-            }
+                List<KeywordList> toImport = reader.getListsL();
+                List<KeywordList> toImportConfirmed = new ArrayList<>();
 
-            if (!writer.writeLists(toImportConfirmed)) {
-                KeywordSearchUtil.displayDialog(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                final XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
+
+                for (KeywordList list : toImport) {
+                    //check name collisions
+                    listName = list.getName();
+                    if (writer.listExists(listName)) {
+                        String[] options;
+                        if (toImport.size() == 1) { //only give them cancel and yes buttons for single list imports
+                            options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};  
+                        } else {
+                            options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                        }
+                        int choice = JOptionPane.showOptionDialog(this,
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                null,
+                                options,
+                                options[0]);
+                        if (choice == JOptionPane.OK_OPTION) {
+                            toImportConfirmed.add(list);
+                        } else if (choice == JOptionPane.CANCEL_OPTION) {
+                            break;
+                        }
+
+                    } else {
+                        //no conflict
+                        toImportConfirmed.add(list);
+                    }
+
+                }
+
+                if (toImportConfirmed.isEmpty()) {
+                    return;
+                }
+
+                if (!writer.writeLists(toImportConfirmed)) {
+                    KeywordSearchUtil.displayDialog(
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                }
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_KEYWORD_LIST_PATH_KEY, file.getParent());
             }
-            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_KEYWORD_LIST_PATH_KEY, selFile.getParent());
         }
         tableModel.resync();
 
