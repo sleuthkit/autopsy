@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class HighlightedText implements IndexedText {
 
-    private static final Logger LOGGER = Logger.getLogger(HighlightedText.class.getName());
+    private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -400,7 +400,7 @@ class HighlightedText implements IndexedText {
             // either be a single chunk containing hits or we narrow our
             // query down to the current page/chunk.
             if (response.getResults().size() > 1) {
-                LOGGER.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
+                logger.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", q); //NON-NLS
             }
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
@@ -426,7 +426,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }

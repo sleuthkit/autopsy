@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
-    private static final Logger LOGGER = Logger.getLogger(KeywordSearchResultFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
     //common properties (superset of all Node properties) to be displayed as columns
     static final List<String> COMMON_PROPERTIES
@@ -140,7 +140,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         try {
             queryResults = queryRequest.performQuery();
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
+            logger.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
@@ -148,7 +148,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         try {
             tskCase = Case.getCurrentCase().getSleuthkitCase();
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
             return false;
         }
 
@@ -165,11 +165,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             try {
                 content = tskCase.getContentById(hit.getContentID());
                 if (content == null) {
-                    LOGGER.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
+                    logger.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
                     return false;
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
                 return false;
             }
 
@@ -192,7 +192,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 try {
                     hitName = tskCase.getBlackboardArtifact(hit.getArtifactID().get()).getDisplayName() + " Artifact"; //NON-NLS
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
+                    logger.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
                     return false;
                 }
             } else {
@@ -250,12 +250,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         Node resultNode;
 
         if (key instanceof KeyValueQueryContent) {
-            QueryContent queryContent = new QueryContent((KeyValueQueryContent) key);
+            AdHocQueryResult adHocQueryResult = new AdHocQueryResult((KeyValueQueryContent) key);
 
-            Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(queryContent));
+            Node kvNode = new KeyValueNode(key, Children.LEAF);
 
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            resultNode = new KeywordSearchFilterNode(queryContent, kvNode);
+            resultNode = new KeywordSearchFilterNode(adHocQueryResult, kvNode);
         } else {
             resultNode = new EmptyNode("This Node Is Empty");
             resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noResultsFound.text"));
@@ -269,19 +269,19 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
      * This class encapsulates content, query results, and an associated Solr
      * object ID for storing in the Lookup to be read later.
      */
-    class QueryContent {
+    final class AdHocQueryResult {
         private final long solrObjectId;
         private final Content content;
         private final QueryResults results;
         
         /**
-         * Instantiate a QueryContent object.
+         * Instantiate a AdHocQueryResult object.
          * 
          * @param solrObjectId The Solr object ID associated with the content.
          * @param content The content for the query result.
          * @param results The query results.
          */
-        QueryContent(KeyValueQueryContent key) {
+        AdHocQueryResult(KeyValueQueryContent key) {
             this.solrObjectId = key.getSolrObjectId();
             this.content = key.getContent();
             this.results = key.getHits();
@@ -407,9 +407,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             try {
                 get();
             } catch (InterruptedException | CancellationException ex) {
-                LOGGER.log(Level.WARNING, "User cancelled writing of ad hoc search query results for '{0}' to the blackboard", query.getQueryString()); //NON-NLS
+                logger.log(Level.WARNING, "User cancelled writing of ad hoc search query results for '{0}' to the blackboard", query.getQueryString()); //NON-NLS
             } catch (ExecutionException ex) {
-                LOGGER.log(Level.SEVERE, "Error writing of ad hoc search query results for " + query.getQueryString() + " to the blackboard", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error writing of ad hoc search query results for " + query.getQueryString() + " to the blackboard", ex); //NON-NLS
             }
         }
 
