@@ -177,7 +177,13 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 // Scan the file with Bulk Extractor.
 //terminator?
                 ExecUtil.execute(processBuilder);
-                extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString());
+                if (l01Dir.toPath().resolve(dirPath).toFile().exists()){
+                    extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString()); 
+                }
+                else { //if we failed to extract anything add it as a regular file
+                    extractedPaths.add(l01Path);
+                }
+                
             } catch (SecurityException ex) {
                 System.out.println("SECURITY EXECEPTION " + ex);
             } catch (IOException ex) {

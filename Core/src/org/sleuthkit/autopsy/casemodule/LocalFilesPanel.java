@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
@@ -46,6 +47,7 @@ final class LocalFilesPanel extends JPanel {
     private static LocalFilesPanel instance;
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
+    private static FileFilter fileFilter;
 
     /**
      * Creates new form LocalFilesPanel
@@ -53,6 +55,23 @@ final class LocalFilesPanel extends JPanel {
     private LocalFilesPanel() {
         initComponents();
         customInit();
+        fileFilter = new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                if (pathname.isDirectory()) {
+                    return true;
+                } else if (pathname.getName().toLowerCase().endsWith(".l01")) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public String getDescription() {
+                return "Logical Evidence Files (L01)";
+            }
+        };
     }
 
     static synchronized LocalFilesPanel getDefault() {
@@ -266,7 +285,18 @@ final class LocalFilesPanel extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
+        if (logicalEvidenceRadioButton.isSelected()) {
+            localFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            localFileChooser.setFileFilter(fileFilter);
+            localFileChooser.setAcceptAllFileFilterUsed(false);
+
+        } else {
+            localFileChooser.resetChoosableFileFilters();
+            localFileChooser.setAcceptAllFileFilterUsed(true);
+            localFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        }
         int returnVal = localFileChooser.showOpenDialog(this);
+
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = localFileChooser.getSelectedFiles();
             for (File f : files) {
