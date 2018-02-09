@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -61,21 +60,19 @@ final class mxGraphImpl extends mxGraph {
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     static {
-        //initialize defaul cell (Vertex and/or Edge)  properties
+        //initialize defaul vertex properties
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_PERIMETER, mxConstants.PERIMETER_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "000000");
-//        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_WHITE_SPACE, "wrap");
 
+        //initialize defaul edge properties
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
-//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_OPACITY, 50        );
-//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ROUNDED, true);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_PERIMETER_SPACING, 0);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
 
-    public mxGraphImpl() {
+    mxGraphImpl() {
         super(mxStylesheet);
         setAutoSizeCells(true);
         setCellsCloneable(false);
@@ -139,17 +136,20 @@ final class mxGraphImpl extends mxGraph {
         if (value instanceof AccountDeviceInstanceKey) {
             final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
             final String accountName = adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
+
+            final double size = Math.round(Math.log(adiKey.getMessageCount()) + 5);
+
             String iconFileName = Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType());
-            String label = "<img src=\""
+            String label = "<img height=" + size + " width=" + size + " src="
                     + mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
-                    + "\">" + accountName;
+                    + ">" + accountName;
             if (pinnedAccountDevices.contains(adiKey)) {
-                label = "<img src=\"" + MARKER_PIN_URL + "\">"+label;
+                label = "<img height=" + size + " width=" + size + " src=" + MARKER_PIN_URL + ">" + label;
             }
             if (lockedVertices.contains((mxCell) cell)) {
-                label += "<img src=\"" + LOCK_URL + "\">";
+                label += "<img height=" + size + " width=" + size + "  src=" + LOCK_URL + ">";
             }
-            return "<div style=\"font-size:"+ (Math.log(adiKey.getMessageCount())+5)+ "px;\" >" + label + "</div>";
+            return "<div style=\"font-size:" + size + "px;\" >" + label + "</div>";
         } else {
             return "";
         }
@@ -184,14 +184,15 @@ final class mxGraphImpl extends mxGraph {
         getView().updateLabelBounds(state);
         getView().updateBoundingBox(state);
     }
-
+    
     SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
-
+        
         return new SwingWorkerImpl(progress, commsManager, currentFilter);
     }
-
+    
     void resetGraph() {
         clear();
+        getView().setScale(1);
         pinnedAccountDevices.clear();
         lockedVertices.clear();
     }
@@ -207,8 +208,8 @@ final class mxGraphImpl extends mxGraph {
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
                     vertexName, accountDeviceInstanceKey,
-                    Math.random() * getView().getGraphBounds().getWidth(),
-                    Math.random() * getView().getGraphBounds().getHeight(),
+                    Math.random() * 400,
+                    Math.random() * 400,
                     size,
                     size);
             return newVertex;
@@ -249,23 +250,23 @@ final class mxGraphImpl extends mxGraph {
     double getScale() {
         return getView().getScale();
     }
-
+    
     boolean isVertexLocked(mxCell vertex) {
         return lockedVertices.contains(vertex);
     }
-
+    
     private class SwingWorkerImpl extends SwingWorker<Void, Void> {
-
+        
         private final ProgressIndicator progress;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
-
+        
         SwingWorkerImpl(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
             this.progress = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
         }
-
+        
         @Override
         protected Void doInBackground() throws Exception {
             progress.start("Loading accounts", pinnedAccountDevices.size());
@@ -296,7 +297,7 @@ final class mxGraphImpl extends mxGraph {
                 for (i = 0; i < relatedAccountsList.size(); i++) {
                     AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
                     for (int j = i; j < relatedAccountsList.size(); j++) {
-
+                        
                         AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
                         List<Content> relationships = commsManager.getRelationshipSources(
                                 adiKey1.getAccountDeviceInstance(),
@@ -315,14 +316,14 @@ final class mxGraphImpl extends mxGraph {
             }
             return null;
         }
-
+        
         @Override
         protected void done() {
             super.done();
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Error building graph visualization. ", ex);
             } finally {
                 progress.finish();
             }
