@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
@@ -31,16 +29,11 @@ import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.util.mxMorphing;
-import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxPoint;
 import com.mxgraph.util.mxRectangle;
-import com.mxgraph.view.mxCellState;
-import com.mxgraph.view.mxGraph;
-import com.mxgraph.view.mxLayoutManager;
-import com.mxgraph.view.mxStylesheet;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -50,19 +43,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import static java.util.Collections.singleton;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -80,13 +65,13 @@ import org.jdesktop.layout.GroupLayout;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -106,29 +91,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
-    private static final URL MARKER_PIN_URL = VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
-    static final private ImageIcon pinIcon = new ImageIcon(MARKER_PIN_URL);
+    private static final String BASE_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images";
+    static final private ImageIcon pinIcon =
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--pin.png"));
     static final private ImageIcon addPinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--plus.png"));
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--plus.png"));
     static final private ImageIcon unpinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--minus.png"));
-
-    static final private mxStylesheet mxStylesheet = new mxStylesheet();
-
-    static {
-        //initialize defaul cell (Vertex and/or Edge)  properties
-        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
-        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_PERIMETER, mxConstants.PERIMETER_ELLIPSE);
-        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "000000");
-//        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_WHITE_SPACE, "wrap");
-
-        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
-//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_OPACITY, 50        );
-//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ROUNDED, true);
-        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_PERIMETER_SPACING, 0);
-        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
-        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
-    }
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--minus.png"));
+    static final private ImageIcon unlockIcon =
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
+    static final private ImageIcon lockIcon =
+            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
 
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
@@ -137,66 +110,22 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             ExplorerUtils.createLookup(vizEM, getActionMap()));
 
     private final mxGraphComponent graphComponent;
-    private final mxGraph graph;
-    private final Map<String, mxCell> nodeMap = new HashMap<>();
-    private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
+    private final mxGraphImpl graph;
 
     private CommunicationsManager commsManager;
-    private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
     private CommunicationsFilter currentFilter;
     private final mxRubberband rubberband;
 
     public VisualizationPanel() {
         initComponents();
-        graph = new mxGraph() {
-            @Override
-            public String convertValueToString(Object cell) {
-                Object value = getModel().getValue(cell);
-                if (value instanceof AccountDeviceInstanceKey) {
-                    final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
-                    final String accountName = adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
-                    String iconFileName = Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType());
-                    String label = "<img src=\""
-                            + VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
-                            + "\">" + accountName;
-                    if (pinnedAccountDevices.contains(adiKey)) {
-                        label += "<img src=\"" + MARKER_PIN_URL + "\">";
-                    }
-                    return "<span>" + label + "</span>";
-                } else {
-                    return "";
-                }
-            }
-
-            @Override
-            public String getToolTipForCell(Object cell) {
-                return ((mxCell) cell).getId();
-            }
-
-        };
-        graph.setCellsCloneable(false);
-        graph.setDropEnabled(false);
-        graph.setCellsCloneable(false);
-        graph.setCellsEditable(false);
-        graph.setCellsResizable(false);
-        graph.setCellsMovable(true);
-        graph.setCellsDisconnectable(false);
-        graph.setConnectableEdges(false);
-        graph.setDisconnectOnMove(false);
-        graph.setEdgeLabelsMovable(false);
-        graph.setVertexLabelsMovable(false);
-        graph.setAllowDanglingEdges(false);
-        graph.setCellsBendable(true);
-        graph.setKeepEdgesInBackground(true);
-        graph.setResetEdgesOnMove(true);
-        graph.setHtmlLabels(true);
-        graph.setStylesheet(mxStylesheet);
+        graph = new mxGraphImpl();
 
         graphComponent = new mxGraphComponent(graph);
         graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
         graphComponent.setAutoscrolls(true);
         graphComponent.setConnectable(false);
+        graphComponent.setDragEnabled(false);
         graphComponent.setKeepSelectionVisibleOnZoom(true);
         graphComponent.setOpaque(true);
         graphComponent.setToolTips(true);
@@ -206,26 +135,32 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
-        new mxLayoutManager(graph) {
-            final private mxOrganicLayout layout;
-            {
-                this.layout = new mxOrganicLayout(graph);
-            }
-
-            @Override
-            protected void executeLayout(mxIGraphLayout layout, Object parent) {
-                super.executeLayout(layout, parent);
-                fitGraph();
-            }
-
-            @Override
-            public mxIGraphLayout getLayout(Object parent) {
-                if (graph.getModel().getChildCount(parent) > 0) {
-                    return layout;
-                }
-                return null;
-            }
-        };
+//        new mxLayoutManager(graph) {
+//            final private mxOrganicLayout layout;
+//            private int counter;
+//            {
+//                this.layout = new mxOrganicLayout(graph);
+//                this.layout.setMaxIterations(1);
+//            }
+//
+//            @Override
+//            protected void executeLayout(mxIGraphLayout layout, Object parent) {
+//                if (counter % 10 == 0)
+//                {
+//                    super.executeLayout(layout, parent);
+////                fitGraph();
+//                }
+//                counter++;
+//            }
+//
+//            @Override
+//            public mxIGraphLayout getLayout(Object parent) {
+//                if (graph.getModel().getChildCount(parent) > 0) {
+//                    return layout;
+//                }
+//                return null;
+//            }
+//        };
         //right click handler
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
@@ -244,10 +179,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 if (SwingUtilities.isRightMouseButton(e)) {
                     mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
                     if (cellAt != null && cellAt.isVertex()) {
-
                         JPopupMenu jPopupMenu = new JPopupMenu();
-
-                        if (pinnedAccountDevices.contains(cellAt.getValue())) {
+                        if (graph.isAccountPinned((AccountDeviceInstanceKey) cellAt.getValue())) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin Account " + cellAt.getId(), unpinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
@@ -256,6 +189,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             }));
                         } else {
 
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock Account " + cellAt.getId(), unlockIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    graph.lockAccount((AccountDeviceInstanceKey) cellAt.getValue());
+                                }
+                            }));
+
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock Account " + cellAt.getId(), lockIcon) {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    graph.unlockAccount((AccountDeviceInstanceKey) cellAt.getValue());
+                                }
+                            }));
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Pin Account " + cellAt.getId(), addPinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
@@ -287,59 +233,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         return proxyLookup;
     }
 
-    private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
-        final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
-        final String name =// accountDeviceInstance.getDeviceId() + ":"                +
-                accountDeviceInstance.getAccount().getTypeSpecificID();
-
-        final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
-            double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
-
-            mxCell newVertex = (mxCell) graph.insertVertex(
-                    graph.getDefaultParent(),
-                    vertexName, accountDeviceInstanceKey,
-                    Math.random() * graphComponent.getWidth(),
-                    Math.random() * graphComponent.getHeight(),
-                    size,
-                    size);
-            return newVertex;
-        });
-        final mxCellState state = graph.getView().getState(vertex, true);
-
-        graph.getView().updateLabel(state);
-        graph.getView().updateLabelBounds(state);
-        graph.getView().updateBoundingBox(state);
-
-        return vertex;
-    }
-
-    @SuppressWarnings("unchecked")
-    private mxCell addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) {
-        mxCell vertex1 = getOrCreateVertex(account1);
-        mxCell vertex2 = getOrCreateVertex(account2);
-        Object[] edgesBetween = graph.getEdgesBetween(vertex1, vertex2);
-        mxCell edge;
-        if (edgesBetween.length == 0) {
-            final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
-            final HashSet<Content> hashSet = new HashSet<>(relSources);
-            //            edgeMap.put(relSource, edge);
-            edge = (mxCell) graph.insertEdge(graph.getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
-                    "strokeWidth=" + Math.sqrt(hashSet.size()));
-        } else {
-            edge = (mxCell) edgesBetween[0];
-            ((Collection<Content>) edge.getValue()).addAll(relSources);
-            edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
-        }
-        return edge;
-    }
-
     @Subscribe
     void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         try {
-
-            pinnedAccountDevices.removeAll(pinEvent.getAccountDeviceInstances());
-            clearGraph();
+            graph.unpinAccount(pinEvent.getAccountDeviceInstances());
+            graph.clear();
             rebuildGraph();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error pinning accounts", ex);
@@ -356,10 +255,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getModel().beginUpdate();
         try {
             if (pinEvent.isReplace()) {
-                pinnedAccountDevices.clear();
-                clearGraph();
+                graph.resetGraph();
             }
-            pinnedAccountDevices.addAll(pinEvent.getAccountDeviceInstances());
+
+            graph.pinAccount(pinEvent.getAccountDeviceInstances());
             rebuildGraph();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error pinning accounts", ex);
@@ -376,7 +275,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         graph.getModel().beginUpdate();
         try {
-            clearGraph();
+            graph.clear();
             currentFilter = filterChangeEvent.getNewFilter();
             rebuildGraph();
         } catch (TskCoreException ex) {
@@ -391,100 +290,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void rebuildGraph() throws TskCoreException {
 
-        progressBar.setVisible(true);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
+        SwingWorker<?, ?> rebuild = graph.rebuild(new ProgressIndicatorImpl(), commsManager, currentFilter);
 
-        new SwingWorker<Set<RelationshipModel>, RelationshipModel>() {
-            @Override
-            protected Set<RelationshipModel> doInBackground() throws Exception {
-                Set<RelationshipModel> relationshipModels = new HashSet<>();
-                try {
+        rebuild.execute();
 
-                    /**
-                     * set to keep track of accounts related to pinned accounts
-                     */
-                    Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
-                    for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
-                        List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                                commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
-
-                        relatedAccounts.add(adiKey);
-                        //get accounts related to pinned account
-                        for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-//                            handle.progress(1);
-                            long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
-                            final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
-                            relatedAccounts.add(relatedADIKey); //store related accounts
-                        }
-                    }
-
-                    //for each pair of related accounts add edges if they are related o each other.
-                    // this is O(n^2) in the number of related accounts!!!
-                    List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
-                    SwingUtilities.invokeLater(() -> {
-                        progressBar.setString("");
-                        progressBar.setStringPainted(true);
-                        progressBar.setValue(0);
-                        progressBar.setMaximum(relatedAccountsList.size());
-                        progressBar.setIndeterminate(false);
-                    });
-                    for (int i = 0; i < relatedAccountsList.size(); i++) {
-                        AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
-                        for (int j = i; j < relatedAccountsList.size(); j++) {
-
-                            AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
-                            List<Content> relationships = commsManager.getRelationshipSources(
-                                    adiKey1.getAccountDeviceInstance(),
-                                    adiKey2.getAccountDeviceInstance(),
-                                    currentFilter);
-                            if (relationships.size() > 0) {
-                                RelationshipModel relationshipModel = new RelationshipModel(relationships, adiKey1, adiKey2);
-                                publish(relationshipModel);
-                            }
-                        }
-                        final int p = i;
-                        SwingUtilities.invokeLater(() -> {
-                            progressBar.setValue(p);
-                        });
-                    }
-                } catch (TskCoreException tskCoreException) {
-                    logger.log(Level.SEVERE, "Error", tskCoreException);
-                } finally {
-                }
-                return relationshipModels;
-            }
-
-            @Override
-            protected void process(List<RelationshipModel> chunks) {
-                super.process(chunks);
-                for (RelationshipModel relationShipModel : chunks) {
-                    mxCell addEdge = addEdge(relationShipModel.getSources(),
-                            relationShipModel.getAccount1(),
-                            relationShipModel.getAccount2());
-                    progressBar.setString(addEdge.getId());
-                }
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    Exceptions.printStackTrace(ex);
-                } finally {
-                    progressBar.setVisible(false);
-                }
-            }
-        }.execute();
-
-    }
-
-    private void clearGraph() {
-        nodeMap.clear();
-        edgeMap.clear();
-        graph.removeCells(graph.getChildVertices(graph.getDefaultParent()));
     }
 
     @Override
@@ -504,7 +313,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             graph.getModel().beginUpdate();
             try {
-                clearGraph();
+                graph.resetGraph();
             } finally {
                 graph.getModel().endUpdate();
             }
@@ -644,6 +453,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         borderLayoutPanel.add(jToolBar1, BorderLayout.NORTH);
 
         progressBar.setMaximumSize(new Dimension(200, 14));
+        progressBar.setStringPainted(true);
 
         GroupLayout statusPanelLayout = new GroupLayout(statusPanel);
         statusPanel.setLayout(statusPanelLayout);
@@ -656,7 +466,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         statusPanelLayout.setVerticalGroup(statusPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(GroupLayout.TRAILING, statusPanelLayout.createSequentialGroup()
                 .add(3, 3, 3)
-                .add(progressBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .add(3, 3, 3))
         );
 
@@ -668,12 +478,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        morph(new mxFastOrganicLayout(graph) {
-            @Override
-            public boolean isVertexMovable(Object vertex) {
-                return super.isVertexMovable(vertex) && false == pinnedAccountDevices.contains((AccountDeviceInstanceKey) ((mxICell) vertex).getValue());
-            }
-        });
+        morph(new mxFastOrganicLayout(graph));
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void zoomInButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
@@ -697,7 +502,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void applyOrganicLayout(int iterations) {
-        mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph);
+        mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph) {
+            @Override
+            public boolean isVertexMovable(Object vertex) {
+                return super.isVertexMovable(vertex); //To change body of generated methods, choose Tools | Templates.
+            }
+
+        };
         mxOrganicLayout.setMaxIterations(iterations);
         morph(mxOrganicLayout);
     }
@@ -718,27 +529,30 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         graph.getView().setTranslate(new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY()));
-//        graph.moveCells(childVertices, -boundsForCells.getX(), -boundsForCells.getY());
 
-//        final double widthFactor = (double) graphComponent.getWidth() / (int) view.getGraphBounds().getWidth();
-//        final double heightFactor = (double) graphComponent.getHeight() / (int) view.getGraphBounds().getHeight();
-//
-//        view.setScale(Math.min(widthFactor, heightFactor) * view.getScale());
+//        graphComponent.zoomActual();
+//        graphComponent.zoomAndCenter();
+//        graph.getGraphBounds().getWidth()
     }
 
     private void morph(mxIGraphLayout layout) {
         // layout using morphing
         graph.getModel().beginUpdate();
         try {
+            progressBar.setVisible(true);
+            progressBar.setIndeterminate(true);
+            progressBar.setString("applying layout");
             layout.execute(graph.getDefaultParent());
         } finally {
             mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
             morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
                 graph.getModel().endUpdate();
                 fitGraph();
+                progressBar.setVisible(false);
+                progressBar.setValue(0);
             });
             morph.addListener(mxEvent.EXECUTE, (Object sender, mxEventObject event) -> {
-                fitGraph();
+//                fitGraph();
             });
 
             morph.startAnimation();
@@ -793,28 +607,76 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
-    private static class RelationshipModel {
+    private class ProgressIndicatorImpl implements ProgressIndicator {
 
-        private final List<Content> relationshipSources;
-        private final AccountDeviceInstanceKey adiKey1;
-        private final AccountDeviceInstanceKey adiKey2;
-
-        private RelationshipModel(List<Content> relationships, AccountDeviceInstanceKey adiKey1, AccountDeviceInstanceKey adiKey2) {
-            this.relationshipSources = relationships;
-            this.adiKey1 = adiKey1;
-            this.adiKey2 = adiKey2;
+        @Override
+        public void start(String message, int totalWorkUnits) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setVisible(true);
+                progressBar.setIndeterminate(false);
+                progressBar.setString(message);
+                progressBar.setMaximum(totalWorkUnits);
+                progressBar.setValue(0);
+            });
         }
 
-        public List<Content> getSources() {
-            return Collections.unmodifiableList(relationshipSources);
+        @Override
+        public void start(String message) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setVisible(true);
+                progressBar.setString(message);
+                progressBar.setIndeterminate(true);
+            });
         }
 
-        public AccountDeviceInstanceKey getAccount1() {
-            return adiKey1;
+        @Override
+        public void switchToIndeterminate(String message) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setVisible(true);
+                progressBar.setIndeterminate(true);
+                progressBar.setString(message);
+            });
         }
 
-        public AccountDeviceInstanceKey getAccount2() {
-            return adiKey2;
+        @Override
+        public void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setVisible(true);
+                progressBar.setIndeterminate(false);
+                progressBar.setString(message);
+                progressBar.setMaximum(totalWorkUnits);
+                progressBar.setValue(workUnitsCompleted);
+            });
+        }
+
+        @Override
+        public void progress(String message) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setString(message);
+            });
+        }
+
+        @Override
+        public void progress(int workUnitsCompleted) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setValue(workUnitsCompleted);
+            });
+        }
+
+        @Override
+        public void progress(String message, int workUnitsCompleted) {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setString(message);
+                progressBar.setValue(workUnitsCompleted);
+            });
+        }
+
+        @Override
+        public void finish() {
+            SwingUtilities.invokeLater(() -> {
+                progressBar.setValue(progressBar.getValue());
+                progressBar.setVisible(false);
+            });
         }
     }
 }

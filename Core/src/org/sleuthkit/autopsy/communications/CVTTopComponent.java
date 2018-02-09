@@ -57,6 +57,7 @@ public final class CVTTopComponent extends TopComponent {
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
             Lookup.Provider selectedComponent = (Lookup.Provider) browseVisualizeTabPane.getSelectedComponent();
             proxyLookup.changeLookups(selectedComponent.getLookup());
+            filtersPane.setDeviceAccountTypeEnabled(browseVisualizeTabPane.getSelectedIndex() != 0);
         });
 
 
