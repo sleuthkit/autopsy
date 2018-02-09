@@ -126,6 +126,8 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         jPanel1.setLayout(new java.awt.BorderLayout());
 
         plistTableScrollPane.setBorder(null);
+        plistTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        plistTableScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         jPanel1.add(plistTableScrollPane, java.awt.BorderLayout.CENTER);
 
         org.openide.awt.Mnemonics.setLocalizedText(exportButton, org.openide.util.NbBundle.getMessage(PListViewer.class, "PListViewer.exportButton.text")); // NOI18N
