@@ -395,7 +395,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 return false;
             }
             try {
-                Integer.parseInt(daysIncludedTextField.getText());
+                int value = Integer.parseInt(daysIncludedTextField.getText());
+                if (value < 0) {
+                    throw new NumberFormatException("Negative numbers are not allowed for the within N days condition");
+                }
             } catch (NumberFormatException e) {
                 //field did not contain an integer
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
