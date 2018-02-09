@@ -93,6 +93,33 @@ final class mxGraphImpl extends mxGraph {
         setKeepEdgesInBackground(true);
         setResetEdgesOnMove(true);
         setHtmlLabels(true);
+
+//        new mxLayoutManager(graph) {
+//            final private mxOrganicLayout layout;
+//            private int counter;
+//            {
+//                this.layout = new mxOrganicLayout(graph);
+//                this.layout.setMaxIterations(1);
+//            }
+//
+//            @Override
+//            protected void executeLayout(mxIGraphLayout layout, Object parent) {
+//                if (counter % 10 == 0)
+//                {
+//                    super.executeLayout(layout, parent);
+////                fitGraph();
+//                }
+//                counter++;
+//            }
+//
+//            @Override
+//            public mxIGraphLayout getLayout(Object parent) {
+//                if (graph.getModel().getChildCount(parent) > 0) {
+//                    return layout;
+//                }
+//                return null;
+//            }
+//        };
     }
 
     @Override
@@ -214,7 +241,12 @@ final class mxGraphImpl extends mxGraph {
     }
 
     boolean hasPinnedAccounts() {
-        return pinnedAccountDevices.isEmpty() == false;  }
+        return pinnedAccountDevices.isEmpty() == false;
+    }
+
+    double getScale() {
+        return getView().getScale();
+    }
 
     class SwingWorkerImpl extends SwingWorker<Void, Void> {
 
