@@ -792,7 +792,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with null path
         // This will fail in the CorrelationAttributeInstance constructor
         try {
-            CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, dataSource1fromCase1, null);
+            new CorrelationAttributeInstance(case1, dataSource1fromCase1, null);
             Assert.fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -821,7 +821,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test null value
         // This will fail in the CorrelationAttribute constructor
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, null);
+            new CorrelationAttribute(fileType, null);
             Assert.fail("addArtifact failed to throw exception for null value");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1127,7 +1127,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test new type with null db name
         // The constructor should fail in this case
         try {
-            CorrelationAttribute.Type temp = new CorrelationAttribute.Type("temp", null, false, false);
+            new CorrelationAttribute.Type("temp", null, false, false);
             Assert.fail("CorrelationAttribute.Type failed to throw exception for null db table name");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1579,7 +1579,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Since it isn't possible to get a null hash into the EamGlobalFileInstance, skip trying to
         // call addReferenceInstance and just test the EamGlobalFileInstance constructor
         try {
-            EamGlobalFileInstance temp = new EamGlobalFileInstance(notableSet1id, null, TskData.FileKnown.BAD, "comment");
+            new EamGlobalFileInstance(notableSet1id, null, TskData.FileKnown.BAD, "comment");
             Assert.fail("EamGlobalFileInstance failed to throw exception for null hash");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1589,7 +1589,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Since it isn't possible to get a null known status into the EamGlobalFileInstance, skip trying to
         // call addReferenceInstance and just test the EamGlobalFileInstance constructor
         try {
-            EamGlobalFileInstance temp = new EamGlobalFileInstance(notableSet1id, inAllSetsHash, null, "comment");
+            new EamGlobalFileInstance(notableSet1id, inAllSetsHash, null, "comment");
             Assert.fail("EamGlobalFileInstance failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
