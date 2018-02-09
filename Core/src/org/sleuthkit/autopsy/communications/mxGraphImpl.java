@@ -55,7 +55,7 @@ final class mxGraphImpl extends mxGraph {
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
-    private final HashSet<AccountDeviceInstanceKey> lockedAccountDevices = new HashSet<>();
+    private final HashSet<mxCell> lockedVertices = new HashSet<>();
 
     private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
@@ -123,23 +123,6 @@ final class mxGraphImpl extends mxGraph {
 //        };
     }
 
-    @Override
-    public boolean isCellMovable(Object cell) {
-        final mxICell mxCell = (mxICell) cell;
-        if (mxCell.isEdge()) {
-            return super.isCellMovable(cell);
-        } else {
-            final boolean cellMovable = super.isCellMovable(cell);
-            final boolean unlocked = false == lockedAccountDevices.contains((AccountDeviceInstanceKey) mxCell.getValue());
-
-            if (cellMovable && unlocked) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
-
     void clear() {
         nodeMap.clear();
         edgeMap.clear();
@@ -163,10 +146,10 @@ final class mxGraphImpl extends mxGraph {
             if (pinnedAccountDevices.contains(adiKey)) {
                 label += "<img src=\"" + MARKER_PIN_URL + "\">";
             }
-            if (lockedAccountDevices.contains(adiKey)) {
+            if (lockedVertices.contains((mxCell) cell)) {
                 label += "<img src=\"" + LOCK_URL + "\">";
             }
-            return "<div width=\"" + (Math.sqrt(adiKey.getMessageCount()) + 10) + "\">" + label + "</div>";
+            return "<div style=\"  font-size:      "+ (Math.log(adiKey.getMessageCount())+10)+ "px;\" >" + label + "</div>";
         } else {
             return "";
         }
@@ -185,12 +168,21 @@ final class mxGraphImpl extends mxGraph {
         pinnedAccountDevices.addAll(accountDeviceInstances);
     }
 
-    void lockAccount(AccountDeviceInstanceKey accountDeviceInstance) {
-        lockedAccountDevices.add(accountDeviceInstance);
+    void lockVertex(mxCell vertex) {
+        lockedVertices.add(vertex);
+
+        final mxCellState state = getView().getState(vertex, true);
+        getView().clear(vertex, true, true);
+        getView().validate();
     }
 
-    void unlockAccount(AccountDeviceInstanceKey accountDeviceInstance) {
-        lockedAccountDevices.remove(accountDeviceInstance);
+    void unlockVertex(mxCell vertex) {
+        lockedVertices.remove(vertex);
+
+        final mxCellState state = getView().getState(vertex, true);
+        getView().updateLabel(state);
+        getView().updateLabelBounds(state);
+        getView().updateBoundingBox(state);
     }
 
     SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
@@ -201,7 +193,7 @@ final class mxGraphImpl extends mxGraph {
     void resetGraph() {
         clear();
         pinnedAccountDevices.clear();
-        lockedAccountDevices.clear();
+        lockedVertices.clear();
     }
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
@@ -241,11 +233,11 @@ final class mxGraphImpl extends mxGraph {
             final HashSet<Content> hashSet = new HashSet<>(relSources);
             //            edgeMap.put(relSource, edge);
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
-                    "strokeWidth=" + (Math.log(hashSet.size())+1));
+                    "strokeWidth=" + (Math.log(hashSet.size()) + 1));
         } else {
             edge = (mxCell) edgesBetween[0];
             ((Collection<Content>) edge.getValue()).addAll(relSources);
-            edge.setStyle("strokeWidth=" +( Math.log(((Collection) edge.getValue()).size())+1));
+            edge.setStyle("strokeWidth=" + (Math.log(((Collection) edge.getValue()).size()) + 1));
         }
         return edge;
     }
@@ -258,8 +250,8 @@ final class mxGraphImpl extends mxGraph {
         return getView().getScale();
     }
 
-    boolean isAccountLocked(AccountDeviceInstanceKey adiKey) {
-        return lockedAccountDevices.contains(adiKey);
+    boolean isVertexLocked(mxCell vertex) {
+        return lockedVertices.contains(vertex);
     }
 
     private class SwingWorkerImpl extends SwingWorker<Void, Void> {

@@ -163,29 +163,29 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    mxICell cellAt = (mxICell) graphComponent.getCellAt(e.getX(), e.getY());
+                    mxCell cellAt = (mxCell) graphComponent.getCellAt(e.getX(), e.getY());
                     if (cellAt != null && cellAt.isVertex()) {
                         JPopupMenu jPopupMenu = new JPopupMenu();
                         AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
 
-                        if (graph.isAccountLocked(adiKey)) {
+                        if (graph.isVertexLocked(cellAt)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    graph.unlockAccount((AccountDeviceInstanceKey) cellAt.getValue());
+                                    graph.unlockVertex(cellAt);
                                 }
                             }));
 
-                        }else {
+                        } else {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    graph.lockAccount((AccountDeviceInstanceKey) cellAt.getValue());
+                                    graph.lockVertex(cellAt);
                                 }
                             }));
 
                         }
-                        if (graph.isAccountPinned(adiKey))  {
+                        if (graph.isAccountPinned(adiKey)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
@@ -583,7 +583,22 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
-        final mxCircleLayout mxCircleLayout = new mxCircleLayout(graph);
+        final mxCircleLayout mxCircleLayout = new mxCircleLayout(graph) {
+            @Override
+            public boolean isVertexIgnored(Object vertex) {
+                return super.isVertexIgnored(vertex)
+                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+            }
+
+            @Override
+            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+                if (isVertexIgnored(vertex)) {
+                    return getVertexBounds(vertex);
+                } else {
+                    return super.setVertexLocation(vertex, x, y);
+                }
+            }
+        };
         mxCircleLayout.setResetEdges(true);
         morph(mxCircleLayout);
     }//GEN-LAST:event_circleLayoutButtonActionPerformed
@@ -593,23 +608,62 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_OrganicLayoutButtonActionPerformed
 
     private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
-        final mxFastOrganicLayout mxFastOrganicLayout = new mxFastOrganicLayout(graph);
+        final mxFastOrganicLayout mxFastOrganicLayout = new mxFastOrganicLayout(graph) {
+            @Override
+            public boolean isVertexIgnored(Object vertex) {
+                return super.isVertexIgnored(vertex)
+                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+            }
+
+            @Override
+            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+                if (isVertexIgnored(vertex)) {
+                    return getVertexBounds(vertex);
+                } else {
+                    return super.setVertexLocation(vertex, x, y);
+                }
+            }
+        };
 
         morph(mxFastOrganicLayout);
     }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
     private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
-        final mxHierarchicalLayout mxHierarchicalLayout = new mxHierarchicalLayout(graph);
+        final mxHierarchicalLayout mxHierarchicalLayout = new mxHierarchicalLayout(graph) {
+            @Override
+            public boolean isVertexIgnored(Object vertex) {
+                return super.isVertexIgnored(vertex)
+                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+            }
+
+            @Override
+            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+                if (isVertexIgnored(vertex)) {
+                    return getVertexBounds(vertex);
+                } else {
+                    return super.setVertexLocation(vertex, x, y);
+                }
+            }
+        };
         morph(mxHierarchicalLayout);
     }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
     private void applyOrganicLayout(int iterations) {
         mxOrganicLayout mxOrganicLayout = new mxOrganicLayout(graph) {
             @Override
-            public boolean isVertexMovable(Object vertex) {
-                return super.isVertexMovable(vertex); //To change body of generated methods, choose Tools | Templates.
+            public boolean isVertexIgnored(Object vertex) {
+                return super.isVertexIgnored(vertex)
+                        || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
             }
 
+            @Override
+            public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+                if (isVertexIgnored(vertex)) {
+                    return getVertexBounds(vertex);
+                } else {
+                    return super.setVertexLocation(vertex, x, y);
+                }
+            }
         };
         mxOrganicLayout.setResetEdges(true);
         mxOrganicLayout.setMaxIterations(iterations);
