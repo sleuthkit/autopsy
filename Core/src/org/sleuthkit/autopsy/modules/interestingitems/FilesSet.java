@@ -761,7 +761,7 @@ public final class FilesSet implements Serializable {
          */
         static final class DateCondition implements FileAttributeCondition {
 
-            private final static long DAY_IN_S = 60 * 60 * 24;
+            private final static long SECS_PER_DAY = 60 * 60 * 24;
 
             private int daysIncluded;
 
@@ -786,7 +786,7 @@ public final class FilesSet implements Serializable {
 
             @Override
             public boolean passes(AbstractFile file) {
-                long dateThreshold = System.currentTimeMillis() / 1000 - daysIncluded * DAY_IN_S;
+                long dateThreshold = System.currentTimeMillis() / 1000 - daysIncluded * SECS_PER_DAY;
                 if (file.getCrtime() > dateThreshold || file.getMtime() > dateThreshold) {
                     return true;
                 }
