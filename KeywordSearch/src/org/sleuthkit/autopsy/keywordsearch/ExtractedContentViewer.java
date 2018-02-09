@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -108,6 +107,10 @@ public class ExtractedContentViewer implements DataContentViewer {
         BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         AbstractFile content = nodeLookup.lookup(AbstractFile.class);
 
+        /*
+         * Add the highlighted text, if any, for any artifact associated with the
+         * node.
+         */
         if (adHocQueryResult != null) {
             highlightedHitText = new HighlightedText(adHocQueryResult.getSolrObjectId(), adHocQueryResult.getResults());
         } else if (artifact != null) {
@@ -115,27 +118,16 @@ public class ExtractedContentViewer implements DataContentViewer {
                 try {
                     highlightedHitText = new HighlightedText(artifact);
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
                 }
             } else if (artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID() && content != null) {
                 try {
                     highlightedHitText = getAccountsText(content, nodeLookup);
                 } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
                 }
             }
         }
-
-        if (content != null) {
-            rawContentText = new RawText(content, content.getId());
-        } else if (artifact != null) {
-            try {
-                rawContentText = getRawArtifactText(nodeLookup);
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        }
-
         if (highlightedHitText != null) {
             sources.add(highlightedHitText);
         }
@@ -144,7 +136,9 @@ public class ExtractedContentViewer implements DataContentViewer {
          * Next, add the "raw" (not highlighted) text, if any, for any content
          * associated with the node.
          */
-        if (rawContentText != null) {
+
+        if (content != null) {
+            rawContentText = new RawText(content, content.getId());
             sources.add(rawContentText);
         }
 
@@ -155,12 +149,13 @@ public class ExtractedContentViewer implements DataContentViewer {
         IndexedText rawArtifactText = null;
         try {
             rawArtifactText = getRawArtifactText(nodeLookup);
+            
+            if (rawArtifactText != null) {
+                sources.add(rawArtifactText);
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating RawText for " + content, ex); //NON-NLS
 
-        }
-        if (rawArtifactText != null) {
-            sources.add(rawArtifactText);
         }
 
         // Now set the default source to be displayed.
