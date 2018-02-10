@@ -42,8 +42,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class FileTypeDetector {
 
-    private static final Logger LOGGER = Logger.getLogger(FileTypeDetector.class.getName());
-    private static final Tika TIKA = new Tika();
+    private static final Logger logger = Logger.getLogger(FileTypeDetector.class.getName());
+    private static final Tika tika = new Tika();
     private static final int SLACK_FILE_THRESHOLD = 4096;
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
@@ -224,7 +224,7 @@ public class FileTypeDetector {
             ReadContentInputStream stream = new ReadContentInputStream(file);
 
             try (TikaInputStream tikaInputStream = TikaInputStream.get(stream)) {
-                String tikaType = TIKA.detect(tikaInputStream, file.getName());
+                String tikaType = tika.detect(tikaInputStream, file.getName());
 
                 /*
                  * Remove the Tika suffix from the MIME type name.
@@ -367,7 +367,7 @@ public class FileTypeDetector {
      *
      * @throws TskCoreException if detection is required and there is a problem
      *                          writing the result to the case database.
-     * @deprecated Use detectMIMEType instead, and call AbstractFile.setMIMEType
+     * @deprecated Use getMIMEType instead, and call AbstractFile.setMIMEType
      * and AbstractFile.save to save the result to the file object and the
      * database.
      */
@@ -391,7 +391,7 @@ public class FileTypeDetector {
      * @throws TskCoreException if detection is required and there is a problem
      *                          writing the result to the case database.
      *
-     * @deprecated Use detectMIMEType instead, and call AbstractFile.setMIMEType
+     * @deprecated Use getMIMEType instead, and call AbstractFile.setMIMEType
      * and AbstractFile.save to save the result to the file object and the
      * database.
      */
@@ -413,7 +413,7 @@ public class FileTypeDetector {
      *         were uncertain, octet-stream is returned.
      *
      * @throws TskCoreException
-     * @deprecated Use detectMIMEType instead.
+     * @deprecated Use getMIMEType instead.
      */
     @Deprecated
     public String detect(AbstractFile file) throws TskCoreException {

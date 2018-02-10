@@ -47,10 +47,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 })
 public class FileTypeIdIngestModule implements FileIngestModule {
 
-    private static final Logger LOGGER = Logger.getLogger(FileTypeIdIngestModule.class.getName());
+    private static final Logger logger = Logger.getLogger(FileTypeIdIngestModule.class.getName());
     private long jobId;
-    private static final HashMap<Long, IngestJobTotals> INGEST_JOB_TOTALS = new HashMap<>();
-    private static final IngestModuleReferenceCounter REF_COUNTER = new IngestModuleReferenceCounter();
+    private static final HashMap<Long, IngestJobTotals> totalsForIngestJobs = new HashMap<>();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
 
     /**
@@ -67,7 +67,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
         try {
             return new FileTypeDetector().isDetectable(mimeType);
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create file type detector", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to create file type detector", ex); //NON-NLS
             return false;
         }
     }
@@ -82,7 +82,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
-        REF_COUNTER.incrementAndGet(jobId);
+        refCounter.incrementAndGet(jobId);
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
@@ -99,7 +99,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          */
         try {
             long startTime = System.currentTimeMillis();
-            String mimeType = fileTypeDetector.detectMIMEType(file);
+            String mimeType = fileTypeDetector.getMIMEType(file);
             file.setMIMEType(mimeType);
             FileType fileType = detectUserDefinedFileType(file);
             if (fileType != null && fileType.createInterestingFileHit()) {
@@ -108,7 +108,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             addToTotals(jobId, (System.currentTimeMillis() - startTime));
             return ProcessResult.OK;
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, String.format("Error while attempting to determine file type of file %d", file.getId()), e); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error while attempting to determine file type of file %d", file.getId()), e); //NON-NLS
             return ProcessResult.ERROR;
         }
     }
@@ -157,10 +157,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             try {
                 Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
         }
     }
 
@@ -170,10 +170,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
          * If this is the instance of this module for this ingest job, post a
          * summary message to the ingest messages box.
          */
-        if (REF_COUNTER.decrementAndGet(jobId) == 0) {
+        if (refCounter.decrementAndGet(jobId) == 0) {
             IngestJobTotals jobTotals;
             synchronized (this) {
-                jobTotals = INGEST_JOB_TOTALS.remove(jobId);
+                jobTotals = totalsForIngestJobs.remove(jobId);
             }
             if (jobTotals != null) {
                 StringBuilder detailsSb = new StringBuilder();
@@ -202,15 +202,15 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * @param matchTimeInc Amount of time to add.
      */
     private static synchronized void addToTotals(long jobId, long matchTimeInc) {
-        IngestJobTotals ingestJobTotals = INGEST_JOB_TOTALS.get(jobId);
+        IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(jobId);
         if (ingestJobTotals == null) {
             ingestJobTotals = new IngestJobTotals();
-            INGEST_JOB_TOTALS.put(jobId, ingestJobTotals);
+            totalsForIngestJobs.put(jobId, ingestJobTotals);
         }
 
         ingestJobTotals.matchTime += matchTimeInc;
         ingestJobTotals.numFiles++;
-        INGEST_JOB_TOTALS.put(jobId, ingestJobTotals);
+        totalsForIngestJobs.put(jobId, ingestJobTotals);
     }
 
     private static class IngestJobTotals {
