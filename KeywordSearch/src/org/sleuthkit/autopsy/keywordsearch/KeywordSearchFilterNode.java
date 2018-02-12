@@ -53,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * FilterNode containing data pertaining to keyword search.
+ * FilterNode containing properties and actions for keyword search.
  */
 class KeywordSearchFilterNode extends FilterNode {
 

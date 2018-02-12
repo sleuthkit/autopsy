@@ -37,7 +37,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -49,6 +48,7 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQueryContent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW;
@@ -75,10 +75,10 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                             TSK_KEYWORD,
                             TSK_KEYWORD_REGEXP,
                             TSK_KEYWORD_PREVIEW)
-                    .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
+                            .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
                     Arrays.stream(AbstractAbstractFileNode.AbstractFilePropertyType.values())
-                    .map(Object::toString))
-            .collect(Collectors.toList());
+                            .map(Object::toString))
+                    .collect(Collectors.toList());
 
     private final Collection<QueryRequest> queryRequests;
 
@@ -188,9 +188,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             }
 
             String hitName;
+            BlackboardArtifact artifact = null;
             if (hit.isArtifactHit()) {
                 try {
-                    hitName = tskCase.getBlackboardArtifact(hit.getArtifactID().get()).getDisplayName() + " Artifact"; //NON-NLS
+                    artifact = tskCase.getBlackboardArtifact(hit.getArtifactID().get());
+                    hitName = artifact.getDisplayName() + " Artifact"; //NON-NLS
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
                     return false;
@@ -199,7 +201,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 hitName = contentName;
             }
             hitNumber++;
-            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, queryRequest, queryResults));
+            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), (AbstractFile) content, artifact, queryRequest, queryResults));
 
         }
 
@@ -264,50 +266,65 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         return resultNode;
 
     }
-    
+
     /**
      * This class encapsulates content, query results, and an associated Solr
      * object ID for storing in the Lookup to be read later.
      */
     final class AdHocQueryResult {
+
         private final long solrObjectId;
-        private final Content content;
+        private final AbstractFile file;
+        private final BlackboardArtifact artifact;
         private final QueryResults results;
-        
+
         /**
          * Instantiate a AdHocQueryResult object.
-         * 
-         * @param solrObjectId The Solr object ID associated with the content.
-         * @param content The content for the query result.
-         * @param results The query results.
+         *
+         * @param solrObjectId The Solr object ID associated with the object in
+         *                     which the hit was found.
+         * @param file         The file for the query result.
+         * @param artifact     The artifact associated with the query result.
+         * @param results      The query results.
          */
         AdHocQueryResult(KeyValueQueryContent key) {
             this.solrObjectId = key.getSolrObjectId();
-            this.content = key.getContent();
+            this.file = key.getFile();
+            this.artifact = key.getArtifact();
             this.results = key.getHits();
         }
-        
+
         /**
-         * Get the Solr object ID associated with the content.
-         * 
+         * Get the Solr object ID associated with the object in which the hit
+         * was found. This could be a file or an artifact.
+         *
          * @return The Solr object ID.
          */
         long getSolrObjectId() {
             return solrObjectId;
         }
-        
+
         /**
-         * Get the content for the query result.
-         * 
+         * Get the file for the query result.
+         *
          * @return The content.
          */
-        Content getContent() {
-            return content;
+        AbstractFile getFile() {
+            return file;
         }
-        
+
+        /**
+         * Get the artifact for the query result.
+         *
+         * @return The artifact.
+         */
+        BlackboardArtifact getArtifact() {
+            return artifact;
+        }
+
         /**
          * Get the query results.
-         * 
+         *
          * @return The query results.
          */
         QueryResults getResults() {
@@ -323,7 +340,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
         private final long solrObjectId;
 
-        private final Content content;
+        private final AbstractFile file;
+        private final BlackboardArtifact artifact;
         private final QueryResults hits;
         private final KeywordSearchQuery query;
 
@@ -335,22 +353,28 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          * @param map          Contains content metadata, snippets, etc.
          *                     (property map)
          * @param id           User incremented ID
-         * @param solrObjectId
-         * @param content      File that had the hit.
+         * @param solrObjectId The ID of the object.
+         * @param file         File that had the hit.
+         * @param artifact     The blackboard artifact.
          * @param query        Query used in search
          * @param hits         Full set of search results (for all files! @@@)
          */
-        KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, KeywordSearchQuery query, QueryResults hits) {
+        KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, AbstractFile file, BlackboardArtifact artifact, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
             this.solrObjectId = solrObjectId;
-            this.content = content;
+            this.file = file;
+            this.artifact = artifact;
 
             this.hits = hits;
             this.query = query;
         }
 
-        Content getContent() {
-            return content;
+        AbstractFile getFile() {
+            return file;
+        }
+
+        BlackboardArtifact getArtifact() {
+            return artifact;
         }
 
         long getSolrObjectId() {

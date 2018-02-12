@@ -98,9 +98,22 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         List<IndexedText> sources = new ArrayList<>();
         Lookup nodeLookup = node.getLookup();
+
         AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
-        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
-        AbstractFile file = nodeLookup.lookup(AbstractFile.class);
+        AbstractFile file;
+        BlackboardArtifact artifact;
+
+        /*
+         * If we have an ad hoc query result, pull the file and artifact objects
+         * from that. Otherwise, pull them from the lookup.
+         */
+        if (adHocQueryResult != null) {
+            artifact = adHocQueryResult.getArtifact();
+            file = adHocQueryResult.getFile();
+        } else {
+            artifact = nodeLookup.lookup(BlackboardArtifact.class);
+            file = nodeLookup.lookup(AbstractFile.class);
+        }
 
         /*
          * First, get text with highlighted hits if this node is for a search
@@ -156,7 +169,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         IndexedText rawArtifactText = null;
         try {
-            rawArtifactText = getRawArtifactText(nodeLookup);
+            rawArtifactText = getRawArtifactText(artifact);
             if (rawArtifactText != null) {
                 sources.add(rawArtifactText);
             }
@@ -190,9 +203,8 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     }
 
-    static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
+    static private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException {
         IndexedText rawArtifactText = null;
-        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         if (null != artifact) {
             /*
              * For keyword hit artifacts, add the text of the artifact that hit,
