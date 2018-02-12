@@ -135,7 +135,8 @@ public class EamArtifactUtil {
      * @return the new EamArtifact, or null if one was not created because
      *         bbArtifact did not contain the needed data
      */
-    private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType, BlackboardArtifact bbArtifact) {
+    private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType, 
+            BlackboardArtifact bbArtifact) throws EamDbException {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
 
