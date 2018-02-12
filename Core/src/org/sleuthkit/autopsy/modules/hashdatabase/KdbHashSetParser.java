@@ -64,7 +64,7 @@ public class KdbHashSetParser implements HashSetParser {
                 totalHashes = resultSet.getLong("count");
             } else {
                 close();
-                throw new TskCoreException("Error getting hash count from database " + filename);
+                throw new TskCoreException("Error getting hash count from hash set " + filename);
             }
 
             // Get the hashes
@@ -72,7 +72,7 @@ public class KdbHashSetParser implements HashSetParser {
 
             // At this point, getNextHash can read each hash from the result set
         } catch (ClassNotFoundException | SQLException ex) {
-            throw new TskCoreException("Error opening/reading database " + filename, ex);
+            throw new TskCoreException("Error opening/reading hash set " + filename, ex);
         }
 
     }
@@ -101,10 +101,10 @@ public class KdbHashSetParser implements HashSetParser {
                 totalHashesRead++;
                 return sb.toString();
             } else {
-                throw new TskCoreException("Could not read expected number of hashes from database " + filename);
+                throw new TskCoreException("Could not read expected number of hashes from hash set " + filename);
             }
         } catch (SQLException ex) {
-            throw new TskCoreException("Error reading hash from result set for database " + filename, ex);
+            throw new TskCoreException("Error reading hash from result set for hash set " + filename, ex);
         }
     }
 
