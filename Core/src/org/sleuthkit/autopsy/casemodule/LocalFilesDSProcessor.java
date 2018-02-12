@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
-    private final LocalFilesPanel configPanel;
+    private final LogicalFilesDspPanel configPanel;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -66,7 +66,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      * method overload to allow it to be used independently of the wizard.
      */
     public LocalFilesDSProcessor() {
-        configPanel = LocalFilesPanel.getDefault();
+        configPanel = LogicalFilesDspPanel.getDefault();
     }
 
     /**
