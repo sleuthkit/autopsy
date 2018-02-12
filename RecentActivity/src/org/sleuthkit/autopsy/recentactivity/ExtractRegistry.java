@@ -76,12 +76,11 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
-    private static String PERL;
     private List<String> rrCmd = new ArrayList<>();
     private List<String> rrFullCmd= new ArrayList<>();
     
 
-    ExtractRegistry() throws IngestModuleException, FileNotFoundException {
+    ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
         
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
@@ -113,18 +112,19 @@ class ExtractRegistry extends Extract {
             rrCmd.add(RR_PATH);
             rrFullCmd.add(RR_FULL_PATH);
         }else{
+            String perl;
             File usrBin = new File("/usr/bin/perl");
             File usrLocalBin = new File("/usr/local/bin/perl");
             if(usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()){
-                PERL = "/usr/bin/perl";
+                perl = "/usr/bin/perl";
             }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
-                PERL = "/usr/local/bin/perl";
+                perl = "/usr/local/bin/perl";
             }else{
-                throw new FileNotFoundException("perl not found in your system");
+                throw new IngestModuleException("perl not found in your system");
             }
-            rrCmd.add(PERL);
+            rrCmd.add(perl);
             rrCmd.add(RR_PATH);
-            rrFullCmd.add(PERL);
+            rrFullCmd.add(perl);
             rrFullCmd.add(RR_FULL_PATH);
         }
     }

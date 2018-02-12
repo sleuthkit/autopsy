@@ -59,12 +59,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
 
-        Extract registry = null;
-        try {
-            registry = new ExtractRegistry();
-        } catch (FileNotFoundException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        
+        Extract registry = new ExtractRegistry();
         Extract iexplore = new ExtractIE();
         Extract recentDocuments = new RecentDocumentsByLnk();
         Extract chrome = new Chrome();

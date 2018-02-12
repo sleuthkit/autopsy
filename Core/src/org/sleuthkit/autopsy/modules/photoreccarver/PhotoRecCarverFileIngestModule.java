@@ -139,11 +139,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
 
         //Set photorec executable directory based on operating system.
-        try {
             executableFile = locateExecutable();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
 
         if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.jobId) == 1) {
             try {
@@ -441,7 +437,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      *
      * @throws IngestModuleException
      */
-    public static File locateExecutable() throws IngestModule.IngestModuleException, IOException {
+    public static File locateExecutable() throws IngestModule.IngestModuleException {
         File exeFile = null;
         Path execName = null;
         String photorec_linux_directory = "/usr/bin";
@@ -456,7 +452,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
                 photorec_linux_directory = "/usr/local/bin";
             }else{
-                exeFile = null;
+                throw new IngestModule.IngestModuleException("Photorec not found");
             }
             execName = Paths.get(photorec_linux_directory, PHOTOREC_LINUX_EXECUTABLE);
             exeFile = new File(execName.toString());
