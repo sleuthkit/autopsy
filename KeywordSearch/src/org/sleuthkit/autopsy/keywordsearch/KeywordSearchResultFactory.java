@@ -201,7 +201,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 hitName = contentName;
             }
             hitNumber++;
-            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), (AbstractFile) content, artifact, queryRequest, queryResults));
+            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, artifact, queryRequest, queryResults));
 
         }
 
@@ -274,7 +274,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     final class AdHocQueryResult {
 
         private final long solrObjectId;
-        private final AbstractFile file;
+        private final Content content;
         private final BlackboardArtifact artifact;
         private final QueryResults results;
 
@@ -283,13 +283,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          *
          * @param solrObjectId The Solr object ID associated with the object in
          *                     which the hit was found.
-         * @param file         The file for the query result.
+         * @param content      The content for the query result.
          * @param artifact     The artifact associated with the query result.
          * @param results      The query results.
          */
         AdHocQueryResult(KeyValueQueryContent key) {
             this.solrObjectId = key.getSolrObjectId();
-            this.file = key.getFile();
+            this.content = key.getContent();
             this.artifact = key.getArtifact();
             this.results = key.getHits();
         }
@@ -305,12 +305,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         }
 
         /**
-         * Get the file for the query result.
+         * Get the content for the query result. This can be either a file or a
+         * data source, and it may or may not be the content in which the hit
+         * occurred. If the hit is in a file, the Content object represents that
+         * file. But if the hit is in an artifact, the Content object represents
+         * the source file or data source of the artifact.
          *
-         * @return The content.
+         * @return The content object.
          */
-        AbstractFile getFile() {
-            return file;
+        Content getContent() {
+            return content;
         }
 
         /**
@@ -340,7 +344,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
         private final long solrObjectId;
 
-        private final AbstractFile file;
+        private final Content content;
         private final BlackboardArtifact artifact;
         private final QueryResults hits;
         private final KeywordSearchQuery query;
@@ -354,23 +358,23 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          *                     (property map)
          * @param id           User incremented ID
          * @param solrObjectId The ID of the object.
-         * @param file         File that had the hit.
+         * @param content      The content object.
          * @param artifact     The blackboard artifact.
          * @param query        Query used in search
          * @param hits         Full set of search results (for all files! @@@)
          */
-        KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, AbstractFile file, BlackboardArtifact artifact, KeywordSearchQuery query, QueryResults hits) {
+        KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, BlackboardArtifact artifact, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
             this.solrObjectId = solrObjectId;
-            this.file = file;
+            this.content = content;
             this.artifact = artifact;
 
             this.hits = hits;
             this.query = query;
         }
 
-        AbstractFile getFile() {
-            return file;
+        Content getContent() {
+            return content;
         }
 
         BlackboardArtifact getArtifact() {

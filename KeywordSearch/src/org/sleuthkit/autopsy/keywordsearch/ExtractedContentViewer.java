@@ -100,7 +100,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         Lookup nodeLookup = node.getLookup();
 
         AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
-        AbstractFile file;
+        AbstractFile file = null;
         BlackboardArtifact artifact;
 
         /*
@@ -109,7 +109,10 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         if (adHocQueryResult != null) {
             artifact = adHocQueryResult.getArtifact();
-            file = adHocQueryResult.getFile();
+            Content content = adHocQueryResult.getContent();
+            if (content instanceof AbstractFile) {
+                file = (AbstractFile) content;
+            }
         } else {
             artifact = nodeLookup.lookup(BlackboardArtifact.class);
             file = nodeLookup.lookup(AbstractFile.class);
