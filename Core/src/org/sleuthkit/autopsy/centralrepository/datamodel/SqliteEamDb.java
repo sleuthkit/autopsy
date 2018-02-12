@@ -22,6 +22,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -165,6 +166,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         connectionPool.setMaxIdle(-1);
         connectionPool.setMaxWaitMillis(1000);
         connectionPool.setValidationQuery(dbSettings.getValidationQuery());
+        connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = ON"));
     }
 
     /**
