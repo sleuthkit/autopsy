@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -107,6 +108,15 @@ class KeywordSearchFilterNode extends FilterNode {
     }
 
     private class GetPopupActionsContentVisitor extends ContentVisitor.Default<List<Action>> {
+
+        @Override
+        public List<Action> visit(Report r) {
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
+
+            actionsList.addAll(ContextMenuExtensionPoint.getActions());
+            return actionsList;
+        }
 
         @Override
         public List<Action> visit(File f) {
