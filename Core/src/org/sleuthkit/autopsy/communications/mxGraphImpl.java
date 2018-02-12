@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -27,6 +29,9 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,6 +56,16 @@ final class mxGraphImpl extends mxGraph {
     private static final Logger logger = Logger.getLogger(mxGraphImpl.class.getName());
     private static final URL MARKER_PIN_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
     private static final URL LOCK_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/lock_large_locked.png");
+    /**
+     * mustache.java template
+     */
+    private final static Mustache labelMustache;
+
+    static {
+//        String labelTemplatePath = "/org/sleuthkit/autopsy/communications/Vertex_Label_template.html";
+        InputStream templateStream = mxGraphImpl.class.getResourceAsStream("/org/sleuthkit/autopsy/communications/Vertex_Label_template.html");
+        labelMustache = new DefaultMustacheFactory().compile(new InputStreamReader(templateStream), "Vertex_Label");
+    }
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
@@ -132,24 +147,27 @@ final class mxGraphImpl extends mxGraph {
 
     @Override
     public String convertValueToString(Object cell) {
+        final StringWriter stringWriter = new StringWriter();
+        HashMap<String, Object> scopes = new HashMap<>();
+
         Object value = getModel().getValue(cell);
         if (value instanceof AccountDeviceInstanceKey) {
             final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
-            final String accountName = adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
 
-            final double size = Math.round(Math.log(adiKey.getMessageCount()) + 5);
+            scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
+            scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
 
-            String iconFileName = Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType());
-            String label = "<img height=" + size + " width=" + size + " src="
-                    + mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
-                    + ">" + accountName;
-            if (pinnedAccountDevices.contains(adiKey)) {
-                label = "<img height=" + size + " width=" + size + " src=" + MARKER_PIN_URL + ">" + label;
-            }
-            if (lockedVertices.contains((mxCell) cell)) {
-                label += "<img height=" + size + " width=" + size + "  src=" + LOCK_URL + ">";
-            }
-            return "<div style=\"font-size:" + size + "px;\" >" + label + "</div>";
+            scopes.put("iconFileName", mxGraphImpl.class
+                    .getResource("/org/sleuthkit/autopsy/communications/images/"
+                            + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
+            scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
+            scopes.put("locked", lockedVertices.contains((mxCell) cell));
+            scopes.put("LOCK_URL", LOCK_URL);
+
+            labelMustache.execute(stringWriter, scopes);
+
+            return stringWriter.toString();
         } else {
             return "";
         }
@@ -184,12 +202,12 @@ final class mxGraphImpl extends mxGraph {
         getView().updateLabelBounds(state);
         getView().updateBoundingBox(state);
     }
-    
+
     SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
-        
+
         return new SwingWorkerImpl(progress, commsManager, currentFilter);
     }
-    
+
     void resetGraph() {
         clear();
         getView().setScale(1);
@@ -250,23 +268,24 @@ final class mxGraphImpl extends mxGraph {
     double getScale() {
         return getView().getScale();
     }
-    
+
     boolean isVertexLocked(mxCell vertex) {
         return lockedVertices.contains(vertex);
+
     }
-    
+
     private class SwingWorkerImpl extends SwingWorker<Void, Void> {
-        
+
         private final ProgressIndicator progress;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
-        
+
         SwingWorkerImpl(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
             this.progress = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
         }
-        
+
         @Override
         protected Void doInBackground() throws Exception {
             progress.start("Loading accounts", pinnedAccountDevices.size());
@@ -297,7 +316,7 @@ final class mxGraphImpl extends mxGraph {
                 for (i = 0; i < relatedAccountsList.size(); i++) {
                     AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
                     for (int j = i; j < relatedAccountsList.size(); j++) {
-                        
+
                         AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
                         List<Content> relationships = commsManager.getRelationshipSources(
                                 adiKey1.getAccountDeviceInstance(),
@@ -316,7 +335,7 @@ final class mxGraphImpl extends mxGraph {
             }
             return null;
         }
-        
+
         @Override
         protected void done() {
             super.done();
