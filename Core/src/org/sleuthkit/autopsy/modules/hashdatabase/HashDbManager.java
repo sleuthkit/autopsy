@@ -1233,9 +1233,10 @@ public class HashDbManager implements PropertyChangeListener {
                     } else {
                         type = TskData.FileKnown.KNOWN;
                     }
-                    EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
-                        type, comment);
+                    
                     try{
+                        EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
+                            type, comment);
                         EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
                     } catch (EamDbException ex){
                         throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
@@ -1260,8 +1261,12 @@ public class HashDbManager implements PropertyChangeListener {
                     type = TskData.FileKnown.BAD;
                 } else {
                     type = TskData.FileKnown.KNOWN;
-                }               
-                globalFileInstances.add(new EamGlobalFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
+                }       
+                try {
+                    globalFileInstances.add(new EamGlobalFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
+                } catch (EamDbException ex){
+                    throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
+                }
             }
             
             try{
