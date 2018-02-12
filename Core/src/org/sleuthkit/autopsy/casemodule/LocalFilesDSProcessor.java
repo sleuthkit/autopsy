@@ -52,6 +52,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private final LogicalFilesDspPanel configPanel;
+    private static final String L01_EXTRACTION_DIR = "ModuleOutput\\L01";
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -144,6 +145,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     }
 
     private List<String> extractL01Contents(List<String> l01FilePaths) {
+         //WJS-TODO -- add ewfexport and any196 other necessary files to software package
         final String EWFEXPORT_EXE = "C:\\project_libs\\libewf_64bit\\msvscpp\\x64\\Release\\ewfexport.exe";
         List<String> extractedPaths = new ArrayList<>();
 
@@ -153,7 +155,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getCurrentCase().getCaseDirectory(), "ModuleOutput\\L01");
+            File l01Dir = new File(Case.getCurrentCase().getCaseDirectory(), L01_EXTRACTION_DIR);
             if (!l01Dir.exists()) {
                 l01Dir.mkdir();
             }
@@ -166,7 +168,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {
-                //
+                  //WJS-TODO redirect stdout and stderr in a method similar to bulk extractor
 //        // redirect BE stdout and stderr to txt files
 //        Path logFileName = Paths.get(outputDirPath.getParent().toString(), outputDirPath.getFileName().toString() + "_out.txt");
 //            File logFile = new File(logFileName.toString());
@@ -181,6 +183,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                     extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString()); 
                 }
                 else { //if we failed to extract anything add it as a regular file
+                    //WJS-TODO notify user of that the file was added as a regular file
                     extractedPaths.add(l01Path);
                 }
                 
