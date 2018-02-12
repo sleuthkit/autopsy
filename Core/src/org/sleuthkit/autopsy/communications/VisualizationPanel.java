@@ -154,7 +154,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rubberband = new mxRubberband(graphComponent);
 
         final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt) ->
-                zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getScale()));
+                zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getView().getScale()));
         graph.getView().addListener(mxEvent.SCALE, scaleListener);
         graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, scaleListener);
 
@@ -164,9 +164,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             public void mouseWheelMoved(final MouseWheelEvent e) {
                 super.mouseWheelMoved(e);
                 if (e.getPreciseWheelRotation() > 0) {
-                    graphComponent.zoomTo(graph.getScale() / graphComponent.getZoomFactor(), true);
+                    graphComponent.zoomIn();
                 } else if (e.getPreciseWheelRotation() < 0) {
-                    graphComponent.zoomTo(graph.getScale() * graphComponent.getZoomFactor(), true);
+                    graphComponent.zoomOut();
                 }
             }
         });
@@ -291,7 +291,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     private void rebuildGraph() throws TskCoreException {
-        if (graph.hasPinnedAccounts()) {
+        if (graph.isEmpty()) {
+            borderLayoutPanel.remove(graphComponent);
+            borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
+        } else {
             borderLayoutPanel.remove(placeHolderPanel);
             borderLayoutPanel.add(graphComponent, BorderLayout.CENTER);
             if (worker != null) {
@@ -303,15 +306,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (worker.isDone()) {
-                        applyOrganicLayout(10);
+                        if (graph.getModel().getChildCount(graph.getDefaultParent()) < 64) {
+                            applyOrganicLayout(10);
+                        } else {
+                            statusLabel.setText("Too many cells, layout aborted.");
+                        }
                     }
                 }
             });
             worker.execute();
 
-        } else {
-            borderLayoutPanel.remove(graphComponent);
-            borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
         }
     }
 
@@ -665,22 +669,28 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private void morph(mxIGraphLayout layout) {
         // layout using morphing
         graph.getModel().beginUpdate();
-        try {
-            progressBar.setVisible(true);
-            progressBar.setIndeterminate(true);
-            progressBar.setString("applying layout");
-            layout.execute(graph.getDefaultParent());
-        } finally {
-            mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
-            morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
-                graph.getModel().endUpdate();
-                fitGraph();
-                progressBar.setVisible(false);
-                progressBar.setValue(0);
-            });
 
-            morph.startAnimation();
-        }
+        progressBar.setVisible(true);
+        progressBar.setIndeterminate(true);
+        progressBar.setString("applying layout");
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                layout.execute(graph.getDefaultParent());
+                mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20);
+                morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
+                    graph.getModel().endUpdate();
+                    fitGraph();
+                    progressBar.setVisible(false);
+                    progressBar.setValue(0);
+                });
+
+                morph.startAnimation();
+                return null;
+            }
+        }.execute();
+
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -709,9 +719,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     final private class SelectionListener implements mxEventSource.mxIEventListener {
 
-        @Override
-
         @SuppressWarnings("unchecked")
+        @Override
         public void invoke(Object sender, mxEventObject evt) {
             Object[] selectionCells = graph.getSelectionCells();
             Node rootNode = Node.EMPTY;
@@ -814,7 +823,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     final private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
 
-        private mxFastOrganicLayoutImpl(mxGraph graph) {
+        mxFastOrganicLayoutImpl(mxGraph graph) {
             super(graph);
         }
 
@@ -836,7 +845,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     final private class mxCircleLayoutImpl extends mxCircleLayout {
 
-        private mxCircleLayoutImpl(mxGraph graph) {
+        mxCircleLayoutImpl(mxGraph graph) {
             super(graph);
             setResetEdges(true);
         }
@@ -859,7 +868,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     final private class mxOrganicLayoutImpl extends mxOrganicLayout {
 
-        private mxOrganicLayoutImpl(mxGraph graph) {
+        mxOrganicLayoutImpl(mxGraph graph) {
             super(graph);
             setResetEdges(true);
         }
@@ -882,7 +891,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     final private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
 
-        private mxHierarchicalLayoutImpl(mxGraph graph) {
+        mxHierarchicalLayoutImpl(mxGraph graph) {
             super(graph);
         }
 
