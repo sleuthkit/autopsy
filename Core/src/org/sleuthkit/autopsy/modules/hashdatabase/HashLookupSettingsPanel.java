@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -301,7 +301,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     @Override
     @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash set settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
-    public void saveSettings() {     
+    public void saveSettings() {
         // Clear out the list of new central repo hash sets. They don't need to be
         // indexed so will all be saved on both code paths.
         newReferenceSetIDs.clear();
@@ -399,7 +399,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * unindexed, along with solutions. This method is related to
      * ModalNoButtons, to be removed at a later date.
      *
-     * @param plural Whether or not there are multiple unindexed databases
+     * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
     private void showInvalidIndex(boolean plural, List<SleuthkitHashSet> unindexed) {
@@ -998,12 +998,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
-    @Messages({})
+    @Messages({
+        "HashLookupSettingsPanel.promptTitle.deleteHashDb=Delete Hash Database from Configuration",
+        "HashLookupSettingsPanel.promptMessage.deleteHashDb=This will make the hash database unavailable for lookup. Do you want to proceed?\n\nNote: The hash database can still be re-imported later."
+    })
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(null,
-                NbBundle.getMessage(this.getClass(),
-                        "HashDbConfigPanel.deleteDbActionConfirmMsg"),
-                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
+                Bundle.HashLookupSettingsPanel_promptMessage_deleteHashDb(),
+                Bundle.HashLookupSettingsPanel_promptTitle_deleteHashDb(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();
