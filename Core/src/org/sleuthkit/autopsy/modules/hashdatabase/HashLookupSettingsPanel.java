@@ -175,7 +175,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the database is updateable.", ex); //NON-NLS
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the hash set is updateable.", ex); //NON-NLS
             addHashesToDatabaseButton.setEnabled(false);
         }
 
@@ -192,14 +192,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting hash set path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
                 hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
             }
 
             try {
                 indexPathLabel.setText(shortenPath(hashDb.getIndexPath()));
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
                 indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
             }
 
@@ -237,7 +237,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     indexButton.setEnabled(true);
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash set", ex); //NON-NLS
                 hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
                 hashDbIndexStatusLabel.setForeground(Color.red);
                 indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
@@ -299,7 +299,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     @Override
-    @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
+    @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash set settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
     public void saveSettings() {
         // Clear out the list of new central repo hash sets. They don't need to be
@@ -316,7 +316,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         unindexed.add(hashDatabase);
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash set", ex); //NON-NLS
                 }
             }
         }
@@ -515,7 +515,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 return hashSets.get(rowIndex).isValid();
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash set", ex); //NON-NLS
                 return false;
             }
         }
