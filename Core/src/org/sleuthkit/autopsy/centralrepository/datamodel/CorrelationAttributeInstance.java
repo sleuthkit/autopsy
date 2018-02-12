@@ -46,7 +46,7 @@ public class CorrelationAttributeInstance implements Serializable {
     public CorrelationAttributeInstance(
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource
-    ) {
+    ) throws EamDbException {
         this(-1, eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN);
     }
 
@@ -54,7 +54,7 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath
-    ) {
+    ) throws EamDbException {
         this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
     }
 
@@ -63,7 +63,7 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment
-    ) {
+    ) throws EamDbException {
         this(-1, eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN);
     }
 
@@ -73,7 +73,7 @@ public class CorrelationAttributeInstance implements Serializable {
             String filePath,
             String comment,
             TskData.FileKnown knownStatus
-    ) {
+    ) throws EamDbException {
         this(-1, eamCase, eamDataSource, filePath, comment, knownStatus);
     }
 
@@ -84,7 +84,11 @@ public class CorrelationAttributeInstance implements Serializable {
             String filePath,
             String comment,
             TskData.FileKnown knownStatus
-    ) {
+    ) throws EamDbException {
+        if(filePath == null) {
+            throw new EamDbException("file path is null");
+        }
+        
         this.ID = ID;
         this.correlationCase = eamCase;
         this.correlationDataSource = eamDataSource;
