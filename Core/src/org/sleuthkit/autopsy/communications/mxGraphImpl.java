@@ -106,33 +106,6 @@ final class mxGraphImpl extends mxGraph {
         setKeepEdgesInBackground(true);
         setResetEdgesOnMove(true);
         setHtmlLabels(true);
-
-//        new mxLayoutManager(graph) {
-//            final private mxOrganicLayout layout;
-//            private int counter;
-//            {
-//                this.layout = new mxOrganicLayout(graph);
-//                this.layout.setMaxIterations(1);
-//            }
-//
-//            @Override
-//            protected void executeLayout(mxIGraphLayout layout, Object parent) {
-//                if (counter % 10 == 0)
-//                {
-//                    super.executeLayout(layout, parent);
-////                fitGraph();
-//                }
-//                counter++;
-//            }
-//
-//            @Override
-//            public mxIGraphLayout getLayout(Object parent) {
-//                if (graph.getModel().getChildCount(parent) > 0) {
-//                    return layout;
-//                }
-//                return null;
-//            }
-//        };
     }
 
     void clear() {
@@ -156,10 +129,8 @@ final class mxGraphImpl extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
-
-            scopes.put("iconFileName", mxGraphImpl.class
-                    .getResource("/org/sleuthkit/autopsy/communications/images/"
-                            + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("iconFileName", mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                    + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertices.contains((mxCell) cell));
@@ -175,25 +146,69 @@ final class mxGraphImpl extends mxGraph {
 
     @Override
     public String getToolTipForCell(Object cell) {
-        return ((mxICell) cell).getId();
+        final StringWriter stringWriter = new StringWriter();
+        HashMap<String, Object> scopes = new HashMap<>();
+
+        Object value = getModel().getValue(cell);
+        if (value instanceof AccountDeviceInstanceKey) {
+            final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
+
+            scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
+            scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
+            scopes.put("iconFileName", mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                    + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
+            scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
+            scopes.put("locked", lockedVertices.contains((mxCell) cell));
+            scopes.put("LOCK_URL", LOCK_URL);
+
+            labelMustache.execute(stringWriter, scopes);
+
+            return stringWriter.toString();
+        } else {
+            return ((mxICell) cell).getId();
+        }
     }
 
+    /**
+     * Unpin the given accounts from the graph. Pinned accounts will always be
+     * shown regardless of the filter state. Furthermore, accounts with
+     * relationships that pass the filters will also be shown.
+     *
+     * @param accountDeviceInstances The accounts to unpin.
+     */
     void unpinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
         pinnedAccountDevices.removeAll(accountDeviceInstances);
     }
 
+    /**
+     * Pin the given accounts to the graph. Pinned accounts will always be shown
+     * regardless of the filter state. Furthermore, accounts with relationships
+     * that pass the filters will also be shown.
+     *
+     * @param accountDeviceInstances The accounts to pin.
+     */
     void pinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
         pinnedAccountDevices.addAll(accountDeviceInstances);
     }
 
+    /**
+     * Lock the given vertex so that applying a layout algorithm doesn't move
+     * it. The user can still manually position the vertex.
+     *
+     * @param vertex The vertex to lock.
+     */
     void lockVertex(mxCell vertex) {
         lockedVertices.add(vertex);
-
-        final mxCellState state = getView().getState(vertex, true);
         getView().clear(vertex, true, true);
         getView().validate();
     }
 
+    /**
+     * Lock the given vertex so that applying a layout algorithm can move it.
+     *
+     * @param vertex The vertex to unlock.
+     */
     void unlockVertex(mxCell vertex) {
         lockedVertices.remove(vertex);
 
@@ -204,8 +219,7 @@ final class mxGraphImpl extends mxGraph {
     }
 
     SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
-
-        return new SwingWorkerImpl(progress, commsManager, currentFilter);
+        return new RebuildWorker(progress, commsManager, currentFilter);
     }
 
     void resetGraph() {
@@ -261,12 +275,14 @@ final class mxGraphImpl extends mxGraph {
         return edge;
     }
 
-    boolean hasPinnedAccounts() {
-        return pinnedAccountDevices.isEmpty() == false;
-    }
-
-    double getScale() {
-        return getView().getScale();
+    /**
+     * Are there any accounts in this graph? If there are no pinned accounts the
+     * graph will be empty.
+     *
+     * @return True if this graph is empty.
+     */
+    boolean isEmpty() {
+        return pinnedAccountDevices.isEmpty();
     }
 
     boolean isVertexLocked(mxCell vertex) {
@@ -274,13 +290,17 @@ final class mxGraphImpl extends mxGraph {
 
     }
 
-    private class SwingWorkerImpl extends SwingWorker<Void, Void> {
+    /**
+     * SwingWorker that loads the accounts and edges for this graph according to
+     * the pinned accounts and the current filters.
+     */
+    private class RebuildWorker extends SwingWorker<Void, Void> {
 
         private final ProgressIndicator progress;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
 
-        SwingWorkerImpl(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
+        RebuildWorker(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
             this.progress = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
