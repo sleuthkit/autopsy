@@ -1536,14 +1536,14 @@ public class Case {
      *                      directory or one of its subdirectories.
      * @param srcModuleName The name of the module that created the report.
      * @param reportName    The report name, may be empty.
-     * @param source        The Content used to create the report, may be empty.
+     * @param parent        The Content used to create the report, if available.
      *
      * @return The new Report instance.
      *
      * @throws TskCoreException if there is a problem adding the report to the
      *                          case database.
      */
-    public Report addReport(String localPath, String srcModuleName, String reportName, Content source) throws TskCoreException {
+    public Report addReport(String localPath, String srcModuleName, String reportName, Content parent) throws TskCoreException {
         String normalizedLocalPath;
         try {
             normalizedLocalPath = Paths.get(localPath).normalize().toString();
@@ -1551,7 +1551,7 @@ public class Case {
             String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
             throw new TskCoreException(errorMsg, ex);
         }
-        Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName);
+        Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName, parent);
         eventPublisher.publish(new ReportAddedEvent(report));
         return report;
     }

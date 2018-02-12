@@ -151,7 +151,7 @@ public final class Reports implements AutopsyVisitableItem {
         private static final String ICON_PATH = "org/sleuthkit/autopsy/images/report_16.png"; //NON-NLS
         private final Report report;
 
-        public ReportNode(Report report) {
+        ReportNode(Report report) {
             super(Children.LEAF, Lookups.fixed(report));
             this.report = report;
             super.setName(this.report.getSourceModuleName());
