@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,23 +45,28 @@ import org.sleuthkit.datamodel.TskData;
  */
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
-    static final double DEFAULT_CONFIG_MINIMUM_ENTROPY = 7.5;
-    static final int DEFAULT_CONFIG_MINIMUM_FILE_SIZE = 5242880; // 5MB;
+    static final String DEFAULT_CONFIG_MINIMUM_ENTROPY = "7.5";
+    static final String DEFAULT_CONFIG_MINIMUM_FILE_SIZE = "5";
     static final boolean DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED = true;
     static final boolean DEFAULT_CONFIG_SLACK_FILES_ALLOWED = true;
+
+    private static final int MEGABYTE_SIZE = 1048576;
+    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
+    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
+    private static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
 
     private static final int FILE_SIZE_MODULUS = 512;
     private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
     private static final int BYTE_OCCURENCES_BUFFER_SIZE = 256;
 
-    private final IngestServices SERVICES = IngestServices.getInstance();
-    private final Logger LOGGER = SERVICES.getLogger(EncryptionDetectionModuleFactory.getModuleName());
+    private final IngestServices services = IngestServices.getInstance();
+    private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
     private Blackboard blackboard;
     private double calculatedEntropy;
 
-    private final double minimumEntropy;
-    private final int minimumFileSize;
+    private final String minimumEntropy;
+    private final String minimumFileSizeMb;
     private final boolean fileSizeMultipleEnforced;
     private final boolean slackFilesAllowed;
 
@@ -72,15 +78,17 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      */
     EncryptionDetectionFileIngestModule(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropy = settings.getMinimumEntropy();
-        minimumFileSize = settings.getMinimumFileSize();
+        minimumFileSizeMb = settings.getMinimumFileSize();
         fileSizeMultipleEnforced = settings.isFileSizeMultipleEnforced();
         slackFilesAllowed = settings.isSlackFilesAllowed();
     }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
+            validateMinimumEntropy();
+            validateMinimumFileSize();
+            blackboard = Case.getCurrentCase().getServices().getBlackboard();
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
@@ -89,17 +97,56 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
     @Override
     public IngestModule.ProcessResult process(AbstractFile file) {
-
         try {
             if (isFileEncrypted(file)) {
                 return flagFile(file);
             }
         } catch (IOException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to process file '%s'", file.getParentPath() + file.getName()), ex);
+            logger.log(Level.SEVERE, String.format("Unable to process file '%s'", file.getParentPath() + file.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
         }
 
         return IngestModule.ProcessResult.OK;
+    }
+
+    /**
+     * Validate the minimum entropy input.
+     *
+     * @throws IngestModule.IngestModuleException If the input is empty,
+     *                                            invalid, or out of range.
+     */
+    @NbBundle.Messages({
+        "EncryptionDetectionFileIngestModule.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0."
+    })
+    private void validateMinimumEntropy() throws IngestModule.IngestModuleException {
+        try {
+            double value = Double.valueOf(minimumEntropy);
+            if (value < MINIMUM_ENTROPY_INPUT_RANGE_MIN || value > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
+                throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput());
+            }
+        } catch (NumberFormatException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput(), ex);
+        }
+    }
+
+    /**
+     * Validate the minimum file size input.
+     *
+     * @throws IngestModule.IngestModuleException If the input is empty,
+     *                                            invalid, or out of range.
+     */
+    @NbBundle.Messages({
+        "EncryptionDetectionFileIngestModule.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater."
+    })
+    private void validateMinimumFileSize() throws IngestModule.IngestModuleException {
+        try {
+            int value = Integer.valueOf(minimumFileSizeMb);
+            if (value < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
+                throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput());
+            }
+        } catch (NumberFormatException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput(), ex);
+        }
     }
 
     /**
@@ -120,13 +167,13 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  */
                 blackboard.indexArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
 
             /*
              * Send an event to update the view with the new result.
              */
-            SERVICES.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, Collections.singletonList(artifact)));
+            services.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, Collections.singletonList(artifact)));
 
             /*
              * Make an ingest inbox message.
@@ -135,7 +182,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             detailsSb.append("File: ").append(file.getParentPath()).append(file.getName()).append("<br/>\n");
             detailsSb.append("Entropy: ").append(calculatedEntropy);
 
-            SERVICES.postMessage(IngestMessage.createDataMessage(EncryptionDetectionModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createDataMessage(EncryptionDetectionModuleFactory.getModuleName(),
                     "Encryption Detected Match: " + file.getName(),
                     detailsSb.toString(),
                     file.getName(),
@@ -143,7 +190,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             return IngestModule.ProcessResult.OK;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
     }
@@ -182,7 +229,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  * Qualify the size.
                  */
                 long contentSize = file.getSize();
-                if (contentSize >= minimumFileSize) {
+                if (contentSize >= Integer.valueOf(minimumFileSizeMb) * MEGABYTE_SIZE) {
                     if (!fileSizeMultipleEnforced || (contentSize % FILE_SIZE_MODULUS) == 0) {
                         /*
                          * Qualify the MIME type.
@@ -199,7 +246,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         if (possiblyEncrypted) {
             try {
                 calculatedEntropy = calculateEntropy(file);
-                if (calculatedEntropy >= minimumEntropy) {
+                if (calculatedEntropy >= Double.valueOf(minimumEntropy)) {
                     return true;
                 }
             } catch (IOException ex) {
