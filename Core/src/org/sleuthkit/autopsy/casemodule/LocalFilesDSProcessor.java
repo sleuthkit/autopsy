@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -35,7 +37,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 
 /**
  * A local/logical files and/or directories data source processor that
@@ -53,6 +57,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private final LogicalFilesDspPanel configPanel;
     private static final String L01_EXTRACTION_DIR = "ModuleOutput\\L01";
+    private static final String EWFEXPORT_DIR = "ewfexport_exec"; // NON-NLS
+    private static final String EWFEXPORT_32_BIT_DIR = "32-bit"; // NON-NLS
+    private static final String EWFEXPORT_64_BIT_DIR = "64-bit"; // NON-NLS
+    private static final String EWFEXPORT_WINDOWS_EXE = "ewfexport.exe"; // NON-NLS
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -145,13 +153,19 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     }
 
     private List<String> extractL01Contents(List<String> l01FilePaths) {
-         //WJS-TODO -- add ewfexport and any196 other necessary files to software package
-        final String EWFEXPORT_EXE = "C:\\project_libs\\libewf_64bit\\msvscpp\\x64\\Release\\ewfexport.exe";
         List<String> extractedPaths = new ArrayList<>();
+        Path ewfexportPath;
+        try {
+            //WJS-TODO -- add ewfexport and any other necessary files to software package
+            ewfexportPath = locateEwfexportExecutable();
+        } catch (IngestModule.IngestModuleException ex) {
+            System.out.println("EXECPTION CAN'T FIND EXE " + ex);
+            return extractedPaths;
+        }
 
         for (String l01Path : l01FilePaths) {
             List<String> command = new ArrayList<>();
-            command.add(EWFEXPORT_EXE);
+            command.add(ewfexportPath.toAbsolutePath().toString());
             command.add("-f");
             command.add("files");
             command.add("-t");
@@ -168,7 +182,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {
-                  //WJS-TODO redirect stdout and stderr in a method similar to bulk extractor
+                //WJS-TODO redirect stdout and stderr in a method similar to bulk extractor
 //        // redirect BE stdout and stderr to txt files
 //        Path logFileName = Paths.get(outputDirPath.getParent().toString(), outputDirPath.getFileName().toString() + "_out.txt");
 //            File logFile = new File(logFileName.toString());
@@ -179,14 +193,13 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 // Scan the file with Bulk Extractor.
 //terminator?
                 ExecUtil.execute(processBuilder);
-                if (l01Dir.toPath().resolve(dirPath).toFile().exists()){
-                    extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString()); 
-                }
-                else { //if we failed to extract anything add it as a regular file
+                if (l01Dir.toPath().resolve(dirPath).toFile().exists()) {
+                    extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString());
+                } else { //if we failed to extract anything add it as a regular file
                     //WJS-TODO notify user of that the file was added as a regular file
                     extractedPaths.add(l01Path);
                 }
-                
+
             } catch (SecurityException ex) {
                 System.out.println("SECURITY EXECEPTION " + ex);
             } catch (IOException ex) {
@@ -194,6 +207,40 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             }
         }
         return extractedPaths;
+    }
+
+    static Path locateEwfexportExecutable() throws IngestModule.IngestModuleException {
+        // Must be running under a Windows operating system.
+        if (!PlatformUtil.isWindowsOS()) {
+            throw new IngestModule.IngestModuleException("L01 files only supported on windows currently");
+        }
+
+        // Build the expected path to either the 32-bit or 64-bit version of the 
+        // ewfexport executable.
+        final File ewfRoot = InstalledFileLocator.getDefault().locate(EWFEXPORT_DIR, LocalFilesDSProcessor.class.getPackage().getName(), false);
+
+        Path executablePath;
+        if (PlatformUtil.is64BitOS()) {
+            executablePath = Paths.get(
+                    ewfRoot.getAbsolutePath(),
+                    EWFEXPORT_64_BIT_DIR,
+                    EWFEXPORT_WINDOWS_EXE);
+        } else {
+            //WJS-TODO what to do for 32 bit mode?
+           throw new IngestModule.IngestModuleException("L01 files only supported on 64 bit windows currently");
+        }
+
+        // Make sure the executable exists at the expected location and that it  
+        // can be run.
+        File ewfexport = executablePath.toFile();
+        if (null == ewfexport || !ewfexport.exists()) {
+            throw new IngestModule.IngestModuleException("EWF export executable does not exist");
+        }
+        if (!ewfexport.canExecute()) {
+            throw new IngestModule.IngestModuleException("EWF export executable can not be executed");
+        }
+
+        return executablePath;
     }
 
     /**
