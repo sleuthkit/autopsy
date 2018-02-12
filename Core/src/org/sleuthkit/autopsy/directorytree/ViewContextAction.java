@@ -202,7 +202,7 @@ public class ViewContextAction extends AbstractAction {
             undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
             TreeView treeView = treeViewTopComponent.getTree();
             treeView.expandNode(parentTreeViewNode);
-            if (treeViewTopComponent.getSelectedNode().getDisplayName().equals(parentTreeViewNode.getDisplayName())) {
+            if (treeViewTopComponent.getSelectedNode().equals(parentTreeViewNode)) {
                 //In the case where our tree view already has the destination directory selected 
                 //due to an optimization in the ExplorerManager.setExploredContextAndSelection method 
                 //the property change we listen for to call DirectoryTreeTopComponent.respondSelection 
