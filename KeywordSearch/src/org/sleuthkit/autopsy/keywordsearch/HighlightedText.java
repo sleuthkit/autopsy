@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,7 +40,6 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
@@ -104,13 +102,13 @@ class HighlightedText implements IndexedText {
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
      * search results. In that case we have the entire QueryResults object and
- need to arrange the paging.
+     * need to arrange the paging.
      *
      * @param objectId     The objectID of the content whose text will be
      *                     highlighted.
      * @param QueryResults The QueryResults for the ad-hoc search from whose
-                     results a selection was made leading to this
-                     HighlightedText.
+     *                     results a selection was made leading to this
+     *                     HighlightedText.
      */
     HighlightedText(long objectId, QueryResults hits) {
         this.objectId = objectId;
@@ -140,7 +138,6 @@ class HighlightedText implements IndexedText {
      * This method figures out which pages / chunks have hits. Invoking it a
      * second time has no effect.
      */
-    @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
     synchronized private void loadPageInfo() throws TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
         if (isPageInfoLoaded) {
             return;
@@ -158,7 +155,6 @@ class HighlightedText implements IndexedText {
             this.numberPages = 1;
             this.currentPage = 1;
             numberOfHitsPerPage.put(1, 0);
-            pages.add(1);
             currentHitPerPage.put(1, 0);
             isPageInfoLoaded = true;
         }
@@ -207,10 +203,10 @@ class HighlightedText implements IndexedText {
         isLiteral = hits.getQuery().isLiteral();
 
         /**
-         * Organize the hits by page, filter as needed.
-         * We process *every* keyword here because in the case of a regular
-         * expression search there may be multiple different keyword
-         * hits located in different chunks for the same file/artifact.
+         * Organize the hits by page, filter as needed. We process *every*
+         * keyword here because in the case of a regular expression search there
+         * may be multiple different keyword hits located in different chunks
+         * for the same file/artifact.
          */
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
@@ -428,7 +424,7 @@ class HighlightedText implements IndexedText {
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
-            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
     }
 
@@ -466,12 +462,13 @@ class HighlightedText implements IndexedText {
      *                         to a Solr query. We expect there to only ever be
      *                         a single document.
      *
-     * @return Either a string with the keyword highlighted via HTML span tags or a string
-     *         indicating that we did not find a hit in the document.
+     * @return Either a string with the keyword highlighted via HTML span tags
+     *         or a string indicating that we did not find a hit in the
+     *         document.
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
 
         // It doesn't make sense for there to be more than a single document in
