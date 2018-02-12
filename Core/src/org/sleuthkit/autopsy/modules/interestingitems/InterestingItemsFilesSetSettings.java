@@ -576,6 +576,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
                         ruleElement.setAttribute(FS_SIZE_ATTR, Integer.toString(sizeCondition.getSizeValue()));
                         ruleElement.setAttribute(FS_UNITS_ATTR, sizeCondition.getUnit().getName());
                     }
+                    
+                     //Add the optional date condition
+                    DateCondition dateCondition = rule.getDateCondition();
+                    if (dateCondition != null) {
+                        ruleElement.setAttribute(DAYS_INCLUDED_ATTR, Integer.toString(dateCondition.getDaysIncluded()));
+                    }
+                    
                     setElement.appendChild(ruleElement);
                 }
                 rootElement.appendChild(setElement);
