@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -159,6 +160,7 @@ final class L01Panel extends javax.swing.JPanel implements DocumentListener {
     }//GEN-LAST:event_selectButtonActionPerformed
 
     void reset() {
+        currentFiles.clear();
         jTextField1.setText("");
         jTextField1.setToolTipText("");
     }
@@ -193,6 +195,7 @@ final class L01Panel extends javax.swing.JPanel implements DocumentListener {
             return false;
         }
 
+        displayName = FilenameUtils.getName(path);
         return new File(path).isFile();
     }
 
@@ -208,7 +211,7 @@ final class L01Panel extends javax.swing.JPanel implements DocumentListener {
     }
 
     String getFileSetName() {
-        return "L01_FILE_SET_NAME";
+        return displayName;
     }
 
     @Override
