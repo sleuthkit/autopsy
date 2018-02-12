@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -264,7 +265,6 @@ final class mxGraphImpl extends mxGraph {
         if (edgesBetween.length == 0) {
             final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
             final HashSet<Content> hashSet = new HashSet<>(relSources);
-            //            edgeMap.put(relSource, edge);
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
                     "strokeWidth=" + (Math.log(hashSet.size()) + 1));
         } else {
@@ -316,6 +316,9 @@ final class mxGraphImpl extends mxGraph {
                  */
                 Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
                 for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
+                    if (isCancelled()) {
+                        break;
+                    }
                     List<AccountDeviceInstance> relatedAccountDeviceInstances =
                             commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
                     relatedAccounts.add(adiKey);
@@ -336,7 +339,9 @@ final class mxGraphImpl extends mxGraph {
                 for (i = 0; i < relatedAccountsList.size(); i++) {
                     AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
                     for (int j = i; j < relatedAccountsList.size(); j++) {
-
+                        if (isCancelled()) {
+                            break;
+                        }
                         AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
                         List<Content> relationships = commsManager.getRelationshipSources(
                                 adiKey1.getAccountDeviceInstance(),
@@ -363,6 +368,8 @@ final class mxGraphImpl extends mxGraph {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error building graph visualization. ", ex);
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Graph visualization cancelled");
             } finally {
                 progress.finish();
             }

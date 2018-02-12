@@ -148,7 +148,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.setToolTips(true);
         graphComponent.setBackground(Color.WHITE);
         borderLayoutPanel.add(graphComponent, BorderLayout.CENTER);
-        progressBar.setVisible(false);
+        progressPanel.setVisible(false);
 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
@@ -176,10 +176,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    mxCell cellAt = (mxCell) graphComponent.getCellAt(e.getX(), e.getY());
+                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(e.getX(), e.getY());
                     if (cellAt != null && cellAt.isVertex()) {
-                        JPopupMenu jPopupMenu = new JPopupMenu();
-                        AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+                        final JPopupMenu jPopupMenu = new JPopupMenu();
+                        final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
 
                         if (graph.isVertexLocked(cellAt)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
@@ -304,7 +304,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
             worker.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
-                public void propertyChange(PropertyChangeEvent evt) {
+                public void propertyChange(final PropertyChangeEvent evt) {
                     if (worker.isDone()) {
                         if (graph.getModel().getChildCount(graph.getDefaultParent()) < 64) {
                             applyOrganicLayout(10);
@@ -312,6 +312,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             statusLabel.setText("Too many cells, layout aborted.");
                         }
                     }
+                }
+            });
+
+            cancelButton.setAction(new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    worker.cancel(true);
                 }
             });
             worker.execute();
@@ -322,7 +329,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Override
     public void addNotify() {
         super.addNotify();
-//        IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
         try {
             commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
 
@@ -357,7 +363,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Override
     public void removeNotify() {
         super.removeNotify();
-//        IngestManager.getInstance().removeIngestModuleEventListener(ingestListener);
     }
 
     /**
@@ -373,8 +378,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         borderLayoutPanel = new JPanel();
         jToolBar2 = new JToolBar();
         statusLabel = new JLabel();
-        progresPanel = new JPanel();
+        progressPanel = new JPanel();
         progressBar = new JProgressBar();
+        cancelButton = new JButton();
         placeHolderPanel = new JPanel();
         jTextArea1 = new JTextArea();
         toolbar = new JPanel();
@@ -404,26 +410,34 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         statusLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.statusLabel.text")); // NOI18N
         jToolBar2.add(statusLabel);
 
-        progresPanel.setMinimumSize(new Dimension(0, 20));
-        progresPanel.setName(""); // NOI18N
+        progressPanel.setMinimumSize(new Dimension(0, 20));
+        progressPanel.setName(""); // NOI18N
 
         progressBar.setMaximumSize(new Dimension(200, 14));
         progressBar.setStringPainted(true);
 
-        GroupLayout progresPanelLayout = new GroupLayout(progresPanel);
-        progresPanel.setLayout(progresPanelLayout);
-        progresPanelLayout.setHorizontalGroup(progresPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, progresPanelLayout.createSequentialGroup()
-                .add(0, 447, Short.MAX_VALUE)
-                .add(progressBar, GroupLayout.PREFERRED_SIZE, 350, GroupLayout.PREFERRED_SIZE))
+        cancelButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/cross-script.png"))); // NOI18N
+        cancelButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.cancelButton.text")); // NOI18N
+
+        GroupLayout progressPanelLayout = new GroupLayout(progressPanel);
+        progressPanel.setLayout(progressPanelLayout);
+        progressPanelLayout.setHorizontalGroup(progressPanelLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, progressPanelLayout.createSequentialGroup()
+                .addContainerGap(415, Short.MAX_VALUE)
+                .add(progressBar, GroupLayout.PREFERRED_SIZE, 350, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(cancelButton, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
+                .add(5, 5, 5))
         );
-        progresPanelLayout.setVerticalGroup(progresPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, progresPanelLayout.createSequentialGroup()
+        progressPanelLayout.setVerticalGroup(progressPanelLayout.createParallelGroup(GroupLayout.LEADING)
+            .add(GroupLayout.TRAILING, progressPanelLayout.createSequentialGroup()
                 .add(0, 0, 0)
-                .add(progressBar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .add(progressPanelLayout.createParallelGroup(GroupLayout.LEADING)
+                    .add(cancelButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(progressBar, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
-        jToolBar2.add(progresPanel);
+        jToolBar2.add(progressPanel);
 
         borderLayoutPanel.add(jToolBar2, BorderLayout.PAGE_END);
 
@@ -437,15 +451,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(GroupLayout.TRAILING, placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(213, Short.MAX_VALUE)
+                .addContainerGap(217, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 372, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(214, Short.MAX_VALUE))
+                .addContainerGap(218, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(GroupLayout.TRAILING, placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(200, Short.MAX_VALUE)
+                .addContainerGap(387, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(200, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
@@ -638,7 +652,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     private void fitGraph() {
-
         graphComponent.zoomTo(1, true);
         mxPoint translate = graph.getView().getTranslate();
         if (translate == null || Double.isNaN(translate.getX()) || Double.isNaN(translate.getY())) {
@@ -651,7 +664,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
         final mxPoint mxPoint = new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY());
 
-//        graph.getView().setTranslate(mxPoint);
         graph.cellsMoved(graph.getChildCells(graph.getDefaultParent()), mxPoint.getX(), mxPoint.getY(), false, false);
 
         boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
@@ -662,7 +674,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         Dimension size = graphComponent.getSize();
         double widthFactor = size.getWidth() / boundsForCells.getWidth();
 
-        graphComponent.zoom(widthFactor);//, true);
+        graphComponent.zoom(widthFactor);
 
     }
 
@@ -670,9 +682,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         // layout using morphing
         graph.getModel().beginUpdate();
 
-        progressBar.setVisible(true);
+        progressPanel.setVisible(true);
         progressBar.setIndeterminate(true);
-        progressBar.setString("applying layout");
+        progressBar.setString("Computing layout");
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -682,19 +694,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
                     graph.getModel().endUpdate();
                     fitGraph();
-                    progressBar.setVisible(false);
+                    progressPanel.setVisible(false);
                     progressBar.setValue(0);
                 });
-
+                
+                SwingUtilities.invokeLater(() -> progressBar.setString("Applying layout"));
                 morph.startAnimation();
                 return null;
             }
         }.execute();
-
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JPanel borderLayoutPanel;
+    private JButton cancelButton;
     private JButton circleLayoutButton;
     private JButton fastOrganicLayoutButton;
     private JButton fitZoomButton;
@@ -706,8 +719,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JToolBar jToolBar2;
     private JButton organicLayoutButton;
     private JPanel placeHolderPanel;
-    private JPanel progresPanel;
     private JProgressBar progressBar;
+    private JPanel progressPanel;
     private JSplitPane splitPane;
     private JLabel statusLabel;
     private JPanel toolbar;
@@ -753,7 +766,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public void start(String message, int totalWorkUnits) {
             SwingUtilities.invokeLater(() -> {
-                progressBar.setVisible(true);
+                progressPanel.setVisible(true);
                 progressBar.setIndeterminate(false);
                 progressBar.setString(message);
                 progressBar.setMaximum(totalWorkUnits);
@@ -764,7 +777,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public void start(String message) {
             SwingUtilities.invokeLater(() -> {
-                progressBar.setVisible(true);
+                progressPanel.setVisible(true);
                 progressBar.setString(message);
                 progressBar.setIndeterminate(true);
             });
@@ -773,7 +786,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public void switchToIndeterminate(String message) {
             SwingUtilities.invokeLater(() -> {
-                progressBar.setVisible(true);
+                progressPanel.setVisible(true);
                 progressBar.setIndeterminate(true);
                 progressBar.setString(message);
             });
@@ -782,7 +795,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits) {
             SwingUtilities.invokeLater(() -> {
-                progressBar.setVisible(true);
+                progressPanel.setVisible(true);
                 progressBar.setIndeterminate(false);
                 progressBar.setString(message);
                 progressBar.setMaximum(totalWorkUnits);
@@ -815,8 +828,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public void finish() {
             SwingUtilities.invokeLater(() -> {
-                progressBar.setValue(progressBar.getValue());
-                progressBar.setVisible(false);
+                progressBar.setValue(progressBar.getMaximum());
+                progressPanel.setVisible(false);
             });
         }
     }
