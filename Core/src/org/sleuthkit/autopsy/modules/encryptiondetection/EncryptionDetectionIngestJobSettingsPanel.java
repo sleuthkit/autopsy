@@ -145,8 +145,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        old_minimumEntropyTextbox = new javax.swing.JTextField();
-        old_minimumFileSizeTextbox = new javax.swing.JTextField();
         fileSizeMultiplesEnforcedCheckbox = new javax.swing.JCheckBox();
         slackFilesAllowedCheckbox = new javax.swing.JCheckBox();
         minimumEntropyLabel = new javax.swing.JLabel();
@@ -155,10 +153,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
         detectionSettingsLabel = new javax.swing.JLabel();
         minimumFileSizeTextbox = new javax.swing.JFormattedTextField();
         minimumEntropyTextbox = new javax.swing.JFormattedTextField();
-
-        old_minimumEntropyTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.old_minimumEntropyTextbox.text")); // NOI18N
-
-        old_minimumFileSizeTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.old_minimumFileSizeTextbox.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(fileSizeMultiplesEnforcedCheckbox, org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.fileSizeMultiplesEnforcedCheckbox.text")); // NOI18N
 
@@ -195,21 +189,15 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
                     .addComponent(detectionSettingsLabel)
                     .addComponent(fileSizeMultiplesEnforcedCheckbox)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(minimumEntropyLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(old_minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(minimumFileSizeLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(old_minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(minimumFileSizeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(mbLabel)))
+                        .addComponent(mbLabel))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(minimumEntropyLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(15, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -219,12 +207,10 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
                 .addComponent(detectionSettingsLabel)
                 .addGap(16, 16, 16)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(old_minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(minimumEntropyLabel)
                     .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(old_minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(mbLabel)
                     .addComponent(minimumFileSizeLabel)
                     .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -248,8 +234,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     private javax.swing.JFormattedTextField minimumEntropyTextbox;
     private javax.swing.JLabel minimumFileSizeLabel;
     private javax.swing.JFormattedTextField minimumFileSizeTextbox;
-    private javax.swing.JTextField old_minimumEntropyTextbox;
-    private javax.swing.JTextField old_minimumFileSizeTextbox;
     private javax.swing.JCheckBox slackFilesAllowedCheckbox;
     // End of variables declaration//GEN-END:variables
 }
