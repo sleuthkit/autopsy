@@ -876,7 +876,7 @@ public class SharedConfiguration {
 
                 if (!sharedDbPath.exists()) {
                     if (!sharedDbPath.mkdirs()) {
-                        throw new SharedConfigurationException("Error creating shared hash database directory " + sharedDbPath.getAbsolutePath());
+                        throw new SharedConfigurationException("Error creating shared hash set directory " + sharedDbPath.getAbsolutePath());
                     }
                 }
 
@@ -1010,7 +1010,7 @@ public class SharedConfiguration {
 
                     if (!localDb.getParentFile().exists()) {
                         if (!localDb.getParentFile().mkdirs()) {
-                            throw new SharedConfigurationException("Error creating hash database directory " + localDb.getParentFile().getAbsolutePath());
+                            throw new SharedConfigurationException("Error creating hash set directory " + localDb.getParentFile().getAbsolutePath());
                         }
                     }
 
@@ -1025,7 +1025,7 @@ public class SharedConfiguration {
                                     break;
                                 }
                             } catch (TskCoreException ex) {
-                                throw new SharedConfigurationException(String.format("Error getting hash database path info for %s", localDb.getParentFile().getAbsolutePath()), ex);
+                                throw new SharedConfigurationException(String.format("Error getting hash set path info for %s", localDb.getParentFile().getAbsolutePath()), ex);
                             }
                         }
 
@@ -1033,7 +1033,7 @@ public class SharedConfiguration {
                             try {
                                 HashDbManager.getInstance().removeHashDatabase(matchingDb);
                             } catch (HashDbManager.HashDbManagerException ex) {
-                                throw new SharedConfigurationException(String.format("Error updating hash database info for %s", localDb.getAbsolutePath()), ex);
+                                throw new SharedConfigurationException(String.format("Error updating hash set info for %s", localDb.getAbsolutePath()), ex);
                             }
 
                         }
@@ -1130,7 +1130,7 @@ public class SharedConfiguration {
                 }
             }
         } catch (TskCoreException ex) {
-            throw new SharedConfigurationException("Unable to read hash databases", ex);
+            throw new SharedConfigurationException("Unable to read hash sets", ex);
         }
         return results;
     }

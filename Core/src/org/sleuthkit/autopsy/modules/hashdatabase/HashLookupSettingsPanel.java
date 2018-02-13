@@ -175,7 +175,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             addHashesToDatabaseButton.setEnabled(!ingestIsRunning && db.isUpdateable());
         } catch (TskCoreException ex) {
-            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the database is updateable.", ex); //NON-NLS
+            Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error identifying if the hash set is updateable.", ex); //NON-NLS
             addHashesToDatabaseButton.setEnabled(false);
         }
 
@@ -192,14 +192,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 hashDbLocationLabel.setText(shortenPath(db.getDatabasePath()));
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting database path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting hash set path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
                 hashDbLocationLabel.setText(ERROR_GETTING_PATH_TEXT);
             }
 
             try {
                 indexPathLabel.setText(shortenPath(hashDb.getIndexPath()));
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash database", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
                 indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
             }
 
@@ -237,7 +237,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                     indexButton.setEnabled(true);
                 }
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash database", ex); //NON-NLS
+                Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index state of hash set", ex); //NON-NLS
                 hashDbIndexStatusLabel.setText(ERROR_GETTING_INDEX_STATUS_TEXT);
                 hashDbIndexStatusLabel.setForeground(Color.red);
                 indexButton.setText(NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.indexButtonText.index"));
@@ -299,9 +299,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
     }
 
     @Override
-    @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash db settings.",
+    @Messages({"HashLookupSettingsPanel.saveFail.message=Couldn't save hash set settings.",
         "HashLookupSettingsPanel.saveFail.title=Save Fail"})
-    public void saveSettings() {     
+    public void saveSettings() {
         // Clear out the list of new central repo hash sets. They don't need to be
         // indexed so will all be saved on both code paths.
         newReferenceSetIDs.clear();
@@ -316,7 +316,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         unindexed.add(hashDatabase);
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+                    Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index info for hash set", ex); //NON-NLS
                 }
             }
         }
@@ -399,7 +399,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * unindexed, along with solutions. This method is related to
      * ModalNoButtons, to be removed at a later date.
      *
-     * @param plural Whether or not there are multiple unindexed databases
+     * @param plural    Whether or not there are multiple unindexed databases
      * @param unindexed The list of unindexed databases. Can be of size 1.
      */
     private void showInvalidIndex(boolean plural, List<SleuthkitHashSet> unindexed) {
@@ -515,7 +515,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 return hashSets.get(rowIndex).isValid();
             } catch (TskCoreException ex) {
-                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash database", ex); //NON-NLS
+                Logger.getLogger(HashSetTableModel.class.getName()).log(Level.SEVERE, "Error getting index info for hash set", ex); //NON-NLS
                 return false;
             }
         }
@@ -998,12 +998,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         }
     }//GEN-LAST:event_importDatabaseButtonActionPerformed
 
-    @Messages({})
+    @Messages({
+        "HashLookupSettingsPanel.promptTitle.deleteHashDb=Delete Hash Database from Configuration",
+        "HashLookupSettingsPanel.promptMessage.deleteHashDb=This will make the hash database unavailable for lookup. Do you want to proceed?\n\nNote: The hash database can still be re-imported later."
+    })
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
         if (JOptionPane.showConfirmDialog(this,
-                NbBundle.getMessage(this.getClass(),
-                        "HashDbConfigPanel.deleteDbActionConfirmMsg"),
-                NbBundle.getMessage(this.getClass(), "HashDbConfigPanel.deleteDbActionMsg"),
+                Bundle.HashLookupSettingsPanel_promptMessage_deleteHashDb(),
+                Bundle.HashLookupSettingsPanel_promptTitle_deleteHashDb(),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
             HashDb hashDb = ((HashSetTable) hashSetTable).getSelection();

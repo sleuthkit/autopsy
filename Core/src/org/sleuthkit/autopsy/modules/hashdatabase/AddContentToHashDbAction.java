@@ -150,7 +150,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 if (null != md5Hash) {
                     // don't let them add the hash for an empty file to the DB
                     if (HashUtility.isNoDataMd5(md5Hash)) { //NON-NLS
-                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to database (empty content)"); //NON-NLS
+                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to hash set (empty content)"); //NON-NLS
                         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(this.getClass(),
                                         "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",
@@ -163,7 +163,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     try {
                         hashSet.addHashes(file);
                     } catch (TskCoreException ex) {
-                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex); //NON-NLS
+                        Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex); //NON-NLS
                         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(this.getClass(),
                                         "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
