@@ -199,9 +199,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                 processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
                 // open the file with ewfexport to extract its contents
-                // WJS-TODO finish cancellation or remove it?
-                EwfexportProcessTerminator terminator = new EwfexportProcessTerminator(true);
-                ExecUtil.execute(processBuilder, terminator);
+                ExecUtil.execute(processBuilder,  new ExecUtil.TimedProcessTerminator());
                 if (l01Dir.toPath().resolve(dirPath).toFile().exists()) {
                     extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString());
                 } else { //if we failed to extract anything let the user know the L01 file was unable to be processed
@@ -349,68 +347,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         setDataSourceOptionsCalled = true;
     }
 
-    private static class EwfexportProcessTerminator implements ProcessTerminator {
-
-        private ExecUtil.TimedProcessTerminator timedTerminator;
-        private ProcTerminationCode terminationCode;
-
-        /**
-         * Constructs a process terminator for a data source ingest module.
-         *
-         * @param context The ingest job context for the ingest module.
-         */
-        EwfexportProcessTerminator() {
-            this.terminationCode = ProcTerminationCode.NONE;
-        }
-
-        /**
-         * Constructs a process terminator for a data source ingest module.
-         *
-         * @param context             The ingest job context for the ingest
-         *                            module.
-         * @param maxRunTimeInSeconds Maximum allowable run time of process.
-         */
-        EwfexportProcessTerminator(long maxRunTimeInSeconds) {
-            this();
-            this.timedTerminator = new ExecUtil.TimedProcessTerminator(maxRunTimeInSeconds);
-        }
-
-        /**
-         * Constructs a process terminator for a data source ingest module. Adds
-         * ability to use global process termination time out.
-         *
-         * @param context          The ingest job context for the ingest module.
-         * @param useGlobalTimeOut Flag whether to use global process
-         *                         termination timeout.
-         */
-        EwfexportProcessTerminator(boolean useGlobalTimeOut) {
-            this();
-            if (useGlobalTimeOut) {
-                this.timedTerminator = new ExecUtil.TimedProcessTerminator();
-            }
-        }
-
-        @Override
-        public boolean shouldTerminateProcess() {
-            if (this.timedTerminator != null && this.timedTerminator.shouldTerminateProcess()) {
-                this.terminationCode = ProcTerminationCode.TIME_OUT;
-                return true;
-            }
-
-            return false;
-        }
-
-        /**
-         * Returns process termination code.
-         *
-         * @return ProcTerminationCode Process termination code.
-         */
-        ProcTerminationCode getTerminationCode() {
-            return this.terminationCode;
-        }
-
-    }
-
     /**
      * A custom exception for the L01 processing.
      */
@@ -418,15 +354,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
         private static final long serialVersionUID = 1L;
 
-        @Deprecated
-        public L01Exception() {
-        }
-
-        public L01Exception(String message) {
+        L01Exception(String message) {
             super(message);
         }
 
-        public L01Exception(String message, Throwable cause) {
+        L01Exception(String message, Throwable cause) {
             super(message, cause);
         }
     }
