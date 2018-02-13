@@ -33,11 +33,11 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
 
     private static final int MEGABYTE_SIZE = 1048576;
     private static final int INVALID_TEXT_FIELD_INPUT_RETURN = -1;
-    
+
     private final Logger logger = Logger.getLogger(EncryptionDetectionIngestJobSettingsPanel.class.getName());
-    
-    private final DefaultFormatterFactory minimumFileSizeTextFormatterFactory = new DefaultFormatterFactory(new MinimumFileSizeTextFormatter());;
-    private final DefaultFormatterFactory minimumEntropyTextFormatterFactory = new DefaultFormatterFactory(new MinimumEntropyTextFormatter());;
+
+    private final DefaultFormatterFactory minimumFileSizeTextFormatterFactory = new DefaultFormatterFactory(new StringIntegerFormatter());
+    private final DefaultFormatterFactory minimumEntropyTextFormatterFactory = new DefaultFormatterFactory(new StringDoubleFormatter());
 
     /**
      * Instantiate the ingest job settings panel.
@@ -71,14 +71,14 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     }
 
     /**
-     * Formatter to handle minimum entropy text input.
+     * Formatter to handle conversion between String and Double.
      */
-    private final class MinimumEntropyTextFormatter extends DefaultFormatter {
+    private final class StringDoubleFormatter extends DefaultFormatter {
 
         /**
          * Create an instance of the formatter.
          */
-        MinimumEntropyTextFormatter() {
+        StringDoubleFormatter() {
             super();
         }
 
@@ -92,7 +92,7 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
             try {
                 return Double.parseDouble(string);
             } catch (NumberFormatException ex) {
-                logger.log(Level.WARNING, String.format("The text input '%s' for minimum entropy is not valid.", string), ex);
+                logger.log(Level.WARNING, String.format("The String input '%s' is not valid for Double conversion.", string), ex);
                 /*
                  * Return a valid number outside the acceptable value range so
                  * it can be run through the validator in the file ingest
@@ -104,14 +104,14 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     }
 
     /**
-     * Formatter to handle minimum file size text input.
+     * Formatter to handle conversion between String and Integer.
      */
-    private final class MinimumFileSizeTextFormatter extends DefaultFormatter {
+    private final class StringIntegerFormatter extends DefaultFormatter {
 
         /**
          * Create an instance of the formatter.
          */
-        MinimumFileSizeTextFormatter() {
+        StringIntegerFormatter() {
             super();
         }
 
@@ -125,7 +125,7 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
             try {
                 return Integer.parseInt(string);
             } catch (NumberFormatException ex) {
-                logger.log(Level.WARNING, String.format("The text input '%s' for minimum file size is not valid.", string), ex);
+                logger.log(Level.WARNING, String.format("The String input '%s' is not valid for Integer conversion.", string), ex);
                 /*
                  * Return a valid number outside the acceptable value range so
                  * it can still be run through the validator in the file ingest
