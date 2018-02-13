@@ -50,9 +50,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     static final boolean DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED = true;
     static final boolean DEFAULT_CONFIG_SLACK_FILES_ALLOWED = true;
 
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
-    private static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
+    static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
+    static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
+    static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
 
     private static final int FILE_SIZE_MODULUS = 512;
     private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))

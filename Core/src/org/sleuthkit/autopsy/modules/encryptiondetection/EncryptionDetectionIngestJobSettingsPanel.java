@@ -25,6 +25,11 @@ import javax.swing.text.DefaultFormatterFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_MINIMUM_ENTROPY;
+import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_MINIMUM_FILE_SIZE;
+import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.MINIMUM_ENTROPY_INPUT_RANGE_MAX;
+import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.MINIMUM_ENTROPY_INPUT_RANGE_MIN;
+import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.MINIMUM_FILE_SIZE_INPUT_RANGE_MIN;
 
 /**
  * Ingest job settings panel for the Encryption Detection module.
@@ -55,8 +60,24 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
      * @param settings The ingest job settings.
      */
     private void customizeComponents(EncryptionDetectionIngestJobSettings settings) {
-        minimumEntropyTextbox.setText(String.valueOf(settings.getMinimumEntropy()));
-        minimumFileSizeTextbox.setText(String.valueOf(settings.getMinimumFileSize() / MEGABYTE_SIZE));
+        /*
+         * If minimum entropy is out of range, reset it to the default.
+         */
+        double minimumEntropy = settings.getMinimumEntropy();
+        if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
+            minimumEntropy = DEFAULT_CONFIG_MINIMUM_ENTROPY;
+        }
+        minimumEntropyTextbox.setText(String.valueOf(minimumEntropy));
+
+        /*
+         * If minimum file size is out of range, reset it to the default.
+         */
+        int minimumFileSize = settings.getMinimumFileSize();
+        if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
+            minimumFileSize = DEFAULT_CONFIG_MINIMUM_FILE_SIZE;
+        }
+        minimumFileSizeTextbox.setText(String.valueOf(minimumFileSize / MEGABYTE_SIZE));
+
         fileSizeMultiplesEnforcedCheckbox.setSelected(settings.isFileSizeMultipleEnforced());
         slackFilesAllowedCheckbox.setSelected(settings.isSlackFilesAllowed());
     }
