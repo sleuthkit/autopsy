@@ -26,10 +26,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -37,9 +37,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 
 /**
  * A local/logical files and/or directories data source processor that
@@ -55,12 +57,15 @@ import org.sleuthkit.autopsy.ingest.IngestModule;
 public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
+    private static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
     private final LogicalFilesDspPanel configPanel;
     private static final String L01_EXTRACTION_DIR = "ModuleOutput\\L01";
+    private static final String UNIQUENESS_CONSTRAINT_SEPERATOR = "_";
     private static final String EWFEXPORT_DIR = "ewfexport_exec"; // NON-NLS
     private static final String EWFEXPORT_32_BIT_DIR = "32-bit"; // NON-NLS
     private static final String EWFEXPORT_64_BIT_DIR = "64-bit"; // NON-NLS
     private static final String EWFEXPORT_WINDOWS_EXE = "ewfexport.exe"; // NON-NLS
+    private static final String LOG_FILE_EXTENSION = ".txt";
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -142,26 +147,29 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *                        to return results.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback){
         if (!setDataSourceOptionsCalled) {
             localFilePaths = configPanel.getContentPaths();
-            if (configPanel.contentsAreL01()) {//if the L01 option was chosen
-                localFilePaths = extractL01Contents(localFilePaths);
+            if (configPanel.contentsAreL01()) {
+                try {
+                    //if the L01 option was chosen
+                    localFilePaths = extractL01Contents(localFilePaths);
+                } catch (L01Exception ex) {
+                    List<String> errors = new ArrayList<>();
+                    errors.add(ex.getMessage());
+                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+                    localFilePaths =  new ArrayList<>();;  //cause run and canProcess to fail
+                    return; 
+                }
             }
         }
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
     }
 
-    private List<String> extractL01Contents(List<String> l01FilePaths) {
+    private List<String> extractL01Contents(List<String> l01FilePaths) throws L01Exception {
         List<String> extractedPaths = new ArrayList<>();
         Path ewfexportPath;
-        try {
-            //WJS-TODO -- add ewfexport and any other necessary files to software package
-            ewfexportPath = locateEwfexportExecutable();
-        } catch (IngestModule.IngestModuleException ex) {
-            System.out.println("EXECPTION CAN'T FIND EXE " + ex);
-            return extractedPaths;
-        }
+        ewfexportPath = locateEwfexportExecutable();
 
         for (String l01Path : l01FilePaths) {
             List<String> command = new ArrayList<>();
@@ -174,7 +182,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                 l01Dir.mkdir();
             }
 
-            Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + System.currentTimeMillis());
+            Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
 
             command.add(dirPath.toString());
             command.add(l01Path);
@@ -182,37 +190,37 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {
-                //WJS-TODO redirect stdout and stderr in a method similar to bulk extractor
-//        // redirect BE stdout and stderr to txt files
-//        Path logFileName = Paths.get(outputDirPath.getParent().toString(), outputDirPath.getFileName().toString() + "_out.txt");
-//            File logFile = new File(logFileName.toString());
-//            Path errFileName = Paths.get(outputDirPath.getParent().toString(), outputDirPath.getFileName().toString() + "_err.txt");
-//            File errFile = new File(errFileName.toString());
-//            processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
-//            processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
-// Scan the file with Bulk Extractor.
-//terminator?
-                ExecUtil.execute(processBuilder);
+                //WJS-TODO redirect stdout and stderr to logger instead?
+                // redirect  ewfexport stdout and stderr to txt file
+                Path logFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
+                File logFile = new File(logFileName.toString());
+                Path errFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
+                File errFile = new File(errFileName.toString());
+                processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
+                processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
+                // open the file with ewfexport to extract its contents
+                // WJS-TODO finish cancellation or remove it?
+                EwfexportProcessTerminator terminator = new EwfexportProcessTerminator(true);
+                ExecUtil.execute(processBuilder, terminator);
                 if (l01Dir.toPath().resolve(dirPath).toFile().exists()) {
                     extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString());
-                } else { //if we failed to extract anything add it as a regular file
-                    //WJS-TODO notify user of that the file was added as a regular file
-                    extractedPaths.add(l01Path);
+                } else { //if we failed to extract anything let the user know the L01 file was unable to be processed
+                    throw new L01Exception("Can not process the selected L01 file, ewfExport was unable to extract any files from it.");
                 }
 
             } catch (SecurityException ex) {
-                System.out.println("SECURITY EXECEPTION " + ex);
+                throw new L01Exception("Security exception occcured while trying to extract l01 contents", ex);
             } catch (IOException ex) {
-                System.out.println("IOEXECEPTION " + ex);
+                throw new L01Exception("IOException occcured while trying to extract l01 contents", ex);
             }
         }
         return extractedPaths;
     }
 
-    static Path locateEwfexportExecutable() throws IngestModule.IngestModuleException {
+    private Path locateEwfexportExecutable() throws L01Exception {
         // Must be running under a Windows operating system.
         if (!PlatformUtil.isWindowsOS()) {
-            throw new IngestModule.IngestModuleException("L01 files only supported on windows currently");
+            throw new L01Exception("L01 files are only supported on windows currently");
         }
 
         // Build the expected path to either the 32-bit or 64-bit version of the 
@@ -226,18 +234,20 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                     EWFEXPORT_64_BIT_DIR,
                     EWFEXPORT_WINDOWS_EXE);
         } else {
-            //WJS-TODO what to do for 32 bit mode?
-           throw new IngestModule.IngestModuleException("L01 files only supported on 64 bit windows currently");
+            executablePath = Paths.get(
+                    ewfRoot.getAbsolutePath(),
+                    EWFEXPORT_32_BIT_DIR,
+                    EWFEXPORT_WINDOWS_EXE);
         }
 
         // Make sure the executable exists at the expected location and that it  
         // can be run.
         File ewfexport = executablePath.toFile();
         if (null == ewfexport || !ewfexport.exists()) {
-            throw new IngestModule.IngestModuleException("EWF export executable does not exist");
+            throw new LocalFilesDSProcessor.L01Exception("EWF export executable was not found");
         }
         if (!ewfexport.canExecute()) {
-            throw new IngestModule.IngestModuleException("EWF export executable can not be executed");
+            throw new LocalFilesDSProcessor.L01Exception("EWF export executable can not be executed");
         }
 
         return executablePath;
@@ -300,6 +310,15 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         // Local files DSP can process any file by simply adding it as a logical file.
         // It should return lowest possible non-zero confidence level and be treated 
         // as the "option of last resort" for auto ingest purposes
+
+        //When the Local files DSP is operating in the L01 mode it is possible 
+        //that it ewfexport will be unable to open the selected L01 file
+        //in the case that happens the localFilePaths list will still be empty and 
+        //we should let the user know that we are unable to process the datasource
+        if (localFilePaths == null || localFilePaths.isEmpty()) {
+            logger.log(Level.SEVERE, "Can not process the selected L01 file");
+            return 0;
+        }
         return 1;
     }
 
@@ -328,6 +347,88 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         // String paths.
         this.localFilePaths = Arrays.asList(paths.split(","));
         setDataSourceOptionsCalled = true;
+    }
+
+    private static class EwfexportProcessTerminator implements ProcessTerminator {
+
+        private ExecUtil.TimedProcessTerminator timedTerminator;
+        private ProcTerminationCode terminationCode;
+
+        /**
+         * Constructs a process terminator for a data source ingest module.
+         *
+         * @param context The ingest job context for the ingest module.
+         */
+        EwfexportProcessTerminator() {
+            this.terminationCode = ProcTerminationCode.NONE;
+        }
+
+        /**
+         * Constructs a process terminator for a data source ingest module.
+         *
+         * @param context             The ingest job context for the ingest
+         *                            module.
+         * @param maxRunTimeInSeconds Maximum allowable run time of process.
+         */
+        EwfexportProcessTerminator(long maxRunTimeInSeconds) {
+            this();
+            this.timedTerminator = new ExecUtil.TimedProcessTerminator(maxRunTimeInSeconds);
+        }
+
+        /**
+         * Constructs a process terminator for a data source ingest module. Adds
+         * ability to use global process termination time out.
+         *
+         * @param context          The ingest job context for the ingest module.
+         * @param useGlobalTimeOut Flag whether to use global process
+         *                         termination timeout.
+         */
+        EwfexportProcessTerminator(boolean useGlobalTimeOut) {
+            this();
+            if (useGlobalTimeOut) {
+                this.timedTerminator = new ExecUtil.TimedProcessTerminator();
+            }
+        }
+
+        @Override
+        public boolean shouldTerminateProcess() {
+            if (this.timedTerminator != null && this.timedTerminator.shouldTerminateProcess()) {
+                this.terminationCode = ProcTerminationCode.TIME_OUT;
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Returns process termination code.
+         *
+         * @return ProcTerminationCode Process termination code.
+         */
+        ProcTerminationCode getTerminationCode() {
+            return this.terminationCode;
+        }
+
+    }
+
+    /**
+     * A custom exception for the L01 processing.
+     */
+    private class L01Exception extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        @Deprecated
+        public L01Exception() {
+        }
+
+        public L01Exception(String message) {
+            super(message);
+        }
+
+        public L01Exception(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
 }
