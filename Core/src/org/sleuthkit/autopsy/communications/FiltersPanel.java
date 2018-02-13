@@ -197,8 +197,6 @@ final public class FiltersPanel extends JPanel {
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
             if (type.equals(Account.Type.CREDIT_CARD)) {
                 //don't show a check box for credit cards
-//            } else if (type.equals(Account.Type.DEVICE)) {
-//                //don't show a check box fro device
             } else {
                 accountTypeMap.computeIfAbsent(type, t -> {
                     final JCheckBox jCheckBox = new JCheckBox(
@@ -211,6 +209,7 @@ final public class FiltersPanel extends JPanel {
                     jCheckBox.addItemListener(validationListener);
                     accountTypePane.add(jCheckBox);
                     if (t.equals(Account.Type.DEVICE)) {
+                        //Deveice type filter is enabled based on whether we are in table or graph view.
                         jCheckBox.setEnabled(deviceAccountTypeEnabled);
                     }
                     return jCheckBox;

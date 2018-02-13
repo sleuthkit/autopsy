@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -27,6 +29,9 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,7 +43,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -50,31 +54,40 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class mxGraphImpl extends mxGraph {
 
     private static final Logger logger = Logger.getLogger(mxGraphImpl.class.getName());
-    private static final URL MARKER_PIN_URL = VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
+    private static final URL MARKER_PIN_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
+    private static final URL LOCK_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/lock_large_locked.png");
+    /**
+     * mustache.java template
+     */
+    private final static Mustache labelMustache;
+
+    static {
+//        String labelTemplatePath = "/org/sleuthkit/autopsy/communications/Vertex_Label_template.html";
+        InputStream templateStream = mxGraphImpl.class.getResourceAsStream("/org/sleuthkit/autopsy/communications/Vertex_Label_template.html");
+        labelMustache = new DefaultMustacheFactory().compile(new InputStreamReader(templateStream), "Vertex_Label");
+    }
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
     private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
-    private final HashSet<AccountDeviceInstanceKey> lockedAccountDevices = new HashSet<>();
+    private final HashSet<mxCell> lockedVertices = new HashSet<>();
 
     private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     static {
-        //initialize defaul cell (Vertex and/or Edge)  properties
+        //initialize defaul vertex properties
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_PERIMETER, mxConstants.PERIMETER_ELLIPSE);
         mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_FONTCOLOR, "000000");
-//        mxStylesheet.getDefaultVertexStyle().put(mxConstants.STYLE_WHITE_SPACE, "wrap");
 
+        //initialize defaul edge properties
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_NOLABEL, true);
-//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_OPACITY, 50        );
-//        mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ROUNDED, true);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_PERIMETER_SPACING, 0);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
 
-    public mxGraphImpl() {
+    mxGraphImpl() {
         super(mxStylesheet);
         setAutoSizeCells(true);
         setCellsCloneable(false);
@@ -93,44 +106,6 @@ final class mxGraphImpl extends mxGraph {
         setKeepEdgesInBackground(true);
         setResetEdgesOnMove(true);
         setHtmlLabels(true);
-
-//        new mxLayoutManager(graph) {
-//            final private mxOrganicLayout layout;
-//            private int counter;
-//            {
-//                this.layout = new mxOrganicLayout(graph);
-//                this.layout.setMaxIterations(1);
-//            }
-//
-//            @Override
-//            protected void executeLayout(mxIGraphLayout layout, Object parent) {
-//                if (counter % 10 == 0)
-//                {
-//                    super.executeLayout(layout, parent);
-////                fitGraph();
-//                }
-//                counter++;
-//            }
-//
-//            @Override
-//            public mxIGraphLayout getLayout(Object parent) {
-//                if (graph.getModel().getChildCount(parent) > 0) {
-//                    return layout;
-//                }
-//                return null;
-//            }
-//        };
-    }
-
-    @Override
-    public boolean isCellMovable(Object cell) {
-        final mxICell mxCell = (mxICell) cell;
-        if (mxCell.isEdge()) {
-            return super.isCellMovable(cell);
-        } else {
-            return super.isCellMovable(cell)
-                    && false == lockedAccountDevices.contains((AccountDeviceInstanceKey) mxCell.getValue());
-        }
     }
 
     void clear() {
@@ -145,18 +120,25 @@ final class mxGraphImpl extends mxGraph {
 
     @Override
     public String convertValueToString(Object cell) {
+        final StringWriter stringWriter = new StringWriter();
+        HashMap<String, Object> scopes = new HashMap<>();
+
         Object value = getModel().getValue(cell);
         if (value instanceof AccountDeviceInstanceKey) {
             final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
-            final String accountName = adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID();
-            String iconFileName = Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType());
-            String label = "<img src=\""
-                    + VisualizationPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/" + iconFileName)
-                    + "\">" + accountName;
-            if (pinnedAccountDevices.contains(adiKey)) {
-                label += "<img src=\"" + MARKER_PIN_URL + "\">";
-            }
-            return "<span>" + label + "</span>";
+
+            scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
+            scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
+            scopes.put("iconFileName", mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                    + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
+            scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
+            scopes.put("locked", lockedVertices.contains((mxCell) cell));
+            scopes.put("LOCK_URL", LOCK_URL);
+
+            labelMustache.execute(stringWriter, scopes);
+
+            return stringWriter.toString();
         } else {
             return "";
         }
@@ -164,34 +146,87 @@ final class mxGraphImpl extends mxGraph {
 
     @Override
     public String getToolTipForCell(Object cell) {
-        return ((mxICell) cell).getId();
+        final StringWriter stringWriter = new StringWriter();
+        HashMap<String, Object> scopes = new HashMap<>();
+
+        Object value = getModel().getValue(cell);
+        if (value instanceof AccountDeviceInstanceKey) {
+            final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
+
+            scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
+            scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
+            scopes.put("iconFileName", mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+                    + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
+            scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
+            scopes.put("locked", lockedVertices.contains((mxCell) cell));
+            scopes.put("LOCK_URL", LOCK_URL);
+
+            labelMustache.execute(stringWriter, scopes);
+
+            return stringWriter.toString();
+        } else {
+            return ((mxICell) cell).getId();
+        }
     }
 
+    /**
+     * Unpin the given accounts from the graph. Pinned accounts will always be
+     * shown regardless of the filter state. Furthermore, accounts with
+     * relationships that pass the filters will also be shown.
+     *
+     * @param accountDeviceInstances The accounts to unpin.
+     */
     void unpinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
         pinnedAccountDevices.removeAll(accountDeviceInstances);
     }
 
+    /**
+     * Pin the given accounts to the graph. Pinned accounts will always be shown
+     * regardless of the filter state. Furthermore, accounts with relationships
+     * that pass the filters will also be shown.
+     *
+     * @param accountDeviceInstances The accounts to pin.
+     */
     void pinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
         pinnedAccountDevices.addAll(accountDeviceInstances);
     }
 
-    void lockAccount(AccountDeviceInstanceKey accountDeviceInstance) {
-        lockedAccountDevices.add(accountDeviceInstance);
+    /**
+     * Lock the given vertex so that applying a layout algorithm doesn't move
+     * it. The user can still manually position the vertex.
+     *
+     * @param vertex The vertex to lock.
+     */
+    void lockVertex(mxCell vertex) {
+        lockedVertices.add(vertex);
+        getView().clear(vertex, true, true);
+        getView().validate();
     }
 
-    void unlockAccount(AccountDeviceInstanceKey accountDeviceInstance) {
-        lockedAccountDevices.remove(accountDeviceInstance);
+    /**
+     * Lock the given vertex so that applying a layout algorithm can move it.
+     *
+     * @param vertex The vertex to unlock.
+     */
+    void unlockVertex(mxCell vertex) {
+        lockedVertices.remove(vertex);
+
+        final mxCellState state = getView().getState(vertex, true);
+        getView().updateLabel(state);
+        getView().updateLabelBounds(state);
+        getView().updateBoundingBox(state);
     }
 
     SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
-
-        return new SwingWorkerImpl(progress, commsManager, currentFilter);
+        return new RebuildWorker(progress, commsManager, currentFilter);
     }
 
     void resetGraph() {
         clear();
+        getView().setScale(1);
         pinnedAccountDevices.clear();
-        lockedAccountDevices.clear();
+        lockedVertices.clear();
     }
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
@@ -205,8 +240,8 @@ final class mxGraphImpl extends mxGraph {
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
                     vertexName, accountDeviceInstanceKey,
-                    Math.random() * getView().getGraphBounds().getWidth(),
-                    Math.random() * getView().getGraphBounds().getHeight(),
+                    Math.random() * 400,
+                    Math.random() * 400,
                     size,
                     size);
             return newVertex;
@@ -231,30 +266,41 @@ final class mxGraphImpl extends mxGraph {
             final HashSet<Content> hashSet = new HashSet<>(relSources);
             //            edgeMap.put(relSource, edge);
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
-                    "strokeWidth=" + Math.sqrt(hashSet.size()));
+                    "strokeWidth=" + (Math.log(hashSet.size()) + 1));
         } else {
             edge = (mxCell) edgesBetween[0];
             ((Collection<Content>) edge.getValue()).addAll(relSources);
-            edge.setStyle("strokeWidth=" + Math.sqrt(((Collection) edge.getValue()).size()));
+            edge.setStyle("strokeWidth=" + (Math.log(((Collection) edge.getValue()).size()) + 1));
         }
         return edge;
     }
 
-    boolean hasPinnedAccounts() {
-        return pinnedAccountDevices.isEmpty() == false;
+    /**
+     * Are there any accounts in this graph? If there are no pinned accounts the
+     * graph will be empty.
+     *
+     * @return True if this graph is empty.
+     */
+    boolean isEmpty() {
+        return pinnedAccountDevices.isEmpty();
     }
 
-    double getScale() {
-        return getView().getScale();
+    boolean isVertexLocked(mxCell vertex) {
+        return lockedVertices.contains(vertex);
+
     }
 
-    class SwingWorkerImpl extends SwingWorker<Void, Void> {
+    /**
+     * SwingWorker that loads the accounts and edges for this graph according to
+     * the pinned accounts and the current filters.
+     */
+    private class RebuildWorker extends SwingWorker<Void, Void> {
 
         private final ProgressIndicator progress;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
 
-        SwingWorkerImpl(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
+        RebuildWorker(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
             this.progress = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
@@ -316,7 +362,7 @@ final class mxGraphImpl extends mxGraph {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Error building graph visualization. ", ex);
             } finally {
                 progress.finish();
             }
