@@ -38,6 +38,16 @@ public class CorrelationDataSource implements Serializable {
     private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
 
+    /**
+     * 
+     * @param caseId
+     * @param deviceId
+     * @param name 
+     */
+    public CorrelationDataSource(int caseId, String deviceId, String name) {
+        this(caseId, -1, deviceId, name);
+    }  
+    
     CorrelationDataSource(int caseId,
             int dataSourceId,
             String deviceId,
