@@ -136,8 +136,8 @@
     </Component>
     <Component class="javax.swing.JFormattedTextField" name="minimumFileSizeTextbox">
       <Properties>
-        <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.editors.AbstractFormatterFactoryEditor">
-          <Format format="#0" subtype="-1" type="0"/>
+        <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+          <Connection code="minimumFileSizeTextFormatterFactory" type="code"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/encryptiondetection/Bundle.properties" key="EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeTextbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -150,7 +150,7 @@
     <Component class="javax.swing.JFormattedTextField" name="minimumEntropyTextbox">
       <Properties>
         <Property name="formatterFactory" type="javax.swing.JFormattedTextField$AbstractFormatterFactory" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="entropyFormatterFactory" type="code"/>
+          <Connection code="minimumEntropyTextFormatterFactory" type="code"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/modules/encryptiondetection/Bundle.properties" key="EncryptionDetectionIngestJobSettingsPanel.minimumEntropyTextbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>

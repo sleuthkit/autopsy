@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,11 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import java.text.NumberFormat;
-import javax.swing.JFormattedTextField.AbstractFormatterFactory;
+import java.text.ParseException;
+import java.util.logging.Level;
+import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.NumberFormatter;
-import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -33,10 +32,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     private static final int MEGABYTE_SIZE = 1048576;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
-    private static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
-    private AbstractFormatterFactory entropyFormatterFactory = null;
+    private static final int INVALID_TEXT_FIELD_INPUT_RETURN = -1;
+    
+    private final Logger logger = Logger.getLogger(EncryptionDetectionIngestJobSettingsPanel.class.getName());
+    
+    private final DefaultFormatterFactory minimumFileSizeTextFormatterFactory = new DefaultFormatterFactory(new MinimumFileSizeTextFormatter());;
+    private final DefaultFormatterFactory minimumEntropyTextFormatterFactory = new DefaultFormatterFactory(new MinimumEntropyTextFormatter());;
 
     /**
      * Instantiate the ingest job settings panel.
@@ -44,12 +45,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
      * @param settings The ingest job settings.
      */
     public EncryptionDetectionIngestJobSettingsPanel(EncryptionDetectionIngestJobSettings settings) {
-        NumberFormatter entropyFormatter = new NumberFormatter(NumberFormat.getNumberInstance());
-        entropyFormatter.setValueClass(Float.TYPE);
-        entropyFormatter.setMinimum(0);
-        entropyFormatter.setMaximum(Float.MAX_VALUE);
-        entropyFormatterFactory = new DefaultFormatterFactory(entropyFormatter);
-        
         initComponents();
         customizeComponents(settings);
     }
@@ -68,9 +63,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        //DLG: validateMinimumEntropy();
-        //DLG: validateMinimumFileSize();
-
         return new EncryptionDetectionIngestJobSettings(
                 Double.valueOf(minimumEntropyTextbox.getText()),
                 Integer.valueOf(minimumFileSizeTextbox.getText()) * MEGABYTE_SIZE,
@@ -79,42 +71,68 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     }
 
     /**
-     * Validate the minimum entropy input.
-     *
-     * @throws IllegalArgumentException If the input is empty, invalid, or out
-     *                                  of range.
+     * Formatter to handle minimum entropy text input.
      */
-    @Messages({
-        "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text=Minimum entropy input must be a number between 6.0 and 8.0."
-    })
-    private void validateMinimumEntropy() throws IllegalArgumentException {
-        try {
-            double minimumEntropy = Double.valueOf(minimumEntropyTextbox.getText());
-            if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text"));
+    private final class MinimumEntropyTextFormatter extends DefaultFormatter {
+
+        /**
+         * Create an instance of the formatter.
+         */
+        MinimumEntropyTextFormatter() {
+            super();
+        }
+
+        @Override
+        public String valueToString(Object object) throws ParseException {
+            return super.valueToString(object);
+        }
+
+        @Override
+        public Object stringToValue(String string) throws ParseException {
+            try {
+                return Double.parseDouble(string);
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("The text input '%s' for minimum entropy is not valid.", string), ex);
+                /*
+                 * Return a valid number outside the acceptable value range so
+                 * it can be run through the validator in the file ingest
+                 * module.
+                 */
+                return new Double(INVALID_TEXT_FIELD_INPUT_RETURN);
             }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text"));
         }
     }
 
     /**
-     * Validate the minimum file size input.
-     *
-     * @throws IllegalArgumentException If the input is empty, invalid, or out
-     *                                  of range.
+     * Formatter to handle minimum file size text input.
      */
-    @Messages({
-        "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text=Minimum file size input must be an integer (in megabytes) of 1 or greater."
-    })
-    private void validateMinimumFileSize() throws IllegalArgumentException {
-        try {
-            int minimumFileSize = Integer.valueOf(minimumFileSizeTextbox.getText());
-            if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text"));
+    private final class MinimumFileSizeTextFormatter extends DefaultFormatter {
+
+        /**
+         * Create an instance of the formatter.
+         */
+        MinimumFileSizeTextFormatter() {
+            super();
+        }
+
+        @Override
+        public String valueToString(Object object) throws ParseException {
+            return super.valueToString(object);
+        }
+
+        @Override
+        public Object stringToValue(String string) throws ParseException {
+            try {
+                return Integer.parseInt(string);
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("The text input '%s' for minimum file size is not valid.", string), ex);
+                /*
+                 * Return a valid number outside the acceptable value range so
+                 * it can still be run through the validator in the file ingest
+                 * module.
+                 */
+                return INVALID_TEXT_FIELD_INPUT_RETURN;
             }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text"));
         }
     }
 
@@ -155,7 +173,7 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
         detectionSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(detectionSettingsLabel, org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.detectionSettingsLabel.text")); // NOI18N
 
-        minimumFileSizeTextbox.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0"))));
+        minimumFileSizeTextbox.setFormatterFactory(minimumFileSizeTextFormatterFactory);
         minimumFileSizeTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeTextbox.text")); // NOI18N
         minimumFileSizeTextbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -163,7 +181,7 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
             }
         });
 
-        minimumEntropyTextbox.setFormatterFactory(entropyFormatterFactory);
+        minimumEntropyTextbox.setFormatterFactory(minimumEntropyTextFormatterFactory);
         minimumEntropyTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyTextbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
