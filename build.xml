@@ -32,10 +32,12 @@
     </condition>  
     <condition property="os.family" value="windows">  
         <os family="windows"/>  
-    </condition>
+    </condition> 
+    
     <condition property="os.family" value="mac">  
         <os family="mac"/>  
-    </condition>   
+    </condition> 
+     
     <import file="build-${os.family}.xml"/> 
     
     <!-- Third party tools dependencies -->
@@ -91,7 +93,7 @@
                 <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
             </then>
         </if>
-
+        
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
         <!-- Copy the Autopsy documentation to the docs folder -->
@@ -101,16 +103,19 @@
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
-        <!-- for Japanese localized version add option:  -Duser.language=ja -->        
-        <if>
-            <equals arg1="${os.family}" arg2="mac"/>
-            <then>
-                <property name="jvm.options" value="&quot;${jvm-value} -J-Xdock:name=${app.title}&quot;"/>
-            </then>
-            <else>
-                <property name="jvm.options" value="&quot;${jvm-value}&quot;"/>
-            </else>
-        </if>
+        <!-- for Japanese localized version add option:  -Duser.language=ja -->
+        
+            
+            <if>
+                <equals arg1="${os.family}" arg2="mac"/>
+                <then>
+                    <property name="jvm.options" value="&quot;${jvm-value} -J-Xdock:name=${app.title}&quot;"/>
+                </then>
+                <else>
+                    <property name="jvm.options" value="&quot;${jvm-value}&quot;"/>
+                </else>
+            </if>
+                
         <propertyfile file="${app.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
