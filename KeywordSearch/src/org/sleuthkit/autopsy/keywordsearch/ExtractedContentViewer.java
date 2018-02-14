@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
 
-    private static final Logger LOGGER = Logger.getLogger(ExtractedContentViewer.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
 
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
     public static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
@@ -98,7 +98,31 @@ public class ExtractedContentViewer implements DataContentViewer {
          * node.
          */
         List<IndexedText> sources = new ArrayList<>();
+        Lookup nodeLookup = node.getLookup();
+        
+        AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
+        AbstractFile file = null;
+        BlackboardArtifact artifact;
+        Report report = null;
 
+        /*
+         * If we have an ad hoc query result, pull the file and artifact objects
+         * from that. Otherwise, pull them from the lookup.
+         */
+        if (adHocQueryResult != null) {
+            artifact = adHocQueryResult.getArtifact();
+            Content content = adHocQueryResult.getContent();
+            if (content instanceof AbstractFile) {
+                file = (AbstractFile) content;
+            } else if (content instanceof Report) {
+                report = (Report) content;
+            }
+        } else {
+            artifact = nodeLookup.lookup(BlackboardArtifact.class);
+            file = nodeLookup.lookup(AbstractFile.class);
+            report = nodeLookup.lookup(Report.class);
+        }
+        
         /*
          * First, get text with highlighted hits if this node is for a search
          * result.
@@ -131,8 +155,6 @@ public class ExtractedContentViewer implements DataContentViewer {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Failed to create AccountsText for " + file, ex); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS                
             }
         }
         if (highlightedHitText != null) {
@@ -146,6 +168,15 @@ public class ExtractedContentViewer implements DataContentViewer {
         IndexedText rawContentText = null;
         if (file != null) {
             rawContentText = new RawText(file, file.getId());
+            sources.add(rawContentText);
+        }
+
+        /*
+         * Add the "raw" (not highlighted) text, if any, for any report
+         * associated with the node.
+         */
+        if (report != null) {
+            rawContentText = new RawText(report, report.getId());
             sources.add(rawContentText);
         }
 
@@ -338,6 +369,16 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         /*
+         * If the lookup of the node contains no artifacts or file but does
+         * contain a report, check to see if there is indexed text for the
+         * report.
+         */
+        Report report = node.getLookup().lookup(Report.class);
+        if (report != null) {
+            return solrHasContent(report.getId());
+        }
+
+        /*
          * If the lookup of the node contains neither ad hoc search results, nor
          * artifacts, nor a file, there is no indexed text.
          */
@@ -388,7 +429,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            LOGGER.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
             return false;
         }
     }
