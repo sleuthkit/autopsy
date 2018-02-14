@@ -73,7 +73,7 @@ Typically a general report module should interact with both the Blackboard API i
 
 \subsection report_create_module_showing Showing Results
 
-You should call Case.addReport() with the path to your report so that it is shown in the Autopsy tree.  You can specify a specific file or folder and the user can then view it later.
+You should call org.sleuthkit.autopsy.casemodule.Case.addReport() with the path to your report so that it is shown in the Autopsy tree.  You can specify a specific file or folder and the user can then view it later.
 
 \subsection report_create_module_layer Installing your Report Module
 
