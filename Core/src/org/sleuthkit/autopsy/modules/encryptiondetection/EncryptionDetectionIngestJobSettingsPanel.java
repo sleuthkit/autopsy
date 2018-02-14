@@ -25,11 +25,6 @@ import javax.swing.text.DefaultFormatterFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
-import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_MINIMUM_ENTROPY;
-import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_MINIMUM_FILE_SIZE;
-import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.MINIMUM_ENTROPY_INPUT_RANGE_MAX;
-import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.MINIMUM_ENTROPY_INPUT_RANGE_MIN;
-import static org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionFileIngestModule.MINIMUM_FILE_SIZE_INPUT_RANGE_MIN;
 
 /**
  * Ingest job settings panel for the Encryption Detection module.
@@ -60,24 +55,8 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
      * @param settings The ingest job settings.
      */
     private void customizeComponents(EncryptionDetectionIngestJobSettings settings) {
-        /*
-         * If minimum entropy is out of range, reset it to the default.
-         */
-        double minimumEntropy = settings.getMinimumEntropy();
-        if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
-            minimumEntropy = DEFAULT_CONFIG_MINIMUM_ENTROPY;
-        }
-        minimumEntropyTextbox.setText(String.valueOf(minimumEntropy));
-
-        /*
-         * If minimum file size is out of range, reset it to the default.
-         */
-        int minimumFileSize = settings.getMinimumFileSize();
-        if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
-            minimumFileSize = DEFAULT_CONFIG_MINIMUM_FILE_SIZE;
-        }
-        minimumFileSizeTextbox.setText(String.valueOf(minimumFileSize / MEGABYTE_SIZE));
-
+        minimumEntropyTextbox.setText(String.valueOf(settings.getMinimumEntropy()));
+        minimumFileSizeTextbox.setText(String.valueOf(settings.getMinimumFileSize() / MEGABYTE_SIZE));
         fileSizeMultiplesEnforcedCheckbox.setSelected(settings.isFileSizeMultipleEnforced());
         slackFilesAllowedCheckbox.setSelected(settings.isSlackFilesAllowed());
     }
@@ -95,18 +74,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
      * Formatter to handle conversion between String and Double.
      */
     private final class StringDoubleFormatter extends DefaultFormatter {
-
-        /**
-         * Create an instance of the formatter.
-         */
-        StringDoubleFormatter() {
-            super();
-        }
-
-        @Override
-        public String valueToString(Object object) throws ParseException {
-            return super.valueToString(object);
-        }
 
         @Override
         public Object stringToValue(String string) throws ParseException {
@@ -128,18 +95,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
      * Formatter to handle conversion between String and Integer.
      */
     private final class StringIntegerFormatter extends DefaultFormatter {
-
-        /**
-         * Create an instance of the formatter.
-         */
-        StringIntegerFormatter() {
-            super();
-        }
-
-        @Override
-        public String valueToString(Object object) throws ParseException {
-            return super.valueToString(object);
-        }
 
         @Override
         public Object stringToValue(String string) throws ParseException {
