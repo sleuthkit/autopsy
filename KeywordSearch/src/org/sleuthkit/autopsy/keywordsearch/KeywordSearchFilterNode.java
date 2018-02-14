@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -53,12 +54,18 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- *
+ * FilterNode containing properties and actions for keyword search.
  */
 class KeywordSearchFilterNode extends FilterNode {
 
-    KeywordSearchFilterNode(QueryResults highlights, Node original) {
-        super(original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
+    /**
+     * Instantiate a KeywordSearchFilterNode.
+     * 
+     * @param adHocQueryResult The query content.
+     * @param original         The original source node.
+     */
+    KeywordSearchFilterNode(AdHocQueryResult adHocQueryResult, Node original) {
+        super(original, null, new ProxyLookup(Lookups.singleton(adHocQueryResult), original.getLookup()));
     }
 
     @Override
