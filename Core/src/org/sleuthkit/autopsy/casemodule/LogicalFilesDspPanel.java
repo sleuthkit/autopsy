@@ -52,9 +52,9 @@ final class LogicalFilesDspPanel extends JPanel {
      */
     private LogicalFilesDspPanel() {
         initComponents();
-        jPanel1.setLayout(new BoxLayout(jPanel1, BoxLayout.Y_AXIS));
-        jPanel1.add(l01panel);
-        jPanel1.add(localFilesPanel);
+        dspSubtypePanel.setLayout(new BoxLayout(dspSubtypePanel, BoxLayout.Y_AXIS));
+        dspSubtypePanel.add(l01panel);
+        dspSubtypePanel.add(localFilesPanel);
         l01panel.setVisible(false);
     }
     @Override
@@ -82,12 +82,12 @@ final class LogicalFilesDspPanel extends JPanel {
     }
 
     void select() {
-        jComboBox1.setSelectedIndex(0);
+        dspSubtypeComboBox.setSelectedIndex(0);
         localFilesPanel.setVisible(true);
         l01panel.setVisible(false);
         localFilesPanel.reset();
         l01panel.reset();
-        jPanel1.repaint();
+        dspSubtypePanel.repaint();
     }
 
     @Override
@@ -104,34 +104,28 @@ final class LogicalFilesDspPanel extends JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
-        jPanel1 = new javax.swing.JPanel();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        dspSubtypePanel = new javax.swing.JPanel();
+        dspSubtypeComboBox = new javax.swing.JComboBox<>();
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
+        dspSubtypePanel.setPreferredSize(new java.awt.Dimension(467, 160));
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(467, 160));
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout dspSubtypePanelLayout = new javax.swing.GroupLayout(dspSubtypePanel);
+        dspSubtypePanel.setLayout(dspSubtypePanelLayout);
+        dspSubtypePanelLayout.setHorizontalGroup(
+            dspSubtypePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 466, Short.MAX_VALUE)
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        dspSubtypePanelLayout.setVerticalGroup(
+            dspSubtypePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 160, Short.MAX_VALUE)
         );
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text(), Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text()}));
-        jComboBox1.setMinimumSize(new java.awt.Dimension(379, 20));
-        jComboBox1.setPreferredSize(new java.awt.Dimension(379, 20));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        dspSubtypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text(), Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text()}));
+        dspSubtypeComboBox.setMinimumSize(new java.awt.Dimension(379, 20));
+        dspSubtypeComboBox.setPreferredSize(new java.awt.Dimension(379, 20));
+        dspSubtypeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                dspSubtypeComboBoxActionPerformed(evt);
             }
         });
 
@@ -143,24 +137,24 @@ final class LogicalFilesDspPanel extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 466, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(dspSubtypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(dspSubtypePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 466, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(dspSubtypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(dspSubtypePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    private void dspSubtypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dspSubtypeComboBoxActionPerformed
         if (evt.getSource() instanceof JComboBox<?>) {
             JComboBox<?> cb = (JComboBox<?>) evt.getSource();
-            String selectedSubType = jComboBox1.getSelectedItem().toString();
+            String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
             if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
                 localFilesPanel.setVisible(true);
                 l01panel.setVisible(false);
@@ -170,12 +164,12 @@ final class LogicalFilesDspPanel extends JPanel {
             }
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         }
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    }//GEN-LAST:event_dspSubtypeComboBoxActionPerformed
 
     boolean validatePanel() {
         // display warning if there is one (but don't disable "next" button)
 
-        String selectedSubType = jComboBox1.getSelectedItem().toString();
+        String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
             return localFilesPanel.validatePanel();
         } else if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text())) {
@@ -185,19 +179,17 @@ final class LogicalFilesDspPanel extends JPanel {
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JComboBox<String> dspSubtypeComboBox;
+    private javax.swing.JPanel dspSubtypePanel;
     // End of variables declaration//GEN-END:variables
 
     boolean contentsAreL01() {
-        String selectedSubType = jComboBox1.getSelectedItem().toString();
+        String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         return selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text());
     }
 
     List<String> getContentPaths() {
-        String selectedSubType = jComboBox1.getSelectedItem().toString();
+        String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
             return localFilesPanel.getContentPaths();
         } else if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text())) {
@@ -209,7 +201,7 @@ final class LogicalFilesDspPanel extends JPanel {
     }
 
     String getFileSetName() {
-        String selectedSubType = jComboBox1.getSelectedItem().toString();
+        String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
             return localFilesPanel.getFileSetName();
         } else if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text())) {

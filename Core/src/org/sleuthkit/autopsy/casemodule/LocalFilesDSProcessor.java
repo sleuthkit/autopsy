@@ -44,10 +44,10 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 
 /**
- * A local/logical files and/or directories data source processor that
- * implements the DataSourceProcessor service provider interface to allow
- * integration with the add data source wizard. It also provides a run method
- * overload to allow it to be used independently of the wizard.
+ * A local/logical files/logical evidence file(.lo1)/or directories data source
+ * processor that implements the DataSourceProcessor service provider interface
+ * to allow integration with the add data source wizard. It also provides a run
+ * method overload to allow it to be used independently of the wizard.
  */
 @ServiceProviders(value = {
     @ServiceProvider(service = DataSourceProcessor.class)
@@ -159,7 +159,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             if (configPanel.contentsAreL01()) {
                 try {
                     //if the L01 option was chosen
-                    localFilePaths = extractL01Contents(localFilePaths);
+                    localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
                 } catch (L01Exception ex) {
                     //contents of l01 could not be extracted don't add data source or run ingest
                     List<String> errors = new ArrayList<>();
@@ -172,11 +172,23 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
     }
 
-    private List<String> extractL01Contents(List<String> l01FilePaths) throws L01Exception {
+    /**
+     * Extract the contents of the logical evidence files and return the paths
+     * to those extracted files.
+     *
+     * @param logicalEvidenceFilePaths
+     *
+     * @return extractedPaths - the paths to all the files extracted from the
+     *         logical evidence files
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception 
+     */
+    private List<String> extractLogicalEvidenceFileContents(List<String> logicalEvidenceFilePaths) throws L01Exception {
         List<String> extractedPaths = new ArrayList<>();
         Path ewfexportPath;
         ewfexportPath = locateEwfexportExecutable();
-        for (String l01Path : l01FilePaths) {
+        for (String l01Path : logicalEvidenceFilePaths) {
             List<String> command = new ArrayList<>();
             command.add(ewfexportPath.toAbsolutePath().toString());
             command.add("-f");
@@ -218,10 +230,22 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         return extractedPaths;
     }
 
-    static FileFilter getLogicalEvidenceFilter(){
+    /**
+     * Get a file filter for logical evidence files.
+     * 
+     * @return LOGICAL_EVIDENCE_FILTER
+     */
+    static FileFilter getLogicalEvidenceFilter() {
         return LOGICAL_EVIDENCE_FILTER;
     }
-    
+
+    /**
+     * Gets the path for the ewfexport executable.
+     * 
+     * @return the path to ewfexport.exe
+     * 
+     * @throws org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception 
+     */
     private Path locateEwfexportExecutable() throws L01Exception {
         // Must be running under a Windows operating system.
         if (!PlatformUtil.isWindowsOS()) {
@@ -254,7 +278,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         if (!ewfexport.canExecute()) {
             throw new LocalFilesDSProcessor.L01Exception("EWF export executable can not be executed");
         }
-
+        
         return executablePath;
     }
 
@@ -315,7 +339,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         // Local files DSP can process any file by simply adding it as a logical file.
         // It should return lowest possible non-zero confidence level and be treated 
         // as the "option of last resort" for auto ingest purposes
-        
+
         this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
         //If there is only 1 file check if it is an L01 file and if it is extract the 
         //contents and replace the paths, if the contents can't be extracted return 0
@@ -324,7 +348,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                 if (LOGICAL_EVIDENCE_FILTER.accept(new File(path))) {
                     try {
                         //if the L01 option was chosen
-                        localFilePaths = extractL01Contents(localFilePaths);
+                        localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
                     } catch (L01Exception ex) {
                         logger.log(Level.WARNING, "File extension was .l01 but contents of logical evidence file were unable to be extracted", ex);
                         //contents of l01 could not be extracted don't add data source or run ingest
