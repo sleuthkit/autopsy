@@ -44,8 +44,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
@@ -219,7 +219,7 @@ final class mxGraphImpl extends mxGraph {
         getView().updateBoundingBox(state);
     }
 
-    SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
+    SwingWorker<?, ?> rebuild(ProgressHandle progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
         return new RebuildWorker(progress, commsManager, currentFilter);
     }
 
@@ -296,19 +296,22 @@ final class mxGraphImpl extends mxGraph {
      */
     private class RebuildWorker extends SwingWorker<Void, Void> {
 
-        private final ProgressIndicator progress;
+        private final ProgressHandle progress;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
 
-        RebuildWorker(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
+        RebuildWorker(ProgressHandle progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
             this.progress = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
+
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            progress.start("Loading accounts", pinnedAccountDevices.size());
+            progress.progress("Loading accounts");
+            progress.switchToDeterminate(pinnedAccountDevices.size());
+            progress.progress(0);
             int i = 0;
             try {
                 /**
@@ -317,6 +320,7 @@ final class mxGraphImpl extends mxGraph {
                 Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
                 for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
                     if (isCancelled()) {
+                        cancel(true);
                         break;
                     }
                     List<AccountDeviceInstance> relatedAccountDeviceInstances =
@@ -335,11 +339,12 @@ final class mxGraphImpl extends mxGraph {
                 //for each pair of related accounts add edges if they are related o each other.
                 // this is O(n^2) in the number of related accounts!!!
                 List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
-                progress.switchToDeterminate("", 0, relatedAccountsList.size());
+                progress.switchToDeterminate(relatedAccountsList.size());
                 for (i = 0; i < relatedAccountsList.size(); i++) {
                     AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
                     for (int j = i; j < relatedAccountsList.size(); j++) {
                         if (isCancelled()) {
+                            cancel(true);
                             break;
                         }
                         AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
@@ -369,6 +374,7 @@ final class mxGraphImpl extends mxGraph {
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error building graph visualization. ", ex);
             } catch (CancellationException ex) {
+
                 logger.log(Level.INFO, "Graph visualization cancelled");
             } finally {
                 progress.finish();

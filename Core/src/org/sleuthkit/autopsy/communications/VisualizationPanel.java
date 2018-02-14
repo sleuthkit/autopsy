@@ -64,14 +64,19 @@ import javax.swing.JProgressBar;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JToolBar;
+import javax.swing.ProgressMonitor;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
+import org.netbeans.api.progress.BaseProgressUtils;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressRunnable;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
@@ -241,35 +246,24 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Subscribe
     void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
-        try {
-            graph.unpinAccount(pinEvent.getAccountDeviceInstances());
-            graph.clear();
-            rebuildGraph();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error pinning accounts", ex);
-        } finally {
-            // Updates the display
-            graph.getModel().endUpdate();
-        }
+        graph.unpinAccount(pinEvent.getAccountDeviceInstances());
+        graph.clear();
+        rebuildGraph();
+        // Updates the display
+        graph.getModel().endUpdate();
 
     }
 
     @Subscribe
     void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
-        try {
-            if (pinEvent.isReplace()) {
-                graph.resetGraph();
-            }
-
-            graph.pinAccount(pinEvent.getAccountDeviceInstances());
-            rebuildGraph();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error pinning accounts", ex);
-        } finally {
-            // Updates the display
-            graph.getModel().endUpdate();
+        if (pinEvent.isReplace()) {
+            graph.resetGraph();
         }
+        graph.pinAccount(pinEvent.getAccountDeviceInstances());
+        rebuildGraph();
+        // Updates the display
+        graph.getModel().endUpdate();
 
     }
 
@@ -277,20 +271,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
 
         graph.getModel().beginUpdate();
-        try {
-            graph.clear();
-            currentFilter = filterChangeEvent.getNewFilter();
-            rebuildGraph();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error filtering accounts", ex);
-        } finally {
-            // Updates the display
-            graph.getModel().endUpdate();
-        }
+        graph.clear();
+        currentFilter = filterChangeEvent.getNewFilter();
+        rebuildGraph();
+        // Updates the display
+        graph.getModel().endUpdate();
 
     }
 
-    private void rebuildGraph() throws TskCoreException {
+    private void rebuildGraph() {
         if (graph.isEmpty()) {
             borderLayoutPanel.remove(graphComponent);
             borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
@@ -300,8 +289,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             if (worker != null) {
                 worker.cancel(true);
             }
-            worker = graph.rebuild(new ProgressIndicatorImpl(), commsManager, currentFilter);
-
+            ;
+            BaseProgressUtils.showProgressDialogAndRun(new ProgressRunnableImpl(), "Loading Visualization", true);
             worker.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(final PropertyChangeEvent evt) {
@@ -311,6 +300,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         } else {
                             statusLabel.setText("Too many cells, layout aborted.");
                         }
+                    }
+                    if (worker.isCancelled()) {
+                        graph.resetGraph();
+                        rebuildGraph();
                     }
                 }
             });
@@ -685,7 +678,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         progressPanel.setVisible(true);
         progressBar.setIndeterminate(true);
         progressBar.setString("Computing layout");
-
+        final ProgressMonitor progressMonitor = new ProgressMonitor(this, "Computing layout", "", 0, 100);
+        progressMonitor.setProgress(0);
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -696,8 +690,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     fitGraph();
                     progressPanel.setVisible(false);
                     progressBar.setValue(0);
+                    progressMonitor.close();
                 });
-                
+
+                progressMonitor.setProgress(50);
                 SwingUtilities.invokeLater(() -> progressBar.setString("Applying layout"));
                 morph.startAnimation();
                 return null;
@@ -763,6 +759,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     final private class ProgressIndicatorImpl implements ProgressIndicator {
 
+        ProgressMonitor progressMonitor = new ProgressMonitor(VisualizationPanel.this, "title", "detail", 0, 100);
+
         @Override
         public void start(String message, int totalWorkUnits) {
             SwingUtilities.invokeLater(() -> {
@@ -771,6 +769,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 progressBar.setString(message);
                 progressBar.setMaximum(totalWorkUnits);
                 progressBar.setValue(0);
+
             });
         }
 
@@ -780,6 +779,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 progressPanel.setVisible(true);
                 progressBar.setString(message);
                 progressBar.setIndeterminate(true);
+
             });
         }
 
@@ -815,6 +815,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             SwingUtilities.invokeLater(() -> {
                 progressBar.setValue(workUnitsCompleted);
             });
+            progressMonitor.setProgress(workUnitsCompleted);
         }
 
         @Override
@@ -823,6 +824,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 progressBar.setString(message);
                 progressBar.setValue(workUnitsCompleted);
             });
+            progressMonitor.setProgress(workUnitsCompleted);
         }
 
         @Override
@@ -831,6 +833,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 progressBar.setValue(progressBar.getMaximum());
                 progressPanel.setVisible(false);
             });
+            progressMonitor.close();
         }
     }
 
@@ -921,6 +924,21 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else {
                 return super.setVertexLocation(vertex, x, y);
             }
+        }
+    }
+
+    private class ProgressRunnableImpl implements ProgressRunnable<Void>, Cancellable {
+
+        @Override
+        public Void run(ProgressHandle ph) {
+            worker = graph.rebuild(ph, commsManager, currentFilter);
+
+            return null;
+        }
+
+        @Override
+        public boolean cancel() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
     }
 }
