@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -51,25 +52,25 @@ import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-final class mxGraphImpl extends mxGraph {
+final class CommunicationsGraph extends mxGraph {
 
-    private static final Logger logger = Logger.getLogger(mxGraphImpl.class.getName());
-    private static final URL MARKER_PIN_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
-    private static final URL LOCK_URL = mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/lock_large_locked.png");
+    private static final Logger logger = Logger.getLogger(CommunicationsGraph.class.getName());
+    private static final URL MARKER_PIN_URL = CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
+    private static final URL LOCK_URL = CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/lock_large_locked.png");
+
     /**
      * mustache.java template
      */
     private final static Mustache labelMustache;
 
     static {
-//        String labelTemplatePath = "/org/sleuthkit/autopsy/communications/Vertex_Label_template.html";
-        InputStream templateStream = mxGraphImpl.class.getResourceAsStream("/org/sleuthkit/autopsy/communications/Vertex_Label_template.html");
+        InputStream templateStream = CommunicationsGraph.class.getResourceAsStream("/org/sleuthkit/autopsy/communications/Vertex_Label_template.html");
         labelMustache = new DefaultMustacheFactory().compile(new InputStreamReader(templateStream), "Vertex_Label");
     }
 
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
-    private final HashSet<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
-    private final HashSet<mxCell> lockedVertices = new HashSet<>();
+    private final Set<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
+    private final Set<mxCell> lockedVertices = new HashSet<>();
 
     private final Map<String, mxCell> nodeMap = new HashMap<>();
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
@@ -87,7 +88,7 @@ final class mxGraphImpl extends mxGraph {
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
 
-    mxGraphImpl() {
+    CommunicationsGraph() {
         super(mxStylesheet);
         setAutoSizeCells(true);
         setCellsCloneable(false);
@@ -129,7 +130,7 @@ final class mxGraphImpl extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
-            scopes.put("iconFileName", mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+            scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                     + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
@@ -155,7 +156,7 @@ final class mxGraphImpl extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
-            scopes.put("iconFileName", mxGraphImpl.class.getResource("/org/sleuthkit/autopsy/communications/images/"
+            scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                     + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
@@ -264,7 +265,6 @@ final class mxGraphImpl extends mxGraph {
         if (edgesBetween.length == 0) {
             final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
             final HashSet<Content> hashSet = new HashSet<>(relSources);
-            //            edgeMap.put(relSource, edge);
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
                     "strokeWidth=" + (Math.log(hashSet.size()) + 1));
         } else {
@@ -304,11 +304,13 @@ final class mxGraphImpl extends mxGraph {
             this.progress = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
+
         }
 
         @Override
         protected Void doInBackground() throws Exception {
-            progress.start("Loading accounts", pinnedAccountDevices.size());
+            progress.start("Loading accounts");
+//            progress.switchToDeterminate("Loading accounts", 0,pinnedAccountDevices.size());
             int i = 0;
             try {
                 /**
@@ -316,6 +318,9 @@ final class mxGraphImpl extends mxGraph {
                  */
                 Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
                 for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
+                    if (isCancelled()) {
+                        break;
+                    }
                     List<AccountDeviceInstance> relatedAccountDeviceInstances =
                             commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
                     relatedAccounts.add(adiKey);
@@ -336,7 +341,9 @@ final class mxGraphImpl extends mxGraph {
                 for (i = 0; i < relatedAccountsList.size(); i++) {
                     AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
                     for (int j = i; j < relatedAccountsList.size(); j++) {
-
+                        if (isCancelled()) {
+                            break;
+                        }
                         AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
                         List<Content> relationships = commsManager.getRelationshipSources(
                                 adiKey1.getAccountDeviceInstance(),
@@ -353,6 +360,7 @@ final class mxGraphImpl extends mxGraph {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
             } finally {
             }
+
             return null;
         }
 
@@ -363,6 +371,8 @@ final class mxGraphImpl extends mxGraph {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error building graph visualization. ", ex);
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Graph visualization cancelled");
             } finally {
                 progress.finish();
             }
