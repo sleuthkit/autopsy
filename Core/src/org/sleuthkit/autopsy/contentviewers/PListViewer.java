@@ -79,7 +79,6 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Key"); 
         
-        Bundle.PListNode_KeyCol();
         outlineView.setPropertyColumns(
                 "Type", Bundle.PListNode_TypeCol(),
                 "Value", Bundle.PListNode_ValueCol());

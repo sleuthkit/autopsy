@@ -67,10 +67,8 @@ class PListNode extends AbstractNode {
 
         this.propKeyVal = propKeyVal;
 
-        
         super.setName(propKeyVal.getKey());
-        setName(propKeyVal.getKey());
-        setDisplayName(propKeyVal.getKey());
+        super.setDisplayName(propKeyVal.getKey());
         if (propKeyVal.getType() == PropertyType.ARRAY) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keychain-16.png");
         } else if (propKeyVal.getType() == PropertyType.DICTIONARY) {
