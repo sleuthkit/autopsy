@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,20 +28,20 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
-import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 
 /**
  * A local/logical files and/or directories data source processor that
@@ -54,18 +54,24 @@ import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
     ,
     @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
 )
+@Messages({
+    "LocalFilesDSProcessor.logicalEvidenceFilter.desc=Logical Evidence Files (L01)"
+})
 public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private static final Logger logger = Logger.getLogger(LocalFilesDSProcessor.class.getName());
     private final LogicalFilesDspPanel configPanel;
-    private static final String L01_EXTRACTION_DIR = "ModuleOutput\\L01";
+    private static final String L01_EXTRACTION_DIR = "L01";
     private static final String UNIQUENESS_CONSTRAINT_SEPERATOR = "_";
     private static final String EWFEXPORT_DIR = "ewfexport_exec"; // NON-NLS
     private static final String EWFEXPORT_32_BIT_DIR = "32-bit"; // NON-NLS
     private static final String EWFEXPORT_64_BIT_DIR = "64-bit"; // NON-NLS
     private static final String EWFEXPORT_WINDOWS_EXE = "ewfexport.exe"; // NON-NLS
     private static final String LOG_FILE_EXTENSION = ".txt";
+    private static final List<String> LOGICAL_EVIDENCE_EXTENSIONS = Arrays.asList(".l01");
+    private static final String LOGICAL_EVIDENCE_DESC = Bundle.LocalFilesDSProcessor_logicalEvidenceFilter_desc();
+    private static final GeneralFilter LOGICAL_EVIDENCE_FILTER = new GeneralFilter(LOGICAL_EVIDENCE_EXTENSIONS, LOGICAL_EVIDENCE_DESC);
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
      * when the deprecated method setDataSourceOptions is removed.
@@ -147,7 +153,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *                        to return results.
      */
     @Override
-    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback){
+    public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             localFilePaths = configPanel.getContentPaths();
             if (configPanel.contentsAreL01()) {
@@ -155,11 +161,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                     //if the L01 option was chosen
                     localFilePaths = extractL01Contents(localFilePaths);
                 } catch (L01Exception ex) {
+                    //contents of l01 could not be extracted don't add data source or run ingest
                     List<String> errors = new ArrayList<>();
                     errors.add(ex.getMessage());
                     callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-                    localFilePaths =  new ArrayList<>();;  //cause run and canProcess to fail
-                    return; 
+                    return;
                 }
             }
         }
@@ -170,18 +176,16 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         List<String> extractedPaths = new ArrayList<>();
         Path ewfexportPath;
         ewfexportPath = locateEwfexportExecutable();
-
         for (String l01Path : l01FilePaths) {
             List<String> command = new ArrayList<>();
             command.add(ewfexportPath.toAbsolutePath().toString());
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getCurrentCase().getCaseDirectory(), L01_EXTRACTION_DIR);
+            File l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);
             if (!l01Dir.exists()) {
-                l01Dir.mkdir();
+                l01Dir.mkdirs();
             }
-
             Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
 
             command.add(dirPath.toString());
@@ -199,7 +203,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                 processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
                 // open the file with ewfexport to extract its contents
-                ExecUtil.execute(processBuilder,  new ExecUtil.TimedProcessTerminator());
+                ExecUtil.execute(processBuilder, new ExecUtil.TimedProcessTerminator());
                 if (l01Dir.toPath().resolve(dirPath).toFile().exists()) {
                     extractedPaths.add(l01Dir.toPath().resolve(dirPath).toString());
                 } else { //if we failed to extract anything let the user know the L01 file was unable to be processed
@@ -215,6 +219,10 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         return extractedPaths;
     }
 
+    static FileFilter getLogicalEvidenceFilter(){
+        return LOGICAL_EVIDENCE_FILTER;
+    }
+    
     private Path locateEwfexportExecutable() throws L01Exception {
         // Must be running under a Windows operating system.
         if (!PlatformUtil.isWindowsOS()) {
@@ -308,21 +316,29 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         // Local files DSP can process any file by simply adding it as a logical file.
         // It should return lowest possible non-zero confidence level and be treated 
         // as the "option of last resort" for auto ingest purposes
-
-        //When the Local files DSP is operating in the L01 mode it is possible 
-        //that it ewfexport will be unable to open the selected L01 file
-        //in the case that happens the localFilePaths list will still be empty and 
-        //we should let the user know that we are unable to process the datasource
-        if (localFilePaths == null || localFilePaths.isEmpty()) {
-            logger.log(Level.SEVERE, "Can not process the selected L01 file");
-            return 0;
+        
+        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        //If there is only 1 file check if it is an L01 file and if it is extract the 
+        //contents and replace the paths, if the contents can't be extracted return 0
+        if (localFilePaths.size() == 1) {
+            for (String path : localFilePaths) {
+                if (LOGICAL_EVIDENCE_FILTER.accept(new File(path))) {
+                    try {
+                        //if the L01 option was chosen
+                        localFilePaths = extractL01Contents(localFilePaths);
+                    } catch (L01Exception ex) {
+                        logger.log(Level.WARNING, "File extension was .l01 but contents of logical evidence file were unable to be extracted", ex);
+                        //contents of l01 could not be extracted don't add data source or run ingest
+                        return 0;
+                    }
+                }
+            }
         }
         return 1;
     }
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
-        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
         run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
     }
 

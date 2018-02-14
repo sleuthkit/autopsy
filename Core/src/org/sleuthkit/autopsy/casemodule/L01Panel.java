@@ -30,7 +30,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
@@ -44,7 +43,6 @@ final class L01Panel extends javax.swing.JPanel implements DocumentListener {
     private final Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
-    private static final String L01_EXTENSION = ".l01";
 
     /**
      * Creates new form L01Panel
@@ -54,21 +52,7 @@ final class L01Panel extends javax.swing.JPanel implements DocumentListener {
         l01FileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         l01FileChooser.setAcceptAllFileFilterUsed(false);
         l01FileChooser.setMultiSelectionEnabled(false);
-        l01FileChooser.setFileFilter(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                if (pathname.isDirectory()) {
-                    return true;
-                } else {
-                    return pathname.getName().toLowerCase().endsWith(L01_EXTENSION);
-                }
-            }
-
-            @Override
-            public String getDescription() {
-                return "Logical Evidence Files (L01)";
-            }
-        });
+        l01FileChooser.setFileFilter(LocalFilesDSProcessor.getLogicalEvidenceFilter());
     }
 
     static synchronized L01Panel createInstance() {
@@ -189,7 +173,7 @@ final class L01Panel extends javax.swing.JPanel implements DocumentListener {
             return false;
         }
         //check the extension incase the path was manually entered
-        if (!path.toLowerCase().endsWith(L01_EXTENSION)) {
+        if (!LocalFilesDSProcessor.getLogicalEvidenceFilter().accept((new File(path)))) {
             errorLabel.setVisible(true);
             errorLabel.setText(Bundle.L01Panel_validatePanel_nonL01Error_text());
             return false;
