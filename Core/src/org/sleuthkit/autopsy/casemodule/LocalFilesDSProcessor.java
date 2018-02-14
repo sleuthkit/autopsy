@@ -156,7 +156,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             localFilePaths = configPanel.getContentPaths();
-            if (configPanel.contentsAreL01()) {
+            if (configPanel.subTypeIsLogicalEvidencePanel()) {
                 try {
                     //if the L01 option was chosen
                     localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);

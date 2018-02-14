@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,10 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -77,7 +75,7 @@ final class LogicalFilesDspPanel extends JPanel {
         return instance;
     }
 
-    public String getContentType() {
+    String getContentType() {
         return NbBundle.getMessage(this.getClass(), "LocalFilesPanel.contentType.text");
     }
 
@@ -166,6 +164,11 @@ final class LogicalFilesDspPanel extends JPanel {
         }
     }//GEN-LAST:event_dspSubtypeComboBoxActionPerformed
 
+    /**
+     * Validate the contents of the panel and its subtype.
+     * 
+     * @return true if the panel is valid, false if it is not
+     */
     boolean validatePanel() {
         // display warning if there is one (but don't disable "next" button)
 
@@ -183,11 +186,21 @@ final class LogicalFilesDspPanel extends JPanel {
     private javax.swing.JPanel dspSubtypePanel;
     // End of variables declaration//GEN-END:variables
 
-    boolean contentsAreL01() {
+    /**
+     * Identify if the selected subtype panel is a LogicalEvidencePanel
+     * 
+     * @return true if logical evidence files have been selected
+     */
+    boolean subTypeIsLogicalEvidencePanel() {
         String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         return selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text());
     }
 
+    /**
+     * Get the selected paths of the selected panel subtype.
+     * 
+     * @return a list of strings which are paths to the selected files or directories
+     */
     List<String> getContentPaths() {
         String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
@@ -200,6 +213,11 @@ final class LogicalFilesDspPanel extends JPanel {
 
     }
 
+    /**
+     * Get the name of the file set based on its subtype.
+     * 
+     * @return the name of the set of files to be ingested.
+     */
     String getFileSetName() {
         String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
