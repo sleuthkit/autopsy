@@ -34,6 +34,8 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
 import com.mxgraph.util.mxPoint;
 import com.mxgraph.util.mxRectangle;
+import com.mxgraph.util.mxUndoManager;
+import com.mxgraph.util.mxUndoableEdit;
 import com.mxgraph.view.mxGraph;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -45,7 +47,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -97,6 +98,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * CVTTopComponent when this tab is active allowing for context sensitive
  * actions to work correctly.
  */
+@NbBundle.Messages("VisualizationPanel.cancelButton.text=Cancel")
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
@@ -113,17 +115,23 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     static final private ImageIcon lockIcon =
             new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
 
+    private static final String CANCEL = Bundle.VisualizationPanel_cancelButton_text();
+
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
     private final ProxyLookup proxyLookup = new ProxyLookup(
             ExplorerUtils.createLookup(gacEM, getActionMap()),
             ExplorerUtils.createLookup(vizEM, getActionMap()));
 
-    private final mxGraphComponent graphComponent;
-    private final mxGraphImpl graph;
+    private Frame windowAncestor;
 
     private CommunicationsManager commsManager;
     private CommunicationsFilter currentFilter;
+
+    private final mxGraphComponent graphComponent;
+    private final CommunicationsGraph graph;
+
+    protected mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband;
     private final mxFastOrganicLayout fastOrganicLayout;
     private final mxCircleLayout circleLayout;
@@ -132,11 +140,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
-    private Frame windowAncestor;
 
     public VisualizationPanel() {
         initComponents();
-        graph = new mxGraphImpl();
+        graph = new CommunicationsGraph();
 
         fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
         circleLayout = new mxCircleLayoutImpl(graph);
@@ -232,6 +239,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(null, new SelectionListener());
+        final mxEventSource.mxIEventListener undoListener = (Object sender, mxEventObject evt) ->
+                undoManager.undoableEditHappened((mxUndoableEdit) evt.getProperty("edit"));
+
+        graph.getModel().addListener(mxEvent.UNDO, undoListener);
+        graph.getView().addListener(mxEvent.UNDO, undoListener);
     }
 
     @Override
@@ -289,24 +301,21 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
 
             CancelationListener cancelationListener = new CancelationListener();
-            ModalDialogProgressIndicator modalDialogProgressIndicator = new ModalDialogProgressIndicator(windowAncestor, "Loading Visualization", new String[]{"Cancel"}, "Cancel", cancelationListener);
-            worker = graph.rebuild(modalDialogProgressIndicator, commsManager, currentFilter);
-            cancelationListener.setCancellable(worker);
-            worker.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(final PropertyChangeEvent evt) {
-                    if (worker.isDone()) {
-                        if (worker.isCancelled()) {
-                            graph.resetGraph();
-                            rebuildGraph();
-                        } else if (graph.getModel().getChildCount(graph.getDefaultParent()) < 64) {
-                            applyOrganicLayout(10);
-                        } else {
-                            JOptionPane.showMessageDialog(VisualizationPanel.this,
-                                    "Too many accounts, layout aborted.",
-                                    "Autopsy",
-                                    JOptionPane.WARNING_MESSAGE);
-                        }
+            ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Loading Visualization", new String[]{CANCEL}, CANCEL, cancelationListener);
+            worker = graph.rebuild(progress, commsManager, currentFilter);
+            cancelationListener.configure(worker, progress);
+            worker.addPropertyChangeListener((final PropertyChangeEvent evt) -> {
+                if (worker.isDone()) {
+                    if (worker.isCancelled()) {
+                        graph.resetGraph();
+                        rebuildGraph();
+                    } else if (graph.getModel().getChildCount(graph.getDefaultParent()) < 64) {
+                        applyOrganicLayout(10);
+                    } else {
+                        JOptionPane.showMessageDialog(VisualizationPanel.this,
+                                "Too many accounts, layout aborted.",
+                                "Autopsy",
+                                JOptionPane.WARNING_MESSAGE);
                     }
                 }
             });
@@ -632,7 +641,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getModel().beginUpdate();
 
         CancelationListener cancelationListener = new CancelationListener();
-        ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Computing layout", new String[]{"Cancel"}, "Cancel", cancelationListener);
+        ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Computing layout", new String[]{CANCEL}, CANCEL, cancelationListener);
         SwingWorker<Void, Void> morphWorker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -657,15 +666,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 });
                 morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
                     graph.getModel().endUpdate();
-                    fitGraph();
+                    if (isCancelled()) {
+                        undoManager.undo();
+                    } else {
+                        fitGraph();
+                    }
                     progress.finish();
                 });
 
                 morph.startAnimation();
                 return null;
+
             }
         };
-        cancelationListener.setCancellable(morphWorker);
+        cancelationListener.configure(morphWorker, progress);
         morphWorker.execute();
     }
 
@@ -813,14 +827,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private class CancelationListener implements ActionListener {
 
         private Future<?> cancellable;
+        private ModalDialogProgressIndicator progress;
 
-        void setCancellable(Future<?> cancellable) {
+        void configure(Future<?> cancellable, ModalDialogProgressIndicator progress) {
             this.cancellable = cancellable;
+            this.progress = progress;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            progress.setCancelling("Cancelling...");
             cancellable.cancel(true);
+            progress.finish();
         }
 
     }
