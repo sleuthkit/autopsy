@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class DeleteFileContentTagAction extends AbstractAction implements Presenter.Popup {
     
-    private static final Logger LOGGER = Logger.getLogger(DeleteFileContentTagAction.class.getName());
+    private static final Logger logger = Logger.getLogger(DeleteFileContentTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteFileContentTagAction.class,
@@ -97,17 +97,11 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
             protected Void doInBackground() throws Exception {
                 TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
                 
-                // Pull the from the global context to avoid unnecessary calls
-                // to the database.
-                final Collection<AbstractFile> selectedFilesList =
-                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                AbstractFile file = selectedFilesList.iterator().next();
-                
                 try {
-                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
+                    logger.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), contentTag.getContent().getName()}); //NON-NLS
                     tagsManager.deleteContentTag(contentTag);
                 } catch (TskCoreException tskCoreException) {
-                    LOGGER.log(Level.SEVERE, "Error untagging file", tskCoreException); //NON-NLS
+                    logger.log(Level.SEVERE, "Error untagging file", tskCoreException); //NON-NLS
                     Platform.runLater(() ->
                             new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
                     );
@@ -121,7 +115,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while untagging file", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unexpected exception while untagging file", ex); //NON-NLS
                 }
             }
         }.execute();

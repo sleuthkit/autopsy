@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -284,15 +284,6 @@ class AccountsText implements IndexedText {
     }
 
     @Override
-    @NbBundle.Messages({"AccountsText.getMarkup.noMatchMsg="
-        + "<html><pre><span style\\\\='background\\\\:yellow'>There were no keyword hits on this page. <br />"
-        + "The keyword could have been in the file name."
-        + " <br />Advance to another page if present, or to view the original text, choose File Text"
-        + " <br />in the drop down menu to the right...</span></pre></html>",
-        "AccountsText.getMarkup.queryFailedMsg="
-        + "<html><pre><span style\\\\='background\\\\:yellow'>Failed to retrieve keyword hit results."
-        + " <br />Confirm that Autopsy can connect to the Solr server. "
-        + "<br /></span></pre></html>"})
     public String getText() {
         try {
             loadPageInfo(); //inits once
@@ -321,7 +312,7 @@ class AccountsText implements IndexedText {
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
-            return Bundle.AccountsText_getMarkup_queryFailedMsg();
+            return Bundle.IndexedText_errorMessage_errorGettingText();
         }
     }
 
