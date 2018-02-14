@@ -182,7 +182,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);
+            File l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
             if (!l01Dir.exists()) {
                 l01Dir.mkdirs();
             }
@@ -194,8 +194,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {
-                //WJS-TODO redirect stdout and stderr to logger instead?
-                // redirect  ewfexport stdout and stderr to txt file
+                //redirect  ewfexport stdout and stderr to txt file
                 Path logFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
                 File logFile = new File(logFileName.toString());
                 Path errFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
