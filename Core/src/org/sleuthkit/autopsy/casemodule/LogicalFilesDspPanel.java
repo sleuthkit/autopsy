@@ -43,7 +43,7 @@ final class LogicalFilesDspPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static LocalFilesPanel localFilesPanel = new LocalFilesPanel();
-    private static L01Panel l01panel = L01Panel.createInstance();
+    private static LogicalEvidenceFilePanel l01panel = LogicalEvidenceFilePanel.createInstance();
     private static LogicalFilesDspPanel instance;
     private static final Logger logger = Logger.getLogger(LogicalFilesDspPanel.class.getName());
 
