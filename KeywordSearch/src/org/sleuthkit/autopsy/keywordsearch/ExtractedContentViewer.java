@@ -323,8 +323,8 @@ public class ExtractedContentViewer implements DataContentViewer {
                 } catch (TskCoreException ex) {
                     /*
                      * If there was an error checking the account type, fall
-                     * back to the check below for the file (if there is one)
-                     * associated with the account.
+                     * back to the check below for the file associated with the
+                     * account (if there is one).
                      */
                     logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + artifact.getArtifactID(), ex);
                 }
