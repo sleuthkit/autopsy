@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
@@ -57,16 +61,18 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * DataResultPanel.
  */
 @RetainLocation("editor")
-public class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
+public class DataResultTopComponent extends TopComponent implements DataResult, FocusListener, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
     private final ExplorerManager explorerManager = new ExplorerManager();
     private final DataResultPanel dataResultPanel; //embedded component with all the logic
+    private int dataContentTabIndex = 0;
     private boolean isMain;
     private String customModeName;
 
     //keep track of tcs opened for menu presenters
     private static final List<String> activeComponentIds = Collections.synchronizedList(new ArrayList<String>());
+    private static final Map<String, Integer> dataContentTabIndexes = Collections.synchronizedMap(new HashMap<String, Integer>());
 
     /**
      * Create a new data result top component
@@ -99,6 +105,39 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         initComponents();
         customizeComponent(isMain, name);
     }
+    
+    @Override
+    public boolean requestFocusInWindow() {
+        return super.requestFocusInWindow();
+    }
+    
+    @Override
+    public void componentActivated() {
+        super.componentActivated();
+        
+        DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
+        Node[] nodeList = explorerManager.getSelectedNodes();
+        
+        if (nodeList.length == 1) {
+            dataContentTopComponent.setNode(nodeList[0]);
+        } else {
+            dataContentTopComponent.setNode(null);
+        }
+        
+        int selectedIndex = dataContentTopComponent.getTabPanels().getSelectedIndex();
+        dataContentTabIndexes.put(dataResultPanel.getName(), selectedIndex);
+    }
+    
+    @Override
+    public void componentHidden() {
+        super.componentHidden();
+        
+        DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
+        Integer selectedIndex = dataContentTabIndexes.get(dataResultPanel.getName());
+        if (selectedIndex != null) {
+            dataContentTopComponent.getTabPanels().setSelectedIndex(selectedIndex);
+        }
+    }
 
     private void customizeComponent(boolean isMain, String title) {
         this.isMain = isMain;
@@ -114,6 +153,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain); // set option to close compoment in GUI
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
         putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
+        addFocusListener(this);
 
         activeComponentIds.add(title);
     }
@@ -339,5 +379,15 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     void setNumMatches(int matches) {
         this.dataResultPanel.setNumMatches(matches);
+    }
+
+    @Override
+    public void focusGained(FocusEvent fe) {
+        System.out.println("focusGained");
+    }
+
+    @Override
+    public void focusLost(FocusEvent fe) {
+        System.out.println("focusLost");
     }
 }
