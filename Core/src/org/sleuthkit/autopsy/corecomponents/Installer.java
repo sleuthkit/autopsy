@@ -28,6 +28,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -72,6 +73,8 @@ public class Installer extends ModuleInstall {
     private void setLookAndFeel() {
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setOSXLookAndFeel();
+        }else if (System.getProperty("os.name").toLowerCase().contains("nux")){
+            setUnixLookAndFeel();
         }
     }
 
@@ -110,5 +113,14 @@ public class Installer extends ModuleInstall {
         uiEntries.entrySet().stream().forEach((entry) -> {
             UIManager.put(entry.getKey(), entry.getValue());
         });
+    }
+    
+    private void setUnixLookAndFeel(){
+        try {
+            //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 }

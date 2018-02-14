@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -84,7 +83,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
          * disabled that check because if it is executed while a data source is
          * being added, it blocks the edt. We still do that in ImageGallery.
          */
-        return PlatformUtil.isWindowsOS() && super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
+        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
     }
 
     @Override
@@ -98,10 +97,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 }
             }
             setEnabled(false);
-        } else if(!isEnabled()){
-            Platform.runLater(PromptDialogManager::showLinuxTimelineMessage);
-            setEnabled(false);
-        }else{
+        } else {
             showTimeline();
         }
     }
