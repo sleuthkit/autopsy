@@ -32,6 +32,9 @@ import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
+/**
+ *  A panel which allows the user to select local files and/or directories.
+ */
 final class LocalFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -69,10 +72,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         selectButton = new javax.swing.JButton();
         clearButton = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        selectedPathsScrollPane = new javax.swing.JScrollPane();
         selectedPaths = new javax.swing.JTextArea();
         errorLabel = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        changeNameButton = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
@@ -103,21 +106,21 @@ final class LocalFilesPanel extends javax.swing.JPanel {
             }
         });
 
-        jScrollPane2.setPreferredSize(new java.awt.Dimension(379, 96));
+        selectedPathsScrollPane.setPreferredSize(new java.awt.Dimension(379, 96));
 
         selectedPaths.setEditable(false);
         selectedPaths.setColumns(20);
         selectedPaths.setRows(5);
         selectedPaths.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectedPaths.toolTipText")); // NOI18N
-        jScrollPane2.setViewportView(selectedPaths);
+        selectedPathsScrollPane.setViewportView(selectedPaths);
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(changeNameButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.changeNameButton.text")); // NOI18N
+        changeNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                changeNameButtonActionPerformed(evt);
             }
         });
 
@@ -131,7 +134,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(selectedPathsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -142,7 +145,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(displayNameLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1))
+                                .addComponent(changeNameButton))
                             .addComponent(errorLabel))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
@@ -158,10 +161,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                         .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(36, 36, 36)
                         .addComponent(clearButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(selectedPathsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(changeNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(displayNameLabel))
                 .addGap(13, 13, 13)
                 .addComponent(errorLabel)
@@ -211,14 +214,17 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         reset();
     }//GEN-LAST:event_clearButtonActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void changeNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_changeNameButtonActionPerformed
         String displayName = JOptionPane.showInputDialog("New Display Name: ");
         if (displayName != null && !displayName.equals("")) {
             this.displayName = displayName;
             this.displayNameLabel.setText("Display Name: " + this.displayName);
         }
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_changeNameButtonActionPerformed
 
+    /**
+     * Clear the fields and undo any selection of files.
+     */
     void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
@@ -235,7 +241,11 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }
-
+    /**
+     * Get the path(s) which have been selected on this panel
+     * 
+     * @return a List of Strings representing the path(s) for the selected files or directories
+     */
     List<String> getContentPaths() {
         List<String> pathsList = new ArrayList<>();
         if (currentFiles == null) {
@@ -247,6 +257,12 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         return pathsList;
     }
 
+    /**
+     * Validates path to selected data source and displays warning if it is
+     * invalid.
+     *
+     * @return enableNext - true if the panel is valid, false if invalid
+     */
     boolean validatePanel() {
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(getContentPaths());
@@ -273,19 +289,24 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Get the name given to this collection of local files and directories
+     * 
+     * @return a String which is the name for the file set.
+     */
     String getFileSetName() {
         return this.displayName;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton changeNameButton;
     private javax.swing.JButton clearButton;
     private javax.swing.JLabel displayNameLabel;
     private javax.swing.JLabel errorLabel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JFileChooser localFileChooser;
     private javax.swing.JButton selectButton;
     private javax.swing.JTextArea selectedPaths;
+    private javax.swing.JScrollPane selectedPathsScrollPane;
     // End of variables declaration//GEN-END:variables
 }
