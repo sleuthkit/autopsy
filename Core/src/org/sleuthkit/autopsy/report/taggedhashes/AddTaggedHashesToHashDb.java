@@ -55,7 +55,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
 
     @Override
     public String getDescription() {
-        return "Adds hashes of tagged files to a hash database.";
+        return "Adds hashes of tagged files to a hash set.";
     }
 
     @Override
@@ -92,17 +92,17 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                                 try {
                                     hashSet.addHashes(tag.getContent(), Case.getCurrentCase().getDisplayName());
                                 } catch (TskCoreException ex) {
-                                    Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash database " + hashSet.getHashSetName(), ex);
+                                    Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
                                     failedExports.add(tag.getContent().getName());
                                 }
                             } else {
-                                JOptionPane.showMessageDialog(null, "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash database. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Database Error", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(null, "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Set Error", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
                         }
                     }
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash database", ex);
+                    Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
                     JOptionPane.showMessageDialog(null, "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
