@@ -222,5 +222,19 @@ public final class PromptDialogManager {
         dialog.setHeaderText(Bundle.PromptDialogManager_showTooManyFiles_headerText());
         dialog.showAndWait();
     }
+    
+    @NbBundle.Messages({
+        "PromptDialogManager.showLinuxTimelineMessage.contextText="
+        + "Timeline functionality is not available for linux right now."
+        + "Timeline will be disabled. ",
+        "PromptDialogManager.showLinuxTimelineMessage.headerText="})
+    static void showLinuxTimelineMessage(){
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION, Bundle.PromptDialogManager_showLinuxTimelineMessage_contextText(),ButtonType.OK);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle(Bundle.Timeline_dialogs_title());
+        setDialogIcons(dialog);
+        dialog.setHeaderText(Bundle.PromptDialogManager_showLinuxTimelineMessage_headerText());
+        dialog.showAndWait();
+    }
 
 }
