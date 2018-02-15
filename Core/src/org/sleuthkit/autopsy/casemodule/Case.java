@@ -615,12 +615,10 @@ public class Case {
      * @throws NoCurrentCaseException if there is no open case.
      */
     public static Case getOpenCase() throws NoCurrentCaseException {
-        try {
-            Case openCase = new Case(currentCase.getCaseType(), 
-                                currentCase.getCacheDirectory(), 
-                                new CaseDetails(currentCase.getDisplayName(), currentCase.getNumber(), currentCase.getExaminer(), currentCase.getExaminerPhone(), currentCase.getExaminerEmail(), currentCase.getCaseNotes()));
+        Case openCase = currentCase;
+        if (null != openCase) {
             return openCase;
-        } catch (NullPointerException ex) {
+        } else {
             throw new NoCurrentCaseException();
         }
     }
