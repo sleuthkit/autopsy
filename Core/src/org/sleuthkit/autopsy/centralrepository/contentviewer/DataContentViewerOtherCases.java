@@ -489,12 +489,16 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             corAttrInstances.addAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
 
             corAttrInstances.forEach((corAttrInstance) -> {
-                CorrelationAttribute newCeArtifact = new CorrelationAttribute(
-                        corAttr.getCorrelationType(),
-                        corAttr.getCorrelationValue()
-                );
-                newCeArtifact.addInstance(corAttrInstance);
-                tableModel.addEamArtifact(newCeArtifact);
+                try {
+                    CorrelationAttribute newCeArtifact = new CorrelationAttribute(
+                            corAttr.getCorrelationType(),
+                            corAttr.getCorrelationValue()
+                    );
+                    newCeArtifact.addInstance(corAttrInstance);
+                    tableModel.addEamArtifact(newCeArtifact);
+                } catch (EamDbException ex){
+                    LOGGER.log(Level.SEVERE, "Error creating correlation attribute", ex);
+                }
             });
         }
 

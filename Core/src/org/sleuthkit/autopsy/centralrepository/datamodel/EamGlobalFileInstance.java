@@ -36,7 +36,7 @@ public class EamGlobalFileInstance {
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) {
+            String comment) throws EamDbException {
         this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
 
@@ -45,7 +45,13 @@ public class EamGlobalFileInstance {
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) {
+            String comment) throws EamDbException {
+        if(MD5Hash == null){
+            throw new EamDbException("null MD5 hash");
+        }
+        if(knownStatus == null){
+            throw new EamDbException("null known status");
+        }
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
         // Normalize hashes by lower casing
@@ -111,7 +117,10 @@ public class EamGlobalFileInstance {
     /**
      * @param MD5Hash the MD5Hash to set
      */
-    public void setMD5Hash(String MD5Hash) {
+    public void setMD5Hash(String MD5Hash) throws EamDbException {
+        if(MD5Hash == null){
+            throw new EamDbException("null MD5 hash");
+        }
         // Normalize hashes by lower casing
         this.MD5Hash = MD5Hash.toLowerCase();
     }
