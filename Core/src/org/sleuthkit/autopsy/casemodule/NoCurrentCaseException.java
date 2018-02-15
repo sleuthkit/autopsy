@@ -25,7 +25,7 @@ import org.openide.util.NbBundle;
  * Exception thrown when no current case is available
  */
 @NbBundle.Messages({
-        "NoCurrentCaseException.message=No open case is availabe."
+        "NoCurrentCaseException.message=No open case is available."
     })
 public class NoCurrentCaseException extends Exception {
 
