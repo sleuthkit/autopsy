@@ -41,6 +41,7 @@ public class Installer extends ModuleInstall {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static Installer instance;
+    public static boolean enableTimeline = true;
 
     public synchronized static Installer getDefault() {
         if (null == instance) {
@@ -117,10 +118,15 @@ public class Installer extends ModuleInstall {
     
     private void setUnixLookAndFeel(){
         try {
-            //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Error setting crossplatform look-and-feel, setting default look-and-feel",ex);
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                enableTimeline=false;
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex1) {
+                Exceptions.printStackTrace(ex1);
+            }
         }
     }
 }

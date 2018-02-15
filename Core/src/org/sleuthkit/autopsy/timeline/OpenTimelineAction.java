@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
+import static org.sleuthkit.autopsy.corecomponents.Installer.enableTimeline;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -97,7 +98,10 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 }
             }
             setEnabled(false);
-        } else {
+        }else if(!enableTimeline) {
+            Platform.runLater(PromptDialogManager::showTimeLineDisabledMessage);
+            setEnabled(false);
+        }else {
             showTimeline();
         }
     }
