@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -51,6 +50,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * A file content viewer for SQLITE db files.
+ * 
+ */
 public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
@@ -67,13 +70,8 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private int currPage = 0; // curr page of rows being displayed
 
     SQLiteTableView selectedTableView = new SQLiteTableView();
-
     private SwingWorker<? extends Object, ? extends Object> worker;
-    
-    
-    //private final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-    //private final Services services = new Services(sleuthkitCase);
-    //private final FileManager fileManager = services.getFileManager();
+   
 
     /**
      * Creates new form SQLiteViewer
