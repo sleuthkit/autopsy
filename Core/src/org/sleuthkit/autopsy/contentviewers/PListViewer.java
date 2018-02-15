@@ -23,7 +23,16 @@ import java.awt.Component;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import java.util.Arrays;
-import com.dd.plist.*;
+//import com.dd.plist.*;
+import com.dd.plist.NSDictionary;
+import com.dd.plist.PropertyListParser;
+import com.dd.plist.NSObject;
+import com.dd.plist.NSArray;
+import com.dd.plist.NSDate;
+import com.dd.plist.NSString;
+import com.dd.plist.NSNumber;
+import com.dd.plist.NSData;
+import com.dd.plist.PropertyListFormatException;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -55,7 +64,7 @@ import org.xml.sax.SAXException;
  */
 public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
 
-    private static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-bplist"};
+    private static final String[] MIMETYPES = new String[]{"application/x-bplist"};
     private static final Logger LOGGER = Logger.getLogger(PListViewer.class.getName());
     
     private final org.openide.explorer.view.OutlineView outlineView;
@@ -217,7 +226,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      */
     @Override
     public List<String> getSupportedMIMETypes() {
-         return Arrays.asList(SUPPORTED_MIMETYPES);
+         return Arrays.asList(MIMETYPES);
     }
 
     /**
@@ -266,7 +275,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             LOGGER.log(Level.SEVERE, "Error reading bytes of plist file.", ex);
         }
 
-        List<PropKeyValue> plist = parsePList(plistFileBuf);
+        final List<PropKeyValue> plist = parsePList(plistFileBuf);
         
         new SwingWorker<Void, Void>() {
             @Override
@@ -326,7 +335,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      * Parses the given plist key/value
      */
     @NbBundle.Messages({"PListViewer.DataType.message=Binary Data value not shown"})
-    private PropKeyValue parseProperty(final String key, NSObject value) {
+    private PropKeyValue parseProperty(final String key, final NSObject value) {
         if (value == null) {
             return null;
         } else if (value instanceof NSString) {
@@ -355,7 +364,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
                 children.add(parseProperty("", array.objectAtIndex(i)));
             }
             
-            pkv.setChildren(children.toArray(new PropKeyValue[0] ));
+            pkv.setChildren(children.toArray(new PropKeyValue[children.size()] ));
             return pkv;
         } else if (value instanceof NSDictionary) {
             final List<PropKeyValue> children = new ArrayList<>();
@@ -452,11 +461,11 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             return this.value;
         }
         
-        public PropKeyValue[] getChildren() {
+        PropKeyValue[] getChildren() {
             return children;
         }
         
-        public void setChildren(PropKeyValue...children) {
+        void setChildren(final PropKeyValue...children) {
             this.children = children;
         }
     }

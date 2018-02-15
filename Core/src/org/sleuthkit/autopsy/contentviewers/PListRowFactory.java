@@ -48,7 +48,7 @@ public class PListRowFactory extends ChildFactory<Integer> {
      * @return true 
      */
     @Override
-    protected boolean createKeys(List<Integer> keys) {
+    protected boolean createKeys(final List<Integer> keys) {
         if (rows != null) {
             for (int i = 0; i < rows.size(); i++) {
                 keys.add(i);
@@ -63,7 +63,7 @@ public class PListRowFactory extends ChildFactory<Integer> {
      * @return node for the given key, null if the key is invalid or node doesn't exist
      */
     @Override
-    protected Node createNodeForKey(Integer key) {
+    protected Node createNodeForKey(final Integer key) {
         if (Objects.isNull(rows) || rows.isEmpty() || key >= rows.size()) {
             return null;
         }
@@ -129,7 +129,7 @@ class PListNode extends AbstractNode {
 
         private final List<PropKeyValue> children;
 
-        public PListNodeChildren(PropKeyValue... children) {
+        PListNodeChildren(final PropKeyValue... children) {
             super();
             this.children = Arrays.asList(children);
         }
@@ -140,7 +140,7 @@ class PListNode extends AbstractNode {
         }
 
         @Override
-        protected Node[] createNodes(PropKeyValue propKeyVal) {
+        protected Node[] createNodes(final PropKeyValue propKeyVal) {
             return new Node[]{new PListNode(propKeyVal)};
         }
 
