@@ -280,8 +280,8 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
          * item in the data results if only one is selected, or show nothing
          * otherwise.
          */
-        DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
-        Node[] nodeList = explorerManager.getSelectedNodes();
+        final DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
+        final Node[] nodeList = explorerManager.getSelectedNodes();
 
         if (nodeList.length == 1) {
             dataContentTopComponent.setNode(nodeList[0]);
