@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
-    private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
+    private static final Logger logger = Logger.getLogger(FileViewer.class.getName());
     private Connection connection = null;
 
     private String tmpDBPathName = null;
@@ -287,7 +287,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 connection.close();
                 connection = null;
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
             }
         }
 
@@ -326,11 +326,11 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     // Read all table names and schema
                     return getTables();
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to copy DB file.", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Failed to copy DB file.", ex); //NON-NLS
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to Open DB.", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to Open DB.", ex); //NON-NLS
                 } catch (ClassNotFoundException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to initialize JDBC Sqlite.", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to initialize JDBC Sqlite.", ex); //NON-NLS
                 }
                 return false;
             }
@@ -350,7 +350,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         tablesDropdownList.setEnabled(false);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening DB file", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unexpected exception while opening DB file", ex); //NON-NLS
                 }
             }
         }.execute();
@@ -379,7 +379,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 dbTablesMap.put(tableName, tableSQL);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
         }
         return true;
     }
@@ -401,7 +401,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                     return resultSet.getInt("count");
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
                 }
                 //NON-NLS
                 return 0;
@@ -431,7 +431,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     }
 
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
                 }
             }
         };
@@ -458,7 +458,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                     return resultSetToArrayList(resultSet);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
                 }
                 //NON-NLS
                 return null;
@@ -480,7 +480,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         selectedTableView.setupTable(Collections.emptyList());
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
                 }
             }
         };

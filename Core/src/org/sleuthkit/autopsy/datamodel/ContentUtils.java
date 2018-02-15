@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -317,7 +317,7 @@ public final class ContentUtils {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE,
+                logger.log(Level.WARNING,
                         "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -329,7 +329,7 @@ public final class ContentUtils {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE,
+                logger.log(Level.WARNING,
                         "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -341,7 +341,7 @@ public final class ContentUtils {
             try {
                 ContentUtils.writeToFile(df, dest, progress, worker, source);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE,
+                logger.log(Level.WARNING,
                         "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -353,7 +353,7 @@ public final class ContentUtils {
             try {
                 ContentUtils.writeToFile(lf, dest, progress, worker, source);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE,
+                logger.log(Level.WARNING,
                         "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -365,7 +365,7 @@ public final class ContentUtils {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE,
+                logger.log(Level.WARNING,
                         "Trouble extracting slack file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }

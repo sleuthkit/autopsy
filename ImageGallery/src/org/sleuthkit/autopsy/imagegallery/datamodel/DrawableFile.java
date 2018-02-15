@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -313,8 +313,18 @@ public abstract class DrawableFile {
         return this.file;
     }
 
+    /**
+     * Get the width of the visual content.
+     * 
+     * @return The width.
+     */
     abstract Double getWidth();
 
+    /**
+     * Get the height of the visual content.
+     * 
+     * @return The height.
+     */
     abstract Double getHeight();
 
     public String getDrawablePath() {
