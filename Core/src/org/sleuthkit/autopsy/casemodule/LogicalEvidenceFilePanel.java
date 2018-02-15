@@ -63,7 +63,7 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
      * @return 
      */
     static synchronized LogicalEvidenceFilePanel createInstance() {
-        LogicalEvidenceFilePanel instance = new LogicalEvidenceFilePanel();
+        final LogicalEvidenceFilePanel instance = new LogicalEvidenceFilePanel();
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         instance.logicalEvidencePathField.getDocument().addDocumentListener(instance);
         return instance;
@@ -137,11 +137,11 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
 
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
-        int returnVal = logicalEvidenceFileChooser.showOpenDialog(this);
+        final int returnVal = logicalEvidenceFileChooser.showOpenDialog(this);
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = logicalEvidenceFileChooser.getSelectedFile();
-            StringBuilder allPaths = new StringBuilder();
+            final File file = logicalEvidenceFileChooser.getSelectedFile();
+            final StringBuilder allPaths = new StringBuilder();
             currentFiles.add(file);
             allPaths.append(file.getAbsolutePath());
             logicalEvidencePathField.setText(allPaths.toString());
@@ -173,25 +173,25 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
      * @return true for a valid selection, false for an invalid or empty selection 
      */
     @Messages({
-        "L01Panel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here."
+        "LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here."
     })
     boolean validatePanel() {
         errorLabel.setVisible(false);
         // display warning if there is one (but don't disable "next" button)
-        String path = logicalEvidencePathField.getText();
+        final String path = logicalEvidencePathField.getText();
         if (StringUtils.isBlank(path)) {
             return false;
         }
         // display warning if there is one (but don't disable "next" button)
-        if (false == PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
             return false;
         }
         //check the extension incase the path was manually entered
-        if (!LocalFilesDSProcessor.getLogicalEvidenceFilter().accept((new File(path)))) {
+        if (!LocalFilesDSProcessor.getLogicalEvidenceFilter().accept(new File(path))) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.L01Panel_validatePanel_nonL01Error_text());
+            errorLabel.setText(Bundle.LogicalEvidenceFilePanel_validatePanel_nonL01Error_text());
             return false;
         }
 
@@ -205,11 +205,11 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
      * @return a List of Strings representing the path(s) for the selected files
      */
     List<String> getContentPaths() {
-        List<String> pathsList = new ArrayList<>();
+        final List<String> pathsList = new ArrayList<>();
         if (currentFiles == null) {
             return pathsList;
         }
-        for (File f : currentFiles) {
+        for (final File f : currentFiles) {
             pathsList.add(f.getAbsolutePath());
         }
         return pathsList;
@@ -225,31 +225,31 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
     }
 
     @Override
-    public void insertUpdate(DocumentEvent e) {
+    public void insertUpdate(final DocumentEvent docEvent) {
         fireChange();
     }
 
     @Override
-    public void removeUpdate(DocumentEvent e) {
+    public void removeUpdate(final DocumentEvent docEvent) {
         fireChange();
     }
 
     @Override
-    public void changedUpdate(DocumentEvent e) {
+    public void changedUpdate(final DocumentEvent docEvent) {
         fireChange();
     }
 
     @Messages({
-        "L01Panel.moduleErr.name=Module Error",
-        "L01Panel.moduleErr.msg=A module caused an error listening to L01Panel updates. See log to determine which module. Some data could be incomplete."
+        "LogicalEvidenceFilePanel.moduleErr.name=Module Error",
+        "LogicalEvidenceFilePanel.moduleErr.msg=A module caused an error listening to LogicalEvidenceFilePanel updates. See log to determine which module. Some data could be incomplete."
     })
     private void fireChange() {
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "L01Panel listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "L01Panel.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "L01Panel.moduleErr.msg"),
+            logger.log(Level.SEVERE, "LogicalEvidenceFilePanel listener threw exception", e); //NON-NLS
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LogicalEvidenceFilePanel.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "LogicalEvidenceFilePanel.moduleErr.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }

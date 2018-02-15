@@ -162,7 +162,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                     localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
                 } catch (L01Exception ex) {
                     //contents of l01 could not be extracted don't add data source or run ingest
-                    List<String> errors = new ArrayList<>();
+                    final List<String> errors = new ArrayList<>();
                     errors.add(ex.getMessage());
                     callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
                     return;
@@ -182,35 +182,43 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *         logical evidence files
      *
      * @throws
-     * org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception 
+     * org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception
      */
-    private List<String> extractLogicalEvidenceFileContents(List<String> logicalEvidenceFilePaths) throws L01Exception {
-        List<String> extractedPaths = new ArrayList<>();
+    private List<String> extractLogicalEvidenceFileContents(final List<String> logicalEvidenceFilePaths) throws L01Exception {
+        final List<String> extractedPaths = new ArrayList<>();
         Path ewfexportPath;
         ewfexportPath = locateEwfexportExecutable();
-        for (String l01Path : logicalEvidenceFilePaths) {
-            List<String> command = new ArrayList<>();
+        List<String> command;
+        File l01Dir;
+        Path dirPath;
+        ProcessBuilder processBuilder;
+        Path logFileName;
+        File logFile;
+        Path errFileName;
+        File errFile;
+        for (final String l01Path : logicalEvidenceFilePaths) {
+            command = new ArrayList<>();
             command.add(ewfexportPath.toAbsolutePath().toString());
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
+            l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
             if (!l01Dir.exists()) {
                 l01Dir.mkdirs();
             }
-            Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
+            dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
 
             command.add(dirPath.toString());
             command.add(l01Path);
 
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {
                 //redirect  ewfexport stdout and stderr to txt file
-                Path logFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
-                File logFile = new File(logFileName.toString());
-                Path errFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
-                File errFile = new File(errFileName.toString());
+                logFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
+                logFile = new File(logFileName.toString());
+                errFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
+                errFile = new File(errFileName.toString());
                 processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
                 // open the file with ewfexport to extract its contents
@@ -232,7 +240,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
     /**
      * Get a file filter for logical evidence files.
-     * 
+     *
      * @return LOGICAL_EVIDENCE_FILTER
      */
     static FileFilter getLogicalEvidenceFilter() {
@@ -241,10 +249,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
     /**
      * Gets the path for the ewfexport executable.
-     * 
+     *
      * @return the path to ewfexport.exe
-     * 
-     * @throws org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception 
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception
      */
     private Path locateEwfexportExecutable() throws L01Exception {
         // Must be running under a Windows operating system.
@@ -271,14 +280,14 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
         // Make sure the executable exists at the expected location and that it  
         // can be run.
-        File ewfexport = executablePath.toFile();
+        final File ewfexport = executablePath.toFile();
         if (null == ewfexport || !ewfexport.exists()) {
             throw new LocalFilesDSProcessor.L01Exception("EWF export executable was not found");
         }
         if (!ewfexport.canExecute()) {
             throw new LocalFilesDSProcessor.L01Exception("EWF export executable can not be executed");
         }
-        
+
         return executablePath;
     }
 
@@ -344,7 +353,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         //If there is only 1 file check if it is an L01 file and if it is extract the 
         //contents and replace the paths, if the contents can't be extracted return 0
         if (localFilePaths.size() == 1) {
-            for (String path : localFilePaths) {
+            for (final String path : localFilePaths) {
                 if (LOGICAL_EVIDENCE_FILTER.accept(new File(path))) {
                     try {
                         //if the L01 option was chosen
@@ -389,15 +398,15 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     /**
      * A custom exception for the L01 processing.
      */
-    private class L01Exception extends Exception {
+    private final class L01Exception extends Exception {
 
         private static final long serialVersionUID = 1L;
 
-        L01Exception(String message) {
+        L01Exception(final String message) {
             super(message);
         }
 
-        L01Exception(String message, Throwable cause) {
+        L01Exception(final String message, final Throwable cause) {
             super(message, cause);
         }
     }

@@ -27,7 +27,6 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 @Messages({
     "LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders",
@@ -40,10 +39,9 @@ final class LogicalFilesDspPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static LocalFilesPanel localFilesPanel = new LocalFilesPanel();
-    private static LogicalEvidenceFilePanel l01panel = LogicalEvidenceFilePanel.createInstance();
+    private final LocalFilesPanel localFilesPanel = new LocalFilesPanel();
+    private final LogicalEvidenceFilePanel l01panel = LogicalEvidenceFilePanel.createInstance();
     private static LogicalFilesDspPanel instance;
-    private static final Logger logger = Logger.getLogger(LogicalFilesDspPanel.class.getName());
 
     /**
      * Creates new form LocalFilesPanel
@@ -55,14 +53,15 @@ final class LogicalFilesDspPanel extends JPanel {
         dspSubtypePanel.add(localFilesPanel);
         l01panel.setVisible(false);
     }
+    
     @Override
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+    public void addPropertyChangeListener(final PropertyChangeListener listener) {
         super.addPropertyChangeListener(listener);
         localFilesPanel.addPropertyChangeListener(listener);
         l01panel.addPropertyChangeListener(listener); 
     }
     @Override
-     public void removePropertyChangeListener(PropertyChangeListener listener) {
+     public void removePropertyChangeListener(final PropertyChangeListener listener) {
         super.removePropertyChangeListener(listener);
         localFilesPanel.removePropertyChangeListener(listener);
         l01panel.removePropertyChangeListener(listener); 
@@ -151,8 +150,7 @@ final class LogicalFilesDspPanel extends JPanel {
 
     private void dspSubtypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dspSubtypeComboBoxActionPerformed
         if (evt.getSource() instanceof JComboBox<?>) {
-            JComboBox<?> cb = (JComboBox<?>) evt.getSource();
-            String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
+            final String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
             if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
                 localFilesPanel.setVisible(true);
                 l01panel.setVisible(false);
@@ -172,7 +170,7 @@ final class LogicalFilesDspPanel extends JPanel {
     boolean validatePanel() {
         // display warning if there is one (but don't disable "next" button)
 
-        String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
+        final String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text())) {
             return localFilesPanel.validatePanel();
         } else if (selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text())) {

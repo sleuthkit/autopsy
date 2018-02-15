@@ -215,9 +215,9 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void changeNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_changeNameButtonActionPerformed
-        String displayName = JOptionPane.showInputDialog("New Display Name: ");
-        if (displayName != null && !displayName.equals("")) {
-            this.displayName = displayName;
+        String selectedDisplayName = JOptionPane.showInputDialog("New Display Name: ");
+        if (selectedDisplayName != null && !selectedDisplayName.isEmpty()) {
+            this.displayName = selectedDisplayName;
             this.displayNameLabel.setText("Display Name: " + this.displayName);
         }
     }//GEN-LAST:event_changeNameButtonActionPerformed
@@ -275,10 +275,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
      *
      * @param paths Absolute paths to the selected data source
      */
-    private void warnIfPathIsInvalid(List<String> pathsList) {
+    private void warnIfPathIsInvalid(final List<String> pathsList) {
         errorLabel.setVisible(false);
 
-        Case.CaseType currentCaseType = Case.getCurrentCase().getCaseType();
+        final Case.CaseType currentCaseType = Case.getCurrentCase().getCaseType();
 
         for (String currentPath : pathsList) {
             if (!PathValidator.isValid(currentPath, currentCaseType)) {
