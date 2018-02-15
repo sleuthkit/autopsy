@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -109,7 +109,7 @@ class Firefox extends Extract {
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox web history artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error writing the sqlite db for firefox web history artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));
@@ -196,7 +196,7 @@ class Firefox extends Extract {
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errAnalyzeFile",
                         this.getName(), fileName));
                 continue;
@@ -280,7 +280,7 @@ class Firefox extends Extract {
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));
@@ -395,7 +395,7 @@ class Firefox extends Extract {
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errAnalyzeFiles",
                         this.getName(), fileName));
                 continue;
@@ -426,7 +426,7 @@ class Firefox extends Extract {
 
                 if (target != null) {
                     try {
-                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8"); //NON-NLS
+                        String decodedTarget = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                 NbBundle.getMessage(this.getClass(),
                                         "Firefox.parentModuleName.noSpace"),
@@ -508,7 +508,7 @@ class Firefox extends Extract {
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error writing the sqlite db for firefox download artifacts.{0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));
@@ -538,7 +538,7 @@ class Firefox extends Extract {
                 String target = result.get("target").toString(); //NON-NLS
                 if (target != null) {
                     try {
-                        String decodedTarget = URLDecoder.decode(target.toString().replaceAll("file:///", ""), "UTF-8"); //NON-NLS
+                        String decodedTarget = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                 NbBundle.getMessage(this.getClass(),
                                         "Firefox.parentModuleName.noSpace"),

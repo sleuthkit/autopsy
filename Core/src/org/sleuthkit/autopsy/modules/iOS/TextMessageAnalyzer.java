@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.iOS;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -50,7 +51,7 @@ class TextMessageAnalyzer {
     private long fileId = 0;
     private java.io.File jFile = null;
     List<AbstractFile> absFiles;
-    private String moduleName = iOSModuleFactory.getModuleName();
+    private final String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
     private Blackboard blackboard;
 
@@ -65,10 +66,12 @@ class TextMessageAnalyzer {
             for (AbstractFile AF : absFiles) {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     dbPath = jFile.toString(); //path of file as string
+                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     fileId = AF.getId();
                     findTextsInDB(dbPath, fileId);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s'.", dbPath), ex); //NON-NLS
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
                 }
@@ -96,7 +99,7 @@ class TextMessageAnalyzer {
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
             if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fId); //NON-NLS
                 return;
             }
 

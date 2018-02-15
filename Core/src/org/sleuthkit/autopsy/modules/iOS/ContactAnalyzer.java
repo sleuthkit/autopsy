@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,9 +52,8 @@ class ContactAnalyzer {
     private ResultSet resultSet = null;
     private Statement statement = null;
     private String dbPath = "";
-    private long fileId = 0;
     private java.io.File jFile = null;
-    private String moduleName = iOSModuleFactory.getModuleName();
+    private final String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
     private Blackboard blackboard;
 
@@ -71,13 +70,10 @@ class ContactAnalyzer {
             for (AbstractFile AF : absFiles) {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    //jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), i+".txt");
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
-                    //copyFileUsingStreams(AF,jFile);
-                    //copyFileUsingStream(AF,jFile);
                     dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    //findContactsInDB(dbPath, fileId);
+                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s'.", dbPath), ex); //NON-NLS
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Contacts", e); //NON-NLS
                 }
@@ -112,7 +108,7 @@ class ContactAnalyzer {
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
             if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fId); //NON-NLS
                 return;
             }
 

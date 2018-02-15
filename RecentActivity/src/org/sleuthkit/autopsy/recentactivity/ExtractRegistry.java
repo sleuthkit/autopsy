@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -76,8 +76,8 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
-    private List<String> rrCmd = new ArrayList<>();
-    private List<String> rrFullCmd= new ArrayList<>();
+    private final List<String> rrCmd = new ArrayList<>();
+    private final List<String> rrFullCmd= new ArrayList<>();
     
 
     ExtractRegistry() throws IngestModuleException {
@@ -181,7 +181,7 @@ class ExtractRegistry extends Extract {
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex); //NON-NLS
+                logger.log(Level.WARNING, "Error writing the temp registry file. {0}", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                 this.getName(), regFileName));
