@@ -215,7 +215,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void changeNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_changeNameButtonActionPerformed
-        String selectedDisplayName = JOptionPane.showInputDialog("New Display Name: ");
+        final String selectedDisplayName = JOptionPane.showInputDialog("New Display Name: ");
         if (selectedDisplayName != null && !selectedDisplayName.isEmpty()) {
             this.displayName = selectedDisplayName;
             this.displayNameLabel.setText("Display Name: " + this.displayName);

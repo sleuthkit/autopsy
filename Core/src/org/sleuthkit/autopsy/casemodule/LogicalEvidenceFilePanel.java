@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
- *  A panel which allows the user to select a Logical Evidence File (L01)
+ * A panel which allows the user to select a Logical Evidence File (L01)
  */
 final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements DocumentListener {
 
@@ -58,15 +58,18 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
         logicalEvidenceFileChooser.setFileFilter(LocalFilesDSProcessor.getLogicalEvidenceFilter());
     }
 
-    /** 
+    /**
      * Create a new LogicalEvidencePanel.
-     * @return 
+     *
+     * @return
      */
-    static synchronized LogicalEvidenceFilePanel createInstance() {
-        final LogicalEvidenceFilePanel instance = new LogicalEvidenceFilePanel();
-        // post-constructor initialization of listener support without leaking references of uninitialized objects
-        instance.logicalEvidencePathField.getDocument().addDocumentListener(instance);
-        return instance;
+    static LogicalEvidenceFilePanel createInstance() {
+        synchronized (LogicalEvidenceFilePanel.class) {
+            final LogicalEvidenceFilePanel instance = new LogicalEvidenceFilePanel();
+            // post-constructor initialization of listener support without leaking references of uninitialized objects
+            instance.logicalEvidencePathField.getDocument().addDocumentListener(instance);
+            return instance;
+        }
     }
 
     /**
@@ -167,10 +170,11 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Check if the current selection exists and is a logical evidence file and 
+     * Check if the current selection exists and is a logical evidence file and
      * therefore the panel is valid.
-     * 
-     * @return true for a valid selection, false for an invalid or empty selection 
+     *
+     * @return true for a valid selection, false for an invalid or empty
+     *         selection
      */
     @Messages({
         "LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here."
@@ -201,7 +205,7 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
 
     /**
      * Get the path(s) which have been selected on this panel
-     * 
+     *
      * @return a List of Strings representing the path(s) for the selected files
      */
     List<String> getContentPaths() {
@@ -217,7 +221,7 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
 
     /**
      * Get the name of the logical evidence file which was selected.
-     * 
+     *
      * @return the name of the logical evidence file
      */
     String getFileSetName() {

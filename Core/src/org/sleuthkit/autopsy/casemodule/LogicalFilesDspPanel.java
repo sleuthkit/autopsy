@@ -53,25 +53,28 @@ final class LogicalFilesDspPanel extends JPanel {
         dspSubtypePanel.add(localFilesPanel);
         l01panel.setVisible(false);
     }
-    
+
     @Override
     public void addPropertyChangeListener(final PropertyChangeListener listener) {
         super.addPropertyChangeListener(listener);
         localFilesPanel.addPropertyChangeListener(listener);
-        l01panel.addPropertyChangeListener(listener); 
+        l01panel.addPropertyChangeListener(listener);
     }
+
     @Override
-     public void removePropertyChangeListener(final PropertyChangeListener listener) {
+    public void removePropertyChangeListener(final PropertyChangeListener listener) {
         super.removePropertyChangeListener(listener);
         localFilesPanel.removePropertyChangeListener(listener);
-        l01panel.removePropertyChangeListener(listener); 
-     }
-    
-    static synchronized LogicalFilesDspPanel getDefault() {
-        if (instance == null) {
-            instance = new LogicalFilesDspPanel();
+        l01panel.removePropertyChangeListener(listener);
+    }
+
+    static LogicalFilesDspPanel getDefault() {
+        synchronized (LogicalFilesDspPanel.class) {
+            if (instance == null) {
+                instance = new LogicalFilesDspPanel();
+            }
+            return instance;
         }
-        return instance;
     }
 
     String getContentType() {
@@ -164,7 +167,7 @@ final class LogicalFilesDspPanel extends JPanel {
 
     /**
      * Validate the contents of the panel and its subtype.
-     * 
+     *
      * @return true if the panel is valid, false if it is not
      */
     boolean validatePanel() {
@@ -186,18 +189,19 @@ final class LogicalFilesDspPanel extends JPanel {
 
     /**
      * Identify if the selected subtype panel is a LogicalEvidencePanel
-     * 
+     *
      * @return true if logical evidence files have been selected
      */
     boolean subTypeIsLogicalEvidencePanel() {
-        String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
+        final String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
         return selectedSubType.equals(Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text());
     }
 
     /**
      * Get the selected paths of the selected panel subtype.
-     * 
-     * @return a list of strings which are paths to the selected files or directories
+     *
+     * @return a list of strings which are paths to the selected files or
+     *         directories
      */
     List<String> getContentPaths() {
         String selectedSubType = dspSubtypeComboBox.getSelectedItem().toString();
@@ -213,7 +217,7 @@ final class LogicalFilesDspPanel extends JPanel {
 
     /**
      * Get the name of the file set based on its subtype.
-     * 
+     *
      * @return the name of the set of files to be ingested.
      */
     String getFileSetName() {

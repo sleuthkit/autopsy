@@ -188,37 +188,29 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         final List<String> extractedPaths = new ArrayList<>();
         Path ewfexportPath;
         ewfexportPath = locateEwfexportExecutable();
-        List<String> command;
-        File l01Dir;
-        Path dirPath;
-        ProcessBuilder processBuilder;
-        Path logFileName;
-        File logFile;
-        Path errFileName;
-        File errFile;
+        List<String> command = new ArrayList<>();
         for (final String l01Path : logicalEvidenceFilePaths) {
-            command = new ArrayList<>();
+            command.clear();
             command.add(ewfexportPath.toAbsolutePath().toString());
             command.add("-f");
             command.add("files");
             command.add("-t");
-            l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
+            File l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
             if (!l01Dir.exists()) {
                 l01Dir.mkdirs();
             }
-            dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
+            Path dirPath = Paths.get(FilenameUtils.getBaseName(l01Path) + UNIQUENESS_CONSTRAINT_SEPERATOR + System.currentTimeMillis());
 
             command.add(dirPath.toString());
             command.add(l01Path);
-
-            processBuilder = new ProcessBuilder(command);
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(l01Dir);
             try {
                 //redirect  ewfexport stdout and stderr to txt file
-                logFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
-                logFile = new File(logFileName.toString());
-                errFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
-                errFile = new File(errFileName.toString());
+                Path logFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
+                File logFile = new File(logFileName.toString());
+                Path errFileName = Paths.get(l01Dir.toString(), dirPath.toString() + LOG_FILE_EXTENSION);
+                File errFile = new File(errFileName.toString());
                 processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(errFile));
                 processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
                 // open the file with ewfexport to extract its contents
