@@ -91,8 +91,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A panel that goes in the Visualize tab of the Communications Visualization
- * Tool. Hosts an JGraphX mxGraphComponent that host the communications network
- * visualization and a MessageBrowser for viewing details of communications.
+ * Tool. Hosts an JGraphX mxGraphComponent that implements the communications
+ * network visualization and a MessageBrowser for viewing details of
+ * communications.
  *
  * The Lookup provided by getLookup will be proxied by the lookup of the
  * CVTTopComponent when this tab is active allowing for context sensitive
@@ -140,10 +141,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
+    private final PinnedAccountModel pinnedAccountModel;
+    private final LockedVertexModel lockedVertexModel;
 
     public VisualizationPanel() {
         initComponents();
         graph = new CommunicationsGraph();
+        pinnedAccountModel = graph.getPinnedAccountModel();
+        lockedVertexModel = graph.getLockedVertexModel();
 
         fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
         circleLayout = new mxCircleLayoutImpl(graph);
@@ -193,22 +198,22 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         final JPopupMenu jPopupMenu = new JPopupMenu();
                         final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
 
-                        if (graph.isVertexLocked(cellAt)) {
+                        if (lockedVertexModel.isVertexLocked(cellAt)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    graph.unlockVertex(cellAt);
+                                    lockedVertexModel.unlockVertex(cellAt);
                                 }
                             }));
                         } else {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
-                                    graph.lockVertex(cellAt);
+                                    lockedVertexModel.lockVertex(cellAt);
                                 }
                             }));
                         }
-                        if (graph.isAccountPinned(adiKey)) {
+                        if (pinnedAccountModel.isAccountPinned(adiKey)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
                                 @Override
                                 public void actionPerformed(ActionEvent e) {
@@ -247,6 +252,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Override
+
     public Lookup getLookup() {
         return proxyLookup;
     }
@@ -254,7 +260,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @Subscribe
     void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
-        graph.unpinAccount(pinEvent.getAccountDeviceInstances());
+        pinnedAccountModel.unpinAccount(pinEvent.getAccountDeviceInstances());
         graph.clear();
         rebuildGraph();
         // Updates the display
@@ -268,7 +274,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         if (pinEvent.isReplace()) {
             graph.resetGraph();
         }
-        graph.pinAccount(pinEvent.getAccountDeviceInstances());
+        pinnedAccountModel.pinAccount(pinEvent.getAccountDeviceInstances());
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
@@ -289,7 +295,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void rebuildGraph() {
-        if (graph.isEmpty()) {
+        if (pinnedAccountModel.isEmpty()) {
             borderLayoutPanel.remove(graphComponent);
             borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
             repaint();
@@ -743,7 +749,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
@@ -766,7 +772,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
@@ -789,7 +795,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
@@ -811,7 +817,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || VisualizationPanel.this.graph.isVertexLocked((mxCell) vertex);
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override

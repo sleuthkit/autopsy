@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.communications;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.Subscribe;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.util.mxConstants;
@@ -44,6 +44,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
+import org.sleuthkit.autopsy.communications.visualization.EventHandler;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -52,6 +53,10 @@ import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Implementation of mxGraph customized for our use in the CVT visualize mode.
+ * Acts as the primary entry point into the JGraphX API.
+ */
 final class CommunicationsGraph extends mxGraph {
 
     private static final Logger logger = Logger.getLogger(CommunicationsGraph.class.getName());
@@ -68,12 +73,11 @@ final class CommunicationsGraph extends mxGraph {
         labelMustache = new DefaultMustacheFactory().compile(new InputStreamReader(templateStream), "Vertex_Label");
     }
 
+    /**
+     * Style sheet for default vertex and edge styles. These are initialized in
+     * the static block below.
+     */
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
-    private final Set<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
-    private final Set<mxCell> lockedVertices = new HashSet<>();
-
-    private final Map<String, mxCell> nodeMap = new HashMap<>();
-    private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
 
     static {
         //initialize defaul vertex properties
@@ -88,8 +92,22 @@ final class CommunicationsGraph extends mxGraph {
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
 
+    /**
+     * Map from type specific account identifier to mxCell(vertex).
+     */
+    private final Map<String, mxCell> nodeMap = new HashMap<>();
+
+    /**
+     * Map from relationship source (Content) to mxCell (edge).
+     */
+    private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
+    private final LockedVertexModel lockedVertexModel;
+
+    private final PinnedAccountModel pinnedAccountModel;
+
     CommunicationsGraph() {
         super(mxStylesheet);
+        //set fixed properties of graph.
         setAutoSizeCells(true);
         setCellsCloneable(false);
         setDropEnabled(false);
@@ -107,16 +125,39 @@ final class CommunicationsGraph extends mxGraph {
         setKeepEdgesInBackground(true);
         setResetEdgesOnMove(true);
         setHtmlLabels(true);
+
+        lockedVertexModel = new LockedVertexModel();
+        lockedVertexModel.registerhandler(new EventHandler<LockedVertexModel.VertexLockEvent>() {
+            @Override
+            @Subscribe
+            public void handle(LockedVertexModel.VertexLockEvent event) {
+                if (event.isVertexLocked()) {
+                    getView().clear(event.getVertex(), true, true);
+                    getView().validate();
+                } else {
+                    final mxCellState state = getView().getState(event.getVertex(), true);
+                    getView().updateLabel(state);
+                    getView().updateLabelBounds(state);
+                    getView().updateBoundingBox(state);
+                }
+            }
+        });
+
+        pinnedAccountModel = new PinnedAccountModel(this);
+    }
+
+    public LockedVertexModel getLockedVertexModel() {
+        return lockedVertexModel;
+    }
+
+    public PinnedAccountModel getPinnedAccountModel() {
+        return pinnedAccountModel;
     }
 
     void clear() {
         nodeMap.clear();
         edgeMap.clear();
         removeCells(getChildVertices(getDefaultParent()));
-    }
-
-    boolean isAccountPinned(AccountDeviceInstanceKey account) {
-        return pinnedAccountDevices.contains(account);
     }
 
     @Override
@@ -132,9 +173,9 @@ final class CommunicationsGraph extends mxGraph {
             scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
             scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                     + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
-            scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
+            scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
-            scopes.put("locked", lockedVertices.contains((mxCell) cell));
+            scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
             scopes.put("LOCK_URL", LOCK_URL);
 
             labelMustache.execute(stringWriter, scopes);
@@ -158,9 +199,9 @@ final class CommunicationsGraph extends mxGraph {
             scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
             scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                     + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
-            scopes.put("pinned", pinnedAccountDevices.contains(adiKey));
+            scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
-            scopes.put("locked", lockedVertices.contains((mxCell) cell));
+            scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
             scopes.put("LOCK_URL", LOCK_URL);
 
             labelMustache.execute(stringWriter, scopes);
@@ -171,54 +212,6 @@ final class CommunicationsGraph extends mxGraph {
         }
     }
 
-    /**
-     * Unpin the given accounts from the graph. Pinned accounts will always be
-     * shown regardless of the filter state. Furthermore, accounts with
-     * relationships that pass the filters will also be shown.
-     *
-     * @param accountDeviceInstances The accounts to unpin.
-     */
-    void unpinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
-        pinnedAccountDevices.removeAll(accountDeviceInstances);
-    }
-
-    /**
-     * Pin the given accounts to the graph. Pinned accounts will always be shown
-     * regardless of the filter state. Furthermore, accounts with relationships
-     * that pass the filters will also be shown.
-     *
-     * @param accountDeviceInstances The accounts to pin.
-     */
-    void pinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
-        pinnedAccountDevices.addAll(accountDeviceInstances);
-    }
-
-    /**
-     * Lock the given vertex so that applying a layout algorithm doesn't move
-     * it. The user can still manually position the vertex.
-     *
-     * @param vertex The vertex to lock.
-     */
-    void lockVertex(mxCell vertex) {
-        lockedVertices.add(vertex);
-        getView().clear(vertex, true, true);
-        getView().validate();
-    }
-
-    /**
-     * Lock the given vertex so that applying a layout algorithm can move it.
-     *
-     * @param vertex The vertex to unlock.
-     */
-    void unlockVertex(mxCell vertex) {
-        lockedVertices.remove(vertex);
-
-        final mxCellState state = getView().getState(vertex, true);
-        getView().updateLabel(state);
-        getView().updateLabelBounds(state);
-        getView().updateBoundingBox(state);
-    }
-
     SwingWorker<?, ?> rebuild(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
         return new RebuildWorker(progress, commsManager, currentFilter);
     }
@@ -226,8 +219,8 @@ final class CommunicationsGraph extends mxGraph {
     void resetGraph() {
         clear();
         getView().setScale(1);
-        pinnedAccountDevices.clear();
-        lockedVertices.clear();
+        pinnedAccountModel.clear();
+        lockedVertexModel.clear();
     }
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
@@ -276,21 +269,6 @@ final class CommunicationsGraph extends mxGraph {
     }
 
     /**
-     * Are there any accounts in this graph? If there are no pinned accounts the
-     * graph will be empty.
-     *
-     * @return True if this graph is empty.
-     */
-    boolean isEmpty() {
-        return pinnedAccountDevices.isEmpty();
-    }
-
-    boolean isVertexLocked(mxCell vertex) {
-        return lockedVertices.contains(vertex);
-
-    }
-
-    /**
      * SwingWorker that loads the accounts and edges for this graph according to
      * the pinned accounts and the current filters.
      */
@@ -317,7 +295,7 @@ final class CommunicationsGraph extends mxGraph {
                  * set to keep track of accounts related to pinned accounts
                  */
                 Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
-                for (AccountDeviceInstanceKey adiKey : pinnedAccountDevices) {
+                for (AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
                     if (isCancelled()) {
                         break;
                     }
