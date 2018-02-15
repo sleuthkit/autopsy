@@ -589,6 +589,7 @@ public class Case {
      *
      * @throws IllegalStateException if there is no current case.
      */
+    @Deprecated
     public static Case getCurrentCase() {
         /*
          * Throwing an unchecked exception is a bad idea here.
@@ -597,13 +598,32 @@ public class Case {
          * IllegalStateException; change to throw checked exception or return
          * null
          */
-        if (null != currentCase) {
-            return currentCase;
-        } else {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
+        try {
+            Case curCase = getOpenCase(); 
+            return curCase;
+        } catch (NoCurrentCaseException e) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), e);
         }
+        
     }
 
+    /**
+     * Gets the current open case, if there is one, at the time of the call.
+     *
+     * @return The open case.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     */
+    public static Case getOpenCase() throws NoCurrentCaseException {
+        try {
+            Case openCase = new Case(currentCase.getCaseType(), 
+                                currentCase.getCacheDirectory(), 
+                                new CaseDetails(currentCase.getDisplayName(), currentCase.getNumber(), currentCase.getExaminer(), currentCase.getExaminerPhone(), currentCase.getExaminerEmail(), currentCase.getCaseNotes()));
+            return openCase;
+        } catch (NullPointerException ex) {
+            throw new NoCurrentCaseException();
+        }
+    }
     /**
      * Closes the current case.
      *
