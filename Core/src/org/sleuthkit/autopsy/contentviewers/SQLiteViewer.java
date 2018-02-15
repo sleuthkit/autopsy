@@ -326,7 +326,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     // Read all table names and schema
                     return getTables();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Failed to copy DB file.", ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Failed to copy DB file '%s' (id=%d)", sqliteFile.getName(), sqliteFile.getId()), ex); //NON-NLS
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Failed to Open DB.", ex); //NON-NLS
                 } catch (ClassNotFoundException ex) {

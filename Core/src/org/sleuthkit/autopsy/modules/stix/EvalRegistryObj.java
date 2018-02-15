@@ -195,7 +195,7 @@ class EvalRegistryObj extends EvaluatableObject {
 
             if ((obj.getValues() == null) || (obj.getValues().getValues().isEmpty())) {
                 // No values to test
-                List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
+                List<StixArtifactData> artData = new ArrayList<>();
                 artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry")); //NON-NLS
                 return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue(), //NON-NLS
                         spacing, ObservableResult.ObservableState.TRUE, artData);
@@ -265,7 +265,7 @@ class EvalRegistryObj extends EvaluatableObject {
 
                         if (nameSuccess && valueSuccess) {
                             // Found a match for all values
-                            List<StixArtifactData> artData = new ArrayList<StixArtifactData>();
+                            List<StixArtifactData> artData = new ArrayList<>();
                             artData.add(new StixArtifactData(a_regInfo.abstractFile.getId(), id, "Registry")); //NON-NLS
                             return new ObservableResult(id, "RegistryObject: Found key " + obj.getKey().getValue() //NON-NLS
                                     + " and value " + stixRegValue.getName().getValue().toString() //NON-NLS
@@ -346,7 +346,7 @@ class EvalRegistryObj extends EvaluatableObject {
         List<AbstractFile> regFilesAbstract = findRegistryFiles();
 
         // List to hold all the extracted file names plus their abstract file
-        List<RegistryFileInfo> regFilesLocal = new ArrayList<RegistryFileInfo>();
+        List<RegistryFileInfo> regFilesLocal = new ArrayList<>();
 
         // Make the temp directory
         String tmpDir = Case.getCurrentCase().getTempDirectory() + File.separator + "STIX"; //NON-NLS
@@ -367,8 +367,8 @@ class EvalRegistryObj extends EvaluatableObject {
                     regFilesLocal.add(new EvalRegistryObj().new RegistryFileInfo(regFile, regFileNameLocal));
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error copying file '%s' into directory '%s'.",
-                        regFileName, regFileNameLocal), ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Error copying file '%s' (id=%d) into directory '%s'.",
+                        regFileName, regFile.getId(), regFileNameLocal), ex); //NON-NLS
                 throw new TskCoreException(ex.getLocalizedMessage());
             }
             index++;
@@ -382,7 +382,7 @@ class EvalRegistryObj extends EvaluatableObject {
      * RecentActivity
      */
     private static List<AbstractFile> findRegistryFiles() throws TskCoreException {
-        List<AbstractFile> registryFiles = new ArrayList<AbstractFile>();
+        List<AbstractFile> registryFiles = new ArrayList<>();
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
         for (Content ds : Case.getCurrentCase().getDataSources()) {
@@ -407,7 +407,7 @@ class EvalRegistryObj extends EvaluatableObject {
     }
 
     private void setUnsupportedFieldWarnings() {
-        List<String> fieldNames = new ArrayList<String>();
+        List<String> fieldNames = new ArrayList<>();
 
         if (obj.getNumberValues() != null) {
             fieldNames.add("Number_Values"); //NON-NLS

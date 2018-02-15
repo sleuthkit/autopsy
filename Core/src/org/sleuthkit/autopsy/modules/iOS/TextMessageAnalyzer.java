@@ -71,7 +71,7 @@ class TextMessageAnalyzer {
                     fileId = AF.getId();
                     findTextsInDB(dbPath, fileId);
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s'.", dbPath), ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s' (id=%d).", dbPath, fileId), ex); //NON-NLS
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
                 }

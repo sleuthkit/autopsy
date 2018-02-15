@@ -66,11 +66,11 @@ class CallLogAnalyzer {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     fileId = AF.getId();
+                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     findCallLogsInDB(dbPath, fileId);
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s'.", dbPath), ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s' (id=%d).", dbPath, fileId), ex); //NON-NLS
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Call logs", e); //NON-NLS
                 }

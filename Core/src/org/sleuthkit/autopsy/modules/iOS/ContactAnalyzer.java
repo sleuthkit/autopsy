@@ -52,6 +52,7 @@ class ContactAnalyzer {
     private ResultSet resultSet = null;
     private Statement statement = null;
     private String dbPath = "";
+    private long fileId = 0;
     private java.io.File jFile = null;
     private final String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
@@ -71,9 +72,10 @@ class ContactAnalyzer {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
+                    fileId = AF.getId();
                     ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s'.", dbPath), ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s' (id=%d).", dbPath, fileId), ex); //NON-NLS
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Contacts", e); //NON-NLS
                 }

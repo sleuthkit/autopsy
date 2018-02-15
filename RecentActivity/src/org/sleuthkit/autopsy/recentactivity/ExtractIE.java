@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -171,7 +171,7 @@ class ExtractIE extends Extract {
                 line = reader.readLine();
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Failed to read from content '%s' (id=%d).", fav.getName(), fav.getId()), ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
                             fav.getName()));

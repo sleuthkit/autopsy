@@ -181,7 +181,8 @@ class ExtractRegistry extends Extract {
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error writing the temp registry file. {0}", ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Error writing temp registry file '%s' (id=%d).",
+                        regFileName, regFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                 this.getName(), regFileName));
