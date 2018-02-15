@@ -208,7 +208,7 @@ public class AutopsyTestCases {
         databases.stream().map((database) -> {
             JButtonOperator importButtonOperator = new JButtonOperator(hashMainDialogOperator, "Import");
             importButtonOperator.pushNoBlock();
-            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Database", false, false);
+            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Import Hash Set", false, false);
             JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
             JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Open...", 0);
             browseButtonOperator.pushNoBlock();

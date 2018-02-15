@@ -47,7 +47,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         try{
             databaseInfoList = HashLookupSettings.convertHashSetList(hashDbList);
         } catch (HashLookupSettings.HashLookupSettingsException ex){
-            Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings.", ex); //NON-NLS
+            Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash set settings.", ex); //NON-NLS
             databaseInfoList = new ArrayList<>();
         }
     }
@@ -87,7 +87,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
                 dbInfo.setSearchDuringIngest(true);
                 databaseInfoList.add(dbInfo);
             } catch (TskCoreException ex){
-                Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings for " + db.getHashSetName(), ex); //NON-NLS
+                Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash set settings for " + db.getHashSetName(), ex); //NON-NLS
             }
         }
         for(HashDb db:disabledHashSets){
@@ -96,7 +96,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
                 dbInfo.setSearchDuringIngest(false);
                 databaseInfoList.add(dbInfo);
             } catch (TskCoreException ex){
-                Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash database settings for " + db.getHashSetName(), ex); //NON-NLS
+                Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error creating hash set settings for " + db.getHashSetName(), ex); //NON-NLS
             }
         }        
         
@@ -152,7 +152,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
         try{
             databaseInfoList = HashLookupSettings.convertHashSetList(HashDbManager.getInstance().getAllHashSets());
         } catch (HashLookupSettings.HashLookupSettingsException ex){
-            Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error updating hash database settings.", ex); //NON-NLS
+            Logger.getLogger(HashLookupModuleSettings.class.getName()).log(Level.SEVERE, "Error updating hash set settings.", ex); //NON-NLS
             return;
         }
         
