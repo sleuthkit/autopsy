@@ -30,14 +30,23 @@ import org.sleuthkit.autopsy.contentviewers.PListViewer.PropKeyValue;
 import org.sleuthkit.autopsy.contentviewers.PListViewer.PropertyType;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
+/**
+ * Factory class to create nodes for Plist table view
+ */
 public class PListRowFactory extends ChildFactory<Integer> {
 
     private final List<PropKeyValue> rows;
 
-    public PListRowFactory(List<PropKeyValue> rows) {
+    PListRowFactory(final List<PropKeyValue> rows) {
         this.rows = rows;
     }
 
+    /**
+     * Creates keys
+     * 
+     * @param keys
+     * @return true 
+     */
     @Override
     protected boolean createKeys(List<Integer> keys) {
         if (rows != null) {
@@ -48,6 +57,11 @@ public class PListRowFactory extends ChildFactory<Integer> {
         return true;
     }
 
+    /**
+     * Creates node for the given key
+     * @param key
+     * @return node for the given key, null if the key is invalid or node doesn't exist
+     */
     @Override
     protected Node createNodeForKey(Integer key) {
         if (Objects.isNull(rows) || rows.isEmpty() || key >= rows.size()) {
@@ -55,15 +69,18 @@ public class PListRowFactory extends ChildFactory<Integer> {
         }
         return new PListNode(rows.get(key));
     }
-
 }
 
+/**
+ * Node for a Plist key
+*/
 class PListNode extends AbstractNode {
 
     private final PropKeyValue propKeyVal;
 
-    PListNode(PropKeyValue propKeyVal) {
-        super(propKeyVal.getChildren() != null ? new PListNodeChildren(propKeyVal.getChildren()) : Children.LEAF);
+    PListNode(final PropKeyValue propKeyVal) {
+        
+        super(propKeyVal.getChildren() == null ? Children.LEAF : new PListNodeChildren(propKeyVal.getChildren()));
 
         this.propKeyVal = propKeyVal;
 
@@ -79,14 +96,17 @@ class PListNode extends AbstractNode {
        
     }
 
+    /**
+     * Creates property sheet for the node
+     */
     @Override
     protected Sheet createSheet() {
 
-        Sheet s = super.createSheet();
-        Sheet.Set properties = s.get(Sheet.PROPERTIES);
+        final Sheet sheet = super.createSheet();
+        Sheet.Set properties = sheet.get(Sheet.PROPERTIES);
         if (properties == null) {
             properties = Sheet.createPropertiesSet();
-            s.put(properties);
+            sheet.put(properties);
         }
 
         properties.put(new NodeProperty<>(Bundle.PListNode_TypeCol(),
@@ -99,9 +119,12 @@ class PListNode extends AbstractNode {
                 Bundle.PListNode_ValueCol(),
                 (propKeyVal.getChildren() == null) ? propKeyVal.getValue() : "")); // NON-NLS
 
-        return s;
+        return sheet;
     }
 
+    /**
+     *  Creates children nodes for a compound PList key
+     */
     private static class PListNodeChildren extends Children.Keys<PropKeyValue> {
 
         private final List<PropKeyValue> children;
@@ -117,8 +140,8 @@ class PListNode extends AbstractNode {
         }
 
         @Override
-        protected Node[] createNodes(PropKeyValue t) {
-            return new Node[]{new PListNode(t)};
+        protected Node[] createNodes(PropKeyValue propKeyVal) {
+            return new Node[]{new PListNode(propKeyVal)};
         }
 
     }
