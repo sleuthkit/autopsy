@@ -100,25 +100,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         customizeComponent(isMain, name);
     }
 
-    @Override
-    public void componentActivated() {
-        super.componentActivated();
-
-        /*
-         * Syncronize the data content viewer to show the currently selected
-         * item in the data results if only one is selected, or show nothing
-         * otherwise.
-         */
-        DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
-        Node[] nodeList = explorerManager.getSelectedNodes();
-
-        if (nodeList.length == 1) {
-            dataContentTopComponent.setNode(nodeList[0]);
-        } else {
-            dataContentTopComponent.setNode(null);
-        }
-    }
-
     private void customizeComponent(boolean isMain, String title) {
         this.isMain = isMain;
         this.customModeName = null;
@@ -288,6 +269,25 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     public void componentOpened() {
         super.componentOpened();
         this.dataResultPanel.open();
+    }
+
+    @Override
+    public void componentActivated() {
+        super.componentActivated();
+
+        /*
+         * Syncronize the data content viewer to show the currently selected
+         * item in the data results if only one is selected, or show nothing
+         * otherwise.
+         */
+        DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
+        Node[] nodeList = explorerManager.getSelectedNodes();
+
+        if (nodeList.length == 1) {
+            dataContentTopComponent.setNode(nodeList[0]);
+        } else {
+            dataContentTopComponent.setNode(null);
+        }
     }
 
     @Override
