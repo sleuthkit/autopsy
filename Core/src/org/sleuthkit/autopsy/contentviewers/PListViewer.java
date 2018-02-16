@@ -376,7 +376,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
                 children.add(parseProperty(key2, obj));
             }
             
-            pkv.setChildren(children.toArray(new PropKeyValue[0] ));
+            pkv.setChildren(children.toArray(new PropKeyValue[children.size()] ));
             return pkv;
         } else {
             LOGGER.severe("Can't parse Plist for key = " + key  + " value of type " + value.getClass());
@@ -441,13 +441,27 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         private final PropertyType type;
         private final Object value;
 
-        private PropKeyValue[] children = null;
+        private PropKeyValue[] children;
         
         PropKeyValue(String key, PropertyType type, Object value) {
             this.key = key;
             this.type = type;
             this.value = value;
+            
+            this.children = null;
         }
+        
+        /**
+         * Copy constructor
+         */
+        PropKeyValue(PropKeyValue other) {
+            this.key = other.key;
+            this.type = other.type;
+            this.value = other.value;
+            
+            this.setChildren(other.getChildren());
+    }
+         
         
         String getKey() {
             return this.key;
@@ -461,13 +475,28 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             return this.value;
         }
         
+        /**
+         * Returns an array of children, if any.
+         * @return 
+         */
         PropKeyValue[] getChildren() {
-            return children;
+            if (children == null) {
+                return null;
+            }
+                
+            // Make and return a copy
+            PropKeyValue[] copy = Arrays.stream(children)
+                    .map(child -> new PropKeyValue(child) )
+                    .toArray(PropKeyValue[]::new);
+            return copy;
+            
         }
         
         void setChildren(final PropKeyValue...children) {
             this.children = children;
         }
+        
+         
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
