@@ -185,7 +185,8 @@
   <rule ref="rulesets/java/logging-java.xml/LoggerIsNotStaticFinal"/>
   <rule ref="rulesets/java/logging-java.xml/SystemPrintln"/>
   <rule ref="rulesets/java/logging-java.xml/AvoidPrintStackTrace"/>
-  <rule ref="rulesets/java/logging-java.xml/GuardLogStatementJavaUtil"/>
+  <!-- Disabled because we don't want If conditions around all Log statements 
+  <rule ref="rulesets/java/logging-java.xml/GuardLogStatementJavaUtil"/> -->
   <rule ref="rulesets/java/logging-java.xml/InvalidSlf4jMessageFormat"/>
   <rule ref="rulesets/java/migrating.xml/ReplaceVectorWithList"/>
   <rule ref="rulesets/java/migrating.xml/ReplaceHashtableWithMap"/>
