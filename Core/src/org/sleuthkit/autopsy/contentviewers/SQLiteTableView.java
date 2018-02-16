@@ -20,15 +20,20 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
@@ -103,7 +108,13 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
             @Override
             protected Boolean doInBackground() throws Exception {
 
-                explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows), true)));
+                List<Action> nodeActions = new ArrayList<>();
+            
+                nodeActions.add(new ParseColAction("Parse column as Epoch time", outline, new EpochTimeCellRenderer(true)) );
+                //nodeActions.add(new ParseColAction("Display column as original type", outline, new DefaultTableCellRenderer()) );
+                nodeActions.add(new ParseColAction("Display column as original type", outline, new EpochTimeCellRenderer(false)) );
+            
+                explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows, nodeActions), true)));
                 return false;
             }
 
@@ -160,4 +171,28 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
+
+private  class ParseColAction extends AbstractAction {
+        private final Outline outline;
+        private TableCellRenderer colCellRenderer;
+        
+
+        private ParseColAction(String displayName,  Outline outline, TableCellRenderer colCellRenderer ) {
+            super(displayName);
+            this.outline = outline;
+            this.colCellRenderer = colCellRenderer;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            int selCol = outline.getSelectedColumn();
+     
+            TableColumnModel columnModel = outline.getColumnModel();
+             
+            TableColumn column = columnModel.getColumn(selCol);
+            column.setCellRenderer(colCellRenderer);
+        }
+    }
 }

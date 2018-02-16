@@ -18,9 +18,17 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import org.netbeans.swing.outline.Outline;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -31,9 +39,12 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 public class SQLiteTableRowFactory extends ChildFactory<Integer> {
 
     private final List<Map<String, Object>> rows;
+   //private final Outline outline;
+    private final List<Action> colActions;
 
-    public SQLiteTableRowFactory(List<Map<String, Object>> rows) {
+    public SQLiteTableRowFactory(List<Map<String, Object>> rows, List<Action> actions ) {
         this.rows = rows;
+        this.colActions = actions;
     }
 
     @Override
@@ -52,7 +63,7 @@ public class SQLiteTableRowFactory extends ChildFactory<Integer> {
             return null;
         }
 
-        return new SQLiteTableRowNode(rows.get(key));
+        return new SQLiteTableRowNode(rows.get(key), this.colActions );
     }
 
 }
@@ -60,10 +71,14 @@ public class SQLiteTableRowFactory extends ChildFactory<Integer> {
 class SQLiteTableRowNode extends AbstractNode {
 
     private final Map<String, Object> row;
+    //private final Outline outline;
+    private final List<Action> nodeActions;
+    
 
-    SQLiteTableRowNode(Map<String, Object> row) {
+    SQLiteTableRowNode(Map<String, Object> row, List<Action> actions) {
         super(Children.LEAF);
         this.row = row;
+        this.nodeActions = actions;
     }
 
     @Override
@@ -85,4 +100,17 @@ class SQLiteTableRowNode extends AbstractNode {
 
         return s;
     }
+    
+     @Override
+        public Action[] getActions(boolean context) {
+            List<Action> actions = new ArrayList<>();
+            
+            actions.addAll(Arrays.asList(super.getActions(context)));
+            
+            actions.addAll(nodeActions);
+            //actions.add(parseColAction);  
+            
+            return actions.toArray(new Action[actions.size()]);
+        }
+              
 }
