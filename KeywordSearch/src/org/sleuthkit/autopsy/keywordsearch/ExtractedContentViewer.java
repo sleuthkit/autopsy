@@ -54,7 +54,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     private static final long INVALID_DOCUMENT_ID = 0L;
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
-    public static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
+    private static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
