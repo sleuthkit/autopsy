@@ -27,6 +27,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 
@@ -51,9 +52,9 @@ class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
         defaultItem.addActionListener(new OpenTopComponentAction(contentWin));
 
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             defaultItem.setEnabled(currentCase.hasData());
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             defaultItem.setEnabled(false); // disable the menu when no case is opened
         }
 

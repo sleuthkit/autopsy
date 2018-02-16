@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -102,9 +103,9 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         private void reloadKeys() {
             try {
-                currentKeys = Case.getCurrentCase().getDataSources();
+                currentKeys = Case.getOpenCase().getDataSources();
                 setKeys(currentKeys);
-            } catch (TskCoreException | IllegalStateException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
                 setKeys(Collections.<Content>emptySet());
             }
