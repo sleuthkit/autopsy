@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule.events;
 import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,7 +46,7 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
      * @throws TskCoreException
      */
     @Override
-    BlackboardArtifactTag getTagByID() throws IllegalStateException, TskCoreException {
-        return Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(getTagID());
+    BlackboardArtifactTag getTagByID() throws NoCurrentCaseException, TskCoreException {
+        return Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(getTagID());
     }
 }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest.events;
 import java.io.Serializable;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -76,9 +77,9 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
         }
         try {
             long id = (Long) super.getOldValue();
-            file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id);
+            file = Case.getOpenCase().getSleuthkitCase().getAbstractFileById(id);
             return file;
-        } catch (IllegalStateException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }

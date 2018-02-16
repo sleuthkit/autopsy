@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
@@ -215,14 +216,14 @@ public class EventNode extends DisplayableItemNode {
      * @return An EventNode with the file (and artifact) backing this event in
      *         its lookup.
      */
-    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, IllegalStateException {
+    public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, NoCurrentCaseException {
         /*
          * Look up the event by id and creata an EventNode with the appropriate
          * data in the lookup.
          */
         final SingleEvent eventById = eventsModel.getEventById(eventID);
 
-        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+        SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
 
         if (eventById.getArtifactID().isPresent()) {
