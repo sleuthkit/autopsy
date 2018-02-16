@@ -31,6 +31,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Manages this module's life cycle. Opens the startup dialog during startup.
@@ -40,7 +41,6 @@ public class Installer extends ModuleInstall {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static Installer instance;
-    public static boolean enableTimeline = true;
 
     public synchronized static Installer getDefault() {
         if (null == instance) {
@@ -115,17 +115,23 @@ public class Installer extends ModuleInstall {
         });
     }
     
+    private void setModuleSettings(String value) {
+        if (ModuleSettings.configExists("timeline")) {
+            ModuleSettings.setConfigSetting("timeline", "enable_timeline", value);
+        } else {
+            ModuleSettings.makeConfigFile("timeline");
+            ModuleSettings.setConfigSetting("timeline", "enable_timeline", value);
+        }
+    }
+    
     private void setUnixLookAndFeel(){
         try {
-            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            UIManager.put("swing.boldMetal", Boolean.FALSE);
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+            setModuleSettings("true");
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             logger.log(Level.WARNING, "Error setting crossplatform look-and-feel, setting default look-and-feel",ex);
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                enableTimeline=false;
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex1) {
-                 logger.log(Level.WARNING, "Error setting native look-and-feel",ex1);
-            }
+            setModuleSettings("false");
         }
     }
 }
