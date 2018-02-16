@@ -23,7 +23,6 @@ import java.awt.Component;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import java.util.Arrays;
-//import com.dd.plist.*;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.PropertyListParser;
 import com.dd.plist.NSObject;
