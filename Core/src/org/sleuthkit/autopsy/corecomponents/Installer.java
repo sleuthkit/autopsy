@@ -127,7 +127,7 @@ public class Installer extends ModuleInstall {
     private void setUnixLookAndFeel(){
         try {
             UIManager.put("swing.boldMetal", Boolean.FALSE);
-            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             setModuleSettings("true");
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             logger.log(Level.WARNING, "Error setting crossplatform look-and-feel, setting default look-and-feel",ex);
