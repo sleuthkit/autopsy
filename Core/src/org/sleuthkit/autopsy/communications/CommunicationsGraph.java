@@ -44,7 +44,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
-import org.sleuthkit.autopsy.communications.visualization.EventHandler;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -146,11 +145,11 @@ final class CommunicationsGraph extends mxGraph {
         pinnedAccountModel = new PinnedAccountModel(this);
     }
 
-    public LockedVertexModel getLockedVertexModel() {
+    LockedVertexModel getLockedVertexModel() {
         return lockedVertexModel;
     }
 
-    public PinnedAccountModel getPinnedAccountModel() {
+    PinnedAccountModel getPinnedAccountModel() {
         return pinnedAccountModel;
     }
 
@@ -302,6 +301,8 @@ final class CommunicationsGraph extends mxGraph {
                     List<AccountDeviceInstance> relatedAccountDeviceInstances =
                             commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
                     relatedAccounts.add(adiKey);
+                    getOrCreateVertex(adiKey);
+
                     //get accounts related to pinned account
                     for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
 //                            handle.progress(1);
