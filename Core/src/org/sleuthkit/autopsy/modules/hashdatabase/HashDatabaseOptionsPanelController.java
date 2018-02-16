@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         keywordsCategory = "HashDatabase",
         id = "HashDatabase")
 // moved messages to Bundle.properties
-//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Database", "OptionsCategory_Keywords_HashDatabase=Hash Database"})
+//@org.openide.util.NbBundle.Messages({"OptionsCategory_Name_HashDatabase=Hash Set", "OptionsCategory_Keywords_HashDatabase=Hash Set"})
 public final class HashDatabaseOptionsPanelController extends OptionsPanelController {
 
     private HashLookupSettingsPanel panel;

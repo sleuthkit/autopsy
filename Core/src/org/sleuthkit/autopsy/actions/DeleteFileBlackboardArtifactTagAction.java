@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,6 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TagName;
@@ -54,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
 })
 public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implements Presenter.Popup {
 
-    private static final Logger LOGGER = Logger.getLogger(DeleteFileBlackboardArtifactTagAction.class.getName());
+    private static final Logger logger = Logger.getLogger(DeleteFileBlackboardArtifactTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteFileBlackboardArtifactTagAction.class,
@@ -98,17 +97,11 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
             protected Void doInBackground() throws Exception {
                 TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
 
-                // Pull the from the global context to avoid unnecessary calls
-                // to the database.
-                final Collection<AbstractFile> selectedFilesList
-                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                AbstractFile file = selectedFilesList.iterator().next();
-
                 try {
-                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
+                    logger.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), artifactTag.getContent().getName()}); //NON-NLS
                     tagsManager.deleteBlackboardArtifactTag(artifactTag);
                 } catch (TskCoreException tskCoreException) {
-                    LOGGER.log(Level.SEVERE, "Error untagging artifact", tskCoreException); //NON-NLS
+                    logger.log(Level.SEVERE, "Error untagging artifact", tskCoreException); //NON-NLS
                     Platform.runLater(()
                             -> new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileBlackboardArtifactTagAction_deleteTag_alert(artifactId)).show()
                     );
@@ -122,7 +115,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while untagging artifact", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unexpected exception while untagging artifact", ex); //NON-NLS
                 }
             }
         }.execute();
