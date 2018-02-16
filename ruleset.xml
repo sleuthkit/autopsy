@@ -62,7 +62,8 @@
   <!-- Commented out because it was flagged some of our header / copyright comments
   <rule ref="rulesets/java/comments.xml/CommentSize"/> -->
   <rule ref="rulesets/java/comments.xml/CommentContent"/>
-  <rule ref="rulesets/java/comments.xml/CommentDefaultAccessModifier"/>
+  <!-- Commented out because we use default (package) access often and commenting it does not make sense for us
+  <rule ref="rulesets/java/comments.xml/CommentDefaultAccessModifier"/> -->
   <!--
     Commented out because they are controversial and we want basics right now.
   <rule ref="rulesets/java/controversial.xml/NullAssignment"/>
@@ -212,13 +213,16 @@
   <rule ref="rulesets/java/naming.xml/NoPackage"/>
   <rule ref="rulesets/java/naming.xml/MethodWithSameNameAsEnclosingClass"/>
   <rule ref="rulesets/java/naming.xml/ShortVariable"/>
-  <rule ref="rulesets/java/naming.xml/LongVariable"/>
+  <!-- Commented out because clarity trumps brevity, developers can use their own judgement
+  <rule ref="rulesets/java/naming.xml/LongVariable"/>  -->
   <rule ref="rulesets/java/naming.xml/ShortMethodName"/>
   <rule ref="rulesets/java/naming.xml/BooleanGetMethodName"/>
   <rule ref="rulesets/java/naming.xml/PackageCase"/>
+  <!-- Commented out because this is a nice micro-refinement, but too much of our code does not do this, developers can, but don't have to ignore this practice for now
   <rule ref="rulesets/java/optimizations.xml/LocalVariableCouldBeFinal"/>
-  <rule ref="rulesets/java/optimizations.xml/MethodArgumentCouldBeFinal"/>
-  <rule ref="rulesets/java/optimizations.xml/AvoidInstantiatingObjectsInLoops"/>
+  <rule ref="rulesets/java/optimizations.xml/MethodArgumentCouldBeFinal"/>  -->
+  <!-- Commented out because this is not typical coding practice and it seems of dubious value, e.g., https://stackoverflow.com/questions/17340421/pmd-avoid-instantiating-new-objects-inside-loops/17458503
+  <rule ref="rulesets/java/optimizations.xml/AvoidInstantiatingObjectsInLoops"/>   -->
   <rule ref="rulesets/java/optimizations.xml/UseArrayListInsteadOfVector"/>
   <rule ref="rulesets/java/optimizations.xml/SimplifyStartsWith"/>
   <rule ref="rulesets/java/optimizations.xml/UseStringBufferForStringAppends"/>

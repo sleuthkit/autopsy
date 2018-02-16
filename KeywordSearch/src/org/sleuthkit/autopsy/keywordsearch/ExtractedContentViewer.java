@@ -305,10 +305,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         /*
-         * If the lookup of the node contains either a keyword hit artifact or
-         * one to many credit card account artifacts from a credit card account
-         * numbers search, then there must be indexed text that produced the
-         * hit(s).
+         * If the lookup of the node contains either a keyword hit artifact or a
+         * credit card account artifact from a credit card account numbers
+         * search, then there must be indexed text that produced the hit(s).
          */
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         if (artifact != null) {
@@ -323,53 +322,58 @@ public class ExtractedContentViewer implements DataContentViewer {
                     }
                 } catch (TskCoreException ex) {
                     /*
-                     * If there is an error, log it and return true. The reason
-                     * for returning true is so that the user will have an
-                     * opportunity to see an error message in the panel when
-                     * this query fails again when setNode is called, instead of
-                     * having an unexpectedly disabled content viewer with no
-                     * other feedback.
+                     * If there was an error checking the account type, fall
+                     * back to the check below for the file associated with the
+                     * account (if there is one).
                      */
                     logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + artifact.getArtifactID(), ex);
-                    return true;
                 }
             }
         }
 
         /*
+         * If the lookup of the node contains a file, check to see if there is
+         * indexed text for the file. Note that there should be a file in the
+         * lookup of all nodes except artifact nodes that are associated with a
+         * data source instead of a file.
+         */
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        if (file != null && solrHasContent(file.getId())) {
+            return true;
+        }
+
+        /*
          * If the lookup of the node contains an artifact that is neither a
-         * keyword hit artifact nor a credit card account artifact, check to see
-         * if there is indexed text for the artifact.
+         * keyword hit artifact nor a credit card account artifact, and the
+         * artifact is not associated with a file, check to see if there is
+         * indexed text for the artifact.
          */
         if (artifact != null) {
             return solrHasContent(artifact.getArtifactID());
         }
 
-        /*
-         * If the lookup of the node contains no artifacts but does contain a
-         * file, check to see if there is indexed text for the file.
-         */
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file != null) {
-            return solrHasContent(file.getId());
-        }
-
-        /*
-         * If the lookup of the node contains neither ad hoc search results, nor
-         * artifacts, nor a file, there is no indexed text.
-         */
         return false;
     }
 
     @Override
     public int isPreferred(Node node) {
-        BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-
-        if (art == null) {
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        if (artifact == null) {
             return 4;
-        } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
-                || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return 6;
+        } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+            try {
+                BlackboardAttribute attribute = artifact.getAttribute(TSK_ACCOUNT_TYPE);
+                if (attribute != null && Account.Type.CREDIT_CARD.getTypeName().equals(attribute.getValueString())) {
+                    return 6;
+                } else {
+                    return 4;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting TSK_ACCOUNT_TYPE attribute from artifact " + artifact.getArtifactID(), ex);
+                return 4;
+            }
         } else {
             return 4;
         }
