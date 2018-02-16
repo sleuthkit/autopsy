@@ -484,12 +484,10 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
                 return null;
             }
                 
-            // Make and return a copy
-            PropKeyValue[] copy = Arrays.stream(children)
+            // return a copy
+            return Arrays.stream(children)
                     .map(child -> new PropKeyValue(child) )
                     .toArray(PropKeyValue[]::new);
-            return copy;
-            
         }
         
         void setChildren(final PropKeyValue...children) {
