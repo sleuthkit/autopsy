@@ -1529,11 +1529,7 @@ public class Case {
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         String normalizedLocalPath;
         try {
-            if (localPath.toLowerCase().contains("http:")) {
-		        normalizedLocalPath = localPath;
-            } else {
-                normalizedLocalPath = Paths.get(localPath).normalize().toString();
-            }
+            normalizedLocalPath = Paths.get(localPath).normalize().toString();
         } catch (InvalidPathException ex) {
             String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
             throw new TskCoreException(errorMsg, ex);
