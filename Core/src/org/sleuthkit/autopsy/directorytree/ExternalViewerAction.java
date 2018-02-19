@@ -136,7 +136,8 @@ public class ExternalViewerAction extends AbstractAction {
             }
         } else {
             try {
-                if (file.getPath().toLowerCase().contains("http")) {
+                String localpath = file.getPath().toLowerCase();
+                if (localpath.contains("http")) {
                     String url_path = file.getPath().replaceAll("\\\\","/");   
                     Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/","//")));
                 } else {
