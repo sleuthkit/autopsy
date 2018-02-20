@@ -78,10 +78,13 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
-    final private static String PERL = "perl ";
+    private List<String> rrCmd = new ArrayList<>();
+    private List<String> rrFullCmd= new ArrayList<>();
+    
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
+        
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
@@ -100,20 +103,33 @@ class ExtractRegistry extends Extract {
         RR_PATH = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
         RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
-
+        
         if (!(new File(RR_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
         if (!(new File(RR_FULL_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
-
-        if (!PlatformUtil.isWindowsOS()) {
-            RR_PATH = PERL + RR_PATH;
-            RR_FULL_PATH = PERL + RR_FULL_PATH;
+        if(PlatformUtil.isWindowsOS()){
+            rrCmd.add(RR_PATH);
+            rrFullCmd.add(RR_FULL_PATH);
+        }else{
+            String perl;
+            File usrBin = new File("/usr/bin/perl");
+            File usrLocalBin = new File("/usr/local/bin/perl");
+            if(usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()){
+                perl = "/usr/bin/perl";
+            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
+                perl = "/usr/local/bin/perl";
+            }else{
+                throw new IngestModuleException("perl not found in your system");
+            }
+            rrCmd.add(perl);
+            rrCmd.add(RR_PATH);
+            rrFullCmd.add(perl);
+            rrFullCmd.add(RR_FULL_PATH);
         }
     }
-
     /**
      * Search for the registry hives on the system.
      */
@@ -274,7 +290,7 @@ class ExtractRegistry extends Extract {
             regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-autopsy.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
-            executeRegRipper(RR_PATH, rrHome, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
+            executeRegRipper(rrCmd, rrHome, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
         }
         if (context.dataSourceIngestIsCancelled()) {
             return regOutputFiles;
@@ -285,15 +301,17 @@ class ExtractRegistry extends Extract {
             regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-full.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing Full RegRipper results to: {0}", regOutputFiles.fullPlugins); //NON-NLS
-            executeRegRipper(RR_FULL_PATH, rrFullHome, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
+            executeRegRipper(rrFullCmd, rrFullHome, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
         }
         return regOutputFiles;
     }
 
-    private void executeRegRipper(String regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
+    private void executeRegRipper(List<String> regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             List<String> commandLine = new ArrayList<>();
-            commandLine.add(regRipperPath);
+            for(String cmd: regRipperPath){
+                commandLine.add(cmd);
+            }
             commandLine.add("-r"); //NON-NLS
             commandLine.add(hiveFilePath);
             commandLine.add("-f"); //NON-NLS
