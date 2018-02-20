@@ -1,3 +1,68 @@
+---------------- VERSION 4.6.0  --------------
+- A new Message content viewer has been added to the content viewers section of 
+the main application window to provide an examiner with tabs for looking at: 
+message headers; content as raw text, HTML, or RTF; and attachments.
+- A new Communications tool has been added to the Tools menu to supply an 
+examiner with a separate three part view consisting of: a filtered, tabular 
+display of the various accounts (email, Facebook, Twitter, etc.) discovered by 
+the ingest modules, a tabular view of the messages exchanged between the 
+accounts, and a Message content viewer for the individual messages. 
+- Hash sets may now be stored either locally or in the Central Repository. 
+- An ingest module that uses file entropy to flag possibly encrypted files has 
+been added as a core file-level ingest module. 
+- The file names and organization of HTML reports have been changed to make it
+easier to find and open these reports outside of the application.
+- The version of Tika used by the application has been upgraded to version 1.17 
+and the amount of memory consumed by Tika has been reduced significantly by 
+configuring it to use the new SAX parsers exclusively.
+- A live triage feature has been added that copies the application executable to 
+a USB drive that can then be used for live analysis of another system. 
+- Memory leaks and other issues revealed by fuzzing the SleuthKit have 
+been fixed.
+- The number of application log files generated before log rollover is now 
+user-configurable to enable retention of more logs to better support enterprise
+installations that are running auto ingest.
+- Preliminary build file and code changes aimed at supporting easy creation of 
+Linux and OS-X binary distribution packages are in place. 
+- Better typing of larger slack files has been added to the file type detection 
+ingest module.
+- The maximum number of Solr connections and the maximum number of 
+file ingest threads allowed have both been increased.  
+- The default setting for JVM memory for 64-bit Windows installations has been 
+increased to 4 GB, and the user can adjust the JVM memory setting via the 
+Application options panel.
+- The embedded file extractor now uses Tika for new form MS Office documents, 
+which dramatically reduces the memory required for processing Excel spreadsheets. 
+- The amount of memory required for processing keyword hits has been reduced.
+- Periodic keyword search during ingest now has logic to dynamically increase 
+the interval between searches when searches are taking longer than the 
+user-configured periodic search interval to complete, thus preventing continuous 
+searching. 
+- Keyword search has been made more responsive to both search and ingest job 
+cancellation.
+- The use of the terminology "known bad" has been replaced by "notable."  
+- Tag definitions now have a "notable" property indicating that tagged content 
+and results should be marked as notable in the Central Repository.
+- Users can now enter more information about cases including examiner contact 
+info, organization info, and notes.
+- A new "Databases" category has been added to the Views, File Types, By 
+Extension ree. 
+- Examiner mode for an enterprise installation no longer requires a restart and 
+a single dialog that lists all multi-user cases is provided; selecting a row in 
+the dialog and beginning to type opens a search box that allows an examiner to 
+search for cases by name, etc., and the columns in the tabular view presented by 
+the dialog can be reordered or hidden.
+- An auto ingest data source processor that extracts data sources from archive 
+files specified as data sources via auto ingest job manifests has been added.
+- Auto ingest job metrics are collected and can be displayed for a 
+user-specified time period using a button on either the auto dashboard or the 
+auto ingest control panel.
+- Sorting by columns has been added to both the auto ingest control panel and 
+the auto ingest dashboard.
+- The row highlight color for tagged items in the Results table view has been 
+changed for better visibility.
+- Assorted small enhancements and bug fixes are included.
+
 ---------------- VERSION 4.5.0  --------------
 - Memory usage has been reduced to improve support for very large cases.
 - The central repository and correlation engine introduced in version 4.4.1 have 
