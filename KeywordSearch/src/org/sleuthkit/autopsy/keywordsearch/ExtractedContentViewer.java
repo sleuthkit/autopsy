@@ -100,28 +100,14 @@ public class ExtractedContentViewer implements DataContentViewer {
         List<IndexedText> sources = new ArrayList<>();
         Lookup nodeLookup = node.getLookup();
         
-        AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
-        AbstractFile file = null;
-        BlackboardArtifact artifact;
-        Report report = null;
-
-        /*
-         * If we have an ad hoc query result, pull the file and artifact objects
-         * from that. Otherwise, pull them from the lookup.
+        /**
+         * Pull the search results, file, artifact and report objects (if any)
+         * from the lookup.
          */
-        if (adHocQueryResult != null) {
-            artifact = adHocQueryResult.getArtifact();
-            Content content = adHocQueryResult.getContent();
-            if (content instanceof AbstractFile) {
-                file = (AbstractFile) content;
-            } else if (content instanceof Report) {
-                report = (Report) content;
-            }
-        } else {
-            artifact = nodeLookup.lookup(BlackboardArtifact.class);
-            file = nodeLookup.lookup(AbstractFile.class);
-            report = nodeLookup.lookup(Report.class);
-        }
+        AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
+        AbstractFile file = nodeLookup.lookup(AbstractFile.class);
+        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+        Report report = nodeLookup.lookup(Report.class);
         
         /*
          * First, get text with highlighted hits if this node is for a search

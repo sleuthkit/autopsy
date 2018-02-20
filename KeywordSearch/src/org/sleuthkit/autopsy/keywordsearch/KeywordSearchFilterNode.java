@@ -30,7 +30,6 @@ import org.openide.nodes.Node.Property;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
-import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -39,7 +38,6 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -61,11 +59,10 @@ class KeywordSearchFilterNode extends FilterNode {
     /**
      * Instantiate a KeywordSearchFilterNode.
      * 
-     * @param adHocQueryResult The query content.
      * @param original         The original source node.
      */
-    KeywordSearchFilterNode(AdHocQueryResult adHocQueryResult, Node original) {
-        super(original, null, new ProxyLookup(Lookups.singleton(adHocQueryResult), original.getLookup()));
+    KeywordSearchFilterNode(Node original) {
+        super(original, null, new ProxyLookup(original.getLookup()));
     }
 
     @Override
