@@ -731,8 +731,6 @@ public class Server {
                 Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
                 solrServer = new HttpSolrServer("http://localhost:" + localSolrServerPort + "/solr"); //NON-NLS
             } else {
-                //String host = UserPreferences.getIndexingServerHost();
-                //String port = UserPreferences.getIndexingServerPort();
                 IndexingServerProperties properties = getMultiUserServerProperties(metadata.getCaseDirectory());
                 solrServer = new HttpSolrServer("http://" + properties.getHost() + ":" + properties.getPort() + "/solr"); //NON-NLS
             }
@@ -772,8 +770,6 @@ public class Server {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
             } else {
-                //String host = UserPreferences.getIndexingServerHost();
-                //String port = UserPreferences.getIndexingServerPort();
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrServer("http://" + properties.getHost() + ":" + properties.getPort() + "/solr"); //NON-NLS
             }
