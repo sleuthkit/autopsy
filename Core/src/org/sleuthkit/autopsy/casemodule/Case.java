@@ -801,6 +801,7 @@ public class Case {
 
     /**
      * Creates a case directory and its subdirectories.
+     * This will fail if the directory already exists.
      *
      * @param caseDir  Path to the case directory (typically base + case name).
      * @param caseType The type of case, single-user or multi-user.
@@ -810,7 +811,7 @@ public class Case {
     @NbBundle.Messages({
         "# {0} - case directory", "Case.createCaseDir.exception.alreadyContainsCase=Case folder already contains an Autopsy case: {0}"
     })
-    static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
+    public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
 
@@ -822,24 +823,13 @@ public class Case {
             } else if (!caseDirF.canRead() || !caseDirF.canWrite()) {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.existCantRW", caseDir));
-            } else {
-                File[] files = caseDirF.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File pathname) {
-                        return pathname.getName().toLowerCase().endsWith(".zip");
-                    }
-                });
-                if(files.length == 0) {
-                    throw new CaseActionException(
-                        NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.alreadyContainsCase", caseDir));
-                }
             }
         }
 
         try {
-            (caseDirF).mkdirs(); // create root case Directory
+            boolean result = (caseDirF).mkdirs(); // create root case Directory
 
-            if(! caseDirF.exists()) {
+            if(result == false) {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreate", caseDir));
             }
@@ -850,7 +840,7 @@ public class Case {
             if (caseType == CaseType.MULTI_USER_CASE) {
                 hostClause = File.separator + NetworkUtils.getLocalHostName();
             }
-            boolean result = (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
+            result = (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + TEMP_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + CACHE_FOLDER)).mkdirs();

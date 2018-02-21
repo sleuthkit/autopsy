@@ -842,7 +842,7 @@ public class Server {
      * @param caseDirectory Current case directory
      * @return IndexingServerProperties containing the solr host/port for this case
      */
-    static IndexingServerProperties getMultiUserServerProperties(String caseDirectory) {
+    public static IndexingServerProperties getMultiUserServerProperties(String caseDirectory) {
 
         Path serverFilePath = Paths.get(caseDirectory, "solrserver.txt");
         if(serverFilePath.toFile().exists()){
@@ -1603,7 +1603,7 @@ public class Server {
     /**
      * Helper class to store the current server properties
      */
-    static class IndexingServerProperties {
+    public static class IndexingServerProperties {
         private final String host;
         private final String port;
         
@@ -1612,11 +1612,11 @@ public class Server {
             this.port = port;
         }
 
-        String getHost() {
+        public String getHost() {
             return host;
         }
         
-        String getPort() {
+        public String getPort() {
             return port;
         }
     }
