@@ -111,7 +111,8 @@
   <rule ref="rulesets/java/design.xml/IdempotentOperations"/>
   <rule ref="rulesets/java/design.xml/SimpleDateFormatNeedsLocale"/>
   <rule ref="rulesets/java/design.xml/ImmutableField"/>
-  <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/> -->
   <rule ref="rulesets/java/design.xml/AvoidProtectedFieldInFinalClass"/>
   <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
