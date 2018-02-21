@@ -162,4 +162,9 @@ public class ExternalViewerAction extends AbstractAction {
         }
     }
 
+    public static void openURL(String path) {
+        // @@@ TODO
+        // get viewer for .html extension
+        // launch it
+    }
 }
