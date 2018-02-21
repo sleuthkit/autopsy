@@ -839,6 +839,7 @@ public class Server {
      * Get the host and port for a multiuser case.
      * If the file solrserver.txt exists, then use the values from that file.
      * Otherwise use the settings from the properties file.
+     * 
      * @param caseDirectory Current case directory
      * @return IndexingServerProperties containing the solr host/port for this case
      */
