@@ -24,7 +24,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -808,9 +807,6 @@ public class Case {
      *
      * @throws CaseActionException throw if could not create the case dir
      */
-    @NbBundle.Messages({
-        "# {0} - case directory", "Case.createCaseDir.exception.alreadyContainsCase=Case folder already contains an Autopsy case: {0}"
-    })
     public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
@@ -829,7 +825,7 @@ public class Case {
         try {
             boolean result = (caseDirF).mkdirs(); // create root case Directory
 
-            if(result == false) {
+            if (result == false) {
                 throw new CaseActionException(
                         NbBundle.getMessage(Case.class, "Case.createCaseDir.exception.cantCreate", caseDir));
             }
@@ -840,7 +836,7 @@ public class Case {
             if (caseType == CaseType.MULTI_USER_CASE) {
                 hostClause = File.separator + NetworkUtils.getLocalHostName();
             }
-            result = (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
+            result = result && (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + TEMP_FOLDER)).mkdirs()
                     && (new File(caseDir + hostClause + File.separator + CACHE_FOLDER)).mkdirs();
