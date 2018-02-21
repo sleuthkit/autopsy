@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -41,7 +43,12 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.Presenter;
 
+/**
+ * Panel to display a SQLite table
+ */
 class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
 
     private final org.openide.explorer.view.OutlineView outlineView;
@@ -68,6 +75,7 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
         outline.setRowSelectionAllowed(false);
         outline.setRootVisible(false);
 
+        outline.setCellSelectionEnabled(true);
         explorerManager = new ExplorerManager();
     }
 
@@ -76,6 +84,10 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
      *
      * @param tableRows
      */
+    @NbBundle.Messages({"SQLiteTableView.DisplayAs.text=Display as",
+        "SQLiteTableView.DisplayAsMenuItem.Date=Date",
+        "SQLiteTableView.DisplayAsMenuItem.RawData=Raw Data"
+    })
     void setupTable(List<Map<String, Object>> tableRows) {
 
      
@@ -110,10 +122,8 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
 
                 List<Action> nodeActions = new ArrayList<>();
             
-                nodeActions.add(new ParseColAction("Parse column as Epoch time", outline, new EpochTimeCellRenderer(true)) );
-                //nodeActions.add(new ParseColAction("Display column as original type", outline, new DefaultTableCellRenderer()) );
-                nodeActions.add(new ParseColAction("Display column as original type", outline, new EpochTimeCellRenderer(false)) );
-            
+                nodeActions.add(new ParseColAction(Bundle.SQLiteTableView_DisplayAs_text(), outline) );
+          
                 explorerManager.setRootContext(new AbstractNode(Children.create(new SQLiteTableRowFactory(tableRows, nodeActions), true)));
                 return false;
             }
@@ -173,26 +183,77 @@ class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
     // End of variables declaration//GEN-END:variables
 
 
-private  class ParseColAction extends AbstractAction {
+    /**
+     * Action to handle "Display as" menu item.
+     *
+     */
+    private  class ParseColAction extends AbstractAction  implements Presenter.Popup {
         private final Outline outline;
-        private TableCellRenderer colCellRenderer;
+        private final String displayName;
         
-
-        private ParseColAction(String displayName,  Outline outline, TableCellRenderer colCellRenderer ) {
+        ParseColAction(String displayName,  Outline outline ) {
             super(displayName);
             this.outline = outline;
-            this.colCellRenderer = colCellRenderer;
+            this.displayName = displayName;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            
+        }
 
-            int selCol = outline.getSelectedColumn();
-     
-            TableColumnModel columnModel = outline.getColumnModel();
-             
-            TableColumn column = columnModel.getColumn(selCol);
-            column.setCellRenderer(colCellRenderer);
+        @Override
+        public JMenuItem getPopupPresenter() {
+             return new DisplayColAsMenu();
+        }
+        
+        /**
+         * Class to SubMenu for "Display As" menu
+         */
+        private class DisplayColAsMenu extends JMenu {
+
+            DisplayColAsMenu() {
+                super(displayName);
+                initMenu();
+            }
+            
+            final void initMenu() {
+                
+                int selCol = outline.getSelectedColumn();
+                if (selCol < 0 ) { 
+                    selCol = 1;
+                }
+                
+                TableColumnModel columnModel = outline.getColumnModel();
+                TableColumn column = columnModel.getColumn(selCol);
+                
+                JMenuItem parseAsEpochItem = new JMenuItem(Bundle.SQLiteTableView_DisplayAsMenuItem_Date());
+                parseAsEpochItem.addActionListener((ActionEvent evt) -> {
+                    column.setCellRenderer(new EpochTimeCellRenderer(true));
+                });
+                parseAsEpochItem.setEnabled(false);
+                add(parseAsEpochItem);
+                        
+                JMenuItem parseAsOriginalItem = new JMenuItem(Bundle.SQLiteTableView_DisplayAsMenuItem_RawData());
+                parseAsOriginalItem.addActionListener((ActionEvent evt) -> {
+                    column.setCellRenderer(new EpochTimeCellRenderer(false));
+                });
+                parseAsOriginalItem.setEnabled(false);
+                add(parseAsOriginalItem);
+                
+                // Enable the relevant menuitem based on the current display state of the column
+                TableCellRenderer currRenderer = column.getCellRenderer();
+                if (currRenderer instanceof EpochTimeCellRenderer) {
+                    if (((EpochTimeCellRenderer) currRenderer).isRenderingAsEpoch()) {
+                        parseAsOriginalItem.setEnabled(true);
+                    } else {
+                        parseAsEpochItem.setEnabled(true);
+                    }
+                }
+                else {
+                    parseAsEpochItem.setEnabled(true);
+                } 
+            }
         }
     }
 }
