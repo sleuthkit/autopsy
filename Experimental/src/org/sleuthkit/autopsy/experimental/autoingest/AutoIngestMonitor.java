@@ -55,6 +55,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.JOB_STATUS_UPDATED.toString(),
         AutoIngestManager.Event.JOB_COMPLETED.toString(),
         AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
+        AutoIngestManager.Event.CASE_DEPRIORITIZED.toString(),
         AutoIngestManager.Event.JOB_STARTED.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
@@ -271,12 +272,56 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     LOGGER.log(Level.SEVERE, String.format("Failed to create a job for '%s'", node), ex);
                 }
             }
-            
+
             return newJobsSnapshot;
-            
+
         } catch (CoordinationServiceException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
             return new JobsSnapshot();
+        }
+    }
+
+    /**
+     * Removes the priority (set to zero) of all pending ingest jobs for a
+     * specified case.
+     *
+     * @param caseName The name of the case to be deprioritized.
+     *
+     * @throws AutoIngestMonitorException If there is an error removing the
+     *                                    priority of the jobs for the case.
+     *
+     * @return The latest jobs snapshot.
+     */
+    JobsSnapshot deprioritizeCase(final String caseName) throws AutoIngestMonitorException {
+        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+
+        synchronized (jobsLock) {
+            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+                if (pendingJob.getManifest().getCaseName().equals(caseName)) {
+                    prioritizedJobs.add(pendingJob);
+                }
+            }
+            if (!prioritizedJobs.isEmpty()) {
+                for (AutoIngestJob job : prioritizedJobs) {
+                    String manifestNodePath = job.getManifest().getFilePath().toString();
+                    try {
+                        AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                        nodeData.setPriority(0);
+                        coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+                    } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
+                        throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
+                    }
+                    job.setPriority(0);
+                }
+
+                /*
+                 * Publish a deprioritization event.
+                 */
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+                }).start();
+            }
+            return jobsSnapshot;
         }
     }
 
@@ -287,7 +332,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      *
      * @throws AutoIngestMonitorException If there is an error bumping the
      *                                    priority of the jobs for the case.
-     * 
+     *
      * @return The latest jobs snapshot.
      */
     JobsSnapshot prioritizeCase(final String caseName) throws AutoIngestMonitorException {
@@ -328,13 +373,64 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Removes the priority (set to zero) of an auto ingest job.
+     *
+     * @param job The job to be deprioritized.
+     *
+     * @throws AutoIngestMonitorException If there is an error removing the
+     *                                    priority of the job.
+     *
+     * @return The latest jobs snapshot.
+     */
+    JobsSnapshot deprioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
+        synchronized (jobsLock) {
+            AutoIngestJob prioritizedJob = null;
+            /*
+             * Make sure the job is still in the pending jobs queue.
+             */
+            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+                if (pendingJob.equals(job)) {
+                    prioritizedJob = job;
+                    break;
+                }
+            }
+
+            /*
+             * If the job was still in the pending jobs queue, bump its
+             * priority.
+             */
+            if (null != prioritizedJob) {
+                String manifestNodePath = job.getManifest().getFilePath().toString();
+                try {
+                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                    nodeData.setPriority(0);
+                    coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+                } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
+                    throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
+                }
+                prioritizedJob.setPriority(0);
+
+                /*
+                 * Publish a deprioritization event.
+                 */
+                final String caseName = job.getManifest().getCaseName();
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+                }).start();
+
+            }
+            return jobsSnapshot;
+        }
+    }
+
+    /**
      * Bumps the priority of an auto ingest job.
      *
      * @param job The job to be prioritized.
-     * 
+     *
      * @throws AutoIngestMonitorException If there is an error bumping the
      *                                    priority of the job.
-     * 
+     *
      * @return The latest jobs snapshot.
      */
     JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
@@ -525,7 +621,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         }
 
     }
-    
+
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * monitor operation.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -128,6 +128,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
+        Event.CASE_DEPRIORITIZED.toString(),
         Event.JOB_STARTED.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
@@ -371,6 +372,20 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Processes a job/case deprioritization event from another node by
+     * triggering an immediate input directory scan.
+     *
+     * @param event A deprioritization event from another auto ingest node.
+     */
+    private void handleRemoteCaseDeprioritizationEvent(AutoIngestCaseDeprioritizedEvent event) {
+        String hostName = event.getNodeName();
+        hostNamesToLastMsgTime.put(hostName, Instant.now());
+        scanInputDirsNow();
+        setChanged();
+        notifyObservers(Event.CASE_DEPRIORITIZED);
+    }
+
+    /**
      * Processes a case deletin event from another node by triggering an
      * immediate input directory scan.
      *
@@ -530,7 +545,49 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Removes the priority (set to zero) of all pending ingest jobs for a
+     * specified case.
+     *
+     * @param caseName The name of the case to be deprioritized.
+     *
+     * @throws AutoIngestManagerException If there is an error removing the
+     *                                    priority of the jobs for the case.
      */
+    void deprioritizeCase(final String caseName) throws AutoIngestManagerException {
+        if (state != State.RUNNING) {
+            return;
+        }
+
+        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        synchronized (jobsLock) {
+            for (AutoIngestJob job : pendingJobs) {
+                if (job.getManifest().getCaseName().equals(caseName)) {
+                    prioritizedJobs.add(job);
+                }
+            }
+            if (!prioritizedJobs.isEmpty()) {
+                for (AutoIngestJob job : prioritizedJobs) {
+                    int oldPriority = job.getPriority();
+                    job.setPriority(0);
+                    try {
+                        this.updateCoordinationServiceManifestNode(job);
+                    } catch (CoordinationServiceException | InterruptedException ex) {
+                        job.setPriority(oldPriority);
+                        throw new AutoIngestManagerException("Error updating case priority", ex);
+                    }
+                }
+            }
+
+            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+        }
+
+        if (!prioritizedJobs.isEmpty()) {
+            new Thread(() -> {
+                eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+            }).start();
+        }
+    }
+
     /**
      * Bumps the priority of all pending ingest jobs for a specified case.
      *
@@ -576,6 +633,57 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (!prioritizedJobs.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+            }).start();
+        }
+    }
+
+    /**
+     * Removes the priority (set to zero) of an auto ingest job.
+     *
+     * @param manifestPath The manifest file path for the job to be
+     *                     deprioritized.
+     *
+     * @throws AutoIngestManagerException If there is an error removing the
+     *                                    priority of the job.
+     */
+    void deprioritizeJob(Path manifestPath) throws AutoIngestManagerException {
+        if (state != State.RUNNING) {
+            return;
+        }
+
+        AutoIngestJob prioritizedJob = null;
+        synchronized (jobsLock) {
+            /*
+             * Find the job in the pending jobs list.
+             */
+            for (AutoIngestJob job : pendingJobs) {
+                if (job.getManifest().getFilePath().equals(manifestPath)) {
+                    prioritizedJob = job;
+                }
+            }
+
+            /*
+             * Remove the priority and update the coordination service manifest
+             * node data for the job.
+             */
+            if (null != prioritizedJob) {
+                int oldPriority = prioritizedJob.getPriority();
+                prioritizedJob.setPriority(0);
+                try {
+                    this.updateCoordinationServiceManifestNode(prioritizedJob);
+                } catch (CoordinationServiceException | InterruptedException ex) {
+                    prioritizedJob.setPriority(oldPriority);
+                    throw new AutoIngestManagerException("Error updating job priority", ex);
+                }
+            }
+
+            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+        }
+
+        if (null != prioritizedJob) {
+            final String caseName = prioritizedJob.getManifest().getCaseName();
+            new Thread(() -> {
+                eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
         }
     }
@@ -2910,6 +3018,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         JOB_STATUS_UPDATED,
         JOB_COMPLETED,
         CASE_PRIORITIZED,
+        CASE_DEPRIORITIZED,
         CASE_DELETED,
         PAUSED_BY_REQUEST,
         PAUSED_FOR_SYSTEM_ERROR,
