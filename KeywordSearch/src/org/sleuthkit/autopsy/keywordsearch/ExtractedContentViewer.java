@@ -54,7 +54,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
 
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
-    public static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
+    private static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
