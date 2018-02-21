@@ -33,10 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +47,7 @@ import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -239,30 +237,29 @@ final class CommunicationsGraph extends mxGraph {
                     size);
             return newVertex;
         });
-        final mxCellState state = getView().getState(vertex, true);
-
-        getView().updateLabel(state);
-        getView().updateLabelBounds(state);
-        getView().updateBoundingBox(state);
+//        final mxCellState state = getView().getState(vertex, true);
+//
+//        getView().updateLabel(state);
+//        getView().updateLabelBounds(state);
+//        getView().updateBoundingBox(state);
 
         return vertex;
     }
 
     @SuppressWarnings("unchecked")
-    private mxCell addEdge(Collection<Content> relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) {
+    private mxCell addOrUpdateEdge(long relSources, AccountDeviceInstanceKey account1, AccountDeviceInstanceKey account2) {
         mxCell vertex1 = getOrCreateVertex(account1);
         mxCell vertex2 = getOrCreateVertex(account2);
         Object[] edgesBetween = getEdgesBetween(vertex1, vertex2);
         mxCell edge;
         if (edgesBetween.length == 0) {
             final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
-            final HashSet<Content> hashSet = new HashSet<>(relSources);
-            edge = (mxCell) insertEdge(getDefaultParent(), edgeName, hashSet, vertex1, vertex2,
-                    "strokeWidth=" + (Math.log(hashSet.size()) + 1));
+            edge = (mxCell) insertEdge(getDefaultParent(), edgeName, relSources, vertex1, vertex2,
+                    "strokeWidth=" + (Math.log(relSources) + 1));
         } else {
             edge = (mxCell) edgesBetween[0];
-            ((Collection<Content>) edge.getValue()).addAll(relSources);
-            edge.setStyle("strokeWidth=" + (Math.log(((Collection) edge.getValue()).size()) + 1));
+//            ((Collection<Content>) edge.getValue()).addAll(relSources);
+            edge.setStyle("strokeWidth=" + (Math.log(relSources) + 1));
         }
         return edge;
     }
@@ -287,54 +284,68 @@ final class CommunicationsGraph extends mxGraph {
         @Override
         protected Void doInBackground() throws Exception {
             progress.start("Loading accounts");
-//            progress.switchToDeterminate("Loading accounts", 0,pinnedAccountDevices.size());
             int i = 0;
             try {
                 /**
                  * set to keep track of accounts related to pinned accounts
                  */
-                Set<AccountDeviceInstanceKey> relatedAccounts = new HashSet<>();
+                Map<Long, AccountDeviceInstanceKey> relatedAccounts = new HashMap<>();
                 for (AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
                     if (isCancelled()) {
                         break;
                     }
                     List<AccountDeviceInstance> relatedAccountDeviceInstances =
                             commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
-                    relatedAccounts.add(adiKey);
+                    relatedAccounts.put(adiKey.getAccountDeviceInstance().getAccount().getAccountID(), adiKey);
                     getOrCreateVertex(adiKey);
 
                     //get accounts related to pinned account
                     for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-//                            handle.progress(1);
                         long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
                         final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
-                        relatedAccounts.add(relatedADIKey); //store related accounts
+                        relatedAccounts.put(relatedADI.getAccount().getAccountID(), relatedADIKey); //store related accounts
                     }
                     progress.progress(++i);
                 }
 
-                //for each pair of related accounts add edges if they are related o each other.
-                // this is O(n^2) in the number of related accounts!!!
-                List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
-                progress.switchToDeterminate("", 0, relatedAccountsList.size());
-                for (i = 0; i < relatedAccountsList.size(); i++) {
-                    AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
-                    for (int j = i; j < relatedAccountsList.size(); j++) {
-                        if (isCancelled()) {
-                            break;
-                        }
-                        AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
-                        List<Content> relationships = commsManager.getRelationshipSources(
-                                adiKey1.getAccountDeviceInstance(),
-                                adiKey2.getAccountDeviceInstance(),
-                                currentFilter);
-                        if (relationships.size() > 0) {
-                            mxCell addEdge = addEdge(relationships, adiKey1, adiKey2);
-                            progress.progress(addEdge.getId());
-                        }
-                    }
-                    progress.progress(i);
+                Set<Long> accountIDs = relatedAccounts.keySet();
+
+                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCounts(accountIDs, currentFilter);
+
+                int total = relationshipCounts.size();
+                int k = 0;
+                progress.switchToDeterminate("", 0,total);
+                for (Map.Entry<Relationship.RelationshipKey, Long> entry : relationshipCounts.entrySet()) {
+                    Long count = entry.getValue();
+                    Relationship.RelationshipKey relationshipKey = entry.getKey();
+                    AccountDeviceInstanceKey account1 = relatedAccounts.get(relationshipKey.getAccount1ID());
+                    AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getAccount2ID());
+                    mxCell addEdge = addOrUpdateEdge(count, account1, account2);
+                    progress.progress(addEdge.getId(),k++);
                 }
+//                //for each pair of related accounts add edges if they are related o each other.
+//                // this is O(n^2) in the number of related accounts!!!
+//                List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
+//                progress.switchToDeterminate("", 0, relatedAccountsList.size());
+//
+//                for (i = 0; i < relatedAccountsList.size(); i++) {
+//                    AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
+//                    for (int j = i; j < relatedAccountsList.size(); j++) {
+//                        if (isCancelled()) {
+//                            break;
+//                        }
+//                        AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
+//                        List<Content> relationships = commsManager.getRelationshipSources(
+//                                adiKey1.getAccountDeviceInstance(),
+//                                adiKey2.getAccountDeviceInstance(),
+//                                currentFilter);
+//                        if (relationships.size() > 0) {
+//                            mxCell addEdge = addEdge(relationships, adiKey1, adiKey2);
+//                            progress.progress(addEdge.getId());
+//                        }
+//                    }
+//                    progress.progress(i);
+//                }
             } catch (TskCoreException tskCoreException) {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
             } finally {

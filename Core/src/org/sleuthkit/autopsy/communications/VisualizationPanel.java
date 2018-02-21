@@ -53,7 +53,7 @@ import java.util.Arrays;
 import static java.util.Collections.singleton;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -723,11 +723,23 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 HashSet<AccountDeviceInstance> adis = new HashSet<>();
                 for (mxICell cell : selectedCells) {
                     if (cell.isEdge()) {
-                        relationshipSources.addAll((Set<Content>) cell.getValue());
+                        mxICell source = (mxICell) graph.getModel().getTerminal(cell, true);
+                        AccountDeviceInstanceKey account1 = (AccountDeviceInstanceKey) source.getValue();
+                        mxICell target = (mxICell) graph.getModel().getTerminal(cell, false);
+                        AccountDeviceInstanceKey account2 = (AccountDeviceInstanceKey) target.getValue();
+                        try {
+                            final List<Content> relationshipSources1 = commsManager.getRelationshipSources(account1.getAccountDeviceInstance(),
+                                    account2.getAccountDeviceInstance(),
+                                    currentFilter);
+                            relationshipSources.addAll(relationshipSources1);
+                        } catch (TskCoreException tskCoreException) {
+                            logger.log(Level.SEVERE, " Error getting relationsips....", tskCoreException);
+                        }
                     } else if (cell.isVertex()) {
                         adis.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
                     }
                 }
+
                 rootNode = SelectionNode.createFromAccountsAndRelationships(relationshipSources, adis, currentFilter, commsManager);
                 selectedNodes = new Node[]{rootNode};
             }
