@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingSta
 final class AutoIngestMonitor extends Observable implements PropertyChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(AutoIngestMonitor.class.getName());
+    private static final int DEFAULT_PRIORITY = 0;
     private static final int NUM_COORD_SVC_QUERY_THREADS = 1;
     private static final String COORD_SVC_QUERY_THREAD_NAME = "AIM-coord-svc-query-thread-%d"; //NON-NLS
     private static final int CORRD_SVC_QUERY_INERVAL_MINS = 5;
@@ -306,12 +307,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     String manifestNodePath = job.getManifest().getFilePath().toString();
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                        nodeData.setPriority(0);
+                        nodeData.setPriority(DEFAULT_PRIORITY);
                         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
                     } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                         throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
                     }
-                    job.setPriority(0);
+                    job.setPriority(DEFAULT_PRIORITY);
                 }
 
                 /*
@@ -403,12 +404,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 String manifestNodePath = job.getManifest().getFilePath().toString();
                 try {
                     AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                    nodeData.setPriority(0);
+                    nodeData.setPriority(DEFAULT_PRIORITY);
                     coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
                 } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
                 }
-                prioritizedJob.setPriority(0);
+                prioritizedJob.setPriority(DEFAULT_PRIORITY);
 
                 /*
                  * Publish a deprioritization event.

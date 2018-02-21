@@ -133,6 +133,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
+    private static final int DEFAULT_PRIORITY = 0;
     private static final java.util.logging.Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
     private static AutoIngestManager instance;
     private final AutopsyEventPublisher eventPublisher;
@@ -568,7 +569,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (!prioritizedJobs.isEmpty()) {
                 for (AutoIngestJob job : prioritizedJobs) {
                     int oldPriority = job.getPriority();
-                    job.setPriority(0);
+                    job.setPriority(DEFAULT_PRIORITY);
                     try {
                         this.updateCoordinationServiceManifestNode(job);
                     } catch (CoordinationServiceException | InterruptedException ex) {
@@ -668,7 +669,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
              */
             if (null != prioritizedJob) {
                 int oldPriority = prioritizedJob.getPriority();
-                prioritizedJob.setPriority(0);
+                prioritizedJob.setPriority(DEFAULT_PRIORITY);
                 try {
                     this.updateCoordinationServiceManifestNode(prioritizedJob);
                 } catch (CoordinationServiceException | InterruptedException ex) {

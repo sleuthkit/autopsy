@@ -247,12 +247,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
         completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-        try {
-            initComponents(); // Generated code.
-        } catch (Throwable ex) {    //DLG:
-            System.out.println();
-            return;
-        }
+        initComponents(); // Generated code.
         setServicesStatusMessage();
         initPendingJobsTable();
         initRunningJobsTable();
