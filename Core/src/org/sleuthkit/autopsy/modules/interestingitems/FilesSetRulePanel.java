@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2017 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.logging.Level;
@@ -50,6 +49,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.NoMimeTypeError=Please select a valid MIME type.",
         "FilesSetRulePanel.NoNameError=Name cannot be empty",
         "FilesSetRulePanel.NoPathError=Path cannot be empty",
+        "FilesSetRulePanel.DaysIncludedEmptyError=Number of days included cannot be empty.",
+        "FilesSetRulePanel.DaysIncludedInvalidError=Number of days included must be a positive integer.",
         "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected)."
     })
 
@@ -82,6 +83,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         } else {
             populateMimeTypesComboBox();
         }
+        this.dateCheckActionPerformed(null);
         populateComponentsWithDefaultValues();
         this.setButtons(okButton, cancelButton);
     }
@@ -108,12 +110,14 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             populateMimeTypesComboBox();
             populateMimeConditionComponents(rule);
             populateSizeConditionComponents(rule);
+
         }
         populateMimeTypesComboBox();
         populateRuleNameComponent(rule);
         populateTypeConditionComponents(rule);
         populateNameConditionComponents(rule);
         populatePathConditionComponents(rule);
+        populateDateConditionComponents(rule);
         this.setButtons(okButton, cancelButton);
     }
 
@@ -176,7 +180,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void setOkButton() {
         if (this.okButton != null) {
             this.okButton.setEnabled(this.fileSizeCheck.isSelected() || this.mimeCheck.isSelected()
-                    || this.nameCheck.isSelected() || this.pathCheck.isSelected());
+                    || this.nameCheck.isSelected() || this.pathCheck.isSelected() || this.dateCheck.isSelected());
         }
     }
 
@@ -275,6 +279,21 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     }
 
     /**
+     * Populates the UI components that display the optional date condition for
+     * a rule.
+     *
+     * @param rule The files set rule to be edited.
+     */
+    private void populateDateConditionComponents(FilesSet.Rule rule) {
+        FilesSet.Rule.DateCondition dateCondition = rule.getDateCondition();
+        if (dateCondition != null) {
+            this.dateCheck.setSelected(true);
+            this.dateCheckActionPerformed(null);
+            this.daysIncludedTextField.setText(Integer.toString(dateCondition.getDaysIncluded()));
+        }
+    }
+
+    /**
      * Returns whether or not the data entered in the panel constitutes a valid
      * files set membership rule definition, displaying a dialog explaining the
      * deficiency if the definition is invalid.
@@ -283,7 +302,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     boolean isValidRuleDefinition() {
 
-        if (!(this.mimeCheck.isSelected() || this.fileSizeCheck.isSelected() || this.pathCheck.isSelected() || this.nameCheck.isSelected())) {
+        if (!(this.mimeCheck.isSelected() || this.fileSizeCheck.isSelected() || this.pathCheck.isSelected() || this.nameCheck.isSelected() || this.dateCheck.isSelected())) {
             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                     Bundle.FilesSetRulePanel_NoConditionError(),
                     NotifyDescriptor.WARNING_MESSAGE);
@@ -367,6 +386,28 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         }
 
+        if (this.dateCheck.isSelected()) {
+            if (this.daysIncludedTextField.getText().isEmpty()) {
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        Bundle.FilesSetRulePanel_DaysIncludedEmptyError(),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
+            }
+            try {
+                int value = Integer.parseInt(daysIncludedTextField.getText());
+                if (value < 0) {
+                    throw new NumberFormatException("Negative numbers are not allowed for the within N days condition");
+                }
+            } catch (NumberFormatException e) {
+                //field did not contain an integer
+                NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                        Bundle.FilesSetRulePanel_DaysIncludedInvalidError(),
+                        NotifyDescriptor.WARNING_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDesc);
+                return false;
+            }
+        }
         return true;
     }
 
@@ -505,6 +546,23 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     }
 
     /**
+     * Gets the optional date condition for the rule that was created or edited.
+     * Should only be called if isValidDefintion() returns true.
+     *
+     * @return A date condition or null if no date condition was specified.
+     *
+     * @throws IllegalStateException if the specified date condition is not
+     *                               valid.
+     */
+    FilesSet.Rule.DateCondition getDateCondition() {
+        FilesSet.Rule.DateCondition dateCondition = null;
+        if (!daysIncludedTextField.getText().isEmpty()) {
+            dateCondition = new FilesSet.Rule.DateCondition(Integer.parseInt(daysIncludedTextField.getText()));
+        }
+        return dateCondition;
+    }
+
+    /**
      * Checks an input string for the use of illegal characters.
      *
      * @param toBeChecked  The input string.
@@ -582,15 +640,13 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         filesRadioButton = new javax.swing.JRadioButton();
         dirsRadioButton = new javax.swing.JRadioButton();
         allRadioButton = new javax.swing.JRadioButton();
+        daysIncludedTextField = new javax.swing.JTextField();
+        daysIncludedLabel = new javax.swing.JLabel();
+        dateCheck = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameLabel.text")); // NOI18N
 
         ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameTextField.text")); // NOI18N
-        ruleNameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ruleNameTextFieldActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel1.text")); // NOI18N
 
@@ -685,85 +741,99 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         });
 
+        daysIncludedTextField.setEnabled(false);
+        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
+        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
+
+        org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.daysIncludedLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(dateCheck, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.dateCheck.text")); // NOI18N
+        dateCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dateCheckActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(8, 8, 8)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 234, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(ruleNameLabel)
+                                .addGap(5, 5, 5)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(mimeTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(pathTextField)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(equalitySymbolComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(fileSizeSpinner)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(fileSizeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(pathRegexCheckBox)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(pathSeparatorInfoLabel))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(daysIncludedLabel))
+                                            .addComponent(ruleNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(fullNameRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(extensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(nameRegexCheckbox)))
+                                        .addGap(1, 1, 1))))
+                            .addComponent(jLabel5)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel5)
+                                    .addComponent(nameCheck, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel1))
+                                .addGap(16, 16, 16)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addGap(65, 65, 65)
                                         .addComponent(filesRadioButton)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(dirsRadioButton)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(allRadioButton)))
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(nameCheck)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 249, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(pathCheck)
-                        .addGap(4, 4, 4)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(pathRegexCheckBox)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(pathSeparatorInfoLabel))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(fullNameRadioButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(extensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(nameRegexCheckbox)
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                                        .addComponent(allRadioButton))
+                                    .addComponent(nameTextField)))))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(pathCheck)
                             .addComponent(mimeCheck)
-                            .addComponent(fileSizeCheck))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(equalitySymbolComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(fileSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(fileSizeCheck)
+                            .addComponent(dateCheck))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(filesRadioButton)
-                    .addComponent(dirsRadioButton)
-                    .addComponent(allRadioButton))
-                .addGap(5, 5, 5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(nameCheck))
+                .addGap(3, 3, 3)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(10, 10, 10)
+                        .addComponent(nameCheck))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(filesRadioButton)
+                            .addComponent(dirsRadioButton)
+                            .addComponent(allRadioButton))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(fullNameRadioButton)
@@ -777,7 +847,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(pathRegexCheckBox)
                     .addComponent(pathSeparatorInfoLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(mimeCheck))
@@ -787,17 +857,18 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     .addComponent(fileSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(fileSizeCheck))
-                .addGap(15, 15, 15)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(daysIncludedLabel)
+                    .addComponent(dateCheck))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ruleNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(ruleNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void ruleNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleNameTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ruleNameTextFieldActionPerformed
 
     private void nameCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameCheckActionPerformed
         if (!this.nameCheck.isSelected()) {
@@ -831,15 +902,30 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.setOkButton();
     }//GEN-LAST:event_pathCheckActionPerformed
 
-    private void mimeCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mimeCheckActionPerformed
-        if (!this.mimeCheck.isSelected()) {
-            this.mimeTypeComboBox.setEnabled(false);
-            this.mimeTypeComboBox.setSelectedIndex(0);
+    private void filesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesRadioButtonActionPerformed
+
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_filesRadioButtonActionPerformed
+
+    private void dirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioButtonActionPerformed
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_dirsRadioButtonActionPerformed
+
+    private void allRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allRadioButtonActionPerformed
+        this.setComponentsForSearchType();
+    }//GEN-LAST:event_allRadioButtonActionPerformed
+
+    private void dateCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dateCheckActionPerformed
+        if (!this.dateCheck.isSelected()) {
+            this.daysIncludedTextField.setEnabled(false);
+            this.daysIncludedLabel.setEnabled(false);
+            this.daysIncludedTextField.setText("");
         } else {
-            this.mimeTypeComboBox.setEnabled(true);
+            this.daysIncludedTextField.setEnabled(true);
+            this.daysIncludedLabel.setEnabled(true);
         }
         this.setOkButton();
-    }//GEN-LAST:event_mimeCheckActionPerformed
+    }//GEN-LAST:event_dateCheckActionPerformed
 
     private void fileSizeCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileSizeCheckActionPerformed
         if (!this.fileSizeCheck.isSelected()) {
@@ -855,21 +941,21 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.setOkButton();
     }//GEN-LAST:event_fileSizeCheckActionPerformed
 
-    private void filesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesRadioButtonActionPerformed
-
-        this.setComponentsForSearchType();
-    }//GEN-LAST:event_filesRadioButtonActionPerformed
-
-    private void dirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioButtonActionPerformed
-        this.setComponentsForSearchType();
-    }//GEN-LAST:event_dirsRadioButtonActionPerformed
-
-    private void allRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allRadioButtonActionPerformed
-        this.setComponentsForSearchType();
-    }//GEN-LAST:event_allRadioButtonActionPerformed
+    private void mimeCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mimeCheckActionPerformed
+        if (!this.mimeCheck.isSelected()) {
+            this.mimeTypeComboBox.setEnabled(false);
+            this.mimeTypeComboBox.setSelectedIndex(0);
+        } else {
+            this.mimeTypeComboBox.setEnabled(true);
+        }
+        this.setOkButton();
+    }//GEN-LAST:event_mimeCheckActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;
+    private javax.swing.JCheckBox dateCheck;
+    private javax.swing.JLabel daysIncludedLabel;
+    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JRadioButton dirsRadioButton;
     private javax.swing.JComboBox<String> equalitySymbolComboBox;
     private javax.swing.JRadioButton extensionRadioButton;
