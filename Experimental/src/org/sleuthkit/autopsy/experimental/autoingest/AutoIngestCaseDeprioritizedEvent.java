@@ -38,7 +38,7 @@ final class AutoIngestCaseDeprioritizedEvent extends AutopsyEvent implements Ser
      * @param caseName The name of the case.
      * @param nodeName The host name of the node that deprioritized the case.
      */
-    public AutoIngestCaseDeprioritizedEvent(String nodeName, String caseName) {
+    AutoIngestCaseDeprioritizedEvent(String nodeName, String caseName) {
         super(AutoIngestManager.Event.CASE_DEPRIORITIZED.toString(), null, null);
         this.caseName = caseName;
         this.nodeName = nodeName;
@@ -49,7 +49,7 @@ final class AutoIngestCaseDeprioritizedEvent extends AutopsyEvent implements Ser
      *
      * @return The case name.
      */
-    public String getCaseName() {
+    String getCaseName() {
         return caseName;
     }
 
@@ -58,7 +58,7 @@ final class AutoIngestCaseDeprioritizedEvent extends AutopsyEvent implements Ser
      *
      * @return The host name of the node.
      */
-    public String getNodeName() {
+    String getNodeName() {
         return nodeName;
     }
 
