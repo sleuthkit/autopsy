@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+
 import com.google.common.base.Strings;
 import java.awt.Component;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * Generic Application content viewer
