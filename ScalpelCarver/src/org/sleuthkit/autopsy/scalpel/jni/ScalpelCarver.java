@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -147,7 +147,7 @@ public class ScalpelCarver {
             carveNat(carverInputId, carverInput, configFilePath, outputFolderPath);
         }
         catch (Exception e) {
-            logger.log(Level.SEVERE, "Error while caving file " + file, e); //NON-NLS
+            logger.log(Level.WARNING, "Error while caving file.", e); //NON-NLS
             throw new ScalpelException(e);
         }
         finally {

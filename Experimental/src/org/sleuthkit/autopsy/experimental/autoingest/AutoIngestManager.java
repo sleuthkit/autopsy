@@ -2641,7 +2641,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     jobLogger.logFileExportCompleted();
                 }
             } catch (FileExportException ex) {
-                SYS_LOGGER.log(Level.SEVERE, String.format("Error doing file export for %s", manifestPath), ex);
+                SYS_LOGGER.log(Level.WARNING, String.format("Error doing file export for %s", manifestPath), ex);
                 currentJob.setErrorsOccurred(true);
                 setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logFileExportError();

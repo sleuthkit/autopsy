@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -74,7 +73,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
-    private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
@@ -136,12 +134,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     @Messages({"ExifParserFileIngestModule.indexError.message=Failed to index EXIF Metadata artifact for keyword search."})
-    ProcessResult processFile(AbstractFile f) {
+    ProcessResult processFile(AbstractFile file) {
         InputStream in = null;
         BufferedInputStream bin = null;
 
         try {
-            in = new ReadContentInputStream(f);
+            in = new ReadContentInputStream(file);
             bin = new BufferedInputStream(in);
 
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
@@ -154,7 +152,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 // set the timeZone for the current datasource.
                 if (timeZone == null) {
                     try {
-                        Content dataSource = f.getDataSource();
+                        Content dataSource = file.getDataSource();
                         if ((dataSource != null) && (dataSource instanceof Image)) {
                             Image image = (Image) dataSource;
                             timeZone = TimeZone.getTimeZone(image.getTimeZone());
@@ -202,7 +200,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
             // Add the attributes, if there are any, to a new artifact
             if (!attributes.isEmpty()) {
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
+                BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
 
                 try {
@@ -218,13 +216,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
             return ProcessResult.OK;
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
+            logger.log(Level.WARNING, String.format("Failed to create blackboard artifact for exif metadata (%s).", ex.getLocalizedMessage())); //NON-NLS
             return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()}); //NON-NLS
+            logger.log(Level.WARNING, String.format("Failed to process the image file: '%s/%s' (id=%d) (%s)", file.getParentPath(), file.getName(), file.getId(), ex.getLocalizedMessage())); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } finally {
             try {

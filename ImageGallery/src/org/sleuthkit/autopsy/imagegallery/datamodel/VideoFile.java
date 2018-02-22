@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 public class VideoFile extends DrawableFile {
 
@@ -93,6 +94,8 @@ public class VideoFile extends DrawableFile {
         
         try {
             retValue = (double) getMedia().getWidth();
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, "Error reading video file.", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error writing video file to disk.", ex); //NON-NLS
         } catch (MediaException ex) {
@@ -109,10 +112,18 @@ public class VideoFile extends DrawableFile {
 
     @Override
     Double getHeight() {
+        double retValue = -1.0;
+        
         try {
-            return (double) getMedia().getHeight();
-        } catch (IOException | MediaException ex) {
-            return -1.0;
+            retValue = (double) getMedia().getHeight();
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, "Error reading video file.", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error writing video file to disk.", ex); //NON-NLS
+        } catch (MediaException ex) {
+            logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
         }
+        
+        return retValue;
     }
 }

@@ -180,9 +180,16 @@ class ExtractRegistry extends Extract {
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
+                        regFile.getName(), regFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                this.getName(), regFileName));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp registry file '%s' (id=%d).",
-                        regFileName, regFile.getId()), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
+                        regFileNameLocal, regFile.getName(), regFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                 this.getName(), regFileName));

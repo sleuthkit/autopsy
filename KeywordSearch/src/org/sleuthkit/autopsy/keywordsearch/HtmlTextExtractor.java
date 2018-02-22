@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -164,7 +164,7 @@ class HtmlTextExtractor extends FileTextExtractor {
             // All done, now make it a reader
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
-            throw new TextExtractorException("Error extracting HTML from content.", ex);
+            throw new TextExtractorException("Error extracting HTML from content file.", ex);
         }
     }
 
@@ -173,6 +173,7 @@ class HtmlTextExtractor extends FileTextExtractor {
         return false;
     }
 
+    @Override
     public void logWarning(final String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.iOS;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -39,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -63,17 +63,17 @@ class TextMessageAnalyzer {
             if (absFiles.isEmpty()) {
                 return;
             }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
-                    fileId = AF.getId();
+                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
+                    fileId = file.getId();
                     findTextsInDB(dbPath, fileId);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s' (id=%d).", dbPath, fileId), ex); //NON-NLS
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
+                } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", file.getName(), fileId), ex); //NON-NLS
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, String.format("Error writing content from file '%s' (id=%d) to '%s'.", file.getName(), fileId, dbPath), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
@@ -82,7 +82,7 @@ class TextMessageAnalyzer {
     }
 
     @Messages({"TextMessageAnalyzer.indexError.message=Failed to index text message artifact for keyword search."})
-    private void findTextsInDB(String DatabasePath, long fId) {
+    private void findTextsInDB(String DatabasePath, long fileId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -97,9 +97,9 @@ class TextMessageAnalyzer {
         Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file {0}", fId); //NON-NLS
+            AbstractFile file = skCase.getAbstractFileById(fileId);
+            if (file == null) {
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fileId); //NON-NLS
                 return;
             }
 
@@ -120,7 +120,7 @@ class TextMessageAnalyzer {
                     subject = resultSet.getString("subject"); //NON-NLS
                     body = resultSet.getString("body"); //NON-NLS
 
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
+                    bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     // @@@ NEed to put into more specific TO or FROM
                     if (type.equals("1")) {

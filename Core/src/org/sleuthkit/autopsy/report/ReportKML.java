@@ -67,7 +67,7 @@ class ReportKML implements GeneralReportModule {
         PURPLE("style.kml#purpleFeature"),
         WHITE("style.kml#whiteFeature"),
         YELLOW("style.kml#yellowFeature");
-        private String color;
+        private final String color;
 
         FeatureColor(String color) {
             this.color = color;
@@ -197,6 +197,8 @@ class ReportKML implements GeneralReportModule {
          */
         try {
             for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
+                String fileName = "";
+                long fileId = 0;
                 try {
                     Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
                     String desc = getDescriptionFromArtifact(artifact, "EXIF Metadata With Locations"); //NON-NLS
@@ -206,7 +208,9 @@ class ReportKML implements GeneralReportModule {
 
                     if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
                         AbstractFile abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-                        Path path = null;
+                        fileName = abstractFile.getName();
+                        fileId = abstractFile.getId();
+                        Path path;
                         copyFileUsingStream(abstractFile, Paths.get(baseReportDir, abstractFile.getName()).toFile());
                         try {
                             path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
@@ -219,6 +223,8 @@ class ReportKML implements GeneralReportModule {
                         }
                         gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, desc, timestamp, point, path, formattedCoordinates));
                     }
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error reading file.", ex);
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract photo information.", ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
@@ -404,9 +410,7 @@ class ReportKML implements GeneralReportModule {
             BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
             if (bba != null) {
                 Double value = bba.getValueDouble();
-                if (value != null) {
-                    returnValue = value;
-                }
+                returnValue = value;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Double value: " + type.toString(), ex); //NON-NLS
@@ -428,9 +432,7 @@ class ReportKML implements GeneralReportModule {
             BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
             if (bba != null) {
                 Long value = bba.getValueLong();
-                if (value != null) {
-                    returnValue = value;
-                }
+                returnValue = value;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Long value: " + type.toString(), ex); //NON-NLS
@@ -452,9 +454,7 @@ class ReportKML implements GeneralReportModule {
             BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
             if (bba != null) {
                 Integer value = bba.getValueInt();
-                if (value != null) {
-                    returnValue = value;
-                }
+                returnValue = value;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Integer value: " + type.toString(), ex); //NON-NLS

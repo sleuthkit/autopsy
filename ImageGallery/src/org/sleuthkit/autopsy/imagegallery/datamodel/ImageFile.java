@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class ImageFile extends DrawableFile {
 
-    private static final Logger LOGGER = Logger.getLogger(ImageFile.class.getName());
+    private static final Logger logger = Logger.getLogger(ImageFile.class.getName());
 
     ImageFile(AbstractFile f, Boolean analyzed) {
         super(f, analyzed);
@@ -53,6 +54,7 @@ public class ImageFile extends DrawableFile {
         try {
             return (double) ImageUtils.getImageWidth(this.getAbstractFile());
         } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to get width from image.", ex);
             return -1.0;
         }
     }
@@ -62,6 +64,7 @@ public class ImageFile extends DrawableFile {
         try {
             return (double) ImageUtils.getImageHeight(this.getAbstractFile());
         } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to get height from image.", ex);
             return -1.0;
         }
     }

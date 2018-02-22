@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -122,9 +123,15 @@ class Chrome extends Extract {
             }
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Chrome web history artifacts.",
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome web history artifacts file '%s' (id=%d).",
                         historyFile.getName(), historyFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
+                        this.getName(), historyFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome web history artifacts file '%s' (id=%d).",
+                        temps, historyFile.getName(), historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
                         this.getName(), historyFile.getName()));
                 continue;
@@ -203,9 +210,15 @@ class Chrome extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Chrome bookmark artifacts.",
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome bookmark artifacts file '%s' (id=%d).",
                         bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
+                        this.getName(), bookmarkFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome bookmark artifacts file '%s' (id=%d).",
+                        temps, bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
                         this.getName(), bookmarkFile.getName()));
                 continue;
@@ -346,12 +359,17 @@ class Chrome extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Chrome cookie artifacts.",
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome cookie artifacts file '%s' (id=%d).",
                         cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile", this.getName(),
-                                cookiesFile.getName()));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile",
+                        this.getName(), cookiesFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome cookie artifacts file '%s' (id=%d).",
+                        temps, cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile",
+                        this.getName(), cookiesFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -430,9 +448,15 @@ class Chrome extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Chrome download artifacts.",
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome download artifacts file '%s' (id=%d).",
                         downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
+                        this.getName(), downloadFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome download artifacts file '%s' (id=%d).",
+                        temps, downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
                         this.getName(), downloadFile.getName()));
                 continue;
@@ -524,12 +548,17 @@ class Chrome extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + signonFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(signonFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Chrome login artifacts.",
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome login artifacts file '%s' (id=%d).",
                         signonFile.getName(), signonFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles", this.getName(),
-                                signonFile.getName()));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                        this.getName(), signonFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome login artifacts file '%s' (id=%d).",
+                        temps, signonFile.getName(), signonFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                        this.getName(), signonFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);

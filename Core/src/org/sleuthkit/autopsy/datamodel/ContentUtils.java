@@ -44,6 +44,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -316,8 +317,12 @@ public final class ContentUtils {
         public Void visit(File f) {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
-            } catch (IOException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
+                        "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
+                        ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
                         "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -328,8 +333,12 @@ public final class ContentUtils {
         public Void visit(LayoutFile f) {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
-            } catch (IOException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
+                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
+                        ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
                         "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -340,8 +349,12 @@ public final class ContentUtils {
         public Void visit(DerivedFile df) {
             try {
                 ContentUtils.writeToFile(df, dest, progress, worker, source);
-            } catch (IOException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
+                        "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
+                        ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
                         "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -352,8 +365,12 @@ public final class ContentUtils {
         public Void visit(LocalFile lf) {
             try {
                 ContentUtils.writeToFile(lf, dest, progress, worker, source);
-            } catch (IOException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
+                        "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
+                        ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
                         "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
@@ -364,8 +381,12 @@ public final class ContentUtils {
         public Void visit(SlackFile f) {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);
-            } catch (IOException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
+                        "Trouble extracting slack file to " + dest.getAbsolutePath(), //NON-NLS
+                        ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
                         "Trouble extracting slack file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -94,15 +93,15 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
-    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private long jobId;
 
     private static class IngestJobTotals {
 
-        private AtomicLong totalItemsRecovered = new AtomicLong(0);
-        private AtomicLong totalItemsWithErrors = new AtomicLong(0);
-        private AtomicLong totalWritetime = new AtomicLong(0);
-        private AtomicLong totalParsetime = new AtomicLong(0);
+        private final AtomicLong totalItemsRecovered = new AtomicLong(0);
+        private final AtomicLong totalItemsWithErrors = new AtomicLong(0);
+        private final AtomicLong totalWritetime = new AtomicLong(0);
+        private final AtomicLong totalParsetime = new AtomicLong(0);
     }
 
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
@@ -303,7 +302,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             }
         } catch (IOException ex) {
             totals.totalItemsWithErrors.incrementAndGet();
-            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
             MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
@@ -438,8 +437,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws IngestModuleException
      */
     public static File locateExecutable() throws IngestModule.IngestModuleException {
-        File exeFile = null;
-        Path execName = null;
+        File exeFile;
+        Path execName;
         String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
             execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);

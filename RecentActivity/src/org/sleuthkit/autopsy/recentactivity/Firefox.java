@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -108,9 +109,16 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Firefox web history artifacts.",
+            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox web history artifacts file '%s' (id=%d).",
                         fileName, historyFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox web history artifacts file '%s' (id=%d).",
+                        temps, fileName, historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));
@@ -196,9 +204,16 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Firefox bookmark artifacts.",
+            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox bookmark artifacts file '%s' (id=%d).",
                         fileName, bookmarkFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox bookmark artifacts file '%s' (id=%d).",
+                        temps, fileName, bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getBookmark.errMsg.errAnalyzeFile",
                         this.getName(), fileName));
                 continue;
@@ -281,9 +296,16 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Firefox cookie artifacts.",
+            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox cookie artifacts file '%s' (id=%d).",
                         fileName, cookiesFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox cookie artifacts file '%s' (id=%d).",
+                        temps, fileName, cookiesFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getCookie.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));
@@ -397,9 +419,16 @@ class Firefox extends Extract {
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Firefox download artifacts.",
+            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox download artifacts file '%s' (id=%d).",
                         fileName, downloadsFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox download artifacts file '%s' (id=%d).",
+                        temps, fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlPre24.errMsg.errAnalyzeFiles",
                         this.getName(), fileName));
                 continue;
@@ -511,9 +540,16 @@ class Firefox extends Extract {
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error writing temp sqlite db file '%s' (id=%d) for Firefox download artifacts.",
+            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox download artifacts file '%s' (id=%d).",
                         fileName, downloadsFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getHistory.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox download artifacts file '%s' (id=%d).",
+                        temps, fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));

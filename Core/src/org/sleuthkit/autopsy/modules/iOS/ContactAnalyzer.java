@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -68,16 +69,16 @@ class ContactAnalyzer {
             if (absFiles.isEmpty()) {
                 return;
             }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Error writing file content to file '%s' (id=%d).", dbPath, fileId), ex); //NON-NLS
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Contacts", e); //NON-NLS
+                    fileId = file.getId();
+                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
+                } catch (ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", file.getName(), fileId), ex); //NON-NLS
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, String.format("Error writing content from file '%s' (id=%d) to '%s'.", file.getName(), fileId, dbPath), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
@@ -88,12 +89,12 @@ class ContactAnalyzer {
     /**
      *
      * @param DatabasePath
-     * @param fId          Will create artifact from a database given by the
+     * @param fileId       Will create artifact from a database given by the
      *                     path The fileId will be the Abstract file associated
      *                     with the artifacts
      */
     @Messages({"ContactAnalyzer.indexError.message=Failed to index contact artifact for keyword search."})
-    private void findContactsInDB(String DatabasePath, long fId) {
+    private void findContactsInDB(String DatabasePath, long fileId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -108,9 +109,9 @@ class ContactAnalyzer {
         Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file {0}", fId); //NON-NLS
+            AbstractFile file = skCase.getAbstractFileById(fileId);
+            if (file == null) {
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fileId); //NON-NLS
                 return;
             }
 
@@ -127,7 +128,7 @@ class ContactAnalyzer {
                         + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
 
                 BlackboardArtifact bba;
-                bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+                bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 String name;
                 String oldName = "";

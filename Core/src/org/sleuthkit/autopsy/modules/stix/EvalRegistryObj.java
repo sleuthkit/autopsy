@@ -35,8 +35,6 @@ import java.util.regex.Matcher;
 import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.mitre.cybox.common_2.ConditionTypeEnum;
 import com.williballenthin.rejistry.*;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  *
@@ -45,8 +43,6 @@ class EvalRegistryObj extends EvaluatableObject {
 
     private final WindowsRegistryKey obj;
     private final List<RegistryFileInfo> regFiles = new ArrayList<>();
-    
-    private final static Logger logger = Logger.getLogger(EvalRegistryObj.class.getName());
 
     public EvalRegistryObj(WindowsRegistryKey a_obj, String a_id, String a_spacing, List<RegistryFileInfo> a_regFiles) {
         obj = a_obj;
@@ -367,8 +363,6 @@ class EvalRegistryObj extends EvaluatableObject {
                     regFilesLocal.add(new EvalRegistryObj().new RegistryFileInfo(regFile, regFileNameLocal));
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Error copying file '%s' (id=%d) into directory '%s'.",
-                        regFileName, regFile.getId(), regFileNameLocal), ex); //NON-NLS
                 throw new TskCoreException(ex.getLocalizedMessage());
             }
             index++;
