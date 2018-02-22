@@ -923,6 +923,9 @@ public class Server {
             Path serverFile = Paths.get(caseDirectoryPath.toString(), "solrserver.txt");
             try {
                 caseDirectoryPath.toFile().mkdirs();
+                if (! caseDirectoryPath.toFile().exists()) {
+                    throw new KeywordSearchModuleException("Case directory " + caseDirectoryPath.toString() + " does not exist");
+                }
                 Files.write(serverFile, lines.get(rnd).getBytes());
             } catch (IOException ex){
                 throw new KeywordSearchModuleException(serverFile.toString() + " could not be written", ex);

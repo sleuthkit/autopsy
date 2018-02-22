@@ -2158,6 +2158,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
+                            Case.createCaseDirectory(caseDirectoryPath.toString(), CaseType.MULTI_USER_CASE);
                             Server.selectSolrServerForCase(rootOutputDirectory, caseDirectoryPath);
                             CaseDetails caseDetails = new CaseDetails(caseName);
                             Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
