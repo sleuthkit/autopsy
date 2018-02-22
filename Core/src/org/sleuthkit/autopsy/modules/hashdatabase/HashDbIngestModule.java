@@ -51,9 +51,9 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 @NbBundle.Messages({
-    "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash database set.",
+    "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash set.",
     "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
-    "HashDbIngestModule.noKnownHashDbSetMsg=No known hash database set.",
+    "HashDbIngestModule.noKnownHashDbSetMsg=No known hash set.",
     "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
 })
 public class HashDbIngestModule implements FileIngestModule {
@@ -95,7 +95,7 @@ public class HashDbIngestModule implements FileIngestModule {
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
         if (!hashDbManager.verifyAllDatabasesLoadedCorrectly()) {
-            throw new IngestModuleException("Could not load all hash databases");
+            throw new IngestModuleException("Could not load all hash sets");
         }
         updateEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         updateEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);
@@ -136,7 +136,7 @@ public class HashDbIngestModule implements FileIngestModule {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName()+ " hash database", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName()+ " hash set", ex); //NON-NLS
                 }
             }
         }

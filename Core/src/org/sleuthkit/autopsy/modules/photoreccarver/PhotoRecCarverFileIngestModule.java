@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -78,6 +79,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
+    private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
     private static final String PHOTOREC_RESULTS_BASE = "results"; //NON-NLS
     private static final String PHOTOREC_RESULTS_EXTENDED = "results.1"; //NON-NLS
     private static final String PHOTOREC_REPORT = "report.xml"; //NON-NLS
@@ -136,8 +138,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
         this.rootOutputDirPath = createModuleOutputDirectoryForCase();
 
-        Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
-        executableFile = locateExecutable(execName.toString());
+        //Set photorec executable directory based on operating system.
+            executableFile = locateExecutable();
 
         if (PhotoRecCarverFileIngestModule.refCounter.incrementAndGet(this.jobId) == 1) {
             try {
@@ -222,13 +224,13 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
             // Scan the file with Unallocated Carver.
             ProcessBuilder processAndSettings = new ProcessBuilder(
-                    "\"" + executableFile + "\"",
+                    executableFile.toString(),
                     "/d", // NON-NLS
-                    "\"" + outputDirPath.toAbsolutePath() + File.separator + PHOTOREC_RESULTS_BASE + "\"",
+                    outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
-                    "\"" + tempFilePath.toFile() + "\"",
+                    tempFilePath.toFile().toString(),
                     "search");  // NON-NLS
-
+            
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
             processAndSettings.redirectErrorStream(true);
@@ -435,17 +437,32 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      *
      * @throws IngestModuleException
      */
-    public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException {
-        // Must be running under a Windows operating system.
-        if (!PlatformUtil.isWindowsOS()) {
-            throw new IngestModule.IngestModuleException(Bundle.unsupportedOS_message());
+    public static File locateExecutable() throws IngestModule.IngestModuleException {
+        File exeFile = null;
+        Path execName = null;
+        String photorec_linux_directory = "/usr/bin";
+        if (PlatformUtil.isWindowsOS()) {
+            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);
+            exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
+        } else {
+            File usrBin = new File("/usr/bin/photorec");
+            File usrLocalBin = new File("/usr/local/bin/photorec");
+            if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
+                photorec_linux_directory = "/usr/bin";
+            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
+                photorec_linux_directory = "/usr/local/bin";
+            }else{
+                throw new IngestModule.IngestModuleException("Photorec not found");
+            }
+            execName = Paths.get(photorec_linux_directory, PHOTOREC_LINUX_EXECUTABLE);
+            exeFile = new File(execName.toString());
         }
 
-        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         if (null == exeFile) {
             throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
         }
-
+        
+        
         if (!exeFile.canExecute()) {
             throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
         }

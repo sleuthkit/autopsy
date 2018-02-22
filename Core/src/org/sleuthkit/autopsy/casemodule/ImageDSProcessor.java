@@ -186,10 +186,8 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    @Deprecated
     public void run(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, progressMonitor, callback);
-        new Thread(addImageTask).start();
+        run(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
     }
 
     /**
