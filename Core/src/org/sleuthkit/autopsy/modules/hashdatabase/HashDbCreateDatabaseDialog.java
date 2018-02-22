@@ -119,7 +119,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
     }
 
     private void display() {
-        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        setLocationRelativeTo(getOwner());
         setVisible(true);
     }
     
