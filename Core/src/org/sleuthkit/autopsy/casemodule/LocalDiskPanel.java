@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 final class LocalDiskPanel extends JPanel {
 
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
+    private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
     private static LocalDiskPanel instance;
     private static final long serialVersionUID = 1L;
     private List<LocalDisk> disks;
@@ -68,6 +69,7 @@ final class LocalDiskPanel extends JPanel {
         initComponents();
         customInit();
         createTimeZoneList();
+        createSectorSizeList();
         refreshTable();
         diskTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -148,6 +150,8 @@ final class LocalDiskPanel extends JPanel {
         imageWriterErrorLabel = new javax.swing.JLabel();
         changeDatabasePathCheckbox = new javax.swing.JCheckBox();
         refreshTablebutton = new javax.swing.JButton();
+        sectorSizeLabel = new javax.swing.JLabel();
+        sectorSizeComboBox = new javax.swing.JComboBox<>();
 
         setMinimumSize(new java.awt.Dimension(0, 420));
         setPreferredSize(new java.awt.Dimension(485, 410));
@@ -212,6 +216,8 @@ final class LocalDiskPanel extends JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.sectorSizeLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -236,16 +242,16 @@ final class LocalDiskPanel extends JPanel {
                                                 .addComponent(browseButton, javax.swing.GroupLayout.DEFAULT_SIZE, 92, Short.MAX_VALUE))
                                             .addGroup(layout.createSequentialGroup()
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(imageWriterErrorLabel)
                                                     .addComponent(jLabel1)
-                                                    .addComponent(changeDatabasePathCheckbox))
+                                                    .addComponent(changeDatabasePathCheckbox)
+                                                    .addComponent(imageWriterErrorLabel))
                                                 .addGap(0, 0, Short.MAX_VALUE)))))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(timeZoneLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(timeZoneComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 475, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(refreshTablebutton, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -255,6 +261,12 @@ final class LocalDiskPanel extends JPanel {
                             .addComponent(errorLabel))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(sectorSizeLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -286,7 +298,11 @@ final class LocalDiskPanel extends JPanel {
                 .addComponent(imageWriterErrorLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(errorLabel)
-                .addContainerGap(58, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sectorSizeLabel)
+                    .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(27, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -335,6 +351,8 @@ final class LocalDiskPanel extends JPanel {
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JButton refreshTablebutton;
+    private javax.swing.JComboBox<String> sectorSizeComboBox;
+    private javax.swing.JLabel sectorSizeLabel;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
@@ -363,6 +381,19 @@ final class LocalDiskPanel extends JPanel {
         } else {
             return "";
         }
+    }
+    
+    /**
+     * //DLG:
+     */
+    int getSectorSize() {
+        int sectorSizeSelectionIndex = sectorSizeComboBox.getSelectedIndex();
+        
+        if (sectorSizeSelectionIndex == 0) {
+            return 0;
+        }
+        
+        return Integer.valueOf((String) sectorSizeComboBox.getSelectedItem());
     }
 
     String getTimeZone() {
@@ -498,6 +529,16 @@ final class LocalDiskPanel extends JPanel {
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
 
+    }
+    
+    /**
+     * //DLG:
+     */
+    private void createSectorSizeList() {
+        for (String choice : SECTOR_SIZE_CHOICES) {
+            sectorSizeComboBox.addItem(choice);
+        }
+        sectorSizeComboBox.setSelectedIndex(0);
     }
 
     /**
