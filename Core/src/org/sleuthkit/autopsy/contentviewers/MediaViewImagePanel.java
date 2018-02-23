@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import org.sleuthkit.autopsy.contentviewers.DataContentViewerMedia;
+
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
@@ -61,7 +61,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 @NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
     "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
     "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
-public class MediaViewImagePanel extends JPanel implements DataContentViewerMedia.MediaViewPanel {
+public class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
     private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
 
