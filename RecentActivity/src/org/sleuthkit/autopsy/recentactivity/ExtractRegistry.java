@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -50,9 +50,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -218,7 +220,17 @@ class ExtractRegistry extends Extract {
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 try {
-                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath()); //NON-NLS
+                    Report report = currentCase.addReport(regOutputFiles.fullPlugins,
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"),
+                            "RegRipper " + regFile.getUniquePath(), regFile); //NON-NLS
+
+                    // Index the report content so that it will be available for keyword search.
+                    KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+                    if (null == searchService) {
+                        logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
+                    } else {
+                        searchService.index(report);
+                    }
                 } catch (TskCoreException e) {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }
@@ -431,12 +443,14 @@ class ExtractRegistry extends Extract {
                                             installtime = Long.valueOf(Tempdate) / 1000;
                                         } catch (ParseException e) {
                                             logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
-                                        }   break;
+                                        }
+                                        break;
                                     default:
                                         break;
                                 }
                             }
-                        }   try {
+                        }
+                        try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, version));
                             if (installtime != null) {
@@ -493,7 +507,8 @@ class ExtractRegistry extends Extract {
                                         break;
                                 }
                             }
-                        }   try {
+                        }
+                        try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION, parentModuleName, os));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE, parentModuleName, procArch));
@@ -532,7 +547,8 @@ class ExtractRegistry extends Extract {
                                     domain = value;
                                 }
                             }
-                        }   try {
+                        }
+                        try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, compName));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domain));
@@ -674,7 +690,7 @@ class ExtractRegistry extends Extract {
                                                     parentModuleName, sid));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                     parentModuleName, homeDir));
-                                            
+
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);

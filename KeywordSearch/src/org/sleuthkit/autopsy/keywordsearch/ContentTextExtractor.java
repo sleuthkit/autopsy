@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,13 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Common methods for utilities that extract text and content and divide into
  * chunks
  */
-abstract class FileTextExtractor implements TextExtractor< AbstractFile> {
+abstract class ContentTextExtractor implements TextExtractor<Content> {
 
 
     static final List<String> BLOB_MIME_TYPES
@@ -86,25 +86,25 @@ abstract class FileTextExtractor implements TextExtractor< AbstractFile> {
      * Determines if the file content is supported by the extractor if
      * isContentTypeSpecific() returns true.
      *
-     * @param file           to test if its content should be supported
+     * @param content           to test if its content should be supported
      * @param detectedFormat mime-type with detected format (such as text/plain)
      *                       or null if not detected
      *
      * @return true if the file content is supported, false otherwise
      */
-    abstract boolean isSupported(AbstractFile file, String detectedFormat);
+    abstract boolean isSupported(Content file, String detectedFormat);
 
     @Override
-    public abstract Reader getReader(AbstractFile source) throws TextExtractorException;
+    public abstract Reader getReader(Content source) throws TextExtractorException;
 
     @Override
-    public long getID(AbstractFile source) {
+    public long getID(Content source) {
         return source.getId();
     }
 
 
     @Override
-    public String getName(AbstractFile source) {
+    public String getName(Content source) {
         return source.getName();
     }
 }
