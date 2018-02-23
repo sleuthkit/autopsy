@@ -177,7 +177,8 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
      *         selection
      */
     @Messages({
-        "LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here."
+        "LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here.",
+        "LogicalEvidenceFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive"
     })
     boolean validatePanel() {
         errorLabel.setVisible(false);
@@ -189,7 +190,7 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
         // display warning if there is one (but don't disable "next" button)
         if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
+            errorLabel.setText(Bundle.LogicalEvidenceFilePanel_pathValidation_dataSourceOnCDriveError());
             return false;
         }
         //check the extension incase the path was manually entered
