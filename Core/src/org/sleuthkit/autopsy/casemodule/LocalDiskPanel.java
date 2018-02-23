@@ -115,7 +115,7 @@ final class LocalDiskPanel extends JPanel {
         diskTable.setEnabled(false);
         imageWriterErrorLabel.setVisible(false);
         imageWriterErrorLabel.setText("");
-        if(! PlatformUtil.isWindowsOS()){
+        if (!PlatformUtil.isWindowsOS()) {
             copyImageCheckbox.setSelected(false);
             copyImageCheckbox.setEnabled(false);
         }
@@ -377,17 +377,19 @@ final class LocalDiskPanel extends JPanel {
             return "";
         }
     }
-    
+
     /**
-     * //DLG:
+     * Get the sector size.
+     *
+     * @return 0 if autodetect; otherwise the value selected.
      */
     int getSectorSize() {
         int sectorSizeSelectionIndex = sectorSizeComboBox.getSelectedIndex();
-        
+
         if (sectorSizeSelectionIndex == 0) {
             return 0;
         }
-        
+
         return Integer.valueOf((String) sectorSizeComboBox.getSelectedItem());
     }
 
@@ -490,8 +492,8 @@ final class LocalDiskPanel extends JPanel {
     }
 
     /**
-     * Creates the drop down list for the time zones and then makes the local
-     * machine time zone to be selected.
+     * Creates the drop down list for the time zones and defaults the selection
+     * to the local machine time zone.
      */
     public void createTimeZoneList() {
         // load and add all timezone
@@ -525,9 +527,10 @@ final class LocalDiskPanel extends JPanel {
         timeZoneComboBox.setSelectedItem(formatted);
 
     }
-    
+
     /**
-     * //DLG:
+     * Creates the drop down list for the sector size and defaults the selection
+     * to "Auto Detect".
      */
     private void createSectorSizeList() {
         for (String choice : SECTOR_SIZE_CHOICES) {
