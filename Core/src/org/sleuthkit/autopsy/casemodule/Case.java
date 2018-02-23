@@ -800,13 +800,14 @@ public class Case {
 
     /**
      * Creates a case directory and its subdirectories.
+     * This will fail if the directory already exists.
      *
      * @param caseDir  Path to the case directory (typically base + case name).
      * @param caseType The type of case, single-user or multi-user.
      *
      * @throws CaseActionException throw if could not create the case dir
      */
-    static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
+    public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
 
