@@ -129,6 +129,7 @@ class AddImageTask implements Runnable {
             Thread progressUpdateThread = new Thread(new ProgressUpdater(progressMonitor, tskAddImageProcess));
             progressUpdateThread.start();
             runAddImageProcess(errorMessages);
+            progressUpdateThread.interrupt();
             commitOrRevertAddImageProcess(currentCase, errorMessages, newDataSources);
             progressMonitor.setProgress(100);
         } finally {
