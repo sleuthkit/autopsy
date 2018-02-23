@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers;
 
+import org.sleuthkit.autopsy.contentviewers.MediaViewVideoPanel;
 import com.google.common.io.Files;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -55,6 +56,8 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.corecomponents.FrameCapture;
+import org.sleuthkit.autopsy.corecomponents.VideoFrame;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;

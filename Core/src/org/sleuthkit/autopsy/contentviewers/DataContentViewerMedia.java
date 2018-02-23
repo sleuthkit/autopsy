@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.CardLayout;
 import java.awt.Component;
