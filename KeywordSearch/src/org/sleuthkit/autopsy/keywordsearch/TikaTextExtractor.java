@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,14 +40,14 @@ import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extracts text from Tika supported AbstractFile content. Protects against Tika
+ * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-class TikaTextExtractor extends FileTextExtractor {
+class TikaTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
@@ -66,8 +66,8 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public Reader getReader(AbstractFile sourceFile) throws TextExtractorException {
-        ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
+    public Reader getReader(Content content) throws TextExtractorException {
+        ReadContentInputStream stream = new ReadContentInputStream(content);
 
         Metadata metadata = new Metadata();
         ParseContext parseContext = new ParseContext();
@@ -83,13 +83,13 @@ class TikaTextExtractor extends FileTextExtractor {
         //Parse the file in a task, a convenient way to have a timeout...
         final Future<Reader> future = tikaParseExecutor.submit(() -> new ParsingReader(parser, stream, metadata, parseContext));
         try {
-            final Reader tikaReader = future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            final Reader tikaReader = future.get(getTimeout(content.getSize()), TimeUnit.SECONDS);
 
             //check if the reader is empty
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new TextExtractorException("Unable to extract text: Tika returned empty reader for " + sourceFile);
+                throw new TextExtractorException("Unable to extract text: Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
 
@@ -97,14 +97,14 @@ class TikaTextExtractor extends FileTextExtractor {
             CharSource metaDataCharSource = getMetaDataCharSource(metadata);
             return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
-            final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
+            final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", content.getId(), content.getName());
             logWarning(msg, te);
             throw new TextExtractorException(msg, te);
         } catch (TextExtractorException ex) {
             throw ex;
         } catch (Exception ex) {
-            KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
-            final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
+            KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
+            final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
             logWarning(msg, ex);
             throw new TextExtractorException(msg, ex);
         } finally {
@@ -135,10 +135,10 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public boolean isSupported(AbstractFile file, String detectedFormat) {
+    public boolean isSupported(Content content, String detectedFormat) {
         if (detectedFormat == null
-                || FileTextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
-                || FileTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
+                || ContentTextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
+                || ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
                 || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
                 ) {
             return false;
