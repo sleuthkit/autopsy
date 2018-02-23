@@ -184,15 +184,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
                 KeywordSearchService kwsService = new SolrSearchService();
+                Server.IndexingServerProperties properties = Server.getMultiUserServerProperties(Case.getCurrentCase().getCaseDirectory());
                 int port;
                 try {
-                    port = Integer.parseInt(UserPreferences.getIndexingServerPort());
+                    port = Integer.parseInt(properties.getPort());
                 } catch (NumberFormatException ex) {
                     // if there is an error parsing the port number
                     throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg() + " " + Bundle.SolrConnectionCheck_Port(), ex);
                 }
                 try {
-                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                    kwsService.tryConnect(properties.getHost(), port);
                 } catch (KeywordSearchServiceException ex) {
                     throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg(), ex);
                 }

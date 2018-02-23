@@ -97,6 +97,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
+import org.sleuthkit.autopsy.keywordsearch.Server;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -2156,6 +2158,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
+                            
+                            // Create the case directory now in case it is needed by selectSolrServerForCase
+                            Case.createCaseDirectory(caseDirectoryPath.toString(), CaseType.MULTI_USER_CASE);
+                            
+                            // If a list of servers exists, choose one to use for this case
+                            Server.selectSolrServerForCase(rootOutputDirectory, caseDirectoryPath);
+                            
                             CaseDetails caseDetails = new CaseDetails(caseName);
                             Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
                             /*
@@ -2170,6 +2179,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
                         return caseForJob;
 
+                    } catch (KeywordSearchModuleException ex) {
+                        throw new CaseManagementException(String.format("Error creating solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (IllegalStateException ex) {
