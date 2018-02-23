@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -31,6 +30,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 
 /**
  * A dialog for adding or editing an external viewer rule
@@ -78,10 +78,7 @@ class AddExternalViewerRuleDialog extends JDialog {
         /**
          * Center the dialog.
          */
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = this.getSize().width;
-        int height = this.getSize().height;
-        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         add(this.addRulePanel, BorderLayout.PAGE_START);
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -78,11 +77,8 @@ public final class IngestProgressSnapshotDialog extends JDialog {
         }
         setResizable(true);
         setLayout(new BorderLayout());
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(DIMENSIONS);
-        int w = this.getSize().width;
-        int h = this.getSize().height;
-        setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+        setLocationRelativeTo(owner);
         this.getRootPane().registerKeyboardAction(e -> {
             this.dispose();
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);

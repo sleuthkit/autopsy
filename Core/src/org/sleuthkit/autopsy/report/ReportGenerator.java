@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 - 2018 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -118,12 +116,7 @@ class ReportGenerator {
             }
         });
 
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int w = dialog.getSize().width;
-        int h = dialog.getSize().height;
-
-        // set the location of the popUp Window on the center of the screen
-        dialog.setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+        dialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         dialog.setVisible(true);
     }
 
