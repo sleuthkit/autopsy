@@ -42,11 +42,19 @@ import javax.swing.JComboBox;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
+/**
+ * A file content viewer for SQLITE db files.
+ * 
+ */
 public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
@@ -63,8 +71,8 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private int currPage = 0; // curr page of rows being displayed
 
     SQLiteTableView selectedTableView = new SQLiteTableView();
-
     private SwingWorker<? extends Object, ? extends Object> worker;
+   
 
     /**
      * Creates new form SQLiteViewer
@@ -309,21 +317,25 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private void processSQLiteFile(AbstractFile sqliteFile) {
 
         tablesDropdownList.removeAllItems();
-
+        
         new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
 
                 try {
                     // Copy the file to temp folder
-                    tmpDBPathName = Case.getCurrentCase().getTempDirectory() + File.separator + sqliteFile.getName() + "-" + sqliteFile.getId();
+                    tmpDBPathName = Case.getCurrentCase().getTempDirectory() + File.separator + sqliteFile.getName();
                     tmpDBFile = new File(tmpDBPathName);
                     ContentUtils.writeToFile(sqliteFile, tmpDBFile);
 
+                    // look for any meta files associated with this DB - WAL, SHM 
+                    findAndCopySQLiteMetaFile(sqliteFile, sqliteFile.getName() + "-wal");
+                    findAndCopySQLiteMetaFile(sqliteFile, sqliteFile.getName() + "-shm");
+                     
                     // Open copy using JDBC
                     Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver 
                     connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
-
+                    
                     // Read all table names and schema
                     return getTables();
                 } catch (IOException ex) {
@@ -358,6 +370,45 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     }
 
+    /**
+     * Searches for a meta file associated with the give SQLite db
+     * If found, copies the file to the temp folder
+     *
+     * @param sqliteFile - SQLIte db file being processed
+     * @param metaFileName name of meta file to look for
+     * 
+     * @return true if the meta file is found and copied successfully, false otherwise
+     */
+    private boolean findAndCopySQLiteMetaFile(AbstractFile sqliteFile, String metaFileName ) {
+        
+        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+        Services services = new Services(sleuthkitCase);
+        FileManager fileManager = services.getFileManager();
+        
+        List<AbstractFile> metaFiles = null;
+        try {
+            metaFiles = fileManager.findFiles(sqliteFile.getDataSource(), metaFileName, sqliteFile.getParent().getName() );
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected exception while searching SQLite meta file = " + metaFileName , ex); //NON-NLS
+            return false;
+        }
+        
+        if (metaFiles != null) {
+            for (AbstractFile metaFile: metaFiles) {
+                String tmpMetafilePathName = Case.getCurrentCase().getTempDirectory() + File.separator + metaFile.getName();
+            
+                File tmpMetafile = new File(tmpMetafilePathName);
+                try {
+                    ContentUtils.writeToFile(metaFile, tmpMetafile);
+                } catch (IOException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while copying SQLite meta file = " + metaFileName , ex); //NON-NLS
+                    return false;
+                }
+            }
+        }
+                    
+        return true;
+    }
     /**
      * Gets the table names and their schema from loaded SQLite db file
      *
