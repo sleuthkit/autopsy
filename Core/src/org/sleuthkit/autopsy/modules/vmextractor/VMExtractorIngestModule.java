@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -260,7 +260,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
-            dataSourceProcessor.run(parentDeviceId, vmFile.toString(), 0, parentTimeZone, false, new AddDataSourceProgressMonitor(), dspCallback);
+            dataSourceProcessor.run(parentDeviceId, vmFile.toString(), parentTimeZone, false, new AddDataSourceProgressMonitor(), dspCallback);
             /*
              * Block the ingest thread until the data source processor finishes.
              */
