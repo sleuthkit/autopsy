@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
@@ -56,66 +55,65 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
 
-
 /**
- * PListViewer - a file viewer for binary plist files. 
+ * PListViewer - a file viewer for binary plist files.
  *
  */
 public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
 
+    private static final long serialVersionUID = 1L;
     private static final String[] MIMETYPES = new String[]{"application/x-bplist"};
     private static final Logger LOGGER = Logger.getLogger(PListViewer.class.getName());
-    
+
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
-   
+
     private NSDictionary rootDict;
-    
+
     /**
      * Creates new form PListViewer
      */
     public PListViewer() {
-       
-        
+
         // Create an Outlineview and add to the panel
         outlineView = new org.openide.explorer.view.OutlineView();
-        
+
         initComponents();
-         
+
         outline = outlineView.getOutline();
-        
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Key"); 
-        
+
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Key");
+
         outlineView.setPropertyColumns(
                 "Type", Bundle.PListNode_TypeCol(),
                 "Value", Bundle.PListNode_ValueCol());
-         
+
         customize();
     }
 
     @NbBundle.Messages({"PListNode.KeyCol=Key",
-                        "PListNode.TypeCol=Type",
-                        "PListNode.ValueCol=Value" })
-       
+        "PListNode.TypeCol=Type",
+        "PListNode.ValueCol=Value"})
+
     private void customize() {
-        
+
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-         
+
         outline.setRootVisible(false);
         if (null == explorerManager) {
-           explorerManager = new ExplorerManager();
+            explorerManager = new ExplorerManager();
         }
-        
+
         //outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-         
         plistTableScrollPane.setViewportView(outlineView);
-        
+
         outline.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-        
+
         this.setVisible(true);
         outline.setRowSelectionAllowed(false);
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -180,14 +178,13 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     }// </editor-fold>//GEN-END:initComponents
 
     @NbBundle.Messages({"PListViewer.ExportSuccess.message=Plist file exported successfully",
-    "PListViewer.ExportFailed.message=Plist file export failed.",
-    })
-     
+        "PListViewer.ExportFailed.message=Plist file export failed.",})
+
     /**
      * Handles the Export button pressed action
      */
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
-       
+
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
         fileChooser.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
@@ -204,33 +201,33 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
                 //Save the propery list as XML
                 PropertyListParser.saveAsXML(this.rootDict, selectedFile);
                 JOptionPane.showMessageDialog(this,
-                                String.format("Plist file exported successfully to %s ", selectedFile.getName() ),
-                                Bundle.PListViewer_ExportSuccess_message(),
-                                JOptionPane.INFORMATION_MESSAGE);
+                        String.format("Plist file exported successfully to %s ", selectedFile.getName()),
+                        Bundle.PListViewer_ExportSuccess_message(),
+                        JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this,
-                            String.format("Failed to export plist file to %s ", selectedFile.getName() ),
-                            Bundle.PListViewer_ExportFailed_message(),
-                            JOptionPane.ERROR_MESSAGE);
-            
+                        String.format("Failed to export plist file to %s ", selectedFile.getName()),
+                        Bundle.PListViewer_ExportFailed_message(),
+                        JOptionPane.ERROR_MESSAGE);
+
                 LOGGER.log(Level.SEVERE, "Error exporting plist to XML file " + selectedFile.getName(), ex);
-            } 
+            }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
-    
+
     /**
      * Returns mime types supported by this viewer
-     * 
+     *
      * @return list of supported mime types
      */
     @Override
     public List<String> getSupportedMIMETypes() {
-         return Arrays.asList(MIMETYPES);
+        return Arrays.asList(MIMETYPES);
     }
 
     /**
      * Sets the file to be displayed in the viewer
-     * 
+     *
      * @param file file to display
      */
     @Override
@@ -239,25 +236,24 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     }
 
     /**
-     * Returns the viewer component 
-     * 
+     * Returns the viewer component
+     *
      * @return the viewer component
      */
     @Override
     public Component getComponent() {
-       return this;
+        return this;
     }
 
     /**
-     * Resets the viewer component 
-     * 
+     * Resets the viewer component
+     *
      */
     @Override
     public void resetComponent() {
-       rootDict = null;
+        rootDict = null;
     }
 
-    
     /**
      * Process the given Plist file
      *
@@ -266,7 +262,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      * @return none
      */
     private void processPlist(final AbstractFile plistFile) {
-       
+
         final byte[] plistFileBuf = new byte[(int) plistFile.getSize()];
         try {
             plistFile.read(plistFileBuf, 0, plistFile.getSize());
@@ -274,25 +270,28 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             LOGGER.log(Level.SEVERE, "Error reading bytes of plist file.", ex);
         }
 
-        final List<PropKeyValue> plist = parsePList(plistFileBuf);
-        
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() throws Exception {
-                setupTable(plist);
-                return null;
-            }
+        final List<PropKeyValue> plist;
+        try {
+            plist = parsePList(plistFileBuf);
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    setupTable(plist);
+                    return null;
+                }
 
-            @Override
-            protected void done() {
-                super.done();
-                setColumnWidths();
-            }
-        }.execute();
-        
+                @Override
+                protected void done() {
+                    super.done();
+                    setColumnWidths();
+                }
+            }.execute();
+
+        } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Error parsing plist for file (obj_id = %d)", plistFile.getId()), ex);
+        } 
     }
-    
-    
+
     /**
      * Sets up the columns in the display table
      *
@@ -301,7 +300,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     private void setupTable(final List<PropKeyValue> tableRows) {
         explorerManager.setRootContext(new AbstractNode(Children.create(new PListRowFactory(tableRows), true)));
     }
-    
+
     /**
      * Sets up the column widths
      *
@@ -310,7 +309,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         final int margin = 4;
         final int padding = 8;
 
-         // find the maximum width needed to fit the values for the first N rows, at most
+        // find the maximum width needed to fit the values for the first N rows, at most
         final int rows = Math.min(20, outline.getRowCount());
         for (int col = 0; col < outline.getColumnCount(); col++) {
             final int columnWidthLimit = 2000;
@@ -319,7 +318,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             for (int row = 0; row < rows; row++) {
                 final TableCellRenderer renderer = outline.getCellRenderer(row, col);
                 final Component comp = outline.prepareRenderer(renderer, row, col);
-          
+
                 columnWidth = Math.max(comp.getPreferredSize().width, columnWidth);
             }
 
@@ -328,8 +327,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
             outline.getColumnModel().getColumn(col).setPreferredWidth(columnWidth);
         }
     }
-    
-    
+
     /**
      * Parses the given plist key/value
      */
@@ -342,71 +340,65 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
         } else if (value instanceof NSNumber) {
             final NSNumber number = (NSNumber) value;
             if (number.isInteger()) {
-                return new PropKeyValue(key, PropertyType.NUMBER,  Long.valueOf(number.longValue()) );
+                return new PropKeyValue(key, PropertyType.NUMBER, number.longValue());
             } else if (number.isBoolean()) {
-                return new PropKeyValue(key, PropertyType.BOOLEAN,  Boolean.valueOf(number.boolValue()) );
+                return new PropKeyValue(key, PropertyType.BOOLEAN, number.boolValue());
             } else {
-                return new PropKeyValue(key, PropertyType.NUMBER,  Float.valueOf(number.floatValue())) ;
+                return new PropKeyValue(key, PropertyType.NUMBER, number.floatValue());
             }
         } else if (value instanceof NSDate) {
             final NSDate date = (NSDate) value;
-            return new PropKeyValue(key, PropertyType.DATE,  date.toString());
-        }
-        else if (value instanceof NSData ) {
+            return new PropKeyValue(key, PropertyType.DATE, date.toString());
+        } else if (value instanceof NSData) {
             return new PropKeyValue(key, PropertyType.DATA, Bundle.PListViewer_DataType_message());
         } else if (value instanceof NSArray) {
             final List<PropKeyValue> children = new ArrayList<>();
             final NSArray array = (NSArray) value;
-            
+
             final PropKeyValue pkv = new PropKeyValue(key, PropertyType.ARRAY, array);
             for (int i = 0; i < array.count(); i++) {
                 children.add(parseProperty("", array.objectAtIndex(i)));
             }
-            
-            pkv.setChildren(children.toArray(new PropKeyValue[children.size()] ));
+
+            pkv.setChildren(children.toArray(new PropKeyValue[children.size()]));
             return pkv;
         } else if (value instanceof NSDictionary) {
             final List<PropKeyValue> children = new ArrayList<>();
             final NSDictionary dict = (NSDictionary) value;
-            
+
             final PropKeyValue pkv = new PropKeyValue(key, PropertyType.DICTIONARY, dict);
             for (final String key2 : ((NSDictionary) value).allKeys()) {
                 final NSObject obj = ((NSDictionary) value).objectForKey(key2);
                 children.add(parseProperty(key2, obj));
             }
-            
-            pkv.setChildren(children.toArray(new PropKeyValue[children.size()] ));
+
+            pkv.setChildren(children.toArray(new PropKeyValue[children.size()]));
             return pkv;
         } else {
-            LOGGER.severe("Can't parse Plist for key = " + key  + " value of type " + value.getClass());
+            LOGGER.log(Level.SEVERE, "Can''t parse Plist for key = {0} value of type {1}", new Object[]{key, value.getClass()});
         }
-        
+
         return null;
     }
-    
+
     /**
-     * Parses given binary stream and extracts Plist key/value 
-     * 
+     * Parses given binary stream and extracts Plist key/value
+     *
      * @param plistbytes
-     * 
-     * @return list of  PropKeyValue
+     *
+     * @return list of PropKeyValue
      */
-    private List<PropKeyValue> parsePList(final byte[] plistbytes) {
+    private List<PropKeyValue> parsePList(final byte[] plistbytes) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
 
         final List<PropKeyValue> plist = new ArrayList<>();
-        try {
-            rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
+        rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
 
-            final String[] keys = rootDict.allKeys();
-            for (final String key : keys) {
-                final PropKeyValue pkv = parseProperty(key, rootDict.objectForKey(key));
-                if (null != pkv) { 
-                    plist.add(pkv);
-                }   
+        final String[] keys = rootDict.allKeys();
+        for (final String key : keys) {
+            final PropKeyValue pkv = parseProperty(key, rootDict.objectForKey(key));
+            if (null != pkv) {
+                plist.add(pkv);
             }
-        } catch (PropertyListFormatException | IOException | ParseException | ParserConfigurationException | SAXException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to parse PList.", ex);
-            return null;
         }
 
         return plist;
@@ -416,84 +408,85 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
     public ExplorerManager getExplorerManager() {
         return explorerManager;
     }
-    
+
     /**
      * Plist property type
      */
     enum PropertyType {
-            STRING, 
-            NUMBER, 
-            BOOLEAN, 
-            DATE,
-            DATA,
-            ARRAY,
-            DICTIONARY
+        STRING,
+        NUMBER,
+        BOOLEAN,
+        DATE,
+        DATA,
+        ARRAY,
+        DICTIONARY
     };
-        
+
     /**
-     * Encapsulates a Plist property 
-     * 
+     * Encapsulates a Plist property
+     *
      */
-    class PropKeyValue {
-   
+    final static class PropKeyValue {
+
         private final String key;
         private final PropertyType type;
         private final Object value;
 
         private PropKeyValue[] children;
-        
+
         PropKeyValue(String key, PropertyType type, Object value) {
             this.key = key;
             this.type = type;
             this.value = value;
-            
+
             this.children = null;
         }
-        
+
         /**
          * Copy constructor
          */
         PropKeyValue(PropKeyValue other) {
-            this.key = other.key;
-            this.type = other.type;
-            this.value = other.value;
-            
+            this.key = other.getKey();
+            this.type = other.getType();
+            this.value = other.getValue();
+
             this.setChildren(other.getChildren());
-    }
-         
-        
+        }
+
         String getKey() {
             return this.key;
         }
-        
+
         PropertyType getType() {
             return this.type;
         }
-        
+
         Object getValue() {
             return this.value;
         }
-        
+
         /**
          * Returns an array of children, if any.
-         * @return 
+         *
+         * @return
          */
         PropKeyValue[] getChildren() {
             if (children == null) {
                 return null;
             }
-                
+
             // return a copy
             return Arrays.stream(children)
-                    .map(child -> new PropKeyValue(child) )
+                    .map(child -> new PropKeyValue(child))
                     .toArray(PropKeyValue[]::new);
         }
-        
-        void setChildren(final PropKeyValue...children) {
-            this.children = children;
+
+        void setChildren(final PropKeyValue... children) {
+            this.children = Arrays.stream(children)
+                    .map(child -> new PropKeyValue(child))
+                    .toArray(PropKeyValue[]::new);
         }
-        
-         
+
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
