@@ -178,11 +178,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * The finalizer removes event listeners as the BlackboardArtifactNode
-     * is being garbage collected. Yes, we know that finalizers are considered
-     * to be "bad" but since the alternative also relies on garbage collection
+     * The finalizer removes event listeners as the BlackboardArtifactNode is
+     * being garbage collected. Yes, we know that finalizers are considered to
+     * be "bad" but since the alternative also relies on garbage collection
      * being run and we know that finalize will be called when the object is
      * being GC'd it seems like this is a reasonable solution.
+     *
      * @throws Throwable
      */
     @Override
@@ -300,7 +301,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
         "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Artifact Details",
         "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
-        "BlackboardArtifactNode.artifact.displayName=Artifact"})
+        "BlackboardArtifactNode.artifact.displayName=Artifact",
+        "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
+        "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash"})
 
     @Override
     protected Sheet createSheet() {
@@ -415,6 +418,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
                         "",
                         associated.getSize()));
+                ss.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
+                        "",
+                        file != null ? file.getMd5Hash() : ""));
             }
         } else {
             String dataSourceStr = "";
