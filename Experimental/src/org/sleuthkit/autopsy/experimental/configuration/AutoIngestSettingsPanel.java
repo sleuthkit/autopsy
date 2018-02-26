@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -226,7 +226,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         if (needsRestart) {
             SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
                         NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);
@@ -530,7 +530,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         add(ingestJobSettingsPanel, BorderLayout.PAGE_START);
 
-        if (JOptionPane.showConfirmDialog(null, ingestJobSettingsPanel, "Ingest Module Configuration", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, ingestJobSettingsPanel, "Ingest Module Configuration", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             // store the updated settings
             ingestJobSettings = ingestJobSettingsPanel.getSettings();
             ingestJobSettings.save();
@@ -547,7 +547,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             for (String warning : warnings) {
                 warningMessage.append(warning).append("\n");
             }
-            JOptionPane.showMessageDialog(null, warningMessage.toString());
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), warningMessage.toString());
         }
     }
 
@@ -1082,7 +1082,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
         AdvancedAutoIngestSettingsPanel advancedAutoIngestSettingsPanel = new AdvancedAutoIngestSettingsPanel(getModeFromRadioButtons());
-        if (JOptionPane.showConfirmDialog(null, advancedAutoIngestSettingsPanel,
+        if (JOptionPane.showConfirmDialog(this, advancedAutoIngestSettingsPanel,
                 NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.AdvancedAutoIngestSettingsPanel.Title"),
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             advancedAutoIngestSettingsPanel.store();
@@ -1175,7 +1175,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
             if (uploadResult == SharedConfiguration.SharedConfigResult.LOCKED) {
                 jLabelTaskDescription.setText("Transfer of shared configuration incomplete");
-                JOptionPane.showMessageDialog(null, "Shared configuration folder is currently locked by another node - try again in a few minutes", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Shared configuration folder is currently locked by another node - try again in a few minutes", "Error", JOptionPane.ERROR_MESSAGE);
             } else if (errorMessage != null) {
                 //MessageNotifyUtil.Message.info(errorMessage);
                 jLabelTaskDescription.setText("Transfer of shared configuration incomplete");
@@ -1186,7 +1186,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
             // Check if anything requiring a reset has changed and update the UI
             if (isResetNeeded()) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
                         NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                         JOptionPane.WARNING_MESSAGE);

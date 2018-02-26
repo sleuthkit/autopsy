@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.DefaultListCellRenderer;
@@ -46,7 +44,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     private EamDb dbManager;
     private EamOrganization newOrg;
     private final DefaultListModel<EamOrganization> rulesListModel = new DefaultListModel<>();
-    private final static Logger LOGGER = Logger.getLogger(ManageOrganizationsDialog.class.getName());
+    private final static Logger logger = Logger.getLogger(ManageOrganizationsDialog.class.getName());
 
     @Messages({"ManageOrganizationsDialog.title.text=Manage Organizations"})
     /**
@@ -82,8 +80,7 @@ public final class ManageOrganizationsDialog extends JDialog {
     }
 
     private void display() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
 
@@ -351,9 +348,9 @@ public final class ManageOrganizationsDialog extends JDialog {
                     EamDb.getInstance().deleteOrganization(orgToDelete);
                     populateList();
                 } catch (EamDbException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(this,
                             ex.getMessage(), Bundle.ManageOrganizationsDialog_unableToDeleteOrg_title(), JOptionPane.WARNING_MESSAGE);
-                    LOGGER.log(Level.INFO, "Was unable to delete organization from central repository", ex);
+                    logger.log(Level.INFO, "Was unable to delete organization from central repository", ex);
                 }
             }
         }

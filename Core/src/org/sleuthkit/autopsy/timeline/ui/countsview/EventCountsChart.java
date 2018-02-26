@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
@@ -394,7 +395,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                     controller.pushTimeRange(interval);
                 } else {
 
-                    int showConfirmDialog = JOptionPane.showConfirmDialog(null,
+                    int showConfirmDialog = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.CountsViewPane_detailSwitchMessage(),
                             Bundle.CountsViewPane_detailSwitchTitle(), JOptionPane.YES_NO_OPTION);
                     if (showConfirmDialog == JOptionPane.YES_OPTION) {

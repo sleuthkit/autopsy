@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,11 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +49,9 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form ArtifactSelectionDialog
+     * 
+     * @param parent The parent window
+     * @param modal  Block user-input to other top-level windows.
      */
     public ArtifactSelectionDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -88,7 +88,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                 artifactTypeSelections.put(type, Boolean.TRUE);
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
+            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: {0}", ex.getLocalizedMessage()); //NON-NLS
         }
     }
 
@@ -117,14 +117,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
      */
     Map<BlackboardArtifact.Type, Boolean> display() {
         this.setTitle(NbBundle.getMessage(this.getClass(), "ArtifactSelectionDialog.dlgTitle.text"));
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        // set the popUp window / JFrame
-        int w = this.getSize().width;
-        int h = this.getSize().height;
-
-        // set the location of the popUp Window on the center of the screen
-        setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-
+        this.setLocationRelativeTo(getOwner());
         this.setVisible(true);
         return artifactTypeSelections;
     }

@@ -113,7 +113,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         String listName = "";
 
-        listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
+        listName = (String) JOptionPane.showInputDialog(this, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                 NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, listName);
 
         if (listName == null || listName.trim().isEmpty()) {
