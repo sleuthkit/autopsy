@@ -294,16 +294,16 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return The latest jobs snapshot.
      */
     JobsSnapshot deprioritizeCase(final String caseName) throws AutoIngestMonitorException {
-        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        List<AutoIngestJob> jobsToDeprioritize = new ArrayList<>();
 
         synchronized (jobsLock) {
             for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
                 if (pendingJob.getManifest().getCaseName().equals(caseName)) {
-                    prioritizedJobs.add(pendingJob);
+                    jobsToDeprioritize.add(pendingJob);
                 }
             }
-            if (!prioritizedJobs.isEmpty()) {
-                for (AutoIngestJob job : prioritizedJobs) {
+            if (!jobsToDeprioritize.isEmpty()) {
+                for (AutoIngestJob job : jobsToDeprioritize) {
                     String manifestNodePath = job.getManifest().getFilePath().toString();
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
@@ -337,7 +337,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return The latest jobs snapshot.
      */
     JobsSnapshot prioritizeCase(final String caseName) throws AutoIngestMonitorException {
-        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
         int highestPriority = 0;
         synchronized (jobsLock) {
             for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
@@ -345,12 +345,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     highestPriority = pendingJob.getPriority();
                 }
                 if (pendingJob.getManifest().getCaseName().equals(caseName)) {
-                    prioritizedJobs.add(pendingJob);
+                    jobsToPrioritize.add(pendingJob);
                 }
             }
-            if (!prioritizedJobs.isEmpty()) {
+            if (!jobsToPrioritize.isEmpty()) {
                 ++highestPriority;
-                for (AutoIngestJob job : prioritizedJobs) {
+                for (AutoIngestJob job : jobsToPrioritize) {
                     String manifestNodePath = job.getManifest().getFilePath().toString();
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));

@@ -559,15 +559,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             return;
         }
 
-        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        List<AutoIngestJob> jobsToDeprioritize = new ArrayList<>();
         synchronized (jobsLock) {
             for (AutoIngestJob job : pendingJobs) {
                 if (job.getManifest().getCaseName().equals(caseName)) {
-                    prioritizedJobs.add(job);
+                    jobsToDeprioritize.add(job);
                 }
             }
-            if (!prioritizedJobs.isEmpty()) {
-                for (AutoIngestJob job : prioritizedJobs) {
+            if (!jobsToDeprioritize.isEmpty()) {
+                for (AutoIngestJob job : jobsToDeprioritize) {
                     int oldPriority = job.getPriority();
                     job.setPriority(DEFAULT_PRIORITY);
                     try {
@@ -582,7 +582,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
         }
 
-        if (!prioritizedJobs.isEmpty()) {
+        if (!jobsToDeprioritize.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
@@ -603,7 +603,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             return;
         }
 
-        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
         int maxPriority = 0;
         synchronized (jobsLock) {
             for (AutoIngestJob job : pendingJobs) {
@@ -611,12 +611,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     maxPriority = job.getPriority();
                 }
                 if (job.getManifest().getCaseName().equals(caseName)) {
-                    prioritizedJobs.add(job);
+                    jobsToPrioritize.add(job);
                 }
             }
-            if (!prioritizedJobs.isEmpty()) {
+            if (!jobsToPrioritize.isEmpty()) {
                 ++maxPriority;
-                for (AutoIngestJob job : prioritizedJobs) {
+                for (AutoIngestJob job : jobsToPrioritize) {
                     int oldPriority = job.getPriority();
                     job.setPriority(maxPriority);
                     try {
@@ -631,7 +631,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
         }
 
-        if (!prioritizedJobs.isEmpty()) {
+        if (!jobsToPrioritize.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
