@@ -23,10 +23,12 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -48,6 +50,7 @@ import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -76,7 +79,7 @@ final class IngestModule implements FileIngestModule {
     }
 
     @Override
-    public ProcessResult process(AbstractFile af) {
+    public ProcessResult process(AbstractFile abstractFile) {
         if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
@@ -86,10 +89,22 @@ final class IngestModule implements FileIngestModule {
              */
             return ProcessResult.OK;
         }
+        
+        if(ignorePreviousNotableItems) { //DLG:
+            CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null); //DLG:
+            //DLG: try {
+                //DLG: List<ContentTag> contentTagsList = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(abstractFile);
+                //DLG: ContentTag tag = contentTagsList.get(0);
+                //DLG: tag.getId();
+            //DLG: } catch (TskCoreException ex) {
+            //DLG:     Exceptions.printStackTrace(ex); //DLG:
+            //DLG:     return ProcessResult.ERROR;
+            //DLG: }
+        } //DLG:
 
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
-        if (!EamArtifactUtil.isValidCentralRepoFile(af)) {
+        if (!EamArtifactUtil.isValidCentralRepoFile(abstractFile)) {
             return ProcessResult.OK;
         }
 
@@ -107,18 +122,18 @@ final class IngestModule implements FileIngestModule {
         }
 
         // get the hash because we're going to correlate it
-        String md5 = af.getMd5Hash();
+        String md5 = abstractFile.getMd5Hash();
         if ((md5 == null) || (HashUtility.isNoDataMd5(md5))) {
             return ProcessResult.OK;
         }
 
         /* Search the central repo to see if this file was previously 
          * marked as being bad.  Create artifact if it was.  */
-        if (af.getKnown() != TskData.FileKnown.KNOWN) {
+        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && !ignorePreviousNotableItems) {
             try {
                 List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 if (!caseDisplayNames.isEmpty()) {
-                    postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
+                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNames);
                 }
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
@@ -132,7 +147,7 @@ final class IngestModule implements FileIngestModule {
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
                     eamCase,
                     eamDataSource,
-                    af.getParentPath() + af.getName(),
+                    abstractFile.getParentPath() + abstractFile.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN  // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
