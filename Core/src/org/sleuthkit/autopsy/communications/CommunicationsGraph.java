@@ -222,27 +222,21 @@ final class CommunicationsGraph extends mxGraph {
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
-        final String name =// accountDeviceInstance.getDeviceId() + ":"                +
+        final String name =
                 accountDeviceInstance.getAccount().getTypeSpecificID();
 
-        final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
+        final mxCell vertex = nodeMap.computeIfAbsent(name+accountDeviceInstance.getDeviceId(), vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
 
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
-                    vertexName, accountDeviceInstanceKey,
+                    name, accountDeviceInstanceKey,
                     Math.random() * 400,
                     Math.random() * 400,
                     size,
                     size);
             return newVertex;
         });
-//        final mxCellState state = getView().getState(vertex, true);
-//
-//        getView().updateLabel(state);
-//        getView().updateLabelBounds(state);
-//        getView().updateBoundingBox(state);
-
         return vertex;
     }
 
@@ -310,7 +304,7 @@ final class CommunicationsGraph extends mxGraph {
 
                 Set<Long> accountIDs = relatedAccounts.keySet();
 
-                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCounts(accountIDs, currentFilter);
+                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCountsBetween(accountIDs, currentFilter);
 
                 int total = relationshipCounts.size();
                 int k = 0;
