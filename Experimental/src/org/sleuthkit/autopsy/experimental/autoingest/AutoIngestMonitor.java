@@ -385,13 +385,13 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     JobsSnapshot deprioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
         synchronized (jobsLock) {
-            AutoIngestJob prioritizedJob = null;
+            AutoIngestJob jobToDeprioritize = null;
             /*
              * Make sure the job is still in the pending jobs queue.
              */
             for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
                 if (pendingJob.equals(job)) {
-                    prioritizedJob = job;
+                    jobToDeprioritize = job;
                     break;
                 }
             }
@@ -400,7 +400,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
              * If the job was still in the pending jobs queue, bump its
              * priority.
              */
-            if (null != prioritizedJob) {
+            if (null != jobToDeprioritize) {
                 String manifestNodePath = job.getManifest().getFilePath().toString();
                 try {
                     AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
@@ -409,7 +409,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
                 }
-                prioritizedJob.setPriority(DEFAULT_PRIORITY);
+                jobToDeprioritize.setPriority(DEFAULT_PRIORITY);
 
                 /*
                  * Publish a deprioritization event.
@@ -437,7 +437,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
         synchronized (jobsLock) {
             int highestPriority = 0;
-            AutoIngestJob prioritizedJob = null;
+            AutoIngestJob jobToPrioritize = null;
             /*
              * Get the highest known priority and make sure the job is still in
              * the pending jobs queue.
@@ -447,7 +447,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     highestPriority = pendingJob.getPriority();
                 }
                 if (pendingJob.equals(job)) {
-                    prioritizedJob = job;
+                    jobToPrioritize = job;
                 }
             }
 
@@ -455,7 +455,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
              * If the job was still in the pending jobs queue, bump its
              * priority.
              */
-            if (null != prioritizedJob) {
+            if (null != jobToPrioritize) {
                 ++highestPriority;
                 String manifestNodePath = job.getManifest().getFilePath().toString();
                 try {
@@ -465,7 +465,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
                 }
-                prioritizedJob.setPriority(highestPriority);
+                jobToPrioritize.setPriority(highestPriority);
 
                 /*
                  * Publish a prioritization event.

@@ -652,14 +652,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             return;
         }
 
-        AutoIngestJob prioritizedJob = null;
+        AutoIngestJob jobToDeprioritize = null;
         synchronized (jobsLock) {
             /*
              * Find the job in the pending jobs list.
              */
             for (AutoIngestJob job : pendingJobs) {
                 if (job.getManifest().getFilePath().equals(manifestPath)) {
-                    prioritizedJob = job;
+                    jobToDeprioritize = job;
                 }
             }
 
@@ -667,13 +667,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
              * Remove the priority and update the coordination service manifest
              * node data for the job.
              */
-            if (null != prioritizedJob) {
-                int oldPriority = prioritizedJob.getPriority();
-                prioritizedJob.setPriority(DEFAULT_PRIORITY);
+            if (null != jobToDeprioritize) {
+                int oldPriority = jobToDeprioritize.getPriority();
+                jobToDeprioritize.setPriority(DEFAULT_PRIORITY);
                 try {
-                    this.updateCoordinationServiceManifestNode(prioritizedJob);
+                    this.updateCoordinationServiceManifestNode(jobToDeprioritize);
                 } catch (CoordinationServiceException | InterruptedException ex) {
-                    prioritizedJob.setPriority(oldPriority);
+                    jobToDeprioritize.setPriority(oldPriority);
                     throw new AutoIngestManagerException("Error updating job priority", ex);
                 }
             }
@@ -681,8 +681,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
         }
 
-        if (null != prioritizedJob) {
-            final String caseName = prioritizedJob.getManifest().getCaseName();
+        if (null != jobToDeprioritize) {
+            final String caseName = jobToDeprioritize.getManifest().getCaseName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
@@ -703,7 +703,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         int maxPriority = 0;
-        AutoIngestJob prioritizedJob = null;
+        AutoIngestJob jobToPrioritize = null;
         synchronized (jobsLock) {
             /*
              * Find the job in the pending jobs list and record the highest
@@ -714,7 +714,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     maxPriority = job.getPriority();
                 }
                 if (job.getManifest().getFilePath().equals(manifestPath)) {
-                    prioritizedJob = job;
+                    jobToPrioritize = job;
                 }
             }
 
@@ -722,14 +722,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
              * Bump the priority by one and update the coordination service
              * manifest node data for the job.
              */
-            if (null != prioritizedJob) {
+            if (null != jobToPrioritize) {
                 ++maxPriority;
-                int oldPriority = prioritizedJob.getPriority();
-                prioritizedJob.setPriority(maxPriority);
+                int oldPriority = jobToPrioritize.getPriority();
+                jobToPrioritize.setPriority(maxPriority);
                 try {
-                    this.updateCoordinationServiceManifestNode(prioritizedJob);
+                    this.updateCoordinationServiceManifestNode(jobToPrioritize);
                 } catch (CoordinationServiceException | InterruptedException ex) {
-                    prioritizedJob.setPriority(oldPriority);
+                    jobToPrioritize.setPriority(oldPriority);
                     throw new AutoIngestManagerException("Error updating job priority", ex);
                 }
             }
@@ -737,8 +737,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
         }
 
-        if (null != prioritizedJob) {
-            final String caseName = prioritizedJob.getManifest().getCaseName();
+        if (null != jobToPrioritize) {
+            final String caseName = jobToPrioritize.getManifest().getCaseName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
