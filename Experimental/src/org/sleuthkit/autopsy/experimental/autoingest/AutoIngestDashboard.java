@@ -247,11 +247,16 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             }
             int row = pendingTable.getSelectedRow();
 
-            boolean enablePrioritizeButtons = (row >= 0 && row < pendingTable.getRowCount());
+            boolean enablePrioritizeButtons = false;
+            boolean enableDeprioritizeButtons = false;
+            if (row >= 0 && row < pendingTable.getRowCount()) {
+                enablePrioritizeButtons = true;
+                enableDeprioritizeButtons = (Integer) pendingTableModel.getValueAt(row, JobsTableModelColumns.PRIORITY.ordinal()) > 0;
+            }
             this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
             this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
-            this.deprioritizeJobButton.setEnabled(enablePrioritizeButtons);
-            this.deprioritizeCaseButton.setEnabled(enablePrioritizeButtons);
+            this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
+            this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
         });
     }
 

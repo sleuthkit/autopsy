@@ -393,7 +393,14 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 return;
             }
             int row = pendingTable.getSelectedRow();
-            enablePendingTableButtons((row >= 0) && (row < pendingTable.getRowCount()));
+            boolean enablePrioritizeButtons = false;
+            boolean enableDeprioritizeButtons = false;
+            if ((row >= 0) && (row < pendingTable.getRowCount())) {
+                enablePrioritizeButtons = true;
+                enableDeprioritizeButtons = ((Integer) pendingTableModel.getValueAt(row, JobsTableModelColumns.PRIORITY.ordinal()) > 0);
+            }
+            enablePrioritizeButtons(enablePrioritizeButtons);
+            enableDeprioritizeButtons(enableDeprioritizeButtons);
         });
 
         /*
@@ -597,7 +604,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private void initButtons() {
         bnOptions.setEnabled(true);
         bnDeleteCase.setEnabled(false);
-        enablePendingTableButtons(false);
+        enablePrioritizeButtons(false);
+        enableDeprioritizeButtons(false);
         bnShowCaseLog.setEnabled(false);
         bnReprocessJob.setEnabled(false);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnStart.text"));
@@ -620,13 +628,22 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     }
 
     /**
-     * Enables or disables buttons related to pending jobs table.
+     * Enables or disables prioritize buttons related to the pending jobs table.
      *
      * @param enable Enable/disable the buttons.
      */
-    private void enablePendingTableButtons(Boolean enable) {
+    private void enablePrioritizeButtons(Boolean enable) {
         bnPrioritizeCase.setEnabled(enable);
         bnPrioritizeJob.setEnabled(enable);
+    }
+
+    /**
+     * Enables or disables deprioritize buttons related to the pending jobs
+     * table.
+     *
+     * @param enable Enable/disable the buttons.
+     */
+    private void enableDeprioritizeButtons(Boolean enable) {
         bnDeprioritizeCase.setEnabled(enable);
         bnDeprioritizeJob.setEnabled(enable);
     }
@@ -1769,7 +1786,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
             refreshTables();
             pendingTable.clearSelection();
-            enablePendingTableButtons(false);
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
             AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnPrioritizeCaseActionPerformed
@@ -1828,7 +1846,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
             refreshTables();
             pendingTable.clearSelection();
-            enablePendingTableButtons(false);
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
             AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnPrioritizeJobActionPerformed
@@ -1874,7 +1893,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
             refreshTables();
             pendingTable.clearSelection();
-            enablePendingTableButtons(false);
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
             AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnDeprioritizeCaseActionPerformed
@@ -1892,7 +1912,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
             refreshTables();
             pendingTable.clearSelection();
-            enablePendingTableButtons(false);
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
             AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnDeprioritizeJobActionPerformed
