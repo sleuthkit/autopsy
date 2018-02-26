@@ -168,8 +168,7 @@ final class CommunicationsGraph extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
-            scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                    + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("iconFileName", CommunicationsGraph.class.getResource( Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
@@ -194,8 +193,7 @@ final class CommunicationsGraph extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
-            scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                    + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("iconFileName", CommunicationsGraph.class.getResource(  Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
@@ -310,7 +308,7 @@ final class CommunicationsGraph extends mxGraph {
 
                 Set<Long> accountIDs = relatedAccounts.keySet();
 
-                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCounts(accountIDs, currentFilter);
+                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCountsBetween(accountIDs, currentFilter);
 
                 int total = relationshipCounts.size();
                 int k = 0;
