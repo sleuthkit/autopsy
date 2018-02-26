@@ -67,8 +67,8 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new IngestModule();
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        return new IngestModule((IngestSettings) settings);
     }
 
     @Override

@@ -60,15 +60,13 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         ingestSettingsLabel = new javax.swing.JLabel();
         ignorePreviousNotableItemsCheckbox = new javax.swing.JCheckBox();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
         ingestSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(ignorePreviousNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ignorePreviousNotableItemsCheckbox.text")); // NOI18N
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -89,8 +87,6 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                 .addComponent(ignorePreviousNotableItemsCheckbox)
                 .addContainerGap(245, Short.MAX_VALUE))
         );
-
-        pack();
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
