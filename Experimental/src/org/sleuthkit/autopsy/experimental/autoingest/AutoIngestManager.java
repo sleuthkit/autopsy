@@ -128,7 +128,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
-        Event.CASE_DEPRIORITIZED.toString(),
         Event.JOB_STARTED.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
@@ -373,20 +372,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
-     * Processes a job/case deprioritization event from another node by
-     * triggering an immediate input directory scan.
-     *
-     * @param event A deprioritization event from another auto ingest node.
-     */
-    private void handleRemoteCaseDeprioritizationEvent(AutoIngestCaseDeprioritizedEvent event) {
-        String hostName = event.getNodeName();
-        hostNamesToLastMsgTime.put(hostName, Instant.now());
-        scanInputDirsNow();
-        setChanged();
-        notifyObservers(Event.CASE_DEPRIORITIZED);
-    }
-
-    /**
      * Processes a case deletin event from another node by triggering an
      * immediate input directory scan.
      *
@@ -584,7 +569,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         if (!jobsToDeprioritize.isEmpty()) {
             new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
         }
     }
@@ -684,7 +669,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (null != jobToDeprioritize) {
             final String caseName = jobToDeprioritize.getManifest().getCaseName();
             new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
         }
     }
@@ -3019,7 +3004,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         JOB_STATUS_UPDATED,
         JOB_COMPLETED,
         CASE_PRIORITIZED,
-        CASE_DEPRIORITIZED,
         CASE_DELETED,
         PAUSED_BY_REQUEST,
         PAUSED_FOR_SYSTEM_ERROR,

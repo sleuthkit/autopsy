@@ -817,7 +817,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     });
                     break;
                 case CASE_PRIORITIZED:
-                case CASE_DEPRIORITIZED:
                     updateExecutor.submit(new UpdatePendingJobsTableTask());
                     break;
                 case JOB_STATUS_UPDATED:

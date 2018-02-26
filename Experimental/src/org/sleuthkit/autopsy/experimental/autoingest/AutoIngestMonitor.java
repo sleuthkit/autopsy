@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,6 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.JOB_STATUS_UPDATED.toString(),
         AutoIngestManager.Event.JOB_COMPLETED.toString(),
         AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
-        AutoIngestManager.Event.CASE_DEPRIORITIZED.toString(),
         AutoIngestManager.Event.JOB_STARTED.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
@@ -319,7 +318,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  * Publish a deprioritization event.
                  */
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
                 }).start();
             }
             return jobsSnapshot;
@@ -416,7 +415,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 final String caseName = job.getManifest().getCaseName();
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCaseDeprioritizedEvent(LOCAL_HOST_NAME, caseName));
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
                 }).start();
 
             }
