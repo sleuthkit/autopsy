@@ -19,8 +19,14 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JTabbedPane;
+import javax.swing.LayoutStyle;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
@@ -83,48 +89,46 @@ public final class CVTTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        browseVisualizeTabPane = new javax.swing.JTabbedPane();
-        accountsBrowser = new org.sleuthkit.autopsy.communications.AccountsBrowser();
-        vizPanel = new org.sleuthkit.autopsy.communications.VisualizationPanel();
-        filtersPane = new org.sleuthkit.autopsy.communications.FiltersPanel();
+        browseVisualizeTabPane = new JTabbedPane();
+        accountsBrowser = new AccountsBrowser();
+        vizPanel = new VisualizationPanel();
+        filtersPane = new FiltersPanel();
 
-        browseVisualizeTabPane.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
-        browseVisualizeTabPane.addTab(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
+        browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
+        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
 
-        filtersPane.setMinimumSize(new java.awt.Dimension(256, 495));
+        filtersPane.setMinimumSize(new Dimension(256, 495));
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(filtersPane, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(browseVisualizeTabPane, javax.swing.GroupLayout.DEFAULT_SIZE, 786, Short.MAX_VALUE)
+                .addComponent(filtersPane, GroupLayout.PREFERRED_SIZE, 265, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(browseVisualizeTabPane, GroupLayout.PREFERRED_SIZE, 786, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(filtersPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(filtersPane, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(5, 5, 5))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(browseVisualizeTabPane)
                 .addContainerGap())
         );
 
-        browseVisualizeTabPane.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
+        browseVisualizeTabPane.getAccessibleContext().setAccessibleName(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.communications.AccountsBrowser accountsBrowser;
-    private javax.swing.JTabbedPane browseVisualizeTabPane;
-    private org.sleuthkit.autopsy.communications.FiltersPanel filtersPane;
-    private org.sleuthkit.autopsy.communications.VisualizationPanel vizPanel;
+    private AccountsBrowser accountsBrowser;
+    private JTabbedPane browseVisualizeTabPane;
+    private FiltersPanel filtersPane;
+    private VisualizationPanel vizPanel;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -156,14 +160,24 @@ public final class CVTTopComponent extends TopComponent {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Extension of ProxyLookup that exposes the ability to change the Lookups
+     * delegated to.
+     *
+     */
     final private static class ProxyLookupImpl extends ProxyLookup {
 
-        ProxyLookupImpl(Lookup... l) {
-            super(l);
+        ProxyLookupImpl(Lookup... lookups) {
+            super(lookups);
         }
 
-        protected void changeLookups(Lookup... l) {
-            setLookups(l);
+        /**
+         * Set the Lookups delegated to by this lookup.
+         *
+         * @param lookups The new Lookups to delegate to.
+         */
+        protected void changeLookups(Lookup... lookups) {
+            setLookups(lookups);
         }
     }
 }
