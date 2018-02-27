@@ -92,7 +92,8 @@ public class Installer extends ModuleInstall {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
-}
+        }
+
 
         // Store the keys that deal with menu items
         final String[] UI_MENU_ITEM_KEYS = new String[]{"MenuBarUI",}; //NON-NLS    
