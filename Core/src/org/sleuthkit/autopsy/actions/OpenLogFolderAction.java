@@ -32,6 +32,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -57,9 +58,9 @@ public final class OpenLogFolderAction implements ActionListener {
                 /*
                  * Open the log directory for the case.
                  */
-                Case currentCase = Case.getCurrentCase();
+                Case currentCase = Case.getOpenCase();
                 logDir = new File(currentCase.getLogDirectoryPath());
-            } catch (IllegalStateException ex) {
+            } catch (NoCurrentCaseException ex) {
                 /*
                  * There is no open case, open the application level log
                  * directory.
