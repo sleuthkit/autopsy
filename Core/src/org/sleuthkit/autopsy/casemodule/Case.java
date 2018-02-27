@@ -612,12 +612,15 @@ public class Case {
      *
      * @throws NoCurrentCaseException if there is no open case.
      */
+    @Messages({
+        "Case.NoCurrentCaseException.message=No open case available."
+    })
     public static Case getOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
         if (null != openCase) {
             return openCase;
         } else {
-            throw new NoCurrentCaseException();
+            throw new NoCurrentCaseException(Bundle.Case_NoCurrentCaseException_message());
         }
     }
 

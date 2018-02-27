@@ -18,19 +18,30 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.openide.util.NbBundle;
 
 /**
  *
  * Exception thrown when no current case is available
  */
-@NbBundle.Messages({
-        "NoCurrentCaseException.message=No open case is available."
-    })
 public class NoCurrentCaseException extends Exception {
+    private static final long serialVersionUID = 1L;
+    /**
+     * Constructs an exception with the specified message.
+     *
+     * @param message The exception message.
+     */
+    public NoCurrentCaseException(String message) {
+        super(message);
+    }
 
-    NoCurrentCaseException() {
-        super(Bundle.NoCurrentCaseException_message());
+    /**
+     * Constructs an exception with the specified message and cause. 
+     *
+     * @param message The exception message.
+     * @param cause   The exception cause.
+     */
+    public NoCurrentCaseException(String message, Throwable cause) {
+        super(message, cause);
     }
 
 }
