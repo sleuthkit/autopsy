@@ -599,9 +599,9 @@ public class Case {
          */
         try {
             Case curCase = getOpenCase();
-                return curCase;
-            } catch (NoCurrentCaseException e) {
-                throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), e);
+            return curCase;
+        } catch (NoCurrentCaseException e) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), e);
         }
     }
 
