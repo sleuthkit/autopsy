@@ -43,7 +43,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="externalViewerTitleLabel" pref="681" max="32767" attributes="0"/>
+                  <Component id="externalViewerTitleLabel" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
@@ -60,7 +60,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="externalViewerTitleLabel" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="428" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
@@ -86,7 +86,7 @@
           <SubComponents>
             <Container class="javax.swing.JSplitPane" name="jSplitPane1">
               <Properties>
-                <Property name="dividerLocation" type="int" value="365"/>
+                <Property name="dividerLocation" type="int" value="400"/>
                 <Property name="dividerSize" type="int" value="1"/>
               </Properties>
 
@@ -113,7 +113,7 @@
                                   <Component id="exePathLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="exePathNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="47" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -124,7 +124,7 @@
                               <Component id="exePathLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="exePathNameLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="361" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -165,15 +165,14 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="ruleListLabel" max="32767" attributes="0"/>
-                                  <Component id="rulesScrollPane" min="-2" pref="345" max="-2" attributes="0"/>
                                   <Group type="102" alignment="1" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       <Component id="newRuleButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="editRuleButton" min="-2" max="-2" attributes="0"/>
+                                      <Component id="editRuleButton" min="-2" pref="123" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="deleteRuleButton" min="-2" max="-2" attributes="0"/>
+                                      <Component id="deleteRuleButton" pref="129" max="32767" attributes="0"/>
                                   </Group>
+                                  <Component id="rulesScrollPane" alignment="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -185,7 +184,7 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="ruleListLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="rulesScrollPane" pref="328" max="32767" attributes="0"/>
+                              <Component id="rulesScrollPane" max="32767" attributes="0"/>
                               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="newRuleButton" alignment="3" min="-2" max="-2" attributes="0"/>

@@ -59,10 +59,10 @@
               <Group type="102" attributes="0">
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="caseDisplayNameLabel" max="32767" attributes="0"/>
-                      <Component id="caseNumberLabel" max="32767" attributes="0"/>
+                      <Component id="caseDisplayNameLabel" linkSize="4" max="32767" attributes="0"/>
+                      <Component id="caseNumberLabel" linkSize="4" pref="47" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="caseDisplayNameTextField" max="32767" attributes="1"/>
                       <Component id="caseNumberTextField" max="32767" attributes="1"/>
@@ -76,12 +76,12 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="caseDisplayNameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="caseDisplayNameLabel" linkSize="5" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="caseDisplayNameTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="caseNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="caseNumberLabel" linkSize="5" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="caseNumberTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
@@ -172,21 +172,21 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="lbNotesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbExaminerPhoneLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbNotesLabel" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbExaminerPhoneLabel" linkSize="6" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="caseNotesScrollPane" max="32767" attributes="0"/>
                               <Component id="tfExaminerPhoneText" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
-                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                              <Component id="lbExaminerEmailLabel" alignment="1" max="32767" attributes="0"/>
-                              <Component id="examinerLabel" alignment="1" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="lbExaminerEmailLabel" linkSize="6" max="32767" attributes="0"/>
+                              <Component id="examinerLabel" linkSize="6" pref="47" max="32767" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="examinerTextField" max="32767" attributes="1"/>
                               <Component id="tfExaminerEmailText" max="32767" attributes="0"/>
@@ -202,22 +202,22 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="examinerLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="examinerLabel" linkSize="7" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="examinerTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="tfExaminerPhoneText" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbExaminerPhoneLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbExaminerPhoneLabel" linkSize="7" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="tfExaminerEmailText" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbExaminerEmailLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbExaminerEmailLabel" linkSize="7" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="lbNotesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbNotesLabel" linkSize="7" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="caseNotesScrollPane" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
@@ -355,8 +355,8 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="1" attributes="0">
+                      <Group type="102" attributes="0">
                           <EmptySpace min="-2" pref="106" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
                               <Component id="lbPointOfContactNameLabel" min="-2" max="-2" attributes="0"/>
@@ -370,13 +370,13 @@
                               <Component id="lbPointOfContactEmailText" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="lbOrganizationNameLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="comboBoxOrgName" pref="161" max="32767" attributes="0"/>
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="bnNewOrganization" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="lbOrganizationNameLabel" min="-2" pref="203" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="comboBoxOrgName" min="-2" pref="135" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="bnNewOrganization" min="-2" pref="135" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>

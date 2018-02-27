@@ -108,7 +108,7 @@
                               <Group type="102" attributes="0">
                                   <Component id="agencyLogoPathField" min="-2" pref="259" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="browseLogosButton" min="-2" pref="67" max="-2" attributes="0"/>
+                                  <Component id="browseLogosButton" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="agencyLogoPathFieldValidationLabel" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -462,7 +462,7 @@
                                       <Group type="102" attributes="0">
                                           <Component id="maxMemoryUnitsLabel" min="-2" pref="17" max="-2" attributes="0"/>
                                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                          <Component id="memFieldValidationLabel" min="-2" pref="263" max="-2" attributes="0"/>
+                                          <Component id="memFieldValidationLabel" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
@@ -504,7 +504,7 @@
                                   <Component id="memField" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="maxMemoryUnitsLabel" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="memFieldValidationLabel" min="-2" pref="17" max="-2" attributes="0"/>
+                              <Component id="memFieldValidationLabel" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
