@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -145,7 +145,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
                 imageWriterSettings = null;
             }
         }
-        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
+        addDiskTask = new AddImageTask(deviceId, drivePath, 0, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 
@@ -171,7 +171,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      * @param callback             Callback to call when processing is done.
      */
     public void run(String deviceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
+        addDiskTask = new AddImageTask(deviceId, drivePath, 0, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 

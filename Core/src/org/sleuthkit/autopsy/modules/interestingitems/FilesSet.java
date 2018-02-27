@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -169,6 +170,7 @@ public final class FilesSet implements Serializable {
         private final ParentPathCondition pathCondition;
         private final MimeTypeCondition mimeTypeCondition;
         private final FileSizeCondition fileSizeCondition;
+        private final DateCondition dateCondition;
         private final List<FileAttributeCondition> conditions = new ArrayList<>();
 
         /**
@@ -180,8 +182,10 @@ public final class FilesSet implements Serializable {
          * @param pathCondition     A file path condition, may be null.
          * @param mimeTypeCondition A file mime type condition, may be null.
          * @param fileSizeCondition A file size condition, may be null.
+         * @param dateCondition     A file date created or modified condition,
+         *                          may be null
          */
-        Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, FileSizeCondition fileSizeCondition) {
+        Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, FileSizeCondition fileSizeCondition, DateCondition dateCondition) {
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
             this.uuid = UUID.randomUUID().toString();
             if (metaTypeCondition == null) {
@@ -215,6 +219,10 @@ public final class FilesSet implements Serializable {
             this.pathCondition = pathCondition;
             if (this.pathCondition != null) {
                 this.conditions.add(this.pathCondition);
+            }
+            this.dateCondition = dateCondition;
+            if (this.dateCondition != null) {
+                this.conditions.add(this.dateCondition);
             }
         }
 
@@ -254,6 +262,10 @@ public final class FilesSet implements Serializable {
             return this.pathCondition;
         }
 
+        DateCondition getDateCondition() {
+            return this.dateCondition;
+        }
+
         /**
          * Determines whether or not a file satisfies the rule.
          *
@@ -270,6 +282,10 @@ public final class FilesSet implements Serializable {
             return true;
         }
 
+        @NbBundle.Messages({
+            "# {0} - daysIncluded",
+            "FilesSet.rule.dateRule.toString=(modified within {0} day(s))"
+        })
         @Override
         public String toString() {
             // This override is designed to provide a display name for use with 
@@ -283,6 +299,8 @@ public final class FilesSet implements Serializable {
             } else if (this.fileSizeCondition != null) {
                 return this.ruleName + " (" + fileSizeCondition.getComparator().getSymbol() + " " + fileSizeCondition.getSizeValue()
                         + " " + fileSizeCondition.getUnit().getName() + ")";
+            } else if (this.dateCondition != null) {
+                return this.ruleName + Bundle.FilesSet_rule_dateRule_toString(dateCondition.getDaysIncluded());
             } else {
                 return this.ruleName + " ()";
             }
@@ -537,7 +555,7 @@ public final class FilesSet implements Serializable {
                     case FILES:
                         return file.isFile();
                     case DIRECTORIES:
-                        return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR 
+                        return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR
                                 || file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT_DIR;
                     case FILES_AND_DIRECTORIES:
                         return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG
@@ -733,6 +751,46 @@ public final class FilesSet implements Serializable {
             @Override
             public boolean passes(AbstractFile file) {
                 return this.textMatches(file.getName());
+            }
+
+        }
+
+        /**
+         * A class for checking whether a file's creation or modification
+         * occured in a specific range of time
+         */
+        static final class DateCondition implements FileAttributeCondition {
+
+            private final static long SECS_PER_DAY = 60 * 60 * 24;
+
+            private int daysIncluded;
+
+            /**
+             * Construct a new DateCondition
+             *
+             * @param days - files created or modified more recently than this
+             *             number of days will pass
+             */
+            DateCondition(int days) {
+                daysIncluded = days;
+            }
+
+            /**
+             * Get the number of days which this condition allows to pass
+             *
+             * @return integer value of the number days which will pass
+             */
+            int getDaysIncluded() {
+                return daysIncluded;
+            }
+
+            @Override
+            public boolean passes(AbstractFile file) {
+                long dateThreshold = System.currentTimeMillis() / 1000 - daysIncluded * SECS_PER_DAY;
+                if (file.getCrtime() > dateThreshold || file.getMtime() > dateThreshold) {
+                    return true;
+                }
+                return false;
             }
 
         }

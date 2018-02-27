@@ -34,6 +34,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 /**
  * Dialog used for editing or adding file types.
@@ -92,10 +93,7 @@ class AddFileTypeDialog extends JDialog {
         /**
          * Center the dialog.
          */
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int width = this.getSize().width;
-        int height = this.getSize().height;
-        setLocation((screenDimension.width - width) / 2, (screenDimension.height - height) / 2);
+        setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
 
         /**
          * Get the default or saved ingest job settings for this context and use

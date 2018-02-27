@@ -31,6 +31,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Manages this module's life cycle. Opens the startup dialog during startup.
@@ -72,6 +73,8 @@ public class Installer extends ModuleInstall {
     private void setLookAndFeel() {
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setOSXLookAndFeel();
+        }else if (System.getProperty("os.name").toLowerCase().contains("nux")){
+            setUnixLookAndFeel();
         }
     }
 
@@ -110,5 +113,25 @@ public class Installer extends ModuleInstall {
         uiEntries.entrySet().stream().forEach((entry) -> {
             UIManager.put(entry.getKey(), entry.getValue());
         });
+    }
+    
+    private void setModuleSettings(String value) {
+        if (ModuleSettings.configExists("timeline")) {
+            ModuleSettings.setConfigSetting("timeline", "enable_timeline", value);
+        } else {
+            ModuleSettings.makeConfigFile("timeline");
+            ModuleSettings.setConfigSetting("timeline", "enable_timeline", value);
+        }
+    }
+    
+    private void setUnixLookAndFeel(){
+        try {
+            UIManager.put("swing.boldMetal", Boolean.FALSE);
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            setModuleSettings("true");
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            logger.log(Level.WARNING, "Error setting crossplatform look-and-feel, setting default look-and-feel",ex);
+            setModuleSettings("false");
+        }
     }
 }

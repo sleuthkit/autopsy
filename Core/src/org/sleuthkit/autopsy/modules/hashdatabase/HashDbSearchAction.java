@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.HashSearchProvider;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -122,7 +123,7 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
         if (file != null && HashDbSearcher.countFilesMd5Hashed() > 0) {
             doSearch();
         } else {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                     NbBundle.getMessage(this.getClass(),
                             "HashDbSearchAction.dlgMsg.noFilesHaveMD5Calculated"),
                     NbBundle.getMessage(this.getClass(), "HashDbSearchAction.dlgMsg.title"),

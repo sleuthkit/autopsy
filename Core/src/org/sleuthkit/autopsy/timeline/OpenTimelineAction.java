@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -97,7 +98,10 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 }
             }
             setEnabled(false);
-        } else {
+        }else if("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
+            Platform.runLater(PromptDialogManager::showTimeLineDisabledMessage);
+            setEnabled(false);
+        }else {
             showTimeline();
         }
     }
