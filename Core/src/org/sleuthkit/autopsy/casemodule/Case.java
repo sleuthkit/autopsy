@@ -598,8 +598,7 @@ public class Case {
          *
          */
         try {
-            Case curCase = getOpenCase();
-            return curCase;
+            return getOpenCase();
         } catch (NoCurrentCaseException e) {
             throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), e);
         }
