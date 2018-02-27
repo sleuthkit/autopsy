@@ -503,6 +503,11 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         elif parent_id == 'NULL':
             parent_path = "NULL"
         
+        # Remove host name (for multi-user) from parent_path
+        if parent_path is not None:
+            if 'ModuleOutput' in parent_path:
+                # skip past the host name (if any)
+                parent_path = parent_path[parent_path.find('ModuleOutput'):]
 
         if path and parent_path:
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
