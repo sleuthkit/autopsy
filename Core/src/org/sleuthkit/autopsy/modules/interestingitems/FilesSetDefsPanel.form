@@ -95,7 +95,7 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
                                       <EmptySpace min="-2" pref="101" max="-2" attributes="0"/>
-                                      <Component id="filesRadioButton" min="-2" pref="47" max="-2" attributes="0"/>
+                                      <Component id="filesRadioButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Component id="dirsRadioButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>

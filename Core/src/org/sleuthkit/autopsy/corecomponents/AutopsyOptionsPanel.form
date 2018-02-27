@@ -108,7 +108,7 @@
                               <Group type="102" attributes="0">
                                   <Component id="agencyLogoPathField" min="-2" pref="259" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="browseLogosButton" min="-2" pref="67" max="-2" attributes="0"/>
+                                  <Component id="browseLogosButton" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="agencyLogoPathFieldValidationLabel" min="-2" max="-2" attributes="0"/>
                           </Group>

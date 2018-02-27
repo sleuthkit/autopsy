@@ -418,7 +418,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanelLayout.setHorizontalGroup(
             orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
                         .addGap(106, 106, 106)
                         .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -432,11 +432,11 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(comboBoxOrgName, 0, 161, Short.MAX_VALUE)
+                        .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         orgainizationPanelLayout.setVerticalGroup(
