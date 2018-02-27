@@ -271,13 +271,16 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(caseDisplayNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(caseNumberLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(caseNumberLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(caseDisplayNameTextField)
                     .addComponent(caseNumberTextField))
                 .addContainerGap())
         );
+
+        casePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {caseDisplayNameLabel, caseNumberLabel});
+
         casePanelLayout.setVerticalGroup(
             casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(casePanelLayout.createSequentialGroup()
@@ -291,6 +294,8 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                     .addComponent(caseNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(6, 6, 6))
         );
+
+        casePanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {caseDisplayNameLabel, caseNumberLabel});
 
         examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.examinerPanel.border.title"))); // NOI18N
 
@@ -338,20 +343,23 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(10, 10, 10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(caseNotesScrollPane)
                             .addComponent(tfExaminerPhoneText)))
                     .addGroup(examinerPanelLayout.createSequentialGroup()
-                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(examinerLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(examinerLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(examinerTextField)
                             .addComponent(tfExaminerEmailText))))
                 .addGap(11, 11, 11))
         );
+
+        examinerPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {examinerLabel, lbExaminerEmailLabel, lbExaminerPhoneLabel, lbNotesLabel});
+
         examinerPanelLayout.setVerticalGroup(
             examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(examinerPanelLayout.createSequentialGroup()
@@ -373,6 +381,8 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                     .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(6, 6, 6))
         );
+
+        examinerPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {examinerLabel, lbExaminerEmailLabel, lbExaminerPhoneLabel, lbNotesLabel});
 
         orgainizationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.orgainizationPanel.border.title"))); // NOI18N
 
