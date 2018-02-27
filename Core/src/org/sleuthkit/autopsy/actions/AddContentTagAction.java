@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -94,7 +95,7 @@ public class AddContentTagAction extends AddTagAction {
                             file = (AbstractFile) parentFile;
                         } else {
                             SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(null,
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                         NbBundle.getMessage(this.getClass(),
                                                 "AddContentTagAction.unableToTag.msg",
                                                 parentFile.getName()),
@@ -113,7 +114,7 @@ public class AddContentTagAction extends AddTagAction {
                             } else {
                                 final Content parentFileCopy = parentFile;
                                 SwingUtilities.invokeLater(() -> {
-                                    JOptionPane.showMessageDialog(null,
+                                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                             NbBundle.getMessage(this.getClass(),
                                                     "AddContentTagAction.unableToTag.msg",
                                                     parentFileCopy.getName()),
@@ -126,7 +127,7 @@ public class AddContentTagAction extends AddTagAction {
                         } else {
                             final Content parentFileCopy = parentFile;
                             SwingUtilities.invokeLater(() -> {
-                                JOptionPane.showMessageDialog(null,
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                         NbBundle.getMessage(this.getClass(),
                                                 "AddContentTagAction.unableToTag.msg",
                                                 parentFileCopy.getName()),
@@ -143,7 +144,7 @@ public class AddContentTagAction extends AddTagAction {
                     Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     AbstractFile fileCopy = file;
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(this.getClass(),
                                         "AddContentTagAction.unableToTag.msg2",
                                         fileCopy.getName()),

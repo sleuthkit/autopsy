@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.FileSizeCond
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MimeTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.DateCondition;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -67,6 +68,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final String FILE_SET_TAG = "INTERESTING_FILE_SET"; //NON-NLS
     private static final String NAME_RULE_TAG = "NAME"; //NON-NLS
     private static final String NAME_ATTR = "name"; //NON-NLS
+    private static final String DAYS_INCLUDED_ATTR = "daysIncluded";
     private static final String MIME_ATTR = "mimeType";
     private static final String FS_COMPARATOR_ATTR = "comparatorSymbol";
     private static final String FS_SIZE_ATTR = "sizeValue";
@@ -167,6 +169,35 @@ class InterestingItemsFilesSetSettings implements Serializable {
     }
 
     /**
+     * Construct a date condition for a FilesSet membership rule from data in an
+     * XML element.
+     *
+     * @param ruleElement The XML element.
+     *
+     * @return The date condition, or null if there is an error (logged).
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
+    private static DateCondition readDateCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
+        // Read in the optional path condition. Null is o.k., but if the attribute
+        // is there, be sure it is not malformed.
+        DateCondition dateCondition = null;
+        if (!ruleElement.getAttribute(DAYS_INCLUDED_ATTR).isEmpty()) {
+            String daysIncluded = ruleElement.getAttribute(DAYS_INCLUDED_ATTR);
+            if (!daysIncluded.isEmpty()) {
+                try {
+                    dateCondition = new DateCondition(Integer.parseInt(daysIncluded));
+                } catch (NumberFormatException ex) {
+                    logger.log(Level.SEVERE, "Error creating condition for " + daysIncluded + ", ignoring malformed date condition definition", ex); // NON-NLS
+                    throw new FilesSetsManager.FilesSetsManagerException(String.format("error compiling %s regex", DAYS_INCLUDED_ATTR), ex);
+                }
+            }
+        }
+        return dateCondition;
+    }
+
+    /**
      * Attempts to compile a regular expression.
      *
      * @param regex The regular expression.
@@ -183,12 +214,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
     }
 
     /**
-     * Construct a fileset membership rule from the data in an xml element for 
+     * Construct a fileset membership rule from the data in an xml element for
      * use in a FilesSet.
      *
      * @param elem The XML element.
      *
-     * @return A file set constructed from the conditions available in the XML element
+     * @return A file set constructed from the conditions available in the XML
+     *         element
      *
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
@@ -200,17 +232,17 @@ class InterestingItemsFilesSetSettings implements Serializable {
         ParentPathCondition pathCondition = readPathCondition(elem);
         MimeTypeCondition mimeCondition = readMimeCondition(elem);
         FileSizeCondition sizeCondition = readSizeCondition(elem);
-        //if meta type condition or all four types of conditions the user can create are all null then don't make the rule
-        if (metaCondition == null || (nameCondition == null && pathCondition == null && mimeCondition == null && sizeCondition == null)) {
+        DateCondition dateCondition = readDateCondition(elem); //if meta type condition or all four types of conditions the user can create are all null then don't make the rule
+        if (metaCondition == null || (nameCondition == null && pathCondition == null && mimeCondition == null && sizeCondition == null && dateCondition == null)) {
             logger.log(Level.WARNING, "Error Reading Rule, " + ruleName + " was either missing a meta condition or contained only a meta condition. No rule was imported."); // NON-NLS
             throw new FilesSetsManager.FilesSetsManagerException(String.format("Invalid Rule in FilesSet xml, missing necessary conditions for %s", ruleName));
         }
-        return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition);
+        return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition, dateCondition);
     }
 
     /**
-     * Construct a file name condition for a FilesSet membership rule from data in an
-     * XML element.
+     * Construct a file name condition for a FilesSet membership rule from data
+     * in an XML element.
      *
      * @param ruleElement The XML element.
      *
@@ -256,8 +288,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
     }
 
     /**
-     * Construct a MIME type condition for a FilesSet membership rule from data in an
-     * XML element.
+     * Construct a MIME type condition for a FilesSet membership rule from data
+     * in an XML element.
      *
      * @param ruleElement The XML element.
      *
@@ -275,8 +307,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
     }
 
     /**
-     * Construct a file size condition for a FilesSet membership rule from data in an
-     * XML element.
+     * Construct a file size condition for a FilesSet membership rule from data
+     * in an XML element.
      *
      * @param ruleElement The XML element.
      *
@@ -544,6 +576,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
                         ruleElement.setAttribute(FS_SIZE_ATTR, Integer.toString(sizeCondition.getSizeValue()));
                         ruleElement.setAttribute(FS_UNITS_ATTR, sizeCondition.getUnit().getName());
                     }
+                    
+                     //Add the optional date condition
+                    DateCondition dateCondition = rule.getDateCondition();
+                    if (dateCondition != null) {
+                        ruleElement.setAttribute(DAYS_INCLUDED_ATTR, Integer.toString(dateCondition.getDaysIncluded()));
+                    }
+                    
                     setElement.appendChild(ruleElement);
                 }
                 rootElement.appendChild(setElement);

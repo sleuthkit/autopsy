@@ -31,6 +31,7 @@ import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -73,7 +74,7 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
             }
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "OpenOutputFolderAction enabled with no current case", ex); //NON-NLS
-            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
         }
     }
 

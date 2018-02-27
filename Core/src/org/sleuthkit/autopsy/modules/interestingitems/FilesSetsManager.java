@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@ public final class FilesSetsManager extends Observable {
         {
             put(Bundle.FilesSetsManager_allFilesAndDirectories(),
                     new Rule(Bundle.FilesSetsManager_allFilesAndDirectories(), null,
-                            new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null));
+                            new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null, null));
         }
     });
     private static final FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet(
@@ -61,7 +61,7 @@ public final class FilesSetsManager extends Observable {
         {
             put(Bundle.FilesSetsManager_allFilesDirectoriesAndUnallocated(),
                     new Rule(Bundle.FilesSetsManager_allFilesDirectoriesAndUnallocated(), null,
-                            new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null));
+                            new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null, null));
         }
     });
 

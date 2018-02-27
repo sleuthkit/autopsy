@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JDialog;
@@ -156,11 +154,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.add(editCasePropertiesPanel);
         editCasePropertiesDialog.setResizable(true);
         editCasePropertiesDialog.pack();
-
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        double w = editCasePropertiesDialog.getSize().getWidth();
-        double h = editCasePropertiesDialog.getSize().getHeight();
-        editCasePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        editCasePropertiesDialog.setLocationRelativeTo(this);
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
         propertiesPanel.updateCaseInfo();

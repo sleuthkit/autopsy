@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.xml.bind.DatatypeConverter;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -384,7 +385,7 @@ class FileType implements Serializable {
                 try {
                     signatureBytesString = new String(this.getSignatureBytes(), "UTF-8");
                 } catch (UnsupportedEncodingException ex) {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             ex.getLocalizedMessage(),
                             Bundle.AddFileTypeSignaturePanel_signatureStringFail_text(),
                             JOptionPane.ERROR_MESSAGE);
