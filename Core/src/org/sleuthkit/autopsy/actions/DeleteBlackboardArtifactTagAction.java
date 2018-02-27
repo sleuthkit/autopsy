@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -72,8 +73,8 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
         new Thread(() -> {
             for (BlackboardArtifactTag tag : selectedTags) {
                 try {
-                    Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
-                } catch (TskCoreException ex) {
+                    Case.getOpenCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(DeleteBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
