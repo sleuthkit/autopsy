@@ -310,7 +310,7 @@ final class CommunicationsGraph extends mxGraph {
 
                 Set<Long> accountIDs = relatedAccounts.keySet();
 
-                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCounts(accountIDs, currentFilter);
+                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCountsBetween(accountIDs, currentFilter);
 
                 int total = relationshipCounts.size();
                 int k = 0;
