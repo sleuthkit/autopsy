@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -95,7 +96,16 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
 
             @Override
             protected Void doInBackground() throws Exception {
-                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                TagsManager tagsManager;
+                try {
+                    tagsManager = Case.getOpenCase().getServices().getTagsManager();
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Error untagging artifact. No open case found.", ex); //NON-NLS
+                    Platform.runLater(()
+                            -> new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileBlackboardArtifactTagAction_deleteTag_alert(artifactId)).show()
+                    );
+                    return null;  
+                }
 
                 try {
                     logger.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), artifactTag.getContent().getName()}); //NON-NLS
@@ -142,13 +152,13 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                 BlackboardArtifact artifact
                         = selectedBlackboardArtifactsList.iterator().next();
 
-                // Get the current set of tag names.
-                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-
                 Map<String, TagName> tagNamesMap = null;
                 try {
+                    // Get the current set of tag names.
+                    TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+
                     tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
                 }
 
@@ -158,7 +168,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
                         List<BlackboardArtifactTag> existingTagsList
-                                = Case.getCurrentCase().getServices().getTagsManager()
+                                = Case.getOpenCase().getServices().getTagsManager()
                                 .getBlackboardArtifactTagsByArtifact(artifact);
 
                         for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
@@ -176,7 +186,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                                 }
                             }
                         }
-                    } catch (TskCoreException ex) {
+                    } catch (TskCoreException | NoCurrentCaseException ex) {
                         Logger.getLogger(TagMenu.class.getName())
                                 .log(Level.SEVERE, "Error retrieving tags for TagMenu", ex); //NON-NLS
                     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,7 @@ import javax.swing.KeyStroke;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
@@ -137,11 +138,11 @@ public class GetTagNameAndCommentDialog extends JDialog {
         // tag name DTOs to be enable to return the one the user selects.
         // Tag name DTOs may be null (user tag names that have not been used do
         // not exist in the database).
-        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         try {
+            TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
             tagNamesSet.addAll(tagsManager.getAllTagNames());
 
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class
                     .getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
