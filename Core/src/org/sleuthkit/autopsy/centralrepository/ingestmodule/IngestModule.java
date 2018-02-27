@@ -71,9 +71,9 @@ final class IngestModule implements FileIngestModule {
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
     private CorrelationAttribute.Type filesType;
-    
+
     private final boolean ignorePreviousNotableItems;
-    
+
     IngestModule(IngestSettings settings) {
         ignorePreviousNotableItems = settings.isIgnorePreviousNotableItems();
     }
@@ -89,18 +89,6 @@ final class IngestModule implements FileIngestModule {
              */
             return ProcessResult.OK;
         }
-        
-        if(ignorePreviousNotableItems) { //DLG:
-            CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null); //DLG:
-            //DLG: try {
-                //DLG: List<ContentTag> contentTagsList = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(abstractFile);
-                //DLG: ContentTag tag = contentTagsList.get(0);
-                //DLG: tag.getId();
-            //DLG: } catch (TskCoreException ex) {
-            //DLG:     Exceptions.printStackTrace(ex); //DLG:
-            //DLG:     return ProcessResult.ERROR;
-            //DLG: }
-        } //DLG:
 
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
@@ -127,8 +115,10 @@ final class IngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        /* Search the central repo to see if this file was previously 
-         * marked as being bad.  Create artifact if it was.  */
+        /*
+         * Search the central repo to see if this file was previously marked as
+         * being bad. Create artifact if it was.
+         */
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && !ignorePreviousNotableItems) {
             try {
                 List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
@@ -149,7 +139,7 @@ final class IngestModule implements FileIngestModule {
                     eamDataSource,
                     abstractFile.getParentPath() + abstractFile.getName(),
                     null,
-                    TskData.FileKnown.UNKNOWN  // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
+                    TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);
@@ -250,7 +240,7 @@ final class IngestModule implements FileIngestModule {
                 throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
             }
         }
-        
+
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {
