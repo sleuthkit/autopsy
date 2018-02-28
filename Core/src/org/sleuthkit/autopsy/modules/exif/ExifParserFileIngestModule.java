@@ -228,7 +228,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d)." + f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } finally {
             try {

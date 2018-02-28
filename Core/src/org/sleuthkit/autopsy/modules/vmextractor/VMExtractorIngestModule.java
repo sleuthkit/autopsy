@@ -156,11 +156,13 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
             } catch (ReadContentInputStreamException ex) {
-                logger.log(Level.WARNING, String.format("Failed to read virtual machine file '%s'.", vmFile.getName()), ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Failed to read virtual machine file '%s' (id=%d).",
+                        vmFile.getName(), vmFile.getId()), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
                         NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, String.format("Failed to write virtual machine file '%s' to folder '%s'.", vmFile.getName(), outputFolderForThisVM), ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Failed to write virtual machine file '%s' (id=%d) to folder '%s'.",
+                        vmFile.getName(), vmFile.getId(), outputFolderForThisVM), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
                         NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             }
