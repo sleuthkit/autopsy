@@ -116,7 +116,7 @@ public class VideoFile extends DrawableFile {
         } catch (ReadContentInputStreamException ex) {
             logger.log(Level.WARNING, "Error reading video file.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Error writing video file to disk.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error writing video file to disk.", ex); //NON-NLS
         } catch (MediaException ex) {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
         }

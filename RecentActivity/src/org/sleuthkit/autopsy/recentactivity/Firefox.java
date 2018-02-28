@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -109,7 +109,7 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Firefox web history artifacts file '%s' (id=%d).",
                         fileName, historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
@@ -204,7 +204,7 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Firefox bookmark artifacts file '%s' (id=%d).",
                         fileName, bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
@@ -296,7 +296,7 @@ class Firefox extends Extract {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Firefox cookie artifacts file '%s' (id=%d).",
                         fileName, cookiesFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
@@ -419,7 +419,7 @@ class Firefox extends Extract {
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Firefox download artifacts file '%s' (id=%d).",
                         fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
@@ -540,7 +540,7 @@ class Firefox extends Extract {
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Firefox download artifacts file '%s' (id=%d).",
                         fileName, downloadsFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(

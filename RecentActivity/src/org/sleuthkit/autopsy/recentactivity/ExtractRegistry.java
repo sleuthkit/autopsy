@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -182,7 +183,7 @@ class ExtractRegistry extends Extract {
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
                         regFile.getName(), regFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
