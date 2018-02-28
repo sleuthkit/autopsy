@@ -1,0 +1,53 @@
+===============================================
+This file identifies core Volatility authors. 
+
+All lists are alphabetical. 
+===============================================
+
+Volatility 2.6:
+------------
+
+Mike Auty
+Andrew Case
+Michael Hale Ligh
+Jamie Levy
+AAron Walters
+Nick L. Petroni, Jr.
+
+
+Volatility 2.4, 2.5:
+------------
+
+Mike Auty
+Andrew Case
+Michael Hale Ligh
+Jamie Levy
+AAron Walters
+
+Volatility 2.0, 2.1, 2.2, 2.3:
+------------
+
+Mike Auty
+Andrew Case
+Michael Cohen
+Brendan Dolan-Gavitt
+Michael Hale Ligh
+Jamie Levy
+AAron Walters
+
+Volatility 1.3:
+------------
+
+AAron Walters <awalters@4tphi.net>
+Volatile Systems LLC
+
+Brendan Dolan-Gavitt <bdolangavitt@wesleyan.edu>
+
+Volatools Basic authors:
+------------
+
+AAron Walters 
+Komoku, Inc.
+
+Nick L. Petroni, Jr.
+Komoku, Inc.
