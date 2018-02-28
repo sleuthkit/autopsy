@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import org.sleuthkit.autopsy.contentviewers.MediaViewVideoPanel;
 import com.google.common.io.Files;
 import java.awt.Dimension;
 import java.io.File;

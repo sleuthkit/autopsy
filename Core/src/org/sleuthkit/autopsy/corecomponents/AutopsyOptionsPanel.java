@@ -88,7 +88,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
     private static final long MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
-    private static final Logger LOGGER = Logger.getLogger(AutopsyOptionsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
 
     /**
@@ -266,7 +266,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             try {
                 lines = Files.readAllLines(filePath, charset);
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error reading config file contents. {}", configFile.getAbsolutePath());
+                logger.log(Level.SEVERE, "Error reading config file contents. {}", configFile.getAbsolutePath());
             }
         }
         return lines;
@@ -316,13 +316,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
+            logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex);
         }
         if (memField.isEnabled()) {
             try {
                 initialMemValue = Long.toString(getCurrentJvmMaxMemoryInGB());
             } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
+                logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
                 memField.setEnabled(false);
             }
             memField.setText(initialMemValue);
@@ -380,7 +380,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             try {
                 writeEtcConfFile();
             } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Unable to save config file to " + PlatformUtil.getUserDirectory() + "\\" + ETC_FOLDER_NAME, ex);
+                logger.log(Level.WARNING, "Unable to save config file to " + PlatformUtil.getUserDirectory() + "\\" + ETC_FOLDER_NAME, ex);
             }
         }
     }
@@ -983,7 +983,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 }
             }
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Error loading image from previously saved agency logo path.", ex);
+            logger.log(Level.WARNING, "Error loading image from previously saved agency logo path.", ex);
         }
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_specifyLogoRBActionPerformed
@@ -995,7 +995,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             updateAgencyLogo("");
         } catch (IOException ex) {
             // This should never happen since we're not reading from a file.
-            LOGGER.log(Level.SEVERE, "Unexpected error occurred while updating the agency logo.", ex);
+            logger.log(Level.SEVERE, "Unexpected error occurred while updating the agency logo.", ex);
         }
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_defaultLogoRBActionPerformed
@@ -1009,7 +1009,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 updateAgencyLogo(path);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } catch (IOException | IndexOutOfBoundsException ex) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
                         "AutopsyOptionsPanel.invalidImageFile.msg"),
                     NbBundle.getMessage(this.getClass(), "AutopsyOptionsPanel.invalidImageFile.title"),
@@ -1017,7 +1017,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 try {
                     updateAgencyLogo(oldLogoPath); //restore previous setting if new one is invalid
                 } catch (IOException ex1) {
-                    LOGGER.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex1);
+                    logger.log(Level.WARNING, "Error loading image from previously saved agency logo path", ex1);
                 }
             }
         }

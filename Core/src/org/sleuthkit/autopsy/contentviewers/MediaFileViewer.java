@@ -84,6 +84,11 @@ public class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewe
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Returns a list of mimetypes supported by this viewer
+     * 
+     * @return list of supported mimetypes
+     */
     @Override
     public List<String> getSupportedMIMETypes() {
         
@@ -96,6 +101,11 @@ public class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewe
     }
     
     
+    /**
+     * Set up the view to display the given file.
+     * 
+     * @param file file to display
+     */
     @Override
     public void setFile(AbstractFile file) {
         try {

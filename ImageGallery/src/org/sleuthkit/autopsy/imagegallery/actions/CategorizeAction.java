@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import javax.swing.JOptionPane;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
@@ -56,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({"CategorizeAction.displayName=Categorize"})
 public class CategorizeAction extends Action {
 
-    private static final Logger LOGGER = Logger.getLogger(CategorizeAction.class.getName());
+    private static final Logger logger = Logger.getLogger(CategorizeAction.class.getName());
 
     private final ImageGalleryController controller;
     private final UndoRedoManager undoManager;
@@ -155,7 +156,7 @@ public class CategorizeAction extends Action {
                                     try {
                                         tagsManager.deleteContentTag(ct);
                                     } catch (TskCoreException ex) {
-                                        LOGGER.log(Level.SEVERE, "Error removing old categories result", ex); //NON-NLS
+                                        logger.log(Level.SEVERE, "Error removing old categories result", ex); //NON-NLS
                                     }
                                 });
                     } else {
@@ -168,8 +169,8 @@ public class CategorizeAction extends Action {
                         }
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null,
+                    logger.log(Level.SEVERE, "Error categorizing result", ex); //NON-NLS
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.CategorizeTask_errorUnable_msg(fileID),
                             Bundle.CategorizeTask_errorUnable_title(),
                             JOptionPane.ERROR_MESSAGE);

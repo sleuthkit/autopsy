@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import org.sleuthkit.autopsy.contentviewers.MediaViewVideoPanel;
 import com.google.common.io.Files;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -88,7 +87,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
-    private final Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * Creates new form MediaViewVideoPanel

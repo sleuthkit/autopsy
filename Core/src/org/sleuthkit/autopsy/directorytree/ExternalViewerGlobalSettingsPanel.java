@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private static final Logger LOGGER = Logger.getLogger(ExternalViewerGlobalSettingsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(ExternalViewerGlobalSettingsPanel.class.getName());
     private DefaultListModel<ExternalViewerRule> rulesListModel;
     private java.util.List<ExternalViewerRule> rules;
 
@@ -253,7 +253,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
             ExternalViewerRule newRule = dialog.getRule();
             // Only allow one association for each MIME type or extension.
             if (rules.contains(newRule)) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.message"),
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.title"),
                         JOptionPane.ERROR_MESSAGE);
@@ -277,7 +277,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
             ExternalViewerRule newRule = dialog.getRule();
             // Only allow one association for each MIME type or extension.
             if (rules.contains(newRule)) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.message"),
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.title"),
                         JOptionPane.ERROR_MESSAGE);
