@@ -147,7 +147,7 @@ public final class FilesSetsManager extends Observable {
      * @return A map of interesting files set names to interesting file sets,
      *         possibly empty.
      */
-    Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
+    public Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
             return InterestingItemsFilesSetSettings.readDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
         }
