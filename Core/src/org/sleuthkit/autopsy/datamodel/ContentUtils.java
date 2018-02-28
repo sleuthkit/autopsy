@@ -352,12 +352,12 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(file, dest, progress, worker, source);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
-                        "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error reading file '%s' (id=%d).",
+                                file.getName(), file.getId()), ex); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error extracting file '%s' (id=%d) to '%s'.",
+                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
             }
             return null;
         }
@@ -368,12 +368,12 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(file, dest, progress, worker, source);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
-                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error reading file '%s' (id=%d).",
+                                file.getName(), file.getId()), ex); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error extracting unallocated content file '%s' (id=%d) to '%s'.",
+                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
             }
             return null;
         }
@@ -384,12 +384,12 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(file, dest, progress, worker, source);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
-                        "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error reading file '%s' (id=%d).",
+                                file.getName(), file.getId()), ex); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Error extracting derived file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error extracting derived file '%s' (id=%d) to '%s'.",
+                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
             }
             return null;
         }
@@ -400,12 +400,12 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(file, dest, progress, worker, source);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
-                        "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error reading file '%s' (id=%d).",
+                                file.getName(), file.getId()), ex); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error extracting local file '%s' (id=%d) to '%s'.",
+                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
             }
             return null;
         }
@@ -416,12 +416,12 @@ public final class ContentUtils {
                 ContentUtils.writeToFile(file, dest, progress, worker, source);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
-                        "Trouble extracting slack file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error reading file '%s' (id=%d).",
+                                file.getName(), file.getId()), ex); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        "Trouble extracting slack file to " + dest.getAbsolutePath(), //NON-NLS
-                        ex);
+                        String.format("Error extracting slack file '%s' (id=%d) to '%s'.",
+                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
             }
             return null;
         }
