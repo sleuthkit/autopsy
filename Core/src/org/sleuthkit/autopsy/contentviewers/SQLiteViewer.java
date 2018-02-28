@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * A file content viewer for SQLITE db files.
