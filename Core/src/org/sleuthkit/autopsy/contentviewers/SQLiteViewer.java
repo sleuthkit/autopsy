@@ -362,14 +362,14 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 try {
                     
                     get();
-                    if (dbTablesMap.size() > 0) {
-                        dbTablesMap.keySet().forEach((tableName) -> {
-                            tablesDropdownList.addItem(tableName);
-                        });
-                    } else {
+                    if (dbTablesMap.isEmpty()) {
                         // Populate error message
                         tablesDropdownList.addItem("No tables found");
                         tablesDropdownList.setEnabled(false);
+                    } else {
+                        dbTablesMap.keySet().forEach((tableName) -> {
+                            tablesDropdownList.addItem(tableName);
+                        });
                     }
                 } catch (InterruptedException ex) {
                     
@@ -450,6 +450,8 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             dbTablesMap.put(tableName, tableSQL);
         }
+        resultSet.close();
+	statement.close();
     }
 
     @NbBundle.Messages({"# {0} - tableName",
@@ -465,15 +467,25 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             @Override
             protected Integer doInBackground() throws Exception {
 
+                Statement statement = null;
+                ResultSet resultSet = null;
                 try {
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
+                    statement = connection.createStatement();
+                    resultSet = statement.executeQuery(
                             "SELECT count (*) as count FROM " + tableName); //NON-NLS
 
                     return resultSet.getInt("count");
                 } catch (SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to get row count for table " + tableName, ex); //NON-NLS
                     throw ex;
+                }
+                finally {
+                    if (null != resultSet) {
+                        resultSet.close();
+                    }
+                    if (null != statement) {
+                        statement.close();
+                    }
                 }
             }
 
@@ -531,9 +543,12 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         worker = new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
             @Override
             protected ArrayList<Map<String, Object>> doInBackground() throws Exception {
+                
+                Statement statement = null;
+                ResultSet resultSet = null;
                 try {
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
+                    statement = connection.createStatement();
+                    resultSet = statement.executeQuery(
                             "SELECT * FROM " + tableName
                             + " LIMIT " + Integer.toString(numRowsToRead)
                             + " OFFSET " + Integer.toString(startRow - 1)
@@ -543,6 +558,14 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 } catch (SQLException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
                     throw ex;
+                }
+                finally {
+                    if (null != resultSet) {
+                        resultSet.close();
+                    }
+                    if (null != statement) {
+                        statement.close();
+                    }
                 }
             }
 
