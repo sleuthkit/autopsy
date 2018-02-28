@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers;
 
 import com.google.common.io.Files;
 import java.awt.Dimension;
@@ -55,6 +55,8 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.corecomponents.FrameCapture;
+import org.sleuthkit.autopsy.corecomponents.VideoFrame;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
@@ -85,7 +87,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlaybin2 player
     private AbstractFile currentFile;
-    private final Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> badVideoFiles = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * Creates new form MediaViewVideoPanel

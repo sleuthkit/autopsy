@@ -5,10 +5,12 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+
 import java.awt.Component;
 import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 public class JPEGViewerDummy extends javax.swing.JPanel implements FileTypeViewer {
 

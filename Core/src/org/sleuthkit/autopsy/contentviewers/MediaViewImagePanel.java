@@ -16,7 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers;
+
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -46,6 +47,7 @@ import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
+//import org.sleuthkit.autopsy.corecomponents.Bundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -59,7 +61,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 @NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
     "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
     "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
-public class MediaViewImagePanel extends JPanel implements DataContentViewerMedia.MediaViewPanel {
+public class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
     private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
 
