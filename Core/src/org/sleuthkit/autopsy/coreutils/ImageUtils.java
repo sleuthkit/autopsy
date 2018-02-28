@@ -322,8 +322,8 @@ public class ImageUtils {
                         }
                         return ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
                     }
-                } catch (IOException iOException) {
-                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), ex); //NON-NLS
                 }
                 return DEFAULT_THUMBNAIL;
             }

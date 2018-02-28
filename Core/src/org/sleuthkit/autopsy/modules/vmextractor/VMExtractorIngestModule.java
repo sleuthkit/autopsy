@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2016 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -154,8 +155,12 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             // write the vm file to output folder
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Failed to read virtual machine file '%s'.", vmFile.getName()), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
+                        NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Failed to write virtual machine file " + vmFile.getName() + " to folder " + outputFolderForThisVM, ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Failed to write virtual machine file '%s' to folder '%s'.", vmFile.getName(), outputFolderForThisVM), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
                         NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             }
@@ -227,9 +232,10 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      * @param vmFile                Abstract file to write to disk.
      * @param outputFolderForThisVM Absolute path to output folder.
      *
-     * @throws IOException
+     * @throws IOException                     General file exception.
+     * @throws ReadContentInputStreamException Thrown when there's an issue reading the file.
      */
-    private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
+    private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws ReadContentInputStreamException, IOException {
 
         // TODO: check available disk space first? See IngestMonitor.getFreeSpace()
         // check if output folder exists
