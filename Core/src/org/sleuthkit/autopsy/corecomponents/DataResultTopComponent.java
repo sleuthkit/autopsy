@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -269,6 +269,25 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     public void componentOpened() {
         super.componentOpened();
         this.dataResultPanel.open();
+    }
+
+    @Override
+    public void componentActivated() {
+        super.componentActivated();
+
+        /*
+         * Syncronize the data content viewer to show the currently selected
+         * item in the data results if only one is selected, or show nothing
+         * otherwise.
+         */
+        final DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
+        final Node[] nodeList = explorerManager.getSelectedNodes();
+
+        if (nodeList.length == 1) {
+            dataContentTopComponent.setNode(nodeList[0]);
+        } else {
+            dataContentTopComponent.setNode(null);
+        }
     }
 
     @Override

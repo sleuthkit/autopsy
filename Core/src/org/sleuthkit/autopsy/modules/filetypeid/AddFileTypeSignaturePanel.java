@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -106,7 +106,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
             try {
                 this.signatureTextField.setText(new String(toEdit.getSignatureBytes(), "UTF-8"));
             } catch (UnsupportedEncodingException ex) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         ex.getLocalizedMessage(),
                         Bundle.AddFileTypeSignaturePanel_signatureStringFail_text(),
                         JOptionPane.ERROR_MESSAGE);
@@ -134,7 +134,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         String sigString = signatureTextField.getText();
 
         if (sigString.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignature.message"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignature.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -147,7 +147,7 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
                 sigString = sigString.replaceAll("\\s", ""); //NON-NLS
                 signatureBytes = DatatypeConverter.parseHexBinary(sigString);
             } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidRawSignatureBytes.message"),
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidSignatureBytes.title"),
                         JOptionPane.ERROR_MESSAGE);
@@ -166,14 +166,14 @@ class AddFileTypeSignaturePanel extends javax.swing.JPanel {
         try {
             offset = Long.parseUnsignedLong(offsetTextField.getText());
             if (!isRelativeToStart && signatureBytes.length > offset + 1) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.length"),
                         NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return null;
             }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.message"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidOffset.title"),
                     JOptionPane.ERROR_MESSAGE);

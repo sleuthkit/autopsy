@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -45,6 +46,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -327,6 +329,28 @@ public class DataModelActionsFactory {
         return actionsList;
     }
 
+    public static List<Action> getActions(Report report, boolean isArtifactSource) {
+        List<Action> actionsList = new ArrayList<>();
+        final ReportNode reportNode = new ReportNode(report);
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, reportNode));
+        actionsList.add(null); // creates a menu separator
+        if (isArtifactSource) {
+            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+        }
+
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
+                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
+            }
+        }
+
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        return actionsList;
+    }
+
     public static List<Action> getActions(Content content, boolean isArtifactSource) {
         if (content instanceof File) {
             return getActions((File) content, isArtifactSource);
@@ -342,6 +366,8 @@ public class DataModelActionsFactory {
             return getActions((DerivedFile) content, isArtifactSource);
         } else if (content instanceof SlackFile) {
             return getActions((SlackFile) content, isArtifactSource);
+        } else if (content instanceof Report) {
+            return getActions((Report) content, isArtifactSource);
         } else {
             return new ArrayList<>();
         }

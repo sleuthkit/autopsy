@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -404,10 +402,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         JDialog dialog = new JDialog(topFrame, Bundle.IngestJobSettingsPanel_pastJobsButton_action_frame_title(), false);
         IngestJobInfoPanel ingestInfo = new IngestJobInfoPanel();
         dialog.add(ingestInfo);
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        double w = dialog.getSize().getWidth();
-        double h = dialog.getSize().getHeight();
-        dialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        dialog.setLocationRelativeTo(topFrame);
         dialog.setResizable(true);
         dialog.pack();
         dialog.setVisible(true);
