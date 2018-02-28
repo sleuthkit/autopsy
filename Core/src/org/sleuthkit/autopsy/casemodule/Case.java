@@ -616,10 +616,10 @@ public class Case {
     })
     public static Case getOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
-        if (null != openCase) {
-            return openCase;
-        } else {
+        if (openCase == null) {
             throw new NoCurrentCaseException(Bundle.Case_NoCurrentCaseException_message());
+        } else {
+            return openCase;
         }
     }
 
