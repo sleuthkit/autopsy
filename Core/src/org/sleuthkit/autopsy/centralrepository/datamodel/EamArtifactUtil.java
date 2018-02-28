@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -89,7 +90,7 @@ public class EamArtifactUtil {
         // if they asked for it, add the instance details associated with this occurance.
         if (!eamArtifacts.isEmpty() && addInstanceDetails) {
             try {
-                Case currentCase = Case.getCurrentCase();
+                Case currentCase = Case.getOpenCase();
                 AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
                 if (null == bbSourceFile) {
                     //@@@ Log this
@@ -97,9 +98,9 @@ public class EamArtifactUtil {
                 }
 
                 // make an instance for the BB source file 
-                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getOpenCase());
                 if (null == correlationCase) {
-                    correlationCase = EamDb.getInstance().newCase(Case.getCurrentCase());
+                    correlationCase = EamDb.getInstance().newCase(Case.getOpenCase());
                 }
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
                         correlationCase,
@@ -116,7 +117,7 @@ public class EamArtifactUtil {
             } catch (TskCoreException | EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
                 return eamArtifacts;
-            } catch (IllegalStateException ex) {
+            } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Case is closed.", ex); // NON-NLS
                 return eamArtifacts;
             }
@@ -145,7 +146,7 @@ public class EamArtifactUtil {
                 // Get the associated artifact
                 BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
-                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     return EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(correlationType, associatedArtifact);
                 }
 
@@ -203,6 +204,9 @@ public class EamArtifactUtil {
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
             return null;
+        }  catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+            return null;
         }
 
         if (null != value) {
@@ -250,9 +254,9 @@ public class EamArtifactUtil {
         try {
             CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
-            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getOpenCase());
             if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCase());
+                correlationCase = EamDb.getInstance().newCase(Case.getOpenCase());
             }
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,
@@ -263,7 +267,7 @@ public class EamArtifactUtil {
             );
             eamArtifact.addInstance(cei);
             return eamArtifact;
-        } catch (TskCoreException | EamDbException ex) {
+        } catch (TskCoreException | EamDbException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Error making correlation attribute.", ex);
             return null;
         }
