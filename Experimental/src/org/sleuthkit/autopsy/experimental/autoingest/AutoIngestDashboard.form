@@ -35,11 +35,15 @@
                       <Group type="103" groupAlignment="1" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="refreshButton" linkSize="1" min="-2" pref="100" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="prioritizeJobButton" linkSize="1" min="-2" pref="100" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
+                              <Component id="deprioritizeJobButton" min="-2" pref="127" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="prioritizeCaseButton" linkSize="1" min="-2" pref="100" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="deprioritizeCaseButton" min="-2" pref="127" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="clusterMetricsButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="lbPending" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -84,6 +88,8 @@
                   <Component id="prioritizeJobButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="prioritizeCaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="clusterMetricsButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="deprioritizeJobButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="deprioritizeCaseButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -263,6 +269,34 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clusterMetricsButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="deprioritizeJobButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.deprioritizeJobButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.deprioritizeJobButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="enabled" type="boolean" value="false"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deprioritizeJobButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="deprioritizeCaseButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.deprioritizeCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.deprioritizeCaseButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="enabled" type="boolean" value="false"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deprioritizeCaseButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

@@ -102,29 +102,7 @@ public final class FilesSetsManager extends Observable {
     public static List<FilesSet> getStandardFileIngestFilters() {
         return Arrays.asList(FILES_DIRS_UNALLOC_INGEST_FILTER, FILES_DIRS_INGEST_FILTER);
     }
-
-    /**
-     * Get the filter that should be used as the default value, if no filter is
-     * specified.
-     *
-     * @return FILES_DIRS_UNALLOC_INGEST_FILTER
-     */
-    public static FilesSet getDefaultFilter() {
-        return FILES_DIRS_UNALLOC_INGEST_FILTER;
-    }
-
-    /**
-     * Gets a copy of the current interesting files set definitions.
-     *
-     * @return A map of interesting files set names to interesting file sets,
-     *         possibly empty.
-     */
-    Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
-        synchronized (INTERESTING_FILES_SET_LOCK) {
-            return InterestingItemsFilesSetSettings.readDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
-        }
-    }
-
+    
     /**
      * Gets a copy of the current ingest file set definitions.
      *
@@ -138,6 +116,43 @@ public final class FilesSetsManager extends Observable {
             return FileSetsDefinitions.readSerializedDefinitions(FILE_INGEST_FILTER_DEFS_NAME);
         }
     }
+
+    /**
+     * Get the filter that should be used as the default value, if no filter is
+     * specified.
+     *
+     * @return FILES_DIRS_UNALLOC_INGEST_FILTER
+     */
+    public static FilesSet getDefaultFilter() {
+        return FILES_DIRS_UNALLOC_INGEST_FILTER;
+    }
+    
+    /**
+     * Sets the current interesting file sets definitions, replacing any
+     * previous definitions.
+     *
+     * @param filesSets A mapping of file ingest filters names to files sets,
+     *                  used to enforce unique files set names.
+     */
+    void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
+        synchronized (FILE_INGEST_FILTER_LOCK) {
+            FileSetsDefinitions.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
+        }
+    }
+
+    
+    /**
+     * Gets a copy of the current interesting files set definitions.
+     *
+     * @return A map of interesting files set names to interesting file sets,
+     *         possibly empty.
+     */
+    public Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
+        synchronized (INTERESTING_FILES_SET_LOCK) {
+            return InterestingItemsFilesSetSettings.readDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
+        }
+    }
+
 
     /**
      * Sets the current interesting file sets definitions, replacing any
@@ -154,18 +169,7 @@ public final class FilesSetsManager extends Observable {
         }
     }
 
-    /**
-     * Sets the current interesting file sets definitions, replacing any
-     * previous definitions.
-     *
-     * @param filesSets A mapping of file ingest filters names to files sets,
-     *                  used to enforce unique files set names.
-     */
-    void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
-        synchronized (FILE_INGEST_FILTER_LOCK) {
-            FileSetsDefinitions.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
-        }
-    }
+    
 
     public static class FilesSetsManagerException extends Exception {
 
