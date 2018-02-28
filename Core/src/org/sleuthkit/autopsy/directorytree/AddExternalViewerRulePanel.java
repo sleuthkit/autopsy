@@ -229,7 +229,7 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
                         .addComponent(browseButton))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(exePathLabel)
-                        .addGap(0, 80, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(nameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
