@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datasourceprocessors;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -49,14 +50,15 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private final String[] pluginList;
     private final PluginListTableModel tableModel = new PluginListTableModel();
     private final List<String> PluginListNames = new ArrayList<>();
-    private final Map<String, Boolean> pluginListStates = new HashMap<>();
+    private final Map<String, Boolean> pluginListStates = new HashMap<>(); // is set by listeners when users select and deselect items
     private final Boolean isEnabled = true;
     /**
      * Creates new form RawDSInputPanel
      */
     private MemoryDSInputPanel(String context) {
         this.pluginList = new String[]{"amcache","cmdline","cmdscan","consoles","malfind","netscan","notepad","pslist","psxview","shellbags","shimcache","shutdown","userassist", "apihooks","connscan","devicetree","dlllist","envars","filescan","gahti","getservicesids","getsids","handles","hashdump","hivelist","hivescan","impscan","ldrmodules","lsadump","modules","mutantscan","privs","psscan","pstree","sockets","svcscan","shimcache","timeliner","unloadedmodules","userhandles","vadinfo","verinfo"};
-        //this.tableModel = new AbstractTableModel();
+        Arrays.sort(this.pluginList);
+        
         initComponents();
 
         errorLabel.setVisible(false);
@@ -144,10 +146,16 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         PluginListNames.clear();
         pluginListStates.clear();
 
-        String[] pluginList = { "amcache","cmdline","cmdscan","consoles","malfind","netscan","notepad","pslist","psxview","shellbags","shimcache","shutdown","userassist", "apihooks","connscan","devicetree","dlllist","envars","filescan","gahti","getservicesids","getsids","handles","hashdump","hivelist","hivescan","impscan","ldrmodules","lsadump","modules","mutantscan","privs","psscan","pstree","sockets","svcscan","shimcache","timeliner","unloadedmodules","userhandles","vadinfo","verinfo"};
+        // if the config file doesn't exist, then set them all to enabled
+        boolean allEnabled = !ModuleSettings.configExists(this.contextName);
+        Map<String, String> pluginMap = ModuleSettings.getConfigSettings(this.contextName);
+        
         for (String plugin : pluginList) {
             PluginListNames.add(plugin);
-            pluginListStates.put(plugin, isEnabled);
+            if (allEnabled)
+                pluginListStates.put(plugin, true);
+            else
+                pluginListStates.put(plugin, pluginMap.containsKey(plugin));
         }
         tableModel.fireTableDataChanged();
         //this.tableModel = pluginsToRun.getModel();
@@ -196,6 +204,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(volExecutableLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.volExecutableLabel.text")); // NOI18N
 
+        volExecutableComboBox.setEnabled(false);
         volExecutableComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 volExecutableComboBoxActionPerformed(evt);
@@ -315,11 +324,16 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     
     List<String> getPluginsToRun() {
         List<String> enabledPlugins = new ArrayList<>();
+        Map<String, String> pluginMap = new HashMap<>();
         for (String plugin : PluginListNames) {
             if (pluginListStates.get(plugin)) {
                 enabledPlugins.add(plugin);
+                pluginMap.put(plugin, "");
             }
         }
+       
+        ModuleSettings.setConfigSettings(this.contextName, pluginMap);
+        // @@ Could return keys of set
         return enabledPlugins;
     }
 

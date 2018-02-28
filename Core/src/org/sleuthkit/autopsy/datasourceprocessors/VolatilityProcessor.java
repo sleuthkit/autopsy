@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy 
+ * 
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datasourceprocessors;
 
@@ -31,10 +44,8 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 //@NbBundle.Messages({
 //    "VolatilityProcessor.PermissionsNotSufficient=Insufficient permissions accessing",
@@ -47,33 +58,25 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  *
- * @author mark
  */
-public class VolatilityProcessor implements Runnable{
+class VolatilityProcessor implements Runnable{
     private static final String VOLATILITY_DIRECTORY = "Volatility"; //NON-NLS
     private static final String VOLATILITY_EXECUTABLE = "volatility_2.6_win64_standalone.exe"; //NON-NLS
-    private static final String TEMP_DIR_NAME = "temp"; // NON-NLS
-    private final String MemoryImage;
+    private final String memoryImagePath;
     private final List<String> PluginsToRun;
-    private final String deviceId;
-   // private final Content dataSource;
-    //private final DataSourceProcessorProgressMonitor progressMonitor;
+    private final Image dataSource;
     private static final String SEP = System.getProperty("line.separator");
     private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
-    private static Object Bundle;
     private String moduleOutputPath;
     private File executableFile;
-    private final Boolean isFile = true;
     private final IngestServices services = IngestServices.getInstance();
+    private final DataSourceProcessorProgressMonitor progressMonitor;
 
-    public VolatilityProcessor(String ImagePath, List<String> PlugInToRuns, String deviceId) {
-//    public VolatilityProcessor(String ImagePath, List<String> PlugInToRuns, String deviceId, DataSourceProcessorProgressMonitor progressMonitor) {
-//    public VolatilityProcessor(String ImagePath) {
-        this.MemoryImage = ImagePath;
+    public VolatilityProcessor(String ImagePath, List<String> PlugInToRuns, Image dataSource, DataSourceProcessorProgressMonitor progressMonitor) {
+        this.memoryImagePath = ImagePath;
         this.PluginsToRun = PlugInToRuns;
-        this.deviceId = deviceId;
-//        this.dataSource = dataSource;
-        //this.progressMonitor = progressMonitor;
+        this.dataSource = dataSource;
+        this.progressMonitor = progressMonitor;
     }
     
     @Override
@@ -84,31 +87,42 @@ public class VolatilityProcessor implements Runnable{
         final Case currentCase = Case.getCurrentCase();
         final FileManager fileManager = currentCase.getServices().getFileManager();
 
-        moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility";
-        
+        // make a unique folder for this image
+        moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility" + File.separator + dataSource.getId();
         File directory = new File(String.valueOf(moduleOutputPath));
         if(!directory.exists()){
-             directory.mkdir();
-             executeVolatility(executableFile, MemoryImage, "", "imageinfo", "", fileManager);
+            directory.mkdirs();
+            progressMonitor.setProgressText("Running imageinfo");
+            executeVolatility(executableFile, memoryImagePath, "", "imageinfo", fileManager);
         }
 
-        PluginsToRun.forEach((pluginToRun) -> {
-            executeVolatility(executableFile, MemoryImage, "", pluginToRun, "", fileManager);
-        }); 
+        progressMonitor.setIndeterminate(false);
+        for (int i = 0; i < PluginsToRun.size(); i++) {
+            String pluginToRun = PluginsToRun.get(i);
+            progressMonitor.setProgressText("Processing " + pluginToRun + " module");
+            executeVolatility(executableFile, memoryImagePath, "", pluginToRun, fileManager);
+            progressMonitor.setProgress(i / PluginsToRun.size() * 100);
+        } 
+        // @@@ NEed to report back here if there were errors
     }
 
-    private void executeVolatility(File VolatilityPath, String MemoryImage, String OutputPath, String PluginToRun, String MemoryProfile, FileManager fileManager) {
-        try {
-                       
+    private void executeVolatility(File VolatilityPath, String MemoryImage, String OutputPath, String PluginToRun, FileManager fileManager) {
+        try {        
             List<String> commandLine = new ArrayList<>();
             commandLine.add("\"" + VolatilityPath + "\"");
             File memoryImage = new File(MemoryImage);
             commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
-            File memoryProfile = new File(moduleOutputPath + "\\imageinfo.txt");
-            if (memoryProfile.exists()) {
-               MemoryProfile = parseProfile(memoryProfile);
-               commandLine.add("--profile=" + MemoryProfile);
+            
+            File imageInfoOutputFile = new File(moduleOutputPath + "\\imageinfo.txt");
+            if (imageInfoOutputFile.exists()) {
+               String memoryProfile = parseImageInfoOutput(imageInfoOutputFile);
+               if (memoryProfile == null) {
+                   // @@@ LOG THIS 
+                   return;
+               }
+               commandLine.add("--profile=" + memoryProfile);
             }
+            
             commandLine.add(PluginToRun); //NON-NLS
           
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -119,12 +133,12 @@ public class VolatilityProcessor implements Runnable{
             processBuilder.directory(new File(memoryImage.getParent()));
             
             int exitVal = ExecUtil.execute(processBuilder);
-//            int exitVal = 0;
-            if (exitVal == 0) {
-               ScanOutputFile(fileManager, PluginToRun, new File(moduleOutputPath + "\\" + PluginToRun + ".txt"));    
-            } else {
-            logger.log(Level.INFO, "Exit Value is ", exitVal);
+            if (exitVal != 0) {
+                logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + PluginToRun);
+                return;
             }
+            scanOutputFile(fileManager, PluginToRun, new File(moduleOutputPath + "\\" + PluginToRun + ".txt"));    
+            
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to run Volatility", ex); //NON-NLS
             //this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
@@ -159,7 +173,7 @@ public class VolatilityProcessor implements Runnable{
         return exeFile;
     }
 
-    private String parseProfile(File memoryProfile) throws FileNotFoundException {
+    private String parseImageInfoOutput(File memoryProfile) throws FileNotFoundException {
             // create a Buffered Reader object instance with a FileReader
             try (
                  BufferedReader br = new BufferedReader(new FileReader(memoryProfile))) {
@@ -169,14 +183,15 @@ public class VolatilityProcessor implements Runnable{
                  String[] profileLine = fileRead.split(":");
                  String[] memProfile = profileLine[1].split(",|\\(");
                  return memProfile[0].replaceAll("\\s+","");
-                } catch (IOException ex) { 
-            Exceptions.printStackTrace(ex);
-        } 
+            } catch (IOException ex) { 
+                Exceptions.printStackTrace(ex);
+                // @@@ Need to log this or rethrow it
+            } 
      
         return null;
     }
     
-    private void ScanOutputFile(FileManager fileManager, String pluginName, File PluginOutput) {
+    private void scanOutputFile(FileManager fileManager, String pluginName, File PluginOutput) {
         List<String> fileNames = new ArrayList<>();
         
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
@@ -273,11 +288,11 @@ public class VolatilityProcessor implements Runnable{
                     }                    
                  }
                  br.close();
-            } catch (IOException ex) { 
+            } catch (IOException ex) {
+                // @@@ NEed to log or rethrow
                 Exceptions.printStackTrace(ex);
             } 
      
             return fileNames;
     }
-    
 }
