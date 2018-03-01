@@ -806,7 +806,7 @@ public class Case {
      *
      * @throws CaseActionException throw if could not create the case dir
      */
-    static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
+    public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
 
