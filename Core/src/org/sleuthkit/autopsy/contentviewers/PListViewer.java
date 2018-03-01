@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * PListViewer - a file viewer for binary plist files.
@@ -501,6 +502,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
                         .map(child -> new PropKeyValue(child))
                         .toArray(PropKeyValue[]::new);
             }
+            
         }
 
     }

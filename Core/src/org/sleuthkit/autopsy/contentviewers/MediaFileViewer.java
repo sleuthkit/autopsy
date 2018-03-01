@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *s
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,31 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.nodes.Node;
-import org.openide.util.NbBundle;
-import org.openide.util.lookup.ServiceProvider;
-import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * Media content viewer for videos, sounds and images.
  */
-@ServiceProviders(value = {
-    @ServiceProvider(service = DataContentViewer.class, position = 5)
-})
-public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
+public class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
-    private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());
     private AbstractFile lastFile;
     //UI
     private final MediaViewVideoPanel videoPanel;
@@ -54,7 +47,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     /**
      * Creates new form DataContentViewerVideo
      */
-    public DataContentViewerMedia() {
+    public MediaFileViewer() {
 
         initComponents();
 
@@ -66,7 +59,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         imagePanelInited = imagePanel.isInited();
 
         customizeComponents();
-        logger.log(Level.INFO, "Created MediaView instance: {0}", this); //NON-NLS
+        LOGGER.log(Level.INFO, "Created MediaView instance: {0}", this); //NON-NLS
     }
 
     private void customizeComponents() {
@@ -86,20 +79,37 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private void initComponents() {
 
         setLayout(new java.awt.CardLayout());
-        getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.AccessibleContext.accessibleDescription")); // NOI18N
+        getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(MediaFileViewer.class, "MediaFileViewer.AccessibleContext.accessibleDescription")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Returns a list of mimetypes supported by this viewer
+     * 
+     * @return list of supported mimetypes
+     */
     @Override
-    public void setNode(Node selectedNode) {
+    public List<String> getSupportedMIMETypes() {
+        
+        List<String> mimeTypes = new ArrayList<>();
+        
+        mimeTypes.addAll(this.imagePanel.getMimeTypes());
+        mimeTypes.addAll(this.videoPanel.getMimeTypes());
+        
+        return mimeTypes;
+    }
+    
+    
+    /**
+     * Set up the view to display the given file.
+     * 
+     * @param file file to display
+     */
+    @Override
+    public void setFile(AbstractFile file) {
         try {
-            if (selectedNode == null) {
-                resetComponent();
-                return;
-            }
-
-            AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
+          
             if (file == null) {
                 resetComponent();
                 return;
@@ -111,7 +121,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
             lastFile = file;
 
-            final Dimension dims = DataContentViewerMedia.this.getSize();
+            final Dimension dims = MediaFileViewer.this.getSize();
             //logger.info("setting node on media viewer"); //NON-NLS
             if (videoPanelInited && videoPanel.isSupported(file)) {
                 videoPanel.setupVideo(file, dims);
@@ -121,7 +131,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 this.showVideoPanel(false);
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Exception while setting node", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Exception while setting node", e); //NON-NLS
         }
     }
 
@@ -140,21 +150,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     @Override
-    public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerMedia.title");
-    }
-
-    @Override
-    public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerMedia.toolTip");
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new DataContentViewerMedia();
-    }
-
-    @Override
     public Component getComponent() {
         return this;
     }
@@ -164,73 +159,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         videoPanel.reset();
         imagePanel.reset();
         lastFile = null;
-    }
-
-    /**
-     * Is the given file a video we can display?
-     *
-     * @param file
-     *
-     * @return True if a video file that can be displayed
-     */
-    private boolean isVideoSupported(AbstractFile file) {
-        if (null == file || file.getSize() == 0) {
-            return false;
-        }
-        return videoPanel.isSupported(file);
-    }
-
-    /**
-     * Is the given file an image that we can display?
-     *
-     * @param file
-     *
-     * @return True if an image file that can be displayed
-     */
-    private boolean isImageSupported(AbstractFile file) {
-        if (null == file || file.getSize() == 0) {
-            return false;
-        }
-
-        return imagePanel.isSupported(file);
-    }
-
-    @Override
-    public boolean isSupported(Node node) {
-        if (node == null) {
-            return false;
-        }
-
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return false;
-        }
-
-        if (file.getSize() == 0) {
-            return false;
-        }
-
-        if (imagePanelInited && isImageSupported(file)) {
-            return true;
-        }
-
-        return videoPanelInited && isVideoSupported(file);
-    }
-
-    @Override
-    public int isPreferred(Node node) {
-        //special case, check if deleted video, then do not make it preferred
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
-            return 0;
-        }
-        boolean deleted = file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-
-        if (videoPanel.isSupported(file) && deleted) {
-            return 0;
-        } else {
-            return 7;
-        }
     }
 
     interface MediaViewPanel {

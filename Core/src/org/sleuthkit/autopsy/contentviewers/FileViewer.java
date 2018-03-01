@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+
 import com.google.common.base.Strings;
 import java.awt.Component;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * Generic Application content viewer
@@ -47,7 +49,8 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
     private static final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
         // new JPEGViewerDummy(), // this if for testing only
         new SQLiteViewer(),
-        new PListViewer()
+        new PListViewer(),
+        new MediaFileViewer()
     };
 
     private FileTypeViewer lastViewer;
