@@ -100,7 +100,7 @@
                                       <Component id="informationLabel" max="32767" attributes="0"/>
                                       <EmptySpace min="-2" pref="309" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" attributes="0">
                                               <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
@@ -111,9 +111,9 @@
                                                           <Component id="indexPathLabelLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                       <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="1" attributes="0">
-                                                          <Component id="indexPathLabel" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="hashDbIndexStatusLabel" min="-2" max="-2" attributes="0"/>
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="hashDbIndexStatusLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="indexPathLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
@@ -162,7 +162,7 @@
                                               </Group>
                                           </Group>
                                       </Group>
-                                      <EmptySpace min="50" max="32767" attributes="0"/>
+                                      <EmptySpace pref="24" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
