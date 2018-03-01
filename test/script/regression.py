@@ -108,9 +108,6 @@ def main():
     if not parse_result:
         Errors.print_error("The arguments were given wrong")
         exit(1)
-    # Remove the output_link_file
-    if file_exists(OUTPUT_DIR_LINK_FILE):
-        os.remove(OUTPUT_DIR_LINK_FILE)
 
     test_config = TestConfiguration(args)
     case_type = test_config.userCaseType.lower()
@@ -883,7 +880,7 @@ class TestConfiguration(object):
 
         #write the output_dir to a html file
 
-        linkFile = open(OUTPUT_DIR_LINK_FILE, "a")
+        linkFile = open(os.path.join(self.args.diff_files_output_folder, OUTPUT_DIR_LINK_FILE), "a")
         index = self.output_dir.find("\\")
         linkStr = "<a href=\"file://"
         linkOutputDir =  self.output_dir[index+2:].replace("//", "/").replace("\\\\", "\\")
@@ -892,9 +889,9 @@ class TestConfiguration(object):
         else:
             linkStr = linkStr + socket.gethostname() + "\\" + linkOutputDir
         if self.testUserCase == "multi":
-            linkStr = linkStr + "\">Multi test output</a>"
+            linkStr = linkStr + "\">Enterprise Viking Tests</a>"
         else:
-            linkStr = linkStr + "\">Single test output</a>"
+            linkStr = linkStr + "\">Standalone Viking Tests</a>"
         linkFile.write(linkStr + "\n")
         linkFile.close()
  
