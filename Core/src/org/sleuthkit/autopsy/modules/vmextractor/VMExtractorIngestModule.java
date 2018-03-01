@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2016 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -155,7 +155,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             try {
                 writeVirtualMachineToDisk(vmFile, outputFolderForThisVM);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Failed to write virtual machine file " + vmFile.getName() + " to folder " + outputFolderForThisVM, ex); //NON-NLS
+                logger.log(Level.WARNING, "Failed to write virtual machine file " + vmFile.getName() + " to folder " + outputFolderForThisVM, ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt"),
                         NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt", vmFile.getName()));
             }
@@ -227,7 +227,8 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      * @param vmFile                Abstract file to write to disk.
      * @param outputFolderForThisVM Absolute path to output folder.
      *
-     * @throws IOException
+     * @throws IOException If there is an issue writing the file to the output
+     *                     folder.
      */
     private void writeVirtualMachineToDisk(AbstractFile vmFile, String outputFolderForThisVM) throws IOException {
 

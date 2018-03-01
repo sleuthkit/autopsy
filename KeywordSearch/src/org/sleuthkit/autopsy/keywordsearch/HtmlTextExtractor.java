@@ -164,7 +164,7 @@ class HtmlTextExtractor extends ContentTextExtractor {
             // All done, now make it a reader
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
-            throw new TextExtractorException("Error extracting HTML from content.", ex);
+            throw new TextExtractorException("Error extracting HTML from content file.", ex);
         }
     }
 

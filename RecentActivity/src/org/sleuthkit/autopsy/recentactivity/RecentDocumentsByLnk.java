@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -32,7 +32,6 @@ import java.util.Collection;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.coreutils.JLnkParserException;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -98,7 +97,7 @@ class RecentDocumentsByLnk extends Extract {
                 boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)
                         || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
-                    logger.log(Level.WARNING, "Error lnk parsing the file to get recent files {0}", recentFile); //NON-NLS
+                    logger.log(Level.WARNING, "Error lnk parsing the file to get recent files."); //NON-NLS
                 }
                 continue;
             }
