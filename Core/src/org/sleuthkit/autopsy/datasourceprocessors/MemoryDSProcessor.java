@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class MemoryDSProcessor implements DataSourceProcessor {
 
     private final MemoryDSInputPanel configPanel;
-    private AddMemoryImageTask addImageTask;
+    private AddMemoryImageTask addImageTask = null;
 
     /*
      * Constructs a Memory data source processor that implements the
@@ -150,6 +150,9 @@ public class MemoryDSProcessor implements DataSourceProcessor {
 
     @Override
     public void cancel() {
+        if (addImageTask != null) {
+            addImageTask.cancelTask();
+        }
     }
 
     /**

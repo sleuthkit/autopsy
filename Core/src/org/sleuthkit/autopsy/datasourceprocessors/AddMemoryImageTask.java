@@ -1,5 +1,3 @@
-package org.sleuthkit.autopsy.datasourceprocessors;
-
 /*
  * Autopsy Forensic Browser
  * 
@@ -18,7 +16,7 @@ package org.sleuthkit.autopsy.datasourceprocessors;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+package org.sleuthkit.autopsy.datasourceprocessors;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -48,6 +46,8 @@ final class AddMemoryImageTask implements Runnable {
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
     private static final long TWO_GB = 2000000000L;
+    private boolean isCancelled = false;
+    private VolatilityProcessor volatilityProcessor = null;
    
     /**
      * Constructs a runnable that adds a raw data source to a case database.
@@ -142,10 +142,12 @@ final class AddMemoryImageTask implements Runnable {
              */
             Image dataSource = caseDatabase.addImageInfo(0, imageFilePaths, timeZone); //TODO: change hard coded deviceId.
             dataSources.add(dataSource);
+            if (isCancelled)
+                return;
             
             /* call Volatility to process the image **/
-            VolatilityProcessor vp = new VolatilityProcessor(imageFilePath, PluginsToRun, dataSource, progressMonitor);
-            vp.run();
+            volatilityProcessor = new VolatilityProcessor(imageFilePath, PluginsToRun, dataSource, progressMonitor);
+            volatilityProcessor.run();
             
         } catch (TskCoreException ex) {
             errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePaths + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
@@ -154,4 +156,11 @@ final class AddMemoryImageTask implements Runnable {
             caseDatabase.releaseExclusiveLock();
         }        
     }    
+
+    void cancelTask() {
+        if (volatilityProcessor != null) {
+            volatilityProcessor.cancel();
+        }
+        isCancelled = true;
+    }
 }

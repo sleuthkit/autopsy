@@ -71,6 +71,8 @@ class VolatilityProcessor implements Runnable{
     private File executableFile;
     private final IngestServices services = IngestServices.getInstance();
     private final DataSourceProcessorProgressMonitor progressMonitor;
+    private boolean isCancelled;
+    private FileManager fileManager;
 
     public VolatilityProcessor(String ImagePath, List<String> PlugInToRuns, Image dataSource, DataSourceProcessorProgressMonitor progressMonitor) {
         this.memoryImagePath = ImagePath;
@@ -80,12 +82,15 @@ class VolatilityProcessor implements Runnable{
     }
     
     @Override
-    public void run() {
-        
+    public void run() {  
         Path execName = Paths.get(VOLATILITY_DIRECTORY, VOLATILITY_EXECUTABLE);
         executableFile = locateExecutable(execName.toString());
+        if (executableFile == null) {
+            logger.log(Level.SEVERE, "Volatility exe not found");
+            return;
+        }
         final Case currentCase = Case.getCurrentCase();
-        final FileManager fileManager = currentCase.getServices().getFileManager();
+        fileManager = currentCase.getServices().getFileManager();
 
         // make a unique folder for this image
         moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility" + File.separator + dataSource.getId();
@@ -93,24 +98,26 @@ class VolatilityProcessor implements Runnable{
         if(!directory.exists()){
             directory.mkdirs();
             progressMonitor.setProgressText("Running imageinfo");
-            executeVolatility(executableFile, memoryImagePath, "", "imageinfo", fileManager);
+            executeVolatility("imageinfo");
         }
 
         progressMonitor.setIndeterminate(false);
         for (int i = 0; i < PluginsToRun.size(); i++) {
+            if (isCancelled)
+                break;
             String pluginToRun = PluginsToRun.get(i);
             progressMonitor.setProgressText("Processing " + pluginToRun + " module");
-            executeVolatility(executableFile, memoryImagePath, "", pluginToRun, fileManager);
+            executeVolatility(pluginToRun);
             progressMonitor.setProgress(i / PluginsToRun.size() * 100);
         } 
         // @@@ NEed to report back here if there were errors
     }
 
-    private void executeVolatility(File VolatilityPath, String MemoryImage, String OutputPath, String PluginToRun, FileManager fileManager) {
+    private void executeVolatility(String pluginToRun) {
         try {        
             List<String> commandLine = new ArrayList<>();
-            commandLine.add("\"" + VolatilityPath + "\"");
-            File memoryImage = new File(MemoryImage);
+            commandLine.add("\"" + executableFile + "\"");
+            File memoryImage = new File(memoryImagePath);
             commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
             
             File imageInfoOutputFile = new File(moduleOutputPath + "\\imageinfo.txt");
@@ -123,21 +130,25 @@ class VolatilityProcessor implements Runnable{
                commandLine.add("--profile=" + memoryProfile);
             }
             
-            commandLine.add(PluginToRun); //NON-NLS
+            commandLine.add(pluginToRun); //NON-NLS
           
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             // Add environment variable to force Volatility to run with the same permissions Autopsy uses
             processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-            processBuilder.redirectOutput(new File(moduleOutputPath + "\\" + PluginToRun + ".txt"));
+            processBuilder.redirectOutput(new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));
             processBuilder.redirectError(new File(moduleOutputPath + "\\Volatility_Run.err"));
             processBuilder.directory(new File(memoryImage.getParent()));
             
             int exitVal = ExecUtil.execute(processBuilder);
             if (exitVal != 0) {
-                logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + PluginToRun);
+                logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + pluginToRun);
                 return;
             }
-            scanOutputFile(fileManager, PluginToRun, new File(moduleOutputPath + "\\" + PluginToRun + ".txt"));    
+            
+            if (isCancelled)
+                return;
+            
+            scanOutputFile(pluginToRun, new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));    
             
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to run Volatility", ex); //NON-NLS
@@ -150,33 +161,30 @@ class VolatilityProcessor implements Runnable{
      *
      * @param executableToFindName The name of the executable to find
      *
-     * @return A File reference or throws an exception
-     *
-     * @throws IngestModuleException
+     * @return A File reference or null
      */
-//    public static File locateExecutable(String executableToFindName) throws IngestModule.IngestModuleException {
-    public static File locateExecutable(String executableToFindName) {
+    private static File locateExecutable(String executableToFindName) {
         // Must be running under a Windows operating system.
         if (!PlatformUtil.isWindowsOS()) {
-           // throw new IngestModule.IngestModuleException(Bundle.unsupportedOS_message());
+           return null;
         }
 
         File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, VolatilityProcessor.class.getPackage().getName(), false);
         if (null == exeFile) {
-            //throw new IngestModule.IngestModuleException(Bundle.missingExecutable_message());
+            return null;
         }
 
         if (!exeFile.canExecute()) {
-            //throw new IngestModule.IngestModuleException(Bundle.cannotRunExecutable_message());
+            return null;
         }
 
         return exeFile;
     }
 
-    private String parseImageInfoOutput(File memoryProfile) throws FileNotFoundException {
+    private String parseImageInfoOutput(File imageOutputFile) throws FileNotFoundException {
             // create a Buffered Reader object instance with a FileReader
             try (
-                 BufferedReader br = new BufferedReader(new FileReader(memoryProfile))) {
+                 BufferedReader br = new BufferedReader(new FileReader(imageOutputFile))) {
                  // read the first line from the text file
                  String fileRead = br.readLine();
                  br.close();
@@ -191,7 +199,7 @@ class VolatilityProcessor implements Runnable{
         return null;
     }
     
-    private void scanOutputFile(FileManager fileManager, String pluginName, File PluginOutput) {
+    private void scanOutputFile(String pluginName, File PluginOutput) {
         List<String> fileNames = new ArrayList<>();
         
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
@@ -204,6 +212,9 @@ class VolatilityProcessor implements Runnable{
         }
         try {
             fileNames.forEach((String fileName) -> {
+                if (isCancelled)
+                    return;
+                
                 List<AbstractFile> volFiles = new ArrayList<>();
                 File volfile = new File(fileName);
                 String filename = volfile.getName();
@@ -294,5 +305,9 @@ class VolatilityProcessor implements Runnable{
             } 
      
             return fileNames;
+    }
+
+    void cancel() {
+        isCancelled = true;
     }
 }
