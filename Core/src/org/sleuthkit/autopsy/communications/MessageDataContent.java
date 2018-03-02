@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.communications;
 
 import java.beans.PropertyChangeEvent;
-import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
+import org.sleuthkit.autopsy.corecomponents.MessageContentViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 
 /**

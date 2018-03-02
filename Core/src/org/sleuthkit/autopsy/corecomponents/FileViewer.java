@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.corecomponents;
 
 
 import com.google.common.base.Strings;
@@ -47,7 +47,6 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
 
     // TBD: This hardcoded list of viewers should be replaced with a dynamic lookup
     private static final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
-        // new JPEGViewerDummy(), // this if for testing only
         new SQLiteViewer(),
         new PListViewer(),
         new MediaFileViewer()
@@ -129,10 +128,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
             }
         }
         
-        if (mimeType.equalsIgnoreCase("application/octet-stream")) {
-            return;
-        } 
-        else {
+        if (false == "application/octet-stream".equalsIgnoreCase(mimeType)) {
             FileTypeViewer viewer = getSupportingViewer(mimeType);
             if (viewer != null) {
                 lastViewer = viewer;
@@ -142,7 +138,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 this.add(viewer.getComponent());
                 this.repaint();
             }
-        }
+        } 
        
     }
 

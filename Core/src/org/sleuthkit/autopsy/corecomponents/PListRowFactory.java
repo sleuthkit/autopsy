@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,8 +26,8 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.contentviewers.PListViewer.PropKeyValue;
-import org.sleuthkit.autopsy.contentviewers.PListViewer.PropertyType;
+import org.sleuthkit.autopsy.corecomponents.PListViewer.PropKeyValue;
+import org.sleuthkit.autopsy.corecomponents.PListViewer.PropertyType;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
