@@ -43,6 +43,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel;
@@ -97,9 +98,9 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         this.settings = settings;
         this.dataSources.addAll(dataSources);
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "No open case", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest job information", ex);
