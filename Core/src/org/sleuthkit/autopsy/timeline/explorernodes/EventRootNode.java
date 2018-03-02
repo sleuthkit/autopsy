@@ -29,6 +29,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -130,7 +131,7 @@ public class EventRootNode extends DisplayableItemNode {
             } else {
                 try {
                     return EventNode.createEventNode(eventID, filteredEvents);
-                } catch (IllegalStateException ex) {
+                } catch (NoCurrentCaseException ex) {
                     //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
                     LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                     return null;

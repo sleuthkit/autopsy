@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -53,17 +54,24 @@ class CallLogAnalyzer {
     private Blackboard blackboard;
 
     public void findCallLogs(IngestJobContext context) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+        blackboard = openCase.getServices().getBlackboard();
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = openCase.getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //NON-NLS //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }
             for (AbstractFile AF : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(openCase.getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
                     dbPath = jFile.toString(); //path of file as string
                     fileId = AF.getId();
@@ -90,7 +98,13 @@ class CallLogAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
-        Case currentCase = Case.getCurrentCase();
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile f = skCase.getAbstractFileById(fId);
