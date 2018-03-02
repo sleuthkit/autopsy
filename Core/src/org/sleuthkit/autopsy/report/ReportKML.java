@@ -43,6 +43,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
@@ -98,7 +99,12 @@ class ReportKML implements GeneralReportModule {
      */
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(true);
         progressPanel.start();
