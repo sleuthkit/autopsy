@@ -43,6 +43,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
@@ -111,7 +112,6 @@ class ReportKML implements GeneralReportModule {
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
         
-        currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
@@ -381,7 +381,7 @@ class ReportKML implements GeneralReportModule {
             if (result == ReportProgressPanel.ReportStatus.ERROR) {
                 prependedStatus = "Incomplete ";
             }
-            Case.getCurrentCase().addReport(kmlFileFullPath,
+            Case.getOpenCase().addReport(kmlFileFullPath,
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
                     prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {
@@ -390,6 +390,9 @@ class ReportKML implements GeneralReportModule {
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
