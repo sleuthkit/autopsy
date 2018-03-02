@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.test;
 
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
@@ -52,7 +53,7 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
             CustomArtifactType.addToCaseDatabase();
-        } catch (Blackboard.BlackboardException ex) {
+        } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.CustomArtifactsCreatorFileIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
         }
     }
