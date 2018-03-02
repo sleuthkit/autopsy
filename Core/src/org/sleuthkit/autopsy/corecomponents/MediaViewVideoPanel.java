@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import org.sleuthkit.autopsy.corecomponents.MediaFileViewer;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.List;
