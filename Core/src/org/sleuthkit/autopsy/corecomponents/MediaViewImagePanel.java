@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.corecomponents;
 
 
 import java.awt.Dimension;
@@ -47,7 +47,6 @@ import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
-//import org.sleuthkit.autopsy.corecomponents.Bundle;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;

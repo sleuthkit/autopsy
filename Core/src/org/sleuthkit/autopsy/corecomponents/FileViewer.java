@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.corecomponents;
 
 
 import com.google.common.base.Strings;
@@ -128,10 +128,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
             }
         }
         
-        if (mimeType.equalsIgnoreCase("application/octet-stream")) {
-            return;
-        } 
-        else {
+        if (false == "application/octet-stream".equalsIgnoreCase(mimeType)) {
             FileTypeViewer viewer = getSupportingViewer(mimeType);
             if (viewer != null) {
                 lastViewer = viewer;
@@ -141,7 +138,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
                 this.add(viewer.getComponent());
                 this.repaint();
             }
-        }
+        } 
        
     }
 
