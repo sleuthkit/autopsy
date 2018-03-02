@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +59,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
 import org.sleuthkit.autopsy.datamodel.AutopsyVisitableItem;
@@ -240,7 +241,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -252,7 +253,7 @@ final public class Accounts implements AutopsyVisitableItem {
                                 && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -264,9 +265,9 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         refresh(true);
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -368,7 +369,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -380,7 +381,7 @@ final public class Accounts implements AutopsyVisitableItem {
                                 && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -392,10 +393,10 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         refresh(true);
 
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -517,7 +518,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -529,7 +530,7 @@ final public class Accounts implements AutopsyVisitableItem {
                                 && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -541,10 +542,10 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         refresh(true);
 
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -651,7 +652,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -663,7 +664,7 @@ final public class Accounts implements AutopsyVisitableItem {
                                 && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -675,10 +676,10 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         refresh(true);
 
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -862,7 +863,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -874,7 +875,7 @@ final public class Accounts implements AutopsyVisitableItem {
                                 && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -886,10 +887,10 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
 
                         refresh(true);
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
