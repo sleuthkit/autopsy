@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.mitre.cybox.common_2.ConditionApplicationEnum;
 import org.mitre.cybox.common_2.ConditionTypeEnum;
 
 import org.mitre.cybox.objects.Address;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -54,6 +55,14 @@ class EvalAddressObj extends EvaluatableObject {
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
+        Case case1;
+        try {
+            case1 = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return new ObservableResult(id, "Exception while getting open case.", //NON-NLS
+                    spacing, ObservableResult.ObservableState.FALSE, null);
+        }
+        
         String origAddressStr = obj.getAddressValue().getValue().toString();
 
         // For now, we don't support "NONE" because it honestly doesn't seem like it
@@ -67,7 +76,6 @@ class EvalAddressObj extends EvaluatableObject {
         // Set warnings for any unsupported fields
         setUnsupportedFieldWarnings();
 
-        Case case1 = Case.getCurrentCase();
         SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
         try {
