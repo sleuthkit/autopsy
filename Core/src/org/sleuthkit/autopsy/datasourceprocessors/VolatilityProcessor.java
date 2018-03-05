@@ -26,11 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -152,12 +148,7 @@ class VolatilityProcessor implements Runnable{
             if (isCancelled)
                 return;
             
-            if (pluginToRun.matches("dlllist") || pluginToRun.matches("handles") || pluginToRun.matches("cmdline") || pluginToRun.matches("psxview") ||
-                pluginToRun.matches("pslist") || pluginToRun.matches("psscan") || pluginToRun.matches("pstree") || pluginToRun.matches("svcscan") ||
-                pluginToRun.matches("filescan") || pluginToRun.matches("shimcache")) {  
-                 scanOutputFile(pluginToRun, new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));  
-                }
-    
+            scanOutputFile(pluginToRun, new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));    
             
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to run Volatility", ex); //NON-NLS
@@ -210,51 +201,40 @@ class VolatilityProcessor implements Runnable{
     
     private void scanOutputFile(String pluginName, File PluginOutput) {
         List<String> fileNames = new ArrayList<>();
-        Map<String, Map> fileName = new HashMap<String, Map>();   
+        
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
          
-          try {
-            if (pluginName.matches("dlllist")) { 
-               fileName = Parse_Dlllist(PluginOutput);
-            } else if (pluginName.matches("handles")) {
-               fileName = Parse_Handles(PluginOutput);
-            } else if (pluginName.matches("cmdline")) { 
-               fileName = Parse_Cmdline(PluginOutput);                
-            } else if (pluginName.matches("psxview")){
-               fileName = Parse_Psxview(PluginOutput);
-            } else if (pluginName.matches("pslist")) {
-                fileName = Parse_Pslist(PluginOutput);
-            } else if (pluginName.matches("psscan")) { 
-                fileName = Parse_Psscan(PluginOutput);
-            } else if (pluginName.matches("pstree")) {
-                fileName = Parse_Pstree(PluginOutput);
-            } else if (pluginName.matches("svcscan")) {
-                fileName = Parse_Svcscan(PluginOutput);            
-            } else if (pluginName.matches("filescan")) {
-                fileName = Parse_Filescan(PluginOutput);
-            } else  {  
-                fileName = Parse_Shimcache(PluginOutput);
-            }
+        try {
+            fileNames = parsePluginOutput(PluginOutput);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unable to parse files " + PluginOutput, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to run RegRipper", ex); //NON-NLS
             //this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
         }
         try {
-            if (isCancelled)
-                return;
+            fileNames.forEach((String fileName) -> {
+                if (isCancelled)
+                    return;
                 
-            List<AbstractFile> volFiles = new ArrayList<>();
-            String filename;
-            String path;
-            Map<String, String> fileMap = new HashMap<>(); 
-            fileMap = dedupeFileList(fileName);
-            Set<String> keySet = fileMap.keySet();
-            Iterator<String> keySetIterator = keySet.iterator();   
-            while (keySetIterator.hasNext()) {
-                path = keySetIterator.next();
-                filename = fileMap.get(path);
+                List<AbstractFile> volFiles = new ArrayList<>();
+                File volfile = new File(fileName);
+                String filename = volfile.getName();
+                String path = volfile.getParent();
+                //Path path = Paths.get("/", fileName).normalize();
+                //String path = fileName.substring(0, fileName.lastIndexOf("\\")+1);
+//                String filename = fileName.substring(fileName.lastIndexOf("\\")+1);
+                if (path != null && !path.isEmpty()) {
+//                if ("".equals(path)) {
+                    path = path.replaceAll("\\\\", "%");
+                    path = path + "%";
+//                    path = "%";
+                } else {
+//                  path = path.replaceAll("\\\\", "%");
+//                  path = path + "%";
+                    path = "%";
+                  //  path = path.substring(0, path.length()-1);
+                }                    
                 try {
-                    volFiles = fileManager.findFiles(filename.trim(), path); //NON-NLS
+                    volFiles = fileManager.findFiles(filename, path); //NON-NLS
                 } catch (TskCoreException ex) {
                     //String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
                     logger.log(Level.SEVERE, "Error in Finding FIles", ex);
@@ -286,441 +266,12 @@ class VolatilityProcessor implements Runnable{
                         logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
                     }
                 });
-            }
+            });
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error in processing List of FIles", ex); //NON-NLS   
         }
     } 
-
-    private Map<String, Map> Parse_Handles(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                 Map<String, String> fileNameMap = new HashMap<>();
-                 if (line.length() > 65) {
-                    line_type = line.substring(64,68);
-                    if (line_type.matches("File")) {
-                        counter = counter + 1;
-                        file_path = line.substring(82);
-                        file_path = file_path.replaceAll("Device\\\\","");
-                        file_path = file_path.replaceAll("HarddiskVolume[0-9]\\\\", "");
-                        File volfile = new File(file_path);
-                        fileName = volfile.getName();
-                        filePath = volfile.getParent();
-                        if (filePath != null && !filePath.isEmpty()) {
-                            filePath = filePath.replaceAll("\\\\", "%");
-                            filePath = "%" + filePath + "%";
-                        } else {
-                            filePath = "%";
-                        }                    
-                        fileNameMap.put(filePath, fileName);
-                        fileMap.put(file_path, fileNameMap);
-                    }
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;
-    }
     
-    private Map<String, Map> Parse_Dlllist(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                 Map<String, String> fileNameMap = new HashMap<>();
-                 if (line.contains("Command line : ")) {
-                     counter = counter + 1;
-                    file_path = line.substring(15);
-                    file_path = file_path.replaceAll("SystemRoot", "");
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    if ((fileName.lastIndexOf(".") + 3) < fileName.length()) {
-                        fileName = fileName.substring(0, fileName.lastIndexOf(".")+4);
-                    }
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        if (filePath.contains(":")) {
-                            filePath = filePath.substring(filePath.indexOf(":")+1);
-                        }
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-
-                 } else if (line.length() > 61) {
-                    counter = counter + 1;
-                    file_path = line.substring(57);
-                    file_path = file_path.replaceAll("SystemRoot", "");
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        if (filePath.contains(":")) {
-                            filePath = filePath.substring(filePath.indexOf(":")+1);
-                        }
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;
-    }
-
-   private Map<String, Map> Parse_Filescan(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                try {
-                    Map<String, String> fileNameMap = new HashMap<>();
-                    counter = counter + 1;
-                    file_path = line.substring(41);
-                    file_path = file_path.replaceAll("Device\\\\","");
-                    file_path = file_path.replaceAll("HarddiskVolume[0-9]\\\\", "");
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-                } catch (StringIndexOutOfBoundsException ex) {
-                  // TO DO  Catch exception
-                }
-            }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-    
-    private Map<String, Map> Parse_Cmdline(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                 if (line.length() > 16) {
-                    line_type = line.substring(0,15);
-                    if (line_type.startsWith("Command line : ")) {
-                        counter = counter + 1;
-                        file_path = line.substring(15);
-                        File volfile = new File(file_path);
-                        fileName = volfile.getName();
-                        if ((fileName.lastIndexOf(".") + 3) < fileName.length()) {
-                            fileName = fileName.substring(0, fileName.lastIndexOf(".")+4);
-                        }
-                        filePath = volfile.getParent();
-                        if (filePath != null && !filePath.isEmpty()) {
-                            if (filePath.contains(":")) {
-                                filePath = filePath.substring(filePath.indexOf(":")+1);
-                            }
-                            filePath = filePath.replaceAll("\\\\", "%");
-                            filePath = "%" + filePath + "%";
-                        } else {
-                            filePath = "%";
-                        }                    
-                        fileNameMap.put(filePath, fileName);
-                        fileMap.put(file_path, fileNameMap);
-                    }
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-    
-    private Map<String, Map> Parse_Shimcache(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                 if (line.length() > 36) {
-                    counter = counter + 1;
-                    file_path = line.substring(38);
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-    
-    private Map<String, Map> Parse_Psscan(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                counter = counter + 1;
-                file_path = line.substring(19, 37);
-                File volfile = new File(file_path);
-                fileName = volfile.getName();
-                filePath = volfile.getParent();
-                if (filePath != null && !filePath.isEmpty()) {
-                    filePath = filePath.replaceAll("\\\\", "%");
-                    filePath = "%" + filePath + "%";
-                } else {
-                    filePath = "%";
-                }                    
-                fileNameMap.put(filePath, fileName);
-                fileMap.put(file_path, fileNameMap);
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-
-    private Map<String, Map> Parse_Pslist(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                counter = counter + 1;
-                file_path = line.substring(19, 41);
-                File volfile = new File(file_path);
-                fileName = volfile.getName();
-                filePath = volfile.getParent();
-                if (filePath != null && !filePath.isEmpty()) {
-                    filePath = filePath.replaceAll("\\\\", "%");
-                    filePath = "%" + filePath + "%";
-                } else {
-                    filePath = "%";
-                }                    
-                fileNameMap.put(filePath, fileName);
-                fileMap.put(file_path, fileNameMap);
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-
-    private Map<String, Map> Parse_Psxview(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                counter = counter + 1;
-                file_path = line.substring(19, 41);
-                File volfile = new File(file_path);
-                fileName = volfile.getName();
-                filePath = volfile.getParent();
-                if (filePath != null && !filePath.isEmpty()) {
-                    filePath = filePath.replaceAll("\\\\", "%");
-                    filePath = "%" + filePath + "%";
-                } else {
-                    filePath = "%";
-                }                    
-                fileNameMap.put(filePath, fileName);
-                fileMap.put(file_path, fileNameMap);
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-
-    private Map<String, Map> Parse_Pstree(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                counter = counter + 1;
-                if (line.contains(":")) {
-                    file_path = line.substring(line.indexOf(":") + 1, 52);
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-                }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-
-    private Map<String, Map> Parse_Svcscan(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
-        int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
-                if (line.startsWith("Binary Path: ")) {
-                    counter = counter + 1;
-                    file_path = line.substring(13);
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    if ((fileName.lastIndexOf(".") + 3) < fileName.length()) {
-                        fileName = fileName.substring(0, fileName.lastIndexOf(".")+4);
-                    }
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        if (filePath.contains(":")) {
-                            filePath = filePath.substring(filePath.indexOf(":")+1);
-                        }
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;     
-    }
-    
-    private Map<String, String> dedupeFileList(Map<String, Map> fileList) {
-            Map<String, String> fileMap = new HashMap<>();
-            Map<String, String> newFileMap = new HashMap<>();
-            Set<String> keySet = fileList.keySet();
-            Iterator<String> keySetIterator = keySet.iterator();   
-            while (keySetIterator.hasNext()) {
-                String key = keySetIterator.next();
-                fileMap = fileList.get(key);
-                for ( String key1 : fileMap.keySet() ) {
-                    newFileMap.put(key1,fileMap.get(key1));
-                }
-            }
-            return newFileMap;
-    }
-
     private List<String> parsePluginOutput(File pluginFile) throws FileNotFoundException {
             // create a Buffered Reader object instance with a FileReader
             List<String> fileNames = new ArrayList<>();
