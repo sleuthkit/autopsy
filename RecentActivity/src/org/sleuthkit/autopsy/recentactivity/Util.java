@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -190,11 +191,11 @@ class Util {
         int index = parent_path.lastIndexOf('/');
         String name = parent_path.substring(++index);
         parent_path = parent_path.substring(0, index);
-        FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         List<AbstractFile> files = null;
         try {
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             files = fileManager.findFiles(dataSource, name, parent_path);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
         }
 
