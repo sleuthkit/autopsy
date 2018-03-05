@@ -42,6 +42,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWO
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -54,7 +55,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
 
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
-    public static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
+    private static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
 
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
@@ -98,26 +99,16 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         List<IndexedText> sources = new ArrayList<>();
         Lookup nodeLookup = node.getLookup();
-
-        AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
-        AbstractFile file = null;
-        BlackboardArtifact artifact;
-
-        /*
-         * If we have an ad hoc query result, pull the file and artifact objects
-         * from that. Otherwise, pull them from the lookup.
+        
+        /**
+         * Pull the search results, file, artifact and report objects (if any)
+         * from the lookup.
          */
-        if (adHocQueryResult != null) {
-            artifact = adHocQueryResult.getArtifact();
-            Content content = adHocQueryResult.getContent();
-            if (content instanceof AbstractFile) {
-                file = (AbstractFile) content;
-            }
-        } else {
-            artifact = nodeLookup.lookup(BlackboardArtifact.class);
-            file = nodeLookup.lookup(AbstractFile.class);
-        }
-
+        AdHocQueryResult adHocQueryResult = nodeLookup.lookup(AdHocQueryResult.class);
+        AbstractFile file = nodeLookup.lookup(AbstractFile.class);
+        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+        Report report = nodeLookup.lookup(Report.class);
+        
         /*
          * First, get text with highlighted hits if this node is for a search
          * result.
@@ -163,6 +154,15 @@ public class ExtractedContentViewer implements DataContentViewer {
         IndexedText rawContentText = null;
         if (file != null) {
             rawContentText = new RawText(file, file.getId());
+            sources.add(rawContentText);
+        }
+
+        /*
+         * Add the "raw" (not highlighted) text, if any, for any report
+         * associated with the node.
+         */
+        if (report != null) {
+            rawContentText = new RawText(report, report.getId());
             sources.add(rawContentText);
         }
 
@@ -352,6 +352,20 @@ public class ExtractedContentViewer implements DataContentViewer {
             return solrHasContent(artifact.getArtifactID());
         }
 
+        /*
+         * If the lookup of the node contains no artifacts or file but does
+         * contain a report, check to see if there is indexed text for the
+         * report.
+         */
+        Report report = node.getLookup().lookup(Report.class);
+        if (report != null) {
+            return solrHasContent(report.getId());
+        }
+
+        /*
+         * If the lookup of the node contains neither ad hoc search results, nor
+         * artifacts, nor a file, nor a report, there is no indexed text.
+         */
         return false;
     }
 

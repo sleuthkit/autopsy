@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,6 @@ package org.sleuthkit.autopsy.filesearch;
 
 import org.openide.util.NbBundle;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
@@ -47,10 +45,6 @@ class FileSearchDialog extends javax.swing.JDialog {
         initComponents();
 
         setResizable(false);
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        double w = getSize().getWidth();
-        double h = getSize().getHeight();
-        setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         fileSearchPanel1.addListenerToAll(new ActionListener() {
 

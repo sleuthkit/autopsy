@@ -1,5 +1,3 @@
-package org.sleuthkit.autopsy.datasourceprocessors;
-
 /*
  * Autopsy Forensic Browser
  * 
@@ -18,7 +16,7 @@ package org.sleuthkit.autopsy.datasourceprocessors;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+package org.sleuthkit.autopsy.datasourceprocessors;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -27,14 +25,12 @@ import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourceprocessors.VolatilityProcessor;
 
 /*
  * A runnable that adds a raw data source to a case database. 
@@ -46,11 +42,12 @@ final class AddMemoryImageTask implements Runnable {
     private final String imageFilePath;
     private final String timeZone;
     private final List<String> PluginsToRun; 
-    private final long chunkSize;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
     private static final long TWO_GB = 2000000000L;
+    private boolean isCancelled = false;
+    private VolatilityProcessor volatilityProcessor = null;
    
     /**
      * Constructs a runnable that adds a raw data source to a case database.
@@ -73,7 +70,6 @@ final class AddMemoryImageTask implements Runnable {
         this.imageFilePath = imageFilePath;
         this.PluginsToRun = PluginsToRun;
         this.timeZone = timeZone;
-        this.chunkSize = chunkSize;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
     }
@@ -146,23 +142,25 @@ final class AddMemoryImageTask implements Runnable {
              */
             Image dataSource = caseDatabase.addImageInfo(0, imageFilePaths, timeZone); //TODO: change hard coded deviceId.
             dataSources.add(dataSource);
+            if (isCancelled)
+                return;
+            
+            /* call Volatility to process the image **/
+            volatilityProcessor = new VolatilityProcessor(imageFilePath, PluginsToRun, dataSource, progressMonitor);
+            volatilityProcessor.run();
             
         } catch (TskCoreException ex) {
             errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePaths + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
             criticalErrorOccurred = true;
         } finally {
             caseDatabase.releaseExclusiveLock();
-        }
-
-        try {
-            /** call Volatility to process the image **/
-            VolatilityProcessor vp = new VolatilityProcessor(imageFilePath, PluginsToRun, deviceId);
-            vp.run();
-            //LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
-            //localFilesDSP.run(deviceId, archiveFileName, pathsList, progressMonitor, internalArchiveDspCallBack);
-        } catch (Exception e) {
-         
-        }
-        
+        }        
     }    
+
+    void cancelTask() {
+        if (volatilityProcessor != null) {
+            volatilityProcessor.cancel();
+        }
+        isCancelled = true;
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(GlobalSettingsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
 
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
@@ -95,7 +95,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             boolean result = EamDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             if(! result){
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                                         NbBundle.getMessage(this.getClass(),
                                                 "GlobalSettingsPanel.updateFailed.message"),
                                         NbBundle.getMessage(this.getClass(),

@@ -156,9 +156,7 @@ class VolatilityProcessor implements Runnable{
                 pluginToRun.matches("pslist") || pluginToRun.matches("psscan") || pluginToRun.matches("pstree") || pluginToRun.matches("svcscan") ||
                 pluginToRun.matches("filescan") || pluginToRun.matches("shimcache")) {  
                  scanOutputFile(pluginToRun, new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));  
-                }
-    
-            
+            }            
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to run Volatility", ex); //NON-NLS
             //this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));

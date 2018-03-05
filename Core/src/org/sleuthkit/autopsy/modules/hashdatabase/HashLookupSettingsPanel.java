@@ -340,7 +340,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 hashSetManager.save();
             } catch (HashDbManager.HashDbManagerException ex) {
                 SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
                 });
             }
         }
@@ -388,7 +388,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             try {
                 hashSetManager.removeHashDatabaseNoSave(hashDb);
             } catch (HashDbManager.HashDbManagerException ex) {
-                JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
             }
         }
         hashSetTableModel.refreshModel();
@@ -432,7 +432,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         try {
             hashSetManager.save();
         } catch (HashDbManager.HashDbManagerException ex) {
-            JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_saveFail_message(), Bundle.HashLookupSettingsPanel_saveFail_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1003,7 +1003,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         "HashLookupSettingsPanel.promptMessage.deleteHashDb=This will make the hash database unavailable for lookup. Do you want to proceed?\n\nNote: The hash database can still be re-imported later."
     })
     private void deleteDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDatabaseButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null,
+        if (JOptionPane.showConfirmDialog(this,
                 Bundle.HashLookupSettingsPanel_promptMessage_deleteHashDb(),
                 Bundle.HashLookupSettingsPanel_promptTitle_deleteHashDb(),
                 JOptionPane.YES_NO_OPTION,
@@ -1013,7 +1013,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 try {
                     hashSetManager.removeHashDatabaseNoSave(hashDb);
                 } catch (HashDbManager.HashDbManagerException ex) {
-                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                    JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
                 }
                 hashSetTableModel.refreshModel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -1028,7 +1028,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 try {
                     hashSetManager.removeHashDatabaseNoSave(hashDb);
                 } catch (HashDbManager.HashDbManagerException ex) {
-                    JOptionPane.showMessageDialog(null, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
+                    JOptionPane.showMessageDialog(this, Bundle.HashLookupSettingsPanel_removeDatabaseFailure_message(hashDb.getHashSetName()));
                 }
                 hashSetTableModel.refreshModel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);

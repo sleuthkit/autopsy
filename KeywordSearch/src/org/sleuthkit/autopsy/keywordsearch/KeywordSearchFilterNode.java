@@ -30,7 +30,6 @@ import org.openide.nodes.Node.Property;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
-import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -39,7 +38,6 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -48,6 +46,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -60,11 +59,10 @@ class KeywordSearchFilterNode extends FilterNode {
     /**
      * Instantiate a KeywordSearchFilterNode.
      * 
-     * @param adHocQueryResult The query content.
      * @param original         The original source node.
      */
-    KeywordSearchFilterNode(AdHocQueryResult adHocQueryResult, Node original) {
-        super(original, null, new ProxyLookup(Lookups.singleton(adHocQueryResult), original.getLookup()));
+    KeywordSearchFilterNode(Node original) {
+        super(original, null, new ProxyLookup(original.getLookup()));
     }
 
     @Override
@@ -114,6 +112,15 @@ class KeywordSearchFilterNode extends FilterNode {
     }
 
     private class GetPopupActionsContentVisitor extends ContentVisitor.Default<List<Action>> {
+
+        @Override
+        public List<Action> visit(Report r) {
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
+
+            actionsList.addAll(ContextMenuExtensionPoint.getActions());
+            return actionsList;
+        }
 
         @Override
         public List<Action> visit(File f) {

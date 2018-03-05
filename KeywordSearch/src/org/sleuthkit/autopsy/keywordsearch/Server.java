@@ -56,6 +56,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
@@ -600,7 +601,7 @@ public class Server {
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
             //TODO handle timeout in cases when some other type of server on that port
-            CoreAdminRequest.getStatus(null, localSolrServer);
+            connectToSolrServer(localSolrServer);
 
             logger.log(Level.INFO, "Solr server is running"); //NON-NLS
         } catch (SolrServerException ex) {
@@ -1180,7 +1181,11 @@ public class Server {
      * @throws IOException
      */
     void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
-        CoreAdminRequest.getStatus(null, solrServer);
+        CoreAdminRequest statusRequest = new CoreAdminRequest();
+        statusRequest.setCoreName( null );
+        statusRequest.setAction( CoreAdminParams.CoreAdminAction.STATUS );
+        statusRequest.setIndexInfoNeeded(false);
+        statusRequest.process(solrServer);
     }
 
     /**

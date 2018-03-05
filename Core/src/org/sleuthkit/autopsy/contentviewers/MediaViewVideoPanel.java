@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Dimension;
 import java.util.Arrays;
@@ -26,6 +26,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.corecomponents.FrameCapture;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -34,7 +35,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Video viewer part of the Media View layered pane. Uses different engines
  * depending on platform.
  */
-public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, DataContentViewerMedia.MediaViewPanel {
+public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, MediaFileViewer.MediaViewPanel {
 
     private static final Set<String> AUDIO_EXTENSIONS = new TreeSet<>(Arrays.asList(".mp3", ".wav", ".wma")); //NON-NLS
 
