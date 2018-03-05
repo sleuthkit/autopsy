@@ -82,6 +82,7 @@ import java.time.ZoneId;
 import javax.swing.DefaultListModel;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  * Global settings panel for data-source-level ingest modules that export and
@@ -528,11 +529,11 @@ public final class FileExporterSettingsPanel extends JPanel {
     void populateArtifacts() {
         Set<String> artifactTypes = scanRulesForArtifacts();
         try {
-            SleuthkitCase currentCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase currentCase = Case.getOpenCase().getSleuthkitCase();
             for (BlackboardArtifact.Type type : currentCase.getArtifactTypes()) {
                 artifactTypes.add(type.getTypeName());
             }
-        } catch (IllegalStateException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             // Unable to find and open case or cannot read the database. Use enum.
             for (BlackboardArtifact.ARTIFACT_TYPE artifact : BlackboardArtifact.ARTIFACT_TYPE.values()) {
                 artifactTypes.add(artifact.toString());
@@ -602,12 +603,12 @@ public final class FileExporterSettingsPanel extends JPanel {
         Set<String> attributeTypes = scanRulesForAttributes();
 
         try {
-            SleuthkitCase currentCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase currentCase = Case.getOpenCase().getSleuthkitCase();
             for (BlackboardAttribute.Type type : currentCase.getAttributeTypes()) {
                 attributeTypes.add(type.getTypeName());
                 attributeTypeMap.put(type.getTypeName(), type.getValueType());
             }
-        } catch (IllegalStateException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             // Unable to find and open case or cannot read the database. Use enum.
             for (BlackboardAttribute.ATTRIBUTE_TYPE type : BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
                 attributeTypes.add(type.getLabel());
