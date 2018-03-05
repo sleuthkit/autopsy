@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -209,75 +208,77 @@ class VolatilityProcessor implements Runnable{
     }
     
     private void lookupFiles(Set<String> fileSet, String pluginName) {
-        try {
-            if (isCancelled)
-                return;
-                
-            Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
         
-            for (String file : fileSet) {
-                File volfile = new File(file);
-                String fileName = volfile.getName().trim();
-                // if there is no extension, add a wildcard to the end
-                if (fileName.contains(".") == false) {
-                    fileName = fileName + ".%";
-                }
-                
-                String filePath = volfile.getParent();
-                if (filePath != null && !filePath.isEmpty()) {
-                    // strip C: 
-                   if (filePath.contains(":")) {
-                        filePath = filePath.substring(filePath.indexOf(":")+1);
-                    }
-                   filePath = filePath.replaceAll("\\\\", "/");
-                } else {
-                    filePath = "";
-                }
-                
-                try {
-                    List<AbstractFile> resolvedFiles;
-                    if (filePath.isEmpty()) {
-                        resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
-                    }
-                    else {
-                        resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
-                    }
-                    resolvedFiles.forEach((resolvedFile) -> {
-                        try {
-                            String MODULE_NAME = "VOLATILITY";
-                            BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                            BlackboardAttribute att1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                                    "Volatility Plugin " + pluginName);
-                            BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                                    "Volatility Plugin " + pluginName);
-                            volArtifact.addAttribute(att1);
-                            volArtifact.addAttribute(att2);
+        Blackboard blackboard;
+        try {
+            blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        }
+        catch (Exception ex) {
+            // case is closed ?? 
+            return;
+        }
 
-                            try {
-                                // index the artifact for keyword search
-                                blackboard.indexArtifact(volArtifact);
-                            } catch (Blackboard.BlackboardException ex) {
-                                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + volArtifact.getArtifactID(), ex); //NON-NLS
-                            }
-
-                            // fire event to notify UI of this new artifact
-                            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
-                        } catch (IllegalStateException ex) {
-                            logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
-                        }
-                    });
-);
-                } catch (TskCoreException ex) {
-                    //String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
-                    logger.log(Level.SEVERE, "Error in Finding FIles", ex);
-                    return;
-                }
-                
+        for (String file : fileSet) {
+            if (isCancelled) {
+               return;
             }
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error in processing List of FIles", ex); //NON-NLS   
+
+            File volfile = new File(file);
+            String fileName = volfile.getName().trim();
+            // if there is no extension, add a wildcard to the end
+            if (fileName.contains(".") == false) {
+                fileName = fileName + ".%";
+            }
+
+            String filePath = volfile.getParent();
+            if (filePath != null && !filePath.isEmpty()) {
+                // strip C: 
+                if (filePath.contains(":")) {
+                    filePath = filePath.substring(filePath.indexOf(":") + 1);
+                }
+                filePath = filePath.replaceAll("\\\\", "/");
+            } else {
+                filePath = "";
+            }
+
+            try {
+                List<AbstractFile> resolvedFiles;
+                if (filePath.isEmpty()) {
+                    resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
+                } else {
+                    resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
+                }
+                resolvedFiles.forEach((resolvedFile) -> {
+                    try {
+                        String MODULE_NAME = "VOLATILITY";
+                        BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                        BlackboardAttribute att1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
+                                "Volatility Plugin " + pluginName);
+                        BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
+                                "Volatility Plugin " + pluginName);
+                        volArtifact.addAttribute(att1);
+                        volArtifact.addAttribute(att2);
+
+                        try {
+                            // index the artifact for keyword search
+                            blackboard.indexArtifact(volArtifact);
+                        } catch (Blackboard.BlackboardException ex) {
+                            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + volArtifact.getArtifactID(), ex); //NON-NLS
+                        }
+
+                        // fire event to notify UI of this new artifact
+                        services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+                    } catch (IllegalStateException ex) {
+                        logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+                    }
+                });
+            } catch (TskCoreException ex) {
+                //String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
+                logger.log(Level.SEVERE, "Error in Finding FIles", ex);
+                return;
+            }
         }
     }
     
@@ -512,29 +513,30 @@ class VolatilityProcessor implements Runnable{
     }
     
     private Set<String> parse_Cmdline(File PluginFile) {
-        String line;
         Set<String> fileSet = new HashSet<>();
         int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                 if (line.length() > 16) {
+        // read the first line from the text file
+        try (BufferedReader br = new BufferedReader(new FileReader(PluginFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.length() > 16) {
                     String TAG = "Command line : ";
                     if (line.startsWith(TAG)) {
                         counter = counter + 1;
-                        // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
                         String file_path;
+
+                        // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
+                        // grab whats inbetween the quotes
                         if (line.charAt(TAG.length()) == '\"') {
-                            file_path = line.substring(TAG.length()+1);
+                            file_path = line.substring(TAG.length() + 1);
                             if (file_path.contains("\"")) {
                                 file_path = file_path.substring(0, file_path.indexOf("\""));
-                            }
-                            else {
+                            } else {
                                 // ERROR
                             }
-                        }
-                        // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512 
+                        } 
+                        // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
+                        // grab everything before the next space - we don't want arguments
                         else {
                             file_path = line.substring(TAG.length());
                             if (file_path.contains(" ")) {
@@ -543,11 +545,12 @@ class VolatilityProcessor implements Runnable{
                         }
                         fileSet.add(file_path.toLowerCase());
                     }
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+                }
+            }
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Error opening cmdline output", ex);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error parsing cmdline output", ex);
         } 
         return fileSet;     
     }
