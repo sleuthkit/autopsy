@@ -27,22 +27,22 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
 
-    private boolean ignorePreviousNotableItems;
+    private boolean flagTaggedNotableItems;
 
     /**
      * Instantiate the ingest job settings with default values.
      */
     IngestSettings() {
-        this.ignorePreviousNotableItems = IngestModule.DEFAULT_IGNORE_PREVIOUS_NOTABLE_ITEMS;
+        this.flagTaggedNotableItems = IngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
     }
 
     /**
      * Instantiate the ingest job settings.
      *
-     * @param ignorePreviousNotableItems Ignore previously seen notable items.
+     * @param flagTaggedNotableItems Flag previously tagged notable items.
      */
-    IngestSettings(boolean ignorePreviousNotableItems) {
-        this.ignorePreviousNotableItems = ignorePreviousNotableItems;
+    IngestSettings(boolean flagTaggedNotableItems) {
+        this.flagTaggedNotableItems = flagTaggedNotableItems;
     }
 
     @Override
@@ -51,21 +51,21 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
     }
 
     /**
-     * Are previously identified notable items ignored?
+     * Are previously tagged notable items to be flagged?
      *
-     * @return True if ignored; otherwise false.
+     * @return True if flagging; otherwise false.
      */
-    boolean isIgnorePreviousNotableItems() {
-        return ignorePreviousNotableItems;
+    boolean isFlagTaggedNotableItems() {
+        return flagTaggedNotableItems;
     }
 
     /**
-     * Consider or ignore previously identified notable items.
+     * Flag or ignore previously identified notable items.
      *
-     * @param ignorePreviousNotableItems Are previously identified notable items
-     *                                   ignored?
+     * @param ignorePreviousNotableItems Are previously tagged notable items to
+     *                                   be flagged?
      */
-    void setIgnorePreviousNotableItems(boolean ignorePreviousNotableItems) {
-        this.ignorePreviousNotableItems = ignorePreviousNotableItems;
+    void setFlagTaggedNotableItems(boolean flagTaggedNotableItems) {
+        this.flagTaggedNotableItems = flagTaggedNotableItems;
     }
 }

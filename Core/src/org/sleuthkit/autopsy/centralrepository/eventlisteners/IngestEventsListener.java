@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,8 @@ public class IngestEventsListener {
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttribute.class.getName());
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
-    private static int ceModuleInstanceCount = 0;
+    private static int correlationModuleInstanceCount = 0;
+    private static int correlationModulesFlaggingNotableCount = 0;
     private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
@@ -87,21 +88,20 @@ public class IngestEventsListener {
     }
 
     /**
-     * Enable this IngestEventsListener to add contents to the Correlation
-     * Engine.
-     *
+     * Increase the number of IngestEventsListeners adding contents to the
+     * Correlation Engine.
      */
     public synchronized static void incrementCorrelationEngineModuleCount() {
-        ceModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
+        correlationModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
     }
 
     /**
-     * Disable this IngestEventsListener from adding contents to the Correlation
-     * Engine.
+     * Decrease the number of IngestEventsListeners adding contents to the
+     * Correlation Engine.
      */
     public synchronized static void decrementCorrelationEngineModuleCount() {
         if (getCeModuleInstanceCount() > 0) {  //prevent it ingestJobCounter from going negative
-            ceModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
+            correlationModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
         }
     }
 
@@ -110,7 +110,7 @@ public class IngestEventsListener {
      * is being run during injest to 0.
      */
     synchronized static void resetCeModuleInstanceCount() {
-        ceModuleInstanceCount = 0;  //called when a case is opened in case for some reason counter was not reset
+        correlationModuleInstanceCount = 0;  //called when a case is opened in case for some reason counter was not reset
     }
 
     /**
@@ -120,7 +120,43 @@ public class IngestEventsListener {
      * @return boolean True for Correlation Engine enabled, False for disabled
      */
     private synchronized static int getCeModuleInstanceCount() {
-        return ceModuleInstanceCount;
+        return correlationModuleInstanceCount;
+    }
+
+    /**
+     * Increase the number of IngestEventsListeners adding contents to the
+     * Correlation Engine with notable item flagging enabled.
+     */
+    public synchronized static void incrementCorrelationModulesFlaggingNotableCount() {
+        correlationModulesFlaggingNotableCount++;
+    }
+
+    /**
+     * Decrease the number of IngestEventsListeners adding contents to the
+     * Correlation Engine with notable item flagging enabled.
+     */
+    public synchronized static void decrementCorrelationModulesFlaggingNotableCount() {
+        if (correlationModulesFlaggingNotableCount > 0) {
+            correlationModulesFlaggingNotableCount--;
+        }
+    }
+
+    /**
+     * Reset the counter which keeps track of if the Correlation Engine Module
+     * is being run during injest and flagging notable items to 0.
+     */
+    synchronized static void resetCorrelationModulesFlaggingNotableCount() {
+        correlationModulesFlaggingNotableCount = 0;
+    }
+
+    /**
+     * Wether or not the Correlation Engine Module is enabled for any of the
+     * currently running ingest jobs and flagging notable items.
+     *
+     * @return boolean True for Correlation Engine enabled, False for disabled
+     */
+    private synchronized static int getCorrelationModulesFlaggingNotableCount() {
+        return correlationModulesFlaggingNotableCount;
     }
 
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
@@ -219,7 +255,7 @@ public class IngestEventsListener {
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled()) {
+            if (!EamDb.isEnabled() || getCorrelationModulesFlaggingNotableCount() == 0) {
                 return;
             }
             final ModuleDataEvent mde = (ModuleDataEvent) event.getOldValue();

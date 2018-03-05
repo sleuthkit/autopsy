@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
+<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -21,11 +21,11 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                      <Component id="ignorePreviousNotableItemsCheckbox" min="-2" max="-2" attributes="0"/>
+                      <Component id="flagTaggedNotableItemsCheckbox" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="ingestSettingsLabel" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="83" max="32767" attributes="0"/>
+              <EmptySpace pref="75" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -35,7 +35,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="ingestSettingsLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="ignorePreviousNotableItemsCheckbox" min="-2" max="-2" attributes="0"/>
+              <Component id="flagTaggedNotableItemsCheckbox" min="-2" max="-2" attributes="0"/>
               <EmptySpace pref="245" max="32767" attributes="0"/>
           </Group>
       </Group>
@@ -52,10 +52,10 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="ignorePreviousNotableItemsCheckbox">
+    <Component class="javax.swing.JCheckBox" name="flagTaggedNotableItemsCheckbox">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/ingestmodule/Bundle.properties" key="IngestSettingsPanel.ignorePreviousNotableItemsCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/ingestmodule/Bundle.properties" key="IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

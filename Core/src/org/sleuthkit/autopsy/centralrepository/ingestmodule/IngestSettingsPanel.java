@@ -40,12 +40,12 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
      * @param settings The ingest job settings.
      */
     private void customizeComponents(IngestSettings settings) {
-        ignorePreviousNotableItemsCheckbox.setSelected(settings.isIgnorePreviousNotableItems());
+        flagTaggedNotableItemsCheckbox.setSelected(settings.isFlagTaggedNotableItems());
     }
     
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new IngestSettings(ignorePreviousNotableItemsCheckbox.isSelected());
+        return new IngestSettings(flagTaggedNotableItemsCheckbox.isSelected());
     }
 
     /**
@@ -58,12 +58,12 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
     private void initComponents() {
 
         ingestSettingsLabel = new javax.swing.JLabel();
-        ignorePreviousNotableItemsCheckbox = new javax.swing.JCheckBox();
+        flagTaggedNotableItemsCheckbox = new javax.swing.JCheckBox();
 
         ingestSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(ignorePreviousNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ignorePreviousNotableItemsCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -74,9 +74,9 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addComponent(ignorePreviousNotableItemsCheckbox))
+                        .addComponent(flagTaggedNotableItemsCheckbox))
                     .addComponent(ingestSettingsLabel))
-                .addContainerGap(83, Short.MAX_VALUE))
+                .addContainerGap(75, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -84,13 +84,13 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                 .addContainerGap()
                 .addComponent(ingestSettingsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(ignorePreviousNotableItemsCheckbox)
+                .addComponent(flagTaggedNotableItemsCheckbox)
                 .addContainerGap(245, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox ignorePreviousNotableItemsCheckbox;
+    private javax.swing.JCheckBox flagTaggedNotableItemsCheckbox;
     private javax.swing.JLabel ingestSettingsLabel;
     // End of variables declaration//GEN-END:variables
 

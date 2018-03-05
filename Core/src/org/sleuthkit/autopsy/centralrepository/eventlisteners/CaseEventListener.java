@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -464,6 +463,7 @@ final class CaseEventListener implements PropertyChangeListener {
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
                 IngestEventsListener.resetCeModuleInstanceCount();
+                IngestEventsListener.resetCorrelationModulesFlaggingNotableCount();
 
                 if (!EamDb.isEnabled()) {
                     return;

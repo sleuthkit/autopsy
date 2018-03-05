@@ -57,7 +57,7 @@ import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListen
     "IngestModule.prevCaseComment.text=Previous Case: "})
 final class IngestModule implements FileIngestModule {
 
-    static final boolean DEFAULT_IGNORE_PREVIOUS_NOTABLE_ITEMS = false;
+    static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
 
     private final static Logger logger = Logger.getLogger(IngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -69,10 +69,14 @@ final class IngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private CorrelationAttribute.Type filesType;
 
-    private final boolean ignorePreviousNotableItems;
+    private final boolean flagTaggedNotableItems;
 
+    /**
+     * //DLG:
+     * @param settings 
+     */
     IngestModule(IngestSettings settings) {
-        ignorePreviousNotableItems = settings.isIgnorePreviousNotableItems();
+        flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
     }
 
     @Override
@@ -116,7 +120,7 @@ final class IngestModule implements FileIngestModule {
          * Search the central repo to see if this file was previously marked as
          * being bad. Create artifact if it was.
          */
-        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && !ignorePreviousNotableItems) {
+        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
                 List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 if (!caseDisplayNames.isEmpty()) {
@@ -151,6 +155,11 @@ final class IngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         IngestEventsListener.decrementCorrelationEngineModuleCount();
+        
+        if (flagTaggedNotableItems) {
+            IngestEventsListener.decrementCorrelationModulesFlaggingNotableCount();
+        }
+        
         if ((EamDb.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
@@ -185,6 +194,11 @@ final class IngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         IngestEventsListener.incrementCorrelationEngineModuleCount();
+        
+        if (flagTaggedNotableItems) {
+            IngestEventsListener.incrementCorrelationModulesFlaggingNotableCount();
+        }
+        
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
