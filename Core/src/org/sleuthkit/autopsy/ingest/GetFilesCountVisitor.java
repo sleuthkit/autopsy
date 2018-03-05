@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
@@ -44,7 +45,13 @@ final class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
     public Long visit(FileSystem fs) {
         //recursion stop here
         //case of a real fs, query all files for it
-        SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
+        SleuthkitCase sc;
+        try {
+            sc = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return 0L;
+        }
         StringBuilder queryB = new StringBuilder();
         queryB.append("( (fs_obj_id = ").append(fs.getId()); //NON-NLS
         //queryB.append(") OR (fs_obj_id = NULL) )");

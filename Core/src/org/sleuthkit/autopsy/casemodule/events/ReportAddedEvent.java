@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Report;
@@ -69,7 +70,7 @@ public final class ReportAddedEvent extends AutopsyEvent implements Serializable
         }
         try {
             long id = (Long) super.getNewValue();
-            List<Report> reports = Case.getCurrentCase().getSleuthkitCase().getAllReports();
+            List<Report> reports = Case.getOpenCase().getSleuthkitCase().getAllReports();
             for (Report thisReport : reports) {
                 if (thisReport.getId() == id) {
                     report = thisReport;
@@ -77,7 +78,7 @@ public final class ReportAddedEvent extends AutopsyEvent implements Serializable
                 }
             }
             return report;
-        } catch (IllegalStateException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }

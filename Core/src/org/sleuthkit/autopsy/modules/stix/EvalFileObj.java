@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.mitre.cybox.common_2.HashType;
 import org.mitre.cybox.common_2.DateTimeObjectPropertyType;
 import org.mitre.cybox.common_2.StringObjectPropertyType;
 import org.mitre.cybox.common_2.UnsignedLongObjectPropertyType;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -59,7 +60,13 @@ class EvalFileObj extends EvaluatableObject {
     @SuppressWarnings("deprecation")
     public synchronized ObservableResult evaluate() {
 
-        Case case1 = Case.getCurrentCase();
+        Case case1;
+        try {
+            case1 = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) { 
+           return new ObservableResult(id, "Exception while getting open case.", //NON-NLS
+                            spacing, ObservableResult.ObservableState.FALSE, null);
+        }
         SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
         setWarnings("");
