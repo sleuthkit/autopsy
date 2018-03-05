@@ -173,7 +173,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
         try {
             openCase = Case.getOpenCase();
         } catch (NoCurrentCaseException ex) {
-            return false;
+            return true;
         }
         return (!this.isDefault) || openCase.hasData() == false;
     }

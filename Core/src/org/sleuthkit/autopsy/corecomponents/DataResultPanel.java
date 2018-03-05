@@ -491,7 +491,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             openCase = Case.getOpenCase();
         } catch (NoCurrentCaseException ex) {
-            return false;
+            return true;
         }
         return (!this.isMain) || openCase.hasData() == false;
     }
