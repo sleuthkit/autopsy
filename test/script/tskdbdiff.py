@@ -322,7 +322,6 @@ class TskDbDiff(object):
         id_reports_table = build_id_reports_table(conn.cursor(), isMultiUser)
         id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table)
 
-                #line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
         if isMultiUser: # Use PostgreSQL
             os.environ['PGPASSWORD']=pgSettings.password
             pgDump = ["pg_dump", "--inserts", "-U", pgSettings.username, "-h", pgSettings.pgHost, "-p", pgSettings.pgPort, "-d", db_file, "-E", "utf-8", "-T", "blackboard_artifacts", "-T", "blackboard_attributes", "-f", "postgreSQLDump.sql"]
@@ -482,14 +481,16 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         elif obj_id in reports_table.keys():
             path = reports_table[obj_id]
         
-        # remove host name from path for reports (only applicable for multi-user)
+        # remove host name (for multi-user) and dates/times from path for reports
         if path is not None:
-            moduleOutput_idx = path.find('ModuleOutput')
-            if moduleOutput_idx > -1:
-                path = "'" + path[path.find('ModuleOutput'):]
-            reports_idx = path.find('\\Reports\\AutopsyTestCase')
-            if reports_idx > -1:
-                path = "'" + path[path.find('Reports\\AutopsyTestCase'):]
+            if 'ModuleOutput' in path:
+                # skip past the host name (if any)
+                path = path[path.find('ModuleOutput'):]
+                if 'BulkExtractor' in path or 'Smirk' in path:
+                    # chop off the last folder (which contains a date/time)
+                    path = path[:path.rfind('\\')]
+            if '\\Reports\\AutopsyTestCase HTML Report' in path:
+                path = 'Reports\\AutopsyTestCase HTML Report'
 
         if parent_id in files_table.keys():
             parent_path = files_table[parent_id]
@@ -502,6 +503,11 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         elif parent_id == 'NULL':
             parent_path = "NULL"
         
+        # Remove host name (for multi-user) from parent_path
+        if parent_path is not None:
+            if 'ModuleOutput' in parent_path:
+                # skip past the host name (if any)
+                parent_path = parent_path[parent_path.find('ModuleOutput'):]
 
         if path and parent_path:
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'

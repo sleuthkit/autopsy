@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers;
+package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.awt.Component;
 import java.util.List;
@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Defines an interface for application specific content viewer
  *
  */
-interface FileTypeViewer {
+public interface FileTypeViewer {
 
     /**
      * Returns list of MIME types supported by this viewer
