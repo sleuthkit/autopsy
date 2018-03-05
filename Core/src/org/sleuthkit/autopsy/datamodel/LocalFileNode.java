@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-2017 Basis Technology Corp.
+ *
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,13 +39,18 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Node for a LocalFile or DerivedFile content object.
  */
 public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
-    
+
     private static final Logger LOGGER = Logger.getLogger(LocalFileNode.class.getName());
 
     public LocalFileNode(AbstractFile af) {
@@ -92,6 +98,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
+
         actionsList.addAll(Arrays.asList(super.getActions(true)));
         actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
         actionsList.add(null); // creates a menu separator
@@ -100,19 +107,29 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         actionsList.add(new ExternalViewerAction(
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.openInExtViewer.text"), this));
         actionsList.add(null); // creates a menu separator
+
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(new HashSearchAction(
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.searchFilesSameMd5.text"), this));
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        
+
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) {
+            actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+            try {
+                if (this.content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
+                    actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
+                }
+            } catch (TskCoreException ex) {
+            }
+        }
         return actionsList.toArray(new Action[0]);
     }
 

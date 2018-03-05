@@ -76,12 +76,22 @@ public final class RunIngestModulesAction extends AbstractAction {
      *
      * @param dataSources - the data sources you want to run ingest on
      */
+    public RunIngestModulesAction(List<Content> dataSources, IngestJobSettings.IngestType type) {
+        this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
+        this.dataSources.addAll(dataSources);
+        this.ingestType = type;
+    }
+    /**
+     * Creates an action which will make a run ingest modules wizard when it is
+     * performed.
+     *
+     * @param dataSources - the data sources you want to run ingest on
+     */
     public RunIngestModulesAction(List<Content> dataSources) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
     }
-
     /**
      * Creates an action which will make a run ingest modules wizard when it is
      * performed.
@@ -94,6 +104,7 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
     }
 
+    
     /**
      * Opens a run ingest modules wizard with the list of data sources.
      *

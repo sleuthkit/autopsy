@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
@@ -35,8 +36,13 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -147,7 +153,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(true)));
-        
+
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
             actionsList.add(null); // Creates an item separator
@@ -168,6 +174,15 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) {
+            try {
+                actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+                if (this.content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
+                    actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
+                }
+            } catch (TskCoreException ex) {
+            }
+        }
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 

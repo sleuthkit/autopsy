@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
@@ -38,6 +40,8 @@ import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
+import net.sf.sevenzipjbinding.ExtractOperationResult;
+import org.apache.tika.mime.MimeTypes;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -57,6 +61,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -138,8 +143,7 @@ class SevenZipExtractor {
      * @return This method returns true if the file format is currently
      *         supported. Else it returns false.
      */
-    boolean isSevenZipExtractionSupported(AbstractFile abstractFile) {
-        String abstractFileMimeType = fileTypeDetector.getMIMEType(abstractFile);
+    boolean isSevenZipExtractionSupported(String abstractFileMimeType) {
         for (SupportedArchiveExtractionFormats s : SupportedArchiveExtractionFormats.values()) {
             if (s.toString().equals(abstractFileMimeType)) {
                 return true;
@@ -242,6 +246,159 @@ class SevenZipExtractor {
         return null;
     }
 
+    void unpack(AbstractFile archiveFile) {
+        unpack(archiveFile, null);
+    }
+
+    private long getRootArchiveId(AbstractFile file) throws TskCoreException {
+        long id = file.getId();
+        Content parentContent = file.getParent();
+        while (parentContent != null) {
+            id = parentContent.getId();
+            parentContent = parentContent.getParent();
+        }
+        return id;
+    }
+
+    private Set<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException {
+        //check if already has derived files, skip
+        if (archiveFile.hasChildren()) {
+            //check if local unpacked dir exists 
+            if (new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
+                List<AbstractFile> existingFiles = Case.getCurrentCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
+                return new HashSet<>(existingFiles);
+            }
+        }
+        return new HashSet<>();
+    }
+
+    private String getArchiveFilePath(AbstractFile archiveFile) {
+        try {
+            return archiveFile.getUniquePath();
+        } catch (TskCoreException ex) {
+            return archiveFile.getParentPath() + archiveFile.getName();
+        }
+    }
+
+    private void makeLocalDirectories(String uniqueArchiveFileName) {
+        final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
+        final File localRoot = new File(localRootAbsPath);
+        if (!localRoot.exists()) {
+            localRoot.mkdirs();
+        }
+    }
+
+    private String getPathInArchive(ISimpleInArchiveItem item, int itemNumber, AbstractFile archiveFile) throws SevenZipException {
+        String pathInArchive = item.getPath();
+
+        if (pathInArchive == null || pathInArchive.isEmpty()) {
+            //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
+            //handle this for .tar.gz and tgz but assuming the child is tar,
+            //otherwise, unpack using itemNumber as name
+
+            //TODO this should really be signature based, not extension based
+            String archName = archiveFile.getName();
+            int dotI = archName.lastIndexOf(".");
+            String useName = null;
+            if (dotI != -1) {
+                String base = archName.substring(0, dotI);
+                String ext = archName.substring(dotI);
+                int colonIndex = ext.lastIndexOf(":");
+                if (colonIndex != -1) {
+                    // If alternate data stream is found, fix the name 
+                    // so Windows doesn't choke on the colon character.
+                    ext = ext.substring(0, colonIndex);
+                }
+                switch (ext) {
+                    case ".gz": //NON-NLS
+                        useName = base;
+                        break;
+                    case ".tgz": //NON-NLS
+                        useName = base + ".tar"; //NON-NLS
+                        break;
+                    case ".bz2": //NON-NLS
+                        useName = base;
+                        break;
+                }
+            }
+            if (useName == null) {
+                pathInArchive = "/" + archName + "/" + Integer.toString(itemNumber);
+            } else {
+                pathInArchive = "/" + useName;
+            }
+            String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
+                    getArchiveFilePath(archiveFile), pathInArchive);
+            logger.log(Level.WARNING, msg);
+        }
+        return pathInArchive;
+    }
+
+    private AbstractFile findExistingFile(ISimpleInArchiveItem item, Set<AbstractFile> existingFiles, String archiveFilePath) throws SevenZipException {
+        AbstractFile existingFile = null;
+        for (AbstractFile fileInDatabase : existingFiles) {
+            String fileInDatabaseName = (fileInDatabase.getParentPath() +  fileInDatabase.getName()).substring(archiveFilePath.length()+1);
+            String itemPath = item.getPath().replace(File.separator, "/");
+            System.out.println("FILE NAME MODIFIED: "+fileInDatabaseName);
+            System.out.println("ITEM NAME MODIFIED: "+itemPath);
+                if (fileInDatabaseName.equals(itemPath)) {
+                    if (item.getSize() != null && fileInDatabase.getSize() < item.getSize()) {
+                        existingFile = fileInDatabase;
+                    }
+                    break;
+                }
+        }
+        return existingFile;
+    }
+
+    private SevenZipExtractor.UnpackedTree.UnpackedNode unpackNode(ISimpleInArchiveItem item, SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode, String password, long freeDiskSpace, String uniqueExtractedName) throws SevenZipException {
+        //unpack locally if a file
+        final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
+        final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
+        final Date createTime = item.getCreationTime();
+        final Date accessTime = item.getLastAccessTime();
+        final Date writeTime = item.getLastWriteTime();
+        final long createtime = createTime == null ? 0L : createTime.getTime() / 1000;
+        final long modtime = writeTime == null ? 0L : writeTime.getTime() / 1000;
+        final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
+        SevenZipExtractor.UnpackStream unpackStream = null;
+        boolean isDir = item.isFolder();
+        if (!isDir) {
+            try {
+                // NOTE: item.getSize() may return null in case of certain
+                // archiving formats. Eg: BZ2
+                if (item.getSize() != null) {
+                    unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(localAbsPath, item.getSize());
+                } else {
+                    unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(localAbsPath, freeDiskSpace);
+                }
+                ExtractOperationResult result;
+                if (password == null) {
+                    result = item.extractSlow(unpackStream);
+                } else {
+                    result = item.extractSlow(unpackStream, password);
+                }
+                if (result != ExtractOperationResult.OK) {
+                    logger.log(Level.WARNING, "Extraction of : " + localAbsPath + " encountered error " + result); //NON-NLS
+                    return null;
+                }
+
+            } catch (Exception e) {
+                //could be something unexpected with this file, move on
+                logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
+            } finally {
+                if (unpackStream != null) {
+                    //record derived data in unode, to be traversed later after unpacking the archive
+                    unpackedNode.addDerivedInfo(unpackStream.getSize(), !isDir,
+                            0L, createtime, accesstime, modtime, localRelPath);
+                    unpackStream.close();
+                }
+            }
+        } else { // this is a directory, size is always 0
+            unpackedNode.addDerivedInfo(0, !isDir, 0L, createtime, accesstime, modtime, localRelPath);
+        }
+        return unpackedNode;
+    }
+
     /**
      * Unpack the file to local folder and return a list of derived files
      *
@@ -251,34 +408,31 @@ class SevenZipExtractor {
      * @return list of unpacked derived files
      */
     @Messages({"SevenZipExtractor.indexError.message=Failed to index encryption detected artifact for keyword search."})
-    void unpack(AbstractFile archiveFile) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        String archiveFilePath;
-        try {
-            archiveFilePath = archiveFile.getUniquePath();
-        } catch (TskCoreException ex) {
-            archiveFilePath = archiveFile.getParentPath() + archiveFile.getName();
-        }
-
-        //check if already has derived files, skip
-        try {
-            if (archiveFile.hasChildren()) {
-                //check if local unpacked dir exists
-                if (new File(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-                    logger.log(Level.INFO, "File already has been processed as it has children and local unpacked file, skipping: {0}", archiveFilePath); //NON-NLS
-                    return;
-                }
-            }
-        } catch (TskCoreException e) {
-            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFilePath); //NON-NLS
-            return;
-        }
-
+    boolean unpack(AbstractFile archiveFile, String password) {
+        boolean unpackSuccessful = true; //initialized to true change to false if any files fail to extract and
+        boolean hasEncrypted = false;
+        boolean fullEncryption = true;
+        boolean progressStarted = false;
+        int processedItems = 0;
+        String archiveFilePath = getArchiveFilePath(archiveFile);
+        Set<AbstractFile> existingFiles;
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-
+        Set<AbstractFile> filesToUpdate = new HashSet<AbstractFile>();
+        ISevenZipInArchive inArchive = null;
+        SevenZipContentReadStream stream = null;
+        final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         //recursion depth check for zip bomb
         final long archiveId = archiveFile.getId();
-        SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr = archiveDepthCountTree.findArchive(archiveId);
+        SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr = null;
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        try {
+            existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
+        } catch (TskCoreException e) {
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFilePath); //NON-NLS
+            unpackSuccessful = false;
+            return unpackSuccessful;
+        }
+        parentAr = archiveDepthCountTree.findArchive(archiveId);
         if (parentAr == null) {
             parentAr = archiveDepthCountTree.addArchive(null, archiveId);
         } else if (parentAr.getDepth() == MAX_DEPTH) {
@@ -289,165 +443,103 @@ class SevenZipExtractor {
                     parentAr.getDepth(), archiveFilePath);
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-            return;
+            unpackSuccessful = false;
+            return unpackSuccessful;
         }
-
-        boolean hasEncrypted = false;
-        boolean fullEncryption = true;
-
-        ISevenZipInArchive inArchive = null;
-        SevenZipContentReadStream stream = null;
-
-        final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
-        int processedItems = 0;
-
-        boolean progressStarted = false;
         try {
             stream = new SevenZipContentReadStream(new ReadContentInputStream(archiveFile));
-
             // for RAR files we need to open them explicitly as RAR. Otherwise, if there is a ZIP archive inside RAR archive
             // it will be opened incorrectly when using 7zip's built-in auto-detect functionality.
             // All other archive formats are still opened using 7zip built-in auto-detect functionality.
             ArchiveFormat options = get7ZipOptions(archiveFile);
-            inArchive = SevenZip.openInArchive(options, stream);
-
+            if (password != null) {
+                inArchive = SevenZip.openInArchive(options, stream);
+            } else {
+                inArchive = SevenZip.openInArchive(options, stream, password);
+            }
             int numItems = inArchive.getNumberOfItems();
             logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFilePath, numItems}); //NON-NLS
             progress.start(numItems);
             progressStarted = true;
-
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
 
             //setup the archive local root folder
             final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
-            final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
-            final File localRoot = new File(localRootAbsPath);
-            if (!localRoot.exists()) {
-                try {
-                    localRoot.mkdirs();
-                } catch (SecurityException e) {
-                    logger.log(Level.SEVERE, "Error setting up output path for archive root: {0}", localRootAbsPath); //NON-NLS
-                    //bail
-                    return;
-                }
+            try {
+                makeLocalDirectories(uniqueArchiveFileName);
+            } catch (SecurityException e) {
+                logger.log(Level.SEVERE, "Error setting up output path for archive root: {0}", getLocalRootAbsPath(uniqueArchiveFileName)); //NON-NLS
+                //bail
+                unpackSuccessful = false;
+                return unpackSuccessful;
             }
 
             //initialize tree hierarchy to keep track of unpacked file structure
             SevenZipExtractor.UnpackedTree unpackedTree = new SevenZipExtractor.UnpackedTree(moduleDirRelative + "/" + uniqueArchiveFileName, archiveFile);
 
-            long freeDiskSpace = services.getFreeDiskSpace();
-
+            long freeDiskSpace = 80000000000000L;// services.getFreeDiskSpace();
             //unpack and process every item in archive
             int itemNumber = 0;
+
             for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
-                String pathInArchive = item.getPath();
+                String pathInArchive = getPathInArchive(item, itemNumber, archiveFile);
 
-                if (pathInArchive == null || pathInArchive.isEmpty()) {
-                    //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
-                    //handle this for .tar.gz and tgz but assuming the child is tar,
-                    //otherwise, unpack using itemNumber as name
+                //query for path in db
+                AbstractFile existingFile = findExistingFile(item, existingFiles, archiveFilePath);
 
-                    //TODO this should really be signature based, not extension based
-                    String archName = archiveFile.getName();
-                    int dotI = archName.lastIndexOf(".");
-                    String useName = null;
-                    if (dotI != -1) {
-                        String base = archName.substring(0, dotI);
-                        String ext = archName.substring(dotI);
-                        int colonIndex = ext.lastIndexOf(":");
-                        if (colonIndex != -1) {
-                            // If alternate data stream is found, fix the name 
-                            // so Windows doesn't choke on the colon character.
-                            ext = ext.substring(0, colonIndex);
-                        }
-                        switch (ext) {
-                            case ".gz": //NON-NLS
-                                useName = base;
-                                break;
-                            case ".tgz": //NON-NLS
-                                useName = base + ".tar"; //NON-NLS
-                                break;
-                            case ".bz2": //NON-NLS
-                                useName = base;
-                                break;
-                        }
-                    }
-
-                    if (useName == null) {
-                        pathInArchive = "/" + archName + "/" + Integer.toString(itemNumber);
-                    } else {
-                        pathInArchive = "/" + useName;
-                    }
-
-                    String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
-                            archiveFilePath, pathInArchive);
-                    logger.log(Level.WARNING, msg);
-
-                }
-                archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
                 ++itemNumber;
+                archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile, item)) {
                     continue; //skip the item
                 }
-
-                //find this node in the hierarchy, create if needed
                 SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
-
-                String fileName = unpackedNode.getFileName();
-
                 //update progress bar
-                progress.progress(archiveFile.getName() + ": " + fileName, processedItems);
+                progress.progress(archiveFile.getName() + ": " + item.getPath(), processedItems);
 
                 final boolean isEncrypted = item.isEncrypted();
-                final boolean isDir = item.isFolder();
 
-                if (isEncrypted) {
+                if (isEncrypted && password == null) {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: {0}", pathInArchive); //NON-NLS
                     hasEncrypted = true;
+                    unpackSuccessful = false;
                     continue;
                 } else {
                     fullEncryption = false;
                 }
-
                 // NOTE: item.getSize() may return null in case of certain
                 // archiving formats. Eg: BZ2
-                Long size = item.getSize();
-
                 //check if unpacking this file will result in out of disk space
                 //this is additional to zip bomb prevention mechanism
-                if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && size != null && size > 0) { //if free space is known and file is not empty.
-                    long newDiskSpace = freeDiskSpace - size;
+                if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && item.getSize() != null && item.getSize() > 0) { //if free space is known and file is not empty.
+                    long newDiskSpace = freeDiskSpace - item.getSize();
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.msg",
-                                archiveFilePath, fileName);
+                                archiveFilePath, item.getPath());
                         String details = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new Object[]{archiveFilePath, fileName}); //NON-NLS
+                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new String[]{archiveFilePath, item.getPath()}); //NON-NLS
                         logger.log(Level.INFO, "Available disk space: {0}", new Object[]{freeDiskSpace}); //NON-NLS
+                        unpackSuccessful = false;
                         continue; //skip this file
                     } else {
                         //update est. disk space during this archive, so we don't need to poll for every file extracted
                         freeDiskSpace = newDiskSpace;
                     }
                 }
-
                 final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName());
 
                 //final String localRelPath = unpackDir + File.separator + localFileRelPath;
-                final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
-                final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
-
                 //create local dirs and empty files before extracted
-                File localFile = new java.io.File(localAbsPath);
+                File localFile = new java.io.File(moduleDirAbsolute + File.separator + uniqueExtractedName);
                 //cannot rely on files in top-bottom order
                 if (!localFile.exists()) {
                     try {
-                        if (isDir) {
+                        if (item.isFolder()) {
                             localFile.mkdirs();
                         } else {
                             localFile.getParentFile().mkdirs();
@@ -462,58 +554,40 @@ class SevenZipExtractor {
                         //TODO consider bail out / msg to the user
                     }
                 }
-
                 // skip the rest of this loop if we couldn't create the file
                 if (localFile.exists() == false) {
                     continue;
                 }
-
-                final Date createTime = item.getCreationTime();
-                final Date accessTime = item.getLastAccessTime();
-                final Date writeTime = item.getLastWriteTime();
-                final long createtime = createTime == null ? 0L : createTime.getTime() / 1000;
-                final long modtime = writeTime == null ? 0L : writeTime.getTime() / 1000;
-                final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
-
-                //unpack locally if a file
-                SevenZipExtractor.UnpackStream unpackStream = null;
-                if (!isDir) {
-                    try {
-                        if (size != null) {
-                            unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(localAbsPath, size);
-                        } else {
-                            unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(localAbsPath, freeDiskSpace);
-                        }
-                        item.extractSlow(unpackStream);
-                    } catch (Exception e) {
-                        //could be something unexpected with this file, move on
-                        logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
-                    } finally {
-                        if (unpackStream != null) {
-                            //record derived data in unode, to be traversed later after unpacking the archive
-                            unpackedNode.addDerivedInfo(unpackStream.getSize(), !isDir,
-                                    0L, createtime, accesstime, modtime, localRelPath);
-                            unpackStream.close();
-                        }
+                //find this node in the hierarchy, create if neede;
+                unpackedNode = unpackNode(item, unpackedNode, password,
+                        freeDiskSpace, uniqueExtractedName);
+                if (unpackedNode != null) {
+                    if (existingFile != null) {
+                        filesToUpdate.add(existingFile);
                     }
-                } else { // this is a directory, size is always 0
-                    unpackedNode.addDerivedInfo(0, !isDir,
-                            0L, createtime, accesstime, modtime, localRelPath);
+                } else {
+                    unpackSuccessful = false;
                 }
 
                 //update units for progress bar
                 ++processedItems;
             }
-
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
             try {
-                unpackedTree.addDerivedFilesToCase();
+                unpackedTree.updateOrAddFileToCaseRec(filesToUpdate, existingFiles);
                 unpackedFiles = unpackedTree.getAllFileObjects();
-
                 //check if children are archives, update archive depth tracking
                 for (AbstractFile unpackedFile : unpackedFiles) {
-                    if (isSevenZipExtractionSupported(unpackedFile)) {
+                    if (unpackedFile == null) {
+                        continue;
+                    }
+                    String abstractFileMimeType = fileTypeDetector.getMIMEType(unpackedFile);
+                    if (abstractFileMimeType.equals(MimeTypes.OCTET_STREAM)) {
+                        abstractFileMimeType = fileTypeDetector.getTikaMIMEType(unpackedFile);
+                        unpackedFile.setMIMEType(abstractFileMimeType);
+                    }
+                    if (isSevenZipExtractionSupported(unpackedFile.getMIMEType())) {
                         archiveDepthCountTree.addArchive(parentAr, unpackedFile.getId());
                     }
                 }
@@ -524,7 +598,7 @@ class SevenZipExtractor {
             }
 
         } catch (SevenZipException ex) {
-            logger.log(Level.WARNING, "Error unpacking file: {0}", archiveFile); //NON-NLS
+            logger.log(Level.WARNING, "Error unpacking file: " + archiveFile, ex); //NON-NLS
             //inbox message
 
             // print a message if the file is allocated
@@ -591,8 +665,11 @@ class SevenZipExtractor {
         if (!unpackedFiles.isEmpty()) {
             //currently sending a single event for all new files
             services.fireModuleContentEvent(new ModuleContentEvent(archiveFile));
-            context.addFilesToJob(unpackedFiles);
+            if (context != null) {
+                context.addFilesToJob(unpackedFiles);
+            }
         }
+        return unpackSuccessful;
     }
 
     /**
@@ -839,33 +916,53 @@ class SevenZipExtractor {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void addDerivedFilesToCase() throws TskCoreException {
+        void updateOrAddFileToCaseRec(Set<AbstractFile> filesToUpdate, Set<AbstractFile> existingFiles) throws TskCoreException {
             final FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
             for (UnpackedNode child : rootNode.children) {
-                addDerivedFilesToCaseRec(child, fileManager);
+                updateOrAddFileToCaseRec(child, fileManager, filesToUpdate, existingFiles);
             }
         }
 
-        private void addDerivedFilesToCaseRec(UnpackedNode node, FileManager fileManager) throws TskCoreException {
-            final String fileName = node.getFileName();
+        private AbstractFile findFileWithSamePath(Set<AbstractFile> files, UnpackedNode unpackedNode) {
+            for (AbstractFile file : files) {
+                if (file.getName().equals(unpackedNode.getFileName())) {
+                    return file;
+                }
+            }
+            return null;
+        }
 
+        private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, Set<AbstractFile> filesToUpdate, Set<AbstractFile> existingFiles) throws TskCoreException {
+            DerivedFile df;
             try {
-                DerivedFile df = fileManager.addDerivedFile(fileName, node.getLocalRelPath(), node.getSize(),
-                        node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                        node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
-                        "", "", TskData.EncodingType.XOR1);
-                node.setFile(df);
+                AbstractFile existingFile = findFileWithSamePath(existingFiles, node);
+                if (existingFile == null) {
+                    df = fileManager.addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
+                            node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
+                            node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
+                            "", "", TskData.EncodingType.XOR1);
+                } else {
+                    AbstractFile updateFile = findFileWithSamePath(filesToUpdate, node);
+                    if (updateFile != null) {
 
+                        df = fileManager.updateDerivedFile(node.getFileName(), updateFile.getId(), node.getLocalRelPath(), node.getSize(),
+                                node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
+                                node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
+                                "", "", TskData.EncodingType.XOR1);
+                    } else {
+                        df = (DerivedFile) existingFile;
+                    }
+                }
+                node.setFile(df);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error adding a derived file to db:" + fileName, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error adding a derived file to db:" + node.getFileName(), ex); //NON-NLS
                 throw new TskCoreException(
                         NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackedTree.exception.msg",
-                                fileName), ex);
+                                node.getFileName()), ex);
             }
-
-            //recurse
+            //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.children) {
-                addDerivedFilesToCaseRec(child, fileManager);
+                updateOrAddFileToCaseRec(child, fileManager, filesToUpdate, existingFiles);
             }
         }
 
@@ -894,7 +991,6 @@ class SevenZipExtractor {
                 this.localRelPath = parent.localRelPath + File.separator + fileName;
                 //new child derived file will be set by unpack() method
                 parent.children.add(this);
-
             }
 
             public long getCtime() {
