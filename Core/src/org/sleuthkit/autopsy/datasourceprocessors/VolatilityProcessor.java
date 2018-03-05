@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +98,7 @@ class VolatilityProcessor implements Runnable{
         fileManager = currentCase.getServices().getFileManager();
 
         // make a unique folder for this image
-        moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility" + File.separator + dataSource.getId();
+        moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility" + File.separator + "1";  // @@@ TESTING ONLY
         File directory = new File(String.valueOf(moduleOutputPath));
         if(!directory.exists()){
             directory.mkdirs();
@@ -143,11 +144,12 @@ class VolatilityProcessor implements Runnable{
             processBuilder.redirectError(new File(moduleOutputPath + "\\Volatility_Run.err"));
             processBuilder.directory(new File(memoryImage.getParent()));
             
-            int exitVal = ExecUtil.execute(processBuilder);
-            if (exitVal != 0) {
-                logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + pluginToRun);
-                return;
-            }
+            // @@@ TESTING ONLY
+            //int exitVal = ExecUtil.execute(processBuilder);
+            //if (exitVal != 0) {
+            //    logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + pluginToRun);
+            //    return;
+            //}
             
             if (isCancelled)
                 return;
@@ -206,8 +208,80 @@ class VolatilityProcessor implements Runnable{
         return null;
     }
     
+    private void lookupFiles(Set<String> fileSet, String pluginName) {
+        try {
+            if (isCancelled)
+                return;
+                
+            Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
+            for (String file : fileSet) {
+                File volfile = new File(file);
+                String fileName = volfile.getName().trim();
+                // if there is no extension, add a wildcard to the end
+                if (fileName.contains(".") == false) {
+                    fileName = fileName + ".%";
+                }
+                
+                String filePath = volfile.getParent();
+                if (filePath != null && !filePath.isEmpty()) {
+                    // strip C: 
+                   if (filePath.contains(":")) {
+                        filePath = filePath.substring(filePath.indexOf(":")+1);
+                    }
+                   filePath = filePath.replaceAll("\\\\", "/");
+                } else {
+                    filePath = "";
+                }
+                
+                try {
+                    List<AbstractFile> resolvedFiles;
+                    if (filePath.isEmpty()) {
+                        resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
+                    }
+                    else {
+                        resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
+                    }
+                    resolvedFiles.forEach((resolvedFile) -> {
+                        try {
+                            String MODULE_NAME = "VOLATILITY";
+                            BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                            BlackboardAttribute att1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
+                                    "Volatility Plugin " + pluginName);
+                            BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
+                                    "Volatility Plugin " + pluginName);
+                            volArtifact.addAttribute(att1);
+                            volArtifact.addAttribute(att2);
+
+                            try {
+                                // index the artifact for keyword search
+                                blackboard.indexArtifact(volArtifact);
+                            } catch (Blackboard.BlackboardException ex) {
+                                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + volArtifact.getArtifactID(), ex); //NON-NLS
+                            }
+
+                            // fire event to notify UI of this new artifact
+                            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+                        } catch (IllegalStateException ex) {
+                            logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+                        }
+                    });
+);
+                } catch (TskCoreException ex) {
+                    //String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
+                    logger.log(Level.SEVERE, "Error in Finding FIles", ex);
+                    return;
+                }
+                
+            }
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Error in processing List of FIles", ex); //NON-NLS   
+        }
+    }
+    
     private void scanOutputFile(String pluginName, File PluginOutput) {
-        List<String> fileNames = new ArrayList<>();
         Map<String, Map> fileName = new HashMap<String, Map>();   
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
          
@@ -217,7 +291,9 @@ class VolatilityProcessor implements Runnable{
             } else if (pluginName.matches("handles")) {
                fileName = Parse_Handles(PluginOutput);
             } else if (pluginName.matches("cmdline")) { 
-               fileName = Parse_Cmdline(PluginOutput);                
+               Set<String> fileSet = parse_Cmdline(PluginOutput);
+               lookupFiles(fileSet, pluginName);
+               return;
             } else if (pluginName.matches("psxview")){
                fileName = Parse_Psxview(PluginOutput);
             } else if (pluginName.matches("pslist")) {
@@ -291,13 +367,11 @@ class VolatilityProcessor implements Runnable{
     } 
 
     private Map<String, Map> Parse_Handles(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
         String line;
         String line_type;
-        String file_path;
+        
         Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
+        
         int counter = 0;
         try {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
@@ -306,14 +380,15 @@ class VolatilityProcessor implements Runnable{
                  Map<String, String> fileNameMap = new HashMap<>();
                  if (line.length() > 65) {
                     line_type = line.substring(64,68);
+                    // @@@ Should this restrict to line starting with File?
                     if (line_type.matches("File")) {
                         counter = counter + 1;
-                        file_path = line.substring(82);
+                        String file_path = line.substring(82);
                         file_path = file_path.replaceAll("Device\\\\","");
                         file_path = file_path.replaceAll("HarddiskVolume[0-9]\\\\", "");
                         File volfile = new File(file_path);
-                        fileName = volfile.getName();
-                        filePath = volfile.getParent();
+                        String fileName = volfile.getName();
+                        String filePath = volfile.getParent();
                         if (filePath != null && !filePath.isEmpty()) {
                             filePath = filePath.replaceAll("\\\\", "%");
                             filePath = "%" + filePath + "%";
@@ -436,42 +511,37 @@ class VolatilityProcessor implements Runnable{
         return fileMap;     
     }
     
-    private Map<String, Map> Parse_Cmdline(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
+    private Set<String> parse_Cmdline(File PluginFile) {
         String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
+        Set<String> fileSet = new HashSet<>();
         int counter = 0;
         try {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
              // read the first line from the text file
              while ((line = br.readLine()) != null) {
-                Map<String, String> fileNameMap = new HashMap<>();
                  if (line.length() > 16) {
-                    line_type = line.substring(0,15);
-                    if (line_type.startsWith("Command line : ")) {
+                    String TAG = "Command line : ";
+                    if (line.startsWith(TAG)) {
                         counter = counter + 1;
-                        file_path = line.substring(15);
-                        File volfile = new File(file_path);
-                        fileName = volfile.getName();
-                        if ((fileName.lastIndexOf(".") + 3) < fileName.length()) {
-                            fileName = fileName.substring(0, fileName.lastIndexOf(".")+4);
-                        }
-                        filePath = volfile.getParent();
-                        if (filePath != null && !filePath.isEmpty()) {
-                            if (filePath.contains(":")) {
-                                filePath = filePath.substring(filePath.indexOf(":")+1);
+                        // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
+                        String file_path;
+                        if (line.charAt(TAG.length()) == '\"') {
+                            file_path = line.substring(TAG.length()+1);
+                            if (file_path.contains("\"")) {
+                                file_path = file_path.substring(0, file_path.indexOf("\""));
                             }
-                            filePath = filePath.replaceAll("\\\\", "%");
-                            filePath = "%" + filePath + "%";
-                        } else {
-                            filePath = "%";
-                        }                    
-                        fileNameMap.put(filePath, fileName);
-                        fileMap.put(file_path, fileNameMap);
+                            else {
+                                // ERROR
+                            }
+                        }
+                        // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512 
+                        else {
+                            file_path = line.substring(TAG.length());
+                            if (file_path.contains(" ")) {
+                                file_path = file_path.substring(0, file_path.indexOf(" "));
+                            }
+                        }
+                        fileSet.add(file_path.toLowerCase());
                     }
                  }
              }    
@@ -479,7 +549,7 @@ class VolatilityProcessor implements Runnable{
         } catch (IOException ex) { 
             //Exceptions.printStackTrace(ex);
         } 
-        return fileMap;     
+        return fileSet;     
     }
     
     private Map<String, Map> Parse_Shimcache(File PluginFile) {
