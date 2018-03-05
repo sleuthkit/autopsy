@@ -93,48 +93,48 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="1" pref="1" max="-2" attributes="0"/>
-                              <Component id="jScrollPane1" min="-2" pref="395" max="-2" attributes="0"/>
+                              <Component id="jScrollPane1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="informationLabel" max="32767" attributes="0"/>
                                       <EmptySpace min="-2" pref="309" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" attributes="0">
                                               <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="102" alignment="0" attributes="0">
                                                       <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="indexLabel" alignment="0" min="-2" pref="66" max="-2" attributes="0"/>
-                                                          <Component id="indexPathLabelLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="indexLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="indexPathLabelLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
                                                       </Group>
-                                                      <EmptySpace min="-2" pref="64" max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="1" attributes="0">
-                                                          <Component id="indexPathLabel" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="hashDbIndexStatusLabel" min="-2" pref="225" max="-2" attributes="0"/>
+                                                      <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
+                                                      <Group type="103" groupAlignment="0" attributes="0">
+                                                          <Component id="hashDbIndexStatusLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="indexPathLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
-                                                      <Component id="indexButton" min="-2" pref="120" max="-2" attributes="0"/>
+                                                      <Component id="indexButton" min="-2" max="-2" attributes="0"/>
                                                       <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                                                       <Component id="addHashesToDatabaseButton" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
                                                       <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="versionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="orgLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="readOnlyLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="nameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="locationLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="typeLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="versionLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="orgLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="readOnlyLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="nameLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       </Group>
                                                       <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
                                                       <Group type="103" groupAlignment="0" attributes="0">
                                                           <Component id="hashDbNameLabel" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="hashDbTypeLabel" min="-2" pref="225" max="-2" attributes="0"/>
-                                                          <Component id="hashDbLocationLabel" alignment="0" min="-2" pref="225" max="-2" attributes="0"/>
+                                                          <Component id="hashDbTypeLabel" min="-2" max="-2" attributes="0"/>
+                                                          <Component id="hashDbLocationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                                           <Component id="hashDbVersionLabel" min="-2" max="-2" attributes="0"/>
                                                           <Component id="hashDbOrgLabel" min="-2" max="-2" attributes="0"/>
                                                           <Component id="hashDbReadOnlyLabel" min="-2" max="-2" attributes="0"/>
@@ -162,7 +162,7 @@
                                               </Group>
                                           </Group>
                                       </Group>
-                                      <EmptySpace min="50" max="32767" attributes="0"/>
+                                      <EmptySpace pref="24" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -170,11 +170,11 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="hashDatabasesLabel" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" attributes="0">
-                                      <Component id="createDatabaseButton" min="-2" pref="121" max="-2" attributes="0"/>
+                                      <Component id="createDatabaseButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="importDatabaseButton" min="-2" pref="132" max="-2" attributes="0"/>
+                                      <Component id="importDatabaseButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="deleteDatabaseButton" min="-2" pref="131" max="-2" attributes="0"/>
+                                      <Component id="deleteDatabaseButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -337,9 +337,6 @@
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[140, 25]"/>
                 </Property>
-                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[140, 25]"/>
-                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteDatabaseButtonActionPerformed"/>
@@ -365,9 +362,6 @@
                   <Dimension value="[140, 25]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[140, 25]"/>
-                </Property>
-                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[140, 25]"/>
                 </Property>
               </Properties>
@@ -562,9 +556,6 @@
                   <Dimension value="[140, 25]"/>
                 </Property>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                  <Dimension value="[140, 25]"/>
-                </Property>
-                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[140, 25]"/>
                 </Property>
               </Properties>
