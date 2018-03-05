@@ -32,6 +32,7 @@ package org.sleuthkit.autopsy.examples;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -76,7 +77,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
         try {
             // Get count of files with .doc extension.
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             List<AbstractFile> docFiles = fileManager.findFiles(dataSource, "%.doc");
 
             long fileCount = 0;
@@ -117,7 +118,7 @@ class SampleDataSourceIngestModule implements DataSourceIngestModule {
 
             return IngestModule.ProcessResult.OK;
 
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             IngestServices ingestServices = IngestServices.getInstance();
             Logger logger = ingestServices.getLogger(SampleIngestModuleFactory.getModuleName());
             logger.log(Level.SEVERE, "File query failed", ex);
