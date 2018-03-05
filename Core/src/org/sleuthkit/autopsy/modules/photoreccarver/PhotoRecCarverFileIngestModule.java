@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -404,7 +404,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path = Paths.get(Case.getCurrentCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        Path path;
+        try {
+            path = Paths.get(Case.getOpenCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
+        }
         try {
             Files.createDirectory(path);
             if (UNCPathUtilities.isUNC(path)) {

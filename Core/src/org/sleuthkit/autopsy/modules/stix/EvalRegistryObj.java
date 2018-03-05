@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import java.util.regex.Matcher;
 import org.mitre.cybox.objects.WindowsRegistryKey;
 import org.mitre.cybox.common_2.ConditionTypeEnum;
 import com.williballenthin.rejistry.*;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -345,7 +346,12 @@ class EvalRegistryObj extends EvaluatableObject {
         List<RegistryFileInfo> regFilesLocal = new ArrayList<RegistryFileInfo>();
 
         // Make the temp directory
-        String tmpDir = Case.getCurrentCase().getTempDirectory() + File.separator + "STIX"; //NON-NLS
+        String tmpDir;
+        try {
+           tmpDir = Case.getOpenCase().getTempDirectory() + File.separator + "STIX"; //NON-NLS
+        } catch (NoCurrentCaseException ex) { 
+            throw new TskCoreException(ex.getLocalizedMessage());
+        }
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -377,9 +383,15 @@ class EvalRegistryObj extends EvaluatableObject {
      */
     private static List<AbstractFile> findRegistryFiles() throws TskCoreException {
         List<AbstractFile> registryFiles = new ArrayList<AbstractFile>();
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) { 
+            throw new TskCoreException(ex.getLocalizedMessage());
+        }
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = openCase.getServices().getFileManager();
 
-        for (Content ds : Case.getCurrentCase().getDataSources()) {
+        for (Content ds : openCase.getDataSources()) {
 
             // find the user-specific ntuser-dat files
             registryFiles.addAll(fileManager.findFiles(ds, "ntuser.dat")); //NON-NLS

@@ -75,12 +75,12 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     }
 
     private void refresh() {
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
+            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
             List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
             this.ingestJobs = ingestJobs;
             this.repaint();
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
@@ -114,11 +114,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             if (columnIndex == 0) {
                 try {
+                    SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
                     return skCase.getContentById(currIngestJob.getObjectId()).getName();
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Failed to get content from db", ex);
                     return "";
                 }
