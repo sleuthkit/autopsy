@@ -52,7 +52,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="ingestRunningWarningLabel" alignment="0" max="32767" attributes="0"/>
                       <Component id="jLabel3" alignment="1" max="32767" attributes="0"/>
-                      <Component id="jScrollPane2" pref="761" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="728" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -144,7 +144,7 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Component id="newTypeButton" min="-2" pref="101" max="-2" attributes="0"/>
+                                      <Component id="newTypeButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="editTypeButton" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
