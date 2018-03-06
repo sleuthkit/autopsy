@@ -599,8 +599,8 @@ public class Case {
          */
         try {
             return getOpenCase();
-        } catch (NoCurrentCaseException e) {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), e);
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
         }
     }
 
@@ -611,13 +611,10 @@ public class Case {
      *
      * @throws NoCurrentCaseException if there is no open case.
      */
-    @Messages({
-        "Case.NoCurrentCaseException.message=No open case available."
-    })
     public static Case getOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
         if (openCase == null) {
-            throw new NoCurrentCaseException(Case_NoCurrentCaseException_message());
+            throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
         } else {
             return openCase;
         }
