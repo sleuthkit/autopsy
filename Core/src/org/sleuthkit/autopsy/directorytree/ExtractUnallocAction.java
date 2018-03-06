@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -100,7 +101,8 @@ final class ExtractUnallocAction extends AbstractAction {
             "ExtractUnallocAction.volumeInProgress=Already extracting unallocated space into {0} - will skip this volume",
             "ExtractUnallocAction.volumeError=Error extracting unallocated space from volume",
             "ExtractUnallocAction.noFiles=No unallocated files found on volume",
-            "ExtractUnallocAction.imageError=Error extracting unallocated space from image"})
+            "ExtractUnallocAction.imageError=Error extracting unallocated space from image",
+            "ExtractUnallocAction.noOpenCase.errMsg=No open case available."})
     @Override
     public void actionPerformed(ActionEvent e) {
         if (filesToExtract != null && filesToExtract.size() > 0) {
@@ -109,6 +111,13 @@ final class ExtractUnallocAction extends AbstractAction {
             if (isImage && isImageInProgress(currentImage)) {
                 MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.notifyMsg.unallocAlreadyBeingExtr.msg"));
                 //JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
+                return;
+            }
+            Case openCase;
+            try {
+                openCase = Case.getOpenCase();
+            } catch (NoCurrentCaseException ex) {
+                MessageNotifyUtil.Message.info(Bundle.ExtractAction_noOpenCase_errMsg());
                 return;
             }
             List<OutputFileData> copyList = new ArrayList<OutputFileData>() {
@@ -130,7 +139,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 }
             };
 
-            fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+            fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
             fileChooser.setDialogTitle(
                     NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

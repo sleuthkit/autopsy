@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -97,7 +98,11 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 } else if (jmi.equals(showCaseDetailsMenuItem)) {
                     showCaseDetails(otherCasesTable.getSelectedRow());
                 } else if (jmi.equals(exportToCSVMenuItem)) {
-                    saveToCSV();
+                    try {
+                        saveToCSV();
+                    } catch (NoCurrentCaseException ex) {
+                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                    }
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
                 }
@@ -159,8 +164,19 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     @Messages({"DataContentViewerOtherCases.caseDetailsDialog.notSelected=No Row Selected",
         "DataContentViewerOtherCases.caseDetailsDialog.noDetails=No details for this case.",
         "DataContentViewerOtherCases.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.",
-        "DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error"})
+        "DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error",
+        "DataContentViewerOtherCases.noOpenCase.errMsg=No open case available."})
     private void showCaseDetails(int selectedRowViewIdx) {
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
+                            Bundle.DataContentViewerOtherCases_noOpenCase_errMsg(),
+                            Bundle.DataContentViewerOtherCases_noOpenCase_errMsg(),
+                            DEFAULT_OPTION, PLAIN_MESSAGE);
+            return;
+        }
         String caseDisplayName = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noCaseNameError();
         try {
             if (-1 != selectedRowViewIdx) {
@@ -177,7 +193,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 }
                 caseDisplayName = eamCasePartial.getDisplayName();
                 // query case details
-                CorrelationCase eamCase = dbManager.getCase(Case.getCurrentCase());
+                CorrelationCase eamCase = dbManager.getCase(openCase);
                 if (eamCase == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                             Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),
@@ -205,11 +221,11 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         }
     }
 
-    private void saveToCSV() {
+    private void saveToCSV() throws NoCurrentCaseException {
         if (0 != otherCasesTable.getSelectedRowCount()) {
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
-            CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+            CSVFileChooser.setCurrentDirectory(new File(Case.getOpenCase().getExportDirectory()));
             CSVFileChooser.setSelectedFile(new File(fileName));
             CSVFileChooser.setFileFilter(new FileNameExtensionFilter("csv file", "csv"));
 
@@ -417,8 +433,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      */
     private Collection<CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
-        String caseUUID = Case.getCurrentCase().getName();
         try {
+            String caseUUID = Case.getOpenCase().getName();
             EamDb dbManager = EamDb.getInstance();
             Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
                     .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
@@ -428,6 +444,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             return artifactInstances;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         }
 
         return Collections.emptyList();
@@ -473,9 +491,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             if (af != null) {
                 Content dataSource = af.getDataSource();
                 dataSourceName = dataSource.getName();
-                deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+                deviceId = Case.getOpenCase().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
             }
-        } catch (TskException ex) {
+        } catch (TskException | NoCurrentCaseException ex) {
             // do nothing. 
             // @@@ Review this behavior
         }
