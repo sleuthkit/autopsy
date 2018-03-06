@@ -583,14 +583,14 @@ public class Case {
     }
 
     /**
-     * Deprecated. Use getOpenCase() instead.
-     * 
      * Gets the current case, if there is one, at the time of the call.
      *
      * @return The current case.
      *
      * @throws IllegalStateException if there is no current case.
-     */
+     * 
+     * @deprecated. Use getOpenCase() instead.
+    */
     @Deprecated
     public static Case getCurrentCase() {
         /*
@@ -617,7 +617,7 @@ public class Case {
     public static Case getOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
         if (openCase == null) {
-            throw new NoCurrentCaseException(Bundle.Case_NoCurrentCaseException_message());
+            throw new NoCurrentCaseException(Case_NoCurrentCaseException_message());
         } else {
             return openCase;
         }
