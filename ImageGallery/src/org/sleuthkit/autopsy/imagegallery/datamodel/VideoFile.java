@@ -29,6 +29,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
@@ -64,7 +65,7 @@ public class VideoFile extends DrawableFile {
     private SoftReference<Media> mediaRef;
 
     @NbBundle.Messages({"VideoFile.getMedia.progress=writing temporary file to disk"})
-    public Media getMedia() throws IOException, MediaException {
+    public Media getMedia() throws IOException, MediaException, NoCurrentCaseException {
         Media media = (mediaRef != null) ? mediaRef.get() : null;
 
         if (media != null) {
@@ -90,7 +91,7 @@ public class VideoFile extends DrawableFile {
     Double getWidth() {
         try {
             return (double) getMedia().getWidth();
-        } catch (IOException | MediaException ex) {
+        } catch (IOException | MediaException | NoCurrentCaseException ex) {
             return -1.0;
         }
     }
@@ -104,7 +105,7 @@ public class VideoFile extends DrawableFile {
     Double getHeight() {
         try {
             return (double) getMedia().getHeight();
-        } catch (IOException | MediaException ex) {
+        } catch (IOException | MediaException | NoCurrentCaseException ex) {
             return -1.0;
         }
     }
