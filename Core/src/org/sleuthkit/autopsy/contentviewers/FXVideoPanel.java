@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +59,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.corecomponents.FrameCapture;
 import org.sleuthkit.autopsy.corecomponents.VideoFrame;
@@ -136,7 +137,13 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         mediaPane.setInfoLabelText(path);
         mediaPane.setInfoLabelToolTipText(path);
 
-        final File tempFile = VideoUtils.getTempVideoFile(currentFile);
+        final File tempFile;
+        try {
+            tempFile = VideoUtils.getTempVideoFile(currentFile);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
 
         new Thread(mediaPane.new ExtractMedia(currentFile, tempFile)).start();
 

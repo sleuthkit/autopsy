@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
@@ -51,7 +53,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
         "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
-        propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
+        try {
+            propertiesPanel = new CasePropertiesPanel(Case.getOpenCase());
+        } catch (NoCurrentCaseException ex) { 
+            Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
+        }
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
