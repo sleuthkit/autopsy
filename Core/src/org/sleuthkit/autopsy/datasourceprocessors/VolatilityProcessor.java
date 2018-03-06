@@ -552,8 +552,10 @@ class VolatilityProcessor implements Runnable{
              while ((line = br.readLine()) != null) {
                 String file_path;
                 file_path = line.substring(19, 41);
-                if (!file_path.startsWith("System")) {
-                   fileSet.add(file_path.toLowerCase());
+                if (!file_path.startsWith("System ")) {
+                   if (file_path.trim().length() > 0) {;
+                       fileSet.add(file_path.toLowerCase().trim());
+                   }
                 }
              }    
              br.close();
