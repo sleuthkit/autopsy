@@ -42,6 +42,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
+@NbBundle.Messages({"LocalDiskPanel.refreshTablebutton.text=Refresh Local Disks",
+    "LocalDiskPanel.listener.getOpenCase.errTitle=No open case available",
+    "LocalDiskPanel.listener.getOpenCase.errMsg=LocalDiskPanel listener couldn't get the open case."
+})
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
  * C:.
@@ -74,9 +78,14 @@ final class LocalDiskPanel extends JPanel {
             public void valueChanged(ListSelectionEvent e) {
                 if (diskTable.getSelectedRow() >= 0 && diskTable.getSelectedRow() < disks.size()) {
                     enableNext = true;
-                    setPotentialImageWriterPath(disks.get(diskTable.getSelectedRow()));
                     try {
+                        setPotentialImageWriterPath(disks.get(diskTable.getSelectedRow()));
                         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.SEVERE, "Exception while getting open case.", e); //NON-NLS
+                        MessageNotifyUtil.Notify.show(Bundle.LocalDiskPanel_listener_getOpenCase_errTitle(),
+                                Bundle.LocalDiskPanel_listener_getOpenCase_errMsg(),
+                                MessageNotifyUtil.MessageType.ERROR);
                     } catch (Exception ex) {
                         logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
                         MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
@@ -400,11 +409,11 @@ final class LocalDiskPanel extends JPanel {
         return noFatOrphansCheckbox.isSelected();
     }
 
-    private static String getDefaultImageWriterFolder() {
-        return Paths.get(Case.getCurrentCase().getModuleDirectory(), "Image Writer").toString();
+    private static String getDefaultImageWriterFolder() throws NoCurrentCaseException {
+        return Paths.get(Case.getOpenCase().getModuleDirectory(), "Image Writer").toString();
     }
 
-    private void setPotentialImageWriterPath(LocalDisk disk) {
+    private void setPotentialImageWriterPath(LocalDisk disk) throws NoCurrentCaseException {
 
         File subDirectory = Paths.get(getDefaultImageWriterFolder()).toFile();
         if (!subDirectory.exists()) {

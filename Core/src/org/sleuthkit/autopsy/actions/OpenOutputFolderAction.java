@@ -33,6 +33,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -56,7 +57,7 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
     public void performAction() {
         File outputDir;
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             outputDir = new File(currentCase.getOutputDirectory());
             if (outputDir.exists()) {
                 try {
@@ -72,7 +73,7 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
                         NbBundle.getMessage(this.getClass(), "OpenOutputFolder.error1", outputDir.getAbsolutePath()), NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(descriptor);
             }
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "OpenOutputFolderAction enabled with no current case", ex); //NON-NLS
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
         }

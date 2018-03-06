@@ -27,6 +27,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
@@ -83,8 +84,8 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
         new Thread(() -> {
             for (BlackboardArtifact artifact : selectedArtifacts) {
                 try {
-                    Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
-                } catch (TskCoreException ex) {
+                    Case.getOpenCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
