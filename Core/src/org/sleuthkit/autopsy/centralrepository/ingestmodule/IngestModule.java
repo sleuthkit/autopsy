@@ -73,8 +73,9 @@ final class IngestModule implements FileIngestModule {
     private final boolean flagTaggedNotableItems;
 
     /**
-     * //DLG:
-     * @param settings 
+     * Instantiate the Correlation Engine ingest module.
+     * 
+     * @param settings The ingest settings for the module instance.
      */
     IngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
@@ -123,9 +124,9 @@ final class IngestModule implements FileIngestModule {
          */
         
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN) {
-            CorrelationAttribute contentCorrelationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null);
             if (flagTaggedNotableItems) {
                 try {
+                    CorrelationAttribute contentCorrelationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null);
                     List<String> caseDisplayNamesList = EamDb.getInstance().getListCasesHavingArtifactInstancesKnownBad(
                             contentCorrelationAttribute.getCorrelationType(), contentCorrelationAttribute.getCorrelationValue());
                     if (!caseDisplayNamesList.isEmpty()) {
