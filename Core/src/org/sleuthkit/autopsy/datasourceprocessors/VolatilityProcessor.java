@@ -225,7 +225,11 @@ class VolatilityProcessor implements Runnable{
 
             File volfile = new File(file);
             String fileName = volfile.getName().trim();
-            // if there is no extension, add a wildcard to the end
+            // File does not have any data in it based on bad data
+            if (fileName.length() < 1) {
+                continue;
+            }
+           // if there is no extension, add a wildcard to the end
             if (fileName.contains(".") == false) {
                 // if there is already the same entry with ".exe" in the set, just use that one
                 if (fileSet.contains(file + ".exe"))
@@ -317,6 +321,7 @@ class VolatilityProcessor implements Runnable{
     } 
 
     private String normalizePath(String filePath) {
+        filePath = filePath.trim();
         if (filePath == null)
             return "";
         
@@ -329,6 +334,8 @@ class VolatilityProcessor implements Runnable{
         filePath = filePath.replaceAll("\\\\", "/");
         filePath = filePath.toLowerCase();
         filePath = filePath.replaceAll("/systemroot/", "/windows/");
+        filePath = filePath.replaceAll("device/","");
+        filePath = filePath.replaceAll("harddiskvolume[0-9]/", "");
 
         return filePath;
     }
@@ -344,15 +351,13 @@ class VolatilityProcessor implements Runnable{
                  String file_path = null;
                  if (line.contains(TAG)) {
                     file_path = line.substring(82);
-                    file_path = file_path.replaceAll("Device\\\\","");
-                    file_path = file_path.replaceAll("HarddiskVolume[0-9]\\\\", "");
                     if (file_path.contains("\"")) {
                          file_path = file_path.substring(0, file_path.indexOf("\""));
                     }
                     else {
                        // ERROR
                     }
-                    fileSet.add(file_path.toLowerCase());
+                    fileSet.add(normalizePath(file_path));
                  }
              }    
              br.close();
@@ -422,9 +427,7 @@ class VolatilityProcessor implements Runnable{
                 try {
                     String file_path;
                     file_path = line.substring(41);
-                    file_path = file_path.replaceAll("Device\\\\","");
-                    file_path = file_path.replaceAll("HarddiskVolume[0-9]\\\\", "");
-                    fileSet.add(file_path.toLowerCase());
+                    fileSet.add(normalizePath(file_path));
                 } catch (StringIndexOutOfBoundsException ex) {
                   // TO DO  Catch exception
                 }
@@ -493,8 +496,8 @@ class VolatilityProcessor implements Runnable{
                     else {
                         // ERROR
                     }
-                    fileSet.add(file_path.toLowerCase());
-                     } 
+                    fileSet.add(normalizePath(file_path));
+                    } 
              }
              br.close();
         } catch (IOException ex) { 
@@ -513,7 +516,7 @@ class VolatilityProcessor implements Runnable{
                 String file_path;
                 file_path = line.substring(19, 37);
                 if (!file_path.startsWith("System")) {
-                   fileSet.add(file_path.toLowerCase());
+                   fileSet.add(normalizePath(file_path));
                 }
              }    
              br.close();
@@ -533,7 +536,7 @@ class VolatilityProcessor implements Runnable{
                 String file_path;
                 file_path = line.substring(19, 41);
                 if (!file_path.startsWith("System")) {
-                   fileSet.add(file_path.toLowerCase());
+                   fileSet.add(normalizePath(file_path));
                 }
              }    
              br.close();
@@ -554,7 +557,7 @@ class VolatilityProcessor implements Runnable{
                 file_path = line.substring(19, 41);
                 if (!file_path.startsWith("System ")) {
                    if (file_path.trim().length() > 0) {;
-                       fileSet.add(file_path.toLowerCase().trim());
+                       fileSet.add(normalizePath(file_path));
                    }
                 }
              }    
@@ -577,7 +580,7 @@ class VolatilityProcessor implements Runnable{
                 if (line.contains(TAG)) {
                     file_path = line.substring(line.indexOf(":") + 1, 52);
                     if (!file_path.startsWith("System")) {
-                       fileSet.add(file_path.toLowerCase());
+                       fileSet.add(normalizePath(file_path));
                     }
                 }
              }    
@@ -615,7 +618,7 @@ class VolatilityProcessor implements Runnable{
                             file_path = file_path.substring(0, file_path.indexOf(" "));
                         }
                     }
-                    fileSet.add(file_path.toLowerCase());
+                    fileSet.add(normalizePath(file_path));
                 }
              }    
              br.close();
@@ -625,56 +628,6 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
     
-    private Map<String, String> dedupeFileList(Map<String, Map> fileList) {
-            Map<String, String> fileMap = new HashMap<>();
-            Map<String, String> newFileMap = new HashMap<>();
-            Set<String> keySet = fileList.keySet();
-            Iterator<String> keySetIterator = keySet.iterator();   
-            while (keySetIterator.hasNext()) {
-                String key = keySetIterator.next();
-                fileMap = fileList.get(key);
-                for ( String key1 : fileMap.keySet() ) {
-                    newFileMap.put(key1,fileMap.get(key1));
-                }
-            }
-            return newFileMap;
-    }
-
-    private List<String> parsePluginOutput(File pluginFile) throws FileNotFoundException {
-            // create a Buffered Reader object instance with a FileReader
-            List<String> fileNames = new ArrayList<>();
-            String line;
-            Pattern filePathPattern = Pattern.compile("(\\\\[.-\\\\\\w\\\\s]+)+");
-            Pattern fileName1Pattern = Pattern.compile("(\\s)([^!()\\,:][\\w-._]+)([^\\s()!:\\]]+)");
-            Pattern fileName2Pattern = Pattern.compile("([^!()\\,:][\\w-._]+)([^\\s()!:\\]]+)");
-            try {
-                 BufferedReader br = new BufferedReader(new FileReader(pluginFile));
-                 // read the first line from the text file
-                 while ((line = br.readLine()) != null) {
-                    Matcher matcher = filePathPattern.matcher(line);
-                    if (matcher.find()) {
-                        fileNames.add(matcher.group());
-                    } else {
-                        Matcher matcher1 = fileName1Pattern.matcher(line);
-                        if (matcher1.find()) {
-                           fileNames.add(matcher1.group());
-                        } else {
-                           Matcher matcher2 = fileName2Pattern.matcher(line);
-                           if (matcher2.find()) {
-                               fileNames.add(matcher2.group());
-                           }
-                        }
-                    }                    
-                 }
-                 br.close();
-            } catch (IOException ex) {
-                // @@@ NEed to log or rethrow
-                Exceptions.printStackTrace(ex);
-            } 
-     
-            return fileNames;
-    }
-
     void cancel() {
         isCancelled = true;
     }
