@@ -203,7 +203,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                  * Unload/delete the core on the server and then delete the text
                  * index files.
                  */
-                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata.getCaseType());
+                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata);
                 if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
                     throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));                    
                 }

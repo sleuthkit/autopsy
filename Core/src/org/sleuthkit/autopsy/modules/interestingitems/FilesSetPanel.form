@@ -22,7 +22,7 @@
                   <Component id="descPanel" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="nameLabel" min="-2" pref="71" max="-2" attributes="0"/>
+                      <Component id="nameLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="nameTextField" min="-2" pref="299" max="-2" attributes="0"/>
                   </Group>
@@ -49,7 +49,7 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="ignoreKnownFilesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="ignoreUnallocCheckbox" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
+                  <Component id="ignoreUnallocCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
