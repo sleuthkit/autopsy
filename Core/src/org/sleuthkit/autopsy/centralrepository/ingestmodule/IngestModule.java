@@ -124,34 +124,17 @@ final class IngestModule implements FileIngestModule {
         
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN) {
             CorrelationAttribute contentCorrelationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null);
-            try {
-                List<String> caseDisplayNamesList = EamDb.getInstance().getListCasesHavingArtifactInstancesKnownBad(
-                        contentCorrelationAttribute.getCorrelationType(), contentCorrelationAttribute.getCorrelationValue());
-                String currentCaseDisplayName = Case.getCurrentCase().getDisplayName();
-                boolean taggedOutsideCurrentCase = false;
-                if (!caseDisplayNamesList.isEmpty()) {
-                    for (String name : caseDisplayNamesList) {
-                        if (!name.equals(currentCaseDisplayName)) {
-                            taggedOutsideCurrentCase = true;
-                            break;
-                        }
+            if (flagTaggedNotableItems) {
+                try {
+                    List<String> caseDisplayNamesList = EamDb.getInstance().getListCasesHavingArtifactInstancesKnownBad(
+                            contentCorrelationAttribute.getCorrelationType(), contentCorrelationAttribute.getCorrelationValue());
+                    if (!caseDisplayNamesList.isEmpty()) {
+                        postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                     }
+                } catch (EamDbException ex) {
+                    logger.log(Level.SEVERE, "Error searching database for content.", ex); // NON-NLS
+                    return ProcessResult.ERROR;
                 }
-
-                if(flagTaggedNotableItems || !taggedOutsideCurrentCase) {
-                    try {
-                        caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
-                        if (!caseDisplayNamesList.isEmpty()) {
-                            postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
-                        }
-                    } catch (EamDbException ex) {
-                        logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
-                        return ProcessResult.ERROR;
-                    }
-                }
-            } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error searching database for content.", ex); // NON-NLS
-                return ProcessResult.ERROR;
             }
         }
 

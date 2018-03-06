@@ -255,7 +255,7 @@ public class IngestEventsListener {
 
         @Override
         public void run() {
-            if (!EamDb.isEnabled() || getCorrelationModulesFlaggingNotableCount() == 0) {
+            if (!EamDb.isEnabled()) {
                 return;
             }
             final ModuleDataEvent mde = (ModuleDataEvent) event.getOldValue();
@@ -276,10 +276,12 @@ public class IngestEventsListener {
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                             // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
                             // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
-                            List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                            if (!caseDisplayNames.isEmpty()) {
-                                postCorrelatedBadArtifactToBlackboard(bbArtifact,
-                                        caseDisplayNames);
+                            if (getCorrelationModulesFlaggingNotableCount() > 0) {
+                                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                if (!caseDisplayNames.isEmpty()) {
+                                    postCorrelatedBadArtifactToBlackboard(bbArtifact,
+                                            caseDisplayNames);
+                                }
                             }
                             eamArtifacts.add(eamArtifact);
                         }
