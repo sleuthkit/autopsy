@@ -76,8 +76,8 @@ class TextMessageAnalyzer {
                 try {
                     jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
                     fileId = file.getId();
+                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
                     findTextsInDB(dbPath, fileId);
                 } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
                     logger.log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", file.getName(), fileId), ex); //NON-NLS
