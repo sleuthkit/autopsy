@@ -150,7 +150,7 @@ public class IngestEventsListener {
     }
 
     /**
-     * Wether or not the Correlation Engine Module is enabled for any of the
+     * Whether or not the Correlation Engine Module is enabled for any of the
      * currently running ingest jobs and flagging notable items.
      *
      * @return boolean True for Correlation Engine flagging enabled, False for
