@@ -325,7 +325,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         
         new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() throws IOException, SQLException, ClassNotFoundException {
 
                 try {
                     // Copy the file to temp folder
@@ -347,7 +347,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     LOGGER.log(Level.SEVERE, "Failed to copy DB file " + sqliteFile.getName(), ex); //NON-NLS
                     throw ex;
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to open DB file " + sqliteFile.getName(), ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Failed to get tables from DB file " + sqliteFile.getName(), ex); //NON-NLS
                     throw ex;
                 } catch (ClassNotFoundException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to initialize JDBC SQLite.", ex); //NON-NLS
@@ -437,21 +437,33 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      */
     private void getTables() throws SQLException {
 
-        
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(
+        Statement statement = null;
+        ResultSet resultSet = null;
+
+        try {
+             statement = connection.createStatement();
+             resultSet = statement.executeQuery(
                 "SELECT name, sql FROM sqlite_master "
                 + " WHERE type= 'table' "
                 + " ORDER BY name;"); //NON-NLS
+        
+            while (resultSet.next()) {
+                String tableName = resultSet.getString("name"); //NON-NLS
+                String tableSQL = resultSet.getString("sql"); //NON-NLS
 
-        while (resultSet.next()) {
-            String tableName = resultSet.getString("name"); //NON-NLS
-            String tableSQL = resultSet.getString("sql"); //NON-NLS
-
-            dbTablesMap.put(tableName, tableSQL);
+                dbTablesMap.put(tableName, tableSQL);
+            }
+        } catch(SQLException ex) {
+           throw ex;
         }
-        resultSet.close();
-	statement.close();
+       finally {
+            if (null != resultSet) {
+                resultSet.close();
+            }
+            if (null != statement) {
+                statement.close();
+            }
+        }
     }
 
     @NbBundle.Messages({"# {0} - tableName",
@@ -476,7 +488,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                     return resultSet.getInt("count");
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get row count for table " + tableName, ex); //NON-NLS
                     throw ex;
                 }
                 finally {
@@ -556,7 +567,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     
                     return resultSetToArrayList(resultSet);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
                     throw ex;
                 }
                 finally {
