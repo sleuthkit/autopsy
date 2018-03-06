@@ -512,7 +512,9 @@ class VolatilityProcessor implements Runnable{
              while ((line = br.readLine()) != null) {
                 String file_path;
                 file_path = line.substring(19, 37);
-                fileSet.add(file_path.toLowerCase());
+                if (!file_path.startsWith("System")) {
+                   fileSet.add(file_path.toLowerCase());
+                }
              }    
              br.close();
         } catch (IOException ex) { 
@@ -530,7 +532,9 @@ class VolatilityProcessor implements Runnable{
              while ((line = br.readLine()) != null) {
                 String file_path;
                 file_path = line.substring(19, 41);
-                fileSet.add(file_path.toLowerCase());
+                if (!file_path.startsWith("System")) {
+                   fileSet.add(file_path.toLowerCase());
+                }
              }    
              br.close();
         } catch (IOException ex) { 
@@ -548,7 +552,9 @@ class VolatilityProcessor implements Runnable{
              while ((line = br.readLine()) != null) {
                 String file_path;
                 file_path = line.substring(19, 41);
-                fileSet.add(file_path.toLowerCase());
+                if (!file_path.startsWith("System")) {
+                   fileSet.add(file_path.toLowerCase());
+                }
              }    
              br.close();
         } catch (IOException ex) { 
@@ -568,7 +574,9 @@ class VolatilityProcessor implements Runnable{
                 String TAG = ":";
                 if (line.contains(TAG)) {
                     file_path = line.substring(line.indexOf(":") + 1, 52);
-                    fileSet.add(file_path.toLowerCase());
+                    if (!file_path.startsWith("System")) {
+                       fileSet.add(file_path.toLowerCase());
+                    }
                 }
              }    
              br.close();
