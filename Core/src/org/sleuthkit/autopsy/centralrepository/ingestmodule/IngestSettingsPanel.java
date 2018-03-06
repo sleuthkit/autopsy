@@ -76,7 +76,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                         .addGap(10, 10, 10)
                         .addComponent(flagTaggedNotableItemsCheckbox))
                     .addComponent(ingestSettingsLabel))
-                .addContainerGap(75, Short.MAX_VALUE))
+                .addContainerGap(65, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

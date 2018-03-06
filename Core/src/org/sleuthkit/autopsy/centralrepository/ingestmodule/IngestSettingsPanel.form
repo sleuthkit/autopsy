@@ -25,7 +25,7 @@
                   </Group>
                   <Component id="ingestSettingsLabel" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="75" max="32767" attributes="0"/>
+              <EmptySpace pref="65" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

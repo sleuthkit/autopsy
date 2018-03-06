@@ -23,6 +23,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -120,14 +121,36 @@ final class IngestModule implements FileIngestModule {
          * Search the central repo to see if this file was previously marked as
          * being bad. Create artifact if it was.
          */
-        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
+        
+        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN) {
+            CorrelationAttribute contentCorrelationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null);
             try {
-                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
-                if (!caseDisplayNames.isEmpty()) {
-                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNames);
+                List<String> caseDisplayNamesList = EamDb.getInstance().getListCasesHavingArtifactInstancesKnownBad(
+                        contentCorrelationAttribute.getCorrelationType(), contentCorrelationAttribute.getCorrelationValue());
+                String currentCaseDisplayName = Case.getCurrentCase().getDisplayName();
+                boolean taggedOutsideCurrentCase = false;
+                if (!caseDisplayNamesList.isEmpty()) {
+                    for (String name : caseDisplayNamesList) {
+                        if (!name.equals(currentCaseDisplayName)) {
+                            taggedOutsideCurrentCase = true;
+                            break;
+                        }
+                    }
+                }
+
+                if(flagTaggedNotableItems || !taggedOutsideCurrentCase) {
+                    try {
+                        caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
+                        if (!caseDisplayNamesList.isEmpty()) {
+                            postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
+                        }
+                    } catch (EamDbException ex) {
+                        logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+                        return ProcessResult.ERROR;
+                    }
                 }
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error searching database for content.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
