@@ -227,23 +227,17 @@ class VolatilityProcessor implements Runnable{
             String fileName = volfile.getName().trim();
             // if there is no extension, add a wildcard to the end
             if (fileName.contains(".") == false) {
+                // if there is already the same entry with ".exe" in the set, just use that one
+                if (fileSet.contains(file + ".exe"))
+                    continue;
                 fileName = fileName + ".%";
             }
 
             String filePath = volfile.getParent();
-            if (filePath != null && !filePath.isEmpty()) {
-                // strip C: 
-                if (filePath.contains(":")) {
-                    filePath = filePath.substring(filePath.indexOf(":") + 1);
-                }
-                filePath = filePath.replaceAll("\\\\", "/");
-            } else {
-                filePath = "";
-            }
-
+            
             try {
                 List<AbstractFile> resolvedFiles;
-                if (filePath.isEmpty()) {
+                if (filePath == null) {
                     resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
                 } else {
                     resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
@@ -287,8 +281,10 @@ class VolatilityProcessor implements Runnable{
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
          
           try {
-            if (pluginName.matches("dlllist")) { 
-               fileName = Parse_Dlllist(PluginOutput);
+            if (pluginName.matches("dlllist")) {
+               Set<String> fileSet = parse_DllList(PluginOutput);
+               lookupFiles(fileSet, pluginName);
+               return;
             } else if (pluginName.matches("handles")) {
                fileName = Parse_Handles(PluginOutput);
             } else if (pluginName.matches("cmdline")) { 
@@ -367,6 +363,23 @@ class VolatilityProcessor implements Runnable{
         }
     } 
 
+    private String normalizePath(String filePath) {
+        if (filePath == null)
+            return "";
+        
+        // strip C: and \??\C:
+        if (filePath.contains(":")) {
+            filePath = filePath.substring(filePath.indexOf(":") + 1);
+        }
+        
+        // change slash direction
+        filePath = filePath.replaceAll("\\\\", "/");
+        filePath = filePath.toLowerCase();
+        filePath = filePath.replaceAll("/systemroot/", "/windows/");
+
+        return filePath;
+    }
+    
     private Map<String, Map> Parse_Handles(File PluginFile) {
         String line;
         String line_type;
@@ -408,69 +421,56 @@ class VolatilityProcessor implements Runnable{
         return fileMap;
     }
     
-    private Map<String, Map> Parse_Dlllist(File PluginFile) {
-        List<String> fileNames = new ArrayList<>();
-        String line;
-        String line_type;
-        String file_path;
-        Map<String, Map> fileMap = new HashMap<>();
-        String filePath;
-        String fileName;
+    private Set<String> parse_DllList(File PluginFile) {
+        Set<String> fileSet = new HashSet<>();
         int counter = 0;
-        try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
-                 Map<String, String> fileNameMap = new HashMap<>();
-                 if (line.contains("Command line : ")) {
-                     counter = counter + 1;
-                    file_path = line.substring(15);
-                    file_path = file_path.replaceAll("SystemRoot", "");
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    if ((fileName.lastIndexOf(".") + 3) < fileName.length()) {
-                        fileName = fileName.substring(0, fileName.lastIndexOf(".")+4);
-                    }
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        if (filePath.contains(":")) {
-                            filePath = filePath.substring(filePath.indexOf(":")+1);
-                        }
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-
-                 } else if (line.length() > 61) {
+        // read the first line from the text file
+        try (BufferedReader br = new BufferedReader(new FileReader(PluginFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                    
+                String TAG = "Command line : ";
+                if (line.startsWith(TAG)) {
                     counter = counter + 1;
-                    file_path = line.substring(57);
-                    file_path = file_path.replaceAll("SystemRoot", "");
-                    File volfile = new File(file_path);
-                    fileName = volfile.getName();
-                    filePath = volfile.getParent();
-                    if (filePath != null && !filePath.isEmpty()) {
-                        if (filePath.contains(":")) {
-                            filePath = filePath.substring(filePath.indexOf(":")+1);
-                        }
-                        filePath = filePath.replaceAll("\\\\", "%");
-                        filePath = "%" + filePath + "%";
-                    } else {
-                        filePath = "%";
-                    }                    
-                    fileNameMap.put(filePath, fileName);
-                    fileMap.put(file_path, fileNameMap);
-                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
-        } 
-        return fileMap;
-    }
+                    String file_path;
 
+                    // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
+                    // grab whats inbetween the quotes
+                    if (line.charAt(TAG.length()) == '\"') {
+                        file_path = line.substring(TAG.length() + 1);
+                        if (file_path.contains("\"")) {
+                            file_path = file_path.substring(0, file_path.indexOf("\""));
+                        } else {
+                            // ERROR
+                        }
+                    } 
+                    // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
+                    // grab everything before the next space - we don't want arguments
+                    else {
+                        file_path = line.substring(TAG.length());
+                        if (file_path.contains(" ")) {
+                            file_path = file_path.substring(0, file_path.indexOf(" "));
+                        }
+                    }
+                    fileSet.add(normalizePath(file_path));
+                }
+                // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
+                // 0x7c900000    0xb2000     0xffff C:\WINDOWS\system32\ntdll.dll
+                else if (line.startsWith("0x") && line.length() > 33) {
+                    counter = counter + 1;
+                    // These lines do not have arguments
+                    String file_path = line.substring(33);
+                    fileSet.add(normalizePath(file_path));
+                }
+            }
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Error opening DllList output", ex);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error parsing DllList output", ex);
+        } 
+        return fileSet;     
+    }
+    
    private Map<String, Map> Parse_Filescan(File PluginFile) {
         List<String> fileNames = new ArrayList<>();
         String line;
@@ -543,7 +543,7 @@ class VolatilityProcessor implements Runnable{
                                 file_path = file_path.substring(0, file_path.indexOf(" "));
                             }
                         }
-                        fileSet.add(file_path.toLowerCase());
+                        fileSet.add(normalizePath(file_path));
                     }
                 }
             }
