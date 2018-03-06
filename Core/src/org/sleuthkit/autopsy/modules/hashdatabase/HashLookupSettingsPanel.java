@@ -657,7 +657,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.deleteDatabaseButton.text")); // NOI18N
         deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         deleteDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        deleteDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
         deleteDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteDatabaseButtonActionPerformed(evt);
@@ -670,7 +669,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         importDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.importDatabaseButton.toolTipText")); // NOI18N
         importDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         importDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        importDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
         importDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importDatabaseButtonActionPerformed(evt);
@@ -733,7 +731,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         createDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.toolTipText")); // NOI18N
         createDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
         createDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        createDatabaseButton.setPreferredSize(new java.awt.Dimension(140, 25));
         createDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 createDatabaseButtonActionPerformed(evt);
@@ -776,7 +773,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(1, 1, 1)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 395, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -789,14 +786,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(indexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(indexLabel)
                                                     .addComponent(indexPathLabelLabel))
-                                                .addGap(64, 64, 64)
-                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                                    .addComponent(indexPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                                .addGap(55, 55, 55)
+                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(hashDbIndexStatusLabel)
+                                                    .addComponent(indexPathLabel)))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(indexButton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(indexButton)
                                                 .addGap(10, 10, 10)
                                                 .addComponent(addHashesToDatabaseButton))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -810,8 +807,8 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                                 .addGap(55, 55, 55)
                                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                     .addComponent(hashDbNameLabel)
-                                                    .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                    .addComponent(hashDbTypeLabel)
+                                                    .addComponent(hashDbLocationLabel)
                                                     .addComponent(hashDbVersionLabel)
                                                     .addComponent(hashDbOrgLabel)
                                                     .addComponent(hashDbReadOnlyLabel)))))
@@ -829,18 +826,21 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                         .addGroup(jPanel1Layout.createSequentialGroup()
                                             .addGap(10, 10, 10)
                                             .addComponent(ingestWarningLabel))))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addContainerGap(24, Short.MAX_VALUE))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(hashDatabasesLabel)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(createDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(importDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(deleteDatabaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
+
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {indexLabel, indexPathLabelLabel, locationLabel, nameLabel, orgLabel, readOnlyLabel, typeLabel, versionLabel});
+
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
