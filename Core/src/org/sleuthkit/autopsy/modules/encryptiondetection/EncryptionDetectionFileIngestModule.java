@@ -227,15 +227,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         }
 
         if (possiblyEncrypted) {
-            try {
-                calculatedEntropy = calculateEntropy(file);
-                if (calculatedEntropy >= minimumEntropy) {
-                    return true;
-                }
-            } catch (ReadContentInputStreamException ex) {
-                throw new ReadContentInputStreamException("Unable to calculate the entropy.", ex);
-            } catch (IOException ex) {
-                throw new IOException("Unable to calculate the entropy.", ex);
+            calculatedEntropy = calculateEntropy(file);
+            if (calculatedEntropy >= minimumEntropy) {
+                return true;
             }
         }
 
@@ -289,20 +283,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             return -entropyAccumulator;
 
-        } catch (ReadContentInputStreamException ex) {
-            throw new ReadContentInputStreamException("Exception occurred while trying to read data from ReadContentInputStream.", ex);
-        } catch (IOException ex) {
-            throw new IOException("Exception occurred while trying to read data from BufferedInputStream.", ex);
         } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-                if (bin != null) {
-                    bin.close();
-                }
-            } catch (IOException ex) {
-                throw new IOException("Failed to close InputStream.", ex);
+            if (in != null) {
+                in.close();
+            }
+            if (bin != null) {
+                bin.close();
             }
         }
     }
