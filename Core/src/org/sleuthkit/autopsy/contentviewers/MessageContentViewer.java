@@ -70,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Shows SMS/MMS/EMail messages
  */
-@ServiceProvider(service = DataContentViewer.class, position = 4)
+@ServiceProvider(service = DataContentViewer.class, position = 5)
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
