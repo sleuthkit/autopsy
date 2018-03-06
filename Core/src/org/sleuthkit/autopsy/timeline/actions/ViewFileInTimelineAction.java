@@ -39,9 +39,13 @@ public final class ViewFileInTimelineAction extends AbstractAction {
     private ViewFileInTimelineAction(AbstractFile file, String displayName) {
         super(displayName);
         this.file = file;
-        
-        if(file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) 
-                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)){
+
+        if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (file.getCrtime() <= 0
+                && file.getCtime() <= 0
+                && file.getMtime() <= 0
+                && file.getAtime() <= 0)) {
             this.setEnabled(false);
         }
     }

@@ -178,7 +178,10 @@
   <rule ref="rulesets/java/imports.xml/ImportFromSamePackage"/>
   <rule ref="rulesets/java/imports.xml/DuplicateImports"/>
   <rule ref="rulesets/java/imports.xml/DontImportJavaLang"/>
-  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>
+  <!-- Disabled because flagging use of Bundle for bundle messages
+  is not desirable since this qualification helps with code completion
+  while inappropriate use of full qualification is otherwise very rare
+  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>-->
   <!-- Disabled because it generated a lot of errors for non-Beans
   <rule ref="rulesets/java/javabeans.xml/BeanMembersShouldSerialize"/>-->
   <rule ref="rulesets/java/javabeans.xml/MissingSerialVersionUID"/>

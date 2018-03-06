@@ -583,14 +583,14 @@ public class Case {
     }
 
     /**
-     * Deprecated. Use getOpenCase() instead.
-     * 
      * Gets the current case, if there is one, at the time of the call.
      *
      * @return The current case.
      *
      * @throws IllegalStateException if there is no current case.
-     */
+     * 
+     * @deprecated. Use getOpenCase() instead.
+    */
     @Deprecated
     public static Case getCurrentCase() {
         /*
@@ -598,10 +598,9 @@ public class Case {
          *
          */
         try {
-            Case curCase = getOpenCase();
-            return curCase;
-        } catch (NoCurrentCaseException e) {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), e);
+            return getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
         }
     }
 
@@ -612,15 +611,12 @@ public class Case {
      *
      * @throws NoCurrentCaseException if there is no open case.
      */
-    @Messages({
-        "Case.NoCurrentCaseException.message=No open case available."
-    })
     public static Case getOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
-        if (null != openCase) {
-            return openCase;
+        if (openCase == null) {
+            throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
         } else {
-            throw new NoCurrentCaseException(Bundle.Case_NoCurrentCaseException_message());
+            return openCase;
         }
     }
 
@@ -826,7 +822,7 @@ public class Case {
      *
      * @throws CaseActionException throw if could not create the case dir
      */
-    static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
+    public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
 
