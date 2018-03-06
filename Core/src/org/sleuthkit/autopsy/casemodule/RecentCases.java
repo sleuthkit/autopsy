@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -374,8 +374,8 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         int i = 0;
         String currentCaseName = null;
         try {
-            currentCaseName = Case.getCurrentCase().getDisplayName();
-        } catch (IllegalStateException ex) {
+            currentCaseName = Case.getOpenCase().getDisplayName();
+        } catch (NoCurrentCaseException ex) {
             // in case there is no current case.
         }
 
@@ -407,8 +407,8 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         String[] casePaths = new String[LENGTH];
         String currentCasePath = null;
         try {
-            currentCasePath = Case.getCurrentCase().getMetadata().getFilePath().toString();
-        } catch (IllegalStateException ex) {
+            currentCasePath = Case.getOpenCase().getMetadata().getFilePath().toString();
+        } catch (NoCurrentCaseException ex) {
             /*
              * There may be no current case.
              */
