@@ -55,16 +55,16 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="noteNameLabel" min="-2" pref="296" max="-2" attributes="0"/>
+                  <Component id="noteNameLabel" min="-2" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Component id="nameCheckBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="searchTextField" min="-2" pref="247" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Component id="searchTextField" max="32767" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -127,7 +127,7 @@
           <Dimension value="[250, 30]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[250, 30]"/>
+          <Dimension value="[250, 40]"/>
         </Property>
       </Properties>
     </Component>
