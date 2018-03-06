@@ -59,15 +59,15 @@
               <Group type="102" attributes="0">
                   <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                      <Component id="caseNumberLabel" pref="60" max="32767" attributes="0"/>
                       <Component id="caseDisplayNameLabel" max="32767" attributes="0"/>
-                      <Component id="caseNumberLabel" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="caseDisplayNameTextField" max="32767" attributes="1"/>
                       <Component id="caseNumberTextField" max="32767" attributes="1"/>
+                      <Component id="caseDisplayNameTextField" max="32767" attributes="1"/>
                   </Group>
-                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -172,21 +172,21 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="lbNotesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbExaminerPhoneLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbNotesLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbExaminerPhoneLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="caseNotesScrollPane" max="32767" attributes="0"/>
                               <Component id="tfExaminerPhoneText" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
-                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                              <Component id="lbExaminerEmailLabel" alignment="1" max="32767" attributes="0"/>
-                              <Component id="examinerLabel" alignment="1" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="lbExaminerEmailLabel" linkSize="1" max="32767" attributes="0"/>
+                              <Component id="examinerLabel" linkSize="1" min="-2" pref="60" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="examinerTextField" max="32767" attributes="1"/>
                               <Component id="tfExaminerEmailText" max="32767" attributes="0"/>
@@ -356,27 +356,27 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
+                      <Group type="102" attributes="0">
                           <EmptySpace min="-2" pref="106" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="lbPointOfContactNameLabel" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbPointOfContactPhoneLabel" alignment="0" max="32767" attributes="0"/>
-                              <Component id="lbPointOfContactEmailLabel" alignment="0" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="lbPointOfContactPhoneLabel" linkSize="4" alignment="0" max="32767" attributes="0"/>
+                              <Component id="lbPointOfContactEmailLabel" linkSize="4" alignment="0" max="32767" attributes="0"/>
+                              <Component id="lbPointOfContactNameLabel" linkSize="4" min="-2" pref="109" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="lbPointOfContactPhoneText" alignment="1" max="32767" attributes="0"/>
                               <Component id="lbPointOfContactNameText" max="32767" attributes="0"/>
                               <Component id="lbPointOfContactEmailText" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="lbOrganizationNameLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="comboBoxOrgName" pref="161" max="32767" attributes="0"/>
-                          <EmptySpace min="-2" max="-2" attributes="0"/>
-                          <Component id="bnNewOrganization" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="lbOrganizationNameLabel" pref="206" max="32767" attributes="0"/>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Component id="comboBoxOrgName" min="-2" pref="108" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="bnNewOrganization" min="-2" pref="147" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -394,10 +394,10 @@
                   </Group>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="lbPointOfContactNameLabel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="lbPointOfContactNameText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
+                      <Component id="lbPointOfContactNameText" max="32767" attributes="0"/>
+                      <Component id="lbPointOfContactNameLabel" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
                       <Component id="lbPointOfContactPhoneLabel" alignment="0" max="32767" attributes="0"/>
                       <Component id="lbPointOfContactPhoneText" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
