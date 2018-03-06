@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * A content viewer that displays the indexed text associated with a file or an
  * artifact, possibly marked up with HTML to highlight keyword hits.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 4)
+@ServiceProvider(service = DataContentViewer.class, position = 5)
 public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());

@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 /**
  * Generic Application content viewer
  */
-@ServiceProvider(service = DataContentViewer.class, position = 5)
+@ServiceProvider(service = DataContentViewer.class, position = 3)
 public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final int CONFIDENCE_LEVEL = 7;
