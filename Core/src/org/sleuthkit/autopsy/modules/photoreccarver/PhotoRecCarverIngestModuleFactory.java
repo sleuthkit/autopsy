@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,9 +66,6 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        if (!(settings instanceof PhotoRecCarverIngestJobSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be an instance of PhotoRecCarverIngestJobSettings.");
-        }
         return new PhotoRecCarverFileIngestModule((PhotoRecCarverIngestJobSettings) settings);
     }
 
@@ -84,9 +81,6 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        if (!(settings instanceof PhotoRecCarverIngestJobSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be an instance of PhotoRecCarverIngestJobSettings");
-        }
         return new PhotoRecCarverIngestJobSettingsPanel((PhotoRecCarverIngestJobSettings) settings);
     }
 

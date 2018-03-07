@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 /**
  * Ingest job settings for the PhotoRec Carver module.
  */
-public class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSettings {
+final class PhotoRecCarverIngestJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
     
