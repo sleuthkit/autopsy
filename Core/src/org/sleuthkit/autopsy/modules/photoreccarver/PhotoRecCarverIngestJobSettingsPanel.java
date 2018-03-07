@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.photoreccarver;
 
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -80,7 +79,7 @@ final class PhotoRecCarverIngestJobSettingsPanel extends IngestModuleIngestJobSe
                         .addGap(10, 10, 10)
                         .addComponent(keepCorruptedFilesCheckbox))
                     .addComponent(detectionSettingsLabel))
-                .addContainerGap(155, Short.MAX_VALUE))
+                .addContainerGap(145, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
