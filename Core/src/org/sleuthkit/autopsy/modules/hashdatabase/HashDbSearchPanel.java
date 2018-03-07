@@ -32,6 +32,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -292,16 +293,27 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
      * Search through all tsk_files to find ones with the same hashes as the
      * hashes given.
      */
+    @NbBundle.Messages ({
+        "HashDbSearchPanel.noOpenCase.errMsg=No open case available."
+    })
     boolean search() {
         // Check if any hashed have been entered
         if (hashTable.getRowCount() != 0) {
             // Make sure at least 1 file has an md5 hash
-            if (HashDbSearcher.countFilesMd5Hashed() > 0) {
-                return doSearch();
-            } else {
+            try {
+                if (HashDbSearcher.countFilesMd5Hashed() > 0) {
+                    return doSearch();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbSearchPanel.noFilesHaveMD5HashMsg"),
+                            NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.dlgMsg.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            } catch (NoCurrentCaseException ex) {
                 JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbSearchPanel.noFilesHaveMD5HashMsg"),
+                        Bundle.HashDbSearchPanel_noOpenCase_errMsg(),
                         NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.dlgMsg.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return false;
