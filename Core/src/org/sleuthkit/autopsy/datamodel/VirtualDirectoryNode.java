@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -105,7 +106,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                     Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_size_desc(),
                     this.content.getSize()));
-            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
+            try (SleuthkitCase.CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
                 ResultSet timeZoneSet = query.getResultSet();
                 if (timeZoneSet.next()) {
                     ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
@@ -113,10 +114,10 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                             Bundle.VirtualDirectoryNode_createSheet_timezone_desc(),
                             timeZoneSet.getString("time_zone")));
                 }
-            } catch (SQLException | TskCoreException ex) {
+            } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Failed to get time zone for the following image: " + this.content.getId(), ex);
             }
-            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
+            try (SleuthkitCase.CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
                 ResultSet deviceIdSet = query.getResultSet();
                 if (deviceIdSet.next()) {
                     ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
@@ -124,7 +125,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                             Bundle.VirtualDirectoryNode_createSheet_deviceId_desc(),
                             deviceIdSet.getString("device_id")));
                 }
-            } catch (SQLException | TskCoreException ex) {
+            } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
             }
 

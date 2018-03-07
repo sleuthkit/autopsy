@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -263,8 +264,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     protected void addTagProperty(Sheet.Set ss) {
         List<ContentTag> tags = new ArrayList<>();
         try {
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content));
-        } catch (TskCoreException ex) {
+            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getContentTagsByContent(content));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
         ss.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
