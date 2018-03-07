@@ -41,6 +41,7 @@ import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
@@ -53,8 +54,6 @@ import org.sleuthkit.datamodel.TskData;
 class ReportGenerator {
 
     private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
-
-    private Case currentCase = Case.getCurrentCase();
 
     /**
      * Progress reportGenerationPanel that can be used to check for cancellation.
@@ -229,10 +228,10 @@ class ReportGenerator {
     private List<AbstractFile> getFiles() {
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("meta_type != " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
             return absFiles;
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             MessageNotifyUtil.Notify.show(
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorTitle"),
                     NbBundle.getMessage(this.getClass(), "ReportGenerator.errors.reportErrorText") + ex.getLocalizedMessage(),
@@ -252,7 +251,12 @@ class ReportGenerator {
     }
 
     private static String createReportDirectory(ReportModule module) throws IOException {
-        Case currentCase = Case.getCurrentCase();
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IOException("Exception while getting open case.", ex);
+        }
         // Create the root reports directory path of the form: <CASE DIRECTORY>/Reports/<Case fileName> <Timestamp>/
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
