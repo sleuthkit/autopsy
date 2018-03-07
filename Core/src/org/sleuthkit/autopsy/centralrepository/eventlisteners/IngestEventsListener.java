@@ -56,8 +56,8 @@ public class IngestEventsListener {
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttribute.class.getName());
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
-    private static int correlationModuleInstanceCount = 0;
-    private static int correlationModulesFlaggingNotableCount = 0;
+    private static int correlationModuleInstanceCount;
+    private static int correlationModulesFlaggingNotableCount;
     private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
