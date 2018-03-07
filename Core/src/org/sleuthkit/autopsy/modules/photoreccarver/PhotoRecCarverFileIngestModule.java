@@ -96,7 +96,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
-    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private long jobId;
     
     private final boolean keepCorruptedFiles;
