@@ -308,8 +308,9 @@ class VolatilityProcessor implements Runnable{
                Set<String> fileSet = Parse_Svcscan(PluginOutput);
                lookupFiles(fileSet, pluginName);
             } else if (pluginName.matches("filescan")) {
-               Set<String> fileSet = Parse_Filescan(PluginOutput);
-               lookupFiles(fileSet, pluginName);
+                // BC: Commented out.  Too many hits to flag
+               //Set<String> fileSet = Parse_Filescan(PluginOutput);
+               //lookupFiles(fileSet, pluginName);
             } else  {  
                Set<String> fileSet = Parse_Shimcache(PluginOutput);
                lookupFiles(fileSet, pluginName);
@@ -321,9 +322,10 @@ class VolatilityProcessor implements Runnable{
     } 
 
     private String normalizePath(String filePath) {
-        filePath = filePath.trim();
         if (filePath == null)
             return "";
+        
+        filePath = filePath.trim();
         
         // strip C: and \??\C:
         if (filePath.contains(":")) {
@@ -345,12 +347,18 @@ class VolatilityProcessor implements Runnable{
         Set<String> fileSet = new HashSet<>();
         try {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
+             // Ignore the first two header lines
+             br.readLine();
+             br.readLine();
              while ((line = br.readLine()) != null) {
+                 // 0x89ab7878      4      0x718  0x2000003 File             \Device\HarddiskVolume1\Documents and Settings\QA\Local Settings\Application 
+                 if (line.startsWith("0x") == false)
+                     continue;
+                 
                  String TAG = " File ";
                  String file_path = null;
-                 if (line.contains(TAG)) {
-                    file_path = line.substring(82);
+                 if ((line.contains(TAG)) && (line.length() > 57)) {
+                    file_path = line.substring(57);
                     if (file_path.contains("\"")) {
                          file_path = file_path.substring(0, file_path.indexOf("\""));
                     }
@@ -485,11 +493,15 @@ class VolatilityProcessor implements Runnable{
         Set<String> fileSet = new HashSet<>();
         try {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
+             // ignore the first 2 header lines
+             br.readLine();
+             br.readLine();
              while ((line = br.readLine()) != null) {
                 String file_path;
-                if (line.length() > 36) {
-                    file_path = line.substring(38);
+                //1970-01-01 00:00:00 UTC+0000   2017-10-25 13:07:30 UTC+0000   C:\WINDOWS\system32\msctfime.ime
+                //2017-10-23 20:47:40 UTC+0000   2017-10-23 20:48:02 UTC+0000   \??\C:\WINDOWS\CT_dba9e71b-ad55-4132-a11b-faa946b197d6.exe
+                if (line.length() > 62) {
+                    file_path = line.substring(62);
                     if (file_path.contains("\"")) {
                         file_path = file_path.substring(0, file_path.indexOf("\""));
                     }
@@ -511,13 +523,20 @@ class VolatilityProcessor implements Runnable{
         Set<String> fileSet = new HashSet<>();
         try {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
+             // ignore the first two header lines
+             br.readLine();
+             br.readLine();
              while ((line = br.readLine()) != null) {
-                String file_path;
-                file_path = line.substring(19, 37);
-                if (!file_path.startsWith("System")) {
-                   fileSet.add(normalizePath(file_path));
-                }
+                // 0x000000000969a020 notepad.exe        3604   3300 0x16d40340 2018-01-12 14:41:16 UTC+0000  
+                if (line.startsWith("0x") == false)
+                    continue;
+                String file_path = line.substring(19, 37);
+                file_path = normalizePath(file_path);
+               
+                // ignore system, it's not really a path
+                if (file_path.equals("system"))
+                    continue;
+                fileSet.add(file_path);
              }    
              br.close();
         } catch (IOException ex) { 
@@ -533,11 +552,18 @@ class VolatilityProcessor implements Runnable{
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
              // read the first line from the text file
              while ((line = br.readLine()) != null) {
+                 if (line.startsWith("0x") == false)
+                     continue;
+                 
+                // 0x89cfb998 csrss.exe               704    640     14      532      0      0 2017-12-07 14:05:34 UTC+0000
                 String file_path;
-                file_path = line.substring(19, 41);
-                if (!file_path.startsWith("System")) {
-                   fileSet.add(normalizePath(file_path));
-                }
+                file_path = line.substring(10, 34);
+                file_path = normalizePath(file_path);
+               
+                // ignore system, it's not really a path
+                if (file_path.equals("system"))
+                    continue;
+                fileSet.add(file_path);
              }    
              br.close();
         } catch (IOException ex) { 
@@ -551,15 +577,20 @@ class VolatilityProcessor implements Runnable{
         Set<String> fileSet = new HashSet<>();
         try {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
+             // ignore the first two header lines
+             br.readLine();
+             br.readLine();
              while ((line = br.readLine()) != null) {
-                String file_path;
-                file_path = line.substring(19, 41);
-                if (!file_path.startsWith("System ")) {
-                   if (file_path.trim().length() > 0) {;
-                       fileSet.add(normalizePath(file_path));
-                   }
-                }
+                // 0x09adf980 svchost.exe            1368 True   True   False    True   True  True    True
+                if (line.startsWith("0x") == false)
+                    continue;
+                String file_path = line.substring(11, 34);
+                file_path = normalizePath(file_path);
+               
+                // ignore system, it's not really a path
+                if (file_path.equals("system"))
+                    continue;
+                fileSet.add(file_path);
              }    
              br.close();
         } catch (IOException ex) { 
@@ -575,13 +606,17 @@ class VolatilityProcessor implements Runnable{
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
              // read the first line from the text file
              while ((line = br.readLine()) != null) {
+                 //  ... 0x897e5020:services.exe                           772    728     15    287 2017-12-07 14:05:35 UTC+000
                 String file_path;
                 String TAG = ":";
                 if (line.contains(TAG)) {
                     file_path = line.substring(line.indexOf(":") + 1, 52);
-                    if (!file_path.startsWith("System")) {
-                       fileSet.add(normalizePath(file_path));
-                    }
+                    file_path = normalizePath(file_path);
+               
+                    // ignore system, it's not really a path
+                    if (file_path.equals("system"))
+                        continue;
+                    fileSet.add(file_path);
                 }
              }    
              br.close();
@@ -601,7 +636,6 @@ class VolatilityProcessor implements Runnable{
                 String file_path;
                 String TAG = "Binary Path: ";
                 if (line.startsWith(TAG)) {
-                    file_path = line.substring(13);
                     if (line.charAt(TAG.length()) == '\"') {
                         file_path = line.substring(TAG.length()+1);
                         if (file_path.contains("\"")) {
@@ -611,11 +645,22 @@ class VolatilityProcessor implements Runnable{
                             // ERROR
                         }
                     }
+                    // Binary Path: -
+                    else if (line.charAt(TAG.length()) == '-') {
+                        continue;
+                    }
                     // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
                     else {
                         file_path = line.substring(TAG.length());
                         if (file_path.contains(" ")) {
                             file_path = file_path.substring(0, file_path.indexOf(" "));
+                        }
+                        // We can't do anything with driver entries
+                        if (file_path.startsWith("\\Driver\\")) {
+                            continue;
+                        }
+                        else if (file_path.startsWith("\\FileSystem\\")) {
+                            continue;
                         }
                     }
                     fileSet.add(normalizePath(file_path));
