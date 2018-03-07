@@ -129,7 +129,7 @@ final class IngestModule implements FileIngestModule {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error searching database for content.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
