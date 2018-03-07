@@ -122,19 +122,15 @@ final class IngestModule implements FileIngestModule {
          * being bad. Create artifact if it was.
          */
         
-        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN) {
-            if (flagTaggedNotableItems) {
-                try {
-                    CorrelationAttribute contentCorrelationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(abstractFile, TskData.FileKnown.BAD, null);
-                    List<String> caseDisplayNamesList = EamDb.getInstance().getListCasesHavingArtifactInstancesKnownBad(
-                            contentCorrelationAttribute.getCorrelationType(), contentCorrelationAttribute.getCorrelationValue());
-                    if (!caseDisplayNamesList.isEmpty()) {
-                        postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
-                    }
-                } catch (EamDbException ex) {
-                    logger.log(Level.SEVERE, "Error searching database for content.", ex); // NON-NLS
-                    return ProcessResult.ERROR;
+        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
+            try {
+                List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
+                if (!caseDisplayNamesList.isEmpty()) {
+                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Error searching database for content.", ex); // NON-NLS
+                return ProcessResult.ERROR;
             }
         }
 
