@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -71,13 +72,15 @@ class FileReportText implements FileReportModule {
         if (out != null) {
             try {
                 out.close();
-                Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+                Case.getOpenCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
                         "FileReportText.getName.text"), "");
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not close output writer when ending report.", ex); //NON-NLS
             } catch (TskCoreException ex) {
                 String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
                 logger.log(Level.SEVERE, errorMessage, ex);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             }
         }
     }

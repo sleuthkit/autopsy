@@ -583,6 +583,8 @@ public class Case {
     }
 
     /**
+     * Deprecated. Use getOpenCase() instead.
+     * 
      * Gets the current case, if there is one, at the time of the call.
      *
      * @return The current case.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -116,7 +117,12 @@ class KeywordHit implements Comparable<KeywordHit> {
     long getContentID() throws TskCoreException {
         if (isArtifactHit()) {
             // If the hit was in an artifact, look up the source content for the artifact.
-            SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase caseDb;
+            try {
+                caseDb = Case.getOpenCase().getSleuthkitCase();
+            } catch (NoCurrentCaseException ex) {
+                throw new TskCoreException("Exception while getting open case.", ex);
+            }
             try (SleuthkitCase.CaseDbQuery executeQuery =
                     caseDb.executeQuery(GET_CONTENT_ID_FROM_ARTIFACT_ID + this.solrObjectId);
                     ResultSet resultSet = executeQuery.getResultSet();) {

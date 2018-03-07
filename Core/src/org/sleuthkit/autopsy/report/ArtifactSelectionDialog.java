@@ -36,6 +36,7 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -74,7 +75,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            artifactTypes = Case.getCurrentCase().getSleuthkitCase().getArtifactTypesInUse();
+            artifactTypes = Case.getOpenCase().getSleuthkitCase().getArtifactTypesInUse();
             artifactTypes.removeAll(doNotReport);
             Collections.sort(artifactTypes, new Comparator<BlackboardArtifact.Type>() {
                 @Override
@@ -89,6 +90,8 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
             }
         } catch (TskCoreException ex) {
             Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: {0}", ex.getLocalizedMessage()); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            Logger.getLogger(ArtifactSelectionDialog.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex.getLocalizedMessage()); //NON-NLS
         }
     }
 

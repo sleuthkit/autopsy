@@ -114,7 +114,8 @@
   <!-- Disabled.  Could enforce in future, but not top priority right now.
   <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/> -->
   <rule ref="rulesets/java/design.xml/AvoidProtectedFieldInFinalClass"/>
-  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>-->
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAbstractMethod"/>
   <rule ref="rulesets/java/design.xml/SimplifyConditional"/>
