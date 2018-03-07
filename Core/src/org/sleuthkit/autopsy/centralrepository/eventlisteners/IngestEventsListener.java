@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -144,9 +145,9 @@ public class IngestEventsListener {
             tifArtifact.addAttributes(attributes);
             try {
                 // index the artifact for keyword search
-                Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
+                Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
                 blackboard.indexArtifact(tifArtifact);
-            } catch (Blackboard.BlackboardException ex) {
+            } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }
 
