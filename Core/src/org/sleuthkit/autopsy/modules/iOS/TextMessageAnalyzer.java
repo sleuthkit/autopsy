@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -65,9 +66,16 @@ class TextMessageAnalyzer {
      * @param context The ingest job context.
      */
     void findTexts(IngestJobContext context) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        Case openCase;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+        blackboard = openCase.getServices().getBlackboard();
+        try {
+            SleuthkitCase skCase = openCase.getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name ='mmssms.db'"); //NON-NLS //get exact file name
             if (absFiles.isEmpty()) {
                 return;
