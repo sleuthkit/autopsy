@@ -3,11 +3,12 @@
 <Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JDialogFormInfo">
   <Properties>
     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[545, 450]"/>
+      <Dimension value="[545, 415]"/>
     </Property>
   </Properties>
   <SyntheticProperties>
-    <SyntheticProperty name="formSizePolicy" type="int" value="2"/>
+    <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
@@ -66,7 +67,7 @@
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="orgDescriptionScrollPane" min="-2" pref="225" max="-2" attributes="0"/>
-                          <Component id="orgListLabel" alignment="0" min="-2" pref="73" max="-2" attributes="0"/>
+                          <Component id="orgListLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="newButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -106,7 +107,7 @@
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="orgDetailsLabel" min="-2" pref="115" max="-2" attributes="0"/>
+                              <Component id="orgDetailsLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -140,7 +141,7 @@
                                   <Component id="pocEmailTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="pocEmailLabel" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="235" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                               <Component id="closeButton" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="jSeparator1" max="32767" attributes="0"/>
@@ -149,7 +150,7 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="orgListLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="orgListScrollPane" pref="288" max="32767" attributes="0"/>
+                              <Component id="orgListScrollPane" max="32767" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="newButton" alignment="3" min="-2" max="-2" attributes="0"/>
