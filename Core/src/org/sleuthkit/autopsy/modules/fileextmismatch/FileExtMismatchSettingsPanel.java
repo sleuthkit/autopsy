@@ -175,7 +175,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         newTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newTypeButton.text")); // NOI18N
         newTypeButton.setMaximumSize(new java.awt.Dimension(111, 25));
         newTypeButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        newTypeButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newTypeButtonActionPerformed(evt);
@@ -217,11 +216,11 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(newTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(removeTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(removeTypeButton))
                 .addContainerGap())
         );
 

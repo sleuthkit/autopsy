@@ -142,13 +142,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.currentPageLabel.text_1")); // NOI18N
         currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
         currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel.text_1")); // NOI18N
         pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
         pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
-        pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
         nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.nextPageButton.text")); // NOI18N
@@ -167,7 +165,6 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel2.text")); // NOI18N
         pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
         pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
-        pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
         prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.prevPageButton.text")); // NOI18N
@@ -256,7 +253,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 728, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
