@@ -164,7 +164,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                     .addComponent(selectedPathsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(changeNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(changeNameButton)
                     .addComponent(displayNameLabel))
                 .addGap(13, 13, 13)
                 .addComponent(errorLabel)
@@ -243,7 +243,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }
     /**
      * Get the path(s) which have been selected on this panel
-     * 
+     *
      * @return a List of Strings representing the path(s) for the selected files or directories
      */
     List<String> getContentPaths() {
@@ -297,7 +297,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
 
     /**
      * Get the name given to this collection of local files and directories
-     * 
+     *
      * @return a String which is the name for the file set.
      */
     String getFileSetName() {
