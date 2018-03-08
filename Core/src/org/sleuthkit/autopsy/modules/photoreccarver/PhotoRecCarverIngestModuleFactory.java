@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter {
 
-    private static final String VERSION = "8.0";
+    private static final String VERSION = "7.0"; // Version should match the PhotoRec tool version.
 
     /**
      * Gets the ingest module name for use within this package.
