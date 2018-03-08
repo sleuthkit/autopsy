@@ -193,19 +193,22 @@ final class CommunicationsGraph extends mxGraph {
             final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
-            scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
+            scopes.put("relationships", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
             scopes.put("iconFileName", CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/"
                     + Utils.getIconFileName(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
             scopes.put("LOCK_URL", LOCK_URL);
+            scopes.put("device_id", adiKey.getAccountDeviceInstance().getDeviceId());
 
             labelMustache.execute(stringWriter, scopes);
 
             return stringWriter.toString();
         } else {
-            return ((mxICell) cell).getId();
+            final mxICell edge = (mxICell) cell;
+            final long count = (long) edge.getValue();
+            return"<html>"+ edge.getId() + "<br>" + count + (count == 1 ? " relationship" : " relationships")+"</html>";
         }
     }
 
@@ -222,27 +225,20 @@ final class CommunicationsGraph extends mxGraph {
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
-        final String name =// accountDeviceInstance.getDeviceId() + ":"                +
-                accountDeviceInstance.getAccount().getTypeSpecificID();
+        final String name = accountDeviceInstance.getAccount().getTypeSpecificID();
 
-        final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
+        final mxCell vertex = nodeMap.computeIfAbsent(name + accountDeviceInstance.getDeviceId(), vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
 
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
-                    vertexName, accountDeviceInstanceKey,
+                    name, accountDeviceInstanceKey,
                     Math.random() * 400,
                     Math.random() * 400,
                     size,
                     size);
             return newVertex;
         });
-//        final mxCellState state = getView().getState(vertex, true);
-//
-//        getView().updateLabel(state);
-//        getView().updateLabelBounds(state);
-//        getView().updateBoundingBox(state);
-
         return vertex;
     }
 
@@ -253,12 +249,11 @@ final class CommunicationsGraph extends mxGraph {
         Object[] edgesBetween = getEdgesBetween(vertex1, vertex2);
         mxCell edge;
         if (edgesBetween.length == 0) {
-            final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
+            final String edgeName = vertex1.getId() + " - " + vertex2.getId();
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, relSources, vertex1, vertex2,
                     "strokeWidth=" + (Math.log(relSources) + 1));
         } else {
             edge = (mxCell) edgesBetween[0];
-//            ((Collection<Content>) edge.getValue()).addAll(relSources);
             edge.setStyle("strokeWidth=" + (Math.log(relSources) + 1));
         }
         return edge;
@@ -308,9 +303,9 @@ final class CommunicationsGraph extends mxGraph {
                     progress.progress(++i);
                 }
 
-                Set<AccountDeviceInstance> accountIDs = relatedAccounts.keySet();
+                Set<AccountDeviceInstance> accounts = relatedAccounts.keySet();
 
-                Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(accountIDs, currentFilter);
+                Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(accounts, currentFilter);
 
                 int total = relationshipCounts.size();
                 int k = 0;
