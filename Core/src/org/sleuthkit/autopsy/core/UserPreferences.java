@@ -69,6 +69,7 @@ public final class UserPreferences {
     private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
     private static final int LOG_FILE_NUM_INT = 10;
+    private static final String SHOW_DEVICE_NODES_IN_DATA_SRCS_TREE = "ShowDeviceNodesInDataSourcesTree"; //NON-NLS 
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -163,6 +164,14 @@ public final class UserPreferences {
         preferences.putBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, value);
     }
 
+    public static boolean showDeviceNodesInDataSourcesTree() {
+        return preferences.getBoolean(SHOW_DEVICE_NODES_IN_DATA_SRCS_TREE, false);
+    }
+
+    public static void setShowDeviceNodesInDataSourcesTree(boolean value) {
+        preferences.putBoolean(SHOW_DEVICE_NODES_IN_DATA_SRCS_TREE, value);
+    }
+    
     public static boolean hideSlackFilesInViewsTree() {
         return preferences.getBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, true);
     }

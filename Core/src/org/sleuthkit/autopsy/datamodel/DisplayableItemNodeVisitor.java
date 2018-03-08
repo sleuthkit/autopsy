@@ -34,6 +34,10 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
+   // T visit(DevicesNode in);
+    
+    T visit(DeviceNode in);
+     
     T visit(DataSourcesNode in);
 
     T visit(LayoutFileNode lfn);
@@ -317,6 +321,18 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(ft);
         }
 
+        /***
+        @Override
+        public T visit(DevicesNode in) {
+            return defaultVisit(in);
+        }
+        * ****/
+        
+        @Override
+        public T visit(DeviceNode in) {
+            return defaultVisit(in);
+        }
+        
         @Override
         public T visit(DataSourcesNode in) {
             return defaultVisit(in);
