@@ -8,6 +8,15 @@ else
 	echo "run the command: sudo apt-get install testdisk"
 	exit 1
 fi
+
+if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
+    	echo "found java executable in $JAVA_HOME"
+else
+    	echo "Install java and set JAVA_HOME env variable"
+	echo "See autopsy linux install instructions for more details"
+    	exit 1	
+fi
+
 TSK_VERSION=4.6.0
 sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar;
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar;
