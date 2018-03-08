@@ -27,6 +27,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -112,13 +113,15 @@ class ReportExcel implements TableReportModule {
         try {
             out = new FileOutputStream(reportPath);
             wb.write(out);
-            Case.getCurrentCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+            Case.getOpenCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
                     "ReportExcel.endReport.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         } finally {
             if (out != null) {
                 try {
@@ -300,6 +303,13 @@ class ReportExcel implements TableReportModule {
     }
 
     private void writeSummaryWorksheet() {
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         sheet = wb.createSheet(NbBundle.getMessage(this.getClass(), "ReportExcel.sheetName.text"));
         rowIndex = 0;
 
@@ -310,8 +320,6 @@ class ReportExcel implements TableReportModule {
 
         sheet.createRow(rowIndex);
         ++rowIndex;
-
-        Case currentCase = Case.getCurrentCase();
 
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);

@@ -42,6 +42,7 @@ import javax.swing.JComboBox;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -324,7 +325,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                 try {
                     // Copy the file to temp folder
-                    tmpDBPathName = Case.getCurrentCase().getTempDirectory() + File.separator + sqliteFile.getName();
+                    tmpDBPathName = Case.getOpenCase().getTempDirectory() + File.separator + sqliteFile.getName();
                     tmpDBFile = new File(tmpDBPathName);
                     ContentUtils.writeToFile(sqliteFile, tmpDBFile);
 
@@ -338,6 +339,8 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     
                     // Read all table names and schema
                     return getTables();
+                } catch (NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to copy DB file.", ex); //NON-NLS
                 } catch (SQLException ex) {
@@ -380,8 +383,14 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * @return true if the meta file is found and copied successfully, false otherwise
      */
     private boolean findAndCopySQLiteMetaFile(AbstractFile sqliteFile, String metaFileName ) {
-        
-        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return false;
+        }
+        SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
         FileManager fileManager = services.getFileManager();
         
@@ -395,7 +404,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         
         if (metaFiles != null) {
             for (AbstractFile metaFile: metaFiles) {
-                String tmpMetafilePathName = Case.getCurrentCase().getTempDirectory() + File.separator + metaFile.getName();
+                String tmpMetafilePathName = openCase.getTempDirectory() + File.separator + metaFile.getName();
             
                 File tmpMetafile = new File(tmpMetafilePathName);
                 try {

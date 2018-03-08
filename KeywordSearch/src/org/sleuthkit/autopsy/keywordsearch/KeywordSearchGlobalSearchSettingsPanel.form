@@ -38,10 +38,10 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="skipNSRLCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="showSnippetsCB" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="filesIndexedLabel" min="-2" max="-2" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="141" max="-2" attributes="0"/>
-                              <Component id="filesIndexedValue" min="-2" pref="104" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="filesIndexedLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="filesIndexedValue" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="frequencyLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
@@ -55,9 +55,9 @@
                               </Group>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="chunksLabel" min="-2" max="-2" attributes="0"/>
+                              <Component id="chunksLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="chunksValLabel" min="-2" pref="104" max="-2" attributes="0"/>
+                              <Component id="chunksValLabel" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>

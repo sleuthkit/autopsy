@@ -139,10 +139,10 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                                 .addComponent(CURRENTLYON_LABEL)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(CURRENTDB_LABEL)))
-                        .addGap(0, 161, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(CANCEL_BUTTON, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(CANCEL_BUTTON)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

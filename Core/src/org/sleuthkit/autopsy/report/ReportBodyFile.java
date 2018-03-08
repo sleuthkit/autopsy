@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
@@ -73,11 +74,17 @@ class ReportBodyFile implements GeneralReportModule {
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            return;
+        }
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportBodyFile.progress.querying"));
         reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
-        currentCase = Case.getCurrentCase();
+        
         skCase = currentCase.getSleuthkitCase();
 
         // Run query to get all files
@@ -154,14 +161,14 @@ class ReportBodyFile implements GeneralReportModule {
                     if (out != null) {
                         out.flush();
                         out.close();
-                        Case.getCurrentCase().addReport(reportPath,
+                        Case.getOpenCase().addReport(reportPath,
                                 NbBundle.getMessage(this.getClass(),
                                         "ReportBodyFile.generateReport.srcModuleName.text"), "");
 
                     }
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
                     logger.log(Level.SEVERE, errorMessage, ex);
                 }

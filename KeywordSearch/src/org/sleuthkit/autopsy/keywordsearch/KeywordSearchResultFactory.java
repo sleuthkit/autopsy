@@ -39,6 +39,7 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -147,8 +148,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         }
         SleuthkitCase tskCase;
         try {
-            tskCase = Case.getCurrentCase().getSleuthkitCase();
-        } catch (IllegalStateException ex) {
+            tskCase = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
             return false;
         }

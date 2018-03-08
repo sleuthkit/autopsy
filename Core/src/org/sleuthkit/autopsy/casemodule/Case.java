@@ -583,24 +583,42 @@ public class Case {
     }
 
     /**
+     * Deprecated. Use getOpenCase() instead.
+     * 
      * Gets the current case, if there is one, at the time of the call.
      *
      * @return The current case.
      *
      * @throws IllegalStateException if there is no current case.
-     */
+     * 
+     * @deprecated. Use getOpenCase() instead.
+    */
+    @Deprecated
     public static Case getCurrentCase() {
         /*
          * Throwing an unchecked exception is a bad idea here.
          *
-         * TODO (JIRA-2229): Case.getCurrentCase() method throws unchecked
-         * IllegalStateException; change to throw checked exception or return
-         * null
          */
-        if (null != currentCase) {
-            return currentCase;
+        try {
+            return getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
+        }
+    }
+
+    /**
+     * Gets the current open case, if there is one, at the time of the call.
+     *
+     * @return The open case.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     */
+    public static Case getOpenCase() throws NoCurrentCaseException {
+        Case openCase = currentCase;
+        if (openCase == null) {
+            throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
         } else {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
+            return openCase;
         }
     }
 
@@ -806,7 +824,7 @@ public class Case {
      *
      * @throws CaseActionException throw if could not create the case dir
      */
-    static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
+    public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
 

@@ -164,7 +164,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                     .addComponent(selectedPathsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(changeNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(changeNameButton)
                     .addComponent(displayNameLabel))
                 .addGap(13, 13, 13)
                 .addComponent(errorLabel)
@@ -243,7 +243,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }
     /**
      * Get the path(s) which have been selected on this panel
-     * 
+     *
      * @return a List of Strings representing the path(s) for the selected files or directories
      */
     List<String> getContentPaths() {
@@ -275,23 +275,29 @@ final class LocalFilesPanel extends javax.swing.JPanel {
      *
      * @param paths Absolute paths to the selected data source
      */
+    @NbBundle.Messages("LocalFilesPanel.pathValidation.error=WARNING: Exception while gettting opon case.")
     private void warnIfPathIsInvalid(final List<String> pathsList) {
         errorLabel.setVisible(false);
 
-        final Case.CaseType currentCaseType = Case.getCurrentCase().getCaseType();
+        try {
+            final Case.CaseType currentCaseType = Case.getOpenCase().getCaseType();
 
-        for (String currentPath : pathsList) {
-            if (!PathValidator.isValid(currentPath, currentCaseType)) {
-                errorLabel.setVisible(true);
-                errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
-                return;
+            for (String currentPath : pathsList) {
+                if (!PathValidator.isValid(currentPath, currentCaseType)) {
+                    errorLabel.setVisible(true);
+                    errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+                    return;
+                }
             }
+        } catch (NoCurrentCaseException ex) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.LocalFilesPanel_pathValidation_error());
         }
     }
 
     /**
      * Get the name given to this collection of local files and directories
-     * 
+     *
      * @return a String which is the name for the file set.
      */
     String getFileSetName() {

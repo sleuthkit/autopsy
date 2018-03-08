@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
@@ -76,13 +77,13 @@ class AccountsRootChildren extends ChildFactory<AccountDeviceInstanceKey> {
 
     private String getDataSourceName(AccountDeviceInstance accountDeviceInstance) {
         try {
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+            final SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 if (dataSource.getDeviceId().equals(accountDeviceInstance.getDeviceId())) {
                     return sleuthkitCase.getContentById(dataSource.getId()).getName();
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
         }
         return accountDeviceInstance.getDeviceId();
