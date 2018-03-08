@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
@@ -34,8 +35,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 @NbBundle.Messages({"IngestModuleFactory.ingestmodule.name=Correlation Engine",
                     "IngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
 public class IngestModuleFactory extends IngestModuleFactoryAdapter {
-
-    private static final String VERSION_NUMBER = "0.9.0";
 
     /**
      * Get the name of the module.
@@ -58,7 +57,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleVersionNumber() {
-        return VERSION_NUMBER;
+        return Version.getVersion();
     }
 
     @Override
