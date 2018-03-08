@@ -33,9 +33,9 @@
                       <Component id="tagsScrollPane" max="32767" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="advancedButton" alignment="1" pref="89" max="32767" attributes="0"/>
-                          <Component id="deselectAllButton" max="32767" attributes="0"/>
-                          <Component id="selectAllButton" max="32767" attributes="0"/>
+                          <Component id="advancedButton" linkSize="1" alignment="1" max="32767" attributes="0"/>
+                          <Component id="deselectAllButton" linkSize="1" max="32767" attributes="0"/>
+                          <Component id="selectAllButton" linkSize="1" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" attributes="0">
@@ -44,7 +44,7 @@
                           <Component id="dataLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="allResultsRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="481" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>

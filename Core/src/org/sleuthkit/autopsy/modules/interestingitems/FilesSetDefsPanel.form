@@ -142,7 +142,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace min="24" pref="28" max="32767" attributes="0"/>
+                              <EmptySpace min="24" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -172,11 +172,11 @@
                                       </Group>
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
-                                              <Component id="equalitySignComboBox" min="-2" pref="44" max="-2" attributes="0"/>
+                                              <Component id="equalitySignComboBox" min="-2" max="-2" attributes="0"/>
                                               <EmptySpace min="-2" max="-2" attributes="0"/>
                                               <Component id="fileSizeSpinner" max="32767" attributes="0"/>
                                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                                              <Component id="fileSizeUnitComboBox" min="-2" pref="79" max="-2" attributes="0"/>
+                                              <Component id="fileSizeUnitComboBox" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                           <Component id="rulePathConditionTextField" alignment="0" max="32767" attributes="0"/>
                                           <Component id="fileNameTextField" alignment="1" max="32767" attributes="0"/>
