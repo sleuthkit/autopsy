@@ -6,7 +6,7 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core</description>
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
-    <import file="../TSK_VERSION.xml"/>
+    <import file="../TSKVersion.xml"/>
      
      
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
@@ -18,8 +18,7 @@
             <fileset dir="{basedir}/../../InternalPythonModules"/>
         </copy>
     </target>
-	
-    <replaceregexp file="${basedir}/../unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
+
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
         <!--Copy openCV dependencies to release-->
         <copy todir="${modules.dir}" >

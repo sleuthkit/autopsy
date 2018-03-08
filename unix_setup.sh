@@ -23,10 +23,10 @@ if [[ -f "$sleuthkit_jar_filepath" ]]; then
         	echo "Successfully removed $ext_jar_filepath"
         	cp $sleuthkit_jar_filepath $ext_jar_filepath
         	if [ "$?" -eq 0 ]; then # checking copy operation was successful
-            	echo "Successfully copied $sleuthkit_jar_filepath"
+            		echo "Successfully copied $sleuthkit_jar_filepath"
         	else
-        	echo "exiting..."
-        	exit 1
+        		echo "exiting..."
+        		exit 1
         	fi
     	fi
 else
@@ -35,4 +35,3 @@ else
 fi
 
 echo "Autopsy is now configured. You can execute bin/autopsy to start it"
-
