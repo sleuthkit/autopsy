@@ -8,10 +8,10 @@ else
 	echo "run the command: sudo apt-get install testdisk"
 	exit 1
 fi
-VERSION=4.6.0
-sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$VERSION.jar;
-ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$VERSION.jar;
-if [[ -f "$sleuthkit_jar_filepath" ]] && [[ -f "$ext_jar_filepath" ]]; then
+TSK_VERSION=4.6.0
+sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar;
+ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar;
+if [[ -f "$sleuthkit_jar_filepath" ]]; then
 	echo "$sleuthkit_jar_filepath found"
 	echo "copying $sleuthkit_jar_filepath to the autopsy directory"
     	echo "deleting $ext_jar_filepath"
@@ -31,7 +31,6 @@ if [[ -f "$sleuthkit_jar_filepath" ]] && [[ -f "$ext_jar_filepath" ]]; then
     	fi
 else
 	echo "$sleuthkit_jar_filepath not found, please install the sleuthkit-java.deb file"
-	echo "run the command: sudo apt install ./sleuthkit-java_4.6.0-1_amd64.deb inside the debian file directory"
 	exit 1
 fi
 

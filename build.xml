@@ -6,7 +6,7 @@
     <description>Builds the module suite Autopsy 4.</description>
 	
     <import file="nbproject/build-impl.xml"/>
-    
+    <import file="${basedir}/TSK_VERSION.xml"/>
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
     <property name="netbeans-plat-version" value="8.2" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
@@ -90,7 +90,7 @@
         <if>
             <equals arg1="${os.family}" arg2="unix"/>
             <then>
-                <copy file="${basedir}/preinstall.sh" tofile="${zip-tmp}/${app.name}/preinstall.sh"/>
+                <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
             </then>
         </if>
         <if>
