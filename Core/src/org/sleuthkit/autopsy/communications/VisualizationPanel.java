@@ -728,7 +728,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         mxICell target = (mxICell) graph.getModel().getTerminal(cell, false);
                         AccountDeviceInstanceKey account2 = (AccountDeviceInstanceKey) target.getValue();
                         try {
-                            final List<Content> relationshipSources1 = commsManager.getRelationshipSources(account1.getAccountDeviceInstance(),
+                            final List<Content> relationshipSources1 = commsManager.getRelationshipSources(
+                                    account1.getAccountDeviceInstance(),
                                     account2.getAccountDeviceInstance(),
                                     currentFilter);
                             relationshipSources.addAll(relationshipSources1);

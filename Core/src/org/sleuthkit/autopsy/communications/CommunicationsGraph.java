@@ -192,18 +192,21 @@ final class CommunicationsGraph extends mxGraph {
             final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) value;
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
-            scopes.put("size", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
+            scopes.put("relationships", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
             scopes.put("iconFileName", CommunicationsGraph.class.getResource(  Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
             scopes.put("LOCK_URL", LOCK_URL);
+            scopes.put("device_id", adiKey.getAccountDeviceInstance().getDeviceId());
 
             labelMustache.execute(stringWriter, scopes);
 
             return stringWriter.toString();
         } else {
-            return ((mxICell) cell).getId();
+            final mxICell edge = (mxICell) cell;
+            final long count = (long) edge.getValue();
+            return"<html>"+ edge.getId() + "<br>" + count + (count == 1 ? " relationship" : " relationships")+"</html>";
         }
     }
 
@@ -220,27 +223,20 @@ final class CommunicationsGraph extends mxGraph {
 
     private mxCell getOrCreateVertex(AccountDeviceInstanceKey accountDeviceInstanceKey) {
         final AccountDeviceInstance accountDeviceInstance = accountDeviceInstanceKey.getAccountDeviceInstance();
-        final String name =// accountDeviceInstance.getDeviceId() + ":"                +
-                accountDeviceInstance.getAccount().getTypeSpecificID();
+        final String name = accountDeviceInstance.getAccount().getTypeSpecificID();
 
-        final mxCell vertex = nodeMap.computeIfAbsent(name, vertexName -> {
+        final mxCell vertex = nodeMap.computeIfAbsent(name + accountDeviceInstance.getDeviceId(), vertexName -> {
             double size = Math.sqrt(accountDeviceInstanceKey.getMessageCount()) + 10;
 
             mxCell newVertex = (mxCell) insertVertex(
                     getDefaultParent(),
-                    vertexName, accountDeviceInstanceKey,
+                    name, accountDeviceInstanceKey,
                     Math.random() * 400,
                     Math.random() * 400,
                     size,
                     size);
             return newVertex;
         });
-//        final mxCellState state = getView().getState(vertex, true);
-//
-//        getView().updateLabel(state);
-//        getView().updateLabelBounds(state);
-//        getView().updateBoundingBox(state);
-
         return vertex;
     }
 
@@ -251,12 +247,11 @@ final class CommunicationsGraph extends mxGraph {
         Object[] edgesBetween = getEdgesBetween(vertex1, vertex2);
         mxCell edge;
         if (edgesBetween.length == 0) {
-            final String edgeName = vertex1.getId() + " <-> " + vertex2.getId();
+            final String edgeName = vertex1.getId() + " - " + vertex2.getId();
             edge = (mxCell) insertEdge(getDefaultParent(), edgeName, relSources, vertex1, vertex2,
                     "strokeWidth=" + (Math.log(relSources) + 1));
         } else {
             edge = (mxCell) edgesBetween[0];
-//            ((Collection<Content>) edge.getValue()).addAll(relSources);
             edge.setStyle("strokeWidth=" + (Math.log(relSources) + 1));
         }
         return edge;
@@ -312,38 +307,15 @@ final class CommunicationsGraph extends mxGraph {
 
                 int total = relationshipCounts.size();
                 int k = 0;
-                progress.switchToDeterminate("", 0,total);
+                progress.switchToDeterminate("", 0, total);
                 for (Map.Entry<Relationship.RelationshipKey, Long> entry : relationshipCounts.entrySet()) {
                     Long count = entry.getValue();
                     Relationship.RelationshipKey relationshipKey = entry.getKey();
                     AccountDeviceInstanceKey account1 = relatedAccounts.get(relationshipKey.getAccount1ID());
                     AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getAccount2ID());
                     mxCell addEdge = addOrUpdateEdge(count, account1, account2);
-                    progress.progress(addEdge.getId(),k++);
+                    progress.progress(addEdge.getId(), k++);
                 }
-//                //for each pair of related accounts add edges if they are related o each other.
-//                // this is O(n^2) in the number of related accounts!!!
-//                List<AccountDeviceInstanceKey> relatedAccountsList = new ArrayList<>(relatedAccounts);
-//                progress.switchToDeterminate("", 0, relatedAccountsList.size());
-//
-//                for (i = 0; i < relatedAccountsList.size(); i++) {
-//                    AccountDeviceInstanceKey adiKey1 = relatedAccountsList.get(i);
-//                    for (int j = i; j < relatedAccountsList.size(); j++) {
-//                        if (isCancelled()) {
-//                            break;
-//                        }
-//                        AccountDeviceInstanceKey adiKey2 = relatedAccountsList.get(j);
-//                        List<Content> relationships = commsManager.getRelationshipSources(
-//                                adiKey1.getAccountDeviceInstance(),
-//                                adiKey2.getAccountDeviceInstance(),
-//                                currentFilter);
-//                        if (relationships.size() > 0) {
-//                            mxCell addEdge = addEdge(relationships, adiKey1, adiKey2);
-//                            progress.progress(addEdge.getId());
-//                        }
-//                    }
-//                    progress.progress(i);
-//                }
             } catch (TskCoreException tskCoreException) {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
             } finally {

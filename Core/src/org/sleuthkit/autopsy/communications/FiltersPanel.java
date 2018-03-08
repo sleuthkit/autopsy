@@ -61,8 +61,15 @@ final public class FiltersPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
 
+    /**
+     * Map from Account.Type to the checkbox for that account type's filter.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
+
+    /**
+     * Map from datasource device id to the checkbox for that datasource.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
 
@@ -70,6 +77,11 @@ final public class FiltersPanel extends JPanel {
      * Listens to ingest events to enable refresh button
      */
     private final PropertyChangeListener ingestListener;
+
+    /**
+     * Flag that indicates the UI is not up-sto-date with respect to the case DB
+     * and it should be refreshed (by reapplying the filters).
+     */
     private boolean needsRefresh;
 
     /**
@@ -78,10 +90,16 @@ final public class FiltersPanel extends JPanel {
      * results)
      */
     private final ItemListener validationListener;
-    private boolean deviceAccountTypeEnabled = false;
 
-    @NbBundle.Messages({"refreshText=Refresh Results",
-        "applyText=Apply"})
+    /**
+     * Is the device account type filter enabled or not. It should be enabled
+     * when the Table/Brows mode is active and disabled when the visualization
+     * is active. Initially false since the browse/table mode is active
+     * initially.
+     */
+    private boolean deviceAccountTypeEnabled;
+
+    @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
         initComponents();
         deviceRequiredLabel.setVisible(false);
@@ -102,8 +120,7 @@ final public class FiltersPanel extends JPanel {
         updateTimeZone();
         validationListener = itemEvent -> validateFilters();
 
-        updateFilters();
-        setAllDevicesSelected(true);
+        updateFilters(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
                 updateTimeZone();
@@ -118,7 +135,7 @@ final public class FiltersPanel extends JPanel {
                 if (null != eventData
                         && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
                         && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    updateFilters();
+                    updateFilters(false);
                     needsRefresh = true;
                     validateFilters();
                 }
@@ -150,8 +167,8 @@ final public class FiltersPanel extends JPanel {
     /**
      * Update the filter widgets, and apply them.
      */
-    void updateAndApplyFilters() {
-        updateFilters();
+    void updateAndApplyFilters(boolean initialState) {
+        updateFilters(initialState);
         applyFilters();
     }
 
@@ -162,9 +179,9 @@ final public class FiltersPanel extends JPanel {
     /**
      * Updates the filter widgets to reflect he data sources/types in the case.
      */
-    private void updateFilters() {
+    private void updateFilters(boolean initialState) {
         updateAccountTypeFilter();
-        updateDeviceFilter();
+        updateDeviceFilter(initialState);
     }
 
     @Override
@@ -220,7 +237,7 @@ final public class FiltersPanel extends JPanel {
     /**
      * Populate the devices filter widgets
      */
-    private void updateDeviceFilter() {
+    private void updateDeviceFilter(boolean initialState) {
         try {
             final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
 
@@ -228,13 +245,12 @@ final public class FiltersPanel extends JPanel {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
                 //store the device id in the map, but display a datasource name in the UI.
                 devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
-                    final JCheckBox jCheckBox = new JCheckBox(dsName, false);
+                    final JCheckBox jCheckBox = new JCheckBox(dsName, initialState);
                     jCheckBox.addItemListener(validationListener);
                     devicesPane.add(jCheckBox);
                     return jCheckBox;
                 });
-            };
-
+            }
         } catch (IllegalStateException ex) {
             logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
         } catch (TskCoreException tskCoreException) {
@@ -538,6 +554,21 @@ final public class FiltersPanel extends JPanel {
     }
 
     /**
+     * Enable or disable the device account type filter. The filter should be
+     * disabled for the browse/table mode and enabled for the visualization.
+     *
+     * @param enable True to enable the device account type filter, False to
+     *               disable it.
+     */
+    void setDeviceAccountTypeEnabled(boolean enable) {
+        deviceAccountTypeEnabled = enable;
+        JCheckBox deviceCheckbox = accountTypeMap.get(Account.Type.DEVICE);
+        if (deviceCheckbox != null) {
+            deviceCheckbox.setEnabled(deviceAccountTypeEnabled);
+        }
+    }
+
+    /**
      * Set the selection state of all the account type check boxes
      *
      * @param selected The selection state to set the check boxes to.
@@ -568,6 +599,7 @@ final public class FiltersPanel extends JPanel {
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
     }
+
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
         setAllAccountTypesSelected(false);
     }//GEN-LAST:event_unCheckAllAccountTypesButtonActionPerformed
@@ -619,12 +651,4 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllAccountTypesButton = new javax.swing.JButton();
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
-
-    void setDeviceAccountTypeEnabled(boolean enableDeviceAccountType) {
-        deviceAccountTypeEnabled = enableDeviceAccountType;
-        JCheckBox deviceCheckbox = accountTypeMap.get(Account.Type.DEVICE);
-        if (deviceCheckbox != null) {
-            deviceCheckbox.setEnabled(deviceAccountTypeEnabled);
-        }
-    }
 }
