@@ -32,6 +32,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
@@ -178,7 +179,8 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
      */
     @Messages({
         "LogicalEvidenceFilePanel.validatePanel.nonL01Error.text=Only files with the .l01 file extension are supported here.",
-        "LogicalEvidenceFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive"
+        "LogicalEvidenceFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
+        "LogicalEvidenceFilePanel.pathValidation.getOpenCase.Error=Warning: Exception while getting open case."
     })
     boolean validatePanel() {
         errorLabel.setVisible(false);
@@ -188,9 +190,15 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
             return false;
         }
         // display warning if there is one (but don't disable "next" button)
-        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        try {
+            if (!PathValidator.isValid(path, Case.getOpenCase().getCaseType())) {
+                errorLabel.setVisible(true);
+                errorLabel.setText(Bundle.LogicalEvidenceFilePanel_pathValidation_dataSourceOnCDriveError());
+                return false;
+            }
+        } catch (NoCurrentCaseException ex) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.LogicalEvidenceFilePanel_pathValidation_dataSourceOnCDriveError());
+            errorLabel.setText(Bundle.LogicalEvidenceFilePanel_pathValidation_getOpenCase_Error());
             return false;
         }
         //check the extension incase the path was manually entered

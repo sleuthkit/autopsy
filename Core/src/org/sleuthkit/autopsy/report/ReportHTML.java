@@ -49,6 +49,7 @@ import javax.imageio.ImageIO;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
@@ -102,8 +103,8 @@ class ReportHTML implements TableReportModule {
     }
 
     // Refesh the member variables
-    private void refresh() {
-        currentCase = Case.getCurrentCase();
+    private void refresh() throws NoCurrentCaseException {
+        currentCase = Case.getOpenCase();
         skCase = currentCase.getSleuthkitCase();
 
         dataTypes = new TreeMap<>();
@@ -327,7 +328,12 @@ class ReportHTML implements TableReportModule {
     @Override
     public void startReport(String baseReportDir) {
         // Refresh the HTML report
-        refresh();
+        try {
+            refresh();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case."); //NON-NLS
+            return;
+        }
         // Setup the path for the HTML report
         this.path = baseReportDir; //NON-NLS
         this.subPath = this.path + HTML_SUBDIR + File.separator;
@@ -882,6 +888,13 @@ class ReportHTML implements TableReportModule {
     private void writeIndex() {
         Writer indexOut = null;
         String indexFilePath = path + "report.html"; //NON-NLS
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         try {
             indexOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(indexFilePath), "UTF-8")); //NON-NLS
             StringBuilder index = new StringBuilder();
@@ -909,7 +922,7 @@ class ReportHTML implements TableReportModule {
             index.append("</frameset>\n"); //NON-NLS
             index.append("</html>"); //NON-NLS
             indexOut.write(index.toString());
-            Case.getCurrentCase().addReport(indexFilePath, NbBundle.getMessage(this.getClass(),
+            openCase.addReport(indexFilePath, NbBundle.getMessage(this.getClass(),
                     "ReportHTML.writeIndex.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error creating Writer for report.html: {0}", ex); //NON-NLS

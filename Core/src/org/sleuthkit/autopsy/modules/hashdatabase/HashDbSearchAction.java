@@ -24,6 +24,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.HashSearchProvider;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -118,8 +119,12 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
      * performAction.
      */
     @Override
+    @NbBundle.Messages ({
+        "HashDbSearchAction.noOpenCase.errMsg=No open case available."
+    })
     public void performAction() {
         // Make sure at least 1 file has an md5 hash
+        try {
         if (file != null && HashDbSearcher.countFilesMd5Hashed() > 0) {
             doSearch();
         } else {
@@ -128,6 +133,12 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
                             "HashDbSearchAction.dlgMsg.noFilesHaveMD5Calculated"),
                     NbBundle.getMessage(this.getClass(), "HashDbSearchAction.dlgMsg.title"),
                     JOptionPane.ERROR_MESSAGE);
+        }
+        } catch (NoCurrentCaseException ex) {
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.HashDbSearchAction_noOpenCase_errMsg(),
+                    NbBundle.getMessage(this.getClass(), "HashDbSearchAction.dlgMsg.title"),
+                    JOptionPane.ERROR_MESSAGE);            
         }
     }
 

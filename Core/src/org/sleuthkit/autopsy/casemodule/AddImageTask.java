@@ -107,9 +107,15 @@ class AddImageTask implements Runnable {
      */
     @Override
     public void run() {
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            return;
+        }
         progressMonitor.setIndeterminate(true);
         progressMonitor.setProgress(0);
-        Case currentCase = Case.getCurrentCase();
         String imageWriterPath = "";
         if (imageWriterSettings != null) {
             imageWriterPath = imageWriterSettings.getPath();

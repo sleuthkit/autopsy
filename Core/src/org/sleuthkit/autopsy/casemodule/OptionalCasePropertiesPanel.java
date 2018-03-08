@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,12 +62,19 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     OptionalCasePropertiesPanel(boolean editCurrentCase) {
         initComponents();
         if (editCurrentCase) {
-            caseDisplayNameTextField.setText(Case.getCurrentCase().getDisplayName());
-            caseNumberTextField.setText(Case.getCurrentCase().getNumber());
-            examinerTextField.setText(Case.getCurrentCase().getExaminer());
-            tfExaminerEmailText.setText(Case.getCurrentCase().getExaminerEmail());
-            tfExaminerPhoneText.setText(Case.getCurrentCase().getExaminerPhone());
-            taNotesText.setText(Case.getCurrentCase().getCaseNotes());
+            Case openCase;
+            try {
+                openCase = Case.getOpenCase();
+            } catch (NoCurrentCaseException ex) { 
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+                return;
+            }
+            caseDisplayNameTextField.setText(openCase.getDisplayName());
+            caseNumberTextField.setText(openCase.getNumber());
+            examinerTextField.setText(openCase.getExaminer());
+            tfExaminerEmailText.setText(openCase.getExaminerEmail());
+            tfExaminerPhoneText.setText(openCase.getExaminerPhone());
+            taNotesText.setText(openCase.getCaseNotes());
             setUpCaseDetailsFields();
             setUpOrganizationData();
         } else {
@@ -86,15 +93,18 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
     private void setUpOrganizationData() {
         if (EamDb.isEnabled()) {
-            Case currentCase = Case.getCurrentCase();
-            if (currentCase != null) {
-                try {
+            try {
+                Case currentCase = Case.getOpenCase();
+                if (currentCase != null) {
                     EamDb dbManager = EamDb.getInstance();
                     selectedOrg = dbManager.getCase(currentCase).getOrg();
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
                 }
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
             }
+            
             if (selectedOrg != null) {
                 setCurrentlySelectedOrganization(selectedOrg.getName());
             }

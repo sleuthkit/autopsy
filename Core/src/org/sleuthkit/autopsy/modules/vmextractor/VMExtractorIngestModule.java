@@ -35,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -73,13 +74,14 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
     private final HashMap<String, String> imageFolderToOutputFolder = new HashMap<>();
     private int folderId = 0;
 
-    @Messages({"# {0} - data source name", "deviceIdQueryErrMsg=Data source {0} missing Device ID"})
+    @Messages({"# {0} - data source name", "deviceIdQueryErrMsg=Data source {0} missing Device ID", 
+        "VMExtractorIngestModule.noOpenCase.errMsg=No open case available."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         long dataSourceObjId = context.getDataSource().getId();
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             SleuthkitCase caseDb = currentCase.getSleuthkitCase();
             DataSource dataSource = caseDb.getDataSource(dataSourceObjId);
             parentDeviceId = dataSource.getDeviceId();
@@ -88,13 +90,15 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
             String ingestJobOutputDirName = context.getDataSource().getName() + "_" + context.getDataSource().getId() + "_" + timeStamp;
             ingestJobOutputDirName = ingestJobOutputDirName.replace(':', '_');
-            ingestJobOutputDir = Paths.get(Case.getCurrentCase().getModuleDirectory(), VMExtractorIngestModuleFactory.getModuleName(), ingestJobOutputDirName);
+            ingestJobOutputDir = Paths.get(currentCase.getModuleDirectory(), VMExtractorIngestModuleFactory.getModuleName(), ingestJobOutputDirName);
             // create module output folder to write extracted virtual machine files to
             Files.createDirectories(ingestJobOutputDir);
         } catch (IOException | SecurityException | UnsupportedOperationException ex) {
             throw new IngestModule.IngestModuleException(Bundle.VMExtractorIngestModule_cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         } catch (TskDataException | TskCoreException ex) {
             throw new IngestModule.IngestModuleException(Bundle.deviceIdQueryErrMsg(context.getDataSource().getName()), ex);
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.VMExtractorIngestModule_noOpenCase_errMsg(), ex);
         }
     }
 
@@ -116,6 +120,9 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             vmFiles = findVirtualMachineFiles(dataSource);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error querying case database", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
 
@@ -198,6 +205,10 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     logger.log(Level.SEVERE, "Failed to ingest virtual machine file " + file + " in folder " + folder, ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.title.txt"),
                             NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.msg.txt", file));
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.msgNotify.failedIngestVM.title.txt"),
+                            Bundle.VMExtractorIngestModule_noOpenCase_errMsg());
                 }
             }
             // Update progress bar
@@ -219,11 +230,11 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    private static List<AbstractFile> findVirtualMachineFiles(Content dataSource) throws TskCoreException {
+    private static List<AbstractFile> findVirtualMachineFiles(Content dataSource) throws TskCoreException, NoCurrentCaseException {
         List<AbstractFile> vmFiles = new ArrayList<>();
         for (String vmExtension : GeneralFilter.VIRTUAL_MACHINE_EXTS) {
             String searchString = "%" + vmExtension;    // want a search string that looks like this "%.vmdk"
-            vmFiles.addAll(Case.getCurrentCase().getServices().getFileManager().findFiles(dataSource, searchString));
+            vmFiles.addAll(Case.getOpenCase().getServices().getFileManager().findFiles(dataSource, searchString));
         }
         return vmFiles;
     }
@@ -258,13 +269,13 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
      *
      * @param vmFile A virtual machine file.
      */
-    private void ingestVirtualMachineImage(Path vmFile) throws InterruptedException, IOException {
+    private void ingestVirtualMachineImage(Path vmFile) throws InterruptedException, IOException, NoCurrentCaseException {
 
         /*
          * Try to add the virtual machine file to the case as a data source.
          */
         UUID taskId = UUID.randomUUID();
-        Case.getCurrentCase().notifyAddingDataSource(taskId);
+        Case.getOpenCase().notifyAddingDataSource(taskId);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
@@ -280,7 +291,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * ingest context.
          */
         if (!dspCallback.vmDataSources.isEmpty()) {
-            Case.getCurrentCase().notifyDataSourceAdded(dspCallback.vmDataSources.get(0), taskId);
+            Case.getOpenCase().notifyDataSourceAdded(dspCallback.vmDataSources.get(0), taskId);
             List<Content> dataSourceContent = new ArrayList<>(dspCallback.vmDataSources);
             IngestJobSettings ingestJobSettings = new IngestJobSettings(context.getExecutionContext());
             for (String warning : ingestJobSettings.getWarnings()) {
@@ -291,7 +302,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.addedVirtualMachineImage.message", vmFile.toString())));
             IngestManager.getInstance().queueIngestJob(dataSourceContent, ingestJobSettings);
         } else {
-            Case.getCurrentCase().notifyFailedAddingDataSource(taskId);
+            Case.getOpenCase().notifyFailedAddingDataSource(taskId);
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,7 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -198,7 +199,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         //TODO: something like this commented code could be used to show only
         //the account types that are found:
-        //final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+        //final CommunicationsManager communicationsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
@@ -229,7 +230,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
      */
     private void updateDeviceFilter() {
         try {
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+            final SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
@@ -242,7 +243,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 });
             };
 
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
@@ -500,10 +501,12 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 ImmutableSet.of(CALL_LOG, MESSAGE)));
 
         try {
-            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            final CommunicationsManager commsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
             em.setRootContext(new AbstractNode(Children.create(new AccountsRootChildren(commsManager, commsFilter), true)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
         }
 
         needsRefresh = false;
