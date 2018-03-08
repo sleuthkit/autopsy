@@ -87,7 +87,12 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-        <copy file="${basedir}/preinstall.sh" tofile="${zip-tmp}/${app.name}/preinstall.sh"/>
+        <if>
+            <equals arg1="${os.family}" arg2="unix"/>
+            <then>
+                <copy file="${basedir}/preinstall.sh" tofile="${zip-tmp}/${app.name}/preinstall.sh"/>
+            </then>
+        </if>
         <if>
             <equals arg1="${os.family}" arg2="windows"/>
             <then>

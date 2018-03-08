@@ -19,7 +19,7 @@
     </target>
 	
 	<property name="VERSION" value="4.6.0"/>
-    
+        <replaceregexp file="${basedir}/../preinstall.sh" match="VERSION=(.*)" replace="VERSION=${VERSION}" byline="true"/>
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
         <!--Copy openCV dependencies to release-->
         <copy todir="${modules.dir}" >
