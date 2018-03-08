@@ -50,15 +50,12 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 /**
  * Options panel that allow users to set application preferences.
  */
-@Messages({"AutopsyOptionsPanel.agencyLogoPreview.text=<html><div style='text-align: center;'>No logo<br>selected</div></html>",
+@Messages({
+    "AutopsyOptionsPanel.agencyLogoPreview.text=<html><div style='text-align: center;'>No logo<br>selected</div></html>",
     "AutopsyOptionsPanel.logoPanel.border.title=Logo",
     "AutopsyOptionsPanel.viewPanel.border.title=View",
     "AutopsyOptionsPanel.invalidImageFile.msg=The selected file was not able to be used as an agency logo.",
     "AutopsyOptionsPanel.invalidImageFile.title=Invalid Image File",
-    "AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any changes to max memory to take effect.",
-    "AutopsyOptionsPanel.totalMemoryLabel.text=Total System Memory:",
-    "AutopsyOptionsPanel.maxMemoryLabel.text=Maximum JVM Memory:",
-    "AutopsyOptionsPanel.maxMemoryUnitsLabel.text=GB",
     "AutopsyOptionsPanel.runtimePanel.border.title=Runtime",
     "AutopsyOptionsPanel.memFieldValidationLabel.not64BitInstall.text=JVM memory settings only enabled for 64 bit version",
     "AutopsyOptionsPanel.memFieldValidationLabel.noValueEntered.text=No value entered",
@@ -68,13 +65,9 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "# {0} - systemMemory",
     "AutopsyOptionsPanel.memFieldValidationLabel.overMaxMemory.text=Value must be less than the total system memory of {0}GB",
     "AutopsyOptionsPanel.memFieldValidationLabel.developerMode.text=Memory settings are not available while running in developer mode",
-    "AutopsyOptionsPanel.defaultLogoRB.text=Use default",
-    "AutopsyOptionsPanel.specifyLogoRB.text=Specify a logo",
-    "AutopsyOptionsPanel.browseLogosButton.text=Browse",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidPath.text=Path is not valid.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidImageSpecified.text=Invalid image file specified.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set.",
-    "AutopsyOptionsPanel.maxLogFileCount.text=Maximum Log Files:",
     "AutopsyOptionsPanel.logNumAlert.invalidInput.text=A positive integer is required here."
 })
 
@@ -653,6 +646,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
+
+        agencyLogoPreview.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPreview.AccessibleContext.accessibleName")); // NOI18N
 
         viewPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.viewPanel.border.title"))); // NOI18N
 
