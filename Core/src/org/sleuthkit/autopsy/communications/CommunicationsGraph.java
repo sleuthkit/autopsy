@@ -44,10 +44,10 @@ import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.AccountPair;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -282,37 +282,37 @@ final class CommunicationsGraph extends mxGraph {
                 /**
                  * set to keep track of accounts related to pinned accounts
                  */
-                Map<Long, AccountDeviceInstanceKey> relatedAccounts = new HashMap<>();
+                Map<AccountDeviceInstance, AccountDeviceInstanceKey> relatedAccounts = new HashMap<>();
                 for (AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
                     if (isCancelled()) {
                         break;
                     }
                     List<AccountDeviceInstance> relatedAccountDeviceInstances =
                             commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
-                    relatedAccounts.put(adiKey.getAccountDeviceInstance().getAccount().getAccountID(), adiKey);
+                    relatedAccounts.put(adiKey.getAccountDeviceInstance(), adiKey);
                     getOrCreateVertex(adiKey);
 
                     //get accounts related to pinned account
                     for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
                         long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
                         final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
-                        relatedAccounts.put(relatedADI.getAccount().getAccountID(), relatedADIKey); //store related accounts
+                        relatedAccounts.put(relatedADI, relatedADIKey); //store related accounts
                     }
                     progress.progress(++i);
                 }
 
-                Set<Long> accountIDs = relatedAccounts.keySet();
+                Set<AccountDeviceInstance> accounts = relatedAccounts.keySet();
 
-                Map<Relationship.RelationshipKey, Long> relationshipCounts = commsManager.getRelationshipCountsBetween(accountIDs, currentFilter);
+                Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(accounts, currentFilter);
 
                 int total = relationshipCounts.size();
                 int k = 0;
                 progress.switchToDeterminate("", 0, total);
-                for (Map.Entry<Relationship.RelationshipKey, Long> entry : relationshipCounts.entrySet()) {
+                for (Map.Entry<AccountPair, Long> entry : relationshipCounts.entrySet()) {
                     Long count = entry.getValue();
-                    Relationship.RelationshipKey relationshipKey = entry.getKey();
-                    AccountDeviceInstanceKey account1 = relatedAccounts.get(relationshipKey.getAccount1ID());
-                    AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getAccount2ID());
+                    AccountPair relationshipKey = entry.getKey();
+                    AccountDeviceInstanceKey account1 = relatedAccounts.get(relationshipKey.getFirst());
+                    AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getSecond());
                     mxCell addEdge = addOrUpdateEdge(count, account1, account2);
                     progress.progress(addEdge.getId(), k++);
                 }
