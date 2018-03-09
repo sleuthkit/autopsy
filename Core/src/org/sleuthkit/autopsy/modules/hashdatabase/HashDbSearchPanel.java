@@ -155,7 +155,7 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
 
             },
             new String [] {
-                    NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.hashTable.defaultModel.title.text")
+                "MD5 Hashes"
             }
         ) {
             Class[] types = new Class [] {
@@ -174,7 +174,9 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
             }
         });
         jScrollPane1.setViewportView(hashTable);
+        if (hashTable.getColumnModel().getColumnCount() > 0) {
             hashTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.hashTable.columnModel.title0")); // NOI18N
+        }
 
         hashField.setText(org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.hashField.text")); // NOI18N
 
@@ -241,7 +243,7 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(hashLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(hashLabel)
                     .addComponent(hashField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)

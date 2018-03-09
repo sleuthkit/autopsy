@@ -87,11 +87,11 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         exePathNameLabel = new javax.swing.JLabel();
         rulesPanel = new javax.swing.JPanel();
         ruleListLabel = new javax.swing.JLabel();
-        rulesScrollPane = new javax.swing.JScrollPane();
-        rulesList = new javax.swing.JList<>();
         newRuleButton = new javax.swing.JButton();
         editRuleButton = new javax.swing.JButton();
         deleteRuleButton = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        rulesList = new javax.swing.JList<>();
 
         setPreferredSize(new java.awt.Dimension(701, 453));
 
@@ -99,7 +99,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
         org.openide.awt.Mnemonics.setLocalizedText(externalViewerTitleLabel, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.externalViewerTitleLabel.text")); // NOI18N
 
-        jSplitPane1.setDividerLocation(365);
         jSplitPane1.setDividerSize(1);
 
         exePanel.setPreferredSize(new java.awt.Dimension(311, 224));
@@ -117,7 +116,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addGroup(exePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(exePathLabel)
                     .addComponent(exePathNameLabel))
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         exePanelLayout.setVerticalGroup(
             exePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -126,22 +125,17 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addComponent(exePathLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(exePathNameLabel)
-                .addContainerGap(361, Short.MAX_VALUE))
+                .addContainerGap(355, Short.MAX_VALUE))
         );
 
         jSplitPane1.setRightComponent(exePanel);
 
-        rulesPanel.setPreferredSize(new java.awt.Dimension(365, 406));
-
         org.openide.awt.Mnemonics.setLocalizedText(ruleListLabel, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.ruleListLabel.text")); // NOI18N
-
-        rulesScrollPane.setViewportView(rulesList);
 
         newRuleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.newRuleButton.text")); // NOI18N
         newRuleButton.setMaximumSize(new java.awt.Dimension(111, 25));
         newRuleButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        newRuleButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newRuleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newRuleButtonActionPerformed(evt);
@@ -152,7 +146,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         org.openide.awt.Mnemonics.setLocalizedText(editRuleButton, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.editRuleButton.text")); // NOI18N
         editRuleButton.setMaximumSize(new java.awt.Dimension(111, 25));
         editRuleButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        editRuleButton.setPreferredSize(new java.awt.Dimension(111, 25));
         editRuleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editRuleButtonActionPerformed(evt);
@@ -163,12 +156,13 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         org.openide.awt.Mnemonics.setLocalizedText(deleteRuleButton, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.deleteRuleButton.text")); // NOI18N
         deleteRuleButton.setMaximumSize(new java.awt.Dimension(111, 25));
         deleteRuleButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        deleteRuleButton.setPreferredSize(new java.awt.Dimension(111, 25));
         deleteRuleButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteRuleButtonActionPerformed(evt);
             }
         });
+
+        jScrollPane2.setViewportView(rulesList);
 
         javax.swing.GroupLayout rulesPanelLayout = new javax.swing.GroupLayout(rulesPanel);
         rulesPanel.setLayout(rulesPanelLayout);
@@ -178,14 +172,14 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addContainerGap()
                 .addGroup(rulesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(ruleListLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rulesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, rulesPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(6, 6, 6)
                         .addComponent(newRuleButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(16, 16, 16)
                         .addComponent(editRuleButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteRuleButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(16, 16, 16)
+                        .addComponent(deleteRuleButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2))
                 .addContainerGap())
         );
         rulesPanelLayout.setVerticalGroup(
@@ -194,8 +188,8 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addContainerGap()
                 .addComponent(ruleListLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane2)
+                .addGap(12, 12, 12)
                 .addGroup(rulesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newRuleButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(editRuleButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -370,6 +364,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     private javax.swing.JLabel externalViewerTitleLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JLabel ruleListLabel;

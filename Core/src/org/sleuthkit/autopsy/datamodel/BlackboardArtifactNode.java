@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -422,7 +423,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 ss.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
                         Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
                         "",
-                        file != null ? file.getMd5Hash() : ""));
+                        file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
             }
         } else {
             String dataSourceStr = "";

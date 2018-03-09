@@ -39,9 +39,14 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Look for text messages and allow resulting blackboard artifacts to be
+ * generated.
+ */
 class TextMessageAnalyzer {
 
     private Connection connection = null;
@@ -51,10 +56,15 @@ class TextMessageAnalyzer {
     private long fileId = 0;
     private java.io.File jFile = null;
     List<AbstractFile> absFiles;
-    private String moduleName = iOSModuleFactory.getModuleName();
+    private final String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
     private Blackboard blackboard;
 
+    /**
+     * Find text messages given an ingest job context and index the results.
+     *
+     * @param context The ingest job context.
+     */
     void findTexts(IngestJobContext context) {
         Case openCase;
         try {
@@ -70,15 +80,17 @@ class TextMessageAnalyzer {
             if (absFiles.isEmpty()) {
                 return;
             }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(openCase.getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
+                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
+                    fileId = file.getId();
+                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
                     findTextsInDB(dbPath, fileId);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS
+                } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", file.getName(), fileId), ex); //NON-NLS
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, String.format("Error writing content from file '%s' (id=%d) to '%s'.", file.getName(), fileId, dbPath), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
@@ -86,8 +98,15 @@ class TextMessageAnalyzer {
         }
     }
 
+    /**
+     * Create blackboard artifacts and index results for text messages found in
+     * the database.
+     *
+     * @param DatabasePath The path to the database.
+     * @param fileId       The ID of the file associated with artifacts.
+     */
     @Messages({"TextMessageAnalyzer.indexError.message=Failed to index text message artifact for keyword search."})
-    private void findTextsInDB(String DatabasePath, long fId) {
+    private void findTextsInDB(String DatabasePath, long fileId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -108,9 +127,9 @@ class TextMessageAnalyzer {
 
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+            AbstractFile file = skCase.getAbstractFileById(fileId);
+            if (file == null) {
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fileId); //NON-NLS
                 return;
             }
 
@@ -131,7 +150,7 @@ class TextMessageAnalyzer {
                     subject = resultSet.getString("subject"); //NON-NLS
                     body = resultSet.getString("body"); //NON-NLS
 
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
+                    bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE); //create Message artifact and then add attributes from result set.
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     // @@@ NEed to put into more specific TO or FROM
                     if (type.equals("1")) {

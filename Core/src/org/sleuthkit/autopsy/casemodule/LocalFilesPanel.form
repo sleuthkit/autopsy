@@ -88,7 +88,7 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="changeNameButton" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                      <Component id="changeNameButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="displayNameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>

@@ -314,8 +314,18 @@ public abstract class DrawableFile {
         return this.file;
     }
 
+    /**
+     * Get the width of the visual content.
+     * 
+     * @return The width.
+     */
     abstract Double getWidth();
 
+    /**
+     * Get the height of the visual content.
+     * 
+     * @return The height.
+     */
     abstract Double getHeight();
 
     public String getDrawablePath() {

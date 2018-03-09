@@ -143,7 +143,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setIconTextGap(2);
-        viewArtifactButton.setPreferredSize(new java.awt.Dimension(93, 23));
         viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewArtifactButtonActionPerformed(evt);
@@ -155,7 +154,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
         viewContentButton.setIconTextGap(2);
-        viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
         viewContentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewContentButtonActionPerformed(evt);

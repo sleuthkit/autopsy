@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 /**
  * Generic Application content viewer
  */
-@ServiceProvider(service = DataContentViewer.class, position = 5)
+@ServiceProvider(service = DataContentViewer.class, position = 3)
 public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final int CONFIDENCE_LEVEL = 7;
@@ -47,7 +47,6 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
 
     // TBD: This hardcoded list of viewers should be replaced with a dynamic lookup
     private static final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
-        // new JPEGViewerDummy(), // this if for testing only
         new SQLiteViewer(),
         new PListViewer(),
         new MediaFileViewer()
