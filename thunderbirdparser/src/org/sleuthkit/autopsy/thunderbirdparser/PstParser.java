@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
@@ -206,7 +208,15 @@ class PstParser {
      */
     private void extractAttachments(EmailMessage email, PSTMessage msg, long fileID) {
         int numberOfAttachments = msg.getNumberOfAttachments();
-        String outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
+        String outputDirPath;
+        try {
+            outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
+        } catch (NoCurrentCaseException ex) {
+                addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
+                                filename));
+                logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex); //NON-NLS
+        }
         for (int x = 0; x < numberOfAttachments; x++) {
             String filename = "";
             try {
@@ -237,7 +247,7 @@ class PstParser {
                 attachment.setSize(attach.getFilesize());
                 attachment.setEncodingType(TskData.EncodingType.XOR1);
                 email.addAttachment(attachment);
-            } catch (PSTException | IOException | NullPointerException ex) {
+            } catch (PSTException | IOException | NullPointerException | NoCurrentCaseException ex) {
                 /**
                  * Swallowing null pointer as it is caused by a problem with
                  * getting input stream (library problem).

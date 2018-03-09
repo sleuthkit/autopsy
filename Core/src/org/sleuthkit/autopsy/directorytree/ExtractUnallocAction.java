@@ -69,14 +69,14 @@ final class ExtractUnallocAction extends AbstractAction {
     private long currentImage = 0L;
     private final boolean isImage;
 
-    public ExtractUnallocAction(String title, Volume volume) {
+    public ExtractUnallocAction(String title, Volume volume) throws NoCurrentCaseException {
         super(title);
         isImage = false;
         OutputFileData outputFileData = new OutputFileData(volume);
         filesToExtract.add(outputFileData);
     }
 
-    public ExtractUnallocAction(String title, Image image) {
+    public ExtractUnallocAction(String title, Image image) throws NoCurrentCaseException {
         super(title);
         isImage = true;
         currentImage = image.getId();
@@ -596,14 +596,14 @@ final class ExtractUnallocAction extends AbstractAction {
          *
          * @param img Image file to be analyzed
          */
-        OutputFileData(Image img) {
+        OutputFileData(Image img) throws NoCurrentCaseException {
             this.layoutFiles = getUnallocFiles(img);
             Collections.sort(layoutFiles, new SortObjId());
             this.volumeId = 0;
             this.imageId = img.getId();
             this.imageName = img.getName();
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + 0 + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getCurrentCase().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(Case.getOpenCase().getExportDirectory() + File.separator + this.fileName);
             this.sizeInBytes = calcSizeInBytes();
         }
 
@@ -612,7 +612,7 @@ final class ExtractUnallocAction extends AbstractAction {
          *
          * @param volume Volume file to be analyzed
          */
-        OutputFileData(Volume volume) {
+        OutputFileData(Volume volume) throws NoCurrentCaseException {
             try {
                 this.imageName = volume.getDataSource().getName();
                 this.imageId = volume.getDataSource().getId();
@@ -623,7 +623,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 this.imageId = 0;
             }
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + volumeId + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getCurrentCase().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(Case.getOpenCase().getExportDirectory() + File.separator + this.fileName);
             this.layoutFiles = getUnallocFiles(volume);
             Collections.sort(layoutFiles, new SortObjId());
             this.sizeInBytes = calcSizeInBytes();
