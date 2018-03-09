@@ -57,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -226,10 +227,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
             return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()}); //NON-NLS
+            logger.log(Level.WARNING, String.format("Failed to process the image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex);
+            return ProcessResult.ERROR;
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } finally {
             try {

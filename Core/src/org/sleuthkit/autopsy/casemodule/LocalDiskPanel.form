@@ -32,7 +32,7 @@
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="refreshTableButton" min="-2" pref="129" max="-2" attributes="0"/>
+                      <Component id="refreshTableButton" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane1" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
@@ -44,28 +44,28 @@
                               <Component id="timeZoneComboBox" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="changeDatabasePathCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="imageWriterErrorLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="descLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Group type="103" groupAlignment="1" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="1" attributes="0">
+                                          <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="changeDatabasePathCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="imageWriterErrorLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="descLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
                                   <Component id="copyImageCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="errorLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="sectorSizeLabel" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="sectorSizeComboBox" min="-2" pref="85" max="-2" attributes="0"/>
+                                      <Component id="sectorSizeComboBox" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="0" attributes="0">
                                       <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
                                       <Component id="pathTextField" min="-2" pref="342" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="browseButton" min="-2" pref="106" max="-2" attributes="0"/>
+                                      <Component id="browseButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="noFatOrphansCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
