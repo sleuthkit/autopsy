@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 class CommonFilesNode extends AbstractNode {
     
-    private CommonFilesChildren children;
+    private final CommonFilesChildren children;
     
     public CommonFilesNode(List<AbstractFile> keys) {
         super(new CommonFilesChildren(true, keys));
