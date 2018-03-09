@@ -3,7 +3,7 @@ package org.sleuthkit.autopsy.datasourceprocessors;
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /*
  * A runnable that adds a raw data source to a case database. 
@@ -121,11 +122,20 @@ final class AddRawImageTask implements Runnable {
                "AddRawImageTask.image.critical.error.adding=Critical error adding ",
                "AddRawImageTask.for.device=for device ",
                "AddRawImageTask.image.notExisting=is not existing.",
-               "AddRawImageTask.image.noncritical.error.adding=Non-critical error adding "})
+               "AddRawImageTask.image.noncritical.error.adding=Non-critical error adding ",
+               "AddRawImageTask.noOpenCase.errMsg=No open case available."})
     private void addImageToCase(List<Content> dataSources, List<String> errorMessages) {
+        SleuthkitCase caseDatabase;
+        try {
+            caseDatabase = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            errorMessages.add(Bundle.AddRawImageTask_noOpenCase_errMsg());
+            logger.log(Level.SEVERE, Bundle.AddRawImageTask_noOpenCase_errMsg(), ex);
+            criticalErrorOccurred = true;
+            return;
+        }
         progressMonitor.setProgressText(Bundle.AddRawImageTask_progress_add_text() + imageFilePath);
         List<String> imageFilePaths = new ArrayList<>();
-        SleuthkitCase caseDatabase = Case.getCurrentCase().getSleuthkitCase();
         File imageFile = Paths.get(imageFilePath).toFile();
         if (!imageFile.exists()) {
             String errorMessage = Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddRawImageTask_for_device() 
