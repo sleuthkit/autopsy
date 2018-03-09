@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -111,7 +112,7 @@ final class FileExporter {
             }
             closeCatalogs();
             writeFlagFiles();
-        } catch (FileExportSettings.PersistenceException | FileExportRuleSet.ExportRulesException | TskCoreException | IOException ex) {
+        } catch (FileExportSettings.PersistenceException | FileExportRuleSet.ExportRulesException | TskCoreException | IOException | NoCurrentCaseException ex) {
             throw new FileExportException("Error occurred during file export", ex);
         }
     }
@@ -128,7 +129,12 @@ final class FileExporter {
      * @throws org.sleuthkit.autopsy.autoingest.FileExporter.FileExportException
      */
     private boolean verifyPrerequisites(List<Content> dataSources) throws FileExportException {
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        SleuthkitCase skCase;
+        try {
+            skCase = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new FileExportException("Exception while getting open case.", ex);
+        }
         List<IngestJobInfo> ingestJobs = new ArrayList<>();
         try {
             // all ingest jobs that were processed as part of this case
@@ -310,7 +316,7 @@ final class FileExporter {
      * @throws IOException      If there is a problem writing a file to
      *                          secondary storage.
      */
-    private void exportFiles(Map<Long, List<String>> fileIdsToRuleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException {
+    private void exportFiles(Map<Long, List<String>> fileIdsToRuleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException, NoCurrentCaseException {
         for (Map.Entry<Long, List<String>> entry : fileIdsToRuleNames.entrySet()) {
            if (cancelCheck.get()) {
               return;
@@ -334,8 +340,8 @@ final class FileExporter {
      * @throws IOException      If there is a problem writing the file to
      *                          storage.
      */
-    private void exportFile(Long fileId, List<String> ruleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException {
-        AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
+    private void exportFile(Long fileId, List<String> ruleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException, NoCurrentCaseException {
+        AbstractFile file = Case.getOpenCase().getSleuthkitCase().getAbstractFileById(fileId);
         if (!shouldExportFile(file)) {
             return;
         }

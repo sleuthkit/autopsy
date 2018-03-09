@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -101,7 +100,7 @@ class AddArchiveTask implements Runnable {
 
         // extract the archive and pass the extracted folder as input
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
 
             // create folder to extract archive to
             Path destinationFolder = createDirectoryForFile(archivePath, currentCase.getModuleDirectory());
