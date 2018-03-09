@@ -29,7 +29,9 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
@@ -85,7 +87,7 @@ public class VideoFile extends DrawableFile {
      * @throws MediaException 
      */
     @NbBundle.Messages({"VideoFile.getMedia.progress=writing temporary file to disk"})
-    public Media getMedia() throws IOException, MediaException {
+    public Media getMedia() throws IOException, MediaException, NoCurrentCaseException {
         Media media = (mediaRef != null) ? mediaRef.get() : null;
 
         if (media != null) {
@@ -119,6 +121,8 @@ public class VideoFile extends DrawableFile {
             logger.log(Level.SEVERE, "Error writing video file to disk.", ex); //NON-NLS
         } catch (MediaException ex) {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
         
         return retValue;
@@ -141,6 +145,8 @@ public class VideoFile extends DrawableFile {
             logger.log(Level.SEVERE, "Error writing video file to disk.", ex); //NON-NLS
         } catch (MediaException ex) {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
         
         return retValue;

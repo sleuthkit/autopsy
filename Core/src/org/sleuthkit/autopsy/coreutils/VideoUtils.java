@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import static org.sleuthkit.autopsy.coreutils.ImageUtils.isMediaThumbnailSupported;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -90,8 +91,8 @@ public class VideoUtils {
     private VideoUtils() {
     }
 
-    public static File getTempVideoFile(AbstractFile file) {
-        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
+    public static File getTempVideoFile(AbstractFile file) throws NoCurrentCaseException {
+        return Paths.get(Case.getOpenCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
@@ -101,7 +102,13 @@ public class VideoUtils {
     @NbBundle.Messages({"# {0} - file name",
         "VideoUtils.genVideoThumb.progress.text=extracting temporary file {0}"})
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
-        java.io.File tempFile = getTempVideoFile(file);
+        java.io.File tempFile;
+        try {
+            tempFile = getTempVideoFile(file);
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            return null;
+        }
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             ProgressHandle progress = ProgressHandle.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
             progress.start(100);
