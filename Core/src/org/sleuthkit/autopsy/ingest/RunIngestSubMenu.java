@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -48,11 +49,11 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
         List<Content> dataSources = new ArrayList<>();
 
         try {
-            dataSources = Case.getCurrentCase().getDataSources();
+            dataSources = Case.getOpenCase().getDataSources();
         } catch (IllegalStateException ex) {
             // No open Cases, create a disabled empty menu
             return getEmpty();
-        } catch (TskCoreException e) {
+        } catch (TskCoreException | NoCurrentCaseException e) {
             System.out.println("Exception getting images: " + e.getMessage()); //NON-NLS
         }
         JComponent[] comps = new JComponent[dataSources.size()];

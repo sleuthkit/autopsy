@@ -52,6 +52,7 @@ import org.mitre.stix.stix_1.STIXPackage;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -185,7 +186,7 @@ public class STIXReportModule implements GeneralReportModule {
 
             // Set the progress bar to done. If any errors occurred along the way, modify
             // the "complete" message to indicate this.
-            Case.getCurrentCase().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
+            Case.getOpenCase().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
             if (hadErrors) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel(
@@ -202,7 +203,7 @@ public class STIXReportModule implements GeneralReportModule {
             progressPanel.complete(ReportStatus.ERROR);
             progressPanel.updateStatusLabel(
                     NbBundle.getMessage(this.getClass(), "STIXReportModule.progress.completedWithErrors"));
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Unable to add report to database.", ex);
         }
     }
