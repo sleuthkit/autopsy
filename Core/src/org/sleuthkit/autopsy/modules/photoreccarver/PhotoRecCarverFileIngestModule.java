@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -301,9 +302,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 context.addFilesToJob(new ArrayList<>(carvedItems));
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
             }
+        } catch (ReadContentInputStreamException ex) {
+            totals.totalItemsWithErrors.incrementAndGet();
+            logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d) with the PhotoRec carver.", file.getName(), file.getId()), ex); // NON-NLS
+            MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
+            return IngestModule.ProcessResult.ERROR;
         } catch (IOException ex) {
             totals.totalItemsWithErrors.incrementAndGet();
-            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error writing file '%s' (id=%d) to '%s' with the PhotoRec carver.", file.getName(), file.getId(), tempFilePath), ex); // NON-NLS
             MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
@@ -443,8 +449,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws IngestModuleException
      */
     public static File locateExecutable() throws IngestModule.IngestModuleException {
-        File exeFile = null;
-        Path execName = null;
+        File exeFile;
+        Path execName;
         String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
             execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);

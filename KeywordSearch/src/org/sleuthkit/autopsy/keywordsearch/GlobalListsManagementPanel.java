@@ -217,7 +217,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         newListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
         newListButton.setMaximumSize(new java.awt.Dimension(111, 25));
         newListButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        newListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newListButtonActionPerformed(evt);
@@ -230,7 +229,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         importButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
         importButton.setMaximumSize(new java.awt.Dimension(111, 25));
         importButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        importButton.setPreferredSize(new java.awt.Dimension(111, 25));
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
@@ -245,7 +243,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         exportButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
         exportButton.setMaximumSize(new java.awt.Dimension(111, 25));
         exportButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        exportButton.setPreferredSize(new java.awt.Dimension(111, 25));
         exportButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 exportButtonActionPerformed(evt);
@@ -258,7 +255,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         copyListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
         copyListButton.setMaximumSize(new java.awt.Dimension(111, 25));
         copyListButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        copyListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         copyListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 copyListButtonActionPerformed(evt);
@@ -271,7 +267,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         deleteListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
         deleteListButton.setMaximumSize(new java.awt.Dimension(111, 25));
         deleteListButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        deleteListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         deleteListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteListButtonActionPerformed(evt);
@@ -284,7 +279,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         renameListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
         renameListButton.setMaximumSize(new java.awt.Dimension(111, 25));
         renameListButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        renameListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         renameListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 renameListButtonActionPerformed(evt);
@@ -297,8 +291,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(10, 10, 10)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -310,10 +303,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                         .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteListButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(keywordListsLabel))
-                .addGap(6, 6, 6))
+                            .addComponent(deleteListButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(keywordListsLabel)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(12, 12, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, newListButton, renameListButton});
@@ -324,7 +317,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addGap(22, 22, 22)
                 .addComponent(keywordListsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
+                .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)

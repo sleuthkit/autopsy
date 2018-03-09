@@ -278,7 +278,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
             FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
             // Get the selected interesting files set and populate the set
-            // components.       
+            // components.
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
 
             if (selectedSet != null) {
@@ -405,7 +405,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // Create a files set defintion panle.
         FilesSetPanel panel;
         if (selectedSet != null) {
-            // Editing an existing set definition.            
+            // Editing an existing set definition.
             panel = new FilesSetPanel(selectedSet, panelType);
         } else {
             // Creating a new set definition.
@@ -707,6 +707,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileNameRegexCheckbox.setFont(fileNameRegexCheckbox.getFont().deriveFont(fileNameRegexCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(fileNameRegexCheckbox, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.fileNameRegexCheckbox.text")); // NOI18N
         fileNameRegexCheckbox.setEnabled(false);
+        fileNameRegexCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileNameRegexCheckboxActionPerformed(evt);
+            }
+        });
 
         separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
@@ -915,18 +920,23 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                         .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(fileNameRadioButton)
                                             .addComponent(rulePathConditionRegexCheckBox)
                                             .addGroup(jPanel1Layout.createSequentialGroup()
                                                 .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(daysIncludedLabel))
                                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(filesRadioButton)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(dirsRadioButton)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(allRadioButton)))
+                                                .addComponent(allRadioButton))
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(fileNameRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(fileNameExtensionRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(fileNameRegexCheckbox)))
                                         .addGap(0, 0, Short.MAX_VALUE)))))
                         .addGap(8, 8, 8))
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -942,11 +952,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                     .addComponent(jLabel6))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(ingestWarningLabel))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(174, 174, 174)
-                                .addComponent(fileNameExtensionRadioButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(fileNameRegexCheckbox))
                             .addComponent(jLabel1)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(newRuleButton)
@@ -954,7 +959,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addComponent(editRuleButton)
                                 .addGap(18, 18, 18)
                                 .addComponent(deleteRuleButton)))
-                        .addGap(24, 28, Short.MAX_VALUE))))
+                        .addGap(24, 47, Short.MAX_VALUE))))
         );
 
         jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copySetButton, deleteSetButton, editSetButton, exportSetButton, importSetButton, newSetButton});
@@ -1141,7 +1146,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import"
     })
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
-        //save currently selected value as default value to select     
+        //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
         JFileChooser chooser = new JFileChooser();
         final String EXTENSION = "xml"; //NON-NLS
@@ -1163,7 +1168,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
             Collection<FilesSet> importedSets;
             try {
-                importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path            
+                importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path
                 if (importedSets.isEmpty()) {
                     throw new FilesSetsManager.FilesSetsManagerException("No Files Sets were read from the xml.");
                 }
@@ -1176,7 +1181,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 return;
             }
             for (FilesSet set : importedSets) {
-                int choice = JOptionPane.OK_OPTION; 
+                int choice = JOptionPane.OK_OPTION;
                 if (filesSets.containsKey(set.getName())) {
                     Object[] options = {NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.yesOwMsg"),
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.noSkipMsg"),
@@ -1274,6 +1279,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         }
     }//GEN-LAST:event_exportSetButtonActionPerformed
+
+    private void fileNameRegexCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameRegexCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fileNameRegexCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;

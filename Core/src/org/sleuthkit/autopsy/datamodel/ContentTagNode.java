@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -114,7 +115,7 @@ class ContentTagNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>(Bundle.ContentTagNode_createSheet_artifactMD5_name(),
                 Bundle.ContentTagNode_createSheet_artifactMD5_displayName(),
                 "",
-                file != null ? file.getMd5Hash() : ""));
+                file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
         return propertySheet;
     }
 
