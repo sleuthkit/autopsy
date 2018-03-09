@@ -54,6 +54,7 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -189,8 +190,21 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      */
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) { 
+                JOptionPane.showMessageDialog(this,
+                        "Failed to export plist file.",
+                        Bundle.PListViewer_ExportFailed_message(),
+                        JOptionPane.ERROR_MESSAGE);
+
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+                return;
+        }
+        
         final JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         fileChooser.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
 
         final int returnVal = fileChooser.showSaveDialog(this);

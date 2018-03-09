@@ -120,7 +120,6 @@
                                           </Group>
                                           <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="fileNameRadioButton" min="-2" max="-2" attributes="0"/>
                                                   <Component id="rulePathConditionRegexCheckBox" min="-2" max="-2" attributes="0"/>
                                                   <Group type="102" attributes="0">
                                                       <Component id="daysIncludedTextField" min="-2" max="-2" attributes="0"/>
@@ -128,11 +127,18 @@
                                                       <Component id="daysIncludedLabel" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <Group type="102" attributes="0">
-                                                      <Component id="filesRadioButton" min="-2" pref="47" max="-2" attributes="0"/>
+                                                      <Component id="filesRadioButton" min="-2" max="-2" attributes="0"/>
                                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                                       <Component id="dirsRadioButton" min="-2" max="-2" attributes="0"/>
                                                       <EmptySpace max="-2" attributes="0"/>
                                                       <Component id="allRadioButton" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <Group type="102" alignment="0" attributes="0">
+                                                      <Component id="fileNameRadioButton" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="fileNameExtensionRadioButton" min="-2" max="-2" attributes="0"/>
+                                                      <EmptySpace max="-2" attributes="0"/>
+                                                      <Component id="fileNameRegexCheckbox" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                               </Group>
                                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -158,12 +164,6 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="ingestWarningLabel" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="-2" pref="174" max="-2" attributes="0"/>
-                                      <Component id="fileNameExtensionRadioButton" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="fileNameRegexCheckbox" min="-2" max="-2" attributes="0"/>
-                                  </Group>
                                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="newRuleButton" min="-2" max="-2" attributes="0"/>
@@ -173,7 +173,7 @@
                                       <Component id="deleteRuleButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <EmptySpace min="24" pref="28" max="32767" attributes="0"/>
+                              <EmptySpace min="24" pref="47" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -600,6 +600,9 @@
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fileNameRegexCheckboxActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JSeparator" name="separator">
               <Properties>

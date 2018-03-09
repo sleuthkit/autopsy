@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -162,8 +163,8 @@ final class CaseEventListener implements PropertyChangeListener {
 
                 try {
                     // Get the remaining tags on the content object
-                    Content content = Case.getCurrentCase().getSleuthkitCase().getContentById(contentID);
-                    TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                    Content content = Case.getOpenCase().getSleuthkitCase().getContentById(contentID);
+                    TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
                     List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
 
                     if (tags.stream()
@@ -185,7 +186,7 @@ final class CaseEventListener implements PropertyChangeListener {
                         // There's still at least one bad tag, so leave the known status as is
                         return;
                     }
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to find content", ex);
                     return;
                 }
@@ -241,6 +242,13 @@ final class CaseEventListener implements PropertyChangeListener {
                     return;
                 }
             } else { //BLACKBOARD_ARTIFACT_TAG_DELETED
+                Case openCase;
+                try {
+                    openCase = Case.getOpenCase();
+                } catch (NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+                    return;
+                }
                 // For deleted tags, we want to set the file status to UNKNOWN if:
                 //   - The tag that was just removed is notable in central repo
                 //   - There are no remaining tags that are notable 
@@ -256,9 +264,9 @@ final class CaseEventListener implements PropertyChangeListener {
 
                 try {
                     // Get the remaining tags on the artifact
-                    content = Case.getCurrentCase().getSleuthkitCase().getContentById(contentID);
-                    bbArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactID);
-                    TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                    content = openCase.getSleuthkitCase().getContentById(contentID);
+                    bbArtifact = openCase.getSleuthkitCase().getBlackboardArtifact(artifactID);
+                    TagsManager tagsManager = openCase.getServices().getTagsManager();
                     List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
 
                     if (tags.stream()
@@ -319,10 +327,10 @@ final class CaseEventListener implements PropertyChangeListener {
              * that are tagged with the given tag name.
              */
             try {
-                TagName tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(modifiedTagName);
+                TagName tagName = Case.getOpenCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(modifiedTagName);
                 //First update the artifacts
                 //Get all BlackboardArtifactTags with this tag name
-                List<BlackboardArtifactTag> artifactTags = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
+                List<BlackboardArtifactTag> artifactTags = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
                 for (BlackboardArtifactTag bbTag : artifactTags) {
                     //start with assumption that none of the other tags applied to this Correlation Attribute will prevent it's status from being changed
                     boolean hasTagWithConflictingKnownStatus = false;
@@ -338,7 +346,7 @@ final class CaseEventListener implements PropertyChangeListener {
                         }
                         //Get the BlackboardArtifact which this BlackboardArtifactTag has been applied to.
                         BlackboardArtifact bbArtifact = bbTag.getArtifact();
-                        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                        TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
                         List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
                         //get all tags which are on this blackboard artifact
                         for (BlackboardArtifactTag t : tags) {
@@ -366,7 +374,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
                 // Next update the files
 
-                List<ContentTag> fileTags = Case.getCurrentCase().getSleuthkitCase().getContentTagsByTagName(tagName);
+                List<ContentTag> fileTags = Case.getOpenCase().getSleuthkitCase().getContentTagsByTagName(tagName);
                 //Get all ContentTags with this tag name
                 for (ContentTag contentTag : fileTags) {
                     //start with assumption that none of the other tags applied to this ContentTag will prevent it's status from being changed
@@ -376,7 +384,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     // the status of the file in the central repository
                     if (tagName.getKnownStatus() == TskData.FileKnown.UNKNOWN) {
                         Content content = contentTag.getContent();
-                        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                        TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
                         List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
                         //get all tags which are on this file
                         for (ContentTag t : tags) {
@@ -405,6 +413,8 @@ final class CaseEventListener implements PropertyChangeListener {
                 LOGGER.log(Level.SEVERE, "Cannot update known status in central repository for tag: " + modifiedTagName, ex);  //NON-NLS
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Cannot get central repository for tag: " + modifiedTagName, ex);  //NON-NLS
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);  //NON-NLS
             }
         } //TAG_STATUS_CHANGED
     }
@@ -424,15 +434,22 @@ final class CaseEventListener implements PropertyChangeListener {
             if (!EamDb.isEnabled()) {
                 return;
             }
+            Case openCase;
+            try {
+                openCase = Case.getOpenCase();
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+                return;
+            }
 
             final DataSourceAddedEvent dataSourceAddedEvent = (DataSourceAddedEvent) event;
             Content newDataSource = dataSourceAddedEvent.getDataSource();
 
             try {
-                String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
-                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCase());
+                String deviceId = openCase.getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
+                CorrelationCase correlationCase = dbManager.getCase(openCase);
                 if (null == correlationCase) {
-                    correlationCase = dbManager.newCase(Case.getCurrentCase());
+                    correlationCase = dbManager.newCase(openCase);
                 }
                 if (null == dbManager.getDataSource(correlationCase, deviceId)) {
                     dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource));

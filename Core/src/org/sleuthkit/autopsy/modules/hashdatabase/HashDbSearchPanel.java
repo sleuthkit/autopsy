@@ -32,6 +32,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -154,7 +155,7 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
 
             },
             new String [] {
-                    NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.hashTable.defaultModel.title.text")
+                "MD5 Hashes"
             }
         ) {
             Class[] types = new Class [] {
@@ -173,7 +174,9 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
             }
         });
         jScrollPane1.setViewportView(hashTable);
+        if (hashTable.getColumnModel().getColumnCount() > 0) {
             hashTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.hashTable.columnModel.title0")); // NOI18N
+        }
 
         hashField.setText(org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.hashField.text")); // NOI18N
 
@@ -240,7 +243,7 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(hashLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(hashLabel)
                     .addComponent(hashField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -290,16 +293,27 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
      * Search through all tsk_files to find ones with the same hashes as the
      * hashes given.
      */
+    @NbBundle.Messages ({
+        "HashDbSearchPanel.noOpenCase.errMsg=No open case available."
+    })
     boolean search() {
         // Check if any hashed have been entered
         if (hashTable.getRowCount() != 0) {
             // Make sure at least 1 file has an md5 hash
-            if (HashDbSearcher.countFilesMd5Hashed() > 0) {
-                return doSearch();
-            } else {
+            try {
+                if (HashDbSearcher.countFilesMd5Hashed() > 0) {
+                    return doSearch();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            NbBundle.getMessage(this.getClass(),
+                                    "HashDbSearchPanel.noFilesHaveMD5HashMsg"),
+                            NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.dlgMsg.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            } catch (NoCurrentCaseException ex) {
                 JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "HashDbSearchPanel.noFilesHaveMD5HashMsg"),
+                        Bundle.HashDbSearchPanel_noOpenCase_errMsg(),
                         NbBundle.getMessage(this.getClass(), "HashDbSearchPanel.dlgMsg.title"),
                         JOptionPane.ERROR_MESSAGE);
                 return false;

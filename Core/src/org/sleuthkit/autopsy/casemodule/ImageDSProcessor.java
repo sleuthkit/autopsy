@@ -264,7 +264,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         
         try {
             // verify that the image has a file system that TSK can process
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
                 // image does not have a file system that TSK can process
                 return 0;

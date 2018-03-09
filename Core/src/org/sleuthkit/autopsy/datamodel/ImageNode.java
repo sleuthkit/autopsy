@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
@@ -170,7 +171,7 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_timezone_desc(),
                 this.content.getTimeZone()));
 
-        try (CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
+        try (CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
             ResultSet deviceIdSet = query.getResultSet();
             if (deviceIdSet.next()) {
                 ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
@@ -178,7 +179,7 @@ public class ImageNode extends AbstractContentNode<Image> {
                         Bundle.ImageNode_createSheet_deviceId_desc(),
                         deviceIdSet.getString("device_id")));
             }
-        } catch (SQLException | TskCoreException ex) {
+        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
         }
 

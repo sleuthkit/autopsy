@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,9 @@ import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
@@ -91,11 +91,11 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             super(getActionDisplayName());
 
             // Get the current set of tag names.
-            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
             Map<String, TagName> tagNamesMap = null;
             try {
+                TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
                 tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
 
@@ -168,18 +168,26 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
          * @param comment        comment for the content or artifact tag
          */
         private void getAndAddTag(String tagDisplayName, TagName tagName, String comment) {
+            Case openCase;
+            try {
+                openCase = Case.getOpenCase();
+            } catch (NoCurrentCaseException ex) {
+                Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                return;
+            }
+
             if (tagName == null) {
                 try {
-                    tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
+                    tagName = openCase.getServices().getTagsManager().addTagName(tagDisplayName);
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     try {
-                        tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                        tagName = openCase.getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
                     } catch (TskCoreException ex1) {
                         Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
-                    }
+                    } 
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
-                }
+                } 
             }
             addTag(tagName, comment);
         }

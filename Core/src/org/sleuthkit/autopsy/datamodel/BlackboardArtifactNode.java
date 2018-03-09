@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,12 +35,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -259,7 +261,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
                     if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                        BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                        BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
                             if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 artifact.getDisplayName();
@@ -269,7 +271,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         }
                     }
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 // Do nothing since the display name will be set to the file name.
             }
         }
@@ -326,7 +328,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
-                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
                             NO_DESCR,
@@ -336,7 +338,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             NO_DESCR,
                             associatedArtifact.getShortDescription()));
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 // Do nothing since the display name will be set to the file name.
             }
         }
@@ -421,7 +423,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 ss.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
                         Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
                         "",
-                        file != null ? file.getMd5Hash() : ""));
+                        file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
             }
         } else {
             String dataSourceStr = "";
@@ -448,9 +450,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
         try {
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated));
-        } catch (TskCoreException ex) {
+            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getContentTagsByContent(associated));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
         }
         ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),

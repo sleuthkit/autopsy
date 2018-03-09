@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -97,8 +98,8 @@ final class ReportVisualPanel2 extends JPanel {
     private void initTags() {
         List<TagName> tagNamesInUse;
         try {
-            tagNamesInUse = Case.getCurrentCase().getServices().getTagsManager().getTagNamesInUse();
-        } catch (TskCoreException ex) {
+            tagNamesInUse = Case.getOpenCase().getServices().getTagsManager().getTagNamesInUse();
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             return;
         }
@@ -136,6 +137,7 @@ final class ReportVisualPanel2 extends JPanel {
     private void initArtifactTypes() {
 
         try {
+            Case openCase = Case.getOpenCase();
             ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
             doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),
@@ -144,7 +146,7 @@ final class ReportVisualPanel2 extends JPanel {
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            artifacts = Case.getCurrentCase().getSleuthkitCase().getArtifactTypesInUse();
+            artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
 
             artifacts.removeAll(doNotReport);
 
@@ -152,7 +154,7 @@ final class ReportVisualPanel2 extends JPanel {
             for (BlackboardArtifact.Type type : artifacts) {
                 artifactStates.put(type, Boolean.TRUE);
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage(), ex); //NON-NLS
         }
     }
@@ -268,7 +270,7 @@ final class ReportVisualPanel2 extends JPanel {
                         .addComponent(tagsScrollPane)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(advancedButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE)
+                            .addComponent(advancedButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
@@ -276,9 +278,12 @@ final class ReportVisualPanel2 extends JPanel {
                             .addComponent(taggedResultsRadioButton)
                             .addComponent(dataLabel)
                             .addComponent(allResultsRadioButton))
-                        .addGap(0, 481, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {advancedButton, deselectAllButton, selectAllButton});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()

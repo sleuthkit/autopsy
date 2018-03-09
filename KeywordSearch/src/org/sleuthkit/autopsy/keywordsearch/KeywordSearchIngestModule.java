@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -144,7 +145,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     @Messages({
         "KeywordSearchIngestModule.startupMessage.failedToGetIndexSchema=Failed to get schema version for text index.",
         "# {0} - Solr version number", "KeywordSearchIngestModule.startupException.indexSolrVersionNotSupported=Adding text no longer supported for Solr version {0} of the text index.",
-        "# {0} - schema version number", "KeywordSearchIngestModule.startupException.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index."
+        "# {0} - schema version number", "KeywordSearchIngestModule.startupException.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index.",
+        "KeywordSearchIngestModule.noOpenCase.errMsg=No open case available."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -180,19 +182,26 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_noOpenCase_errMsg(), ex);
+        }
         if (refCounter.incrementAndGet(jobId) == 1) {
-            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
                 KeywordSearchService kwsService = new SolrSearchService();
+                Server.IndexingServerProperties properties = Server.getMultiUserServerProperties(openCase.getCaseDirectory());
                 int port;
                 try {
-                    port = Integer.parseInt(UserPreferences.getIndexingServerPort());
+                    port = Integer.parseInt(properties.getPort());
                 } catch (NumberFormatException ex) {
                     // if there is an error parsing the port number
                     throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg() + " " + Bundle.SolrConnectionCheck_Port(), ex);
                 }
                 try {
-                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                    kwsService.tryConnect(properties.getHost(), port);
                 } catch (KeywordSearchServiceException ex) {
                     throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg(), ex);
                 }

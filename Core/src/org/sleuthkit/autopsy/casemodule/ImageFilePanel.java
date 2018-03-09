@@ -31,6 +31,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -306,7 +307,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    @NbBundle.Messages("ImageFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive")
+    @NbBundle.Messages({"ImageFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
+            "ImageFilePanel.pathValidation.getOpenCase.Error=Warning: Exception while getting open case."
+            })
     public boolean validatePanel() {
         pathErrorLabel.setVisible(false);
         String path = getContentPaths();
@@ -315,9 +318,14 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
 
         // Display warning if there is one (but don't disable "next" button)
-        if (false == PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        try {
+            if (false == PathValidator.isValid(path, Case.getOpenCase().getCaseType())) {
+                pathErrorLabel.setVisible(true);
+                pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
+            }
+        } catch (NoCurrentCaseException ex) {
             pathErrorLabel.setVisible(true);
-            pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
+            pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_getOpenCase_Error());
         }
 
         return new File(path).isFile()
