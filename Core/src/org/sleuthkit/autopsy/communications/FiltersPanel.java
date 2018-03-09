@@ -218,8 +218,7 @@ final public class FiltersPanel extends JPanel {
                 accountTypeMap.computeIfAbsent(type, t -> {
                     final JCheckBox jCheckBox = new JCheckBox(
                             "<html><table cellpadding=0><tr><td><img src=\""
-                            + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                                    + Utils.getIconFileName(type))
+                            + FiltersPanel.class.getResource(Utils.getIconFilePath(type))
                             + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
                             true
                     );
@@ -343,7 +342,7 @@ final public class FiltersPanel extends JPanel {
             }
         });
 
-        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/image.png"))); // NOI18N
+        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png"))); // NOI18N
         devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
 
         checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
