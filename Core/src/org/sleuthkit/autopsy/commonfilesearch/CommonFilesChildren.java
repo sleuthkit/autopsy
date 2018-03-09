@@ -22,6 +22,9 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  *
@@ -36,14 +39,14 @@ class CommonFilesChildren extends Children.Keys<AbstractFile>{
     
     @Override
     protected Node[] createNodes(AbstractFile t) {
-        
+        Node[] node = new Node[1];
         if(t.isDir()){
             //TODO log an error ???
-            
+            return node;            
         } else {
-            
+            //replace FileNode with our own subclass of its base type or similar
+            node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
+            return node;
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
+    }    
 }
