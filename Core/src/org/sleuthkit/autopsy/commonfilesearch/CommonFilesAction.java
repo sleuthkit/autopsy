@@ -5,34 +5,63 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
 /**
  *
  * @author bsweeney
  */
-public class CommonFilesAction extends CallableSystemAction implements FileSearchProvider {
+final class CommonFilesAction extends CallableSystemAction implements FileSearchProvider {
 
+    private static CommonFilesAction instance = null;
+    
+    CommonFilesAction(){
+        super();
+        this.setEnabled(Case.isCaseOpen());
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                setEnabled(evt.getNewValue() != null);
+            }
+        });
+    }
+    
+    public static CommonFilesAction getDefault(){
+        if(instance == null){
+            instance = new CommonFilesAction();
+        }
+        return instance;
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        new CommonFilesDialog().setVisible(true);
+    }
+    
     @Override
     public void performAction() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        new CommonFilesDialog().setVisible(true);
     }
 
     @Override
     public String getName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return NbBundle.getMessage(this.getClass(), "CommonFilesAction.getName.text");
     }
 
     @Override
     public HelpCtx getHelpCtx() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return HelpCtx.DEFAULT_HELP;
     }
 
     @Override
     public void showDialog() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        performAction();
     }
     
 }

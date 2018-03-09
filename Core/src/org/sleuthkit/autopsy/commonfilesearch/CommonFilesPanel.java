@@ -17,7 +17,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.filesearch.SearchNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -33,6 +32,7 @@ public class CommonFilesPanel extends javax.swing.JPanel {
      */
     public CommonFilesPanel() {
         initComponents();
+        customizeComponents();
     }
     
     private void customizeComponents(){
@@ -59,7 +59,8 @@ public class CommonFilesPanel extends javax.swing.JPanel {
         List<AbstractFile> contentList = null;
         try {
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            contentList = tskDb.findAllFilesWhere("");
+            //tskDb.executeQuery("SELECT *, COUNT(*) FROM  tsk_files GROUP BY  md5 HAVING  COUNT(*) > 1;");
+            contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
         } catch (TskCoreException ex) {
             Logger logger = Logger.getLogger(this.getClass().getName());
             logger.log(Level.WARNING, "Error while trying to get common files.", ex);
@@ -69,7 +70,7 @@ public class CommonFilesPanel extends javax.swing.JPanel {
             contentList = Collections.<AbstractFile>emptyList();
         }
         
-        SearchNode sn = new SearchNode(contentList);
+        CommonFilesNode sn = new CommonFilesNode(contentList);
         final TopComponent searchResultWin = DataResultTopComponent.createInstance(
                 title, 
                 pathText,
