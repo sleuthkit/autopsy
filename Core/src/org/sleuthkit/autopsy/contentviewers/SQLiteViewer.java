@@ -39,8 +39,10 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -315,13 +317,16 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      *
      * @return none
      */
+    @NbBundle.Messages({"# {0} - fileName",
+        "SQLiteViewer.processSQLiteFile.errorMessage=Error opening SQLite file {0}"
+    })
     private void processSQLiteFile(AbstractFile sqliteFile) {
 
         tablesDropdownList.removeAllItems();
         
-        new SwingWorker<Boolean, Void>() {
+        new SwingWorker<Void, Void>() {
             @Override
-            protected Boolean doInBackground() throws Exception {
+            protected Void doInBackground() throws IOException, SQLException, ClassNotFoundException {
 
                 try {
                     // Copy the file to temp folder
@@ -342,31 +347,47 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 } catch (NoCurrentCaseException ex) {
                     LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to copy DB file.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Failed to copy DB file " + sqliteFile.getName(), ex); //NON-NLS
+                    throw ex;
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to Open DB.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Failed to get tables from DB file " + sqliteFile.getName(), ex); //NON-NLS
+                    throw ex;
                 } catch (ClassNotFoundException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to initialize JDBC Sqlite.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Failed to initialize JDBC SQLite.", ex); //NON-NLS
+                    throw ex;
                 }
-                return false;
+                return null;
             }
 
             @Override
             protected void done() {
                 super.done();
                 try {
-                    boolean status = get();
-                    if ((status == true) && (dbTablesMap.size() > 0)) {
-                        dbTablesMap.keySet().forEach((tableName) -> {
-                            tablesDropdownList.addItem(tableName);
-                        });
-                    } else {
+                    
+                    get();
+                    if (dbTablesMap.isEmpty()) {
                         // Populate error message
                         tablesDropdownList.addItem("No tables found");
                         tablesDropdownList.setEnabled(false);
+                    } else {
+                        dbTablesMap.keySet().forEach((tableName) -> {
+                            tablesDropdownList.addItem(tableName);
+                        });
                     }
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening DB file", ex); //NON-NLS
+                } catch (InterruptedException ex) {
+                    
+                    LOGGER.log(Level.SEVERE, "Interrupted while opening DB file " + sqliteFile.getName(), ex); //NON-NLS
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        ex.getMessage(),
+                                        Bundle.SQLiteViewer_processSQLiteFile_errorMessage(sqliteFile.getName()),
+                                        JOptionPane.ERROR_MESSAGE);
+                }
+                catch (ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening DB file " + sqliteFile.getName(), ex); //NON-NLS
+                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        ex.getCause().getMessage(),
+                                        Bundle.SQLiteViewer_processSQLiteFile_errorMessage(sqliteFile.getName()),
+                                        JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
@@ -423,28 +444,40 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      *
      * @return true if success, false otherwise
      */
-    private boolean getTables() {
+    private void getTables() throws SQLException {
+
+        Statement statement = null;
+        ResultSet resultSet = null;
 
         try {
-            Statement statement = connection.createStatement();
-
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT name, sql FROM sqlite_master "
-                    + " WHERE type= 'table' "
-                    + " ORDER BY name;"); //NON-NLS
-
+             statement = connection.createStatement();
+             resultSet = statement.executeQuery(
+                "SELECT name, sql FROM sqlite_master "
+                + " WHERE type= 'table' "
+                + " ORDER BY name;"); //NON-NLS
+        
             while (resultSet.next()) {
                 String tableName = resultSet.getString("name"); //NON-NLS
                 String tableSQL = resultSet.getString("sql"); //NON-NLS
 
                 dbTablesMap.put(tableName, tableSQL);
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
+        } catch(SQLException ex) {
+           throw ex;
         }
-        return true;
+       finally {
+            if (null != resultSet) {
+                resultSet.close();
+            }
+            if (null != statement) {
+                statement.close();
+            }
+        }
     }
 
+    @NbBundle.Messages({"# {0} - tableName",
+        "SQLiteViewer.selectTable.errorText=Error getting row count for table: {0}"
+    })
     private void selectTable(String tableName) {
         if (worker != null && !worker.isDone()) {
             worker.cancel(false);
@@ -455,17 +488,25 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             @Override
             protected Integer doInBackground() throws Exception {
 
+                Statement statement = null;
+                ResultSet resultSet = null;
                 try {
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
+                    statement = connection.createStatement();
+                    resultSet = statement.executeQuery(
                             "SELECT count (*) as count FROM " + tableName); //NON-NLS
 
                     return resultSet.getInt("count");
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
+                    throw ex;
                 }
-                //NON-NLS
-                return 0;
+                finally {
+                    if (null != resultSet) {
+                        resultSet.close();
+                    }
+                    if (null != statement) {
+                        statement.close();
+                    }
+                }
             }
 
             @Override
@@ -491,14 +532,27 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         selectedTableView.setupTable(Collections.emptyList());
                     }
 
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
+                } catch (InterruptedException ex ) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while getting row count from table " + tableName, ex); //NON-NLS
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            Bundle.SQLiteViewer_selectTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
+                }
+                catch (ExecutionException ex) {
+                     LOGGER.log(Level.SEVERE, "Unexpected exception while getting row count from table " + tableName, ex); //NON-NLS  
+                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        ex.getCause().getMessage(),
+                                        Bundle.SQLiteViewer_selectTable_errorText(tableName),
+                                        JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
         worker.execute();
     }
 
+    @NbBundle.Messages({"# {0} - tableName",
+        "SQLiteViewer.readTable.errorText=Error getting rows for table: {0}"})
     private void readTable(String tableName, int startRow, int numRowsToRead) {
 
         if (worker != null && !worker.isDone()) {
@@ -509,20 +563,29 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         worker = new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
             @Override
             protected ArrayList<Map<String, Object>> doInBackground() throws Exception {
+                
+                Statement statement = null;
+                ResultSet resultSet = null;
                 try {
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
+                    statement = connection.createStatement();
+                    resultSet = statement.executeQuery(
                             "SELECT * FROM " + tableName
                             + " LIMIT " + Integer.toString(numRowsToRead)
                             + " OFFSET " + Integer.toString(startRow - 1)
                     ); //NON-NLS
-
+                    
                     return resultSetToArrayList(resultSet);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
+                    throw ex;
                 }
-                //NON-NLS
-                return null;
+                finally {
+                    if (null != resultSet) {
+                        resultSet.close();
+                    }
+                    if (null != statement) {
+                        statement.close();
+                    }
+                }
             }
 
             @Override
@@ -540,8 +603,19 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     }else{
                         selectedTableView.setupTable(Collections.emptyList());
                     }
-                } catch (InterruptedException | ExecutionException ex) {
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while reading table " + tableName, ex); //NON-NLS
+                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            Bundle.SQLiteViewer_readTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
+                }
+                catch (ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
+                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getCause().getMessage(),
+                            Bundle.SQLiteViewer_readTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
