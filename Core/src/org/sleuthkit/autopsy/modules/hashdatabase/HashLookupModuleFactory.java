@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -105,6 +106,10 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
             throw new IllegalArgumentException(
                     NbBundle.getMessage(this.getClass(), "HashLookupModuleFactory.createFileIngestModule.exception.msg"));
         }
-        return new HashDbIngestModule((HashLookupModuleSettings) settings);
+        try {
+            return new HashDbIngestModule((HashLookupModuleSettings) settings);
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalArgumentException("Exception while getting open case.", ex);
+        }
     }
 }
