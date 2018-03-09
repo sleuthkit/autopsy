@@ -20,7 +20,7 @@ public class CommonFilesDialog extends javax.swing.JDialog {
     /**
      * Creates new form CommonFilesDialog
      */
-    public CommonFilesDialog(java.awt.Frame parent, boolean modal) {
+    public CommonFilesDialog() {
         super(new JFrame(NbBundle.getMessage(CommonFilesDialog.class, "CommonFilesDialog.frame.title")),
                 NbBundle.getMessage(CommonFilesDialog.class, "CommonFilesDialog.frame.msg"), true);
         initComponents();
