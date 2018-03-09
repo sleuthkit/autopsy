@@ -38,6 +38,7 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
@@ -73,8 +74,8 @@ public abstract class DrawableFile {
                 : new ImageFile(abstractFileById, analyzed);
     }
 
-    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
-        return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
+    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
+        return create(Case.getOpenCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
     private SoftReference<Image> imageRef;

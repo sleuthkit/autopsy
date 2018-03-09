@@ -152,10 +152,13 @@ public final class OpenAction extends CallableSystemAction {
     public void performAction() {
 
         //check case
-        if (!Case.isCaseOpen()) {
+        final Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
         }
-        final Case currentCase = Case.getCurrentCase();
 
         if (tooManyFiles()) {
             Platform.runLater(OpenAction::showTooManyFiles);
@@ -185,8 +188,8 @@ public final class OpenAction extends CallableSystemAction {
 
     private boolean tooManyFiles() {
         try {
-            return FILE_LIMIT < Case.getCurrentCase().getSleuthkitCase().countFilesWhere("1 = 1");
-        } catch (IllegalStateException ex) {
+            return FILE_LIMIT < Case.getOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can not open image gallery with no case open.", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error counting files in the DB.", ex);
