@@ -39,7 +39,8 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
     "CannotCreateOutputFolder=Unable to create output folder.",
     "CannotRunFileTypeDetection=Unable to run file type detection.",
     "UnableToInitializeLibraries=Unable to initialize 7Zip libraries.",
-    "EmbeddedFileExtractorIngestModule.NoOpenCase.errMsg=No open case available."
+    "EmbeddedFileExtractorIngestModule.NoOpenCase.errMsg=No open case available.",
+    "EmbeddedFileExtractorIngestModule.UnableToGetMSOfficeExtractor.errMsg=Unable to get MSOfficeEmbeddedContentExtractor."
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
@@ -106,7 +107,11 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * Construct an embedded content extractor for processing Microsoft
          * Office documents.
          */
-        this.officeExtractor = new MSOfficeEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        try {
+            this.officeExtractor = new MSOfficeEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
+        }
     }
 
     @Override

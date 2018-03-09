@@ -114,6 +114,13 @@ final class ContactAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        } 
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
@@ -122,7 +129,6 @@ final class ContactAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
-        Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile file = skCase.getAbstractFileById(fileId);
