@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import javax.swing.JMenuItem;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -247,8 +248,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 long objId = artifact.getObjectID();
                 AbstractFile file = null;
                 try {
-                    file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(objId);
-                } catch (TskException ex) {
+                    file = Case.getOpenCase().getSleuthkitCase().getAbstractFileById(objId);
+                } catch (TskException | NoCurrentCaseException ex) {
 
                 }
                 if (file == null) {
