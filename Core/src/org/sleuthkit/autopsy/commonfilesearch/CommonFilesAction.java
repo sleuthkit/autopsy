@@ -27,10 +27,6 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
-/**
- *
- * @author bsweeney
- */
 final class CommonFilesAction extends CallableSystemAction implements FileSearchProvider {
 
     private static CommonFilesAction instance = null;
