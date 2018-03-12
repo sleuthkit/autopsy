@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -706,7 +706,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static class AttachmentNode extends FileNode {
 
         AttachmentNode(AbstractFile file) {
-            super(file, true);
+            super(file, false);
         }
 
         @Override
