@@ -58,17 +58,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         addIngestJobEventsListener();
     }
 
-    @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
-        "GlobalSettingsPanel.pnTagManagement.border.title=Tags",
-        "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
-        "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable items. "
-        + "When these tags are used, the file or result will be recorded in the central repository. "
-        + "If that file or result is seen again in future cases, it will be flagged.",
-        "GlobalSettingsPanel.organizationPanel.border.title=Organizations",
-    })
-
     private void customizeComponents() {
-        setName(Bundle.GlobalSettingsPanel_title());
+        setName(NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"));
     }
 
     private void addIngestJobEventsListener() {
@@ -137,7 +128,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         setPreferredSize(new java.awt.Dimension(1022, 488));
 
         jScrollPane1.setBorder(null);
-        jScrollPane1.setMinimumSize(new java.awt.Dimension(21, 22));
         jScrollPane1.setPreferredSize(new java.awt.Dimension(1022, 407));
 
         jPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
@@ -320,7 +310,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE)
+                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 1012, Short.MAX_VALUE)
                     .addComponent(organizationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );

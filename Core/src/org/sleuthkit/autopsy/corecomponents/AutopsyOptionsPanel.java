@@ -51,12 +51,8 @@ import org.sleuthkit.autopsy.report.ReportBranding;
  * Options panel that allow users to set application preferences.
  */
 @Messages({
-    "AutopsyOptionsPanel.agencyLogoPreview.text=<html><div style='text-align: center;'>No logo<br>selected</div></html>",
-    "AutopsyOptionsPanel.logoPanel.border.title=Logo",
-    "AutopsyOptionsPanel.viewPanel.border.title=View",
     "AutopsyOptionsPanel.invalidImageFile.msg=The selected file was not able to be used as an agency logo.",
     "AutopsyOptionsPanel.invalidImageFile.title=Invalid Image File",
-    "AutopsyOptionsPanel.runtimePanel.border.title=Runtime",
     "AutopsyOptionsPanel.memFieldValidationLabel.not64BitInstall.text=JVM memory settings only enabled for 64 bit version",
     "AutopsyOptionsPanel.memFieldValidationLabel.noValueEntered.text=No value entered",
     "AutopsyOptionsPanel.memFieldValidationLabel.invalidCharacters.text=Invalid characters, value must be a positive integer",
@@ -334,7 +330,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private void updateAgencyLogo(String path) throws IOException {
         agencyLogoPathField.setText(path);
         ImageIcon agencyLogoIcon = new ImageIcon();
-        agencyLogoPreview.setText(Bundle.AutopsyOptionsPanel_agencyLogoPreview_text());
+        agencyLogoPreview.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPreview.text"));
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
@@ -647,8 +643,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        agencyLogoPreview.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPreview.AccessibleContext.accessibleName")); // NOI18N
-
         viewPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.viewPanel.border.title"))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectFile, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelSelectFile.text")); // NOI18N
@@ -911,8 +905,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
-
-        runtimePanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.runtimePanel.AccessibleContext.accessibleName")); // NOI18N
 
         jScrollPane1.setViewportView(jPanel1);
 
