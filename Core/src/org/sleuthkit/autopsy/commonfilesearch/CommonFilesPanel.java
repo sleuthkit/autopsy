@@ -43,6 +43,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class .getName());
+    
     /**
      * Creates new form CommonFilesPanel
      */
@@ -78,8 +80,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             //...consider doing something else
             contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            Logger logger = Logger.getLogger(this.getClass().getName());
-            logger.log(Level.WARNING, "Error while trying to get common files.", ex);
+            LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
         }
 
         if (contentList == null) {
