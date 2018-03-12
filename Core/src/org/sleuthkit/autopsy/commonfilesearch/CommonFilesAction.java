@@ -27,9 +27,13 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
+/**
+ * Encapsulates a menu action which triggers the common files search dialog.
+ */
 final class CommonFilesAction extends CallableSystemAction implements FileSearchProvider {
 
     private static CommonFilesAction instance = null;
+    private static final long serialVersionUID = 1L;
 
     CommonFilesAction() {
         super();
@@ -72,5 +76,4 @@ final class CommonFilesAction extends CallableSystemAction implements FileSearch
     public void showDialog() {
         performAction();
     }
-
 }

@@ -24,6 +24,9 @@ import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
+/**
+ * Dialog box for configuring and running common files search.
+ */
 public class CommonFilesDialog extends javax.swing.JDialog {
 
     /**
