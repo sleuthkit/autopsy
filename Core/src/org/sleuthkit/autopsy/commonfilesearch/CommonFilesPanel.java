@@ -23,9 +23,11 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -67,15 +69,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         String title = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.title");
         String pathText = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.pathText");
 
-        //TODO somehow thats not deprecated???
-        Case currentCase = Case.getCurrentCase();
-
         List<AbstractFile> contentList = null;
         try {
+            Case currentCase = Case.getOpenCase();
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            //tskDb.executeQuery("SELECT *, COUNT(*) FROM  tsk_files GROUP BY  md5 HAVING  COUNT(*) > 1;");
+            
+            //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
+            //...consider doing something else
             contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger logger = Logger.getLogger(this.getClass().getName());
             logger.log(Level.WARNING, "Error while trying to get common files.", ex);
         }
