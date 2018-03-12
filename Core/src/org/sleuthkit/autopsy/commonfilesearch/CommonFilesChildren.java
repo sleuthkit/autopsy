@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,25 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.filesearch;
+package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.autopsy.datamodel.DirectoryNode;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Makes nodes for search results.
+ * Makes nodes for common files search results.
  */
-class SearchChildren extends Children.Keys<AbstractFile> {
+final class CommonFilesChildren extends Children.Keys<AbstractFile> {
 
-    SearchChildren(boolean lazy, List<AbstractFile> fileList) {
+    CommonFilesChildren(boolean lazy, List<AbstractFile> fileList) {
         super(lazy);
         this.setKeys(fileList);
     }
@@ -42,15 +39,9 @@ class SearchChildren extends Children.Keys<AbstractFile> {
     @Override
     protected Node[] createNodes(AbstractFile t) {
         Node[] node = new Node[1];
-        if (t.isDir()) {
-            node[0] = new DataResultFilterNode(new DirectoryNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
 
-            //node[0] = new DirectoryNode((Directory)t);
-            return node;
-        } else {
-            node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
-            //node[0] = new FileNode((File)t);
-            return node;
-        }
+        //TODO replace FileNode with our own subclass of its base type or similar
+        node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
+        return node;
     }
 }

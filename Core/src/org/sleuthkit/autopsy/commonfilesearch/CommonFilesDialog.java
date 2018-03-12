@@ -1,52 +1,50 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2018 Basis Technology Corp.
+ *
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * FileSearchDialog.java
- *
- * Created on Mar 5, 2012, 1:57:33 PM
- */
-package org.sleuthkit.autopsy.filesearch;
-
-import org.openide.util.NbBundle;
+package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
 /**
- * File search dialog
+ * Dialog box for configuring and running common files search.
  */
-class FileSearchDialog extends javax.swing.JDialog {
+public final class CommonFilesDialog extends javax.swing.JDialog {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form FileSearchDialog
+     * Creates new form CommonFilesDialog
      */
-    public FileSearchDialog() {
-        super(new JFrame(NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.title")),
-                NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.msg"), true);
+    @NbBundle.Messages({
+        "CommonFilesDialog.frame.title=Find Common Files",
+        "CommonFilesDialog.frame.msg=Find Common Files"})
+    public CommonFilesDialog() {
+        super(new JFrame(Bundle.CommonFilesDialog_frame_title()),
+                Bundle.CommonFilesDialog_frame_msg(), true);
         initComponents();
 
-        setResizable(false);
+        this.setResizable(false);
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        fileSearchPanel1.addListenerToAll(new ActionListener() {
+        this.commonFilesPanel1.addListenerToAll(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -64,7 +62,7 @@ class FileSearchDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        fileSearchPanel1 = new org.sleuthkit.autopsy.filesearch.FileSearchPanel();
+        commonFilesPanel1 = new org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -72,18 +70,27 @@ class FileSearchDialog extends javax.swing.JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(fileSearchPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(commonFilesPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(fileSearchPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
+            .addGap(0, 322, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(commonFilesPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.filesearch.FileSearchPanel fileSearchPanel1;
+    private org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel commonFilesPanel1;
     // End of variables declaration//GEN-END:variables
 }
-
