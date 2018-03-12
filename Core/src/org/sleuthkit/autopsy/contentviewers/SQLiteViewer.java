@@ -299,6 +299,8 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             tmpDbFile.delete();
             tmpDbFile = null;
         }
+        
+        sqliteDbFile = null;
     }
 
     /**
