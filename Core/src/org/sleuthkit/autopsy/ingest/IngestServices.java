@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -53,18 +54,20 @@ public final class IngestServices {
      * Get the current Autopsy case.
      *
      * @return The current case.
+     * @throws NoCurrentCaseException if there is no open case.
      */
-    public Case getCurrentCase() {
-        return Case.getCurrentCase();
+    public Case getOpenCase() throws NoCurrentCaseException {
+        return Case.getOpenCase();
     }
 
     /**
      * Get the current SleuthKit case. The SleuthKit case is the case database.
      *
      * @return The current case database.
+     * @throws NoCurrentCaseException if there is no open case.
      */
-    public SleuthkitCase getCurrentSleuthkitCaseDb() {
-        return Case.getCurrentCase().getSleuthkitCase();
+    public SleuthkitCase getCurrentSleuthkitCaseDb() throws NoCurrentCaseException {
+        return Case.getOpenCase().getSleuthkitCase();
     }
 
     /**

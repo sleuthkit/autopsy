@@ -122,8 +122,6 @@ public class VideoFile extends DrawableFile {
         } catch (MediaException ex) {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-        }
         
         return retValue;
     }
@@ -147,8 +145,7 @@ public class VideoFile extends DrawableFile {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-        }
-        
+
         return retValue;
     }
 }
