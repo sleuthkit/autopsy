@@ -26,10 +26,6 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
-/**
- *
- * @author bsweeney
- */
 class CommonFilesChildren extends Children.Keys<AbstractFile> {
 
     CommonFilesChildren(boolean lazy, List<AbstractFile> fileList) {
