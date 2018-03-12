@@ -20,15 +20,17 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
+/**
+ * Encapsulates data used to display common files search results in the top right pane.
+ */
 class CommonFilesNode extends AbstractNode {
 
-    private final CommonFilesChildren children;
+    private CommonFilesChildren children;
 
-    public CommonFilesNode(List<AbstractFile> keys) {
+    CommonFilesNode(List<AbstractFile> keys) {
         super(new CommonFilesChildren(true, keys));
         this.children = (CommonFilesChildren) this.getChildren();
     }
@@ -37,5 +39,4 @@ class CommonFilesNode extends AbstractNode {
     public String getName() {
         return NbBundle.getMessage(this.getClass(), "CommonFilesNode.getName.text");
     }
-
 }
