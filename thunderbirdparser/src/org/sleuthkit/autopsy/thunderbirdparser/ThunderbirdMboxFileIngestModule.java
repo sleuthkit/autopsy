@@ -291,7 +291,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     /**
      * Get a path to a temporary folder.
      *
-     * @return
+     * @throws NoCurrentCaseException if there is no open case.
+     * @return the temporary folder
      */
     public static String getTempPath() throws NoCurrentCaseException {
         String tmpDir = Case.getOpenCase().getTempDirectory() + File.separator
@@ -303,6 +304,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         return tmpDir;
     }
 
+    /**
+     * Get a module output folder.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     * @return the module output folder
+     */
     public static String getModuleOutputPath() throws NoCurrentCaseException {
         String outDir = Case.getOpenCase().getModuleDirectory() + File.separator
                 + EmailParserModuleFactory.getModuleName();
@@ -313,6 +320,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         return outDir;
     }
 
+    /**
+     * Get a relative path of a module output folder.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     * @return the relative path of the module output folder
+     */
     public static String getRelModuleOutputPath() throws NoCurrentCaseException {
         return Case.getOpenCase().getModuleOutputDirectoryRelativePath() + File.separator
                 + EmailParserModuleFactory.getModuleName();

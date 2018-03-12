@@ -595,6 +595,8 @@ final class ExtractUnallocAction extends AbstractAction {
          * Contingency constructor in event no VolumeSystem exists on an Image.
          *
          * @param img Image file to be analyzed
+         * 
+         * @throws NoCurrentCaseException if there is no open case.
          */
         OutputFileData(Image img) throws NoCurrentCaseException {
             this.layoutFiles = getUnallocFiles(img);
@@ -611,6 +613,8 @@ final class ExtractUnallocAction extends AbstractAction {
          * Default constructor for extracting info from Volumes.
          *
          * @param volume Volume file to be analyzed
+         * 
+         * @throws NoCurrentCaseException if there is no open case.
          */
         OutputFileData(Volume volume) throws NoCurrentCaseException {
             try {
