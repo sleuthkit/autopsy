@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,23 +30,19 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
  *
  * @author bsweeney
  */
-class CommonFilesChildren extends Children.Keys<AbstractFile>{
+class CommonFilesChildren extends Children.Keys<AbstractFile> {
 
-    CommonFilesChildren(boolean lazy, List<AbstractFile> fileList){
+    CommonFilesChildren(boolean lazy, List<AbstractFile> fileList) {
         super(lazy);
         this.setKeys(fileList);
     }
-    
+
     @Override
     protected Node[] createNodes(AbstractFile t) {
         Node[] node = new Node[1];
-        if(t.isDir()){
-            //TODO log an error ???
-            return node;            
-        } else {
-            //replace FileNode with our own subclass of its base type or similar
-            node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
-            return node;
-        }
-    }    
+
+        //TODO replace FileNode with our own subclass of its base type or similar
+        node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
+        return node;
+    }
 }
