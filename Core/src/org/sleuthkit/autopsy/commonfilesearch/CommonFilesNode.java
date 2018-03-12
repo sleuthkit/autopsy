@@ -35,8 +35,10 @@ final class CommonFilesNode extends AbstractNode {
         this.children = (CommonFilesChildren) this.getChildren();
     }
 
+    @NbBundle.Messages({
+        "CommonFilesNode.getName.text=CommonFiles"})
     @Override
     public String getName() {
-        return NbBundle.getMessage(this.getClass(), "CommonFilesNode.getName.text");
+        return Bundle.CommonFilesNode_getName_text();
     }
 }

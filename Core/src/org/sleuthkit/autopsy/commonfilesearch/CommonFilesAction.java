@@ -62,9 +62,11 @@ final class CommonFilesAction extends CallableSystemAction implements FileSearch
         new CommonFilesDialog().setVisible(true);
     }
 
+    @NbBundle.Messages({
+        "CommonFilesAction.getName.text=Common Files Search"})
     @Override
     public String getName() {
-        return NbBundle.getMessage(this.getClass(), "CommonFilesAction.getName.text");
+        return Bundle.CommonFilesAction_getName_text();
     }
 
     @Override
