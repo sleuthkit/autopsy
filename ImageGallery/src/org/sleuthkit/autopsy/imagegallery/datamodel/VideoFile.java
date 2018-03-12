@@ -82,6 +82,7 @@ public class VideoFile extends DrawableFile {
      *
      * @throws IOException
      * @throws MediaException
+     * @throws NoCurrentCaseException
      */
     @NbBundle.Messages({"VideoFile.getMedia.progress=writing temporary file to disk"})
     public Media getMedia() throws IOException, MediaException, NoCurrentCaseException {
