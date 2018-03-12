@@ -29,6 +29,8 @@ import org.openide.windows.WindowManager;
  */
 public final class CommonFilesDialog extends javax.swing.JDialog {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates new form CommonFilesDialog
      */
