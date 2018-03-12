@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 /**
  * Makes nodes for common files search results.
  */
-class CommonFilesChildren extends Children.Keys<AbstractFile> {
+final class CommonFilesChildren extends Children.Keys<AbstractFile> {
 
     CommonFilesChildren(boolean lazy, List<AbstractFile> fileList) {
         super(lazy);
