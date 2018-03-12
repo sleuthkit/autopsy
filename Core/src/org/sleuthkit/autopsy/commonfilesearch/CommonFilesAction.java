@@ -45,7 +45,7 @@ final class CommonFilesAction extends CallableSystemAction implements FileSearch
         });
     }
 
-    public static CommonFilesAction getDefault() {
+    public static synchronized CommonFilesAction getDefault() {
         if (instance == null) {
             instance = new CommonFilesAction();
         }
