@@ -24,22 +24,18 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
-/**
- *
- * @author bsweeney
- */
 class CommonFilesNode extends AbstractNode {
-    
+
     private final CommonFilesChildren children;
-    
+
     public CommonFilesNode(List<AbstractFile> keys) {
         super(new CommonFilesChildren(true, keys));
         this.children = (CommonFilesChildren) this.getChildren();
     }
 
     @Override
-    public String getName(){
+    public String getName() {
         return NbBundle.getMessage(this.getClass(), "CommonFilesNode.getName.text");
     }
-    
+
 }
