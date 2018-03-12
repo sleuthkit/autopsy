@@ -50,4 +50,7 @@ else
 	exit 1
 fi
 
+# make sure it is executable
+chmod +x bin/autopsy
+
 echo "Autopsy is now configured. You can execute bin/autopsy to start it"
