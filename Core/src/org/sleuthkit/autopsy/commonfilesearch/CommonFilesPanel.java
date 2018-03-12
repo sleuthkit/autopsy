@@ -92,6 +92,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
                     //...consider doing something else
+                    //TODO verify that this works with postgres
                     contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
 
                     CommonFilesNode cfn = new CommonFilesNode(contentList);
