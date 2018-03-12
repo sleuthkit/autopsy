@@ -9,18 +9,22 @@ else
 	exit 1
 fi
 
-if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
-    	echo "found java executable in $JAVA_HOME"
+if [ -n "$JAVA_HOME" ];  then
+	if [ -x "$JAVA_HOME/bin/java" ]; then
+		echo "found java executable in $JAVA_HOME"
+	else
+		echo "no executable found in $JAVA_HOME"
+		exit 1
+	fi
 else
-    	echo "Install java and set JAVA_HOME env variable"
-	echo "See autopsy linux install instructions for more details"
+    	echo "Set JAVA_HOME env variable"
     	exit 1	
 fi
 
 TSK_VERSION=4.6.0
 sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar;
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar;
-if [[ -f "$sleuthkit_jar_filepath" ]]; then
+if [ -f "$sleuthkit_jar_filepath" ]; then
 	echo "$sleuthkit_jar_filepath found"
 	echo "copying $sleuthkit_jar_filepath to the autopsy directory"
     	echo "deleting $ext_jar_filepath"
