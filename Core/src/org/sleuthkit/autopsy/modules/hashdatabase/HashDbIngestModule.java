@@ -62,7 +62,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
-    private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+    private final SleuthkitCase skCase;
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
@@ -88,8 +88,9 @@ public class HashDbIngestModule implements FileIngestModule {
         return totals;
     }
 
-    HashDbIngestModule(HashLookupModuleSettings settings) {
+    HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
         this.settings = settings;
+        skCase = Case.getOpenCase().getSleuthkitCase();
     }
 
     @Override

@@ -82,7 +82,7 @@ class TextMessageAnalyzer {
             }
             for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(Case.getOpenCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
                     fileId = file.getId();
                     ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);

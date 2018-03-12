@@ -193,8 +193,10 @@ public final class ImageGalleryController {
         Platform.runLater(() -> {
             stale.set(b);
         });
-        if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
+        try {
+            new PerCaseProperties(Case.getOpenCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
+        } catch (NoCurrentCaseException ex) {
+            Logger.getLogger(ImageGalleryController.class.getName()).log(Level.WARNING, "Exception while getting open case."); //NON-NLS
         }
     }
 
