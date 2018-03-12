@@ -23,7 +23,6 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -34,7 +33,13 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Panel used for common files search configuration and configuration business logic.
+ * Nested within CommonFilesDialog.
+ */
 public class CommonFilesPanel extends javax.swing.JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form CommonFilesPanel
