@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author bsweeney
+ * Encapsulates data being pushed to Common Files component in top right pane.
  */
 public class CommonFileNode extends AbstractFsContentNode<AbstractFile> {       //TODO maybe we dont need abstractfscontentnode (just abstractnode)
 
