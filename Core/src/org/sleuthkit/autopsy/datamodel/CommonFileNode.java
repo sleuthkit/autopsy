@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  * @author bsweeney
  */
-public class CommonFileNode extends AbstractFsContentNode<AbstractFile> {
+public class CommonFileNode extends AbstractFsContentNode<AbstractFile> {       //TODO maybe we dont need abstractfscontentnode (just abstractnode)
 
     public CommonFileNode(AbstractFile fsContent) {
         super(fsContent);

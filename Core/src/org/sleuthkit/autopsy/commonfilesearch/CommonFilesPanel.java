@@ -65,7 +65,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         });
     }
 
-    void addListenerToAll(ActionListener l) {
+    void addListenerToAll(ActionListener l) {       //TODO double click the button
         this.searchButton.addActionListener(l);
     }
 
@@ -84,9 +84,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() throws Exception {  //this will throw the exceptions - dont return null
 
-                List<AbstractFile> contentList;
+                List<AbstractFile> contentList; //TODO return this!!!
 
                 try {
                     Case currentCase = Case.getOpenCase();
@@ -99,6 +99,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesNode cfn = new CommonFilesNode(contentList);
 
+                    //TODO please wait node - use child factory
                     tfn = new TableFilterNode(cfn, true, cfn.getName());
                     count = contentList.size();
 
@@ -110,13 +111,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     tfn = new TableFilterNode(cfn, true, cfn.getName());
 
-                } finally {
-                    return null;
                 }
+                
+                return null;
             }
 
             @Override
-            protected void done() {
+            protected void done() {     //TODO do all ui stuff here
                 try {
                     super.done();
 
