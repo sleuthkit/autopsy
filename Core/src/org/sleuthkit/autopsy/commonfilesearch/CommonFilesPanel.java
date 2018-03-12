@@ -75,12 +75,17 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         String title = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.title");
         String pathText = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.pathText");
 
-        new SwingWorker<List<AbstractFile>, Void>() {
+        new SwingWorker<Void, Void>() {
+
+            private int count = 0;
+            private TableFilterNode tfn = null;
 
             @Override
-            protected List<AbstractFile> doInBackground() throws Exception {
+            @SuppressWarnings("FinallyDiscardsException")
+            protected Void doInBackground() throws Exception {
 
-                List<AbstractFile> contentList = null;
+                List<AbstractFile> contentList;
+
                 try {
                     Case currentCase = Case.getOpenCase();
                     SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -88,39 +93,45 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
                     //...consider doing something else
                     contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
+
+                    CommonFilesNode cfn = new CommonFilesNode(contentList);
+
+                    tfn = new TableFilterNode(cfn, true, cfn.getName());
+                    count = contentList.size();
+
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
-                }
-
-                if (contentList == null) {
                     contentList = Collections.<AbstractFile>emptyList();
-                }
 
-                return contentList;
+                    CommonFilesNode cfn = new CommonFilesNode(contentList);
+
+                    tfn = new TableFilterNode(cfn, true, cfn.getName());
+
+                } finally {
+                    return null;
+                }
             }
 
             @Override
             protected void done() {
-                super.done();
-
-                List<AbstractFile> contentList = null;
-                CommonFilesNode sn = null;
-
                 try {
-                    contentList = get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
-                    contentList = Collections.<AbstractFile>emptyList();
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage(), "", JOptionPane.ERROR_MESSAGE);
-                } finally {
-                    sn = new CommonFilesNode(contentList);
+                    super.done();
 
-                    final TopComponent searchResultWin = DataResultTopComponent.createInstance(
+                    get();
+
+                    TopComponent component = DataResultTopComponent.createInstance(
                             title,
                             pathText,
-                            new TableFilterNode(sn, true, sn.getName()),
-                            contentList.size());
-                    searchResultWin.requestActive(); // make it the active top component
+                            tfn,
+                            count);
+
+                    component.requestActive(); // make it the active top component
+
+                } catch (InterruptedException | ExecutionException ex) {
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getCause().getMessage(),
+                            "Some went wrong finding common files.",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
