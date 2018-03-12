@@ -29,6 +29,7 @@ import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
@@ -121,8 +122,6 @@ public class VideoFile extends DrawableFile {
         } catch (MediaException ex) {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
-	    logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-	}
         
         return retValue;
     }
@@ -146,7 +145,6 @@ public class VideoFile extends DrawableFile {
             logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-	}
 
         return retValue;
     }
