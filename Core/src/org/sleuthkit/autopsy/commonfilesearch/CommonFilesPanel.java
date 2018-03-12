@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -70,10 +69,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         this.searchButton.addActionListener(l);
     }
 
+    @NbBundle.Messages({
+        "CommonFilesPanel.search.results.title=Common Files",
+        "CommonFilesPanel.search.results.pathText=Common Files Search Results\\:"})
     private void search() {
 
-        String title = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.title");
-        String pathText = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.pathText");
+        String title = Bundle.CommonFilesPanel_search_results_title();
+        String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
         new SwingWorker<Void, Void>() {
 

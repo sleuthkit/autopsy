@@ -34,9 +34,12 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
     /**
      * Creates new form CommonFilesDialog
      */
+    @NbBundle.Messages({
+        "CommonFilesDialog.frame.title=Find Common Files",
+        "CommonFilesDialog.frame.msg=Find Common Files"})
     public CommonFilesDialog() {
-        super(new JFrame(NbBundle.getMessage(CommonFilesDialog.class, "CommonFilesDialog.frame.title")),
-                NbBundle.getMessage(CommonFilesDialog.class, "CommonFilesDialog.frame.msg"), true);
+        super(new JFrame(Bundle.CommonFilesDialog_frame_title()),
+                Bundle.CommonFilesDialog_frame_msg(), true);
         initComponents();
 
         this.setResizable(false);
