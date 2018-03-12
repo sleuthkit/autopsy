@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class RelationshipNode extends BlackboardArtifactNode {
 
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
-
+    
     RelationshipNode(BlackboardArtifact artifact) {
         super(artifact);
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
@@ -113,6 +113,9 @@ final class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
+
+        addTagProperty(ss);
+        
         return s;
     }
 
