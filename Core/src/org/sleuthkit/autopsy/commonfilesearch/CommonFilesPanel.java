@@ -22,10 +22,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -36,15 +40,15 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel used for common files search configuration and configuration business logic.
- * Nested within CommonFilesDialog.
+ * Panel used for common files search configuration and configuration business
+ * logic. Nested within CommonFilesDialog.
  */
 public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class .getName());
-    
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
+
     /**
      * Creates new form CommonFilesPanel
      */
@@ -71,30 +75,55 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         String title = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.title");
         String pathText = NbBundle.getMessage(this.getClass(), "CommonFilesPanel.search.results.pathText");
 
-        List<AbstractFile> contentList = null;
-        try {
-            Case currentCase = Case.getOpenCase();
-            SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            
-            //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
-            //...consider doing something else
-            contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
-        }
+        new SwingWorker<List<AbstractFile>, Void>() {
 
-        if (contentList == null) {
-            contentList = Collections.<AbstractFile>emptyList();
-        }
+            @Override
+            protected List<AbstractFile> doInBackground() throws Exception {
 
-        CommonFilesNode sn = new CommonFilesNode(contentList);
-        final TopComponent searchResultWin = DataResultTopComponent.createInstance(
-                title,
-                pathText,
-                new TableFilterNode(sn, true, sn.getName()),
-                contentList.size());
+                List<AbstractFile> contentList = null;
+                try {
+                    Case currentCase = Case.getOpenCase();
+                    SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-        searchResultWin.requestActive(); // make it the active top component
+                    //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
+                    //...consider doing something else
+                    contentList = tskDb.findAllFilesWhere("1 == 1 GROUP BY  md5 HAVING  COUNT(*) > 1;");
+                } catch (TskCoreException | NoCurrentCaseException ex) {
+                    LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
+                }
+
+                if (contentList == null) {
+                    contentList = Collections.<AbstractFile>emptyList();
+                }
+
+                return contentList;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+
+                List<AbstractFile> contentList = null;
+                CommonFilesNode sn = null;
+
+                try {
+                    contentList = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
+                    contentList = Collections.<AbstractFile>emptyList();
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), ex.getCause().getMessage(), "", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    sn = new CommonFilesNode(contentList);
+
+                    final TopComponent searchResultWin = DataResultTopComponent.createInstance(
+                            title,
+                            pathText,
+                            new TableFilterNode(sn, true, sn.getName()),
+                            contentList.size());
+                    searchResultWin.requestActive(); // make it the active top component
+                }
+            }
+        }.execute();
     }
 
     /**
