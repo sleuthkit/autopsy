@@ -212,10 +212,8 @@ class PstParser {
         try {
             outputDirPath = ThunderbirdMboxFileIngestModule.getModuleOutputPath() + File.separator;
         } catch (NoCurrentCaseException ex) {
-                addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
-                                filename));
-                logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                return;
         }
         for (int x = 0; x < numberOfAttachments; x++) {
             String filename = "";
