@@ -58,7 +58,7 @@ public class IngestEventsListener {
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int correlationModuleInstanceCount;
-    private static int correlationModulesFlaggingNotableCount;
+    private static boolean flagNotableItems;
     private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
@@ -123,42 +123,23 @@ public class IngestEventsListener {
     private synchronized static int getCeModuleInstanceCount() {
         return correlationModuleInstanceCount;
     }
-
+    
     /**
-     * Increase the number of IngestEventsListeners adding contents to the
-     * Correlation Engine with notable item flagging enabled.
+     * Are notable items being flagged?
+     * 
+     * @return True if flagging notable items; otherwise false.
      */
-    public synchronized static void incrementCorrelationModulesFlaggingNotableCount() {
-        correlationModulesFlaggingNotableCount++;
+    private synchronized static boolean isFlagNotableItems() {
+        return flagNotableItems;
     }
-
+    
     /**
-     * Decrease the number of IngestEventsListeners adding contents to the
-     * Correlation Engine with notable item flagging enabled.
+     * Configure the listener to flag notable items or not.
+     * 
+     * @param value True to flag notable items; otherwise false.
      */
-    public synchronized static void decrementCorrelationModulesFlaggingNotableCount() {
-        if (correlationModulesFlaggingNotableCount > 0) {
-            correlationModulesFlaggingNotableCount--;
-        }
-    }
-
-    /**
-     * Reset the counter which keeps track of if the Correlation Engine Module
-     * is being run during injest and flagging notable items to 0.
-     */
-    synchronized static void resetCorrelationModulesFlaggingNotableCount() {
-        correlationModulesFlaggingNotableCount = 0;
-    }
-
-    /**
-     * Whether or not the Correlation Engine Module is enabled for any of the
-     * currently running ingest jobs and flagging notable items.
-     *
-     * @return boolean True for Correlation Engine flagging enabled, False for
-     *         disabled
-     */
-    private synchronized static int getCorrelationModulesFlaggingNotableCount() {
-        return correlationModulesFlaggingNotableCount;
+    public synchronized static void setFlagNotableItems(boolean value) {
+        flagNotableItems = value;
     }
 
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
@@ -278,7 +259,7 @@ public class IngestEventsListener {
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                             // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
                             // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
-                            if (getCorrelationModulesFlaggingNotableCount() > 0) {
+                            if (isFlagNotableItems()) {
                                 List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                 if (!caseDisplayNames.isEmpty()) {
                                     postCorrelatedBadArtifactToBlackboard(bbArtifact,

@@ -74,7 +74,7 @@ final class IngestModule implements FileIngestModule {
 
     /**
      * Instantiate the Correlation Engine ingest module.
-     * 
+     *
      * @param settings The ingest settings for the module instance.
      */
     IngestModule(IngestSettings settings) {
@@ -127,7 +127,6 @@ final class IngestModule implements FileIngestModule {
          * Search the central repo to see if this file was previously marked as
          * being bad. Create artifact if it was.
          */
-        
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
                 List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
@@ -163,11 +162,7 @@ final class IngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         IngestEventsListener.decrementCorrelationEngineModuleCount();
-        
-        if (flagTaggedNotableItems) {
-            IngestEventsListener.decrementCorrelationModulesFlaggingNotableCount();
-        }
-        
+
         if ((EamDb.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
@@ -202,11 +197,17 @@ final class IngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         IngestEventsListener.incrementCorrelationEngineModuleCount();
-        
-        if (flagTaggedNotableItems) {
-            IngestEventsListener.incrementCorrelationModulesFlaggingNotableCount();
-        }
-        
+
+        /*
+         * Tell the IngestEventsListener to flag notable items based on the
+         * current module's configuration. This is a work around for the lack of
+         * an artifacts pipeline. Note that this can be changed by another
+         * module instance. All modules are affected by the value. While not
+         * ideal, this will be good enough until a better solution can be
+         * posited.
+         */
+        IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
+
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
@@ -227,9 +228,9 @@ final class IngestModule implements FileIngestModule {
             autopsyCase = Case.getOpenCase();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            throw new IngestModuleException("Exception while getting open case.", ex); 
+            throw new IngestModuleException("Exception while getting open case.", ex);
         }
-        
+
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
                 && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
