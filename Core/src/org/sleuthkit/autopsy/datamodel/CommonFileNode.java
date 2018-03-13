@@ -18,43 +18,22 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
-//public class CommonFileNode extends AbstractFsContentNode<AbstractFile> {
 public class CommonFileNode extends AbstractNode {
-    //TODO goto AbstractNode rather than AbstractFsContentNode<T>...
     
     public CommonFileNode(AbstractFile fsContent) {
-        super(fsContent);
+        super(Children.LEAF);
     }
 
     @Override
     protected Sheet createSheet(){
         return null;    //TODO
-    }
-    
-    //ContentTagNode as an example
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean isLeafTypeNode() {//TODO return true
-        return true;
-    }
-
-    @Override
-    public String getItemType() {//TODO getClass.getCanonicalName
-        return this.getClass().getCanonicalName();
-    }    
+    }   
 }
