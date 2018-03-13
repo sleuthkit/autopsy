@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,74 +22,75 @@ package org.sleuthkit.autopsy.ingest;
  * Combines an ingest module factory with ingest module settings and an enabled
  * flag to create a template for creating fully configured ingest modules.
  */
-final class IngestModuleTemplate {
+public final class IngestModuleTemplate {
 
     private final IngestModuleFactory moduleFactory;
     private IngestModuleIngestJobSettings settings = null;
     private boolean enabled = true;
 
-    IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings settings) {
+    public IngestModuleTemplate(IngestModuleFactory moduleFactory, IngestModuleIngestJobSettings settings) {
         this.moduleFactory = moduleFactory;
         this.settings = settings;
     }
 
-    IngestModuleFactory getModuleFactory() {
+    public IngestModuleFactory getModuleFactory() {
         return moduleFactory;
     }
 
-    String getModuleName() {
+    public String getModuleName() {
         return moduleFactory.getModuleDisplayName();
     }
 
-    String getModuleDescription() {
+    public String getModuleDescription() {
         return moduleFactory.getModuleDescription();
     }
 
-    IngestModuleIngestJobSettings getModuleSettings() {
+    public IngestModuleIngestJobSettings getModuleSettings() {
         return settings;
     }
 
-    void setModuleSettings(IngestModuleIngestJobSettings settings) {
+    public void setModuleSettings(IngestModuleIngestJobSettings settings) {
         this.settings = settings;
     }
 
-    boolean hasModuleSettingsPanel() {
+    public boolean hasModuleSettingsPanel() {
         return moduleFactory.hasIngestJobSettingsPanel();
     }
 
-    IngestModuleIngestJobSettingsPanel getModuleSettingsPanel() {
+    public IngestModuleIngestJobSettingsPanel getModuleSettingsPanel() {
         return moduleFactory.getIngestJobSettingsPanel(settings);
     }
 
-    boolean hasGlobalSettingsPanel() {
+    public boolean hasGlobalSettingsPanel() {
         return moduleFactory.hasGlobalSettingsPanel();
     }
 
-    IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         return moduleFactory.getGlobalSettingsPanel();
     }
 
-    boolean isDataSourceIngestModuleTemplate() {
+    public boolean isDataSourceIngestModuleTemplate() {
         return moduleFactory.isDataSourceIngestModuleFactory();
     }
 
-    DataSourceIngestModule createDataSourceIngestModule() {
+    public DataSourceIngestModule createDataSourceIngestModule() {
         return moduleFactory.createDataSourceIngestModule(settings);
     }
 
-    boolean isFileIngestModuleTemplate() {
+    public boolean isFileIngestModuleTemplate() {
         return moduleFactory.isFileIngestModuleFactory();
     }
 
-    FileIngestModule createFileIngestModule() {
+    public FileIngestModule createFileIngestModule() {
         return moduleFactory.createFileIngestModule(settings);
     }
 
-    void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
-    boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
+    
 }
