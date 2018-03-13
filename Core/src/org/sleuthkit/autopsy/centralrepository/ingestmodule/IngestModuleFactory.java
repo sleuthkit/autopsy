@@ -94,9 +94,6 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        if (!(settings instanceof IngestSettings)) {
-            throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
-        }
         return new IngestSettingsPanel((IngestSettings) settings);
     }
 
