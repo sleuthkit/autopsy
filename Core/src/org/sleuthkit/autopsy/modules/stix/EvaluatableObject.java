@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import org.mitre.cybox.common_2.ConditionApplicationEnum;
 import org.mitre.cybox.common_2.ConditionTypeEnum;
 import org.mitre.cybox.common_2.StringObjectPropertyType;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -100,7 +101,7 @@ abstract class EvaluatableObject {
 
         List<BlackboardArtifact> hits = null;
         try {
-            Case case1 = Case.getCurrentCase();
+            Case case1 = Case.getOpenCase();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
             String[] parts = item.getValue().toString().split("##comma##"); //NON-NLS
@@ -143,7 +144,7 @@ abstract class EvaluatableObject {
             } else {
                 throw new TskCoreException("Error: Can not apply NONE condition in search"); //NON-NLS
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             addWarning(ex.getLocalizedMessage());
         }
 

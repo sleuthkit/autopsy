@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 
 /**
@@ -37,7 +38,9 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 @NbBundle.Messages({
     "CannotCreateOutputFolder=Unable to create output folder.",
     "CannotRunFileTypeDetection=Unable to run file type detection.",
-    "UnableToInitializeLibraries=Unable to initialize 7Zip libraries."
+    "UnableToInitializeLibraries=Unable to initialize 7Zip libraries.",
+    "EmbeddedFileExtractorIngestModule.NoOpenCase.errMsg=No open case available.",
+    "EmbeddedFileExtractorIngestModule.UnableToGetMSOfficeExtractor.errMsg=Unable to get MSOfficeEmbeddedContentExtractor."
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
@@ -63,10 +66,13 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * case database for extracted (derived) file paths. The absolute path
          * is used to write the extracted (derived) files to local storage.
          */
-        final Case currentCase = Case.getCurrentCase();
+        try {
+        final Case currentCase = Case.getOpenCase();
         moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_NoOpenCase_errMsg(), ex);
+        }
         /*
          * Create the output directory.
          */
@@ -101,7 +107,11 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * Construct an embedded content extractor for processing Microsoft
          * Office documents.
          */
-        this.officeExtractor = new MSOfficeEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        try {
+            this.officeExtractor = new MSOfficeEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
+        }
     }
 
     @Override

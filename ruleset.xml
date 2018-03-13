@@ -57,6 +57,8 @@
     <properties>            
       <!-- Disabled because we have lots of undocumented fields -->
       <property name="fieldCommentRequirement" value="Unwanted"/>
+      <!-- Disabled because we don't require comments on overrides of public fields -->
+      <property name="publicMethodCommentRequirement" value="Unwanted"/>
     </properties>
   </rule>
   <!-- Commented out because it was flagged some of our header / copyright comments

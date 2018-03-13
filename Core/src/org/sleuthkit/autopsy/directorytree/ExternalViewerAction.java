@@ -29,6 +29,7 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
@@ -79,7 +80,14 @@ public class ExternalViewerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         // Get the temp folder path of the case
-        String tempPath = Case.getCurrentCase().getTempDirectory();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+        String tempPath = openCase.getTempDirectory();
         tempPath = tempPath + File.separator + this.fileObject.getName();
 
         // create the temporary file

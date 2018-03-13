@@ -55,6 +55,7 @@ import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.sax.BodyContentHandler;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -115,9 +116,9 @@ class MSOfficeEmbeddedContentExtractor {
     }
     private SupportedExtractionFormats abstractFileExtractionFormat;
 
-    MSOfficeEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) {
+    MSOfficeEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws NoCurrentCaseException {
 
-        this.fileManager = Case.getCurrentCase().getServices().getFileManager();
+        this.fileManager = Case.getOpenCase().getServices().getFileManager();
         this.services = IngestServices.getInstance();
         this.context = context;
         this.fileTypeDetector = fileTypeDetector;

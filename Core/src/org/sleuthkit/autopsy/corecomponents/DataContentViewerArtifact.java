@@ -62,7 +62,7 @@ import org.netbeans.swing.etable.ETable;
  * Content represented by a Node. Each BlackboardArtifact is rendered displayed
  * in a JTable representation of its BlackboardAttributes.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 3)
+@ServiceProvider(service = DataContentViewer.class, position = 7)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
 
     @NbBundle.Messages({

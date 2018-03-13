@@ -33,6 +33,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -334,7 +335,13 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
          * window, only allow it to be closed when there's no case opened or no
          * data sources in the open case.
          */
-        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
+        return (!this.isMain) || openCase.hasData() == false;
     }
 
     /**

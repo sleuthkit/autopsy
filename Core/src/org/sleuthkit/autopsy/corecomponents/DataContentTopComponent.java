@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -168,7 +169,13 @@ public final class DataContentTopComponent extends TopComponent implements DataC
          * the main window, only it to be closed when there's no case opened or
          * no data sources in the open case.
          */
-        return (!this.isDefault) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
+        return (!this.isDefault) || openCase.hasData() == false;
     }
 
     @Override

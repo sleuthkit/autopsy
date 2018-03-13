@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import org.mitre.cybox.common_2.AnyURIObjectPropertyType;
 import org.mitre.cybox.objects.URLHistory;
 import org.mitre.cybox.objects.URLHistoryEntryType;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -138,7 +139,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                 }
 
                 try {
-                    Case case1 = Case.getCurrentCase();
+                    Case case1 = Case.getOpenCase();
                     SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
                     List<BlackboardArtifact> artList
                             = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
@@ -206,7 +207,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                         }
                     }
 
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     return new ObservableResult(id, "URLHistoryObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                             spacing, ObservableResult.ObservableState.INDETERMINATE, null);
                 }
@@ -231,7 +232,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
             // It doesn't seem too useful, but we can just search for the browser name
             // if there aren't any URL entries
             try {
-                Case case1 = Case.getCurrentCase();
+                Case case1 = Case.getOpenCase();
                 SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
                 List<BlackboardArtifact> artList
                         = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
@@ -264,7 +265,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                 // Didn't find any matches
                 return new ObservableResult(id, "URLHistoryObject: No matches found for " + baseSearchString, //NON-NLS
                         spacing, ObservableResult.ObservableState.FALSE, null);
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 return new ObservableResult(id, "URLHistoryObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                         spacing, ObservableResult.ObservableState.INDETERMINATE, null);
             }
