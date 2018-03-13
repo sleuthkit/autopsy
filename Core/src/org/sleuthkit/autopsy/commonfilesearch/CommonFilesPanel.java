@@ -103,8 +103,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     List<AbstractFile> contentList = get();
 
-                    CommonFilesNode contentFilesNode = new CommonFilesNode(contentList);
+                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(contentList);
 
+                    //TODO can use DataResultFilterNode in addition to TableFilterNode
                     TableFilterNode tableFilterNode = new TableFilterNode(contentFilesNode, true, contentFilesNode.getName());
 
                     TopComponent component = DataResultTopComponent.createInstance(
@@ -126,7 +127,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         errorMessage = Bundle.CommonFilesPanel_search_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
                         LOGGER.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
-                        errorMessage = Bundle.CommonFilesPanel_search_results_noCurrentCaseException();
+                        errorMessage = Bundle.CommonFilesPanel_search_done_noCurrentCaseException();
                     } else {
                         LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search", ex);
                         errorMessage = Bundle.CommonFilesPanel_search_done_exception();
