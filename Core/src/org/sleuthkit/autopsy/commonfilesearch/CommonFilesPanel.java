@@ -74,7 +74,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.search.results.pathText=Common Files Search Results\\:",
         "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
-        "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search."})
+        "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
+        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files."})
     private void search() {
 
         String title = Bundle.CommonFilesPanel_search_results_title();
@@ -116,10 +117,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            ex.getCause().getMessage(),
-                            "Some went wrong finding common files.",
-                            JOptionPane.ERROR_MESSAGE);
+                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
                 } catch (ExecutionException ex) {
                     String errorMessage;
                     Throwable inner = ex.getCause();
