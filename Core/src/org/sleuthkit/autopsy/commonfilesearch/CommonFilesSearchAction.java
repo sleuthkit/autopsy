@@ -25,17 +25,16 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
  */
-final class CommonFilesAction extends CallableSystemAction implements FileSearchProvider {
+final class CommonFilesSearchAction extends CallableSystemAction {
 
-    private static CommonFilesAction instance = null;
+    private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
 
-    CommonFilesAction() {
+    CommonFilesSearchAction() {
         super();
         this.setEnabled(Case.isCaseOpen());
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
@@ -45,9 +44,9 @@ final class CommonFilesAction extends CallableSystemAction implements FileSearch
         });
     }
 
-    public static synchronized CommonFilesAction getDefault() {
+    public static synchronized CommonFilesSearchAction getDefault() {
         if (instance == null) {
-            instance = new CommonFilesAction();
+            instance = new CommonFilesSearchAction();
         }
         return instance;
     }
@@ -72,10 +71,5 @@ final class CommonFilesAction extends CallableSystemAction implements FileSearch
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
-    }
-
-    @Override
-    public void showDialog() {
-        performAction();
     }
 }
