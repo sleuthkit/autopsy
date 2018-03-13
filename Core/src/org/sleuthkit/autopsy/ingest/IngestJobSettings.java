@@ -47,7 +47,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 /**
  * The settings for an ingest job.
  */
-public class IngestJobSettings {
+public final class IngestJobSettings {
 
     private static final String ENABLED_MODULES_PROPERTY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_PROPERTY = "Disabled_Ingest_Modules"; //NON-NLS
@@ -58,10 +58,10 @@ public class IngestJobSettings {
     private static final CharSequence PYTHON_CLASS_PROXY_PREFIX = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
     private final IngestType ingestType;
-    private final List<IngestModuleTemplate> moduleTemplates;
-    private final List<String> warnings;
+    private final List<IngestModuleTemplate> moduleTemplates = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
     private String executionContext;
-    private FilesSet fileIngestFilter;
+    private FilesSet fileFilter;
     private String moduleSettingsFolderPath;
 
     /**
@@ -72,7 +72,7 @@ public class IngestJobSettings {
      * the Run Ingest Modules dialog, and auto ingest. Different execution
      * contexts may have different ingest job settings.
      *
-     * @return The execution context identifier.
+     * @param The execution context identifier.
      *
      * @return The path to the module settings folder
      */
@@ -111,8 +111,6 @@ public class IngestJobSettings {
      */
     public IngestJobSettings(String executionContext, IngestType ingestType) {
         this.ingestType = ingestType;
-        this.moduleTemplates = new ArrayList<>();
-        this.warnings = new ArrayList<>();
         if (this.ingestType.equals(IngestType.ALL_MODULES)) {
             this.executionContext = executionContext;
         } else {
@@ -120,6 +118,48 @@ public class IngestJobSettings {
         }
         this.createSavedModuleSettingsFolder();
         this.load();
+    }
+
+    /**
+     * Creates entirely new ingest job settings for a given context without
+     * saving them.
+     *
+     * @param executionContext The execution context identifier.
+     * @param ingestType       Whether to run all ingest modules, data source
+     *                         level ingest modules only, or file level ingest
+     *                         modules only.
+     * @param moduleTemplates  A collection of ingest module templates for
+     *                         creating fully configured ingest modules; each
+     *                         template combines an ingest module factory with
+     *                         ingest module job settings and an enabled flag.
+     */
+    public IngestJobSettings(String executionContext, IngestType ingestType, Collection<IngestModuleTemplate> moduleTemplates) {
+        this.ingestType = ingestType;
+        if (this.ingestType.equals(IngestType.ALL_MODULES)) {
+            this.executionContext = executionContext;
+        } else {
+            this.executionContext = executionContext + "." + this.ingestType.name();
+        }
+        this.moduleTemplates.addAll(moduleTemplates);
+    }
+
+    /**
+     * Creates entirely new ingest job settings for a given context without
+     * saving them.
+     *
+     * @param executionContext The execution context identifier.
+     * @param ingestType       Whether to run all ingest modules, data source
+     *                         level ingest modules only, or file level ingest
+     *                         modules only.
+     * @param moduleTemplates  A collection of ingest module templates for
+     *                         creating fully configured ingest modules; each
+     *                         template combines an ingest module factory with
+     *                         ingest module job settings and an enabled flag.
+     * @param fileFilter       A file filter in the form of a files set.
+     */
+    public IngestJobSettings(String executionContext, IngestType ingestType, Collection<IngestModuleTemplate> moduleTemplates, FilesSet fileFilter) {
+        this(executionContext, ingestType, moduleTemplates);
+        this.setFileFilter(fileFilter);
     }
 
     /**
@@ -136,6 +176,7 @@ public class IngestJobSettings {
      * Saves these ingest job settings.
      */
     public void save() {
+        this.createSavedModuleSettingsFolder();
         this.store();
     }
 
@@ -148,7 +189,7 @@ public class IngestJobSettings {
      *
      * @param executionContext The new execution context.
      */
-    void saveAs(String executionContext) {
+    public void saveAs(String executionContext) {
         this.executionContext = executionContext;
         this.createSavedModuleSettingsFolder();
         this.store();
@@ -175,29 +216,29 @@ public class IngestJobSettings {
      *
      * @return The execution context identifier.
      */
-    String getExecutionContext() {
+    public String getExecutionContext() {
         return this.executionContext;
     }
 
     /**
-     * Gets the file ingest filter for the ingest job.
+     * Gets the file filter for the ingest job.
      *
      * @return FilesSet The filter as a files set.
      */
-    FilesSet getFileIngestFilter() {
-        if (fileIngestFilter == null) {
-            fileIngestFilter = FilesSetsManager.getDefaultFilter();
+    public FilesSet getFileFilter() {
+        if (fileFilter == null) {
+            fileFilter = FilesSetsManager.getDefaultFilter();
         }
-        return fileIngestFilter;
+        return fileFilter;
     }
 
     /**
-     * Sets the file ingest filter for the ingest job.
+     * Sets the file filter for the ingest job.
      *
      * @param fileIngestFilter The filter as a files set.
      */
-    void setFileIngestFilter(FilesSet fileIngestFilter) {
-        this.fileIngestFilter = fileIngestFilter;
+    public void setFileFilter(FilesSet fileIngestFilter) {
+        this.fileFilter = fileIngestFilter;
     }
 
     /**
@@ -205,7 +246,7 @@ public class IngestJobSettings {
      *
      * @return The list of ingest module templates.
      */
-    List<IngestModuleTemplate> getIngestModuleTemplates() {
+    public List<IngestModuleTemplate> getIngestModuleTemplates() {
         return Collections.unmodifiableList(this.moduleTemplates);
     }
 
@@ -214,7 +255,7 @@ public class IngestJobSettings {
      *
      * @param moduleTemplates The ingest module templates.
      */
-    void setIngestModuleTemplates(List<IngestModuleTemplate> moduleTemplates) {
+    public void setIngestModuleTemplates(List<IngestModuleTemplate> moduleTemplates) {
         this.moduleTemplates.clear();
         this.moduleTemplates.addAll(moduleTemplates);
     }
@@ -224,7 +265,7 @@ public class IngestJobSettings {
      *
      * @return The list of enabled ingest module templates.
      */
-    List<IngestModuleTemplate> getEnabledIngestModuleTemplates() {
+    public List<IngestModuleTemplate> getEnabledIngestModuleTemplates() {
         List<IngestModuleTemplate> enabledModuleTemplates = new ArrayList<>();
         for (IngestModuleTemplate moduleTemplate : this.moduleTemplates) {
             if (moduleTemplate.isEnabled()) {
@@ -240,16 +281,17 @@ public class IngestJobSettings {
      * @return True or false.
      *
      */
-    boolean getProcessUnallocatedSpace() {
+    public boolean getProcessUnallocatedSpace() {
         boolean processUnallocated = true;
-        if (!Objects.isNull(this.fileIngestFilter)) {
-            processUnallocated = (this.fileIngestFilter.ingoresUnallocatedSpace() == false);
+        if (!Objects.isNull(this.fileFilter)) {
+            processUnallocated = (this.fileFilter.ingoresUnallocatedSpace() == false);
         }
         return processUnallocated;
     }
 
     /**
-     * Creates the module folder for these ingest job settings.
+     * Creates the module folder for these ingest job settings, if it does not
+     * already exist.
      */
     private void createSavedModuleSettingsFolder() {
         try {
@@ -359,10 +401,10 @@ public class IngestJobSettings {
             for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
                 fileIngestFilters.put(fSet.getName(), fSet);
             }
-            this.fileIngestFilter = fileIngestFilters.get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY));
+            this.fileFilter = fileIngestFilters.get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY));
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
-            this.fileIngestFilter = FilesSetsManager.getDefaultFilter();
-            logger.log(Level.SEVERE, "Failed to get file ingest filter from .properties file, default filter being used", ex); //NON-NLS
+            this.fileFilter = FilesSetsManager.getDefaultFilter();
+            logger.log(Level.SEVERE, "Failed to get file filter from .properties file, default filter being used", ex); //NON-NLS
         }
     }
 
@@ -513,7 +555,7 @@ public class IngestJobSettings {
         /**
          * Save the last used File Ingest Filter setting for this context.
          */
-        ModuleSettings.setConfigSetting(this.executionContext, LAST_FILE_INGEST_FILTER_PROPERTY, fileIngestFilter.getName());
+        ModuleSettings.setConfigSetting(this.executionContext, LAST_FILE_INGEST_FILTER_PROPERTY, fileFilter.getName());
     }
 
     /**
@@ -542,7 +584,18 @@ public class IngestJobSettings {
      *         comma-separated values.
      */
     private static String makeCsvList(Collection<String> collection) {
-        return collection.stream().collect(Collectors.joining(","));
+        if (collection == null || collection.isEmpty()) {
+            return "";
+        }
+
+        ArrayList<String> list = new ArrayList<>();
+        list.addAll(collection);
+        StringBuilder csvList = new StringBuilder();
+        for (int i = 0; i < list.size() - 1; ++i) {
+            csvList.append(list.get(i)).append(", ");
+        }
+        csvList.append(list.get(list.size() - 1));
+        return csvList.toString();
     }
 
     /**
