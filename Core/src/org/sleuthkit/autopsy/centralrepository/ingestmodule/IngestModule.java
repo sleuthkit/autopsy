@@ -96,7 +96,7 @@ final class IngestModule implements FileIngestModule {
         try {
             blackboard = Case.getOpenCase().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
         }
 
@@ -226,7 +226,7 @@ final class IngestModule implements FileIngestModule {
         try {
             autopsyCase = Case.getOpenCase();
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             throw new IngestModuleException("Exception while getting open case.", ex); 
         }
         
