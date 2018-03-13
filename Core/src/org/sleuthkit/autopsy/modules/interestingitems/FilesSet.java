@@ -403,18 +403,22 @@ public final class FilesSet implements Serializable {
                 }
 
                 public static COMPARATOR fromSymbol(String symbol) {
-                    if (symbol.equals("<=") || symbol.equals("≤")) {
-                        return LESS_THAN_EQUAL;
-                    } else if (symbol.equals("<")) {
-                        return LESS_THAN;
-                    } else if (symbol.equals("==") || symbol.equals("=")) {
-                        return EQUAL;
-                    } else if (symbol.equals(">")) {
-                        return GREATER_THAN;
-                    } else if (symbol.equals(">=") || symbol.equals("≥")) {
-                        return GREATER_THAN_EQUAL;
-                    } else {
-                        throw new IllegalArgumentException("Invalid symbol");
+                    switch (symbol) {
+                        case "<=":
+                        case "≤":
+                            return LESS_THAN_EQUAL;
+                        case "<":
+                            return LESS_THAN;
+                        case "==":
+                        case "=":
+                            return EQUAL;
+                        case ">":
+                            return GREATER_THAN;
+                        case ">=":
+                        case "≥":
+                            return GREATER_THAN_EQUAL;
+                        default:
+                            throw new IllegalArgumentException("Invalid symbol");
                     }
                 }
 
@@ -761,6 +765,7 @@ public final class FilesSet implements Serializable {
          */
         static final class DateCondition implements FileAttributeCondition {
 
+            private static final long serialVersionUID = 1L;
             private final static long SECS_PER_DAY = 60 * 60 * 24;
 
             private int daysIncluded;
@@ -787,10 +792,7 @@ public final class FilesSet implements Serializable {
             @Override
             public boolean passes(AbstractFile file) {
                 long dateThreshold = System.currentTimeMillis() / 1000 - daysIncluded * SECS_PER_DAY;
-                if (file.getCrtime() > dateThreshold || file.getMtime() > dateThreshold) {
-                    return true;
-                }
-                return false;
+                return file.getCrtime() > dateThreshold || file.getMtime() > dateThreshold;
             }
 
         }
