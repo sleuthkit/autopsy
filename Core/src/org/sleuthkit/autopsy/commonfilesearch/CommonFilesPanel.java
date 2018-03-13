@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -34,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -71,71 +71,69 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.title=Common Files",
-        "CommonFilesPanel.search.results.pathText=Common Files Search Results\\:"})
+        "CommonFilesPanel.search.results.pathText=Common Files Search Results\\:",
+        "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
+        "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
+        "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search."})
     private void search() {
 
         String title = Bundle.CommonFilesPanel_search_results_title();
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<Void, Void>() {
-
-            private int count = 0;
-            private TableFilterNode tfn = null;
+        new SwingWorker<List<AbstractFile>, Void>() {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected Void doInBackground() throws Exception {  //this will throw the exceptions - dont return null
+            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException {
 
-                List<AbstractFile> contentList; //TODO return this!!!
+                Case currentCase = Case.getOpenCase();
+                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-                try {
-                    Case currentCase = Case.getOpenCase();
-                    SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-                    //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
-                    //...consider doing something else
-                    //TODO verify that this works with postgres
-                    contentList = tskDb.findAllFilesWhere("1 == 1 AND (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1;");
-
-                    CommonFilesNode cfn = new CommonFilesNode(contentList);
-
-                    //TODO please wait node - use child factory
-                    tfn = new TableFilterNode(cfn, true, cfn.getName());
-                    count = contentList.size();
-
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    LOGGER.log(Level.WARNING, "Error while trying to get common files.", ex);
-                    contentList = Collections.<AbstractFile>emptyList();
-
-                    CommonFilesNode cfn = new CommonFilesNode(contentList);
-
-                    tfn = new TableFilterNode(cfn, true, cfn.getName());
-
-                }
-                
-                return null;
+                //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
+                //...consider doing something else
+                //TODO verify that this works with postgres
+                return tskDb.findAllFilesWhere("1 == 1 AND (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1;");
             }
 
             @Override
-            protected void done() {     //TODO do all ui stuff here
+            protected void done() {
                 try {
                     super.done();
 
-                    get();
+                    List<AbstractFile> contentList = get();
+
+                    CommonFilesNode contentFilesNode = new CommonFilesNode(contentList);
+
+                    TableFilterNode tableFilterNode = new TableFilterNode(contentFilesNode, true, contentFilesNode.getName());
 
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
                             pathText,
-                            tfn,
-                            count);
+                            tableFilterNode,
+                            contentList.size());
 
                     component.requestActive(); // make it the active top component
 
-                } catch (InterruptedException | ExecutionException ex) {
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             ex.getCause().getMessage(),
                             "Some went wrong finding common files.",
                             JOptionPane.ERROR_MESSAGE);
+                } catch (ExecutionException ex) {
+                    String errorMessage;
+                    Throwable inner = ex.getCause();
+                    if (inner instanceof TskCoreException) {
+                        LOGGER.log(Level.SEVERE, "Failed to load files from database.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_search_done_tskCoreException();
+                    } else if (inner instanceof NoCurrentCaseException) {
+                        LOGGER.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
+                        errorMessage = Bundle.CommonFilesPanel_search_results_noCurrentCaseException();
+                    } else {
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search", ex);
+                        errorMessage = Bundle.CommonFilesPanel_search_done_exception();
+                    }
+                    MessageNotifyUtil.Message.error(errorMessage);
                 }
             }
         }.execute();
