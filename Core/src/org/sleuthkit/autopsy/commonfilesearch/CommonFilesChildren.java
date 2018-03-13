@@ -40,7 +40,7 @@ final class CommonFilesChildren extends Children.Keys<AbstractFile> {
     protected Node[] createNodes(AbstractFile t) {
         Node[] node = new Node[1];
 
-        //TODO replace FileNode with our own subclass of its base type or similar
+        //TODO replace FileNode with our own subclass of its base type or similar (use CommonFileNode once its finished)
         node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
         return node;
     }

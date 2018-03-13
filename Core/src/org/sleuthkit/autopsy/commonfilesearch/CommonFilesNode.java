@@ -26,6 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data used to display common files search results in the top right pane.
  */
+//TODO rename to CommonFilesSearchNode
 final class CommonFilesNode extends AbstractNode {
 
     private CommonFilesChildren children;
