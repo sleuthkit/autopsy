@@ -174,7 +174,7 @@ class ImageWriter implements PropertyChangeListener{
                 periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
                 progressHandle = ProgressHandle.createHandle(Bundle.ImageWriter_progressBar_message(dataSourceName));
                 progressHandle.start(100);
-                progressUpdateTask = periodicTasksExecutor.scheduleAtFixedRate(
+                progressUpdateTask = periodicTasksExecutor.scheduleWithFixedDelay(
                         new ProgressUpdateTask(progressHandle, imageHandle), 0, 250, TimeUnit.MILLISECONDS);
             }
 
