@@ -57,6 +57,8 @@
     <properties>            
       <!-- Disabled because we have lots of undocumented fields -->
       <property name="fieldCommentRequirement" value="Unwanted"/>
+      <!-- Disabled because we don't require comments on overrides of public fields -->
+      <property name="publicMethodCommentRequirement" value="Unwanted"/>
     </properties>
   </rule>
   <!-- Commented out because it was flagged some of our header / copyright comments
@@ -114,7 +116,8 @@
   <!-- Disabled.  Could enforce in future, but not top priority right now.
   <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/> -->
   <rule ref="rulesets/java/design.xml/AvoidProtectedFieldInFinalClass"/>
-  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>-->
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAbstractMethod"/>
   <rule ref="rulesets/java/design.xml/SimplifyConditional"/>
@@ -178,7 +181,10 @@
   <rule ref="rulesets/java/imports.xml/ImportFromSamePackage"/>
   <rule ref="rulesets/java/imports.xml/DuplicateImports"/>
   <rule ref="rulesets/java/imports.xml/DontImportJavaLang"/>
-  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>
+  <!-- Disabled because flagging use of Bundle for bundle messages
+  is not desirable since this qualification helps with code completion
+  while inappropriate use of full qualification is otherwise very rare
+  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>-->
   <!-- Disabled because it generated a lot of errors for non-Beans
   <rule ref="rulesets/java/javabeans.xml/BeanMembersShouldSerialize"/>-->
   <rule ref="rulesets/java/javabeans.xml/MissingSerialVersionUID"/>

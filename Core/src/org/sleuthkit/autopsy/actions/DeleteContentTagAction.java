@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -71,8 +72,8 @@ public class DeleteContentTagAction extends AbstractAction {
         new Thread(() -> {
             for (ContentTag tag : selectedTags) {
                 try {
-                    Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
-                } catch (TskCoreException ex) {
+                    Case.getOpenCase().getServices().getTagsManager().deleteContentTag(tag);
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(DeleteContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),

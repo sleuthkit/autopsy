@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -46,6 +47,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -331,7 +333,11 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             cleanupTask.enable();
 
             new Thread(() -> {
-                Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
+                try {
+                    Case.getOpenCase().notifyAddingDataSource(dataSourceId);
+                } catch (NoCurrentCaseException ex) {
+                     Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                }
             }).start();
             DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
                 @Override
@@ -398,10 +404,14 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
         //notify the UI of the new content added to the case
         new Thread(() -> {
-            if (!contents.isEmpty()) {
-                Case.getCurrentCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
-            } else {
-                Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
+            try {
+                if (!contents.isEmpty()) {
+                    Case.getOpenCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
+                } else {
+                    Case.getOpenCase().notifyFailedAddingDataSource(dataSourceId);
+                }
+            } catch (NoCurrentCaseException ex) {
+                Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }
         }).start();
 

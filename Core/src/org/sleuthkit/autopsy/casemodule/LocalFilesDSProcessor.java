@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -166,6 +167,9 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                     errors.add(ex.getMessage());
                     callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
                     return;
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.WARNING, "Exception while getting open case.", ex);
+                    return;
                 }
             }
         }
@@ -184,7 +188,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      * @throws
      * org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor.L01Exception
      */
-    private List<String> extractLogicalEvidenceFileContents(final List<String> logicalEvidenceFilePaths) throws L01Exception {
+    private List<String> extractLogicalEvidenceFileContents(final List<String> logicalEvidenceFilePaths) throws L01Exception, NoCurrentCaseException {
         final List<String> extractedPaths = new ArrayList<>();
         Path ewfexportPath;
         ewfexportPath = locateEwfexportExecutable();
@@ -195,7 +199,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getCurrentCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
+            File l01Dir = new File(Case.getOpenCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
             if (!l01Dir.exists()) {
                 l01Dir.mkdirs();
             }
@@ -353,6 +357,9 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                     } catch (L01Exception ex) {
                         logger.log(Level.WARNING, "File extension was .l01 but contents of logical evidence file were unable to be extracted", ex);
                         //contents of l01 could not be extracted don't add data source or run ingest
+                        return 0;
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, "Exception while getting open case.", ex);
                         return 0;
                     }
                 }

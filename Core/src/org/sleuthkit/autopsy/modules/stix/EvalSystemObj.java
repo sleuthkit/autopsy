@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 
 import org.mitre.cybox.objects.SystemObjectType;
 import org.mitre.cybox.objects.WindowsSystem;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -135,7 +136,7 @@ class EvalSystemObj extends EvaluatableObject {
         setUnsupportedFieldWarnings();
 
         try {
-            Case case1 = Case.getCurrentCase();
+            Case case1 = Case.getOpenCase();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
             List<OSInfo> osInfoList = OSUtility.getOSInfo(sleuthkitCase);
 
@@ -217,7 +218,7 @@ class EvalSystemObj extends EvaluatableObject {
                 return new ObservableResult(id, "SystemObject: No OS artifacts found", //NON-NLS
                         spacing, ObservableResult.ObservableState.INDETERMINATE, null);
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             return new ObservableResult(id, "SystemObject: Exception during evaluation: " + ex.getLocalizedMessage(), //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }

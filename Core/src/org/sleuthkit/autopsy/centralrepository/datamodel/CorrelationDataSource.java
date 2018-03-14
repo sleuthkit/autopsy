@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.io.Serializable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -73,8 +74,8 @@ public class CorrelationDataSource implements Serializable {
     public static CorrelationDataSource fromTSKDataSource(CorrelationCase correlationCase, Content dataSource) throws EamDbException {
         Case curCase;
         try {
-            curCase = Case.getCurrentCase();
-        } catch (IllegalStateException ex) {
+            curCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
             throw new EamDbException("Autopsy case is closed");
         }
         String deviceId;

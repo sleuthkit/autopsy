@@ -31,6 +31,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.AdHocQueryResult;
@@ -176,7 +177,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             if (rawArtifactText != null) {
                 sources.add(rawArtifactText);
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Error creating RawText for " + file, ex); //NON-NLS
         }
 
@@ -206,7 +207,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     }
 
-    static private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException {
+    static private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
         IndexedText rawArtifactText = null;
         if (null != artifact) {
             /*
@@ -219,7 +220,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
-                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
                     rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
 
                 }

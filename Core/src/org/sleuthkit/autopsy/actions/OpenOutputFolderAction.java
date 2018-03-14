@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,10 +33,11 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * The action associated with the Tools/Open Case Folder menu item. It opens a
+ * The action associated with the Tools/Open Output Folder menu item. It opens a
  * file explorer window for the root output directory for the currently open
  * case. If the case is a single-user case, this is the case directory. If the
  * case is a multi-user case, this is a subdirectory of the case directory
@@ -45,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = false)
-@ActionReference(path = "Menu/Case", position = 302)
+@ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
 
@@ -56,13 +57,13 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
     public void performAction() {
         File outputDir;
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             outputDir = new File(currentCase.getOutputDirectory());
             if (outputDir.exists()) {
                 try {
                     Desktop.getDesktop().open(outputDir);
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to open case output folder %s", outputDir), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Failed to open output folder %s", outputDir), ex); //NON-NLS
                     NotifyDescriptor descriptor = new NotifyDescriptor.Message(
                             NbBundle.getMessage(this.getClass(), "OpenOutputFolder.CouldNotOpenOutputFolder", outputDir.getAbsolutePath()), NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(descriptor);
@@ -72,7 +73,7 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
                         NbBundle.getMessage(this.getClass(), "OpenOutputFolder.error1", outputDir.getAbsolutePath()), NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(descriptor);
             }
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "OpenOutputFolderAction enabled with no current case", ex); //NON-NLS
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
         }

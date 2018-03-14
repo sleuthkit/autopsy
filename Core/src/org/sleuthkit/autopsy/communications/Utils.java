@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.Account;
 
 /**
@@ -37,36 +38,12 @@ class Utils {
     }
 
     /**
-     * The file name of the icon for the given Account Type. Will not include
-     * the path but will include the extension.
+     * Get the path of the icon for the given Account Type.
      *
-     * @return The file name of the icon for the given Account Type.
+     * @return The path of the icon for the given Account Type.
      */
-    static final String getIconFileName(Account.Type type) {
-        if (type.equals(Account.Type.CREDIT_CARD)) {
-            return "credit-card.png";
-        } else if (type.equals(Account.Type.DEVICE)) {
-            return "image.png";
-        } else if (type.equals(Account.Type.EMAIL)) {
-            return "email.png";
-        } else if (type.equals(Account.Type.FACEBOOK)) {
-            return "facebook.png";
-        } else if (type.equals(Account.Type.INSTAGRAM)) {
-            return "instagram.png";
-        } else if (type.equals(Account.Type.MESSAGING_APP)) {
-            return "messaging.png";
-        } else if (type.equals(Account.Type.PHONE)) {
-            return "phone.png";
-        } else if (type.equals(Account.Type.TWITTER)) {
-            return "twitter.png";
-        } else if (type.equals(Account.Type.WEBSITE)) {
-            return "web-file.png";
-        } else if (type.equals(Account.Type.WHATSAPP)) {
-            return "WhatsApp.png";
-        } else {
-            //there could be a default icon instead...
-            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
-        }
+    static final String getIconFilePath(Account.Type type) {
+        return Accounts.getIconFilePath(type);
     }
 
 }

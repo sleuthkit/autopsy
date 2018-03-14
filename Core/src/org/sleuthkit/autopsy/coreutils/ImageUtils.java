@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -62,6 +62,7 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.opencv.core.Core;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
@@ -384,9 +385,9 @@ public class ImageUtils {
     private static File getCachedThumbnailLocation(long fileID) {
         return cacheFileMap.computeIfAbsent(fileID, id -> {
             try {
-                String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
+                String cacheDirectory = Case.getOpenCase().getCacheDirectory();
                 return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NON-NLS
-            } catch (IllegalStateException e) {
+            } catch (NoCurrentCaseException e) {
                 LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
                 return null;
             }

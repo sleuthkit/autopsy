@@ -35,11 +35,13 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
@@ -50,7 +52,9 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -186,8 +190,21 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      */
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) { 
+                JOptionPane.showMessageDialog(this,
+                        "Failed to export plist file.",
+                        Bundle.PListViewer_ExportFailed_message(),
+                        JOptionPane.ERROR_MESSAGE);
+
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+                return;
+        }
+        
         final JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         fileChooser.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
 
         final int returnVal = fileChooser.showSaveDialog(this);
@@ -262,35 +279,50 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
      *
      * @return none
      */
+    @NbBundle.Messages({"PListViewer.processPlist.interruptedMessage=Interrupted while parsing/displaying plist file.",
+        "PListViewer.processPlist.errorMessage=Error while parsing/displaying plist file."})
     private void processPlist(final AbstractFile plistFile) {
 
-        final byte[] plistFileBuf = new byte[(int) plistFile.getSize()];
-        try {
-            plistFile.read(plistFileBuf, 0, plistFile.getSize());
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error reading bytes of plist file.", ex);
-        }
-
-        final List<PropKeyValue> plist;
-        try {
-            plist = parsePList(plistFileBuf);
-            new SwingWorker<Void, Void>() {
-                @Override
-                protected Void doInBackground() {
+        new SwingWorker<List<PropKeyValue>, Void>() {
+            @Override
+            protected List<PropKeyValue> doInBackground() throws TskCoreException, IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
+                // Read in and parse the file
+                final byte[] plistFileBuf = new byte[(int) plistFile.getSize()];
+                plistFile.read(plistFileBuf, 0, plistFile.getSize());
+                final List<PropKeyValue>   plist = parsePList(plistFileBuf);
+               
+                return plist;
+            }
+            
+            @Override
+            protected void done() {
+                super.done();
+                List<PropKeyValue> plist;
+                try {
+                    plist = get();
                     setupTable(plist);
-                    return null;
+                    
+                    SwingUtilities.invokeLater(() -> {
+                         setColumnWidths();
+                    });
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interruption while parsing/dislaying  plist file " + plistFile.getName(), ex);
+                      
+                   JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        ex.getMessage(),
+                                        Bundle.PListViewer_processPlist_interruptedMessage(),
+                                        JOptionPane.ERROR_MESSAGE);
+                    
+                } catch (ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Exception while parsing/dislaying  plist file " + plistFile.getName(), ex);
+                      JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        ex.getCause().getMessage(),
+                                        Bundle.PListViewer_processPlist_errorMessage(),
+                                        JOptionPane.ERROR_MESSAGE);
                 }
-
-                @Override
-                protected void done() {
-                    super.done();
-                    setColumnWidths();
-                }
-            }.execute();
-
-        } catch (IOException | PropertyListFormatException | ParseException | ParserConfigurationException | SAXException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error parsing plist for file (obj_id = %d)", plistFile.getId()), ex);
-        } 
+                      
+            }
+        }.execute(); 
     }
 
     /**

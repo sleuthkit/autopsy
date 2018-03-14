@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -299,7 +299,7 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             Case curCase;
             try {
-                curCase = Case.getCurrentCase();
+                curCase = Case.getOpenCase();
             } catch (Exception e) {
                 setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 setStatusMsg("");
@@ -380,7 +380,7 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             Case curCase;
             try {
-                curCase = Case.getCurrentCase();
+                curCase = Case.getOpenCase();
             } catch (Exception e) {
                 setFileReadLabel(
                         NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
@@ -472,7 +472,7 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             Case curCase;
             try {
-                curCase = Case.getCurrentCase();
+                curCase = Case.getOpenCase();
             } catch (Exception e) {
                 setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 return;

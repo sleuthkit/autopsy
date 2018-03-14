@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -43,10 +44,14 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class ContactAnalyzer {
+/**
+ * Look for call logs and allow resulting blackboard artifacts to be generated.
+ */
+final class ContactAnalyzer {
 
     private Connection connection = null;
     private ResultSet resultSet = null;
@@ -54,32 +59,42 @@ class ContactAnalyzer {
     private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
-    private String moduleName = iOSModuleFactory.getModuleName();
+    private final String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
     private Blackboard blackboard;
 
+    /**
+     * Find contacts given an ingest job context and index the results.
+     *
+     * @param context The ingest job context.
+     */
     public void findContacts(IngestJobContext context) {
-
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+ 
+        blackboard = openCase.getServices().getBlackboard();
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = openCase.getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("LOWER(name) LIKE LOWER('%call_history%') "); //NON-NLS //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    //jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), i+".txt");
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
-                    //copyFileUsingStreams(AF,jFile);
-                    //copyFileUsingStream(AF,jFile);
+                    jFile = new java.io.File(openCase.getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
-                    //findContactsInDB(dbPath, fileId);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Contacts", e); //NON-NLS
+                    fileId = file.getId();
+                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
+                } catch (ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", file.getName(), fileId), ex); //NON-NLS
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, String.format("Error writing content from file '%s' (id=%d) to '%s'.", file.getName(), fileId, dbPath), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
@@ -88,17 +103,24 @@ class ContactAnalyzer {
     }
 
     /**
+     * Create blackboard artifacts and index results for call logs found in the
+     * database.
      *
-     * @param DatabasePath
-     * @param fId          Will create artifact from a database given by the
-     *                     path The fileId will be the Abstract file associated
-     *                     with the artifacts
+     * @param DatabasePath The path to the database.
+     * @param fileId       The ID of the file associated with artifacts.
      */
     @Messages({"ContactAnalyzer.indexError.message=Failed to index contact artifact for keyword search."})
-    private void findContactsInDB(String DatabasePath, long fId) {
+    private void findContactsInDB(String DatabasePath, long fileId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        } 
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
@@ -107,12 +129,11 @@ class ContactAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
-        Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+            AbstractFile file = skCase.getAbstractFileById(fileId);
+            if (file == null) {
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fileId); //NON-NLS
                 return;
             }
 
@@ -129,7 +150,7 @@ class ContactAnalyzer {
                         + "ORDER BY name_raw_contact.display_name ASC;"); //NON-NLS
 
                 BlackboardArtifact bba;
-                bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+                bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 Collection<BlackboardAttribute> attributes = new ArrayList<>();
                 String name;
                 String oldName = "";
@@ -148,7 +169,7 @@ class ContactAnalyzer {
                         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, data1));
                     }
                     oldName = name;
-                    
+
                     bba.addAttributes(attributes);
                     try {
                         // index the artifact for keyword search
@@ -157,7 +178,7 @@ class ContactAnalyzer {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
                                 Bundle.ContactAnalyzer_indexError_message(), bba.getDisplayName());
-                    }                    
+                    }
                 }
 
             } catch (Exception e) {

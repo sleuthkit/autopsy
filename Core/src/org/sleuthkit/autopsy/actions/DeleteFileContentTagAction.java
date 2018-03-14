@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -95,7 +96,16 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
 
             @Override
             protected Void doInBackground() throws Exception {
-                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                TagsManager tagsManager;
+                try {
+                    tagsManager = Case.getOpenCase().getServices().getTagsManager();
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Error untagging file. No open case found.", ex); //NON-NLS
+                    Platform.runLater(() ->
+                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
+                    );
+                    return null;
+                }
                 
                 try {
                     logger.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), contentTag.getContent().getName()}); //NON-NLS
@@ -139,13 +149,13 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
             if(!selectedAbstractFilesList.isEmpty()) {
                 AbstractFile file = selectedAbstractFilesList.iterator().next();
                 
-                // Get the current set of tag names.
-                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-
                 Map<String, TagName> tagNamesMap = null;
                 try {
+                    // Get the current set of tag names.
+                    TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+
                     tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
                 }
 
@@ -155,7 +165,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
                         List<ContentTag> existingTagsList =
-                                Case.getCurrentCase().getServices().getTagsManager()
+                                Case.getOpenCase().getServices().getTagsManager()
                                         .getContentTagsByContent(file);
 
                         for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
@@ -173,7 +183,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                                 }
                             }
                         }
-                    } catch (TskCoreException ex) {
+                    } catch (TskCoreException | NoCurrentCaseException ex) {
                         Logger.getLogger(TagMenu.class.getName())
                                 .log(Level.SEVERE, "Error retrieving tags for TagMenu", ex); //NON-NLS
                     }

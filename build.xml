@@ -32,7 +32,7 @@
     </condition>  
     <condition property="os.family" value="windows">  
         <os family="windows"/>  
-    </condition> 
+    </condition>  
     
     <condition property="os.family" value="mac">  
         <os family="mac"/>  
@@ -87,13 +87,7 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-        <if>
-            <equals arg1="${os.family}" arg2="windows"/>
-            <then>
-                <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
-            </then>
-        </if>
-        
+        <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
         <!-- Copy the Autopsy documentation to the docs folder -->
@@ -102,7 +96,6 @@
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
             
