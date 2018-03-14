@@ -19,28 +19,20 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SpecialDirectory;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Parent class for special directory types (Local and Virtual)
  */
 public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<SpecialDirectory> {
-
-    private static final Logger logger = Logger.getLogger(SpecialDirectoryNode.class.getName());
     
     public SpecialDirectoryNode(SpecialDirectory sd) {
         super(sd);
@@ -68,11 +60,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-        try {
-            actions.add(new RunIngestModulesAction(content.getDataSource(), Collections.<AbstractFile>singletonList(content)));
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to get data source for special directory %s (objId=%d), RunIngestModulesAction omitted from context menu", content.getName(), content.getId()), ex);
-        }
+        actions.add(new RunIngestModulesAction(content));
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }

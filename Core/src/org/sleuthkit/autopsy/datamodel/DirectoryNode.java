@@ -20,17 +20,14 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -38,7 +35,6 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -46,8 +42,6 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * are more directories.
  */
 public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
-
-    private static final Logger LOGGER = Logger.getLogger(DirectoryNode.class.getName());
 
     public static final String DOTDOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.parFolder.text");
     public static final String DOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.curFolder.text");
@@ -96,11 +90,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
-        try {
-            actionsList.add(new RunIngestModulesAction(content.getDataSource(), Collections.<AbstractFile>singletonList(content)));
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Failed to get data source for directory %s (objId=%d), RunIngestModulesAction omitted from context menu", content.getName(), content.getId()), ex);
-        }
+        actionsList.add(new RunIngestModulesAction(content));
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
 

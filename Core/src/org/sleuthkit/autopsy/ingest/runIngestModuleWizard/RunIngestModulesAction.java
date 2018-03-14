@@ -24,6 +24,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -32,19 +33,24 @@ import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.SpecialDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An action that invokes the Run Ingest Modules wizard for one or more data
- * sources or a subset of the files in a single data source.
+ * sources or for the children of a file.
  */
 public final class RunIngestModulesAction extends AbstractAction {
 
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(SpecialDirectoryNode.class.getName());
 
     /*
      * Note that the execution context is the name of the dialog that used to be
@@ -53,7 +59,7 @@ public final class RunIngestModulesAction extends AbstractAction {
     private static final String EXECUTION_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
     private final List<Content> dataSources = new ArrayList<>();
     private final IngestJobSettings.IngestType ingestType;
-    private final List<AbstractFile> files;
+    private final AbstractFile parentFile;
 
     /**
      * Display any warnings that the ingestJobSettings have.
@@ -81,21 +87,25 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
-        this.files = Collections.emptyList();
+        this.parentFile = null;
     }
 
     /**
-     * Constructs an action that invokes the Run Ingest Modules wizard for a
-     * subset of the files in a single data source.
+     * Constructs an action that invokes the Run Ingest Modules wizard for the
+     * children of a file.
      *
-     * @param dataSource The data source.
-     * @param files      The files.
+     * @param file The file.
      */
-    public RunIngestModulesAction(Content dataSource, List<AbstractFile> files) {
+    public RunIngestModulesAction(AbstractFile parentFile) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
-        this.dataSources.add(dataSource);
+        this.parentFile = parentFile;
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
-        this.files = new ArrayList<>(files);
+        try {
+            this.setEnabled(parentFile.hasChildren());
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to get children count for parent file %s (objId=%d), RunIngestModulesAction disabled", parentFile.getName(), parentFile.getId()), ex);
+            MessageNotifyUtil.Message.error(Bundle.RunIngestModulesAction_actionPerformed_errorMessage());
+        }
     }
 
     /**
@@ -103,6 +113,9 @@ public final class RunIngestModulesAction extends AbstractAction {
      *
      * @param e the action event
      */
+    @Messages({
+        "RunIngestModulesAction.actionPerformed.errorMessage=Error querying the case database for the selected item."
+    })
     @Override
     public void actionPerformed(ActionEvent e) {
         /**
@@ -122,10 +135,25 @@ public final class RunIngestModulesAction extends AbstractAction {
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             IngestJobSettings ingestJobSettings = wizard.getIngestJobSettings();
             showWarnings(ingestJobSettings);
-            if (this.files.isEmpty()) {
+            if (this.parentFile == null) {
                 IngestManager.getInstance().queueIngestJob(this.dataSources, ingestJobSettings);
             } else {
-                IngestManager.getInstance().queueIngestJob(this.dataSources.get(0), this.files, ingestJobSettings);
+                try {
+                    Content dataSource = parentFile.getDataSource();
+                    List<Content> children = parentFile.getChildren();
+                    List<AbstractFile> files = new ArrayList<>();
+                    for (Content child : children) {
+                        if (child instanceof AbstractFile && child.getSize() > 0) {
+                            files.add((AbstractFile) child);
+                        }
+                    }
+                    if (files.isEmpty() == false) {
+                        IngestManager.getInstance().queueIngestJob(dataSource, files, ingestJobSettings);
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to get data source or children for parent file %s (objId=%d), action failed", parentFile.getName(), parentFile.getId()), ex);
+                    MessageNotifyUtil.Message.error(Bundle.RunIngestModulesAction_actionPerformed_errorMessage());
+                }
             }
         }
     }
