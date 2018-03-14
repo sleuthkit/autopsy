@@ -56,7 +56,7 @@ public final class CVTTopComponent extends TopComponent {
          * selections in the sub views can be exposed to context-sensitive
          * actions.
          */
-        ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup(accountsBrowser.getLookup());
+        final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup(accountsBrowser.getLookup());
         associateLookup(proxyLookup);
         // Make sure the Global Actions Context is proxying the selection of the active tab.
         browseVisualizeTabPane.addChangeListener(changeEvent -> {

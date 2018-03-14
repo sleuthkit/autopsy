@@ -28,7 +28,7 @@ import org.openide.util.lookup.ProxyLookup;
  */
 final class ModifiableProxyLookup extends ProxyLookup {
 
-    ModifiableProxyLookup(Lookup... lookups) {
+    ModifiableProxyLookup(final Lookup... lookups) {
         super(lookups);
     }
 
@@ -37,7 +37,8 @@ final class ModifiableProxyLookup extends ProxyLookup {
      *
      * @param lookups The new Lookups to delegate to.
      */
-    void setNewLookups(Lookup... lookups) {
+    void setNewLookups(final Lookup... lookups) {
+        /* default */
         setLookups(lookups);
     }
 }

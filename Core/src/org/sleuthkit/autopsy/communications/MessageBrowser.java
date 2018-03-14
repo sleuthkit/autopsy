@@ -48,14 +48,10 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private final ExplorerManager tableEM;
     private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
-    /**
-     * lookup that will be exposed through the (Global Actions Context)
-     */
+    /* lookup that will be exposed through the (Global Actions Context) */
     private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
-    /**
-     * Listener that keeps the proxyLookup in sync with the focused area of the
-     * UI.
-     */
+    /* Listener that keeps the proxyLookup in sync with the focused area of the
+     * UI. */
     private final FocusPropertyListener focusPropertyListener = new FocusPropertyListener();
 
     /**
@@ -70,7 +66,7 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
      *                           context-sensitive actions.
      */
     @NbBundle.Messages({"MessageBrowser.DataResultViewerTable.title=Messages"})
-    MessageBrowser(ExplorerManager tableEM, ExplorerManager gacExplorerManager) {
+    MessageBrowser(final ExplorerManager tableEM, final ExplorerManager gacExplorerManager) {
         this.tableEM = tableEM;
         this.gacExplorerManager = gacExplorerManager;
         initComponents();
@@ -111,10 +107,10 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
 
             private Node makeRootNodeFromAccountDeviceInstanceNodes(final Node[] selectedNodes) {
                 //Use lookup here? 
-                AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
+                final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
 
                 final Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
-                for (Node n : selectedNodes) {
+                for (final Node n : selectedNodes) {
                     //Use lookup here?
                     accountDeviceInstances.add(((AccountDeviceInstanceNode) n).getAccountDeviceInstance());
                 }
@@ -199,10 +195,10 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private class FocusPropertyListener implements PropertyChangeListener {
 
         @Override
-        public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
+        public void propertyChange(final PropertyChangeEvent focusEvent) {
 
-            if (propertyChangeEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                Component newFocusOwner = (Component) propertyChangeEvent.getNewValue();
+            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                final Component newFocusOwner = (Component) focusEvent.getNewValue();
 
                 if (newFocusOwner != null) {
                     if (isDescendingFrom(newFocusOwner, messageDataContent)) {

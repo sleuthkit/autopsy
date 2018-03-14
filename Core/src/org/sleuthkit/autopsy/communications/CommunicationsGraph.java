@@ -22,7 +22,6 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import com.google.common.eventbus.Subscribe;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.util.mxConstants;
@@ -60,20 +59,16 @@ final class CommunicationsGraph extends mxGraph {
     private static final URL MARKER_PIN_URL = CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/marker--pin.png");
     private static final URL LOCK_URL = CommunicationsGraph.class.getResource("/org/sleuthkit/autopsy/communications/images/lock_large_locked.png");
 
-    /**
-     * mustache.java template
-     */
+    /* mustache.java template */
     private final static Mustache labelMustache;
 
     static {
-        InputStream templateStream = CommunicationsGraph.class.getResourceAsStream("/org/sleuthkit/autopsy/communications/Vertex_Label_template.html");
+        final InputStream templateStream = CommunicationsGraph.class.getResourceAsStream("/org/sleuthkit/autopsy/communications/Vertex_Label_template.html");
         labelMustache = new DefaultMustacheFactory().compile(new InputStreamReader(templateStream), "Vertex_Label");
     }
 
-    /**
-     * Style sheet for default vertex and edge styles. These are initialized in
-     * the static block below.
-     */
+    /* Style sheet for default vertex and edge styles. These are initialized in
+     * the static block below. */
     static final private mxStylesheet mxStylesheet = new mxStylesheet();
 
     static {
@@ -89,14 +84,10 @@ final class CommunicationsGraph extends mxGraph {
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
 
-    /**
-     * Map from type specific account identifier to mxCell(vertex).
-     */
+    /* Map from type specific account identifier to mxCell(vertex). */
     private final Map<String, mxCell> nodeMap = new HashMap<>();
 
-    /**
-     * Map from relationship source (Content) to mxCell (edge).
-     */
+    /* Map from relationship source (Content) to mxCell (edge). */
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
     private final LockedVertexModel lockedVertexModel;
 
@@ -124,25 +115,26 @@ final class CommunicationsGraph extends mxGraph {
         setHtmlLabels(true);
 
         lockedVertexModel = new LockedVertexModel();
-        lockedVertexModel.registerhandler(new EventHandler<LockedVertexModel.VertexLockEvent>() {
-            @Override
-            @Subscribe
-            public void handle(LockedVertexModel.VertexLockEvent event) {
-                if (event.isVertexLocked()) {
-                    getView().clear(event.getVertex(), true, true);
-                    getView().validate();
-                } else {
-                    final mxCellState state = getView().getState(event.getVertex(), true);
-                    getView().updateLabel(state);
-                    getView().updateLabelBounds(state);
-                    getView().updateBoundingBox(state);
-                }
+        lockedVertexModel.registerhandler((LockedVertexModel.VertexLockEvent event) -> {
+            if (event.isVertexLocked()) {
+                getView().clear(event.getVertex(), true, true);
+                getView().validate();
+            } else {
+                final mxCellState state = getView().getState(event.getVertex(), true);
+                getView().updateLabel(state);
+                getView().updateLabelBounds(state);
+                getView().updateBoundingBox(state);
             }
         });
 
         pinnedAccountModel = new PinnedAccountModel(this);
     }
 
+    /**
+     * Get the LockedVertexModel
+     *
+     * @return the LockedVertexModel
+     */
     LockedVertexModel getLockedVertexModel() {
         return lockedVertexModel;
     }
@@ -168,7 +160,7 @@ final class CommunicationsGraph extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("size", Math.round(Math.log(adiKey.getMessageCount()) + 5));
-            scopes.put("iconFileName", CommunicationsGraph.class.getResource( Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("iconFileName", CommunicationsGraph.class.getResource(Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
@@ -193,7 +185,7 @@ final class CommunicationsGraph extends mxGraph {
 
             scopes.put("accountName", adiKey.getAccountDeviceInstance().getAccount().getTypeSpecificID());
             scopes.put("relationships", 12);// Math.round(Math.log(adiKey.getMessageCount()) + 5));
-            scopes.put("iconFileName", CommunicationsGraph.class.getResource(  Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
+            scopes.put("iconFileName", CommunicationsGraph.class.getResource(Utils.getIconFilePath(adiKey.getAccountDeviceInstance().getAccount().getAccountType())));
             scopes.put("pinned", pinnedAccountModel.isAccountPinned(adiKey));
             scopes.put("MARKER_PIN_URL", MARKER_PIN_URL);
             scopes.put("locked", lockedVertexModel.isVertexLocked((mxCell) cell));
@@ -206,7 +198,7 @@ final class CommunicationsGraph extends mxGraph {
         } else {
             final mxICell edge = (mxICell) cell;
             final long count = (long) edge.getValue();
-            return"<html>"+ edge.getId() + "<br>" + count + (count == 1 ? " relationship" : " relationships")+"</html>";
+            return "<html>" + edge.getId() + "<br>" + count + (count == 1 ? " relationship" : " relationships") + "</html>";
         }
     }
 
@@ -277,28 +269,28 @@ final class CommunicationsGraph extends mxGraph {
         @Override
         protected Void doInBackground() throws Exception {
             progress.start("Loading accounts");
-            int i = 0;
+            int progressCounter = 0;
             try {
                 /**
                  * set to keep track of accounts related to pinned accounts
                  */
-                Map<AccountDeviceInstance, AccountDeviceInstanceKey> relatedAccounts = new HashMap<>();
-                for (AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
+                final Map<AccountDeviceInstance, AccountDeviceInstanceKey> relatedAccounts = new HashMap<>();
+                for (final AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
                     if (isCancelled()) {
                         break;
                     }
-                    List<AccountDeviceInstance> relatedAccountDeviceInstances =
+                    final List<AccountDeviceInstance> relatedAccountDeviceInstances =
                             commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
                     relatedAccounts.put(adiKey.getAccountDeviceInstance(), adiKey);
                     getOrCreateVertex(adiKey);
 
                     //get accounts related to pinned account
-                    for (AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
-                        long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
+                    for (final AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
+                        final long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
                         final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
                         relatedAccounts.put(relatedADI, relatedADIKey); //store related accounts
                     }
-                    progress.progress(++i);
+                    progress.progress(++progressCounter);
                 }
 
                 Set<AccountDeviceInstance> accounts = relatedAccounts.keySet();

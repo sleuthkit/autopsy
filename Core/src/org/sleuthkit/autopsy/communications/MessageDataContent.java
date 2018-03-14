@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,15 +30,15 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 final class MessageDataContent extends MessageContentViewer implements DataContent, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
-    private ExplorerManager em = new ExplorerManager();
+    final private ExplorerManager explorerManager = new ExplorerManager();
 
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
+    public void propertyChange(final PropertyChangeEvent evt) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return em;
+        return explorerManager;
     }
 }
