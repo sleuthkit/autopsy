@@ -22,6 +22,8 @@ import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -112,7 +114,8 @@ public class ExternalViewerAction extends AbstractAction {
         "ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.",
         "ExternalViewerAction.actionPerformed.failure.support.message=This platform (operating system) does not support opening a file in an editor this way.",
         "ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.",
-        "ExternalViewerAction.actionPerformed.failure.permission.message=Permission to open the file was denied."})
+        "ExternalViewerAction.actionPerformed.failure.permission.message=Permission to open the file was denied.",
+        "ExternalViewerAction.actionPerformed.failure.open.url=Cannot open URL"})
     public static void openFile(String mimeType, String ext, File file) {
         /**
          * Check if the file MIME type or extension exists in the user defined
@@ -163,8 +166,39 @@ public class ExternalViewerAction extends AbstractAction {
     }
 
     public static void openURL(String path) {
-        // @@@ TODO
-        // get viewer for .html extension
-        // launch it
+        String url_path = path.replaceAll("\\\\","/");   
+        try {
+            Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/","//")));          
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Could not find a viewer for the given URL: " + url_path, ex); //NON-NLS
+            JOptionPane.showMessageDialog(null,
+                    Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (UnsupportedOperationException ex) {
+            logger.log(Level.WARNING, "Platform cannot open " + url_path + " in the defined editor.", ex); //NON-NLS
+            JOptionPane.showMessageDialog(null,
+                    Bundle.ExternalViewerAction_actionPerformed_failure_support_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.WARNING, "Could not find the given URL: " + url_path, ex); //NON-NLS
+            JOptionPane.showMessageDialog(null,
+                    Bundle.ExternalViewerAction_actionPerformed_failure_missingFile_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (SecurityException ex) {
+            logger.log(Level.WARNING, "Could not get permission to open the given URL: " + url_path, ex); //NON-NLS
+            JOptionPane.showMessageDialog(null,
+                    Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (URISyntaxException ex) {
+           logger.log(Level.WARNING, "Could not open URL provided: " + url_path, ex);
+           JOptionPane.showMessageDialog(null,
+                   Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
+                   Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                   JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
