@@ -103,6 +103,7 @@ public final class RunIngestModulesAction extends AbstractAction {
         try {
             this.setEnabled(parentFile.hasChildren());
         } catch (TskCoreException ex) {
+            this.setEnabled(false);
             logger.log(Level.SEVERE, String.format("Failed to get children count for parent file %s (objId=%d), RunIngestModulesAction disabled", parentFile.getName(), parentFile.getId()), ex);
             MessageNotifyUtil.Message.error(Bundle.RunIngestModulesAction_actionPerformed_errorMessage());
         }
