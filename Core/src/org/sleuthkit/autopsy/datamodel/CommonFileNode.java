@@ -34,9 +34,27 @@ public class CommonFileNode extends AbstractNode {
 
     private final AbstractFile content;
     
-    public CommonFileNode(AbstractFile fsContent) {
+    private final int commonFileCount;
+    
+    private final String dataSources;
+    
+    public CommonFileNode(AbstractFile fsContent, int commonFileCount, String dataSources) {
         super(Children.LEAF);
         this.content = fsContent;
+        this.commonFileCount = commonFileCount;
+        this.dataSources = dataSources;
+    }
+    
+    int getCommonFileCount(){
+        return this.commonFileCount;
+    }
+    
+    AbstractFile getContent(){
+        return this.content;
+    }
+    
+    String getDataSources(){
+        return this.dataSources;
     }
 
     @Override
@@ -49,7 +67,7 @@ public class CommonFileNode extends AbstractNode {
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, content);
+        fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
@@ -63,25 +81,31 @@ public class CommonFileNode extends AbstractNode {
         return s;
     }
     
-        /**
+    /**
      * Fill map with AbstractFile properties
      *
      * @param map     map with preserved ordering, where property names/values
      *                are put
-     * @param content The content to get properties for.
+     * @param node The item to get properties for.
      */
-    static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
-        map.put(CommonFilePropertyType.Name.toString(), content.getName());
-        map.put(CommonFilePropertyType.Md5Hash.toString(), StringUtils.defaultString(content.getMd5Hash()));
+    static public void fillPropertyMap(Map<String, Object> map, CommonFileNode node) {
+        map.put(CommonFilePropertyType.Name.toString(), node.getContent().getName());
+        map.put(CommonFilePropertyType.InstanceCount.toString(), node.getCommonFileCount());
+        map.put(CommonFilePropertyType.Md5Hash.toString(), StringUtils.defaultString(node.getContent().getMd5Hash()));
+        map.put(CommonFilePropertyType.DataSources.toString(), node.getDataSources());
     }
     
     @NbBundle.Messages({
         "CommonFilePropertyType.nameColLbl=Name",
-        "CommonFilePropertyType.md5HashColLbl=MD5 Hash"})
+        "CommonFilePropertyType.instanceColLbl1=Instance Count",
+        "CommonFilePropertyType.md5HashColLbl=MD5 Hash",
+        "CommonFilePropertyType.dataSourcesColLbl=Data Sources"})
     public enum CommonFilePropertyType {
         
         Name(Bundle.CommonFilePropertyType_nameColLbl()),
-        Md5Hash(Bundle.CommonFilePropertyType_md5HashColLbl());
+        InstanceCount(Bundle.CommonFilePropertyType_instanceColLbl1()),
+        Md5Hash(Bundle.CommonFilePropertyType_md5HashColLbl()),
+        DataSources(Bundle.CommonFilePropertyType_dataSourcesColLbl());
         
         final private String displayString;
         
