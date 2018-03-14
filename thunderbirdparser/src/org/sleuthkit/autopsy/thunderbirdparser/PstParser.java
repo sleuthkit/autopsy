@@ -206,6 +206,7 @@ class PstParser {
      * @param email
      * @param msg
      */
+    @NbBundle.Messages({"PstParser.noOpenCase.errMsg=Exception while getting open case."})
     private void extractAttachments(EmailMessage email, PSTMessage msg, long fileID) {
         int numberOfAttachments = msg.getNumberOfAttachments();
         String outputDirPath;
@@ -245,7 +246,7 @@ class PstParser {
                 attachment.setSize(attach.getFilesize());
                 attachment.setEncodingType(TskData.EncodingType.XOR1);
                 email.addAttachment(attachment);
-            } catch (PSTException | IOException | NullPointerException | NoCurrentCaseException ex) {
+            } catch (PSTException | IOException | NullPointerException ex) {
                 /**
                  * Swallowing null pointer as it is caused by a problem with
                  * getting input stream (library problem).
@@ -254,6 +255,9 @@ class PstParser {
                         NbBundle.getMessage(this.getClass(), "PstParser.extractAttch.errMsg.failedToExtractToDisk",
                                 filename));
                 logger.log(Level.WARNING, "Failed to extract attachment from pst file.", ex); //NON-NLS
+            } catch (NoCurrentCaseException ex) {
+                addErrorMessage(Bundle.PstParser_noOpenCase_errMsg());
+                logger.log(Level.SEVERE, Bundle.PstParser_noOpenCase_errMsg(), ex); //NON-NLS
             }
         }
     }

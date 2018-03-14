@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
@@ -44,6 +43,7 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
 
@@ -78,7 +78,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             lst.add(new ExtractUnallocAction(
                 NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFiles"), img));
         } catch (NoCurrentCaseException ex) { 
-            Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
         return lst;
     }
@@ -95,7 +95,7 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
             lst.add(new ExtractUnallocAction(
                 NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFile"), vol));
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
         return lst;
     }

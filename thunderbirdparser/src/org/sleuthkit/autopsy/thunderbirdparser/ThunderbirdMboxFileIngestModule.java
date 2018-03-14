@@ -81,6 +81,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             fileManager = Case.getOpenCase().getServices().getFileManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            throw new IngestModuleException("Exception while getting open case.", ex);
         }
     }
 
@@ -175,8 +176,14 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         PstParser.ParseResult result = parser.parse(file, abstractFile.getId());
 
         if (result == PstParser.ParseResult.OK) {
-            // parse success: Process email and add artifacts
-            processEmails(parser.getResults(), abstractFile);
+            try {
+                // parse success: Process email and add artifacts
+                processEmails(parser.getResults(), abstractFile);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                return ProcessResult.ERROR;
+            }
+
         } else if (result == PstParser.ParseResult.ENCRYPT) {
             // encrypted pst: Add encrypted file artifact
             try {
@@ -271,7 +278,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
         MboxParser parser = new MboxParser(services, emailFolder);
         List<EmailMessage> emails = parser.parse(file, abstractFile.getId());
-        processEmails(emails, abstractFile);
+        try {
+            processEmails(emails, abstractFile);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        }
 
         if (file.delete() == false) {
             logger.log(Level.INFO, "Failed to delete temp file: {0}", file.getName()); //NON-NLS
@@ -336,8 +348,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param emails
      * @param abstractFile
+     * @throws NoCurrentCaseException if there is no open case.
      */
-    private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
+    private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) throws NoCurrentCaseException {
         List<AbstractFile> derivedFiles = new ArrayList<>();
         
        
@@ -421,9 +434,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param email
      * @param abstractFile
+     * @throws NoCurrentCaseException if there is no open case.
      */
     @Messages({"ThunderbirdMboxFileIngestModule.addArtifact.indexError.message=Failed to index email message detected artifact for keyword search."})
-    private BlackboardArtifact addArtifact(EmailMessage email, AbstractFile abstractFile) {
+    private BlackboardArtifact addArtifact(EmailMessage email, AbstractFile abstractFile) throws NoCurrentCaseException {
         BlackboardArtifact bbart = null;
         List<BlackboardAttribute> bbattributes = new ArrayList<>();
         String to = email.getRecipients();
@@ -445,13 +459,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
         AccountFileInstance senderAccountInstance = null;
 
-        Case openCase;
-        try {
-            openCase = Case.getOpenCase();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
-            return null; 
-        }
+        Case openCase = Case.getOpenCase();
+        
         if (senderAddressList.size() == 1) {
             senderAddress = senderAddressList.get(0);
             try {

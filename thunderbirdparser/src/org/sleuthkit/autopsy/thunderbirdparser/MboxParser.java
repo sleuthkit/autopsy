@@ -277,7 +277,7 @@ class MboxParser {
             relModuleOutputPath = ThunderbirdMboxFileIngestModule.getRelModuleOutputPath() + File.separator;
         } catch (NoCurrentCaseException ex) {
             addErrorMessage(Bundle.MboxParser_handleAttch_noOpenCase_errMsg());
-            logger.log(Level.INFO, Bundle.MboxParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
+            logger.log(Level.SEVERE, Bundle.MboxParser_handleAttch_noOpenCase_errMsg(), ex); //NON-NLS
             return;       
         }
         String filename = e.getFilename();
