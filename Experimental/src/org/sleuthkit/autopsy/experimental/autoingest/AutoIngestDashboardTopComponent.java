@@ -67,6 +67,10 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                      */
                     tc.removeAll();
 
+                    /*
+                     * Create a new dashboard instance to ensure we're using the
+                     * most recent configuration.
+                     */
                     AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
                     tc.add(dashboard);
                     dashboard.setSize(dashboard.getPreferredSize());
