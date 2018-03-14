@@ -38,7 +38,11 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -149,6 +153,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private Color pendingTableBackground;
     private Color pendingTablelForeground;
 
+    /**
+     * Maintain a mapping of each service to it's last status update.
+     */
+    private final ConcurrentHashMap<String, String> statusByService;
+    
     /*
      * The enum is used in conjunction with the DefaultTableModel class to
      * provide table models for the JTables used to display a view of the
@@ -235,6 +244,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestControlPanel() {
+        
+        this.statusByService = new ConcurrentHashMap<>();
 
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
         WindowManager.getDefault().getMainWindow().setEnabled(false);
@@ -248,6 +259,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
         initComponents(); // Generated code.
+        statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
         initPendingJobsTable();
         initRunningJobsTable();
@@ -260,6 +274,25 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         UIManager.put("PopupMenu.consumeEventOnClose", false);
     }
 
+    /**
+     * Update status of the services on the dashboard
+     */
+    private void displayServicesStatus() {
+        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message", 
+                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()), 
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
+                statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
+        String upStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
+        if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
+                || statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()).compareTo(upStatus) != 0
+                || statusByService.get(ServicesMonitor.Service.MESSAGING.toString()).compareTo(upStatus) != 0) {
+            tbServicesStatusMessage.setForeground(Color.RED);
+        } else {
+            tbServicesStatusMessage.setForeground(Color.BLACK);
+        }
+    }
+    
     /**
      * Queries the services monitor and sets the text for the services status
      * text box.
@@ -274,15 +307,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private void setServicesStatusMessage() {
         new SwingWorker<Void, Void>() {
 
-            String caseDatabaseServerStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
-            String keywordSearchServiceStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
-            String messagingStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
-
             @Override
             protected Void doInBackground() throws Exception {
-                caseDatabaseServerStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
-                keywordSearchServiceStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH);
-                messagingStatus = getServiceStatus(ServicesMonitor.Service.MESSAGING);
+                statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE));
+                statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH));
+                statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), getServiceStatus(ServicesMonitor.Service.MESSAGING));
                 return null;
             }
 
@@ -311,15 +340,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
             @Override
             protected void done() {
-                tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message", caseDatabaseServerStatus, keywordSearchServiceStatus, keywordSearchServiceStatus, messagingStatus));
-                String upStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
-                if (caseDatabaseServerStatus.compareTo(upStatus) != 0
-                        || keywordSearchServiceStatus.compareTo(upStatus) != 0
-                        || messagingStatus.compareTo(upStatus) != 0) {
-                    tbServicesStatusMessage.setForeground(Color.RED);
-                } else {
-                    tbServicesStatusMessage.setForeground(Color.BLACK);
-                }
+                displayServicesStatus();
             }
 
         }.execute();
@@ -682,12 +703,33 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             return;
         }
 
-        /*
-         * Subscribe to services monitor events.
-         */
-        ServicesMonitor.getInstance().addSubscriber((PropertyChangeEvent evt) -> {
-            setServicesStatusMessage();
-        });
+        PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
+            
+            String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
+            String status = evt.getNewValue().toString();
+            
+            if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+                status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
+            } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+                status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
+                SYS_LOGGER.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
+            }
+            
+            // if the status update is for an existing service who's status hasn't changed - do nothing.       
+            if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
+                return;
+            }
+            
+            statusByService.put(serviceDisplayName, status);
+            displayServicesStatus();
+        };
+        
+        // Subscribe to all multi-user services in order to display their status
+        Set<String> servicesList = new HashSet<>();
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()); 
+        servicesList.add(ServicesMonitor.Service.MESSAGING.toString());
+        ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 
         /*
          * Register with the AIM as an observer.
