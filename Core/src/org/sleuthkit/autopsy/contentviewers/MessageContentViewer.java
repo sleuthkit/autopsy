@@ -90,7 +90,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      */
     private BlackboardArtifact artifact;
     private final DataResultPanel drp;
-    private final ExplorerManager drpExplorerManager;
+    private ExplorerManager drpExplorerManager;
 
     /**
      * Creates new MessageContentViewer
@@ -107,6 +107,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
         resetComponent();
+
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify(); //To change body of generated methods, choose Tools | Templates.
 
         drp.open();
         drpExplorerManager = drp.getExplorerManager();

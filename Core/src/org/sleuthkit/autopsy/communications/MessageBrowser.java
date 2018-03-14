@@ -18,13 +18,18 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.JPanel;
+import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.openide.explorer.ExplorerManager;
+import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -33,15 +38,25 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 
 /**
- * The right hand side of the CVT. Has a DataResultPanel to show messages and
- * other account details, and a ContentViewer to show individual
+ * The right hand side of the CVT. Has a DataResultPanel to show a listing of
+ * messages and other account details, and a ContentViewer to show individual
+ * messages.
  */
-public final class MessageBrowser extends JPanel implements ExplorerManager.Provider {
+public final class MessageBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
     private final ExplorerManager tableEM;
     private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
+    /**
+     * lookup that will be exposed through the (Global Actions Context)
+     */
+    private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
+    /**
+     * Listener that keeps the proxyLookup in sync with the focused area of the
+     * UI.
+     */
+    private final FocusPropertyListener focusPropertyListener = new FocusPropertyListener();
 
     /**
      * Constructs the right hand side of the Communications Visualization Tool
@@ -66,6 +81,10 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
         messagesResultPanel.addResultViewer(new DataResultViewerTable(gacExplorerManager,
                 Bundle.MessageBrowser_DataResultViewerTable_title()));
         messagesResultPanel.open();
+
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
 
         this.tableEM.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -101,12 +120,25 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                 }
                 return SelectionNode.createFromAccounts(accountDeviceInstances, adiNode.getFilter(), adiNode.getCommsManager());
             }
-        });
+        }
+        );
     }
 
     @Override
     public ExplorerManager getExplorerManager() {
         return gacExplorerManager;
+    }
+
+    @Override
+    public Lookup getLookup() {
+        return proxyLookup;
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .removePropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
     /**
@@ -150,4 +182,38 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Since the embedded MessageContentViewer (attachments panel) is not in its
+     * own TopComponenet, its selection does not get proxied into the Global
+     * Actions Context (GAC), and many of the available actions don't work on
+     * it. Further, we can't put the selection from both the Messages table and
+     * the Attachments table in the GAC because they could include have
+     * AbstractFiles, muddling the selection seen by the actions. Instead,
+     * depending on where the focus is in the window, we want to put different
+     * Content in the Global Actions Context to be picked up by, e.g., the
+     * tagging actions. The best way I could figure to do this was to listen to
+     * all focus events and swap out what is in the lookup appropriately. An
+     * alternative to this would be to investigate using the ContextAwareAction
+     * interface.
+     */
+    private class FocusPropertyListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
+
+            if (propertyChangeEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                Component newFocusOwner = (Component) propertyChangeEvent.getNewValue();
+
+                if (newFocusOwner != null) {
+                    if (isDescendingFrom(newFocusOwner, messageDataContent)) {
+                        //if the focus owner is within the MessageContentViewer ( the attachments table)
+                        proxyLookup.setNewLookups(createLookup(messageDataContent.getExplorerManager(), getActionMap()));
+                    } else if (isDescendingFrom(newFocusOwner, messagesResultPanel)) {
+                        //... or if it is within the Messages table.
+                        proxyLookup.setNewLookups(createLookup(gacExplorerManager, getActionMap()));
+                    }
+                }
+            }
+        }
+    }
 }

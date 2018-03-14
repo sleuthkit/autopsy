@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JTabbedPane;
+import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -40,7 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 //@TopComponent.Description(preferredID = "DataContentTopComponent")
 //@TopComponent.Registration(mode = "output", openAtStartup = true)
 //@TopComponent.OpenActionRegistration(displayName = "#CTL_DataContentAction", preferredID = "DataContentTopComponent")
-public final class DataContentTopComponent extends TopComponent implements DataContent {
+public final class DataContentTopComponent extends TopComponent implements DataContent, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataContentTopComponent.class.getName());
 
@@ -51,6 +53,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     private final boolean isDefault;
     // the content panel holding tabs with content viewers
     private final DataContentPanel dataContentPanel;
+    private final ExplorerManager explorerManager = new ExplorerManager();
 
     // contains a list of the undocked TCs
     private static final ArrayList<DataContentTopComponent> newWindowList = new ArrayList<>();
@@ -67,6 +70,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         dataContentPanel = new DataContentPanel(isDefault);
         add(dataContentPanel);
+
+        associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isDefault); // prevent option to close compoment in GUI
         logger.log(Level.INFO, "Created DataContentTopComponent instance: {0}", this); //NON-NLS
@@ -126,6 +131,11 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                 "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
                 + "' ID. That is a potential source of errors and unexpected behavior."); //NON-NLS
         return getDefault();
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
     }
 
     @Override

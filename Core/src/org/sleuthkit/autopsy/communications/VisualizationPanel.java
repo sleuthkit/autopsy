@@ -120,10 +120,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
-    private final ProxyLookup proxyLookup = new ProxyLookup(
-            ExplorerUtils.createLookup(gacEM, getActionMap()),
-            ExplorerUtils.createLookup(vizEM, getActionMap()));
-
+    private final ProxyLookup proxyLookup;
     private Frame windowAncestor;
 
     private CommunicationsManager commsManager;
@@ -239,8 +236,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 }
             }
         });
+        final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
 
-        splitPane.setRightComponent(new MessageBrowser(vizEM, gacEM));
+        splitPane.setRightComponent(messageBrowser);
+
+        proxyLookup = new ProxyLookup(
+                messageBrowser.getLookup(),
+                ExplorerUtils.createLookup(vizEM, getActionMap()));
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(null, new SelectionListener());

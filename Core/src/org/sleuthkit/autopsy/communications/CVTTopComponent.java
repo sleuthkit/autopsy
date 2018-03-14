@@ -29,7 +29,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.LayoutStyle;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.ProxyLookup;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
@@ -57,12 +56,12 @@ public final class CVTTopComponent extends TopComponent {
          * selections in the sub views can be exposed to context-sensitive
          * actions.
          */
-        ProxyLookupImpl proxyLookup = new ProxyLookupImpl(accountsBrowser.getLookup());
+        ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup(accountsBrowser.getLookup());
         associateLookup(proxyLookup);
-        // Make sure the GAC is proxying the selection of the active tab.
+        // Make sure the Global Actions Context is proxying the selection of the active tab.
         browseVisualizeTabPane.addChangeListener(changeEvent -> {
             Lookup.Provider selectedComponent = (Lookup.Provider) browseVisualizeTabPane.getSelectedComponent();
-            proxyLookup.changeLookups(selectedComponent.getLookup());
+            proxyLookup.setNewLookups(selectedComponent.getLookup());
             filtersPane.setDeviceAccountTypeEnabled(browseVisualizeTabPane.getSelectedIndex() != 0);
         });
 
@@ -158,26 +157,5 @@ public final class CVTTopComponent extends TopComponent {
          */
         return modes.stream().filter(mode -> mode.getName().equals("cvt"))
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Extension of ProxyLookup that exposes the ability to change the Lookups
-     * delegated to.
-     *
-     */
-    final private static class ProxyLookupImpl extends ProxyLookup {
-
-        ProxyLookupImpl(Lookup... lookups) {
-            super(lookups);
-        }
-
-        /**
-         * Set the Lookups delegated to by this lookup.
-         *
-         * @param lookups The new Lookups to delegate to.
-         */
-        protected void changeLookups(Lookup... lookups) {
-            setLookups(lookups);
-        }
     }
 }

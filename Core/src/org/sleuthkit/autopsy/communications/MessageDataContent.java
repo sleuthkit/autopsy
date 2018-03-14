@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications;
 
 import java.beans.PropertyChangeEvent;
+import org.openide.explorer.ExplorerManager;
 import org.sleuthkit.autopsy.contentviewers.MessageContentViewer;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 
@@ -26,12 +27,18 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
  * Extends MessageContentViewer so that it implements DataContent and can be set
  * as the only ContentViewer for a DataResultPanel
  */
-final class MessageDataContent extends MessageContentViewer implements DataContent {
+final class MessageDataContent extends MessageContentViewer implements DataContent, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+    private ExplorerManager em = new ExplorerManager();
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return em;
     }
 }
