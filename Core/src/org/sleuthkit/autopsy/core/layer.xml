@@ -198,10 +198,10 @@
             <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
-                <attr name="position" intvalue="104"/>
+                <attr name="position" intvalue="200"/>
             </file>
             <folder name="RunIngestModules">
-                <attr name="position" intvalue="105"/>
+                <attr name="position" intvalue="201"/>
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="org.sleuthkit.autopsy.ingest.Bundle"/>
                 <file name="org-sleuthkit-autopsy-ingest-RunIngestAction.shadow">
                     <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-RunIngestAction.instance"/>
@@ -213,7 +213,7 @@
             </file>-->
             <file name="org-sleuthkit-autopsy-report-ReportWizardAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="199"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <!--<file name="Separator1.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>-->

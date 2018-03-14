@@ -339,7 +339,7 @@ final class DataSourceIngestJob {
      * @return True or false.
      */
     FilesSet getFileIngestFilter() {
-        return this.settings.getFileIngestFilter();
+        return this.settings.getFileFilter();
     }
 
     /**

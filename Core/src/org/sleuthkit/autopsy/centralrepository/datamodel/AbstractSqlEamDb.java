@@ -2334,7 +2334,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(resultSet.getInt("case_id"), -1, resultSet.getString("device_id"), resultSet.getString("name")),
+                new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status"))
