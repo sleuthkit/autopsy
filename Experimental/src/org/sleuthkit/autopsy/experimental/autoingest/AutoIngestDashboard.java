@@ -146,7 +146,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
                 statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
                 statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
-        String upStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+        String upStatus = ServicesMonitor.ServiceStatus.UP.toString(); //NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
         if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
                 || statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()).compareTo(upStatus) != 0
                 || statusByService.get(ServicesMonitor.Service.MESSAGING.toString()).compareTo(upStatus) != 0) {
@@ -440,7 +440,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
         PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
             
-            String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
+            String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
 
             // if the status update is for an existing service who's status hasn't changed - do nothing.       
