@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.HashMap;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.openide.nodes.Children;
@@ -29,17 +30,28 @@ import org.sleuthkit.autopsy.datamodel.CommonFileNode;
  */
 final class CommonFilesChildren extends Children.Keys<AbstractFile> {
 
-    CommonFilesChildren(boolean lazy, List<AbstractFile> fileList) {
+    private final java.util.Map<String, Integer> instanceCountMap;
+    private final java.util.Map<String, String> dataSourceMap;
+
+    CommonFilesChildren(boolean lazy, List<AbstractFile> fileList, java.util.Map<String, Integer> instanceCountMap, java.util.Map<String, String> dataSourceMap) {
         super(lazy);
         this.setKeys(fileList);
+
+        this.instanceCountMap = instanceCountMap;
+        this.dataSourceMap = dataSourceMap;
     }
 
     @Override
     protected Node[] createNodes(AbstractFile t) {
+        
+        final String md5Hash = t.getMd5Hash();
+        
+        int instanceCount = this.instanceCountMap.get(md5Hash);
+        String dataSources = this.dataSourceMap.get(md5Hash);
+        
         Node[] node = new Node[1];
-
-        //TODO replace FileNode with our own subclass of its base type or similar (use CommonFileNode once its finished)
-        node[0] = new CommonFileNode(t);
+        node[0] = new CommonFileNode(t, instanceCount, dataSources);
+        
         return node;
     }
 }

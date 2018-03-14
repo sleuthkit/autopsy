@@ -90,7 +90,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
                 //...consider doing something else
                 //TODO verify that this works with postgres
-                return tskDb.findAllFilesWhere("1 == 1 AND (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1;");
+                return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
             }
 
             @Override
@@ -100,7 +100,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     List<AbstractFile> contentList = get();
 
-                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(contentList);
+                    CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);
+                    
+                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata.dedupedFiles, metadata.instanceCountMap, metadata.dataSourceMap);
 
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
