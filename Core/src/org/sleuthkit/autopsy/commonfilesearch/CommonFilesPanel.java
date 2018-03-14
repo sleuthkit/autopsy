@@ -23,15 +23,12 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -105,13 +102,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(contentList);
 
-                    //TODO can use DataResultFilterNode in addition to TableFilterNode
-                    TableFilterNode tableFilterNode = new TableFilterNode(contentFilesNode, true, contentFilesNode.getName());
-
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
                             pathText,
-                            tableFilterNode,
+                            contentFilesNode,
                             contentList.size());
 
                     component.requestActive(); // make it the active top component
