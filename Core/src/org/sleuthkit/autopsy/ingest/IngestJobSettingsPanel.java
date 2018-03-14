@@ -84,7 +84,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         }
         initComponents();
         customizeComponents();
-        fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
+        fileIngestFilterComboBox.setSelectedItem(settings.getFileFilter().getName());
     }
 
     /**
@@ -110,7 +110,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         }
         initComponents();
         customizeComponents();
-        fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
+        fileIngestFilterComboBox.setSelectedItem(settings.getFileFilter().getName());
     }
 
     /**
@@ -426,19 +426,19 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                         for (FilesSet filter : newFilterList) {  //getting one of the recently created filters
                             if (!oldFilterList.contains(filter.getName())) {
                                 //set newly created filter to selected filter
-                                settings.setFileIngestFilter(filter);
+                                settings.setFileFilter(filter);
                                 break;
                             }
                         }
                         fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(getComboBoxContents()));
                         //set the selected filter after the comboBox Contents were updated to include it
-                        fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
+                        fileIngestFilterComboBox.setSelectedItem(settings.getFileFilter().getName());
                         dialog.close();
                     }
             );
             dialog.display(fileIngestFilterPanel);
             //return to saved selection in case they cancel out of filter creation 
-            fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
+            fileIngestFilterComboBox.setSelectedItem(settings.getFileFilter().getName());
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
             try {
                 Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance()
@@ -446,10 +446,10 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                 for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
                     fileIngestFilters.put(fSet.getName(), fSet);
                 }
-                settings.setFileIngestFilter(fileIngestFilters
+                settings.setFileFilter(fileIngestFilters
                         .get(fileIngestFilterComboBox.getSelectedItem().toString()));
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                settings.setFileIngestFilter(FilesSetsManager.getDefaultFilter());
+                settings.setFileFilter(FilesSetsManager.getDefaultFilter());
                 logger.log(Level.SEVERE, "Failed to get file ingest filter from combobox selection, default filter being used", ex); //NON-NLS
             }
         }
