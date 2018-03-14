@@ -1,0 +1,83 @@
+/*
+ * 
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.commonfilesearch;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
+
+/**
+ * Utility and wrapper around data required for Common Files Search results
+ */
+public class CommonFilesMetaData {
+
+    public List<AbstractFile> dedupedFiles;
+    public java.util.Map<String, Integer> instanceCountMap;
+    public java.util.Map<String, String> dataSourceMap;
+
+    static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
+
+        CommonFilesMetaData data = new CommonFilesMetaData();
+
+        List<AbstractFile> deDupedFiles = new ArrayList<>();
+        java.util.Map<String, String> dataSourceMap = new HashMap<>();
+        java.util.Map<String, Integer> instanceCountMap = new HashMap<>();
+
+        AbstractFile previousFile = null;
+        String previousMd5 = "";
+        int instanceCount = 0;
+
+        List<String> dataSources = new ArrayList<>();
+
+        for (AbstractFile file : files) {
+
+            String currentMd5 = file.getMd5Hash();
+            if (currentMd5.equals(previousMd5)) {
+                previousFile = file;
+                previousMd5 = currentMd5;
+                instanceCount++;
+                try {
+                    dataSources.add(file.getDataSource().getName());
+                } catch (TskCoreException ex) {
+                    //TODO finish this
+                    Exceptions.printStackTrace(ex);
+                }
+            } else {
+                if (previousFile != null) {
+                    deDupedFiles.add(previousFile);
+                    instanceCountMap.put(currentMd5, instanceCount);
+                    dataSourceMap.put(currentMd5, String.join(", ", dataSources));
+                    dataSources.clear();
+                    instanceCount = 1;
+                    
+                }
+            }
+        }
+
+        data.dedupedFiles = deDupedFiles;
+        data.dataSourceMap = dataSourceMap;
+        data.instanceCountMap = instanceCountMap;
+
+        return data;
+    }
+}
