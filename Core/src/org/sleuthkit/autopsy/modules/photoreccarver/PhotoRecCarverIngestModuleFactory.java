@@ -81,6 +81,9 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        if (!(settings instanceof PhotoRecCarverIngestJobSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be an instance of PhotoRecCarverIngestJobSettings");
+        }
         return new PhotoRecCarverIngestJobSettingsPanel((PhotoRecCarverIngestJobSettings) settings);
     }
 
