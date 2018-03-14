@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,11 +43,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Node for a relationship, as represented by a BlackboardArtifact.
  */
-public class RelationshipNode extends BlackboardArtifactNode {
+final class RelationshipNode extends BlackboardArtifactNode {
 
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
-
-    public RelationshipNode(BlackboardArtifact artifact) {
+    
+    RelationshipNode(BlackboardArtifact artifact) {
         super(artifact);
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message");
@@ -113,6 +113,9 @@ public class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
+
+        addTagProperty(ss);
+        
         return s;
     }
 
@@ -144,4 +147,14 @@ public class RelationshipNode extends BlackboardArtifactNode {
         }
     }
 
+    /**
+     * Circumvent DataResultFilterNode's slightly odd delegation to
+     * BlackboardArtifactNode.getSourceName().
+     *
+     * @return the displayName of this Node, which is the type.
+     */
+    @Override
+    public String getSourceName() {
+        return getDisplayName();
+    }
 }

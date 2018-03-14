@@ -29,6 +29,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     private final BlackboardArtifact artifact;
     private Content associated = null;
+
     private List<NodeProperty<? extends Object>> customProperties;
+
+    private final static String NO_DESCR = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.noDesc.text");
+
 
     /*
      * Artifact types which should have the full unique path of the associated
@@ -315,7 +320,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        final String NO_DESCR = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.noDesc.text");
 
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, artifact);
@@ -447,6 +451,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
+        addTagProperty(ss);
+
+        return s;
+    }
+
+    
+      /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the tags property
+     * to their sheets.
+     *
+     * @param ss the modifiable Sheet.Set returned by
+     *           Sheet.get(Sheet.PROPERTIES)
+     */
+    @NbBundle.Messages({ 
+    "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
+    protected void addTagProperty(Sheet.Set ss) throws MissingResourceException {
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
         try {
@@ -455,10 +475,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
         }
-        ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
+        ss.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
-
-        return s;
     }
 
     private void updateSheet() {
