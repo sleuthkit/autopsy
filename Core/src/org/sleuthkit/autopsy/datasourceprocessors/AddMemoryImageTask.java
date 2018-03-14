@@ -84,9 +84,17 @@ final class AddMemoryImageTask implements Runnable {
          */
         progressMonitor.setIndeterminate(true);
         progressMonitor.setProgress(0);
-        List<Content> newDataSources = new ArrayList<>();
         List<String> errorMessages = new ArrayList<>();
-        addImageToCase(newDataSources, errorMessages);
+        Image dataSource = addImageToCase(errorMessages);
+
+        /* call Volatility to process the image */
+        if (dataSource != null) {
+            volatilityProcessor = new VolatilityProcessor(imageFilePath, PluginsToRun, dataSource, progressMonitor);
+            // @@@ run() needs a way to return if a critical eror occured.
+            volatilityProcessor.run();
+            List<String> volErrorMsgs = volatilityProcessor.getErrorMessages();
+            errorMessages.addAll(volErrorMsgs);
+        }
 
         progressMonitor.setProgress(100);
 
@@ -101,6 +109,9 @@ final class AddMemoryImageTask implements Runnable {
         } else {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
         }
+        
+        List <Content> newDataSources = new ArrayList();
+        newDataSources.add(dataSource);
         callback.done(result, errorMessages, newDataSources);
         criticalErrorOccurred = false;
     }
@@ -108,54 +119,45 @@ final class AddMemoryImageTask implements Runnable {
     /**
      * Attempts to add the input image to the case.
      *
-     * @param newDataSources If the image is added, a data source is added to
-     *                       this list for eventual return to the caller via the
-     *                       callback.
      * @param errorMessages  If there are any error messages, the error messages
      *                       are added to this list for eventual return to the
      *                       caller via the callback.
+     * @returns Image that was added to DB or null on error
      */
     @Messages({"AddMemoryImageTask.progress.add.text=Adding memory image: ",
                "AddMemoryImageTask.image.critical.error.adding=Critical error adding ",
                "AddMemoryImageTask.for.device=for device ",
                "AddMemoryImageTask.image.notExisting=is not existing.",
                "AddMemoryImageTask.image.noncritical.error.adding=Non-critical error adding "})
-    private void addImageToCase(List<Content> dataSources, List<String> errorMessages) {
+    private Image addImageToCase(List<String> errorMessages) {
         progressMonitor.setProgressText(Bundle.AddMemoryImageTask_progress_add_text() + imageFilePath);
-        List<String> imageFilePaths = new ArrayList<>();
+        
         SleuthkitCase caseDatabase = Case.getCurrentCase().getSleuthkitCase();
         caseDatabase.acquireExclusiveLock();
 
+        // verify it exists
         File imageFile = Paths.get(imageFilePath).toFile();
         if (!imageFile.exists()) {
             errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddMemoryImageTask_for_device() 
                     + deviceId + Bundle.AddMemoryImageTask_image_notExisting());
             criticalErrorOccurred = true;
-            return;
+            return null;
         }
-
-        imageFilePaths.add(imageFilePath);
         
         try {
-            /*
-             * Get Image that will be added to case
-             */
+            // add it to the DB
+            List<String> imageFilePaths = new ArrayList<>();
+            imageFilePaths.add(imageFilePath);
             Image dataSource = caseDatabase.addImageInfo(0, imageFilePaths, timeZone); //TODO: change hard coded deviceId.
-            dataSources.add(dataSource);
-            if (isCancelled)
-                return;
-            
-            /* call Volatility to process the image **/
-            volatilityProcessor = new VolatilityProcessor(imageFilePath, PluginsToRun, dataSource, progressMonitor);
-            volatilityProcessor.run();
-            
+            return dataSource;
         } catch (TskCoreException ex) {
-            errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePaths + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
+            errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
             criticalErrorOccurred = true;
+            return null;
         } finally {
             caseDatabase.releaseExclusiveLock();
         }        
-    }    
+    }
 
     void cancelTask() {
         if (volatilityProcessor != null) {

@@ -37,37 +37,35 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Report;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-//@NbBundle.Messages({
-//    "VolatilityProcessor.PermissionsNotSufficient=Insufficient permissions accessing",
-//    "VolatilityProcessor.PermissionsNotSufficientSeeReference=See 'Shared Drive Authentication' in Autopsy help.",
-//    "# {0} - output directory name", "cannotCreateOutputDir.message=Unable to create output directory: {0}.",
-//    "unsupportedOS.message=PhotoRec module is supported on Windows platforms only.",
-//    "missingExecutable.message=Unable to locate PhotoRec executable.",
-//   "cannotRunExecutable.message=Unable to execute PhotoRec."
-//})
 
 /**
  *
  */
-class VolatilityProcessor implements Runnable{
+class VolatilityProcessor {
     private static final String VOLATILITY_DIRECTORY = "Volatility"; //NON-NLS
     private static final String VOLATILITY_EXECUTABLE = "volatility_2.6_win64_standalone.exe"; //NON-NLS
     private final String memoryImagePath;
-    private final List<String> PluginsToRun;
+    private final List<String> pluginsToRun;
     private final Image dataSource;
     private static final String SEP = System.getProperty("line.separator");
     private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
@@ -77,15 +75,15 @@ class VolatilityProcessor implements Runnable{
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private boolean isCancelled;
     private FileManager fileManager;
+    private final List <String> errorMsgs = new ArrayList<>();
 
-    public VolatilityProcessor(String ImagePath, List<String> PlugInToRuns, Image dataSource, DataSourceProcessorProgressMonitor progressMonitor) {
+    public VolatilityProcessor(String ImagePath, List<String> plugInToRuns, Image dataSource, DataSourceProcessorProgressMonitor progressMonitor) {
         this.memoryImagePath = ImagePath;
-        this.PluginsToRun = PlugInToRuns;
+        this.pluginsToRun = plugInToRuns;
         this.dataSource = dataSource;
         this.progressMonitor = progressMonitor;
     }
     
-    @Override
     public void run() {  
         Path execName = Paths.get(VOLATILITY_DIRECTORY, VOLATILITY_EXECUTABLE);
         executableFile = locateExecutable(execName.toString());
@@ -97,27 +95,30 @@ class VolatilityProcessor implements Runnable{
         fileManager = currentCase.getServices().getFileManager();
 
         // make a unique folder for this image
-        moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility" + File.separator + "1";  // @@@ TESTING ONLY
-        File directory = new File(String.valueOf(moduleOutputPath));
+        moduleOutputPath = currentCase.getModulesOutputDirAbsPath() + File.separator + "Volatility" + File.separator + dataSource.getId();        File directory = new File(String.valueOf(moduleOutputPath));
         if(!directory.exists()){
             directory.mkdirs();
             progressMonitor.setProgressText("Running imageinfo");
-            executeVolatility("imageinfo");
+            executeAndParseVolatility("imageinfo");
         }
 
         progressMonitor.setIndeterminate(false);
-        for (int i = 0; i < PluginsToRun.size(); i++) {
+        for (int i = 0; i < pluginsToRun.size(); i++) {
             if (isCancelled)
                 break;
-            String pluginToRun = PluginsToRun.get(i);
+            String pluginToRun = pluginsToRun.get(i);
             progressMonitor.setProgressText("Processing " + pluginToRun + " module");
-            executeVolatility(pluginToRun);
-            progressMonitor.setProgress(i / PluginsToRun.size() * 100);
+            executeAndParseVolatility(pluginToRun);
+            progressMonitor.setProgress(i / pluginsToRun.size() * 100);
         } 
         // @@@ NEed to report back here if there were errors
     }
+    
+    List<String> getErrorMessages() {
+        return errorMsgs;
+    }
 
-    private void executeVolatility(String pluginToRun) {
+    private void executeAndParseVolatility(String pluginToRun) {
         try {        
             List<String> commandLine = new ArrayList<>();
             commandLine.add("\"" + executableFile + "\"");
@@ -136,29 +137,36 @@ class VolatilityProcessor implements Runnable{
             
             commandLine.add(pluginToRun); //NON-NLS
           
+            String outputFile = moduleOutputPath + "\\" + pluginToRun + ".txt";
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             // Add environment variable to force Volatility to run with the same permissions Autopsy uses
             processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-            processBuilder.redirectOutput(new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));
+            processBuilder.redirectOutput(new File(outputFile));
             processBuilder.redirectError(new File(moduleOutputPath + "\\Volatility_Run.err"));
             processBuilder.directory(new File(memoryImage.getParent()));
             
-            // @@@ TESTING ONLY
-            //int exitVal = ExecUtil.execute(processBuilder);
-            //if (exitVal != 0) {
-            //    logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + pluginToRun);
-            //    return;
-            //}
+            int exitVal = ExecUtil.execute(processBuilder);
+            if (exitVal != 0) {
+                logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + pluginToRun);
+                return;
+            }
             
             if (isCancelled)
                 return;
             
-            if (pluginToRun.matches("dlllist") || pluginToRun.matches("handles") || pluginToRun.matches("cmdline") || pluginToRun.matches("psxview") ||
-                pluginToRun.matches("pslist") || pluginToRun.matches("psscan") || pluginToRun.matches("pstree") || pluginToRun.matches("svcscan") ||
-                pluginToRun.matches("filescan") || pluginToRun.matches("shimcache")) {  
-                 scanOutputFile(pluginToRun, new File(moduleOutputPath + "\\" + pluginToRun + ".txt"));  
-            }            
-        } catch (Exception ex) {
+            final Case currentCase = Case.getCurrentCase();
+            
+            Report report = currentCase.getSleuthkitCase().addReport(outputFile, "Volatility", "Volatility " + pluginToRun + " Module", dataSource);
+            KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+            if (null == searchService) {
+                logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
+            } else {
+                searchService.index(report);
+            }
+            
+            scanOutputFile(pluginToRun, new File(outputFile));  
+                        
+        } catch (IOException | SecurityException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Unable to run Volatility", ex); //NON-NLS
             //this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
         }
@@ -190,24 +198,30 @@ class VolatilityProcessor implements Runnable{
     }
 
     private String parseImageInfoOutput(File imageOutputFile) throws FileNotFoundException {
-            // create a Buffered Reader object instance with a FileReader
-            try (
-                 BufferedReader br = new BufferedReader(new FileReader(imageOutputFile))) {
-                 // read the first line from the text file
-                 String fileRead = br.readLine();
-                 br.close();
-                 String[] profileLine = fileRead.split(":");
-                 String[] memProfile = profileLine[1].split(",|\\(");
-                 return memProfile[0].replaceAll("\\s+","");
-            } catch (IOException ex) { 
-                Exceptions.printStackTrace(ex);
-                // @@@ Need to log this or rethrow it
-            } 
+        // create a Buffered Reader object instance with a FileReader
+        try (
+             BufferedReader br = new BufferedReader(new FileReader(imageOutputFile))) {
+             // read the first line from the text file
+             String fileRead = br.readLine();
+             br.close();
+             String[] profileLine = fileRead.split(":");
+             String[] memProfile = profileLine[1].split(",|\\(");
+             return memProfile[0].replaceAll("\\s+","");
+        } catch (IOException ex) { 
+            Exceptions.printStackTrace(ex);
+            // @@@ Need to log this or rethrow it
+        } 
      
         return null;
     }
     
-    private void lookupFiles(Set<String> fileSet, String pluginName) {
+    /**
+     * Lookup the set of files and add INTERESTING_ITEM artifacts for them.
+     * 
+     * @param fileSet
+     * @param pluginName 
+     */
+    private void flagFiles(Set<String> fileSet, String pluginName) {
         
         Blackboard blackboard;
         try {
@@ -239,23 +253,33 @@ class VolatilityProcessor implements Runnable{
 
             String filePath = volfile.getParent();
             
+        
             try {
                 List<AbstractFile> resolvedFiles;
                 if (filePath == null) {
                     resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
                 } else {
+                    // File changed the slashes back to \ on us...
+                    filePath = filePath.replaceAll("\\\\", "/");
                     resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
                 }
+                
+                if (resolvedFiles.isEmpty()) {
+                    logger.log(Level.SEVERE, "File not found in lookup: " + filePath + "/" + fileName);
+                    errorMsgs.add("File not found in lookup: " + filePath + "/" + fileName);
+                    continue;
+                }
+                
                 resolvedFiles.forEach((resolvedFile) -> {
+                    if (resolvedFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK) {
+                        return; // equivalent to continue in non-lambda world
+                    }
                     try {
-                        String MODULE_NAME = "VOLATILITY";
+                        String MODULE_NAME = "Volatility";
                         BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                         BlackboardAttribute att1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                                 "Volatility Plugin " + pluginName);
-                        BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                                "Volatility Plugin " + pluginName);
                         volArtifact.addAttribute(att1);
-                        volArtifact.addAttribute(att2);
 
                         try {
                             // index the artifact for keyword search
@@ -274,7 +298,7 @@ class VolatilityProcessor implements Runnable{
                 });
             } catch (TskCoreException ex) {
                 //String msg = NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errGettingFiles");
-                logger.log(Level.SEVERE, "Error in Finding FIles", ex);
+                logger.log(Level.SEVERE, "Error in Finding Files", ex);
                 return;
             }
         }
@@ -282,43 +306,38 @@ class VolatilityProcessor implements Runnable{
     
     private void scanOutputFile(String pluginName, File PluginOutput) {
            
-        try {
-            if (pluginName.matches("dlllist")) {
-               Set<String> fileSet = parse_DllList(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("handles")) {
-               Set<String> fileSet = Parse_Handles(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("cmdline")) { 
-               Set<String> fileSet = parse_Cmdline(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("psxview")){
-               Set<String> fileSet = Parse_Psxview(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("pslist")) {
-               Set<String> fileSet = Parse_Pslist(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("psscan")) { 
-                Set<String> fileSet = Parse_Psscan(PluginOutput);
-                lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("pstree")) {
-               Set<String> fileSet = Parse_Pstree(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("svcscan")) {
-               Set<String> fileSet = Parse_Svcscan(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            } else if (pluginName.matches("filescan")) {
-                // BC: Commented out.  Too many hits to flag
-               //Set<String> fileSet = Parse_Filescan(PluginOutput);
-               //lookupFiles(fileSet, pluginName);
-            } else  {  
-               Set<String> fileSet = Parse_Shimcache(PluginOutput);
-               lookupFiles(fileSet, pluginName);
-            }
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unable to parse files " + PluginOutput, ex); //NON-NLS
-            //this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
-        }
+        if (pluginName.matches("dlllist")) {
+           Set<String> fileSet = parse_DllList(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("handles")) {
+           Set<String> fileSet = parseHandles(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("cmdline")) { 
+           Set<String> fileSet = parse_Cmdline(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("psxview")){
+           Set<String> fileSet = parse_Psxview(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("pslist")) {
+           Set<String> fileSet = parse_Pslist(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("psscan")) { 
+            Set<String> fileSet = parse_Psscan(PluginOutput);
+            flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("pstree")) {
+           Set<String> fileSet = parse_Pstree(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("svcscan")) {
+           Set<String> fileSet = parse_Svcscan(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        } else if (pluginName.matches("filescan")) {
+            // BC: Commented out.  Too many hits to flag
+           //Set<String> fileSet = Parse_Filescan(PluginOutput);
+           //lookupFiles(fileSet, pluginName);  
+        } else if (pluginName.matches("shimcache")) { 
+           Set<String> fileSet = parse_Shimcache(PluginOutput);
+           flagFiles(fileSet, pluginName);
+        }        
     } 
 
     private String normalizePath(String filePath) {
@@ -338,11 +357,14 @@ class VolatilityProcessor implements Runnable{
         filePath = filePath.replaceAll("/systemroot/", "/windows/");
         filePath = filePath.replaceAll("device/","");
         filePath = filePath.replaceAll("harddiskvolume[0-9]/", "");
+        // no point returning these. We won't map to them
+        if (filePath.startsWith("/namedpipe/"))
+            return "";
 
         return filePath;
     }
     
-    private Set<String> Parse_Handles(File PluginFile) {
+    private Set<String> parseHandles(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -425,7 +447,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
     
-   private Set<String> Parse_Filescan(File PluginFile) {
+   private Set<String> parse_Filescan(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -488,7 +510,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
     
-    private Set<String> Parse_Shimcache(File PluginFile) {
+    private Set<String> parse_Shimcache(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -518,7 +540,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
     
-    private Set<String> Parse_Psscan(File PluginFile) {
+    private Set<String> parse_Psscan(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -545,7 +567,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
 
-    private Set<String> Parse_Pslist(File PluginFile) {
+    private Set<String> parse_Pslist(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -572,7 +594,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
 
-    private Set<String> Parse_Psxview(File PluginFile) {
+    private Set<String> parse_Psxview(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -599,7 +621,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
 
-    private Set<String> Parse_Pstree(File PluginFile) {
+    private Set<String> parse_Pstree(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -626,7 +648,7 @@ class VolatilityProcessor implements Runnable{
         return fileSet;     
     }
 
-    private Set<String> Parse_Svcscan(File PluginFile) {
+    private Set<String> parse_Svcscan(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
