@@ -123,9 +123,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
         initComponents();
-        statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), ServicesMonitor.ServiceStatus.DOWN.toString());
-        statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), ServicesMonitor.ServiceStatus.DOWN.toString());
-        statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), ServicesMonitor.ServiceStatus.DOWN.toString());
+        statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
         initPendingJobsTable();
         initRunningJobsTable();
@@ -146,7 +146,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
                 statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
                 statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
-        String upStatus = ServicesMonitor.ServiceStatus.UP.toString(); //NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+        String upStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
         if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
                 || statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()).compareTo(upStatus) != 0
                 || statusByService.get(ServicesMonitor.Service.MESSAGING.toString()).compareTo(upStatus) != 0) {
@@ -182,14 +182,12 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 String serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
                 try {
                     ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
-                    return servicesMonitor.getServiceStatus(service.toString());
-                    
-                    /*serviceStatus = servicesMonitor.getServiceStatus(service.toString());
+                    serviceStatus = servicesMonitor.getServiceStatus(service.toString());
                     if (serviceStatus.compareTo(ServicesMonitor.ServiceStatus.UP.toString()) == 0) {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                     } else {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
-                    }*/
+                    }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
                 }
@@ -442,18 +440,20 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             
             String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
-
-            // if the status update is for an existing service who's status hasn't changed - do nothing.       
-            if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
-                return;
-            }
             
             if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+                status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                 LOGGER.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
             } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+                status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
                 LOGGER.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
             } else {
                 LOGGER.log(Level.INFO, "Status for {0} is {1}", new Object[]{serviceDisplayName, status}); //NON-NLS
+            }
+            
+            // if the status update is for an existing service who's status hasn't changed - do nothing.       
+            if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
+                return;
             }
             
             statusByService.put(serviceDisplayName, status);
