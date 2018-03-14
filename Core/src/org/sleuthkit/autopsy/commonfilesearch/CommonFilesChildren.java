@@ -22,9 +22,7 @@ import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.datamodel.CommonFileNode;
 
 /**
  * Makes nodes for common files search results.
@@ -41,7 +39,7 @@ final class CommonFilesChildren extends Children.Keys<AbstractFile> {
         Node[] node = new Node[1];
 
         //TODO replace FileNode with our own subclass of its base type or similar (use CommonFileNode once its finished)
-        node[0] = new DataResultFilterNode(new FileNode(t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
+        node[0] = new CommonFileNode(t);
         return node;
     }
 }
