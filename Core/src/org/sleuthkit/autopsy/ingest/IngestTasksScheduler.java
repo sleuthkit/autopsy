@@ -288,8 +288,6 @@ final class IngestTasksScheduler {
      *
      * @param dataSource    The data source.
      * @param topLevelFiles The top level files are added to this list.
-     *
-     * @return A list of top level files.
      */
     private static void getTopLevelFiles(Content dataSource, List<AbstractFile> topLevelFiles) {
         Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirectoryVisitor());
