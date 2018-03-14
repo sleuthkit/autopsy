@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -251,6 +251,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.fileNameRegexCheckbox.setSelected(false);
         this.filesRadioButton.setSelected(true);
         this.rulePathConditionTextField.setText("");
+        this.daysIncludedTextField.setText("");
         this.rulePathConditionRegexCheckBox.setSelected(false);
         this.mimeTypeComboBox.setSelectedIndex(0);
         this.equalitySignComboBox.setSelectedIndex(2);
@@ -277,7 +278,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
             FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
             // Get the selected interesting files set and populate the set
-            // components.       
+            // components.
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
 
             if (selectedSet != null) {
@@ -326,7 +327,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSet.Rule.ParentPathCondition pathCondition = rule.getPathCondition();
                 FilesSet.Rule.MimeTypeCondition mimeTypeCondition = rule.getMimeTypeCondition();
                 FilesSet.Rule.FileSizeCondition fileSizeCondition = rule.getFileSizeCondition();
-
+                FilesSet.Rule.DateCondition dateCondition = rule.getDateCondition();
                 // Populate the components that display the properties of the
                 // selected rule.
                 if (nameCondition != null) {
@@ -372,7 +373,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     FilesSetDefsPanel.this.equalitySignComboBox.setSelectedIndex(2);
                     FilesSetDefsPanel.this.fileSizeSpinner.setValue(0);
                 }
-
+                if (dateCondition != null){
+                     FilesSetDefsPanel.this.daysIncludedTextField.setText(Integer.toString(dateCondition.getDaysIncluded()));
+                }
+                else {
+                     FilesSetDefsPanel.this.daysIncludedTextField.setText("");
+                }
                 // Enable the new, edit and delete rule buttons.
                 FilesSetDefsPanel.this.newRuleButton.setEnabled(true && canBeEnabled);
                 FilesSetDefsPanel.this.editRuleButton.setEnabled(true && canBeEnabled);
@@ -399,7 +405,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // Create a files set defintion panle.
         FilesSetPanel panel;
         if (selectedSet != null) {
-            // Editing an existing set definition.            
+            // Editing an existing set definition.
             panel = new FilesSetPanel(selectedSet, panelType);
         } else {
             // Creating a new set definition.
@@ -411,7 +417,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, filterDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.showConfirmDialog(this, panel, NbBundle.getMessage(FilesSetPanel.class, filterDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
@@ -461,7 +467,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
+            option = JOptionPane.showOptionDialog(this, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
 
         } while (option == JOptionPane.OK_OPTION && !panel.isValidRuleDefinition());
 
@@ -477,7 +483,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (selectedRule != null) {
                 rules.remove(selectedRule.getUuid());
             }
-            FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameCondition(), panel.getMetaTypeCondition(), panel.getPathCondition(), panel.getMimeTypeCondition(), panel.getFileSizeCondition());
+            FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameCondition(), panel.getMetaTypeCondition(), panel.getPathCondition(), panel.getMimeTypeCondition(), panel.getFileSizeCondition(), panel.getDateCondition());
             rules.put(newRule.getUuid(), newRule);
 
             // Add the new/edited files set definition, replacing any previous
@@ -590,6 +596,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         copySetButton = new javax.swing.JButton();
         importSetButton = new javax.swing.JButton();
         exportSetButton = new javax.swing.JButton();
+        modifiedDateLabel = new javax.swing.JLabel();
+        daysIncludedTextField = new javax.swing.JTextField();
+        daysIncludedLabel = new javax.swing.JLabel();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -643,7 +652,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setDescriptionTextArea.setColumns(20);
         setDescriptionTextArea.setFont(setDescriptionTextArea.getFont().deriveFont(setDescriptionTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         setDescriptionTextArea.setLineWrap(true);
-        setDescriptionTextArea.setRows(10);
+        setDescriptionTextArea.setRows(6);
         setDescriptionTextArea.setMinimumSize(new java.awt.Dimension(10, 22));
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
@@ -698,6 +707,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileNameRegexCheckbox.setFont(fileNameRegexCheckbox.getFont().deriveFont(fileNameRegexCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(fileNameRegexCheckbox, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.fileNameRegexCheckbox.text")); // NOI18N
         fileNameRegexCheckbox.setEnabled(false);
+        fileNameRegexCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileNameRegexCheckboxActionPerformed(evt);
+            }
+        });
 
         separator.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
@@ -841,6 +855,17 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(modifiedDateLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.modifiedDateLabel.text")); // NOI18N
+
+        daysIncludedTextField.setEditable(false);
+        daysIncludedTextField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
+        daysIncludedTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.daysIncludedTextField.text")); // NOI18N
+        daysIncludedTextField.setMinimumSize(new java.awt.Dimension(60, 20));
+        daysIncludedTextField.setPreferredSize(new java.awt.Dimension(60, 20));
+
+        org.openide.awt.Mnemonics.setLocalizedText(daysIncludedLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.daysIncludedLabel.text")); // NOI18N
+        daysIncludedLabel.setEnabled(false);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -867,83 +892,74 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     .addComponent(setsListLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(rulesListScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(setDescScrollPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(101, 101, 101)
-                                .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(16, 16, 16)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel8)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel4)
+                                    .addComponent(modifiedDateLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(dirsRadioButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(allRadioButton))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(105, 105, 105)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(rulePathConditionTextField)
+                                    .addComponent(fileNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(mimeTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(fileNameRadioButton)
-                                        .addGap(4, 4, 4)
-                                        .addComponent(fileNameExtensionRadioButton)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(fileNameRegexCheckbox))
-                                    .addComponent(rulePathConditionRegexCheckBox)))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(rulesListLabel)
-                                    .addComponent(jLabel1)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(newRuleButton)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(editRuleButton)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(deleteRuleButton))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(ignoreKnownFilesCheckbox)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(ingoreUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel5)
-                                            .addComponent(jLabel6))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(ingestWarningLabel)))))
-                        .addGap(24, 28, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(22, 22, 22)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel7)
-                                            .addComponent(jLabel8))
-                                        .addGap(18, 18, 18))
-                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jPanel1Layout.createSequentialGroup()
-                                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                .addComponent(jLabel3)
-                                                .addComponent(jLabel2))
-                                            .addGap(6, 6, 6))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                            .addComponent(jLabel4)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))))
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(fileSizeSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addComponent(rulePathConditionTextField)
-                                    .addComponent(fileNameTextField, javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(mimeTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(rulePathConditionRegexCheckBox)
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(daysIncludedLabel))
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(filesRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(dirsRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(allRadioButton))
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(fileNameRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(fileNameExtensionRadioButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(fileNameRegexCheckbox)))
+                                        .addGap(0, 0, Short.MAX_VALUE)))))
+                        .addGap(8, 8, 8))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(rulesListLabel)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(ignoreKnownFilesCheckbox)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(ingoreUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(rulesListScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(setDescScrollPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                        .addGap(8, 8, 8))))
+                                    .addComponent(jLabel5)
+                                    .addComponent(jLabel6))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(ingestWarningLabel))
+                            .addComponent(jLabel1)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(newRuleButton)
+                                .addGap(18, 18, 18)
+                                .addComponent(editRuleButton)
+                                .addGap(18, 18, 18)
+                                .addComponent(deleteRuleButton)))
+                        .addGap(24, 47, Short.MAX_VALUE))))
         );
 
         jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copySetButton, deleteSetButton, editSetButton, exportSetButton, importSetButton, newSetButton});
@@ -963,15 +979,15 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addGap(1, 1, 1))
                             .addComponent(ingestWarningLabel, javax.swing.GroupLayout.Alignment.TRAILING))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)
+                        .addComponent(setDescScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 69, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(ignoreKnownFilesCheckbox)
                             .addComponent(ingoreUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(rulesListLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(rulesListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 82, Short.MAX_VALUE)
+                        .addComponent(rulesListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(newRuleButton)
@@ -979,13 +995,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                             .addComponent(deleteRuleButton))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1)
-                        .addGap(8, 8, 8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel2)
                             .addComponent(filesRadioButton)
                             .addComponent(dirsRadioButton)
                             .addComponent(allRadioButton))
-                        .addGap(8, 8, 8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel3)
                             .addComponent(fileNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -994,23 +1010,28 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                             .addComponent(fileNameRadioButton)
                             .addComponent(fileNameExtensionRadioButton)
                             .addComponent(fileNameRegexCheckbox))
-                        .addGap(8, 8, 8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel4)
                             .addComponent(rulePathConditionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(6, 6, 6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(rulePathConditionRegexCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel7)
                             .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel8)
                             .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(fileSizeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(5, 5, 5))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(modifiedDateLabel)
+                            .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(daysIncludedLabel))
+                        .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1125,7 +1146,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import"
     })
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
-        //save currently selected value as default value to select     
+        //save currently selected value as default value to select
         FilesSet selectedSet = this.setsList.getSelectedValue();
         JFileChooser chooser = new JFileChooser();
         final String EXTENSION = "xml"; //NON-NLS
@@ -1147,7 +1168,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
             Collection<FilesSet> importedSets;
             try {
-                importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path            
+                importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path
                 if (importedSets.isEmpty()) {
                     throw new FilesSetsManager.FilesSetsManagerException("No Files Sets were read from the xml.");
                 }
@@ -1160,7 +1181,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 return;
             }
             for (FilesSet set : importedSets) {
-                int choice = JOptionPane.OK_OPTION; 
+                int choice = JOptionPane.OK_OPTION;
                 if (filesSets.containsKey(set.getName())) {
                     Object[] options = {NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.yesOwMsg"),
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.noSkipMsg"),
@@ -1233,7 +1254,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 //if the file already exists ask the user how to proceed
                 final String FILE_EXISTS_MESSAGE = NbBundle.getMessage(this.getClass(),
                         "FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt", selFile.getName());
-                boolean shouldWrite = JOptionPane.showConfirmDialog(null, FILE_EXISTS_MESSAGE, FEATURE_NAME, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION;
+                boolean shouldWrite = JOptionPane.showConfirmDialog(this, FILE_EXISTS_MESSAGE, FEATURE_NAME, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION;
                 if (!shouldWrite) {
                     return;
                 }
@@ -1259,9 +1280,15 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         }
     }//GEN-LAST:event_exportSetButtonActionPerformed
 
+    private void fileNameRegexCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameRegexCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fileNameRegexCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;
     private javax.swing.JButton copySetButton;
+    private javax.swing.JLabel daysIncludedLabel;
+    private javax.swing.JTextField daysIncludedTextField;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JButton deleteSetButton;
     private javax.swing.JRadioButton dirsRadioButton;
@@ -1294,6 +1321,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JComboBox<String> mimeTypeComboBox;
+    private javax.swing.JLabel modifiedDateLabel;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newSetButton;
     private javax.swing.JCheckBox rulePathConditionRegexCheckBox;

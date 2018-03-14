@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -210,7 +211,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  * may be received for a case that is already closed.
                  */
                 try {
-                    Case.getCurrentCase();
+                    Case.getOpenCase();
                     /**
                      * Due to some unresolved issues with how cases are closed,
                      * it is possible for the event to have a null oldValue if
@@ -220,7 +221,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     if (null != event && !(this.doNotShow.contains(event.getBlackboardArtifactType()))) {
                         refresh(true);
                     }
-                } catch (IllegalStateException notUsed) {
+                } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
@@ -233,9 +234,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  * may be received for a case that is already closed.
                  */
                 try {
-                    Case.getCurrentCase();
+                    Case.getOpenCase();
                     refresh(true);
-                } catch (IllegalStateException notUsed) {
+                } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
@@ -401,7 +402,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -412,7 +413,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                         if (null != event && event.getBlackboardArtifactType().equals(type)) {
                             refresh(true);
                         }
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */
@@ -426,9 +427,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         refresh(true);
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */

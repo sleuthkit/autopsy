@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -272,6 +273,25 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     }
 
     @Override
+    public void componentActivated() {
+        super.componentActivated();
+
+        /*
+         * Syncronize the data content viewer to show the currently selected
+         * item in the data results if only one is selected, or show nothing
+         * otherwise.
+         */
+        final DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
+        final Node[] nodeList = explorerManager.getSelectedNodes();
+
+        if (nodeList.length == 1) {
+            dataContentTopComponent.setNode(nodeList[0]);
+        } else {
+            dataContentTopComponent.setNode(null);
+        }
+    }
+
+    @Override
     public void componentClosed() {
         super.componentClosed();
         activeComponentIds.remove(this.getName());
@@ -315,7 +335,13 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
          * window, only allow it to be closed when there's no case opened or no
          * data sources in the open case.
          */
-        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
+        return (!this.isMain) || openCase.hasData() == false;
     }
 
     /**

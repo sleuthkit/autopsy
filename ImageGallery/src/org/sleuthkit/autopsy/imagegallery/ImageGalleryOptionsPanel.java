@@ -19,9 +19,12 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The Image/Video Gallery panel in the NetBeans provided Options Dialogs
@@ -183,10 +186,15 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
     void load() {
         enabledByDefaultBox.setSelected(ImageGalleryPreferences.isEnabledByDefault());
-        if (Case.isCaseOpen() && IngestManager.getInstance().isIngestRunning() == false) {
-            enabledForCaseBox.setEnabled(true);
-            enabledForCaseBox.setSelected(ImageGalleryModule.isEnabledforCase(Case.getCurrentCase()));
-        } else {
+        try {
+            if (IngestManager.getInstance().isIngestRunning() == false) {
+                enabledForCaseBox.setEnabled(true);
+                enabledForCaseBox.setSelected(ImageGalleryModule.isEnabledforCase(Case.getOpenCase()));
+            } else {
+                enabledForCaseBox.setEnabled(false);
+                enabledForCaseBox.setSelected(enabledByDefaultBox.isSelected());
+            }
+        } catch (NoCurrentCaseException ex) {
             enabledForCaseBox.setEnabled(false);
             enabledForCaseBox.setSelected(enabledByDefaultBox.isSelected());
         }
@@ -194,11 +202,16 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
     }
 
     void store() {
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            Logger.getLogger(ImageGalleryOptionsPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         ImageGalleryPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
         ImageGalleryController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
-        if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
-        }
+        new PerCaseProperties(openCase).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         ImageGalleryPreferences.setGroupCategorizationWarningDisabled(groupCategorizationWarningBox.isSelected());
     }
 

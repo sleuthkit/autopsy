@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.Tag;
@@ -84,7 +85,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
         try {
             tag = getTagByID();
             return tag;
-        } catch (IllegalStateException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             Logger.getLogger(TagAddedEvent.class.getName()).log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
@@ -98,8 +99,8 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
      *
      * @return the Tag based on the saved tag id
      *
-     * @throws IllegalStateException
+     * @throws NoCurrentCaseException
      * @throws TskCoreException
      */
-    abstract T getTagByID() throws IllegalStateException, TskCoreException;
+    abstract T getTagByID() throws NoCurrentCaseException, TskCoreException;
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -583,24 +583,42 @@ public class Case {
     }
 
     /**
+     * Deprecated. Use getOpenCase() instead.
+     * 
      * Gets the current case, if there is one, at the time of the call.
      *
      * @return The current case.
      *
      * @throws IllegalStateException if there is no current case.
-     */
+     * 
+     * @deprecated. Use getOpenCase() instead.
+    */
+    @Deprecated
     public static Case getCurrentCase() {
         /*
          * Throwing an unchecked exception is a bad idea here.
          *
-         * TODO (JIRA-2229): Case.getCurrentCase() method throws unchecked
-         * IllegalStateException; change to throw checked exception or return
-         * null
          */
-        if (null != currentCase) {
-            return currentCase;
+        try {
+            return getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
+        }
+    }
+
+    /**
+     * Gets the current open case, if there is one, at the time of the call.
+     *
+     * @return The open case.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     */
+    public static Case getOpenCase() throws NoCurrentCaseException {
+        Case openCase = currentCase;
+        if (openCase == null) {
+            throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
         } else {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
+            return openCase;
         }
     }
 
@@ -806,7 +824,7 @@ public class Case {
      *
      * @throws CaseActionException throw if could not create the case dir
      */
-    static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
+    public static void createCaseDirectory(String caseDir, CaseType caseType) throws CaseActionException {
 
         File caseDirF = new File(caseDir);
 
@@ -998,17 +1016,16 @@ public class Case {
         }
     }
 
-    private static String getNameForTitle(){
+    private static String getNameForTitle() {
         //Method should become unnecessary once technical debt story 3334 is done.
-        if (UserPreferences.getAppName().equals(Version.getName())){
+        if (UserPreferences.getAppName().equals(Version.getName())) {
             //Available version number is version number for this application
             return String.format("%s %s", UserPreferences.getAppName(), Version.getVersion());
-        }
-        else {
+        } else {
             return UserPreferences.getAppName();
         }
     }
-    
+
     /**
      * Update the GUI to to reflect the current case.
      */
@@ -1526,7 +1543,25 @@ public class Case {
      * @throws TskCoreException if there is a problem adding the report to the
      *                          case database.
      */
-    public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+    public Report addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+        return addReport(localPath, srcModuleName, reportName, null);
+    }
+
+    /**
+     * Adds a report to the case.
+     *
+     * @param localPath     The path of the report file, must be in the case
+     *                      directory or one of its subdirectories.
+     * @param srcModuleName The name of the module that created the report.
+     * @param reportName    The report name, may be empty.
+     * @param parent        The Content used to create the report, if available.
+     *
+     * @return The new Report instance.
+     *
+     * @throws TskCoreException if there is a problem adding the report to the
+     *                          case database.
+     */
+    public Report addReport(String localPath, String srcModuleName, String reportName, Content parent) throws TskCoreException {
         String normalizedLocalPath;
         try {
             normalizedLocalPath = Paths.get(localPath).normalize().toString();
@@ -1534,8 +1569,9 @@ public class Case {
             String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
             throw new TskCoreException(errorMsg, ex);
         }
-        Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName);
+        Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName, parent);
         eventPublisher.publish(new ReportAddedEvent(report));
+        return report;
     }
 
     /**
@@ -1616,13 +1652,14 @@ public class Case {
     /**
      * Constructs a Case object for a new Autopsy case.
      *
-     * @param caseType        The type of case (single-user or multi-user).
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
-     * @param caseDetails     Contains details of the case, such as examiner, display name, etc
-     *                        
+     * @param caseType    The type of case (single-user or multi-user).
+     * @param caseDir     The full path of the case directory. The directory
+     *                    will be created if it doesn't already exist; if it
+     *                    exists, it is ASSUMED it was created by calling
+     *                    createCaseDirectory.
+     * @param caseDetails Contains details of the case, such as examiner,
+     *                    display name, etc
+     *
      */
     private Case(CaseType caseType, String caseDir, CaseDetails caseDetails) {
         metadata = new CaseMetadata(caseType, caseDir, displayNameToUniqueName(caseDetails.getCaseDisplayName()), caseDetails);

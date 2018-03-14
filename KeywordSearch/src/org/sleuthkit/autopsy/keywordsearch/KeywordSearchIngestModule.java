@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -89,7 +90,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private List<FileTextExtractor> textExtractors;
+    private List<ContentTextExtractor> textExtractors;
     private StringsTextExtractor stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
@@ -144,7 +145,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     @Messages({
         "KeywordSearchIngestModule.startupMessage.failedToGetIndexSchema=Failed to get schema version for text index.",
         "# {0} - Solr version number", "KeywordSearchIngestModule.startupException.indexSolrVersionNotSupported=Adding text no longer supported for Solr version {0} of the text index.",
-        "# {0} - schema version number", "KeywordSearchIngestModule.startupException.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index."
+        "# {0} - schema version number", "KeywordSearchIngestModule.startupException.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index.",
+        "KeywordSearchIngestModule.noOpenCase.errMsg=No open case available."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -180,19 +182,26 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         // increment the module reference count
         // if first instance of this module for this job then check the server and existence of keywords
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_noOpenCase_errMsg(), ex);
+        }
         if (refCounter.incrementAndGet(jobId) == 1) {
-            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 // for multi-user cases need to verify connection to remore SOLR server
                 KeywordSearchService kwsService = new SolrSearchService();
+                Server.IndexingServerProperties properties = Server.getMultiUserServerProperties(openCase.getCaseDirectory());
                 int port;
                 try {
-                    port = Integer.parseInt(UserPreferences.getIndexingServerPort());
+                    port = Integer.parseInt(properties.getPort());
                 } catch (NumberFormatException ex) {
                     // if there is an error parsing the port number
                     throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg() + " " + Bundle.SolrConnectionCheck_Port(), ex);
                 }
                 try {
-                    kwsService.tryConnect(UserPreferences.getIndexingServerHost(), port);
+                    kwsService.tryConnect(properties.getHost(), port);
                 } catch (KeywordSearchServiceException ex) {
                     throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_badInitMsg(), ex);
                 }
@@ -422,10 +431,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            FileTextExtractor extractor = null;
+            ContentTextExtractor extractor = null;
 
             //go over available text extractors in order, and pick the first one (most specific one)
-            for (FileTextExtractor fe : textExtractors) {
+            for (ContentTextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
                     extractor = fe;
                     break;
@@ -515,7 +524,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (FileTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
+            if (ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;

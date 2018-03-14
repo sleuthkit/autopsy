@@ -98,8 +98,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
     }
 
     private void display() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
 

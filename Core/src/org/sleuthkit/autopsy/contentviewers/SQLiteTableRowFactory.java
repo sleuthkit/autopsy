@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -28,12 +31,17 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
+/**
+ * Factory class to generate nodes for SQLite table rows
+ */
 public class SQLiteTableRowFactory extends ChildFactory<Integer> {
 
     private final List<Map<String, Object>> rows;
+    private final List<Action> colActions;
 
-    public SQLiteTableRowFactory(List<Map<String, Object>> rows) {
+    SQLiteTableRowFactory(List<Map<String, Object>> rows, List<Action> actions ) {
         this.rows = rows;
+        this.colActions = actions;
     }
 
     @Override
@@ -52,37 +60,53 @@ public class SQLiteTableRowFactory extends ChildFactory<Integer> {
             return null;
         }
 
-        return new SQLiteTableRowNode(rows.get(key));
+        return new SQLiteTableRowNode(rows.get(key), this.colActions );
     }
 
 }
 
+/**
+ * 
+ * Node for SQLite table row
+ */
 class SQLiteTableRowNode extends AbstractNode {
 
     private final Map<String, Object> row;
-
-    SQLiteTableRowNode(Map<String, Object> row) {
+    private final List<Action> nodeActions;
+    
+    SQLiteTableRowNode(Map<String, Object> row, List<Action> actions) {
         super(Children.LEAF);
         this.row = row;
+        this.nodeActions = actions;
     }
 
     @Override
     protected Sheet createSheet() {
 
-        Sheet s = super.createSheet();
-        Sheet.Set properties = s.get(Sheet.PROPERTIES);
+        Sheet sheet = super.createSheet();
+        Sheet.Set properties = sheet.get(Sheet.PROPERTIES);
         if (properties == null) {
             properties = Sheet.createPropertiesSet();
-            s.put(properties);
+            sheet.put(properties);
         }
 
         for (Map.Entry<String, Object> col : row.entrySet()) {
             String colName = col.getKey();
             String colVal = col.getValue().toString();
-
             properties.put(new NodeProperty<>(colName, colName, colName, colVal)); // NON-NLS
         }
 
-        return s;
+        return sheet;
     }
+    
+     @Override
+        public Action[] getActions(boolean context) {
+            List<Action> actions = new ArrayList<>();
+            
+            actions.addAll(Arrays.asList(super.getActions(context)));
+            actions.addAll(nodeActions);
+           
+            return actions.toArray(new Action[actions.size()]);
+        }
+              
 }

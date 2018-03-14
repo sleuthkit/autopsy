@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -185,7 +186,7 @@ final class HashLookupSettings implements Serializable {
                     } while (hashSetNames.contains(newHashSetName));
                     logger.log(Level.INFO, "Duplicate hash set name " + hashSetName + " found. Replacing with " + newHashSetName + ".");
                     if (RuntimeProperties.runningWithGUI()) {
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(HashLookupSettings.class,
                                         "HashDbManager.replacingDuplicateHashsetNameMsg",
                                         hashSetName, newHashSetName),
@@ -251,7 +252,7 @@ final class HashLookupSettings implements Serializable {
                     FileUtils.copyFile(new File(configFilePath), new File(backupFilePath));
                     logger.log(Level.INFO, "Updated the schema, backup saved at: " + backupFilePath);
                     if (RuntimeProperties.runningWithGUI()) {
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(HashLookupSettings.class,
                                         "HashDbManager.savedBackupOfOldConfigMsg",
                                         baseMessage, backupFilePath),
@@ -260,7 +261,7 @@ final class HashLookupSettings implements Serializable {
                     }
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Failed to save backup of old format configuration file to " + backupFilePath, ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null, baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), baseMessage, messageBoxTitle, JOptionPane.INFORMATION_MESSAGE);
                 }
                 HashLookupSettings settings;
                 settings = new HashLookupSettings(hashDbInfoList);

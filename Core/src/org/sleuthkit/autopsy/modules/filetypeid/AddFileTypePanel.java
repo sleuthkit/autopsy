@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,7 +105,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
 
         //if typeName does not equal sanitized typeName display message saying this name will be used instead 
         if (typeName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -114,7 +114,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
         //if we need to remove more characters could use matches instead of contains and regex "[^\\w\s\\-\\/] to remove everything that isnt a letter, number, underscore, whitespace, dash, or forward slash.
         if (typeName.contains("\'")) {  //remove single apostraphes as they are an easy way to accidently screw up PostgreSQL
             typeName = typeName.replaceAll("[\\']", "");
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.containsIllegalCharacter.message", typeName),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.containsIllegalCharacter.title"),
                     JOptionPane.WARNING_MESSAGE);
@@ -125,7 +125,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
         //if the MIME type has more than 2 parts the first part will be used as a media type and the remainder of the string as the sub-type
         String[] splitName = typeName.split("/");
         if (splitName.length < 2 || splitName[0].isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", typeName),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
                     JOptionPane.WARNING_MESSAGE);
@@ -137,7 +137,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
         //suggests a mime_type that will be the same after it is split appart and rejoined
         if (!StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/").equals(typeName)) {
             String rejoinedMimeType = StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/");  
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", rejoinedMimeType),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
                     JOptionPane.WARNING_MESSAGE);  
@@ -145,7 +145,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
             return null;
         }
         if (this.signaturesListModel.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     Bundle.AddMimeTypePanel_emptySigList_message(),
                     Bundle.AddMimeTypePanel_emptySigList_title(),
                     JOptionPane.ERROR_MESSAGE);
@@ -159,7 +159,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
         String setName = "";
         if (this.postHitCheckBox.isSelected()) {
             if (this.setNameTextField.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         Bundle.AddMimeTypePanel_emptySetName_message(),
                         Bundle.AddMimeTypePanel_emptySetName_title(),
                         JOptionPane.ERROR_MESSAGE);

@@ -73,8 +73,6 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
  * one such panel per node.
  */
 @Messages({
-    "AutoIngestControlPanel.bnClusterMetrics.text=Auto Ingest Metrics",
-    "AutoIngestControlPanel.bnPause.text=Pause",
     "AutoIngestControlPanel.bnPause.paused=Paused",
     "AutoIngestControlPanel.bnPause.running=Running",
     "AutoIngestControlPanel.bnPause.confirmHeader=Are you sure you want to pause?",
@@ -88,38 +86,15 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
     "AutoIngestControlPanel.pendingTable.toolTipText=The Pending table displays the order upcoming Jobs will be processed with the top of the list first",
     "AutoIngestControlPanel.runningTable.toolTipText=The Running table displays the currently running Job and information about it",
     "AutoIngestControlPanel.completedTable.toolTipText=The Completed table shows all Jobs that have been processed already",
-    "AutoIngestControlPanel.bnCancelJob.text=&Cancel Job",
     "AutoIngestControlPanel.bnCancelJob.toolTipText=Cancel processing of the current Job and move on to the next Job. This functionality is only available for jobs running on current AIM node.",
-    "AutoIngestControlPanel.bnDeleteCase.text=&Delete Case",
     "AutoIngestControlPanel.bnDeleteCase.toolTipText=Delete the selected Case in its entirety",
     "AutoIngestControlPanel.bnResume.text=Resume",
-    "AutoIngestControlPanel.lbPending.text=Pending Jobs",
-    "AutoIngestControlPanel.lbRunning.text=Running Jobs",
-    "AutoIngestControlPanel.lbCompleted.text=Completed Jobs",
-    "AutoIngestControlPanel.bnRefresh.text=&Refresh",
     "AutoIngestControlPanel.bnRefresh.toolTipText=Refresh displayed tables",
-    "AutoIngestControlPanel.bnCancelModule.text=Cancel &Module",
     "AutoIngestControlPanel.bnCancelModule.toolTipText=Cancel processing of the current module within the Job and move on to the next module within the Job. This functionality is only available for jobs running on current AIM node.",
-    "AutoIngestControlPanel.bnExit.text=&Exit",
     "AutoIngestControlPanel.bnExit.toolTipText=Exit Application",
-    "AutoIngestControlPanel.bnOptions.text=&Options",
     "AutoIngestControlPanel.bnOptions.toolTipText=Display options panel. All processing must be paused to open the options panel.",
-    "AutoIngestControlPanel.bnShowProgress.text=Ingest Progress",
     "AutoIngestControlPanel.bnShowProgress.toolTipText=Show the progress of the currently running Job. This functionality is only available for jobs running on current AIM node.",
-    "AutoIngestControlPanel.bnPrioritizeCase.text=Prioritize Case",
-    "AutoIngestControlPanel.bnPrioritizeCase.toolTipText=Move all images associated with a case to top of Pending queue.",
-    "AutoIngestControlPanel.bnShowCaseLog.text=Show Case &Log",
     "AutoIngestControlPanel.bnShowCaseLog.toolTipText=Display case log file for selected case",
-    "AutoIngestControlPanel.tbStatusMessage.text=",
-    "AutoIngestControlPanel.lbStatus.text=Status:",
-    "AutoIngestControlPanel.bnPrioritizeJob.text=Prioritize Job",
-    "AutoIngestControlPanel.bnPrioritizeJob.toolTipText=Move this folder to the top of the Pending queue.",
-    "AutoIngestControlPanel.bnPrioritizeJob.actionCommand=<AutoIngestControlPanel.bnPrioritizeJob.text>",
-    "AutoIngestControlPanel.lbServicesStatus.text=Services Status:",
-    "AutoIngestControlPanel.tbServicesStatusMessage.text=",
-    "AutoIngestControlPanel.bnOpenLogDir.text=Open System Logs Folder",
-    "AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job",
-    "AutoIngestControlPanel.bnPrioritizeFolder.label=<AutoIngestControlPanel.bnPrioritizeJob.text>",
     "AutoIngestControlPanel.Cancelling=Cancelling...",
     "AutoIngestControlPanel.AutoIngestStartupWarning.Title=Automated Ingest Warning",
     "AutoIngestControlPanel.AutoIngestStartupWarning.Message=Failed to establish remote communications with other automated ingest nodes.\nAuto ingest dashboard will only be able to display local ingest job events.\nPlease verify Multi-User settings (Options->Multi-User). See application log for details.",
@@ -418,7 +393,14 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 return;
             }
             int row = pendingTable.getSelectedRow();
-            enablePendingTableButtons((row >= 0) && (row < pendingTable.getRowCount()));
+            boolean enablePrioritizeButtons = false;
+            boolean enableDeprioritizeButtons = false;
+            if ((row >= 0) && (row < pendingTable.getRowCount())) {
+                enablePrioritizeButtons = true;
+                enableDeprioritizeButtons = ((Integer) pendingTableModel.getValueAt(row, JobsTableModelColumns.PRIORITY.ordinal()) > 0);
+            }
+            enablePrioritizeButtons(enablePrioritizeButtons);
+            enableDeprioritizeButtons(enableDeprioritizeButtons);
         });
 
         /*
@@ -622,7 +604,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private void initButtons() {
         bnOptions.setEnabled(true);
         bnDeleteCase.setEnabled(false);
-        enablePendingTableButtons(false);
+        enablePrioritizeButtons(false);
+        enableDeprioritizeButtons(false);
         bnShowCaseLog.setEnabled(false);
         bnReprocessJob.setEnabled(false);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnStart.text"));
@@ -645,13 +628,24 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     }
 
     /**
-     * Enables or disables buttons related to pending jobs table.
+     * Enables or disables prioritize buttons related to the pending jobs table.
      *
      * @param enable Enable/disable the buttons.
      */
-    private void enablePendingTableButtons(Boolean enable) {
+    private void enablePrioritizeButtons(Boolean enable) {
         bnPrioritizeCase.setEnabled(enable);
         bnPrioritizeJob.setEnabled(enable);
+    }
+
+    /**
+     * Enables or disables deprioritize buttons related to the pending jobs
+     * table.
+     *
+     * @param enable Enable/disable the buttons.
+     */
+    private void enableDeprioritizeButtons(Boolean enable) {
+        bnDeprioritizeCase.setEnabled(enable);
+        bnDeprioritizeJob.setEnabled(enable);
     }
 
     /**
@@ -1201,6 +1195,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         bnOpenLogDir = new javax.swing.JButton();
         bnClusterMetrics = new javax.swing.JButton();
         bnReprocessJob = new javax.swing.JButton();
+        bnDeprioritizeCase = new javax.swing.JButton();
+        bnDeprioritizeJob = new javax.swing.JButton();
 
         pendingTable.setModel(pendingTableModel);
         pendingTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.pendingTable.toolTipText")); // NOI18N
@@ -1434,6 +1430,29 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnDeprioritizeCase, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeprioritizeCase.text")); // NOI18N
+        bnDeprioritizeCase.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeprioritizeCase.toolTipText")); // NOI18N
+        bnDeprioritizeCase.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnDeprioritizeCase.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnDeprioritizeCase.setPreferredSize(new java.awt.Dimension(162, 23));
+        bnDeprioritizeCase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnDeprioritizeCaseActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(bnDeprioritizeJob, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeprioritizeJob.text")); // NOI18N
+        bnDeprioritizeJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeprioritizeJob.toolTipText")); // NOI18N
+        bnDeprioritizeJob.setActionCommand(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnDeprioritizeJob.actionCommand")); // NOI18N
+        bnDeprioritizeJob.setMaximumSize(new java.awt.Dimension(162, 23));
+        bnDeprioritizeJob.setMinimumSize(new java.awt.Dimension(162, 23));
+        bnDeprioritizeJob.setPreferredSize(new java.awt.Dimension(162, 23));
+        bnDeprioritizeJob.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnDeprioritizeJobActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1486,7 +1505,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                    .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnDeprioritizeCase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(bnDeprioritizeJob, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
@@ -1511,10 +1532,14 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(82, 82, 82)
+                        .addGap(48, 48, 48)
                         .addComponent(bnPrioritizeCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(bnDeprioritizeCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(bnPrioritizeJob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(bnDeprioritizeJob, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbRunning)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1747,7 +1772,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
-    @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})
+    @Messages({"AutoIngestControlPanel.errorMessage.casePrioritization=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
         if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -1757,11 +1782,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 manager.prioritizeCase(caseName);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
                 SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
-                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_casePrioritization_errorMessage());
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_casePrioritization());
             }
             refreshTables();
             pendingTable.clearSelection();
-            enablePendingTableButtons(false);
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
             AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnPrioritizeCaseActionPerformed
@@ -1807,7 +1833,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         }
     }//GEN-LAST:event_bnShowCaseLogActionPerformed
 
-    @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})
+    @Messages({"AutoIngestControlPanel.errorMessage.jobPrioritization=An error occurred when prioritizing the job."})
     private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
         if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -1815,12 +1841,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             try {
                 manager.prioritizeJob(manifestFilePath);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
-                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
-                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_jobPrioritization_errorMessage());
+                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a job", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_jobPrioritization());
             }
             refreshTables();
             pendingTable.clearSelection();
-            enablePendingTableButtons(false);
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
             AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnPrioritizeJobActionPerformed
@@ -1852,11 +1879,52 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_bnClusterMetricsActionPerformed
 
+    @Messages({"AutoIngestControlPanel.errorMessage.caseDeprioritization=An error occurred when deprioritizing the case. Some or all jobs may not have been deprioritized."})
+    private void bnDeprioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeprioritizeCaseActionPerformed
+        if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            String caseName = (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.CASE.ordinal())).toString();
+            try {
+                manager.deprioritizeCase(caseName);
+            } catch (AutoIngestManager.AutoIngestManagerException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Error deprioritizing a case", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_caseDeprioritization());
+            }
+            refreshTables();
+            pendingTable.clearSelection();
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
+            AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_bnDeprioritizeCaseActionPerformed
+
+    @Messages({"AutoIngestControlPanel.errorMessage.jobDeprioritization=An error occurred when deprioritizing the job."})
+    private void bnDeprioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeprioritizeJobActionPerformed
+        if (pendingTable.getModel().getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            Path manifestFilePath = (Path) (pendingTable.getModel().getValueAt(pendingTable.convertRowIndexToModel(pendingTable.getSelectedRow()), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
+            try {
+                manager.deprioritizeJob(manifestFilePath);
+            } catch (AutoIngestManager.AutoIngestManagerException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Error deprioritizing a job", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_jobDeprioritization());
+            }
+            refreshTables();
+            pendingTable.clearSelection();
+            enablePrioritizeButtons(false);
+            enableDeprioritizeButtons(false);
+            AutoIngestControlPanel.this.setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_bnDeprioritizeJobActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancelJob;
     private javax.swing.JButton bnCancelModule;
     private javax.swing.JButton bnClusterMetrics;
     private javax.swing.JButton bnDeleteCase;
+    private javax.swing.JButton bnDeprioritizeCase;
+    private javax.swing.JButton bnDeprioritizeJob;
     private javax.swing.JButton bnExit;
     private javax.swing.JButton bnOpenLogDir;
     private javax.swing.JButton bnOptions;

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -50,9 +50,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -76,10 +79,13 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
-    final private static String PERL = "perl ";
+    private final List<String> rrCmd = new ArrayList<>();
+    private final List<String> rrFullCmd= new ArrayList<>();
+    
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
+        
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
@@ -98,20 +104,33 @@ class ExtractRegistry extends Extract {
         RR_PATH = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
         RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
-
+        
         if (!(new File(RR_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
         if (!(new File(RR_FULL_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
-
-        if (!PlatformUtil.isWindowsOS()) {
-            RR_PATH = PERL + RR_PATH;
-            RR_FULL_PATH = PERL + RR_FULL_PATH;
+        if(PlatformUtil.isWindowsOS()){
+            rrCmd.add(RR_PATH);
+            rrFullCmd.add(RR_FULL_PATH);
+        }else{
+            String perl;
+            File usrBin = new File("/usr/bin/perl");
+            File usrLocalBin = new File("/usr/local/bin/perl");
+            if(usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()){
+                perl = "/usr/bin/perl";
+            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
+                perl = "/usr/local/bin/perl";
+            }else{
+                throw new IngestModuleException("perl not found in your system");
+            }
+            rrCmd.add(perl);
+            rrCmd.add(RR_PATH);
+            rrFullCmd.add(perl);
+            rrFullCmd.add(RR_FULL_PATH);
         }
     }
-
     /**
      * Search for the registry hives on the system.
      */
@@ -164,8 +183,16 @@ class ExtractRegistry extends Extract {
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
+                        regFile.getName(), regFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
+                                this.getName(), regFileName));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
+                        regFileNameLocal, regFile.getName(), regFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                 this.getName(), regFileName));
@@ -202,7 +229,17 @@ class ExtractRegistry extends Extract {
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 try {
-                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath()); //NON-NLS
+                    Report report = currentCase.addReport(regOutputFiles.fullPlugins,
+                            NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"),
+                            "RegRipper " + regFile.getUniquePath(), regFile); //NON-NLS
+
+                    // Index the report content so that it will be available for keyword search.
+                    KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+                    if (null == searchService) {
+                        logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
+                    } else {
+                        searchService.index(report);
+                    }
                 } catch (TskCoreException e) {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }
@@ -262,7 +299,7 @@ class ExtractRegistry extends Extract {
             regOutputFiles.autopsyPlugins = outFilePathBase + "-autopsy.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-autopsy.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing RegRipper results to: {0}", regOutputFiles.autopsyPlugins); //NON-NLS
-            executeRegRipper(RR_PATH, rrHome, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
+            executeRegRipper(rrCmd, rrHome, regFilePath, autopsyType, regOutputFiles.autopsyPlugins, errFilePath);
         }
         if (context.dataSourceIngestIsCancelled()) {
             return regOutputFiles;
@@ -273,15 +310,17 @@ class ExtractRegistry extends Extract {
             regOutputFiles.fullPlugins = outFilePathBase + "-full.txt"; //NON-NLS
             String errFilePath = outFilePathBase + "-full.err.txt"; //NON-NLS
             logger.log(Level.INFO, "Writing Full RegRipper results to: {0}", regOutputFiles.fullPlugins); //NON-NLS
-            executeRegRipper(RR_FULL_PATH, rrFullHome, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
+            executeRegRipper(rrFullCmd, rrFullHome, regFilePath, fullType, regOutputFiles.fullPlugins, errFilePath);
         }
         return regOutputFiles;
     }
 
-    private void executeRegRipper(String regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
+    private void executeRegRipper(List<String> regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             List<String> commandLine = new ArrayList<>();
-            commandLine.add(regRipperPath);
+            for(String cmd: regRipperPath){
+                commandLine.add(cmd);
+            }
             commandLine.add("-r"); //NON-NLS
             commandLine.add(hiveFilePath);
             commandLine.add("-f"); //NON-NLS
@@ -413,12 +452,14 @@ class ExtractRegistry extends Extract {
                                             installtime = Long.valueOf(Tempdate) / 1000;
                                         } catch (ParseException e) {
                                             logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
-                                        }   break;
+                                        }
+                                        break;
                                     default:
                                         break;
                                 }
                             }
-                        }   try {
+                        }
+                        try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, version));
                             if (installtime != null) {
@@ -475,7 +516,8 @@ class ExtractRegistry extends Extract {
                                         break;
                                 }
                             }
-                        }   try {
+                        }
+                        try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION, parentModuleName, os));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE, parentModuleName, procArch));
@@ -514,7 +556,8 @@ class ExtractRegistry extends Extract {
                                     domain = value;
                                 }
                             }
-                        }   try {
+                        }
+                        try {
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, compName));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domain));
@@ -656,7 +699,7 @@ class ExtractRegistry extends Extract {
                                                     parentModuleName, sid));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                                     parentModuleName, homeDir));
-                                            
+
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);

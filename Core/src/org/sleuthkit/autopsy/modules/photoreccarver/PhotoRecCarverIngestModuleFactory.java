@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
  * A factory for creating instances of file ingest modules that carve
@@ -32,7 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapter {
 
-    private static final String VERSION = "7.0";
+    private static final String VERSION = "7.0"; // Version should match the PhotoRec tool version.
 
     /**
      * Gets the ingest module name for use within this package.
@@ -65,7 +66,22 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        return new PhotoRecCarverFileIngestModule();
+        return new PhotoRecCarverFileIngestModule((PhotoRecCarverIngestJobSettings) settings);
+    }
+
+    @Override
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new PhotoRecCarverIngestJobSettings();
+    }
+
+    @Override
+    public boolean hasIngestJobSettingsPanel() {
+        return true;
+    }
+
+    @Override
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        return new PhotoRecCarverIngestJobSettingsPanel((PhotoRecCarverIngestJobSettings) settings);
     }
 
 }

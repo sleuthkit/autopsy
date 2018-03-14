@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +31,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -44,6 +40,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -118,9 +115,9 @@ public final class Reports implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         ReportNodeFactory.this.refresh(true);
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */
@@ -132,8 +129,8 @@ public final class Reports implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<Report> keys) {
             try {
-                keys.addAll(Case.getCurrentCase().getAllReports());
-            } catch (TskCoreException ex) {
+                keys.addAll(Case.getOpenCase().getAllReports());
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(Reports.ReportNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get reports", ex); //NON-NLS
             }
             return true;
@@ -269,8 +266,8 @@ public final class Reports implements AutopsyVisitableItem {
                         NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.title"),
                         JOptionPane.YES_NO_OPTION)) {
                     try {
-                        Case.getCurrentCase().deleteReports(selectedReportsCollection);
-                    } catch (TskCoreException | IllegalStateException ex) {
+                        Case.getOpenCase().deleteReports(selectedReportsCollection);
+                    } catch (TskCoreException | NoCurrentCaseException ex) {
                         Logger.getLogger(DeleteReportAction.class.getName()).log(Level.SEVERE, "Error deleting reports", ex); // NON-NLS
                         MessageNotifyUtil.Message.error(Bundle.DeleteReportAction_showConfirmDialog_errorMsg());
                     }

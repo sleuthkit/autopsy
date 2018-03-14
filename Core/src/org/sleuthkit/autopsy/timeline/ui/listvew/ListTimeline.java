@@ -78,6 +78,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -668,7 +669,7 @@ class ListTimeline extends BorderPane {
                         //show new context menu.
                         new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()]))
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-                    } catch (IllegalStateException ex) {
+                    } catch (NoCurrentCaseException ex) {
                         //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
                         LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {

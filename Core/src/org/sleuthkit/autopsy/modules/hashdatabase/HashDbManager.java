@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 - 2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -579,7 +580,7 @@ public class HashDbManager implements PropertyChangeListener {
                 }
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbManager.unableToOpenHashDbMsg", hashDbInfo.getHashSetName()),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
@@ -594,7 +595,7 @@ public class HashDbManager implements PropertyChangeListener {
             } catch (TskCoreException ex){
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash set", ex); //NON-NLS
                 
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.HashDbManager_centralRepoLoadError_message(),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
@@ -653,7 +654,7 @@ public class HashDbManager implements PropertyChangeListener {
         // Give the user an opportunity to find the desired file.
         String newPath = null;
         if (RuntimeProperties.runningWithGUI() && 
-                JOptionPane.showConfirmDialog(null,
+                JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(this.getClass(), "HashDbManager.dlgMsg.dbNotFoundAtLoc",
                         hashSetName, configuredPath),
                 NbBundle.getMessage(this.getClass(), "HashDbManager.dlgTitle.MissingDb"),
@@ -1420,7 +1421,7 @@ public class HashDbManager implements PropertyChangeListener {
                 SleuthkitJNI.createLookupIndexForHashDatabase(hashDb.getHandle());
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbIndexer.class.getName()).log(Level.SEVERE, "Error indexing hash set " + hashDb.getHashSetName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         NbBundle.getMessage(this.getClass(),
                                 "HashDbManager.dlgMsg.errorIndexingHashSet",
                                 hashDb.getHashSetName()),

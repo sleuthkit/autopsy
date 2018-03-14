@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
@@ -73,8 +74,8 @@ public abstract class DrawableFile {
                 : new ImageFile(abstractFileById, analyzed);
     }
 
-    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, IllegalStateException {
-        return create(Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
+    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
+        return create(Case.getOpenCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
     private SoftReference<Image> imageRef;
@@ -313,8 +314,18 @@ public abstract class DrawableFile {
         return this.file;
     }
 
+    /**
+     * Get the width of the visual content.
+     * 
+     * @return The width.
+     */
     abstract Double getWidth();
 
+    /**
+     * Get the height of the visual content.
+     * 
+     * @return The height.
+     */
     abstract Double getHeight();
 
     public String getDrawablePath() {

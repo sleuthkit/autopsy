@@ -1,3 +1,33 @@
+---------------- VERSION 4.6.0  --------------
+New Features: 
+- A new Message content viewer was added to make it easier to view email message contents. 
+- A new Communications interface was added to make it easier to find messages and relationships. 
+- Hash sets can be centrally stored and shared in the Central Repository. 
+- New Encryption Detection module that will flag possibly encrypted files.
+- Can more easily run Autopsy from a USB drive and leave few traces on target system.
+- Tag definitions now have a "notable" property.  The Central Repository uses this to mark files as notable. 
+- Large slack files are now file typed. 
+- The maximum number of Solr connections and ingest threads have increased. 
+- Periodic keyword search will dynamically change based on how long queries are taking. 
+- Users can change the amount of memory allocated to the application. 
+- The amount of memory required for processing keyword hits has been reduced.
+- Layout of HTML reports has been modified make it easier to open. 
+- "Databases" was added to File Type by Extension view. 
+- Users can now enter more information about cases including examiner, organization, etc.
+- New dialog to open multi-user cases that allows for searching. 
+- Auto ingest metrics are collected and displayed in dashboard.
+- Auto ingest module that extracts disk images from archive files. 
+- Keyword search has been made more responsive to both search and ingest job cancellation.
+- Number of log files to keep before rollover is now configurable. 
+- Preliminary changes to make Linux and OS X builds easier. 
+
+Bug Fixes:
+- Memory leaks and other issues revealed by fuzzing the SleuthKit have 
+been fixed.
+- Memory issues caused by Tika are fixed (by upgrading to 1.17)
+- Assorted small enhancements and bug fixes are included.
+
+
 ---------------- VERSION 4.5.0  --------------
 - Memory usage has been reduced to improve support for very large cases.
 - The central repository and correlation engine introduced in version 4.4.1 have 

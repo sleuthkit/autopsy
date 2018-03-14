@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,13 +32,13 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extracts text from AbstractFile HTML content.
+ * Extracts text from HTML content.
  */
-class HtmlTextExtractor extends FileTextExtractor {
+class HtmlTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private static final int MAX_SIZE = 50_000_000; //50MB
@@ -63,15 +63,15 @@ class HtmlTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean isSupported(AbstractFile file, String detectedFormat) {
+    boolean isSupported(Content content, String detectedFormat) {
         return detectedFormat != null
                 && WEB_MIME_TYPES.contains(detectedFormat)
-                && file.getSize() <= MAX_SIZE;
+                && content.getSize() <= MAX_SIZE;
     }
 
     @Override
-    public Reader getReader(AbstractFile sourceFile) throws TextExtractorException {
-        ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
+    public Reader getReader(Content content) throws TextExtractorException {
+        ReadContentInputStream stream = new ReadContentInputStream(content);
 
         //Parse the stream with Jericho and put the results in a Reader
         try {
@@ -173,6 +173,7 @@ class HtmlTextExtractor extends FileTextExtractor {
         return false;
     }
 
+    @Override
     public void logWarning(final String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }

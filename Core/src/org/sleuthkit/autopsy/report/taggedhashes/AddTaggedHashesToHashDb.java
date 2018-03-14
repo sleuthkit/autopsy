@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -65,6 +67,14 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
 
     @Override
     public void generateReport(String reportPath, ReportProgressPanel progressPanel) {
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "No open Case", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel("Adding hashes...");
@@ -73,7 +83,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         if (hashSet != null) {
             progressPanel.updateStatusLabel("Adding hashes to " + hashSet.getHashSetName() + " hash set...");
 
-            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+            TagsManager tagsManager = openCase.getServices().getTagsManager();
             List<TagName> tagNames = configPanel.getSelectedTagNames();
             ArrayList<String> failedExports = new ArrayList<>();
             for (TagName tagName : tagNames) {
@@ -90,20 +100,20 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                         if (content instanceof AbstractFile) {
                             if (null != ((AbstractFile) content).getMd5Hash()) {
                                 try {
-                                    hashSet.addHashes(tag.getContent(), Case.getCurrentCase().getDisplayName());
+                                    hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
                                 } catch (TskCoreException ex) {
                                     Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
                                     failedExports.add(tag.getContent().getName());
                                 }
                             } else {
-                                JOptionPane.showMessageDialog(null, "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Set Error", JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Set Error", JOptionPane.ERROR_MESSAGE);
                                 break;
                             }
                         }
                     }
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
-                    JOptionPane.showMessageDialog(null, "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
             if (!failedExports.isEmpty()) {
@@ -117,7 +127,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                         errorMessage.append(".");
                     }
                 }
-                JOptionPane.showMessageDialog(null, errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
             }
         }
         progressPanel.setIndeterminate(false);

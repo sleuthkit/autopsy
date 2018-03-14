@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +40,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -56,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -101,8 +103,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile content) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
-
+        try {
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        }
         //skip unalloc
         if ((content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.SLACK)))) {
@@ -221,10 +227,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
             return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image file: {0}/{1}({2})", new Object[]{f.getParentPath(), f.getName(), ex.getLocalizedMessage()}); //NON-NLS
+            logger.log(Level.WARNING, String.format("Failed to process the image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex);
+            return ProcessResult.ERROR;
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file: " + f.getParentPath() + "/" + f.getName(), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } finally {
             try {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,12 +31,14 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
@@ -357,6 +359,31 @@ class Ingester {
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(ArtifactTextExtractor.getDataSource(artifact).getId()));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
+            }
+            return params;
+        }
+
+        /**
+         * Get the field map for artifacts.
+         *
+         * @param report The report to get fields for.
+         *
+         * @return The field map for the given report.
+         */
+        @Override
+        public Map<String, String> visit(Report report) {
+            Map<String, String> params = new HashMap<>();
+            params.put(Server.Schema.ID.toString(), Long.toString(report.getId()));
+            try {
+                Content dataSource = report.getDataSource();
+                if (null == dataSource) {
+                    params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
+                } else {
+                    params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the report, using default value. Id: " + report.getId(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
             return params;

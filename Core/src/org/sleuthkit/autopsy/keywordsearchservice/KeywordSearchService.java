@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearchservice;
 import java.io.Closeable;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -49,6 +50,15 @@ public interface KeywordSearchService extends Closeable {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
+
+    /**
+     * Add the given Content object to the text index.
+     *
+     * @param content The content to index.
+     *
+     * @throws TskCoreException
+     */
+    public void index(Content content) throws TskCoreException;
 
     /**
      * Deletes the keyword search text index for a case.

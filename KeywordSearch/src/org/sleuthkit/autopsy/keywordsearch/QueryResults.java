@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -212,9 +213,9 @@ class QueryResults {
                  */
                 Content content = null;
                 try {
-                    SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
+                    SleuthkitCase tskCase = Case.getOpenCase().getSleuthkitCase();
                     content = tskCase.getContentById(hit.getContentID());
-                } catch (TskCoreException | IllegalStateException tskCoreException) {
+                } catch (TskCoreException | NoCurrentCaseException tskCoreException) {
                     logger.log(Level.SEVERE, "Failed to get text source object for ", tskCoreException); //NON-NLS
                 }
 

@@ -22,17 +22,17 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="signatureTypeLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="signatureTypeComboBox" min="-2" pref="176" max="-2" attributes="0"/>
+                      <Component id="signatureTypeComboBox" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="signatureLabel" min="-2" pref="73" max="-2" attributes="0"/>
+                      <Component id="signatureLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="hexPrefixLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="signatureTextField" min="-2" pref="160" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="offsetLabel" min="-2" pref="71" max="-2" attributes="0"/>
+                      <Component id="offsetLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="offsetTextField" min="-2" pref="178" max="-2" attributes="0"/>
                   </Group>
@@ -42,7 +42,7 @@
                       <Component id="offsetRelativeToComboBox" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="26" max="32767" attributes="0"/>
+              <EmptySpace pref="46" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

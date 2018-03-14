@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -95,6 +96,35 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
     }
 
+    /**
+     * Add the given Content object to the text index.
+     * @param content The content to index.
+     * @throws TskCoreException 
+     */
+    @Override
+    public void index(Content content) throws TskCoreException {
+        if (content == null) {
+            return;
+        }
+        final Ingester ingester = Ingester.getDefault();
+
+        try {
+            ingester.indexText(new TikaTextExtractor(), content, null);
+        } catch (Ingester.IngesterException ex) {
+            try {
+                // Try the StringsTextExtractor if Tika extractions fails.
+                ingester.indexText(new StringsTextExtractor(), content, null);
+            } catch (Ingester.IngesterException ex1) {
+                throw new TskCoreException(ex.getCause().getMessage(), ex1);
+            }        
+        }
+        
+        // TODO: Review whether this is the right thing to do. We typically use
+        // a combination of autoCommit and the SearchRunner to ensure that data
+        // is committed but that might not be sufficient for reports (or artifacts).
+        ingester.commit();
+    }
+    
     /**
      * Tries to connect to the keyword search service.
      *
@@ -173,7 +203,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                  * Unload/delete the core on the server and then delete the text
                  * index files.
                  */
-                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata.getCaseType());
+                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata);
                 if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
                     throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));                    
                 }

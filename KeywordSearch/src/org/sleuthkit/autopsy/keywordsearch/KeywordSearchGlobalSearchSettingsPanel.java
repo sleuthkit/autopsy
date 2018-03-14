@@ -190,10 +190,10 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(skipNSRLCheckBox)
                             .addComponent(showSnippetsCB)
-                            .addComponent(filesIndexedLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(141, 141, 141)
-                                .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(filesIndexedLabel)
+                                .addGap(18, 18, 18)
+                                .addComponent(filesIndexedValue))
                             .addComponent(frequencyLabel)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
@@ -206,9 +206,12 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(chunksLabel)
                                 .addGap(18, 18, 18)
-                                .addComponent(chunksValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addComponent(chunksValLabel)))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {chunksLabel, filesIndexedLabel});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()

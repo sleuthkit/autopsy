@@ -119,11 +119,11 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="jScrollPane2" pref="348" max="32767" attributes="0"/>
+                              <Component id="jScrollPane2" pref="341" max="32767" attributes="0"/>
                               <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="newTypeButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="removeTypeButton" alignment="3" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <Component id="removeTypeButton" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -163,9 +163,6 @@
                           <Dimension value="[111, 25]"/>
                         </Property>
                         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                          <Dimension value="[111, 25]"/>
-                        </Property>
-                        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                           <Dimension value="[111, 25]"/>
                         </Property>
                       </Properties>

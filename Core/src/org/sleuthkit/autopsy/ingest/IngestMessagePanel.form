@@ -20,7 +20,7 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Component id="controlPanel" alignment="0" max="32767" attributes="0"/>
-          <Component id="jScrollPane1" alignment="0" pref="357" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" alignment="0" pref="376" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -105,11 +105,11 @@
                   <EmptySpace min="-2" pref="101" max="-2" attributes="0"/>
                   <Component id="totalMessagesNameLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="totalMessagesNameVal" pref="24" max="32767" attributes="0"/>
+                  <Component id="totalMessagesNameVal" max="32767" attributes="0"/>
                   <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                   <Component id="totalUniqueMessagesNameLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="totalUniqueMessagesNameVal" pref="24" max="32767" attributes="0"/>
+                  <Component id="totalUniqueMessagesNameVal" max="32767" attributes="0"/>
                   <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
               </Group>
           </Group>
