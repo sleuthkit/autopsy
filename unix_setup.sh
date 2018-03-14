@@ -38,9 +38,7 @@ if [ -f "$sleuthkit_jar_filepath" ]; then
         	exit 1
     	else
         	cp $sleuthkit_jar_filepath $ext_jar_filepath
-        	if [ "$?" -eq 0 ]; then # checking copy operation was successful
-            		# echo "Successfully copied $sleuthkit_jar_filepath"
-        	else
+        	if [ "$?" -ne 0 ]; then # checking copy operation was successful
         		echo "exiting..."
         		exit 1
         	fi
