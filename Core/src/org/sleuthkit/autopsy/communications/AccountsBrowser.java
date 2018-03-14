@@ -84,11 +84,12 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
                 SwingUtilities.invokeLater(this::setColumnWidths);
             }
         });
+        final MessageBrowser messageBrowser = new MessageBrowser(accountsTableEM, messageBrowserEM);
 
-        jSplitPane1.setRightComponent(new MessageBrowser(accountsTableEM, messageBrowserEM));
+        jSplitPane1.setRightComponent(messageBrowser);
 
         proxyLookup = new ProxyLookup(
-                ExplorerUtils.createLookup(messageBrowserEM, getActionMap()),
+               messageBrowser.getLookup(),
                 ExplorerUtils.createLookup(accountsTableEM, getActionMap()));
     }
 
