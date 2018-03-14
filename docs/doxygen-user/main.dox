@@ -60,7 +60,6 @@ The following topics are available here:
   - \subpage windows_authentication
  - \subpage multiuser_sec_page
  - \subpage multiuser_page
-- \subpage live_triage_page
 - \subpage advanced_page
 
 If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.

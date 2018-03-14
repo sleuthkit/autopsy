@@ -222,7 +222,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         } else if (!profile.getName().equals(getProfileName())) {
             IngestProfile.renameProfile(profile.getName(), getProfileName());
         }
-        profile = new IngestProfile(getProfileName(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileIngestFilter().getName());
+        profile = new IngestProfile(getProfileName(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileFilter().getName());
         IngestProfile.saveProfile(profile);
         ingestSettingsPanel.getSettings().saveAs(getProfileName());
     }
