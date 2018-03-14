@@ -92,7 +92,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         } catch (AutopsyEventException ex) {
             throw new AutoIngestMonitorException("Failed to open auto ingest event channel", ex); //NON-NLS
         }
-        coordSvcQueryExecutor.scheduleAtFixedRate(new CoordinationServiceQueryTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
+        coordSvcQueryExecutor.scheduleWithFixedDelay(new CoordinationServiceQueryTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
         eventPublisher.addSubscriber(EVENT_LIST, this);
     }
 
