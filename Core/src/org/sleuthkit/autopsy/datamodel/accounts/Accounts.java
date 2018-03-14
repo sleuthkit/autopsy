@@ -54,7 +54,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
@@ -74,7 +73,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -90,6 +88,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
 final public class Accounts implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
+    private static final String iconBasePath = "/org/sleuthkit/autopsy/images/"; //NON-NLS
 
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
@@ -127,7 +126,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * results from db queries.
      *
      * @return A clause that will or will not filter out rejected artifacts
-     * based on the state of showRejected.
+     *         based on the state of showRejected.
      */
     private String getRejectedArtifactFilterClause() {
         return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + " "; //NON-NLS
@@ -138,7 +137,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * or off.
      *
      * @return An Action that will toggle whether rejected artifacts are shown
-     * in the tree rooted by this Accounts instance.
+     *         in the tree rooted by this Accounts instance.
      */
     public Action newToggleShowRejectedAction() {
         return new ToggleShowRejected();
@@ -226,8 +225,8 @@ final public class Accounts implements AutopsyVisitableItem {
     private class AccountTypeFactory extends ObservingChildren<String> {
 
         /*
-             * The pcl is in this class because it has the easiest mechanisms to
-             * add and remove itself during its life cycles.
+         * The pcl is in this class because it has the easiest mechanisms to add
+         * and remove itself during its life cycles.
          */
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -311,23 +310,21 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node[] createNodesForKey(String key) {
+        protected Node[] createNodesForKey(String acountTypeName) {
 
-            String accountType = key;
-            if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+            if (Account.Type.CREDIT_CARD.getTypeName().equals(acountTypeName)) {
                 return new Node[]{new CreditCardNumberAccountTypeNode()};
             } else {
-                String accountTypeDisplayname;
+
                 try {
-                    accountTypeDisplayname = skCase.getCommunicationsManager().getAccountType(accountType).getDisplayName();
+                    Account.Type accountType = skCase.getCommunicationsManager().getAccountType(acountTypeName);
+                    return new Node[]{new DefaultAccountTypeNode(accountType)};
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error getting display name for account type. ", ex);
-                    accountTypeDisplayname = accountType;
                 }
 
-                return new Node[]{new DefaultAccountTypeNode(key, accountTypeDisplayname)};
+                return new Node[]{};
             }
-
         }
 
         @Override
@@ -351,10 +348,10 @@ final public class Accounts implements AutopsyVisitableItem {
 
     final private class DefaultAccountFactory extends ObservingChildren<Long> {
 
-        private final String accountTypeName;
+        private final Account.Type accountType;
 
-        private DefaultAccountFactory(String accountTypeName) {
-            this.accountTypeName = accountTypeName;
+        private DefaultAccountFactory(Account.Type accountType) {
+            this.accountType = accountType;
         }
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
@@ -425,13 +422,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            String query
-                    = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+            String query =
+                    "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.value_text = '" + accountTypeName + "'" //NON-NLS
+                    + "     AND blackboard_attributes.value_text = '" + accountType.getTypeName() + "'" //NON-NLS
                     + getRejectedArtifactFilterClause(); //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
@@ -474,10 +471,10 @@ final public class Accounts implements AutopsyVisitableItem {
      */
     final public class DefaultAccountTypeNode extends DisplayableItemNode {
 
-        private DefaultAccountTypeNode(String accountTypeName, String accountTypeDisplayName) {
-            super(Children.create(new DefaultAccountFactory(accountTypeName), true), Lookups.singleton(accountTypeDisplayName));
-            setName(accountTypeDisplayName);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-cards.png");   //NON-NLS
+        private DefaultAccountTypeNode(Account.Type accountType) {
+            super(Children.create(new DefaultAccountFactory(accountType), true), Lookups.singleton(accountType));
+            setName(accountType.getDisplayName());
+            this.setIconBaseWithExtension(getIconFilePath(accountType));   //NON-NLS
         }
 
         @Override
@@ -1162,13 +1159,13 @@ final public class Accounts implements AutopsyVisitableItem {
      * take the result of a group_concat SQLite operation and split it into a
      * set of X using the mapper to to convert from string to X
      *
-     * @param <X> the type of elements to return
+     * @param <X>         the type of elements to return
      * @param groupConcat a string containing the group_concat result ( a comma
-     * separated list)
-     * @param mapper a function from String to X
+     *                    separated list)
+     * @param mapper      a function from String to X
      *
      * @return a Set of X, each element mapped from one element of the original
-     * comma delimited string
+     *         comma delimited string
      */
     static <X> List<X> unGroupConcat(String groupConcat, Function<String, X> mapper) {
         return StringUtils.isBlank(groupConcat) ? Collections.emptyList()
@@ -1188,8 +1185,8 @@ final public class Accounts implements AutopsyVisitableItem {
         /**
          * Constructor
          *
-         * @param key The FileWithCCN that backs this node.
-         * @param content The Content object the key represents.
+         * @param key            The FileWithCCN that backs this node.
+         * @param content        The Content object the key represents.
          * @param lookupContents The contents of this Node's lookup. It should
          * contain the content object and the account artifacts.
          */
@@ -1466,11 +1463,11 @@ final public class Accounts implements AutopsyVisitableItem {
             }
             return sheet;
         }
-        
+
         private void updateSheet() {
             this.setSheet(createSheet());
         }
-        
+
     }
 
     /**
@@ -1602,7 +1599,7 @@ final public class Accounts implements AutopsyVisitableItem {
             super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
             this.artifact = artifact;
             setName("" + this.artifact.getArtifactID());
-            
+
             reviewStatusBus.register(this);
         }
 
@@ -1629,13 +1626,13 @@ final public class Accounts implements AutopsyVisitableItem {
                     Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
                     artifact.getReviewStatus().getDisplayName()));
-            
+
             return sheet;
         }
-        
+
         @Subscribe
         void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-    
+
             // Update the node if event includes this artifact
             event.artifacts.stream().filter((art) -> (art.getArtifactID() == this.artifact.getArtifactID())).map((_item) -> {
                 return _item;
@@ -1643,11 +1640,11 @@ final public class Accounts implements AutopsyVisitableItem {
                 updateSheet();
             });
         }
-        
+
         private void updateSheet() {
             this.setSheet(createSheet());
         }
-        
+
     }
 
     private final class ToggleShowRejected extends AbstractAction {
@@ -1756,14 +1753,47 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    private class ReviewStatusChangeEvent {
+    static private class ReviewStatusChangeEvent {
 
         Collection<? extends BlackboardArtifact> artifacts;
         BlackboardArtifact.ReviewStatus newReviewStatus;
 
-        public ReviewStatusChangeEvent(Collection<? extends BlackboardArtifact> artifacts, BlackboardArtifact.ReviewStatus newReviewStatus) {
+        ReviewStatusChangeEvent(Collection<? extends BlackboardArtifact> artifacts, BlackboardArtifact.ReviewStatus newReviewStatus) {
             this.artifacts = artifacts;
             this.newReviewStatus = newReviewStatus;
+        }
+    }
+
+    /**
+     * Get the path of the icon for the given Account Type.
+     *
+     * @return The path of the icon for the given Account Type.
+     */
+    public static String getIconFilePath(Account.Type type) {
+
+        if (type.equals(Account.Type.CREDIT_CARD)) {
+            return iconBasePath + "credit-card.png";
+        } else if (type.equals(Account.Type.DEVICE)) {
+            return iconBasePath + "image.png";
+        } else if (type.equals(Account.Type.EMAIL)) {
+            return iconBasePath + "email.png";
+        } else if (type.equals(Account.Type.FACEBOOK)) {
+            return iconBasePath + "facebook.png";
+        } else if (type.equals(Account.Type.INSTAGRAM)) {
+            return iconBasePath + "instagram.png";
+        } else if (type.equals(Account.Type.MESSAGING_APP)) {
+            return iconBasePath + "messaging.png";
+        } else if (type.equals(Account.Type.PHONE)) {
+            return iconBasePath + "phone.png";
+        } else if (type.equals(Account.Type.TWITTER)) {
+            return iconBasePath + "twitter.png";
+        } else if (type.equals(Account.Type.WEBSITE)) {
+            return iconBasePath + "web-file.png";
+        } else if (type.equals(Account.Type.WHATSAPP)) {
+            return iconBasePath + "WhatsApp.png";
+        } else {
+            //there could be a default icon instead...
+            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
         }
     }
 }
