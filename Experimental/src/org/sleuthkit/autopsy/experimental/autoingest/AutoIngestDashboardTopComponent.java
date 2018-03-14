@@ -54,10 +54,10 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
 
             try {
                 if (tc.isOpened() == false) {
+                    Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
                     if (mode != null) {
                         mode.dockInto(tc);
                     }
