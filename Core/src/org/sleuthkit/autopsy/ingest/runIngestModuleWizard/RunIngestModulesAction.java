@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -33,13 +34,12 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Directory;
 
 /**
- * This class is used to add the action to the run ingest modules menu item.
- * When the data source is pressed, it should open the wizard for ingest
- * modules.
+ * An action that invokes the Run Ingest Modules wizard for one or more data
+ * sources or a subset of the files in a single data source.
  */
 public final class RunIngestModulesAction extends AbstractAction {
 
@@ -51,6 +51,9 @@ public final class RunIngestModulesAction extends AbstractAction {
      * used instead of this wizard and is retained for backwards compatibility.
      */
     private static final String EXECUTION_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
+    private final List<Content> dataSources = new ArrayList<>();
+    private final IngestJobSettings.IngestType ingestType;
+    private final List<AbstractFile> files;
 
     /**
      * Display any warnings that the ingestJobSettings have.
@@ -67,12 +70,10 @@ public final class RunIngestModulesAction extends AbstractAction {
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), warningMessage.toString());
         }
     }
-    private final List<Content> dataSources = new ArrayList<>();
-    private final IngestJobSettings.IngestType ingestType;
 
     /**
-     * Creates an action which will make a run ingest modules wizard when it is
-     * performed.
+     * Constructs an action that invokes the Run Ingest Modules wizard for one
+     * or more data sources.
      *
      * @param dataSources - the data sources you want to run ingest on
      */
@@ -80,18 +81,21 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
+        this.files = Collections.emptyList();
     }
 
     /**
-     * Creates an action which will make a run ingest modules wizard when it is
-     * performed.
+     * Constructs an action that invokes the Run Ingest Modules wizard for a
+     * subset of the files in a single data source.
      *
-     * @param dir - the directory you want to run ingest on
+     * @param dataSource The data source.
+     * @param files      The files.
      */
-    public RunIngestModulesAction(Directory dir) {
+    public RunIngestModulesAction(Content dataSource, List<AbstractFile> files) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
-        this.dataSources.add(dir);
+        this.dataSources.add(dataSource);
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
+        this.files = new ArrayList<>(files);
     }
 
     /**
@@ -118,7 +122,11 @@ public final class RunIngestModulesAction extends AbstractAction {
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
             IngestJobSettings ingestJobSettings = wizard.getIngestJobSettings();
             showWarnings(ingestJobSettings);
-            IngestManager.getInstance().queueIngestJob(this.dataSources, ingestJobSettings);
+            if (this.files.isEmpty()) {
+                IngestManager.getInstance().queueIngestJob(this.dataSources, ingestJobSettings);
+            } else {
+                IngestManager.getInstance().queueIngestJob(this.dataSources.get(0), this.files, ingestJobSettings);
+            }
         }
     }
 

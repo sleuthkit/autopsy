@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -36,8 +37,8 @@ import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
@@ -95,7 +96,11 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
-        actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+        try {
+            actionsList.add(new RunIngestModulesAction(content.getDataSource(), Collections.<AbstractFile>singletonList(content)));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Failed to get data source for directory %s (objId=%d), RunIngestModulesAction omitted from context menu", content.getName(), content.getId()), ex);
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
 
