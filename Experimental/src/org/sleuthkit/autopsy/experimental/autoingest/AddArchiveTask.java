@@ -191,6 +191,7 @@ class AddArchiveTask implements Runnable {
                             if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
                                     || internalDataSource.getContent().isEmpty()) {
                                 // move onto the the next DSP that can process this data source
+                                logger.log(Level.SEVERE, "Data source processor {0} was unable to process {1}", new Object[]{selectedProcessor.getDataSourceType(), internalDataSource.getPath()});
                                 continue;
                             }
 
