@@ -51,16 +51,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
      */
     public CommonFilesPanel() {
         initComponents();
-        customizeComponents();
-    }
-
-    private void customizeComponents() {
-        addListenerToAll(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                search();
-            }
-        });
     }
 
     void addListenerToAll(ActionListener l) {       //TODO double click the button
@@ -148,6 +138,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         setPreferredSize(new java.awt.Dimension(300, 300));
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.searchButton.text")); // NOI18N
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -166,6 +161,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
+        search();
+    }//GEN-LAST:event_searchButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
