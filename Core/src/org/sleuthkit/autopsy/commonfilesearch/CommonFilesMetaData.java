@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CommonFilesMetaData {
 
-    private List<AbstractFile> dedupedFiles;
+    private final List<AbstractFile> dedupedFiles;
     private final Map<String, Integer> instanceCountMap;
     private final Map<String, String> dataSourceMap;
 
