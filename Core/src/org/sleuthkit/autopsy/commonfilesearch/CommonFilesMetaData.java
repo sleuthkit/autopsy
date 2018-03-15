@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -35,22 +35,26 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CommonFilesMetaData {
 
     private List<AbstractFile> dedupedFiles;
-    private java.util.Map<String, Integer> instanceCountMap;
-    private java.util.Map<String, String> dataSourceMap;
+    private final Map<String, Integer> instanceCountMap;
+    private final Map<String, String> dataSourceMap;
 
-    /**
-     * De-dupe list of abstract files and count instances of dupes.  
-     * Also collates data sources.
-     * 
-     * Assumes files are sorted by md5 and that there is at least two of any 
-     * given file (no singles are included, only sets of 2 or more).
-     * @param files objects to dedupe
-     * @return object with deduped file list and maps of files to data sources and number instances
-     */
+    CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
+        dedupedFiles = theDedupedFiles;
+        instanceCountMap = theInstanceCountMap;
+        dataSourceMap = theDataSourceMap;
+    }
+    
+    public List<AbstractFile> getFilesList() {
+        return Collections.unmodifiableList(dedupedFiles);
+    }
+    
+    public Map<String, Integer> getInstanceMap() {
+        return Collections.unmodifiableMap(instanceCountMap);
+    }
+    public Map<String, String> getDataSourceMap() {
+        return Collections.unmodifiableMap(dataSourceMap);
+    }
     static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
-
-        CommonFilesMetaData data = new CommonFilesMetaData();
-
         List<AbstractFile> deDupedFiles = new ArrayList<>();
         java.util.Map<String, String> dataSourceMap = new HashMap<>();
         java.util.Map<String, Integer> instanceCountMap = new HashMap<>();
@@ -91,11 +95,7 @@ public class CommonFilesMetaData {
                 }
             }
         }
-
-        data.setDedupedFiles(deDupedFiles);
-        data.setDataSourceMap(dataSourceMap);
-        data.setInstanceCountMap(instanceCountMap);
-
+        CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles,dataSourceMap, instanceCountMap);
         return data;
     }
 
