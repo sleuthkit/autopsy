@@ -29,11 +29,8 @@ import org.openide.util.lookup.Lookups;
  */
 final class CommonFilesSearchNode extends AbstractNode {
 
-    private final Children children;
-
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
-        children = this.getChildren();
     }
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
