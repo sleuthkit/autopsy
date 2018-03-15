@@ -88,9 +88,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-                //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
-                //...consider doing something else
-                //TODO verify that this works with postgres
                 return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
             }
 
