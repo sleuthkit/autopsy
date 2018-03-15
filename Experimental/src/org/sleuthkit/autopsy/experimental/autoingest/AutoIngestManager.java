@@ -74,6 +74,7 @@ import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
+import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -2489,6 +2490,16 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         try {
                             selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                             ingestLock.wait();
+
+                            // at this point we got the content object(s) from the current DSP.
+                            // check whether the data source was processed successfully
+                            if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                    || dataSource.getContent().isEmpty()) {
+                                // move onto the the next DSP that can process this data source
+                                SYS_LOGGER.log(Level.SEVERE, "Data source processor {0} was unable to process {1}", new Object[]{selectedProcessor.getDataSourceType(), dataSource.getPath()});
+                                continue;
+                            }
+
                             return;
                         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                             // Log that the current DSP failed and set the error flag. We consider it an error
