@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.testutils.*;
+import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -47,10 +47,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class IngestFileFiltersTest extends TestCase {
 
-    private static final Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
-    private static final File CASE_DIR = new File(caseDirectoryPath.toString());
-    private static final Path imagePath = Paths.get("test/filter_test1.img");
-    private final ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
+    private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
+    private static final Path IMAGE_PATH = Paths.get("test/filter_test1.img");
     
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
@@ -60,33 +59,33 @@ public class IngestFileFiltersTest extends TestCase {
     }
 
     @Override
-    @BeforeClass
     public void setUp() {
         // Delete the test directory, if it exists
-        if (caseDirectoryPath.toFile().exists()) {
+        if (CASE_DIRECTORY_PATH.toFile().exists()) {
             try {
-                FileUtils.deleteDirectory(caseDirectoryPath.toFile());
+                FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex);
             }
         }
-        assertFalse("Unable to delete existing test directory", caseDirectoryPath.toFile().exists());
+        assertFalse("Unable to delete existing test directory", CASE_DIRECTORY_PATH.toFile().exists());
  
         // Create the test directory
-        caseDirectoryPath.toFile().mkdirs();
-        assertTrue("Unable to create test directory", caseDirectoryPath.toFile().exists());
+        CASE_DIRECTORY_PATH.toFile().mkdirs();
+        assertTrue("Unable to create test directory", CASE_DIRECTORY_PATH.toFile().exists());
 
         try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails("IngestFiltersTest"));
+            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, CASE_DIRECTORY_PATH.toString(), new CaseDetails("IngestFiltersTest"));
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }        
         assertTrue(CASE_DIR.exists());
         ProcessorCallback callBack = null;
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         try {
-            callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, imagePath);
+            callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -99,12 +98,17 @@ public class IngestFileFiltersTest extends TestCase {
     }
 
     @Override
-    @AfterClass
     public void tearDown() {
         try {
             Case.closeCurrentCase();
-            FileUtils.deleteDirectory(CASE_DIR);
+            //Seems like we need some time to close the case.
+            try {
+                Thread.sleep(2000);
+            } catch (Exception ex) {
 
+            }
+
+            FileUtils.deleteDirectory(CASE_DIR);
         } catch (CaseActionException | IOException ex) {
             Exceptions.printStackTrace(ex);
         }
