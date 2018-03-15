@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.HashMap;
 import java.util.List;
+import org.openide.nodes.ChildFactory;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.CommonFileNode;
 
@@ -30,29 +29,33 @@ import org.sleuthkit.autopsy.datamodel.CommonFileNode;
  */
 final class CommonFilesChildren extends Children.Keys<AbstractFile> {   //TODO extend ChildFactory rather than Children.Keys
 
-    private final java.util.Map<String, Integer> instanceCountMap;
-    private final java.util.Map<String, String> dataSourceMap;
+    private CommonFilesMetaData metaData;
 
-    CommonFilesChildren(boolean lazy, List<AbstractFile> fileList, java.util.Map<String, Integer> instanceCountMap, java.util.Map<String, String> dataSourceMap) {
-        super(lazy);
-        this.setKeys(fileList);
-
-        this.instanceCountMap = instanceCountMap;
-        this.dataSourceMap = dataSourceMap;
+    CommonFilesChildren(CommonFilesMetaData theMetaData) {
+        super();  
+        this.metaData = theMetaData;
     }
 
+    protected void removeNotify() {
+        metaData = null;
+    }
+    
     @Override
-    protected Node[] createNodes(AbstractFile t) {
+    protected Node createNodeForKey(AbstractFile t) {
         
         final String md5Hash = t.getMd5Hash();
         
-        int instanceCount = this.instanceCountMap.get(md5Hash);
-        String dataSources = this.dataSourceMap.get(md5Hash);
-        
-        Node[] node = new Node[1];
-        final CommonFileNode commonFileNode = new CommonFileNode(t, instanceCount, dataSources);
-        node[0] = commonFileNode;
-        
-        return node;
+        int instanceCount = metaData.getInstanceMap().get(md5Hash);
+        String dataSources = metaData.getDataSourceMap().get(md5Hash);     
+
+        return new CommonFileNode(t, instanceCount, dataSources);
+
     }
+
+    @Override
+    protected boolean createKeys(List<AbstractFile> toPopulate) {
+       toPopulate.addAll(metaData.getFilesList());
+       return true;  
+    }
+
 }
