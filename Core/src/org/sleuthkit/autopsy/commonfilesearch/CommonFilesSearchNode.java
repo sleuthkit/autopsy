@@ -32,7 +32,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 final class CommonFilesSearchNode extends AbstractNode {
 
-    private final CommonFilesChildren children;
+    CommonFilesSearchNode(CommonFilesMetaData metaData) {
+        super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
+}
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
 }

@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.datamodel.CommonFileNode;
 /**
  * Makes nodes for common files search results.
  */
-final class CommonFilesChildren extends Children.Keys<AbstractFile> {   //TODO extend ChildFactory rather than Children.Keys
+final class CommonFilesChildren extends ChildFactory<AbstractFile>  {
 
     private CommonFilesMetaData metaData;
 
