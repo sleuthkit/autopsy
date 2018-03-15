@@ -100,7 +100,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);
                     
-                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata.getDedupedFiles(), metadata.getInstanceCountMap(), metadata.getDataSourceMap());
+                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
                     TableFilterNode tableFilterNode = new TableFilterNode(contentFilesNode, true);
                     
@@ -108,7 +108,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                             title,
                             pathText,
                             tableFilterNode,
-                            metadata.getDedupedFiles().size());
+                            metadata.getFilesList().size());
 
                     component.requestActive(); // make it the active top component
 
