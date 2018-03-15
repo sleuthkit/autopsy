@@ -141,6 +141,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
         setLayout(new java.awt.BorderLayout());
 
+        jSplitPane1.setDividerLocation(500);
         jSplitPane1.setLeftComponent(outlineView);
 
         add(jSplitPane1, java.awt.BorderLayout.CENTER);
