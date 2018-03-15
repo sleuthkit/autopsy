@@ -43,6 +43,7 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
         this.content = fsContent;
         this.commonFileCount = commonFileCount;
         this.dataSources = dataSources;
+        this.setDisplayName(fsContent.getName());
     }
     
     int getCommonFileCount(){
@@ -74,9 +75,6 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
             final String propString = propType.toString();
             ss.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }
-
-        // add tags property to the sheet
-        //addTagProperty(ss);
 
         return s;
     }
