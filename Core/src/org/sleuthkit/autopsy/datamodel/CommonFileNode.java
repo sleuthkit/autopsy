@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -30,16 +28,14 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
-public class CommonFileNode extends AbstractNode {  //TODO FileNode
-
-    private final AbstractFile content;
+public class CommonFileNode extends FileNode {
     
     private final int commonFileCount;
     
     private final String dataSources;
     
     public CommonFileNode(AbstractFile fsContent, int commonFileCount, String dataSources) {
-        super(Children.LEAF);
+        super(fsContent);
         this.content = fsContent;
         this.commonFileCount = commonFileCount;
         this.dataSources = dataSources;
@@ -50,7 +46,8 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
         return this.commonFileCount;
     }
     
-    AbstractFile getContent(){
+    @Override
+    public AbstractFile getContent(){
         return this.content;
     }
     
@@ -60,7 +57,7 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
 
     @Override
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
+        Sheet s = new Sheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
         if (ss == null) {
             ss = Sheet.createPropertiesSet();
@@ -86,7 +83,7 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
      *                are put
      * @param node The item to get properties for.
      */
-    static public void fillPropertyMap(Map<String, Object> map, CommonFileNode node) {
+    static private void fillPropertyMap(Map<String, Object> map, CommonFileNode node) {
         map.put(CommonFilePropertyType.Name.toString(), node.getContent().getName());
         map.put(CommonFilePropertyType.Id.toString(), node.getContent().getId());
         map.put(CommonFilePropertyType.InstanceCount.toString(), node.getCommonFileCount());
