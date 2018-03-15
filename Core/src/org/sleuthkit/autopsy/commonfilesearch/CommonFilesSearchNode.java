@@ -18,13 +18,10 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Encapsulates data used to display common files search results in the top
@@ -32,8 +29,11 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 final class CommonFilesSearchNode extends AbstractNode {
 
+    private final Children children;
+    
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
+        children =  this.getChildren();
 }
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
