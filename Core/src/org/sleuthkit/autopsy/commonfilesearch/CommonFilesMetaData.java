@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -43,17 +44,30 @@ public class CommonFilesMetaData {
         instanceCountMap = theInstanceCountMap;
         dataSourceMap = theDataSourceMap;
     }
-    
+
     public List<AbstractFile> getFilesList() {
         return Collections.unmodifiableList(dedupedFiles);
     }
-    
+
     public Map<String, Integer> getInstanceMap() {
         return Collections.unmodifiableMap(instanceCountMap);
     }
+
     public Map<String, String> getDataSourceMap() {
         return Collections.unmodifiableMap(dataSourceMap);
     }
+
+    /**
+     * De-dupe list of abstract files and count instances of dupes. Also
+     * collates data sources.
+     *
+     * Assumes files are sorted by md5 and that there is at least two of any
+     * given file (no singles are included, only sets of 2 or more).
+     *
+     * @param files objects to dedupe
+     * @return object with deduped file list and maps of files to data sources
+     * and number instances
+     */
     static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
         List<AbstractFile> deDupedFiles = new ArrayList<>();
         java.util.Map<String, String> dataSourceMap = new HashMap<>();
@@ -70,7 +84,7 @@ public class CommonFilesMetaData {
             String currentMd5 = file.getMd5Hash();
             if (currentMd5.equals(previousMd5)) {
                 instanceCount++;
-                
+
                 try {
                     dataSources.add(file.getDataSource().getName());
                 } catch (TskCoreException ex) {
@@ -82,12 +96,12 @@ public class CommonFilesMetaData {
                     deDupedFiles.add(previousFile);
                     instanceCountMap.put(previousMd5, instanceCount);
                     dataSourceMap.put(previousMd5, String.join(", ", dataSources));
-                }                
+                }
                 previousFile = file;
                 previousMd5 = currentMd5;
                 instanceCount = 1;
                 dataSources.clear();
-                                try {
+                try {
                     dataSources.add(file.getDataSource().getName());
                 } catch (TskCoreException ex) {
                     //TODO finish this
@@ -95,7 +109,7 @@ public class CommonFilesMetaData {
                 }
             }
         }
-        CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles,dataSourceMap, instanceCountMap);
+        CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles, dataSourceMap, instanceCountMap);
         return data;
     }
 
