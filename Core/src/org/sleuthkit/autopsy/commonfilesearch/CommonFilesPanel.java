@@ -102,7 +102,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);
                     
-                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata.dedupedFiles, metadata.instanceCountMap, metadata.dataSourceMap);
+                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,

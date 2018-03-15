@@ -20,8 +20,10 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -31,14 +33,27 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CommonFilesMetaData {
 
-    public List<AbstractFile> dedupedFiles;
-    public java.util.Map<String, Integer> instanceCountMap;
-    public java.util.Map<String, String> dataSourceMap;
+    private List<AbstractFile> dedupedFiles;
+    private final Map<String, Integer> instanceCountMap;
+    private final Map<String, String> dataSourceMap;
 
+    CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
+        dedupedFiles = theDedupedFiles;
+        instanceCountMap = theInstanceCountMap;
+        dataSourceMap = theDataSourceMap;
+    }
+    
+    public List<AbstractFile> getFilesList() {
+        return Collections.unmodifiableList(dedupedFiles);
+    }
+    
+    public Map<String, Integer> getInstanceMap() {
+        return Collections.unmodifiableMap(instanceCountMap);
+    }
+    public Map<String, String> getDataSourceMap() {
+        return Collections.unmodifiableMap(dataSourceMap);
+    }
     static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
-
-        CommonFilesMetaData data = new CommonFilesMetaData();
-
         List<AbstractFile> deDupedFiles = new ArrayList<>();
         java.util.Map<String, String> dataSourceMap = new HashMap<>();
         java.util.Map<String, Integer> instanceCountMap = new HashMap<>();
@@ -73,11 +88,7 @@ public class CommonFilesMetaData {
                 }
             }
         }
-
-        data.dedupedFiles = deDupedFiles;
-        data.dataSourceMap = dataSourceMap;
-        data.instanceCountMap = instanceCountMap;
-
+        CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles,dataSourceMap, instanceCountMap);
         return data;
     }
 }
