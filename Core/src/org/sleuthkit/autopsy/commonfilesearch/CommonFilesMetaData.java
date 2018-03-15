@@ -26,7 +26,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -35,6 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CommonFilesMetaData {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
+    
     private final List<AbstractFile> dedupedFiles;
     private final Map<String, Integer> instanceCountMap;
     private final Map<String, String> dataSourceMap;
@@ -84,13 +88,7 @@ public class CommonFilesMetaData {
             String currentMd5 = file.getMd5Hash();
             if (currentMd5.equals(previousMd5)) {
                 instanceCount++;
-
-                try {
-                    dataSources.add(file.getDataSource().getName());
-                } catch (TskCoreException ex) {
-                    //TODO finish this
-                    Exceptions.printStackTrace(ex);
-                }
+                addDataSource(dataSources, file);
             } else {
                 if (previousFile != null) {
                     deDupedFiles.add(previousFile);
@@ -101,12 +99,7 @@ public class CommonFilesMetaData {
                 previousMd5 = currentMd5;
                 instanceCount = 1;
                 dataSources.clear();
-                try {
-                    dataSources.add(file.getDataSource().getName());
-                } catch (TskCoreException ex) {
-                    //TODO finish this
-                    Exceptions.printStackTrace(ex);
-                }
+                addDataSource(dataSources, file);
             }
         }
         CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles, dataSourceMap, instanceCountMap);
@@ -153,5 +146,14 @@ public class CommonFilesMetaData {
      */
     public void setDataSourceMap(java.util.Map<String, String> dataSourceMap) {
         this.dataSourceMap = dataSourceMap;
+    }
+
+    private static void addDataSource(Set<String> dataSources, AbstractFile file) {
+        try {
+            dataSources.add(file.getDataSource().getName());
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, String.format("Unable to determine data source for file with ID: {0}.", file.getId()), ex);
+            dataSources.add("Unknown Source");
+        }
     }
 }
