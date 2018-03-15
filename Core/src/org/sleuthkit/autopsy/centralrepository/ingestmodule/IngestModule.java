@@ -206,7 +206,9 @@ final class IngestModule implements FileIngestModule {
          * ideal, this will be good enough until a better solution can be
          * posited.
          */
-        IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagNotableItems()) {
+            IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
+        }
 
         if (EamDb.isEnabled() == false) {
             /*

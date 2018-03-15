@@ -120,7 +120,7 @@ public class IngestEventsListener {
      *
      * @return boolean True for Correlation Engine enabled, False for disabled
      */
-    private synchronized static int getCeModuleInstanceCount() {
+    public synchronized static int getCeModuleInstanceCount() {
         return correlationModuleInstanceCount;
     }
     
@@ -129,7 +129,7 @@ public class IngestEventsListener {
      * 
      * @return True if flagging notable items; otherwise false.
      */
-    private synchronized static boolean isFlagNotableItems() {
+    public synchronized static boolean isFlagNotableItems() {
         return flagNotableItems;
     }
     

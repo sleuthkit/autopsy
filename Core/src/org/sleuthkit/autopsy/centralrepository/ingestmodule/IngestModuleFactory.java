@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 
 /**
  * Factory for Central Repository ingest modules
@@ -94,7 +95,17 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        return new IngestSettingsPanel((IngestSettings) settings);
+        if (settings instanceof IngestSettings) {
+            return new IngestSettingsPanel((IngestSettings) settings);
+        }
+        /*
+         * Compatibility check for older versions.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new IngestSettingsPanel(new IngestSettings());
+        }
+        
+        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }
 
 }
