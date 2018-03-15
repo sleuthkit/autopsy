@@ -38,6 +38,15 @@ public class CommonFilesMetaData {
     private java.util.Map<String, Integer> instanceCountMap;
     private java.util.Map<String, String> dataSourceMap;
 
+    /**
+     * De-dupe list of abstract files and count instances of dupes.  
+     * Also collates data sources.
+     * 
+     * Assumes files are sorted by md5 and that there is at least two of any 
+     * given file (no singles are included, only sets of 2 or more).
+     * @param files objects to dedupe
+     * @return object with deduped file list and maps of files to data sources and number instances
+     */
     static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
 
         CommonFilesMetaData data = new CommonFilesMetaData();
