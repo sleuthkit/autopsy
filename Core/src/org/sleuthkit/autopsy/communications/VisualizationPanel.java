@@ -129,7 +129,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxGraphComponent graphComponent;
     private final CommunicationsGraph graph;
 
-    protected mxUndoManager undoManager = new mxUndoManager();
+    private mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband;
     private final mxFastOrganicLayout fastOrganicLayout;
     private final mxCircleLayout circleLayout;
@@ -175,11 +175,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         //right click handler
         graphComponent.getGraphControl().addMouseWheelListener(new MouseAdapter() {
             @Override
-            public void mouseWheelMoved(final MouseWheelEvent e) {
-                super.mouseWheelMoved(e);
-                if (e.getPreciseWheelRotation() > 0) {
+            public void mouseWheelMoved(final MouseWheelEvent event) {
+                super.mouseWheelMoved(event);
+                if (event.getPreciseWheelRotation() > 0) {
                     graphComponent.zoomIn();
-                } else if (e.getPreciseWheelRotation() < 0) {
+                } else if (event.getPreciseWheelRotation() < 0) {
                     graphComponent.zoomOut();
                 }
             }
@@ -187,10 +187,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(e.getX(), e.getY());
+            public void mouseClicked(final MouseEvent event) {
+                super.mouseClicked(event);
+                if (SwingUtilities.isRightMouseButton(event)) {
+                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
                     if (cellAt != null && cellAt.isVertex()) {
                         final JPopupMenu jPopupMenu = new JPopupMenu();
                         final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
@@ -198,14 +198,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         if (lockedVertexModel.isVertexLocked(cellAt)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
                                 @Override
-                                public void actionPerformed(ActionEvent e) {
+                                public void actionPerformed(final ActionEvent event) {
                                     lockedVertexModel.unlockVertex(cellAt);
                                 }
                             }));
                         } else {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
                                 @Override
-                                public void actionPerformed(ActionEvent e) {
+                                public void actionPerformed(final ActionEvent event) {
                                     lockedVertexModel.lockVertex(cellAt);
                                 }
                             }));
@@ -213,25 +213,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         if (pinnedAccountModel.isAccountPinned(adiKey)) {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
                                 @Override
-                                public void actionPerformed(ActionEvent e) {
+                                public void actionPerformed(final ActionEvent event) {
                                     handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
                                 }
                             }));
                         } else {
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
                                 @Override
-                                public void actionPerformed(ActionEvent e) {
+                                public void actionPerformed(final ActionEvent event) {
                                     handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
                                 }
                             }));
                             jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
                                 @Override
-                                public void actionPerformed(ActionEvent e) {
+                                public void actionPerformed(final ActionEvent event) {
                                     handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
                                 }
                             }));
                         }
-                        jPopupMenu.show(graphComponent.getGraphControl(), e.getX(), e.getY());
+                        jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
                     }
                 }
             }
@@ -260,7 +260,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    void handleUnPinEvent(CVTEvents.UnpinAccountsEvent pinEvent) {
+    void handleUnPinEvent(final CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         pinnedAccountModel.unpinAccount(pinEvent.getAccountDeviceInstances());
         graph.clear();
@@ -271,7 +271,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    void handlePinEvent(CVTEvents.PinAccountsEvent pinEvent) {
+    void handlePinEvent(final CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         if (pinEvent.isReplace()) {
             graph.resetGraph();
@@ -284,7 +284,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+    void handleFilterEvent(final CVTEvents.FilterChangeEvent filterChangeEvent) {
 
         graph.getModel().beginUpdate();
         graph.clear();
@@ -308,8 +308,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 worker.cancel(true);
             }
 
-            CancelationListener cancelationListener = new CancelationListener();
-            ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Loading Visualization", new String[]{CANCEL}, CANCEL, cancelationListener);
+            final CancelationListener cancelationListener = new CancelationListener();
+            final ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Loading Visualization", new String[]{CANCEL}, CANCEL, cancelationListener);
             worker = graph.rebuild(progress, commsManager, currentFilter);
             cancelationListener.configure(worker, progress);
             worker.addPropertyChangeListener((final PropertyChangeEvent evt) -> {
@@ -320,7 +320,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     } else if (graph.getModel().getChildCount(graph.getDefaultParent()) < 64) {
                         applyOrganicLayout(10);
                     } else {
-                        JOptionPane.showMessageDialog(VisualizationPanel.this,
+                        JOptionPane.showMessageDialog(this,
                                 "Too many accounts, layout aborted.",
                                 "Autopsy",
                                 JOptionPane.WARNING_MESSAGE);
@@ -354,15 +354,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } finally {
                 graph.getModel().endUpdate();
             }
-            if (evt.getNewValue() != null) {
+            if (evt.getNewValue() == null) {
+                commsManager = null;
+            } else {
                 Case currentCase = (Case) evt.getNewValue();
                 try {
                     commsManager = currentCase.getSleuthkitCase().getCommunicationsManager();
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
                 }
-            } else {
-                commsManager = null;
             }
 
         });
@@ -416,16 +416,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         GroupLayout placeHolderPanelLayout = new GroupLayout(placeHolderPanel);
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(208, Short.MAX_VALUE)
-                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 372, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(209, Short.MAX_VALUE))
+            .add(placeHolderPanelLayout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
-            .add(GroupLayout.TRAILING, placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(213, Short.MAX_VALUE)
-                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 43, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(214, Short.MAX_VALUE))
+            .add(placeHolderPanelLayout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 47, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
@@ -637,8 +637,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             boundsForCells = new mxRectangle(0, 0, 1, 1);
         }
 
-        Dimension size = graphComponent.getSize();
-        double widthFactor = size.getWidth() / boundsForCells.getWidth();
+        final Dimension size = graphComponent.getSize();
+        final double widthFactor = size.getWidth() / boundsForCells.getWidth();
 
         graphComponent.zoom(widthFactor);
 

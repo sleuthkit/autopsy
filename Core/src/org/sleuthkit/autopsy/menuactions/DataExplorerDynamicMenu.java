@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import org.openide.awt.DynamicMenuContent;
 import org.openide.util.Lookup;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 
 /**
@@ -54,9 +55,9 @@ class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuContent {
             item.addActionListener(new OpenTopComponentAction(explorerWin));
 
             try {
-                Case currentCase = Case.getCurrentCase();
+                Case currentCase = Case.getOpenCase();
                 item.setEnabled(currentCase.hasData());
-            } catch (IllegalStateException ex) {
+            } catch (NoCurrentCaseException ex) {
                 item.setEnabled(false); // disable the menu when no case is opened
             }
 

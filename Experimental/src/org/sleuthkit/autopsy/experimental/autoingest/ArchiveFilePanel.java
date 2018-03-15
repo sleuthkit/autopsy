@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import javax.swing.filechooser.FileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import static org.sleuthkit.autopsy.experimental.autoingest.Bundle.*;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
@@ -204,7 +205,9 @@ class ArchiveFilePanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper archive has been selected, false otherwise
      */
-    @NbBundle.Messages("DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on \"C:\" drive")
+    @NbBundle.Messages({"DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on \"C:\" drive",
+            "DataSourceOnCDriveError.noOpenCase.errMsg=Warning: Exception while getting open case."
+    })
     public boolean validatePanel() {
         errorLabel.setVisible(false);
         String path = getContentPaths();
@@ -213,9 +216,14 @@ class ArchiveFilePanel extends JPanel implements DocumentListener {
         }
 
         // display warning if there is one (but don't disable "next" button)
-        if (false == PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        try {
+            if (false == PathValidator.isValid(path, Case.getOpenCase().getCaseType())) {
+                errorLabel.setVisible(true);
+                errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
+            }
+        } catch (NoCurrentCaseException ex) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
+            errorLabel.setText(Bundle.DataSourceOnCDriveError_noOpenCase_errMsg());
         }
 
         return new File(path).isFile()

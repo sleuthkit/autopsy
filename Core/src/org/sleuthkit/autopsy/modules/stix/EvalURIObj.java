@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import org.mitre.cybox.common_2.ConditionApplicationEnum;
 
 import org.mitre.cybox.objects.URIObjectType;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -52,6 +53,15 @@ class EvalURIObj extends EvaluatableObject {
             return new ObservableResult(id, "URIObject: No URI value field found", //NON-NLS
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
+
+        Case case1;
+        try {
+            case1 = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return new ObservableResult(id, "Exception while getting open case: " + ex.getLocalizedMessage(), //NON-NLS
+                    spacing, ObservableResult.ObservableState.FALSE, null);
+        }
+
         String addressStr = obj.getValue().getValue().toString();
 
         // Strip off http:// or https://
@@ -65,7 +75,6 @@ class EvalURIObj extends EvaluatableObject {
                     + " on URI object", spacing, ObservableResult.ObservableState.INDETERMINATE, null); //NON-NLS
         }
 
-        Case case1 = Case.getCurrentCase();
         SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
         try {

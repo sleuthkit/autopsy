@@ -37,10 +37,10 @@
                               </Group>
                               <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="fileReadLabel" alignment="0" min="-2" pref="228" max="-2" attributes="0"/>
-                                  <Component id="dbReadLabel" min="-2" pref="237" max="-2" attributes="0"/>
-                                  <Component id="cpuTimeLabel" min="-2" pref="284" max="-2" attributes="0"/>
-                                  <Component id="imgReadLabel" min="-2" pref="237" max="-2" attributes="0"/>
+                                  <Component id="fileReadLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="dbReadLabel" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cpuTimeLabel" min="-2" max="-2" attributes="0"/>
+                                  <Component id="imgReadLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="76" max="32767" attributes="0"/>
                           </Group>
@@ -58,7 +58,7 @@
                       <EmptySpace max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="statusLabel" min="-2" pref="508" max="-2" attributes="0"/>
+                      <Component id="statusLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>

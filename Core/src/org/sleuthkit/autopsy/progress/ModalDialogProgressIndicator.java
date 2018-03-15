@@ -227,6 +227,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
     public synchronized void finish() {
         SwingUtilities.invokeLater(() -> {
             this.dialog.setVisible(false);
+            this.dialog.dispose();
         });
     }
 

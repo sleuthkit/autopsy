@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -155,9 +156,11 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             attributes.add(ruleNameAttribute);
             artifact.addAttributes(attributes);
             try {
-                Case.getCurrentCase().getServices().getBlackboard().indexArtifact(artifact);
+                Case.getOpenCase().getServices().getBlackboard().indexArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS

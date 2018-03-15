@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,33 +23,45 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 public class VideoFile extends DrawableFile {
 
-    private static final Logger LOGGER = Logger.getLogger(VideoFile.class.getName());
+    private static final Logger logger = Logger.getLogger(VideoFile.class.getName());
 
-    private static final Image VIDEO_ICON = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png"); //NON-NLS
+    private static final Image videoIcon = new Image("org/sleuthkit/autopsy/imagegallery/images/Clapperboard.png"); //NON-NLS
 
+    /**
+     * Instantiate a VideoFile object.
+     *
+     * @param file     The file on which to base the object.
+     * @param analyzed
+     */
     VideoFile(AbstractFile file, Boolean analyzed) {
         super(file, analyzed);
     }
 
+    /**
+     * Get the genereric video thumbnail.
+     *
+     * @return The thumbnail.
+     */
     public static Image getGenericVideoThumbnail() {
-        return VIDEO_ICON;
+        return videoIcon;
     }
-
-    
 
     @Override
     String getMessageTemplate(final Exception exception) {
@@ -63,8 +75,17 @@ public class VideoFile extends DrawableFile {
 
     private SoftReference<Media> mediaRef;
 
+    /**
+     * Get the media associated with the VideoFile.
+     *
+     * @return The media.
+     *
+     * @throws IOException
+     * @throws MediaException
+     * @throws NoCurrentCaseException
+     */
     @NbBundle.Messages({"VideoFile.getMedia.progress=writing temporary file to disk"})
-    public Media getMedia() throws IOException, MediaException {
+    public Media getMedia() throws IOException, MediaException, NoCurrentCaseException {
         Media media = (mediaRef != null) ? mediaRef.get() : null;
 
         if (media != null) {
@@ -83,16 +104,23 @@ public class VideoFile extends DrawableFile {
         media = new Media(Paths.get(cacheFile.getAbsolutePath()).toUri().toString());
         mediaRef = new SoftReference<>(media);
         return media;
-
     }
 
     @Override
     Double getWidth() {
+        double width = -1.0;
         try {
-            return (double) getMedia().getWidth();
-        } catch (IOException | MediaException ex) {
-            return -1.0;
+            width = getMedia().getWidth();
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, "Error reading video file", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error writing video file to disk", ex); //NON-NLS
+        } catch (MediaException ex) {
+            logger.log(Level.SEVERE, "Error creating media from source file", ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "The current case has been closed", ex); //NON-NLS
         }
+        return width;
     }
 
     @Override
@@ -102,10 +130,18 @@ public class VideoFile extends DrawableFile {
 
     @Override
     Double getHeight() {
+        double height = -1.0;
         try {
-            return (double) getMedia().getHeight();
-        } catch (IOException | MediaException ex) {
-            return -1.0;
+            height = getMedia().getHeight();
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, "Error reading video file.", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error writing video file to disk.", ex); //NON-NLS
+        } catch (MediaException ex) {
+            logger.log(Level.SEVERE, "Error creating media from source file.", ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "The current case has been closed", ex); //NON-NLS
         }
+        return height;
     }
 }

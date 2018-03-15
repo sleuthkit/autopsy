@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -59,7 +60,7 @@ class AddFileExtensionAction extends AbstractAction {
             FileExtMismatchSettings.writeSettings(new FileExtMismatchSettings(editableMap));
         } catch (FileExtMismatchSettings.FileExtMismatchSettingsException ex) {
             //error
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                     Bundle.AddFileExtensionAction_writeError_message(),
                     NbBundle.getMessage(this.getClass(), "AddFileExtensionAction.msgDlg.title"),
                     JOptionPane.ERROR_MESSAGE);

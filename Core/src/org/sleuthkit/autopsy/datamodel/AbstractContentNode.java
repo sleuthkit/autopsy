@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -119,12 +120,12 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
                         + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ") AS OBJECT_IDS"; //NON-NLS;
   
             
-            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCase().getSleuthkitCase().executeQuery(query)) {
+            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getOpenCase().getSleuthkitCase().executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 if(resultSet.next()){
                     return (0 < resultSet.getInt("count"));
                 }
-            } catch (TskCoreException | SQLException ex) {
+            } catch (TskCoreException | SQLException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
             }
         }

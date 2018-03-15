@@ -43,6 +43,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -152,7 +153,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                 String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
 
                 // try to get the number of matches first
-                Case currentCase = Case.getCurrentCase(); // get the most updated case
+                Case currentCase = Case.getOpenCase(); // get the most updated case
                 long totalMatches = 0;
                 List<AbstractFile> contentList = null;
                 try {
@@ -189,7 +190,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                 throw new FilterValidationException(
                         NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.exception.noFilterSelected.msg"));
             }
-        } catch (FilterValidationException ex) {
+        } catch (FilterValidationException | NoCurrentCaseException ex) {
             NotifyDescriptor d = new NotifyDescriptor.Message(
                     NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.validationErr.msg", ex.getMessage()));
             DialogDisplayer.getDefault().notify(d);
@@ -291,8 +292,8 @@ class FileSearchPanel extends javax.swing.JPanel {
 
         searchButton.setText(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.searchButton.text")); // NOI18N
 
-        errorLabel.setForeground(new java.awt.Color(255, 51, 51));
         errorLabel.setText(org.openide.util.NbBundle.getMessage(FileSearchPanel.class, "FileSearchPanel.errorLabel.text")); // NOI18N
+        errorLabel.setForeground(new java.awt.Color(255, 51, 51));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

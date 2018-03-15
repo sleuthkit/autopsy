@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -252,7 +253,12 @@ class SevenZipExtractor {
      */
     @Messages({"SevenZipExtractor.indexError.message=Failed to index encryption detected artifact for keyword search."})
     void unpack(AbstractFile archiveFile) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        try {
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         String archiveFilePath;
         try {
             archiveFilePath = archiveFile.getUniquePath();
@@ -518,8 +524,8 @@ class SevenZipExtractor {
                     }
                 }
 
-            } catch (TskCoreException e) {
-                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure"); //NON-NLS
+            } catch (TskCoreException | NoCurrentCaseException e) {
+                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
                 //TODO decide if anything to cleanup, for now bailing
             }
 
@@ -839,8 +845,8 @@ class SevenZipExtractor {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void addDerivedFilesToCase() throws TskCoreException {
-            final FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        void addDerivedFilesToCase() throws TskCoreException, NoCurrentCaseException {
+            final FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             for (UnpackedNode child : rootNode.children) {
                 addDerivedFilesToCaseRec(child, fileManager);
             }

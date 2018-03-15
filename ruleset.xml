@@ -57,12 +57,15 @@
     <properties>            
       <!-- Disabled because we have lots of undocumented fields -->
       <property name="fieldCommentRequirement" value="Unwanted"/>
+      <!-- Disabled because we don't require comments on overrides of public fields -->
+      <property name="publicMethodCommentRequirement" value="Unwanted"/>
     </properties>
   </rule>
   <!-- Commented out because it was flagged some of our header / copyright comments
   <rule ref="rulesets/java/comments.xml/CommentSize"/> -->
   <rule ref="rulesets/java/comments.xml/CommentContent"/>
-  <rule ref="rulesets/java/comments.xml/CommentDefaultAccessModifier"/>
+  <!-- Commented out because we use default (package) access often and commenting it does not make sense for us
+  <rule ref="rulesets/java/comments.xml/CommentDefaultAccessModifier"/> -->
   <!--
     Commented out because they are controversial and we want basics right now.
   <rule ref="rulesets/java/controversial.xml/NullAssignment"/>
@@ -110,9 +113,11 @@
   <rule ref="rulesets/java/design.xml/IdempotentOperations"/>
   <rule ref="rulesets/java/design.xml/SimpleDateFormatNeedsLocale"/>
   <rule ref="rulesets/java/design.xml/ImmutableField"/>
-  <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/> -->
   <rule ref="rulesets/java/design.xml/AvoidProtectedFieldInFinalClass"/>
-  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>-->
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAbstractMethod"/>
   <rule ref="rulesets/java/design.xml/SimplifyConditional"/>
@@ -176,7 +181,10 @@
   <rule ref="rulesets/java/imports.xml/ImportFromSamePackage"/>
   <rule ref="rulesets/java/imports.xml/DuplicateImports"/>
   <rule ref="rulesets/java/imports.xml/DontImportJavaLang"/>
-  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>
+  <!-- Disabled because flagging use of Bundle for bundle messages
+  is not desirable since this qualification helps with code completion
+  while inappropriate use of full qualification is otherwise very rare
+  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>-->
   <!-- Disabled because it generated a lot of errors for non-Beans
   <rule ref="rulesets/java/javabeans.xml/BeanMembersShouldSerialize"/>-->
   <rule ref="rulesets/java/javabeans.xml/MissingSerialVersionUID"/>
@@ -184,7 +192,8 @@
   <rule ref="rulesets/java/logging-java.xml/LoggerIsNotStaticFinal"/>
   <rule ref="rulesets/java/logging-java.xml/SystemPrintln"/>
   <rule ref="rulesets/java/logging-java.xml/AvoidPrintStackTrace"/>
-  <rule ref="rulesets/java/logging-java.xml/GuardLogStatementJavaUtil"/>
+  <!-- Disabled because we don't want If conditions around all Log statements 
+  <rule ref="rulesets/java/logging-java.xml/GuardLogStatementJavaUtil"/> -->
   <rule ref="rulesets/java/logging-java.xml/InvalidSlf4jMessageFormat"/>
   <rule ref="rulesets/java/migrating.xml/ReplaceVectorWithList"/>
   <rule ref="rulesets/java/migrating.xml/ReplaceHashtableWithMap"/>
@@ -212,13 +221,16 @@
   <rule ref="rulesets/java/naming.xml/NoPackage"/>
   <rule ref="rulesets/java/naming.xml/MethodWithSameNameAsEnclosingClass"/>
   <rule ref="rulesets/java/naming.xml/ShortVariable"/>
-  <rule ref="rulesets/java/naming.xml/LongVariable"/>
+  <!-- Commented out because clarity trumps brevity, developers can use their own judgement
+  <rule ref="rulesets/java/naming.xml/LongVariable"/>  -->
   <rule ref="rulesets/java/naming.xml/ShortMethodName"/>
   <rule ref="rulesets/java/naming.xml/BooleanGetMethodName"/>
   <rule ref="rulesets/java/naming.xml/PackageCase"/>
+  <!-- Commented out because this is a nice micro-refinement, but too much of our code does not do this, developers can, but don't have to ignore this practice for now
   <rule ref="rulesets/java/optimizations.xml/LocalVariableCouldBeFinal"/>
-  <rule ref="rulesets/java/optimizations.xml/MethodArgumentCouldBeFinal"/>
-  <rule ref="rulesets/java/optimizations.xml/AvoidInstantiatingObjectsInLoops"/>
+  <rule ref="rulesets/java/optimizations.xml/MethodArgumentCouldBeFinal"/>  -->
+  <!-- Commented out because this is not typical coding practice and it seems of dubious value, e.g., https://stackoverflow.com/questions/17340421/pmd-avoid-instantiating-new-objects-inside-loops/17458503
+  <rule ref="rulesets/java/optimizations.xml/AvoidInstantiatingObjectsInLoops"/>   -->
   <rule ref="rulesets/java/optimizations.xml/UseArrayListInsteadOfVector"/>
   <rule ref="rulesets/java/optimizations.xml/SimplifyStartsWith"/>
   <rule ref="rulesets/java/optimizations.xml/UseStringBufferForStringAppends"/>

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
@@ -140,7 +141,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         try {
             // get the latest case
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            Case currentCase = Case.getOpenCase(); // get the most updated case
 
             Set<TimeZone> caseTimeZones = currentCase.getTimeZones();
             Iterator<TimeZone> iterator = caseTimeZones.iterator();
@@ -167,7 +168,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
                 timeZones.add(item);
             }
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             // No current case.
         }
 
@@ -281,9 +282,9 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */

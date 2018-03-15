@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,17 +24,21 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel to allow the user to create and delete custom tag types.
@@ -121,7 +125,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
         jScrollPane2.setPreferredSize(new java.awt.Dimension(750, 490));
 
-        jSplitPane1.setDividerLocation(365);
+        jSplitPane1.setDividerLocation(450);
         jSplitPane1.setDividerSize(1);
         jSplitPane1.setPreferredSize(new java.awt.Dimension(748, 488));
 
@@ -183,17 +187,13 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tagTypesListLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(modifyTagTypesListPanelLayout.createSequentialGroup()
-                        .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(TagNameScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, modifyTagTypesListPanelLayout.createSequentialGroup()
-                                    .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(editTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(deleteTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(panelDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(editTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(deleteTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(TagNameScrollPane)
+                    .addComponent(panelDescriptionScrollPane))
                 .addContainerGap())
         );
 
@@ -207,7 +207,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tagTypesListLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(TagNameScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                .addComponent(TagNameScrollPane)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(modifyTagTypesListPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newTagNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -247,14 +247,14 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(descriptionScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
+                    .addComponent(descriptionScrollPane)
                     .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
                         .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(descriptionLabel)
                             .addGroup(tagTypesAdditionalPanelLayout.createSequentialGroup()
-                                .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(isNotableLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(notableYesOrNoLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(notableYesOrNoLabel))
                             .addComponent(ingestRunningWarningLabel))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -268,9 +268,9 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 .addComponent(descriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(tagTypesAdditionalPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(isNotableLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(isNotableLabel)
                     .addComponent(notableYesOrNoLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 304, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 311, Short.MAX_VALUE)
                 .addComponent(ingestRunningWarningLabel)
                 .addGap(31, 31, 31))
         );
@@ -327,7 +327,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
                 updatePanel();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.message"),
                         NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.TagNameDialog.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);
@@ -424,8 +424,10 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private void sendStatusChangedEvents() {
         for (String modifiedTagDisplayName : updatedStatusTags) {
             //if  user closes their case after options have been changed but before application of them is complete don't notify
-            if (Case.isCaseOpen()) {
-                Case.getCurrentCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
+            try {
+                Case.getOpenCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
+            } catch (NoCurrentCaseException ex) {
+                Logger.getLogger(TagOptionsPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }
         }
         updatedStatusTags.clear();

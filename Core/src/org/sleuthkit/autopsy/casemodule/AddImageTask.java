@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,6 +43,7 @@ class AddImageTask implements Runnable {
     private final Logger logger = Logger.getLogger(AddImageTask.class.getName());
     private final String deviceId;
     private final String imagePath;
+    private final int sectorSize;
     private final String timeZone;
     private final ImageWriterSettings imageWriterSettings;
     private final boolean ignoreFatOrphanFiles;
@@ -75,6 +76,7 @@ class AddImageTask implements Runnable {
      *                             intended to be unique across multiple cases
      *                             (e.g., a UUID).
      * @param imagePath            Path to the image file.
+     * @param sectorSize           The sector size (use '0' for autodetect).
      * @param timeZone             The time zone to use when processing dates
      *                             and times for the image, obtained from
      *                             java.util.TimeZone.getID.
@@ -87,10 +89,11 @@ class AddImageTask implements Runnable {
      *                             processing.
      * @param callback             Callback to call when processing is done.
      */
-    AddImageTask(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, ImageWriterSettings imageWriterSettings,
+    AddImageTask(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, ImageWriterSettings imageWriterSettings,
             DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.imagePath = imagePath;
+        this.sectorSize = sectorSize;
         this.timeZone = timeZone;
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         this.imageWriterSettings = imageWriterSettings;
@@ -104,9 +107,15 @@ class AddImageTask implements Runnable {
      */
     @Override
     public void run() {
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            return;
+        }
         progressMonitor.setIndeterminate(true);
         progressMonitor.setProgress(0);
-        Case currentCase = Case.getCurrentCase();
         String imageWriterPath = "";
         if (imageWriterSettings != null) {
             imageWriterPath = imageWriterSettings.getPath();
@@ -126,9 +135,7 @@ class AddImageTask implements Runnable {
             Thread progressUpdateThread = new Thread(new ProgressUpdater(progressMonitor, tskAddImageProcess));
             progressUpdateThread.start();
             runAddImageProcess(errorMessages);
-            if (null != progressUpdateThread) {
-                progressUpdateThread.interrupt();
-            }
+            progressUpdateThread.interrupt();
             commitOrRevertAddImageProcess(currentCase, errorMessages, newDataSources);
             progressMonitor.setProgress(100);
         } finally {
@@ -178,7 +185,7 @@ class AddImageTask implements Runnable {
      */
     private void runAddImageProcess(List<String> errorMessages) {
         try {
-            tskAddImageProcess.run(deviceId, new String[]{imagePath});
+            tskAddImageProcess.run(deviceId, new String[]{imagePath}, sectorSize);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Critical error occurred adding image %s", imagePath), ex); //NON-NLS
             criticalErrorOccurred = true;

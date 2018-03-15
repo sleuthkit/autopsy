@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -246,7 +246,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openCaseButtonActionPerformed
 
     private void openRecentCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentCaseButtonActionPerformed
-        recentCasesWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        recentCasesWindow.setLocationRelativeTo(this);
         OpenRecentCasePanel.getInstance();  //refreshes the recent cases table
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentCaseButtonActionPerformed

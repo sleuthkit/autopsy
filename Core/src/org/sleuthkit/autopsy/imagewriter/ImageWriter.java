@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Image;
@@ -78,12 +79,12 @@ class ImageWriter implements PropertyChangeListener{
         this.settings = settings;
         doUI = RuntimeProperties.runningWithGUI();    
         
-        // We save the reference to the sleuthkit case here in case getCurrentCase() is set to
+        // We save the reference to the sleuthkit case here in case getOpenCase() is set to
         // null before Image Writer finishes. The user can still elect to wait for image writer
         // (in ImageWriterService.closeCaseResources) even though the case is closing. 
         try{
-            caseDb = Case.getCurrentCase().getSleuthkitCase();
-        } catch (IllegalStateException ex){
+            caseDb = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex){
             logger.log(Level.SEVERE, "Unable to load case. Image writer will be cancelled.");
             this.isCancelled = true;
         }
@@ -151,10 +152,10 @@ class ImageWriter implements PropertyChangeListener{
             
             Image image;
             try{
-                image = Case.getCurrentCase().getSleuthkitCase().getImageById(dataSourceId);
+                image = Case.getOpenCase().getSleuthkitCase().getImageById(dataSourceId);
                 imageHandle = image.getImageHandle();
-            } catch (IllegalStateException ex){
-                // This exception means that getCurrentCase() failed because no case was open.
+            } catch (NoCurrentCaseException ex){
+                // This exception means that getOpenCase() failed because no case was open.
                 // This can happen when the user closes the case while ingest is ongoing - canceling
                 // ingest fires off the DataSourceAnalysisCompletedEvent while the case is in the 
                 // process of closing. 
@@ -173,7 +174,7 @@ class ImageWriter implements PropertyChangeListener{
                 periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
                 progressHandle = ProgressHandle.createHandle(Bundle.ImageWriter_progressBar_message(dataSourceName));
                 progressHandle.start(100);
-                progressUpdateTask = periodicTasksExecutor.scheduleAtFixedRate(
+                progressUpdateTask = periodicTasksExecutor.scheduleWithFixedDelay(
                         new ProgressUpdateTask(progressHandle, imageHandle), 0, 250, TimeUnit.MILLISECONDS);
             }
 

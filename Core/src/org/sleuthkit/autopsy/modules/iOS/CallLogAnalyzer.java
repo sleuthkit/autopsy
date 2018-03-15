@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -37,10 +38,14 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class CallLogAnalyzer {
+/**
+ * Look for call logs and allow resulting blackboard artifacts to be generated.
+ */
+final class CallLogAnalyzer {
 
     private Connection connection = null;
     private ResultSet resultSet = null;
@@ -48,28 +53,42 @@ class CallLogAnalyzer {
     private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
-    private String moduleName = iOSModuleFactory.getModuleName();
+    private final String moduleName = iOSModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
     private Blackboard blackboard;
 
+    /**
+     * Find call logs given an ingest job context and index the results.
+     * 
+     * @param context The ingest job context.
+     */
     public void findCallLogs(IngestJobContext context) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+        blackboard = openCase.getServices().getBlackboard();
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = openCase.getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("name ='contacts2.db' OR name ='contacts.db'"); //NON-NLS //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }
-            for (AbstractFile AF : absFiles) {
+            for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), AF.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
-                    ContentUtils.writeToFile(AF, jFile, context::dataSourceIngestIsCancelled);
+                    jFile = new java.io.File(Case.getOpenCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
-                    fileId = AF.getId();
+                    fileId = file.getId();
+                    ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
                     findCallLogsInDB(dbPath, fileId);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Error parsing Call logs", e); //NON-NLS
+                } catch (ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading content from file '%s' (id=%d).", file.getName(), fileId), ex); //NON-NLS
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, String.format("Error writing content from file '%s' (id=%d) to '%s'.", file.getName(), fileId, dbPath), ex); //NON-NLS
                 }
             }
         } catch (TskCoreException e) {
@@ -77,8 +96,14 @@ class CallLogAnalyzer {
         }
     }
 
+    /**
+     * Index results for call logs found in the database.
+     * 
+     * @param DatabasePath The path to the database.
+     * @param fileId       The ID of the file associated with artifacts.
+     */
     @Messages({"CallLogAnalyzer.indexError.message=Failed to index call log artifact for keyword search."})
-    private void findCallLogsInDB(String DatabasePath, long fId) {
+    private void findCallLogsInDB(String DatabasePath, long fileId) {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
@@ -90,12 +115,18 @@ class CallLogAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
-        Case currentCase = Case.getCurrentCase();
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
-            AbstractFile f = skCase.getAbstractFileById(fId);
-            if (f == null) {
-                logger.log(Level.SEVERE, "Error getting abstract file " + fId); //NON-NLS
+            AbstractFile file = skCase.getAbstractFileById(fileId);
+            if (file == null) {
+                logger.log(Level.SEVERE, "Error getting abstract file {0}", fileId); //NON-NLS
                 return;
             }
 
@@ -117,7 +148,7 @@ class CallLogAnalyzer {
                     date = resultSet.getString("date"); //NON-NLS
                     type = resultSet.getString("type"); //NON-NLS
 
-                    bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
+                    bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG); //create a call log and then add attributes from result set.
                     Collection<BlackboardAttribute> attributes = new ArrayList<>();
                     if (type.equalsIgnoreCase("outgoing")) { //NON-NLS
                         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, moduleName, number));

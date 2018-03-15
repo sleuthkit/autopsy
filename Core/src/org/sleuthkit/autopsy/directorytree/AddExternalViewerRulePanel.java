@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -134,7 +134,7 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
     ExternalViewerRule getRule() {
         String exePath = exePathTextField.getText();
         if (exePath.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExePath.message"),
                     NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExePath.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -151,7 +151,7 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
                 return null;
             }
             if (name.isEmpty() || !detector.isDetectable(name)) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.message"),
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidMime.title"),
                         JOptionPane.ERROR_MESSAGE);
@@ -160,7 +160,7 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
             return new ExternalViewerRule(name, exePath, ExternalViewerRule.RuleType.MIME);
         } else if (extRadioButton.isSelected()) {
             if (name.isEmpty() || !name.matches("^\\.?\\w+$")) {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.message"),
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.invalidExt.title"),
                         JOptionPane.ERROR_MESSAGE);
@@ -229,7 +229,7 @@ class AddExternalViewerRulePanel extends javax.swing.JPanel {
                         .addComponent(browseButton))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(exePathLabel)
-                        .addGap(0, 80, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(nameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)

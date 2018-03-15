@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
@@ -53,7 +53,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
         "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
-        propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
+        try {
+            propertiesPanel = new CasePropertiesPanel(Case.getOpenCase());
+        } catch (NoCurrentCaseException ex) { 
+            Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
+        }
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
@@ -106,14 +110,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
             .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
             .addGroup(outerDetailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(editDetailsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(editDetailsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(closeButton)
                 .addContainerGap())
         );
-
-        outerDetailsPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, editDetailsButton});
-
         outerDetailsPanelLayout.setVerticalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(outerDetailsPanelLayout.createSequentialGroup()
@@ -156,11 +157,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.add(editCasePropertiesPanel);
         editCasePropertiesDialog.setResizable(true);
         editCasePropertiesDialog.pack();
-
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        double w = editCasePropertiesDialog.getSize().getWidth();
-        double h = editCasePropertiesDialog.getSize().getHeight();
-        editCasePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        editCasePropertiesDialog.setLocationRelativeTo(this);
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
         propertiesPanel.updateCaseInfo();

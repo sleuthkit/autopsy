@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +52,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
  */
 public class EamDbSettingsDialog extends JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(EamDbSettingsDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(EamDbSettingsDialog.class.getName());
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
     private static final String CENTRAL_REPO_SQLITE_EXT = ".db";
     private static final long serialVersionUID = 1L;
@@ -234,18 +232,18 @@ public class EamDbSettingsDialog extends JDialog {
                     .addComponent(lbHostName)
                     .addComponent(lbPort)
                     .addComponent(lbUserName)
-                    .addComponent(lbDatabaseType, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lbDatabaseType)
                     .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addComponent(lbDatabasePath, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lbUserPassword, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(lbDatabaseDesc, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbDatabaseDesc))
                 .addGap(10, 10, 10)
                 .addGroup(pnSQLiteSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbFullDbPath, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnSQLiteSettingsLayout.createSequentialGroup()
                         .addComponent(cbDatabaseType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lbSingleUserSqLite, javax.swing.GroupLayout.DEFAULT_SIZE, 467, Short.MAX_VALUE)
+                        .addComponent(lbSingleUserSqLite, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(9, 9, 9))
                     .addGroup(pnSQLiteSettingsLayout.createSequentialGroup()
                         .addComponent(tfDatabasePath)
@@ -319,7 +317,7 @@ public class EamDbSettingsDialog extends JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addGap(10, 10, 10)
                 .addComponent(pnSQLiteSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(pnButtons, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10))
         );
@@ -348,8 +346,7 @@ public class EamDbSettingsDialog extends JDialog {
     }
 
     private void display() {
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
 
@@ -365,7 +362,7 @@ public class EamDbSettingsDialog extends JDialog {
                 tfDatabasePath.setText(databaseFile.getCanonicalPath());
                 valid();
             } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get path of selected database file", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Failed to get path of selected database file", ex); // NON-NLS
             }
         }
     }//GEN-LAST:event_bnDatabasePathFileOpenActionPerformed
@@ -432,7 +429,7 @@ public class EamDbSettingsDialog extends JDialog {
                             Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                    LOGGER.severe("Unable to initialize database schema or insert contents into central repository.");
+                    logger.severe("Unable to initialize database schema or insert contents into central repository.");
                     return;
                 }
                 break;
@@ -453,7 +450,7 @@ public class EamDbSettingsDialog extends JDialog {
                             Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                    LOGGER.severe("Unable to initialize database schema or insert contents into central repository.");
+                    logger.severe("Unable to initialize database schema or insert contents into central repository.");
                     return;
                 }
                 break;
@@ -523,9 +520,9 @@ public class EamDbSettingsDialog extends JDialog {
                 EamDb.getInstance().shutdownConnections();
             }
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to close database connections in previously selected platform.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to close database connections in previously selected platform.", ex); // NON-NLS
             SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
                         Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
                         JOptionPane.WARNING_MESSAGE);
@@ -548,7 +545,7 @@ public class EamDbSettingsDialog extends JDialog {
                     EamDb.getInstance().updateSettings();
                     configurationChanged = true;
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex); //NON-NLS
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     return;
                 }
@@ -563,7 +560,7 @@ public class EamDbSettingsDialog extends JDialog {
                     EamDb.getInstance().updateSettings();
                     configurationChanged = true;
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex);  //NON-NLS
+                    logger.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex);  //NON-NLS
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     return;
                 }

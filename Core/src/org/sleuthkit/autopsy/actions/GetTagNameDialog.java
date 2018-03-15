@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TagName;
@@ -108,10 +109,10 @@ public class GetTagNameDialog extends JDialog {
 
         // Get the current set of tag names and hash them for a speedy lookup in
         // case the user chooses an existing tag name from the tag names table.
-        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
         try {
+            TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
             tagNamesMap.putAll(tagsManager.getDisplayNamesToTagNamesMap());
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
 
@@ -326,19 +327,19 @@ public class GetTagNameDialog extends JDialog {
         String userTagDescription = descriptionTextArea.getText();
         TskData.FileKnown status = notableCheckbox.isSelected() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
         if (tagDisplayName.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
                             "GetTagNameDialog.mustSupplyTtagName.msg"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameErr"),
                     JOptionPane.ERROR_MESSAGE);
         } else if (TagsManager.containsIllegalCharacters(tagDisplayName)) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalChars.msg"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.illegalCharsErr"),
                     JOptionPane.ERROR_MESSAGE);
         } else if (userTagDescription.contains(",")
                 || userTagDescription.contains(";")) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagDescriptionIllegalCharacters.message"),
                     NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagDescriptionIllegalCharacters.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -347,11 +348,11 @@ public class GetTagNameDialog extends JDialog {
 
             if (tagName == null) {
                 try {
-                    tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName, userTagDescription, TagName.HTML_COLOR.NONE, status);
+                    tagName = Case.getOpenCase().getServices().getTagsManager().addTagName(tagDisplayName, userTagDescription, TagName.HTML_COLOR.NONE, status);
                     dispose();
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(this,
                             NbBundle.getMessage(this.getClass(),
                                     "GetTagNameDialog.unableToAddTagNameToCase.msg",
                                     tagDisplayName),
@@ -360,10 +361,10 @@ public class GetTagNameDialog extends JDialog {
                     tagName = null;
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     try {
-                        tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
-                    } catch (TskCoreException ex1) {
+                        tagName = Case.getOpenCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                    } catch (TskCoreException | NoCurrentCaseException ex1) {
                         Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(this,
                                 NbBundle.getMessage(this.getClass(),
                                         "GetTagNameDialog.tagNameExistsTskCore.msg",
                                         tagDisplayName),
@@ -373,7 +374,7 @@ public class GetTagNameDialog extends JDialog {
                     }
                 }
             } else {
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameAlreadyExists.message"),
                         NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameAlreadyExists.title"),
                         JOptionPane.INFORMATION_MESSAGE);

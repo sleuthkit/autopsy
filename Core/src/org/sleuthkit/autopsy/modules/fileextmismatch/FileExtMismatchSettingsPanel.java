@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -175,7 +175,6 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         newTypeButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newTypeButton.text")); // NOI18N
         newTypeButton.setMaximumSize(new java.awt.Dimension(111, 25));
         newTypeButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        newTypeButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newTypeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newTypeButtonActionPerformed(evt);
@@ -217,11 +216,11 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(mimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(newTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(removeTypeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(removeTypeButton))
                 .addContainerGap())
         );
 
@@ -319,28 +318,28 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     // Add a user-provided filename extension string to the selecte mimetype
     private void newExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExtButtonActionPerformed
-        String newExt = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.message"),
+        String newExt = (String) JOptionPane.showInputDialog(this, NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.message"),
                 NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.title"), JOptionPane.PLAIN_MESSAGE, null, null, "");
 
         if (newExt == null) {
             return;
         }
         if (newExt.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.empty.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.empty.title"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (selectedMime.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.noMimeType.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.noMimeType.title"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (currentExtensions.contains(newExt)) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.extExists.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newExtPrompt.extExists.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -361,7 +360,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     private void removeExtButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeExtButtonActionPerformed
         if (selectedExt.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeExtButton.noneSelected.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeExtButton.noneSelected.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -369,7 +368,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         }
         
         if (selectedMime.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeExtButton.noMimeTypeSelected.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeExtButton.noMimeTypeSelected.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -391,7 +390,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
 
     private void removeTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeTypeButtonActionPerformed
         if (selectedMime.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeTypeButton.noneSelected.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.removeTypeButton.noneSelected.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -407,28 +406,28 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
     }//GEN-LAST:event_removeTypeButtonActionPerformed
 
     private void newTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTypeButtonActionPerformed
-        String newMime = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.message"),
+        String newMime = (String) JOptionPane.showInputDialog(this, NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.message"),
                 NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.title"), JOptionPane.PLAIN_MESSAGE, null, null, "");
 
         if (newMime == null) {
             return;
         }
         if (newMime.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.emptyMime.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.emptyMime.title"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (newMime.equals("application/octet-stream")) { //NON-NLS
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.mimeTypeNotSupported.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.mimeTypeNotSupported.title"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (mimeList.contains(newMime)) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.mimeTypeExists.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.mimeTypeExists.title"),
                     JOptionPane.ERROR_MESSAGE);
@@ -444,7 +443,7 @@ final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel
         }
         boolean mimeTypeDetectable = (null != detector) ? detector.isDetectable(newMime) : false;
         if (!mimeTypeDetectable) {
-            JOptionPane.showMessageDialog(null,
+            JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.mimeTypeNotDetectable.message"),
                     NbBundle.getMessage(FileExtMismatchSettingsPanel.class, "FileExtMismatchSettingsPanel.newMimePrompt.mimeTypeNotDetectable.title"),
                     JOptionPane.ERROR_MESSAGE);

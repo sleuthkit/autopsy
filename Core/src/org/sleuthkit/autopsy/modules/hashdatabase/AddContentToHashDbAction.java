@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
@@ -150,7 +151,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                     // don't let them add the hash for an empty file to the DB
                     if (HashUtility.isNoDataMd5(md5Hash)) { //NON-NLS
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.INFO, "Not adding " + file.getName() + " to hash set (empty content)"); //NON-NLS
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(this.getClass(),
                                         "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileEmptyMsg",
                                         file.getName()),
@@ -163,7 +164,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                         hashSet.addHashes(file);
                     } catch (TskCoreException ex) {
                         Logger.getLogger(AddContentToHashDbAction.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex); //NON-NLS
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(this.getClass(),
                                         "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileMsg",
                                         file.getName()),
@@ -172,7 +173,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
-                    JOptionPane.showMessageDialog(null,
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             NbBundle.getMessage(this.getClass(),
                                     "AddContentToHashDbAction.addFilesToHashSet.unableToAddFileSzMsg",
                                     files.size() > 1 ? NbBundle

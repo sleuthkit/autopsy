@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2017 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +33,11 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -79,7 +81,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
     @Override
     public boolean isEnabled() {
         /**
-         * We used to also check if Case.getCurrentCase().hasData() was true. We
+         * We used to also check if Case.getOpenCase().hasData() was true. We
          * disabled that check because if it is executed while a data source is
          * being added, it blocks the edt. We still do that in ImageGallery.
          */
@@ -97,7 +99,10 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 }
             }
             setEnabled(false);
-        } else {
+        }else if("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
+            Platform.runLater(PromptDialogManager::showTimeLineDisabledMessage);
+            setEnabled(false);
+        }else {
             showTimeline();
         }
     }
@@ -107,7 +112,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
     synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             if (currentCase.hasData() == false) {
                 MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
@@ -127,7 +132,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
                 logger.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
             }
-        } catch (IllegalStateException e) {
+        } catch (NoCurrentCaseException e) {
             //there is no case...   Do nothing.
         }
     }
@@ -208,8 +213,8 @@ public final class OpenTimelineAction extends CallableSystemAction {
 
     private boolean tooManyFiles() {
         try {
-            return FILE_LIMIT < Case.getCurrentCase().getSleuthkitCase().countFilesWhere("1 = 1");
-        } catch (IllegalStateException ex) {
+            return FILE_LIMIT < Case.getOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can not open timeline with no case open.", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error counting files in the DB.", ex);
