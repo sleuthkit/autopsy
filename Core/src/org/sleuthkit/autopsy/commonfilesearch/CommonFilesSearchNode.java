@@ -30,7 +30,6 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Encapsulates data used to display common files search results in the top
  * right pane.
  */
-//TODO rename to CommonFilesSearchNode
 final class CommonFilesSearchNode extends AbstractNode {
 
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
@@ -38,7 +37,7 @@ final class CommonFilesSearchNode extends AbstractNode {
 }
 
     @NbBundle.Messages({
-        "CommonFilesNode.getName.text=CommonFiles"})
+        "CommonFilesNode.getName.text=Common Files"})
     @Override
     public String getName() {
         return Bundle.CommonFilesNode_getName_text();

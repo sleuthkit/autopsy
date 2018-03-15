@@ -29,6 +29,7 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -87,9 +88,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-                //TODO this is sort of a misues of the findAllFilesWhere function and seems brittle...
-                //...consider doing something else
-                //TODO verify that this works with postgres
                 return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
             }
 
@@ -104,11 +102,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     
                     CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
+                    TableFilterNode tableFilterNode = new TableFilterNode(contentFilesNode, true);
+                    
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
                             pathText,
-                            contentFilesNode,
-                            contentList.size());
+                            tableFilterNode,
+                            metadata.getFilesList().size());
 
                     component.requestActive(); // make it the active top component
 

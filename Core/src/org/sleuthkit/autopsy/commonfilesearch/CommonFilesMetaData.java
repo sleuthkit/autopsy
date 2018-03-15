@@ -68,8 +68,6 @@ public class CommonFilesMetaData {
 
             String currentMd5 = file.getMd5Hash();
             if (currentMd5.equals(previousMd5)) {
-                previousFile = file;
-                previousMd5 = currentMd5;
                 instanceCount++;
                 try {
                     dataSources.add(file.getDataSource().getName());
@@ -78,14 +76,16 @@ public class CommonFilesMetaData {
                     Exceptions.printStackTrace(ex);
                 }
             } else {
-                if (previousFile != null) {
-                    deDupedFiles.add(previousFile);
-                    instanceCountMap.put(currentMd5, instanceCount);
-                    dataSourceMap.put(currentMd5, String.join(", ", dataSources));
-                    dataSources.clear();
-                    instanceCount = 1;
-                    
-                }
+                previousFile = file;
+                previousMd5 = currentMd5;
+                instanceCount = 1;
+                dataSources.clear();
+            }
+            
+            if (previousFile != null) {
+                deDupedFiles.add(previousFile);
+                instanceCountMap.put(currentMd5, instanceCount);
+                dataSourceMap.put(currentMd5, String.join(", ", dataSources));
             }
         }
         CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles,dataSourceMap, instanceCountMap);
