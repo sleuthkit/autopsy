@@ -32,6 +32,8 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -74,6 +76,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @Override
             @SuppressWarnings("FinallyDiscardsException")
             protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException {
+                
+                //contents of this function should be wrapped in a BL class for the sake of testing
 
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -86,13 +90,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    List<AbstractFile> contentList = get();
-
-                    CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);
-                    
+                    List<AbstractFile> contentList = get();                                         //
+                                                                                                    //// To background thread
+                    CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);    //
+                                        
                     CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
-                    TableFilterNode tableFilterNode = new TableFilterNode(contentFilesNode, true);
+                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(contentFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
+                                        
+                    TableFilterNode tableFilterNode = new TableFilterNode(dataResultFilterNode, true);
                     
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
