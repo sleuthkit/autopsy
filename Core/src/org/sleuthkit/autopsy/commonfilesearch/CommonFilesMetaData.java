@@ -20,8 +20,11 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -31,9 +34,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CommonFilesMetaData {
 
-    public List<AbstractFile> dedupedFiles;
-    public java.util.Map<String, Integer> instanceCountMap;
-    public java.util.Map<String, String> dataSourceMap;
+    private List<AbstractFile> dedupedFiles;
+    private java.util.Map<String, Integer> instanceCountMap;
+    private java.util.Map<String, String> dataSourceMap;
 
     static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
 
@@ -47,13 +50,14 @@ public class CommonFilesMetaData {
         String previousMd5 = "";
         int instanceCount = 0;
 
-        List<String> dataSources = new ArrayList<>();
+        Set<String> dataSources = new HashSet<>();
 
         for (AbstractFile file : files) {
 
             String currentMd5 = file.getMd5Hash();
             if (currentMd5.equals(previousMd5)) {
                 instanceCount++;
+                
                 try {
                     dataSources.add(file.getDataSource().getName());
                 } catch (TskCoreException ex) {
@@ -61,23 +65,70 @@ public class CommonFilesMetaData {
                     Exceptions.printStackTrace(ex);
                 }
             } else {
+                if (previousFile != null) {
+                    deDupedFiles.add(previousFile);
+                    instanceCountMap.put(previousMd5, instanceCount);
+                    dataSourceMap.put(previousMd5, String.join(", ", dataSources));
+                }                
                 previousFile = file;
                 previousMd5 = currentMd5;
                 instanceCount = 1;
                 dataSources.clear();
-            }
-            
-            if (previousFile != null) {
-                deDupedFiles.add(previousFile);
-                instanceCountMap.put(currentMd5, instanceCount);
-                dataSourceMap.put(currentMd5, String.join(", ", dataSources));
+                                try {
+                    dataSources.add(file.getDataSource().getName());
+                } catch (TskCoreException ex) {
+                    //TODO finish this
+                    Exceptions.printStackTrace(ex);
+                }
             }
         }
 
-        data.dedupedFiles = deDupedFiles;
-        data.dataSourceMap = dataSourceMap;
-        data.instanceCountMap = instanceCountMap;
+        data.setDedupedFiles(deDupedFiles);
+        data.setDataSourceMap(dataSourceMap);
+        data.setInstanceCountMap(instanceCountMap);
 
         return data;
+    }
+
+    /**
+     * @return the dedupedFiles
+     */
+    public List<AbstractFile> getDedupedFiles() {
+        return Collections.unmodifiableList(dedupedFiles);
+    }
+
+    /**
+     * @param dedupedFiles the dedupedFiles to set
+     */
+    public void setDedupedFiles(List<AbstractFile> dedupedFiles) {
+        this.dedupedFiles = dedupedFiles;
+    }
+
+    /**
+     * @return the instanceCountMap
+     */
+    public java.util.Map<String, Integer> getInstanceCountMap() {
+        return Collections.unmodifiableMap(instanceCountMap);
+    }
+
+    /**
+     * @param instanceCountMap the instanceCountMap to set
+     */
+    public void setInstanceCountMap(java.util.Map<String, Integer> instanceCountMap) {
+        this.instanceCountMap = instanceCountMap;
+    }
+
+    /**
+     * @return the dataSourceMap
+     */
+    public java.util.Map<String, String> getDataSourceMap() {
+        return Collections.unmodifiableMap(dataSourceMap);
+    }
+
+    /**
+     * @param dataSourceMap the dataSourceMap to set
+     */
+    public void setDataSourceMap(java.util.Map<String, String> dataSourceMap) {
+        this.dataSourceMap = dataSourceMap;
     }
 }

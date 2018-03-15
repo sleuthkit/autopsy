@@ -90,6 +90,7 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
      */
     static public void fillPropertyMap(Map<String, Object> map, CommonFileNode node) {
         map.put(CommonFilePropertyType.Name.toString(), node.getContent().getName());
+        map.put(CommonFilePropertyType.Id.toString(), node.getContent().getId());
         map.put(CommonFilePropertyType.InstanceCount.toString(), node.getCommonFileCount());
         map.put(CommonFilePropertyType.Md5Hash.toString(), StringUtils.defaultString(node.getContent().getMd5Hash()));
         map.put(CommonFilePropertyType.DataSources.toString(), node.getDataSources());
@@ -97,12 +98,14 @@ public class CommonFileNode extends AbstractNode {  //TODO FileNode
     
     @NbBundle.Messages({
         "CommonFilePropertyType.nameColLbl=Name",
+        "CommonFilePropertyType.idColLbl1=Id",
         "CommonFilePropertyType.instanceColLbl1=Instance Count",
         "CommonFilePropertyType.md5HashColLbl=MD5 Hash",
         "CommonFilePropertyType.dataSourcesColLbl=Data Sources"})
     public enum CommonFilePropertyType {
         
         Name(Bundle.CommonFilePropertyType_nameColLbl()),
+        Id(Bundle.CommonFilePropertyType_idColLbl1()),
         InstanceCount(Bundle.CommonFilePropertyType_instanceColLbl1()),
         Md5Hash(Bundle.CommonFilePropertyType_md5HashColLbl()),
         DataSources(Bundle.CommonFilePropertyType_dataSourcesColLbl());
