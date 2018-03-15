@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.datamodel.CommonFileNode;
 /**
  * Makes nodes for common files search results.
  */
-final class CommonFilesChildren extends Children.Keys<AbstractFile> {
+final class CommonFilesChildren extends Children.Keys<AbstractFile> {   //TODO extend ChildFactory rather than Children.Keys
 
     private final java.util.Map<String, Integer> instanceCountMap;
     private final java.util.Map<String, String> dataSourceMap;
@@ -50,7 +50,8 @@ final class CommonFilesChildren extends Children.Keys<AbstractFile> {
         String dataSources = this.dataSourceMap.get(md5Hash);
         
         Node[] node = new Node[1];
-        node[0] = new CommonFileNode(t, instanceCount, dataSources);
+        final CommonFileNode commonFileNode = new CommonFileNode(t, instanceCount, dataSources);
+        node[0] = commonFileNode;
         
         return node;
     }
