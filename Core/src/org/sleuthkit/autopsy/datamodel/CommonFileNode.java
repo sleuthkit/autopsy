@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
-public class CommonFileNode extends AbstractNode {
+public class CommonFileNode extends AbstractNode {  //TODO FileNode
 
     private final AbstractFile content;
     
