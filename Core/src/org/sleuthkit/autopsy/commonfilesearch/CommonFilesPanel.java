@@ -108,7 +108,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                             title,
                             pathText,
                             tableFilterNode,
-                            metadata.getDedupedFiles().size());
+                            metadata.getFilesList().size());
 
                     component.requestActive(); // make it the active top component
 
