@@ -34,6 +34,7 @@ import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -254,12 +255,12 @@ final class DataSourceIngestJob {
              */
             Thread.currentThread().interrupt();
         }
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
+            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
             this.addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
             this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
             this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
         }
     }
@@ -338,7 +339,7 @@ final class DataSourceIngestJob {
      * @return True or false.
      */
     FilesSet getFileIngestFilter() {
-        return this.settings.getFileIngestFilter();
+        return this.settings.getFileFilter();
     }
 
     /**
@@ -400,8 +401,8 @@ final class DataSourceIngestJob {
                 this.startSecondStage();
             }
             try {
-                this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
-            } catch (TskCoreException ex) {
+                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }

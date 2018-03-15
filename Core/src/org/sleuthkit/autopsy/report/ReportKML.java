@@ -43,6 +43,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 /**
@@ -99,14 +100,18 @@ class ReportKML implements GeneralReportModule {
      */
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
-
-        currentCase = Case.getCurrentCase();
+        
         skCase = currentCase.getSleuthkitCase();
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
@@ -382,7 +387,7 @@ class ReportKML implements GeneralReportModule {
             if (result == ReportProgressPanel.ReportStatus.ERROR) {
                 prependedStatus = "Incomplete ";
             }
-            Case.getCurrentCase().addReport(kmlFileFullPath,
+            Case.getOpenCase().addReport(kmlFileFullPath,
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
                     prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {
@@ -391,6 +396,9 @@ class ReportKML implements GeneralReportModule {
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 

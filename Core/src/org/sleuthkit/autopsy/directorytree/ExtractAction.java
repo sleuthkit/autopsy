@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +33,11 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -95,9 +97,18 @@ public final class ExtractAction extends AbstractAction {
      * @param e
      * @param selectedFile Selected file
      */
+    @NbBundle.Messages ({"ExtractAction.noOpenCase.errMsg=No open case available."})
     private void extractFile(ActionEvent e, AbstractFile selectedFile) {
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            JOptionPane.showMessageDialog((Component) e.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
+            logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
@@ -114,9 +125,17 @@ public final class ExtractAction extends AbstractAction {
      * @param selectedFiles Selected files
      */
     private void extractFiles(ActionEvent e, Collection<? extends AbstractFile> selectedFiles) {
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            JOptionPane.showMessageDialog((Component) e.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
+            logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        folderChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+        folderChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         if (folderChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {

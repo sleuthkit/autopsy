@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JTabbedPane;
+import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -40,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 //@TopComponent.Description(preferredID = "DataContentTopComponent")
 //@TopComponent.Registration(mode = "output", openAtStartup = true)
 //@TopComponent.OpenActionRegistration(displayName = "#CTL_DataContentAction", preferredID = "DataContentTopComponent")
-public final class DataContentTopComponent extends TopComponent implements DataContent {
+public final class DataContentTopComponent extends TopComponent implements DataContent, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataContentTopComponent.class.getName());
 
@@ -51,6 +54,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     private final boolean isDefault;
     // the content panel holding tabs with content viewers
     private final DataContentPanel dataContentPanel;
+    private final ExplorerManager explorerManager = new ExplorerManager();
 
     // contains a list of the undocked TCs
     private static final ArrayList<DataContentTopComponent> newWindowList = new ArrayList<>();
@@ -67,6 +71,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         dataContentPanel = new DataContentPanel(isDefault);
         add(dataContentPanel);
+
+        associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isDefault); // prevent option to close compoment in GUI
         logger.log(Level.INFO, "Created DataContentTopComponent instance: {0}", this); //NON-NLS
@@ -129,6 +135,11 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     }
 
     @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
+    }
+
+    @Override
     public int getPersistenceType() {
         return TopComponent.PERSISTENCE_NEVER;
     }
@@ -168,7 +179,13 @@ public final class DataContentTopComponent extends TopComponent implements DataC
          * the main window, only it to be closed when there's no case opened or
          * no data sources in the open case.
          */
-        return (!this.isDefault) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
+        return (!this.isDefault) || openCase.hasData() == false;
     }
 
     @Override

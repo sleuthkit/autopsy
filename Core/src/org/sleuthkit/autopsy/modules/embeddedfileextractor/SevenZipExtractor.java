@@ -46,6 +46,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -347,9 +348,9 @@ class SevenZipExtractor {
         UnpackedTree.UnpackedNode currentNode = node;
         String name = currentNode.getFileName();
         currentNode = currentNode.getParent();
-        while(currentNode != null && currentNode.getParent() != null){
-             name = currentNode.getFileName() +"/"+ name;
-             currentNode = currentNode.getParent();
+        while (currentNode != null && currentNode.getParent() != null) {
+            name = currentNode.getFileName() + "/" + name;
+            currentNode = currentNode.getParent();
         }
 //        String dataSourceName = null;
 //        if (lastNode != null){
@@ -435,7 +436,13 @@ class SevenZipExtractor {
         //recursion depth check for zip bomb
         final long archiveId = archiveFile.getId();
         SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr = null;
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        try {
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
+            unpackSuccessful = false;
+            return unpackSuccessful;
+        }
         try {
 
             List<AbstractFile> existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
@@ -609,8 +616,8 @@ class SevenZipExtractor {
                     }
                 }
 
-            } catch (TskCoreException e) {
-                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure"); //NON-NLS
+            } catch (TskCoreException | NoCurrentCaseException e) {
+                logger.log(Level.SEVERE, "Error populating complete derived file hierarchy from the unpacked dir structure", e); //NON-NLS
                 //TODO decide if anything to cleanup, for now bailing
             }
 
@@ -933,8 +940,8 @@ class SevenZipExtractor {
          * Traverse the tree top-down after unzipping is done and create derived
          * files for the entire hierarchy
          */
-        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
-            final FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+        void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
+            final FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             for (UnpackedNode child : rootNode.children) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }

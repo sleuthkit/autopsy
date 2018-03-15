@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Shows SMS/MMS/EMail messages
  */
-@ServiceProvider(service = DataContentViewer.class, position = 4)
+@ServiceProvider(service = DataContentViewer.class, position = 5)
 public class MessageContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
@@ -90,7 +90,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
      */
     private BlackboardArtifact artifact;
     private final DataResultPanel drp;
-    private final ExplorerManager drpExplorerManager;
+    private ExplorerManager drpExplorerManager;
 
     /**
      * Creates new MessageContentViewer
@@ -107,6 +107,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
         resetComponent();
+
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify(); //To change body of generated methods, choose Tools | Templates.
 
         drp.open();
         drpExplorerManager = drp.getExplorerManager();
@@ -706,7 +712,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private static class AttachmentNode extends FileNode {
 
         AttachmentNode(AbstractFile file) {
-            super(file, true);
+            super(file, false);
         }
 
         @Override

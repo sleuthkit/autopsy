@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -79,7 +80,12 @@ class IngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        try {
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            return ProcessResult.ERROR;
+        }
 
         if (!EamArtifactUtil.isValidCentralRepoFile(af)) {
             return ProcessResult.OK;
@@ -190,8 +196,16 @@ class IngestModule implements FileIngestModule {
             }
             return;
         }
+        Case autopsyCase;
+        try {
+            autopsyCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            throw new IngestModuleException("Exception while getting open case.", ex); 
+        }
+        
         // Don't allow sqlite central repo databases to be used for multi user cases
-        if ((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE)
+        if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
                 && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
             LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
@@ -212,7 +226,7 @@ class IngestModule implements FileIngestModule {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
-        Case autopsyCase = Case.getCurrentCase();
+
         try {
             eamCase = centralRepoDb.getCase(autopsyCase);
         } catch (EamDbException ex) {

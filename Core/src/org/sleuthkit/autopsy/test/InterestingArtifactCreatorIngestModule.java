@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
@@ -53,10 +54,10 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
+            Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
             artifactType = blackboard.getOrAddArtifactType(INT_ARTIFACT_TYPE_NAME, INT_ARTIFACT_DISPLAY_NAME);
-         } catch (Blackboard.BlackboardException ex) {
+         } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.InterestingArtifactCreatorIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
         }
     }
@@ -76,7 +77,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
              * type.
              */
             int randomArtIndex = (int) (Math.random() * 3);
-            Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
+            Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
             BlackboardArtifact.Type artifactTypeBase = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAMES[randomArtIndex], ARTIFACT_DISPLAY_NAMES[randomArtIndex]);
             BlackboardArtifact artifactBase = file.newArtifact(artifactTypeBase.getTypeID());
             Collection<BlackboardAttribute> baseAttributes = new ArrayList<>();
@@ -123,7 +124,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
             attributes.add(att3);
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactBase.getArtifactID()));
             artifact.addAttributes(attributes);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         } catch (Blackboard.BlackboardException ex) {

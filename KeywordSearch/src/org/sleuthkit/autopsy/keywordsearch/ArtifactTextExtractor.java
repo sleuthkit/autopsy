@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -57,9 +58,9 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
 
         Case currentCase;
         try {
-            currentCase = Case.getCurrentCase();
-        } catch (IllegalStateException ignore) {
-            // thorown by Case.getCurrentCase() if currentCase is null
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ignore) {
+            // thorown by Case.getOpenCase() if currentCase is null
             return null;
         }
 

@@ -66,7 +66,7 @@ final class CaseDeleteAction extends CallableSystemAction {
         "# {0} - exception message", "Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}",})
     public void actionPerformed(ActionEvent e) {
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             String caseName = currentCase.getName();
             String caseDirectory = currentCase.getCaseDirectory();
 
@@ -110,7 +110,7 @@ final class CaseDeleteAction extends CallableSystemAction {
                     }
                 }.execute();
             }
-        } catch (IllegalStateException ex) {
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Case delete action called with no current case", ex);
         }
     }

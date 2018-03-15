@@ -57,6 +57,8 @@
     <properties>            
       <!-- Disabled because we have lots of undocumented fields -->
       <property name="fieldCommentRequirement" value="Unwanted"/>
+      <!-- Disabled because we don't require comments on overrides of public fields -->
+      <property name="publicMethodCommentRequirement" value="Unwanted"/>
     </properties>
   </rule>
   <!-- Commented out because it was flagged some of our header / copyright comments
@@ -114,7 +116,8 @@
   <!-- Disabled.  Could enforce in future, but not top priority right now.
   <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/> -->
   <rule ref="rulesets/java/design.xml/AvoidProtectedFieldInFinalClass"/>
-  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>-->
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAbstractMethod"/>
   <rule ref="rulesets/java/design.xml/SimplifyConditional"/>
