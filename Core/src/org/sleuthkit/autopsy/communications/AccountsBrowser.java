@@ -34,6 +34,7 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -89,7 +90,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         jSplitPane1.setRightComponent(messageBrowser);
 
         proxyLookup = new ProxyLookup(
-               messageBrowser.getLookup(),
+                messageBrowser.getLookup(),
                 ExplorerUtils.createLookup(accountsTableEM, getActionMap()));
     }
 
@@ -120,10 +121,12 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     @Subscribe
     public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
         try {
-            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            final CommunicationsManager commsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
             accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, filterChangeEvent.getNewFilter()), true)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
+        } catch (NoCurrentCaseException ex) { //NOPMD empty catch clause
+            //Case is closed, do nothig.
         }
     }
 
