@@ -267,7 +267,11 @@ class SevenZipExtractor {
         if (archiveFile.hasChildren()) {
             //check if local unpacked dir exists 
             if (new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
+                System.out.println("ARCHIVEFILE = " + archiveFile.getName() + "ARCHIVEPATH = "+ archiveFilePath);
                 List<AbstractFile> existingFiles = Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
+                for (AbstractFile file : existingFiles) {
+                    System.out.println("File Parent Path: " + file.getParentPath() + " File Name: " + file.getName());
+                }
                 return existingFiles;
             }
         }
@@ -336,7 +340,7 @@ class SevenZipExtractor {
     }
 
     private String getKeyAbstractFile(AbstractFile fileInDatabase, String archiveFilePath) {
-        String returnString = fileInDatabase == null ? null : archiveFilePath + "/" + fileInDatabase.getName(); //fileInDatabase.getParentPath() + fileInDatabase.getName();
+        String returnString = fileInDatabase == null ? null : fileInDatabase.getParentPath() + fileInDatabase.getName(); //fileInDatabase.getParentPath() + fileInDatabase.getName();
         System.out.println("KEY FROM FILE: " + returnString);
         System.out.println("KEY FROM FILE ARCHIVEFILEPATH: " + archiveFilePath);
         return returnString;
@@ -946,14 +950,14 @@ class SevenZipExtractor {
             }
         }
 
-        private AbstractFile findFileWithSamePath(Set<AbstractFile> files, UnpackedNode unpackedNode) {
-            for (AbstractFile file : files) {
-                if (file.getName().equals(unpackedNode.getFileName())) {
-                    return file;
-                }
-            }
-            return null;
-        }
+//        private AbstractFile findFileWithSamePath(Set<AbstractFile> files, UnpackedNode unpackedNode) {
+//            for (AbstractFile file : files) {
+//                if (file.getName().equals(unpackedNode.getFileName())) {
+//                    return file;
+//                }
+//            }
+//            return null;
+//        }
 
         private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
             DerivedFile df;
@@ -962,8 +966,20 @@ class SevenZipExtractor {
                 for (ZipFileStatusWrapper zip : statusMap.values()){
                     System.out.println("file="+zip.getFile().getUniquePath() + "  status="+zip.getStatus());
                 }
+                for (String key : statusMap.keySet()){
+                    System.out.println("KEY="+key);
+                }
                 String nameInDatabase = getKeyFromUnpackedNode(node, archiveFilePath);
-                ZipFileStatusWrapper existingFile = nameInDatabase == null ? null : statusMap.get(nameInDatabase);
+                ZipFileStatusWrapper existingFile;
+                if (nameInDatabase == null){
+                    existingFile = null;
+                    System.out.println("NAME IS NULL SOMEHOW");
+                }
+                else{
+                    System.out.println("GETTING WITH KEY: " + nameInDatabase);
+                    existingFile = statusMap.get(nameInDatabase);
+                }
+                //ZipFileStatusWrapper existingFile = nameInDatabase == null ? null : statusMap.get(nameInDatabase);
                 if (existingFile == null) {
                     df = fileManager.addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
                             node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
@@ -1001,7 +1017,7 @@ class SevenZipExtractor {
             }
             //recurse adding the children if this file was incomplete the children presumably need to be added
             for (UnpackedNode child : node.children) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
             }
         }
 
