@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -75,9 +74,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException {
+            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
                 
-                //contents of this function should be wrapped in a BL class for the sake of testing
+                //contents of this whole function should be wrapped in a business logic class for the sake of testing
+                
+                /*
+                
+                Use this query to grab mapping of object_id to datasourcename:
+                    select name, obj_id from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info));
+                
+                Use SleuthkitCase.executeSql to run the query and get back a result set which can be iterated like a regular old jdbc object.
+                
+                Use file.getDataSourceID() to get datasourceid and map it to the appropriate row from above
+                */
 
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -91,7 +100,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     super.done();
 
                     List<AbstractFile> contentList = get();                                         //
-                                                                                                    //// To background thread
+                                                                                                    //// To background thread (doInBackground)
                     CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);    //
                                         
                     CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
