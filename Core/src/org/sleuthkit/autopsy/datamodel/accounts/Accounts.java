@@ -88,7 +88,7 @@ import org.sleuthkit.datamodel.TskData.DbType;
 final public class Accounts implements AutopsyVisitableItem {
 
     private static final Logger LOGGER = Logger.getLogger(Accounts.class.getName());
-    private static final String iconBasePath = "/org/sleuthkit/autopsy/images/"; //NON-NLS
+    private static final String ICON_BASE_PATH = "/org/sleuthkit/autopsy/images/"; //NON-NLS
 
     @NbBundle.Messages("AccountsRootNode.name=Accounts")
     final public static String NAME = Bundle.AccountsRootNode_name();
@@ -96,10 +96,8 @@ final public class Accounts implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     private final EventBus reviewStatusBus = new EventBus("ReviewStatusBus");
 
-    /**
-     * Should rejected accounts be shown in the accounts section of the tree.
-     */
-    private boolean showRejected = false;
+    /* Should rejected accounts be shown in the accounts section of the tree. */
+    private boolean showRejected = false; //NOPMD redundant initializer
 
     private final RejectAccounts rejectActionInstance;
     private final ApproveAccounts approveActionInstance;
@@ -717,8 +715,8 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<FileWithCCN> list) {
-            String query
-                    = "SELECT blackboard_artifacts.obj_id," //NON-NLS
+            String query =
+                    "SELECT blackboard_artifacts.obj_id," //NON-NLS
                     + "      solr_attribute.value_text AS solr_document_id, "; //NON-NLS
             if (skCase.getDatabaseType().equals(DbType.POSTGRESQL)) {
                 query += "      string_agg(blackboard_artifacts.artifact_id::character varying, ',') AS artifact_IDs, " //NON-NLS
@@ -739,14 +737,14 @@ final public class Accounts implements AutopsyVisitableItem {
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
                     + " ORDER BY hits DESC ";  //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
-                    ResultSet rs = results.getResultSet();) {
-                while (rs.next()) {
+                    ResultSet resultSet = results.getResultSet();) {
+                while (resultSet.next()) {
                     list.add(new FileWithCCN(
-                            rs.getLong("obj_id"), //NON-NLS
-                            rs.getString("solr_document_id"), //NON-NLS
-                            unGroupConcat(rs.getString("artifact_IDs"), Long::valueOf), //NON-NLS
-                            rs.getLong("hits"), //NON-NLS
-                            new HashSet<>(unGroupConcat(rs.getString("review_status_ids"), id -> BlackboardArtifact.ReviewStatus.withID(Integer.valueOf(id))))));  //NON-NLS
+                            resultSet.getLong("obj_id"), //NON-NLS
+                            resultSet.getString("solr_document_id"), //NON-NLS
+                            unGroupConcat(resultSet.getString("artifact_IDs"), Long::valueOf), //NON-NLS
+                            resultSet.getLong("hits"), //NON-NLS
+                            new HashSet<>(unGroupConcat(resultSet.getString("review_status_ids"), reviewStatusID -> BlackboardArtifact.ReviewStatus.withID(Integer.valueOf(reviewStatusID))))));  //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
@@ -794,8 +792,8 @@ final public class Accounts implements AutopsyVisitableItem {
             "# {0} - number of children",
             "Accounts.ByFileNode.displayName=By File ({0})"})
         private void updateDisplayName() {
-            String query
-                    = "SELECT count(*) FROM ( SELECT count(*) AS documents "
+            String query =
+                    "SELECT count(*) FROM ( SELECT count(*) AS documents "
                     + " FROM blackboard_artifacts " //NON-NLS
                     + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
                     + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
@@ -806,12 +804,12 @@ final public class Accounts implements AutopsyVisitableItem {
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
-                    ResultSet rs = results.getResultSet();) {
-                while (rs.next()) {
+                    ResultSet resultSet = results.getResultSet();) {
+                while (resultSet.next()) {
                     if (skCase.getDatabaseType().equals(DbType.POSTGRESQL)) {
-                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count")));
+                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(resultSet.getLong("count")));
                     } else {
-                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count(*)")));
+                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(resultSet.getLong("count(*)")));
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -872,7 +870,7 @@ final public class Accounts implements AutopsyVisitableItem {
                                 && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
                             reviewStatusBus.post(eventData);
                         }
-                    } catch (NoCurrentCaseException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
                         // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -887,15 +885,14 @@ final public class Accounts implements AutopsyVisitableItem {
                         Case.getOpenCase();
 
                         refresh(true);
-                    } catch (NoCurrentCaseException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause
                         // Case is closed, do nothing.
                     }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())
+                        && (evt.getNewValue() == null)) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                    removeNotify();
+                    skCase = null;
                 }
             }
         };
@@ -931,8 +928,8 @@ final public class Accounts implements AutopsyVisitableItem {
 
             RangeMap<Integer, BinResult> binRanges = TreeRangeMap.create();
 
-            String query
-                    = "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
+            String query =
+                    "SELECT SUBSTR(blackboard_attributes.value_text,1,8) AS BIN, " //NON-NLS
                     + "     COUNT(blackboard_artifacts.artifact_id) AS count " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
@@ -941,8 +938,8 @@ final public class Accounts implements AutopsyVisitableItem {
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY BIN " //NON-NLS
                     + " ORDER BY BIN "; //NON-NLS
-            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
-                ResultSet resultSet = results.getResultSet();
+            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
+                    ResultSet resultSet = results.getResultSet();) {
                 //sort all te individual bins in to the ranges
                 while (resultSet.next()) {
                     final Integer bin = Integer.valueOf(resultSet.getString("BIN"));
@@ -956,16 +953,15 @@ final public class Accounts implements AutopsyVisitableItem {
                         count += previousResult.getCount();
                     }
 
-                    if (binRange != null) {
-                        binRanges.put(Range.closed(binRange.getBINstart(), binRange.getBINend()), new BinResult(count, binRange));
-                    } else {
+                    if (binRange == null) {
                         binRanges.put(Range.closed(bin, bin), new BinResult(count, bin, bin));
+                    } else {
+                        binRanges.put(Range.closed(binRange.getBINstart(), binRange.getBINend()), new BinResult(count, binRange));
                     }
                 }
                 binRanges.asMapOfRanges().values().forEach(list::add);
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for BINs.", ex); //NON-NLS
-
             }
 
             return true;
@@ -999,15 +995,15 @@ final public class Accounts implements AutopsyVisitableItem {
             "# {0} - number of children",
             "Accounts.ByBINNode.displayName=By BIN ({0})"})
         private void updateDisplayName() {
-            String query
-                    = "SELECT count(distinct SUBSTR(blackboard_attributes.value_text,1,8)) AS BINs " //NON-NLS
+            String query =
+                    "SELECT count(distinct SUBSTR(blackboard_attributes.value_text,1,8)) AS BINs " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause(); //NON-NLS
-            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query)) {
-                ResultSet resultSet = results.getResultSet();
+            try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
+                    ResultSet resultSet = results.getResultSet();) {
                 while (resultSet.next()) {
                     setDisplayName(Bundle.Accounts_ByBINNode_displayName(resultSet.getLong("BINs")));
                 }
@@ -1188,7 +1184,8 @@ final public class Accounts implements AutopsyVisitableItem {
          * @param key            The FileWithCCN that backs this node.
          * @param content        The Content object the key represents.
          * @param lookupContents The contents of this Node's lookup. It should
-         * contain the content object and the account artifacts.
+         *                       contain the content object and the account
+         *                       artifacts.
          */
         @NbBundle.Messages({
             "# {0} - raw file name",
@@ -1226,29 +1223,29 @@ final public class Accounts implements AutopsyVisitableItem {
             "Accounts.FileWithCCNNode.statusProperty.displayName=Status",
             "Accounts.FileWithCCNNode.noDescription=no description"})
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set propSet = sheet.get(Sheet.PROPERTIES);
+            if (propSet == null) {
+                propSet = Sheet.createPropertiesSet();
+                sheet.put(propSet);
             }
 
-            ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_nameProperty_displayName(),
+            propSet.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_nameProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_nameProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
                     fileName));
-            ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_accountsProperty_displayName(),
+            propSet.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_accountsProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_accountsProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
                     fileKey.getHits()));
-            ss.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
+            propSet.put(new NodeProperty<>(Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_statusProperty_displayName(),
                     Bundle.Accounts_FileWithCCNNode_noDescription(),
                     fileKey.getStatuses().stream()
                             .map(BlackboardArtifact.ReviewStatus::getDisplayName)
                             .collect(Collectors.joining(", ")))); //NON-NLS
 
-            return s;
+            return sheet;
         }
 
         @Override
@@ -1292,8 +1289,8 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<Long> list) {
 
-            String query
-                    = "SELECT blackboard_artifacts.artifact_id " //NON-NLS
+            String query =
+                    "SELECT blackboard_artifacts.artifact_id " //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
@@ -1339,9 +1336,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     final public class BINNode extends DisplayableItemNode {
 
-        /**
-         * Creates the nodes for the credit card numbers
-         */
+        /** Creates the nodes for the credit card numbers */
         private final BinResult bin;
 
         private BINNode(BinResult bin) {
@@ -1365,8 +1360,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            String query
-                    = "SELECT count(blackboard_artifacts.artifact_id ) AS count" //NON-NLS
+            String query =
+                    "SELECT count(blackboard_artifacts.artifact_id ) AS count" //NON-NLS
                     + " FROM blackboard_artifacts " //NON-NLS
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
@@ -1374,9 +1369,9 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                     + getRejectedArtifactFilterClause();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
-                    ResultSet rs = results.getResultSet();) {
-                while (rs.next()) {
-                    setDisplayName(getBinRangeString(bin) + " (" + rs.getLong("count") + ")"); //NON-NLS
+                    ResultSet resultSet = results.getResultSet();) {
+                while (resultSet.next()) {
+                    setDisplayName(getBinRangeString(bin) + " (" + resultSet.getLong("count") + ")"); //NON-NLS
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for account artifacts.", ex); //NON-NLS
@@ -1506,9 +1501,7 @@ final public class Accounts implements AutopsyVisitableItem {
             return true;
         }
 
-        /**
-         * The number of accounts with this BIN
-         */
+        /** The number of accounts with this BIN */
         private final long count;
 
         private final BINRange binRange;
@@ -1598,7 +1591,7 @@ final public class Accounts implements AutopsyVisitableItem {
         private AccountArtifactNode(BlackboardArtifact artifact) {
             super(artifact, "org/sleuthkit/autopsy/images/credit-card.png");   //NON-NLS
             this.artifact = artifact;
-            setName("" + this.artifact.getArtifactID());
+            setName(Long.toString(this.artifact.getArtifactID()));
 
             reviewStatusBus.register(this);
         }
@@ -1728,7 +1721,7 @@ final public class Accounts implements AutopsyVisitableItem {
             selectedPaths.forEach(path -> {
                 try {
                     toArray.add(NodeOp.findPath(rootNode, path));
-                } catch (NodeNotFoundException ex) {
+                } catch (NodeNotFoundException ex) { //NOPMD empty catch clause
                     //just ingnore paths taht don't exist.  this is expected since we are rejecting
                 }
             });
@@ -1772,25 +1765,25 @@ final public class Accounts implements AutopsyVisitableItem {
     public static String getIconFilePath(Account.Type type) {
 
         if (type.equals(Account.Type.CREDIT_CARD)) {
-            return iconBasePath + "credit-card.png";
+            return ICON_BASE_PATH + "credit-card.png";
         } else if (type.equals(Account.Type.DEVICE)) {
-            return iconBasePath + "image.png";
+            return ICON_BASE_PATH + "image.png";
         } else if (type.equals(Account.Type.EMAIL)) {
-            return iconBasePath + "email.png";
+            return ICON_BASE_PATH + "email.png";
         } else if (type.equals(Account.Type.FACEBOOK)) {
-            return iconBasePath + "facebook.png";
+            return ICON_BASE_PATH + "facebook.png";
         } else if (type.equals(Account.Type.INSTAGRAM)) {
-            return iconBasePath + "instagram.png";
+            return ICON_BASE_PATH + "instagram.png";
         } else if (type.equals(Account.Type.MESSAGING_APP)) {
-            return iconBasePath + "messaging.png";
+            return ICON_BASE_PATH + "messaging.png";
         } else if (type.equals(Account.Type.PHONE)) {
-            return iconBasePath + "phone.png";
+            return ICON_BASE_PATH + "phone.png";
         } else if (type.equals(Account.Type.TWITTER)) {
-            return iconBasePath + "twitter.png";
+            return ICON_BASE_PATH + "twitter.png";
         } else if (type.equals(Account.Type.WEBSITE)) {
-            return iconBasePath + "web-file.png";
+            return ICON_BASE_PATH + "web-file.png";
         } else if (type.equals(Account.Type.WHATSAPP)) {
-            return iconBasePath + "WhatsApp.png";
+            return ICON_BASE_PATH + "WhatsApp.png";
         } else {
             //there could be a default icon instead...
             throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
