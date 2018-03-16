@@ -77,17 +77,6 @@ public final class RunIngestModulesAction extends AbstractAction {
     }
 
     /**
-     * Constructs an action that invokes the Run Ingest Modules wizard for one
-     * or more data sources.
-     *
-     * @param dataSources - the data sources you want to run ingest on
-     */
-    public RunIngestModulesAction(List<Content> dataSources, IngestJobSettings.IngestType type) {
-        this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
-        this.dataSources.addAll(dataSources);
-        this.ingestType = type;
-    }
-    /**
      * Creates an action which will make a run ingest modules wizard when it is
      * performed.
      *

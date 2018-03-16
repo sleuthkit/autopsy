@@ -38,7 +38,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
         String prompt = "Enter Password:";
         String title = "Enter Password";
         while (!done) {
-            Object inputValue = JOptionPane.showInputDialog(null, prompt, title, JOptionPane.PLAIN_MESSAGE, null, null, password);
+            Object inputValue = JOptionPane.showInputDialog(null,  prompt, title, JOptionPane.PLAIN_MESSAGE, null, null, password);
             if (inputValue == null) {
                 done = true;
             } else {

@@ -43,6 +43,7 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import org.apache.tika.mime.MimeTypes;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -261,12 +262,12 @@ class SevenZipExtractor {
         return id;
     }
 
-    private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException {
+    private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
         //check if already has derived files, skip
         if (archiveFile.hasChildren()) {
             //check if local unpacked dir exists 
             if (new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-                List<AbstractFile> existingFiles = Case.getCurrentCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
+                List<AbstractFile> existingFiles = Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
                 return existingFiles;
             }
         }
@@ -334,30 +335,32 @@ class SevenZipExtractor {
         return pathInArchive;
     }
 
-    private String getKeyAbstractFile(AbstractFile fileInDatabase, int archivePathLength) {
-        String returnString = fileInDatabase == null ? null : (fileInDatabase.getParentPath() + fileInDatabase.getName()).substring(archivePathLength + 1);
-        return returnString;
-    }
-
-    private String getKeyFromArchiveItem(ISimpleInArchiveItem item) throws SevenZipException {
-        String returnString = item == null ? null : item.getPath().replace(File.separator, "/");
+    private String getKeyAbstractFile(AbstractFile fileInDatabase, String archiveFilePath) {
+        String returnString = fileInDatabase == null ? null : archiveFilePath + "/" + fileInDatabase.getName(); //fileInDatabase.getParentPath() + fileInDatabase.getName();
+        System.out.println("KEY FROM FILE: " + returnString);
+        System.out.println("KEY FROM FILE ARCHIVEFILEPATH: " + archiveFilePath);
         return returnString;
     }
 
     private String getKeyFromUnpackedNode(UnpackedTree.UnpackedNode node, String archiveFilePath) {
-        UnpackedTree.UnpackedNode currentNode = node;
-        String name = currentNode.getFileName();
-        currentNode = currentNode.getParent();
-        while (currentNode != null && currentNode.getParent() != null) {
-            name = currentNode.getFileName() + "/" + name;
-            currentNode = currentNode.getParent();
-        }
-//        String dataSourceName = null;
-//        if (lastNode != null){
-//            //archiveFilePath has underscore before and after data source name but may have underscores elsewhere too
-//            String[] tokens = archiveFilePath.split(lastNode.getFileName());
-//            dataSourceName = tokens[0].substring(1, tokens[0].length()-1);
+
+//        UnpackedTree.UnpackedNode currentNode = node;
+//        String name = currentNode.getFileName();
+//        currentNode = currentNode.getParent();
+//        while (currentNode != null && currentNode.getParent() != null) {
+//            name = currentNode.getFileName() + "/" + name;
+//            currentNode = currentNode.getParent();
 //        }
+////        String dataSourceName = null;
+////        if (lastNode != null){
+////            //archiveFilePath has underscore before and after data source name but may have underscores elsewhere too
+////            String[] tokens = archiveFilePath.split(lastNode.getFileName());
+////            dataSourceName = tokens[0].substring(1, tokens[0].length()-1);
+////        }
+
+        String name = node == null ? null : archiveFilePath + "/" + node.getFileName();
+        System.out.println("KEY FROM NODE: " + name);
+        System.out.println("KEY FROM NODE ARCHIVEFILEPATH: " + archiveFilePath);
         return name;
     }
 
@@ -425,10 +428,11 @@ class SevenZipExtractor {
         boolean fullEncryption = true;
         boolean progressStarted = false;
         int processedItems = 0;
-        String archiveFilePath = getArchiveFilePath(archiveFile);
+        final String archiveFilePath = getArchiveFilePath(archiveFile);
+        final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
+        System.out.println("ARCHIVE FILE PATH FINAL " + archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
-        //Set<AbstractFile> filesToUpdate = new HashSet<AbstractFile>();
         ISevenZipInArchive inArchive = null;
 
         SevenZipContentReadStream stream = null;
@@ -447,10 +451,14 @@ class SevenZipExtractor {
 
             List<AbstractFile> existingFiles = getAlreadyExtractedFiles(archiveFile, archiveFilePath);
             for (AbstractFile file : existingFiles) {
-                statusMap.put(getKeyAbstractFile(file, archiveFilePath.length()), new ZipFileStatusWrapper(file, ZipFileStatus.EXISTS));
+                statusMap.put(getKeyAbstractFile(file, archiveFilePath), new ZipFileStatusWrapper(file, ZipFileStatus.EXISTS));
             }
         } catch (TskCoreException e) {
-            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", archiveFilePath); //NON-NLS
+            logger.log(Level.INFO, "Error checking if file already has been processed, skipping: {0}", escapedArchiveFilePath); //NON-NLS
+            unpackSuccessful = false;
+            return unpackSuccessful;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.INFO, "No open case was found while trying to unpack the archive file {0}", escapedArchiveFilePath); //NON-NLS
             unpackSuccessful = false;
             return unpackSuccessful;
         }
@@ -462,7 +470,7 @@ class SevenZipExtractor {
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnMsg.zipBomb", archiveFile.getName());
             String details = NbBundle.getMessage(SevenZipExtractor.class,
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnDetails.zipBomb",
-                    parentAr.getDepth(), archiveFilePath);
+                    parentAr.getDepth(), escapedArchiveFilePath);
             //MessageNotifyUtil.Notify.error(msg, details);
             services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
             unpackSuccessful = false;
@@ -480,7 +488,7 @@ class SevenZipExtractor {
                 inArchive = SevenZip.openInArchive(options, stream, password);
             }
             int numItems = inArchive.getNumberOfItems();
-            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{archiveFilePath, numItems}); //NON-NLS
+            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{escapedArchiveFilePath, numItems}); //NON-NLS
             progress.start(numItems);
             progressStarted = true;
             final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
@@ -507,16 +515,7 @@ class SevenZipExtractor {
                 String pathInArchive = getPathInArchive(item, itemNumber, archiveFile);
 
                 //query for path in db
-                String dbName = getKeyFromArchiveItem(item);
-                ZipFileStatusWrapper existingFileWithStatus = statusMap.get(dbName);
-                if (existingFileWithStatus == null) {
-                    statusMap.put(dbName, new ZipFileStatusWrapper(null, ZipFileStatus.ADD));
-                } else if (item.getSize() != null && existingFileWithStatus.getFile().getSize() < item.getSize()) {
-                    existingFileWithStatus.setStatus(ZipFileStatus.UPDATE);
-                    statusMap.put(getKeyFromArchiveItem(item), existingFileWithStatus);
-                }
                 ++itemNumber;
-                archiveFilePath = FileUtil.escapeFileName(archiveFilePath);
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile, item)) {
@@ -545,12 +544,12 @@ class SevenZipExtractor {
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.msg",
-                                archiveFilePath, item.getPath());
+                                escapedArchiveFilePath, item.getPath());
                         String details = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.details");
                         //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new String[]{archiveFilePath, item.getPath()}); //NON-NLS
+                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new String[]{escapedArchiveFilePath, item.getPath()}); //NON-NLS
                         logger.log(Level.INFO, "Available disk space: {0}", new Object[]{freeDiskSpace}); //NON-NLS
                         unpackSuccessful = false;
                         continue; //skip this file
@@ -631,7 +630,7 @@ class SevenZipExtractor {
                         archiveFile.getName());
                 String details = NbBundle.getMessage(SevenZipExtractor.class,
                         "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.details",
-                        archiveFilePath, ex.getMessage());
+                        escapedArchiveFilePath, ex.getMessage());
                 services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
             }
         } finally {
@@ -675,7 +674,7 @@ class SevenZipExtractor {
 
                 services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + archiveFilePath, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + escapedArchiveFilePath, ex); //NON-NLS
             }
 
             String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.encrFileDetected.msg");
@@ -959,21 +958,39 @@ class SevenZipExtractor {
         private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
             DerivedFile df;
             try {
+                System.out.println("NODE = " + node.getLocalRelPath() + " STATUS MAP CONTENTS : SIZE = " + statusMap.size());
+                for (ZipFileStatusWrapper zip : statusMap.values()){
+                    System.out.println("file="+zip.getFile().getUniquePath() + "  status="+zip.getStatus());
+                }
                 String nameInDatabase = getKeyFromUnpackedNode(node, archiveFilePath);
                 ZipFileStatusWrapper existingFile = nameInDatabase == null ? null : statusMap.get(nameInDatabase);
-                if (existingFile == null || existingFile.getStatus() == ZipFileStatus.ADD) {
+                if (existingFile == null) {
                     df = fileManager.addDerivedFile(node.getFileName(), node.getLocalRelPath(), node.getSize(),
                             node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                             node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
                             "", "", TskData.EncodingType.XOR1);
-                    statusMap.put(getKeyAbstractFile(df, archiveFilePath.length()), new ZipFileStatusWrapper(df, ZipFileStatus.EXISTS));
-                } else if (existingFile.getStatus() == ZipFileStatus.UPDATE) {
-                    df = fileManager.updateDerivedFile(node.getFileName(), existingFile.getFile().getId(), node.getLocalRelPath(), node.getSize(),
-                            node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                            node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
-                            "", "", TskData.EncodingType.XOR1);
-                } else {  //SKIP
-                    df = (DerivedFile) existingFile.getFile();
+                    statusMap.put(getKeyAbstractFile(df, archiveFilePath), new ZipFileStatusWrapper(df, ZipFileStatus.EXISTS));
+                    System.out.println("ADD");
+                } else {
+                    String key = getKeyAbstractFile(existingFile.getFile(), archiveFilePath);
+                    if (existingFile.getStatus() == ZipFileStatus.EXISTS) {
+                        if (existingFile.getFile().getSize() < node.getSize()) {
+                            existingFile.setStatus(ZipFileStatus.UPDATE);
+                            statusMap.put(key, existingFile);
+                        }
+                    }
+                    if (existingFile.getStatus() == ZipFileStatus.UPDATE) {
+                        df = fileManager.updateDerivedFile(node.getFileName(), existingFile.getFile().getId(), node.getLocalRelPath(), node.getSize(),
+                                node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
+                                node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
+                                "", "", TskData.EncodingType.XOR1);
+                        System.out.println("UPDATE");
+                    } else {
+                        //SKIP
+                        statusMap.put(key, new ZipFileStatusWrapper(existingFile.getFile(), ZipFileStatus.SKIP));
+                        df = (DerivedFile) existingFile.getFile();
+                        System.out.println("SKIP");
+                    }
                 }
                 node.setFile(df);
             } catch (TskCoreException ex) {
@@ -983,9 +1000,8 @@ class SevenZipExtractor {
                                 node.getFileName()), ex);
             }
             //recurse adding the children if this file was incomplete the children presumably need to be added
-            String childArchiveFilePath = getArchiveFilePath(df);
             for (UnpackedNode child : node.children) {
-                updateOrAddFileToCaseRec(child, fileManager, statusMap, childArchiveFilePath);
+                updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }
         }
 
@@ -1190,7 +1206,6 @@ class SevenZipExtractor {
     }
 
     private enum ZipFileStatus {
-        ADD, //NON-NLS
         UPDATE, //NON-NLS
         SKIP,//NON-NLS
         EXISTS

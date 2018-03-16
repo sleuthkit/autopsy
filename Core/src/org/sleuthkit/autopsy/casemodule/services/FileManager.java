@@ -138,7 +138,7 @@ public class FileManager implements Closeable {
     }
 
     private static String createParentPathCondition(long dataSourceObjectID, String parentPath){
-        return "data_source_obj_id = " + dataSourceObjectID +" AND parent_path LIKE '" + parentPath +"/%'";
+        return "data_source_obj_id = " + dataSourceObjectID +" AND parent_path LIKE '" + parentPath +"%'";
     }
     
     

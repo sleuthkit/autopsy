@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
@@ -174,9 +175,8 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) {
+        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) { 
             try {
-                actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
                 if (this.content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
                     actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
                 }
