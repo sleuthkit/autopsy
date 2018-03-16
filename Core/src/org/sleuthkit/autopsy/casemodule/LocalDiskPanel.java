@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -44,7 +46,17 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
 @NbBundle.Messages({"LocalDiskPanel.refreshTablebutton.text=Refresh Local Disks",
     "LocalDiskPanel.listener.getOpenCase.errTitle=No open case available",
-    "LocalDiskPanel.listener.getOpenCase.errMsg=LocalDiskPanel listener couldn't get the open case."
+    "LocalDiskPanel.listener.getOpenCase.errMsg=LocalDiskPanel listener couldn't get the open case.",
+    "LocalDiskPanel.localDiskModel.loading.msg=Loading local disks...",
+    "LocalDiskPanel.localDiskModel.nodrives.msg=No Accessible Drives",
+    "LocalDiskPanel.moduleErr=Module Error",
+    "LocalDiskPanel.moduleErr.msg=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.",
+    "LocalDiskPanel.errLabel.disksNotDetected.text=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
+    "LocalDiskPanel.errLabel.disksNotDetected.toolTipText=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
+    "LocalDiskPanel.errLabel.drivesNotDetected.text=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
+    "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
+    "LocalDiskPanel.errLabel.someDisksNotDetected.text=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
+    "LocalDiskPanel.errLabel.someDisksNotDetected.toolTipText=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\")."
 })
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
@@ -52,11 +64,13 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
  */
 final class LocalDiskPanel extends JPanel {
 
+    static final String LOCAL_DISK_SELECTION_EVENT = "local_disk_selection_event";
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
     private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
     private static LocalDiskPanel instance;
     private static final long serialVersionUID = 1L;
     private List<LocalDisk> disks;
+    private LocalDisk localDisk;
     private boolean enableNext = false;
     private final LocalDiskModel model;
     private final JFileChooser fc = new JFileChooser();
@@ -73,6 +87,18 @@ final class LocalDiskPanel extends JPanel {
         createTimeZoneList();
         createSectorSizeList();
         refreshTable();
+        this.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getPropertyName().equals(LOCAL_DISK_SELECTION_EVENT)) {
+                    LocalDisk eventValue = (LocalDisk) event.getNewValue();
+                    if (eventValue != null) {
+                        localDisk = eventValue;
+                        localDiskLabel.setText(eventValue.getName());
+                    }
+                }
+            }
+        });
         diskTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -159,6 +185,9 @@ final class LocalDiskPanel extends JPanel {
         refreshTableButton = new javax.swing.JButton();
         sectorSizeLabel = new javax.swing.JLabel();
         sectorSizeComboBox = new javax.swing.JComboBox<>();
+        selectDiskButton = new javax.swing.JButton();
+        localDiskLabel = new javax.swing.JLabel();
+        localDiskNameLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 420));
         setPreferredSize(new java.awt.Dimension(485, 410));
@@ -225,48 +254,64 @@ final class LocalDiskPanel extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.sectorSizeLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(selectDiskButton, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.selectDiskButton.text")); // NOI18N
+        selectDiskButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectDiskButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(localDiskLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.localDiskLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(localDiskNameLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.localDiskNameLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 475, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(refreshTableButton))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(timeZoneLabel)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(timeZoneLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(localDiskLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(timeZoneComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(localDiskNameLabel)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(selectDiskButton)
+                                .addGap(18, 18, 18)
+                                .addComponent(refreshTableButton))
+                            .addComponent(timeZoneComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(diskLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addGap(21, 21, 21)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(changeDatabasePathCheckbox, javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(imageWriterErrorLabel, javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(descLabel, javax.swing.GroupLayout.Alignment.LEADING)))
                                     .addComponent(copyImageCheckbox, javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(errorLabel, javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addComponent(sectorSizeLabel)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(noFatOrphansCheckbox, javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                         .addGap(21, 21, 21)
-                                        .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(browseButton))
-                                    .addComponent(noFatOrphansCheckbox, javax.swing.GroupLayout.Alignment.LEADING))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(changeDatabasePathCheckbox, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(imageWriterErrorLabel, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(descLabel, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                                .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(browseButton)))))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -276,7 +321,11 @@ final class LocalDiskPanel extends JPanel {
                 .addGap(1, 1, 1)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(refreshTableButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(refreshTableButton)
+                    .addComponent(selectDiskButton)
+                    .addComponent(localDiskLabel)
+                    .addComponent(localDiskNameLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
@@ -338,6 +387,10 @@ final class LocalDiskPanel extends JPanel {
         refreshTable();
     }//GEN-LAST:event_refreshTableButtonActionPerformed
 
+    private void selectDiskButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDiskButtonActionPerformed
+        new LocalDiskSelectionDialog();
+    }//GEN-LAST:event_selectDiskButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JCheckBox changeDatabasePathCheckbox;
@@ -349,11 +402,14 @@ final class LocalDiskPanel extends JPanel {
     private javax.swing.JLabel imageWriterErrorLabel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel localDiskLabel;
+    private javax.swing.JLabel localDiskNameLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JButton refreshTableButton;
     private javax.swing.JComboBox<String> sectorSizeComboBox;
     private javax.swing.JLabel sectorSizeLabel;
+    private javax.swing.JButton selectDiskButton;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
