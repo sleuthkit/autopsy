@@ -144,7 +144,7 @@ public final class RunIngestModulesAction extends AbstractAction {
                     List<Content> children = parentFile.getChildren();
                     List<AbstractFile> files = new ArrayList<>();
                     for (Content child : children) {
-                        if (child instanceof AbstractFile && child.getSize() > 0) {
+                        if (child instanceof AbstractFile) {
                             files.add((AbstractFile) child);
                         }
                     }
