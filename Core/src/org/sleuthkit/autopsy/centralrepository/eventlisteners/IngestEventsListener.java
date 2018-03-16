@@ -192,7 +192,7 @@ public class IngestEventsListener {
                 }
                 switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                     case DATA_ADDED: {
-                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt));
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, isFlagNotableItems()));
                         break;
                     }
                 }
@@ -230,10 +230,12 @@ public class IngestEventsListener {
 
         private final EamDb dbManager;
         private final PropertyChangeEvent event;
+        private final boolean flagNotableItemsEnabled;
 
-        private DataAddedTask(EamDb db, PropertyChangeEvent evt) {
+        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled) {
             dbManager = db;
             event = evt;
+            this.flagNotableItemsEnabled = flagNotableItemsEnabled;
         }
 
         @Override
@@ -259,7 +261,7 @@ public class IngestEventsListener {
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                             // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
                             // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
-                            if (isFlagNotableItems()) {
+                            if (flagNotableItemsEnabled) {
                                 List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                 if (!caseDisplayNames.isEmpty()) {
                                     postCorrelatedBadArtifactToBlackboard(bbArtifact,
