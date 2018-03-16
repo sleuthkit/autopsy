@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,13 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Runs a collection of data sources through a set of ingest modules specified
- * via ingest job settings.
- * <p>
- * This class is thread-safe.
+ * Analyzes one or more data sources using a set of ingest modules specified via
+ * ingest job settings.
  */
 public final class IngestJob {
 
@@ -69,7 +68,7 @@ public final class IngestJob {
     private volatile CancellationReason cancellationReason;
 
     /**
-     * Constructs an ingest job that runs a collection of data sources through a
+     * Constructs an ingest job that analyzes one or more data sources using a
      * set of ingest modules specified via ingest job settings.
      *
      * @param dataSources The data sources to be ingested.
@@ -84,6 +83,26 @@ public final class IngestJob {
             DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, settings, doUI);
             this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
         }
+        incompleteJobsCount = new AtomicInteger(dataSourceJobs.size());
+        cancellationReason = CancellationReason.NOT_CANCELLED;
+    }
+
+    /**
+     * Constructs an ingest job that analyzes one data source using a set of
+     * ingest modules specified via ingest job settings. Either all of the files
+     * in the data source or a given subset of the files will be analyzed.
+     *
+     * @param dataSource The data source to be analyzed
+     * @param files      A subset of the files for the data source.
+     * @param settings   The ingest job settings.
+     * @param doUI       Whether or not this job should use progress bars,
+     *                   message boxes for errors, etc.
+     */
+    IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings, boolean doUI) {
+        this.id = IngestJob.nextId.getAndIncrement();
+        this.dataSourceJobs = new ConcurrentHashMap<>();
+        DataSourceIngestJob dataSourceIngestJob = new DataSourceIngestJob(this, dataSource, files, settings, doUI);
+        this.dataSourceJobs.put(dataSourceIngestJob.getId(), dataSourceIngestJob);
         incompleteJobsCount = new AtomicInteger(dataSourceJobs.size());
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
