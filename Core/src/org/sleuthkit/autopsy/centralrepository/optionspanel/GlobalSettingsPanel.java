@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Cursor;
+import java.awt.EventQueue;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -450,7 +451,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         @Override
         public void propertyChange(PropertyChangeEvent event) {
             if (AutopsyEvent.SourceType.LOCAL == ((AutopsyEvent) event).getSourceType()) {
-                ingestStateUpdated();
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        ingestStateUpdated();
+                    }
+                });
             }
         }
     };
@@ -468,6 +474,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         if (IngestManager.getInstance().isIngestRunning()) {
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             cbUseCentralRepo.setEnabled(false);
+            enableAllSubComponents(false);
         } else if (!cbUseCentralRepo.isEnabled()) {
             cbUseCentralRepo.setEnabled(true);
             load();
