@@ -32,9 +32,6 @@ final class CommonFilesSearchNode extends AbstractNode {
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
     }
-    CommonFilesSearchNode(CommonFilesMetaData metaData) {
-        super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
-}
 
     @NbBundle.Messages({
         "CommonFilesNode.getName.text=Common Files"})
