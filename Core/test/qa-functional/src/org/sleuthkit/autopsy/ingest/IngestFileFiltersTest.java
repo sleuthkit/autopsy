@@ -31,8 +31,6 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import junit.framework.Test;
 import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
