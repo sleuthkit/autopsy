@@ -106,48 +106,6 @@ public class CommonFilesMetaData {
         return data;
     }
 
-    /**
-     * @return the dedupedFiles
-     */
-    public List<AbstractFile> getDedupedFiles() {
-        return Collections.unmodifiableList(dedupedFiles);
-    }
-
-    /**
-     * @param dedupedFiles the dedupedFiles to set
-     */
-    public void setDedupedFiles(List<AbstractFile> dedupedFiles) {
-        this.dedupedFiles = dedupedFiles;
-    }
-
-    /**
-     * @return the instanceCountMap
-     */
-    public java.util.Map<String, Integer> getInstanceCountMap() {
-        return Collections.unmodifiableMap(instanceCountMap);
-    }
-
-    /**
-     * @param instanceCountMap the instanceCountMap to set
-     */
-    public void setInstanceCountMap(java.util.Map<String, Integer> instanceCountMap) {
-        this.instanceCountMap = instanceCountMap;
-    }
-
-    /**
-     * @return the dataSourceMap
-     */
-    public java.util.Map<String, String> getDataSourceMap() {
-        return Collections.unmodifiableMap(dataSourceMap);
-    }
-
-    /**
-     * @param dataSourceMap the dataSourceMap to set
-     */
-    public void setDataSourceMap(java.util.Map<String, String> dataSourceMap) {
-        this.dataSourceMap = dataSourceMap;
-    }
-
     private static void addDataSource(Set<String> dataSources, AbstractFile file) {
         try {
             dataSources.add(file.getDataSource().getName());
