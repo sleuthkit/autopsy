@@ -75,13 +75,14 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     @Override
+    @Messages ({"ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case."})
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         try {
             fileManager = Case.getOpenCase().getServices().getFileManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            throw new IngestModuleException("Exception while getting open case.", ex);
+            throw new IngestModuleException(Bundle.ThunderbirdMboxFileIngestModule_noOpenCase_errMsg(), ex);
         }
     }
 

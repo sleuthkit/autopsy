@@ -56,7 +56,7 @@ abstract class Extract {
             currentCase = Case.getOpenCase();
             tskCase = currentCase.getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException("Exception while getting open case.", ex);
+            throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
         }
     }
 

@@ -69,11 +69,17 @@ final class ExtractUnallocAction extends AbstractAction {
     private long currentImage = 0L;
     private final boolean isImage;
 
-    public ExtractUnallocAction(String title, Volume volume) throws NoCurrentCaseException {
+    public ExtractUnallocAction(String title, Volume volume){
         super(title);
         isImage = false;
-        OutputFileData outputFileData = new OutputFileData(volume);
-        filesToExtract.add(outputFileData);
+        try {
+            OutputFileData outputFileData = new OutputFileData(volume);
+            filesToExtract.add(outputFileData);
+        } catch (NoCurrentCaseException ex) { 
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            setEnabled(false);
+        }
+        
     }
 
     public ExtractUnallocAction(String title, Image image) throws NoCurrentCaseException {

@@ -91,12 +91,9 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     @Override
     public List<? extends Action> visit(final Volume vol) {
         List<AbstractAction> lst = new ArrayList<>();
-        try { 
-            lst.add(new ExtractUnallocAction(
-                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFile"), vol));
-        } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-        }
+        lst.add(new ExtractUnallocAction(
+            NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFile"), vol));
+         
         return lst;
     }
 
