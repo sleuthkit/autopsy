@@ -205,6 +205,12 @@ final class IngestModule implements FileIngestModule {
          * module instance. All modules are affected by the value. While not
          * ideal, this will be good enough until a better solution can be
          * posited.
+         *
+         * Note: Flagging cannot be disabled if any other instances of the
+         * Correlation Engine module are running. This restriction is to prevent
+         * missing results in the case where the first module is flagging
+         * notable items, and the proceeding module (with flagging disabled)
+         * causes the first to stop flagging.
          */
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagNotableItems()) {
             IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
