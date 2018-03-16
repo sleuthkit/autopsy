@@ -22,7 +22,6 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -148,7 +147,7 @@ public final class RunIngestModulesAction extends AbstractAction {
                             files.add((AbstractFile) child);
                         }
                     }
-                    if (files.isEmpty() == false) {
+                    if (!files.isEmpty()) {
                         IngestManager.getInstance().queueIngestJob(dataSource, files, ingestJobSettings);
                     }
                 } catch (TskCoreException ex) {
