@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import javax.annotation.concurrent.Immutable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
@@ -295,9 +296,11 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
                 setting.append(";");
             }
             setting.append(tagName.toSettingsFormat());
-            if (Case.isCaseOpen()) {
-                SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
+            try {
+                SleuthkitCase caseDb = Case.getOpenCase().getSleuthkitCase();
                 tagName.saveToCase(caseDb);
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
             }
         }
         ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, setting.toString());

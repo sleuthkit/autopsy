@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,101 +18,123 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.Collections;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import javax.swing.JPanel;
+import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.openide.explorer.ExplorerManager;
+import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.communications.AccountsRootChildren.AccountDeviceInstanceNode;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
-import org.sleuthkit.datamodel.CommunicationsFilter;
-import org.sleuthkit.datamodel.CommunicationsManager;
 
 /**
- * The right hand side of the CVT. Has a DataResultPanel to show messages and
- * other account details, and a ContentViewer to show individual
+ * The right hand side of the CVT. Has a DataResultPanel to show a listing of
+ * messages and other account details, and a ContentViewer to show individual
+ * messages.
  */
-final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
+public final class MessageBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
+    private final ExplorerManager tableEM;
     private final ExplorerManager gacExplorerManager;
     private final DataResultPanel messagesResultPanel;
-    private DataResultViewerTable dataResultViewerTable;
+    /* lookup that will be exposed through the (Global Actions Context) */
+    private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
+    /* Listener that keeps the proxyLookup in sync with the focused area of the
+     * UI. */
+    private final FocusPropertyListener focusPropertyListener = new FocusPropertyListener();
 
     /**
      * Constructs the right hand side of the Communications Visualization Tool
      * (CVT).
      *
+     * @param tableEM            An explorer manager to listen to as the driver
+     *                           of the Message Table.
      * @param gacExplorerManager An explorer manager associated with the
      *                           GlobalActionsContext (GAC) so that selections
      *                           in the messages browser can be exposed to
      *                           context-sensitive actions.
      */
-    MessageBrowser(ExplorerManager gacExplorerManager) {
+    @NbBundle.Messages({"MessageBrowser.DataResultViewerTable.title=Messages"})
+    MessageBrowser(final ExplorerManager tableEM, final ExplorerManager gacExplorerManager) {
+        this.tableEM = tableEM;
         this.gacExplorerManager = gacExplorerManager;
         initComponents();
         //create an uninitialized DataResultPanel so we can control the ResultViewers that get added.
         messagesResultPanel = DataResultPanel.createInstanceUninitialized("Account", "", Node.EMPTY, 0, messageDataContent);
         splitPane.setTopComponent(messagesResultPanel);
         splitPane.setBottomComponent(messageDataContent);
-    }
+        messagesResultPanel.addResultViewer(new DataResultViewerTable(gacExplorerManager,
+                Bundle.MessageBrowser_DataResultViewerTable_title()));
+        messagesResultPanel.open();
 
-    @Override
-    public void addNotify() {
-        super.addNotify();
-        ExplorerManager parentExplorerManager = ExplorerManager.find(this);
-        parentExplorerManager.addPropertyChangeListener(pce -> {
-            if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] selectedNodes = parentExplorerManager.getSelectedNodes();
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
 
-                messagesResultPanel.setNumMatches(0);
-                messagesResultPanel.setNode(null);
-
-                if (selectedNodes.length == 0) {
-                    //reset panel when there is no selection
+        this.tableEM.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent pce) {
+                if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                    final Node[] selectedNodes = MessageBrowser.this.tableEM.getSelectedNodes();
+                    messagesResultPanel.setNumMatches(0);
+                    messagesResultPanel.setNode(null);
                     messagesResultPanel.setPath("");
-                } else {
-                    AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
-                    CommunicationsFilter filter = adiNode.getFilter();
-                    CommunicationsManager commsManager = adiNode.getCommsManager();
-                    final Set<AccountDeviceInstance> accountDeviceInstances;
+                    if (selectedNodes.length > 0) {
+                        Node rootNode;
+                        final Node selectedNode = selectedNodes[0];
 
-                    if (selectedNodes.length == 1) {
-                        final AccountDeviceInstance accountDeviceInstance = adiNode.getAccountDeviceInstance();
-                        accountDeviceInstances = Collections.singleton(accountDeviceInstance);
-                        messagesResultPanel.setPath(accountDeviceInstance.getAccount().getTypeSpecificID());
-                    } else {
-                        accountDeviceInstances = Stream.of(selectedNodes)
-                                .map(node -> (AccountDeviceInstanceNode) node)
-                                .map(AccountDeviceInstanceNode::getAccountDeviceInstance)
-                                .collect(Collectors.toSet());
-                        messagesResultPanel.setPath(selectedNodes.length + " accounts");
+                        if (selectedNode instanceof AccountDeviceInstanceNode) {
+                            rootNode = makeRootNodeFromAccountDeviceInstanceNodes(selectedNodes);
+                        } else {
+                            rootNode = selectedNode;
+                        }
+                        messagesResultPanel.setPath(rootNode.getDisplayName());
+                        messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(rootNode, gacExplorerManager), true));
                     }
-                    AccountDetailsNode accountDetailsNode
-                            = new AccountDetailsNode(accountDeviceInstances, filter, commsManager);
-                    TableFilterNode wrappedNode
-                            = new TableFilterNode(new DataResultFilterNode(accountDetailsNode, parentExplorerManager), true);
-                    messagesResultPanel.setNode(wrappedNode);
                 }
             }
-        });
 
-        //add the required result viewers and THEN open the panel
-        if (null == dataResultViewerTable) {
-            dataResultViewerTable = new DataResultViewerTable(gacExplorerManager, "Messages");
-            messagesResultPanel.addResultViewer(dataResultViewerTable);
+            private Node makeRootNodeFromAccountDeviceInstanceNodes(final Node[] selectedNodes) {
+                //Use lookup here? 
+                final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
+
+                final Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
+                for (final Node n : selectedNodes) {
+                    //Use lookup here?
+                    accountDeviceInstances.add(((AccountDeviceInstanceNode) n).getAccountDeviceInstance());
+                }
+                return SelectionNode.createFromAccounts(accountDeviceInstances, adiNode.getFilter(), adiNode.getCommsManager());
+            }
         }
-        messagesResultPanel.open();
+        );
     }
 
     @Override
     public ExplorerManager getExplorerManager() {
         return gacExplorerManager;
+    }
+
+    @Override
+    public Lookup getLookup() {
+        return proxyLookup;
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .removePropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
     /**
@@ -156,4 +178,38 @@ final class MessageBrowser extends javax.swing.JPanel implements ExplorerManager
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Since the embedded MessageContentViewer (attachments panel) is not in its
+     * own TopComponenet, its selection does not get proxied into the Global
+     * Actions Context (GAC), and many of the available actions don't work on
+     * it. Further, we can't put the selection from both the Messages table and
+     * the Attachments table in the GAC because they could include have
+     * AbstractFiles, muddling the selection seen by the actions. Instead,
+     * depending on where the focus is in the window, we want to put different
+     * Content in the Global Actions Context to be picked up by, e.g., the
+     * tagging actions. The best way I could figure to do this was to listen to
+     * all focus events and swap out what is in the lookup appropriately. An
+     * alternative to this would be to investigate using the ContextAwareAction
+     * interface.
+     */
+    private class FocusPropertyListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(final PropertyChangeEvent focusEvent) {
+
+            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                if (newFocusOwner != null) {
+                    if (isDescendingFrom(newFocusOwner, messageDataContent)) {
+                        //if the focus owner is within the MessageContentViewer ( the attachments table)
+                        proxyLookup.setNewLookups(createLookup(messageDataContent.getExplorerManager(), getActionMap()));
+                    } else if (isDescendingFrom(newFocusOwner, messagesResultPanel)) {
+                        //... or if it is within the Messages table.
+                        proxyLookup.setNewLookups(createLookup(gacExplorerManager, getActionMap()));
+                    }
+                }
+            }
+        }
+    }
 }
