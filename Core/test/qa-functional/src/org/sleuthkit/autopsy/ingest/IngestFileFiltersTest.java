@@ -115,8 +115,8 @@ public class IngestFileFiltersTest extends TestCase {
     
     public void testFileNotFound() {
         try {
-            FileManager fm = Case.getOpenCase().getServices().getFileManager();
-            List<AbstractFile> results = fm.findFiles("noFound");
+            FileManager filemanager = Case.getOpenCase().getServices().getFileManager();
+            List<AbstractFile> results = filemanager.findFiles("noFound");
             assertEquals(0, results.size());
             
         } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -127,8 +127,8 @@ public class IngestFileFiltersTest extends TestCase {
 
     public void testFileFound() {
         try {
-            FileManager fm = Case.getOpenCase().getServices().getFileManager();
-            List<AbstractFile> results = fm.findFiles("file.jpg", "dir1");
+            FileManager filemanager = Case.getOpenCase().getServices().getFileManager();
+            List<AbstractFile> results = filemanager.findFiles("file.jpg", "dir1");
             assertEquals(1, results.size());
             assertEquals("file.jpg", results.get(0).getName());
         } catch (TskCoreException | NoCurrentCaseException ex) {
