@@ -185,7 +185,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
         } catch (NoCurrentCaseException ex) {
             return true;
         }
-        return (!this.isDefault) || openCase.hasData() == false;
+        
+        return (this.isDefault ==false) ||( openCase.hasData() == false);
     }
 
     @Override
