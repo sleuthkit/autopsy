@@ -87,11 +87,11 @@ final public class CoreComponentControl {
     public static void closeCoreWindows() {
         TopComponent directoryTree = null;
         TopComponent favorites = null;
-
         final WindowManager windowManager = WindowManager.getDefault();
         for (Mode mode : windowManager.getModes()) {
             for (TopComponent tc : windowManager.getOpenedTopComponents(mode)) {
                 String tcName = tc.getName();
+
                 if (tcName == null) {
                     logger.log(Level.INFO, "tcName was null"); //NON-NLS
                 }

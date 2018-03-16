@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -298,12 +298,31 @@ public class IngestManager {
     /**
      * Queues an ingest job for for one or more data sources.
      *
-     * @param dataSources The data sources to process.
+     * @param dataSources The data sources to analyze.
      * @param settings    The settings for the ingest job.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            if (job.hasIngestPipeline()) {
+                long taskId = nextIngestManagerTaskId.incrementAndGet();
+                Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
+                startIngestJobFutures.put(taskId, task);
+            }
+        }
+    }
+
+    /**
+     * Queues an ingest job for for a data source. Either all of the files in
+     * the data source or a given subset of the files will be analyzed.
+     *
+     * @param dataSource The data source to analyze.
+     * @param files      A subset of the files for the data source.
+     * @param settings   The settings for the ingest job.
+     */
+    public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        if (caseIsOpen) {
+            IngestJob job = new IngestJob(dataSource, files, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -351,7 +370,7 @@ public class IngestManager {
         Case openCase;
         try {
             openCase = Case.getOpenCase();
-        } catch (NoCurrentCaseException ex) { 
+        } catch (NoCurrentCaseException ex) {
             return new IngestJobStartResult(null, new IngestManagerException("Exception while getting open case.", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
         }
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
