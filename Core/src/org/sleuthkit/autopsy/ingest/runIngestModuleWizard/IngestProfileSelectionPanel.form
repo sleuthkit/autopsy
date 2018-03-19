@@ -37,10 +37,10 @@
                   <Component id="profileListScrollPane" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="ingestSettingsButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="profileListLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="ingestSettingsButton" alignment="0" min="-2" pref="128" max="-2" attributes="0"/>
+                          <Component id="profileListLabel" alignment="0" min="-2" pref="102" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="0" pref="458" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="523" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -51,9 +51,9 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="profileListLabel" min="-2" max="-2" attributes="0"/>
+              <Component id="profileListLabel" min="-2" pref="27" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="profileListScrollPane" pref="362" max="32767" attributes="0"/>
+              <Component id="profileListScrollPane" pref="385" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="ingestSettingsButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
