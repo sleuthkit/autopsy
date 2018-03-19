@@ -279,10 +279,9 @@ class AddArchiveTask implements Runnable {
         for (Iterator<AutoIngestDataSourceProcessor> iterator = validDataSourceProcessors.iterator(); iterator.hasNext();) {
             AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
 
-            // skip local files and local disk DSPs, only looking for "valid" data sources.
+            // skip local files, only looking for "valid" data sources.
             // also skip nested archive files, those will be ingested as logical files and extracted during ingest
-            if ((selectedProcessor instanceof LocalDiskDSProcessor)
-                    || (selectedProcessor instanceof LocalFilesDSProcessor)
+            if ((selectedProcessor instanceof LocalFilesDSProcessor)
                     || (selectedProcessor instanceof ArchiveExtractorDSProcessor)) {
                 iterator.remove();
             }
