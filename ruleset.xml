@@ -106,7 +106,8 @@
   <rule ref="rulesets/java/design.xml/DefaultLabelNotLastInSwitchStmt"/>
   <rule ref="rulesets/java/design.xml/OptimizableToArrayCall"/>
   <rule ref="rulesets/java/design.xml/BadComparison"/>
-  <rule ref="rulesets/java/design.xml/ConfusingTernary"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/ConfusingTernary"/>-->
   <rule ref="rulesets/java/design.xml/InstantiationToGetClass"/>
   <rule ref="rulesets/java/design.xml/IdempotentOperations"/>
   <rule ref="rulesets/java/design.xml/SimpleDateFormatNeedsLocale"/>
@@ -118,7 +119,8 @@
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAbstractMethod"/>
   <rule ref="rulesets/java/design.xml/SimplifyConditional"/>
-  <rule ref="rulesets/java/design.xml/PositionLiteralsFirstInCaseInsensitiveComparisons"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/PositionLiteralsFirstInCaseInsensitiveComparisons"/>-->
   <rule ref="rulesets/java/design.xml/UnnecessaryLocalBeforeReturn"/>
   <rule ref="rulesets/java/design.xml/NonThreadSafeSingleton"/>
   <rule ref="rulesets/java/design.xml/SingleMethodSingleton"/>
@@ -155,7 +157,8 @@
   <rule ref="rulesets/java/design.xml/SimplifyBooleanExpressions"/>
   <rule ref="rulesets/java/design.xml/AssignmentToNonFinalStatic"/>
   <rule ref="rulesets/java/design.xml/MissingStaticMethodInNonInstantiatableClass"/>
-  <rule ref="rulesets/java/design.xml/PositionLiteralsFirstInComparisons"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/PositionLiteralsFirstInComparisons"/>-->
   <rule ref="rulesets/java/empty.xml/EmptyCatchBlock"/>
   <rule ref="rulesets/java/empty.xml/EmptyWhileStmt"/>
   <rule ref="rulesets/java/empty.xml/EmptyFinallyBlock"/>
@@ -227,7 +230,8 @@
   <rule ref="rulesets/java/optimizations.xml/AvoidInstantiatingObjectsInLoops"/>   -->
   <rule ref="rulesets/java/optimizations.xml/UseArrayListInsteadOfVector"/>
   <rule ref="rulesets/java/optimizations.xml/SimplifyStartsWith"/>
-  <rule ref="rulesets/java/optimizations.xml/UseStringBufferForStringAppends"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/optimizations.xml/UseStringBufferForStringAppends"/>-->
   <rule ref="rulesets/java/optimizations.xml/UseArraysAsList"/>
   <rule ref="rulesets/java/optimizations.xml/AvoidArrayLoops"/>
   <rule ref="rulesets/java/optimizations.xml/UnnecessaryWrapperObjectCreation"/>
@@ -272,7 +276,8 @@
   <rule ref="rulesets/java/unnecessary.xml/UnnecessaryFinalModifier"/>
   <rule ref="rulesets/java/unnecessary.xml/UselessOverridingMethod"/>
   <rule ref="rulesets/java/unnecessary.xml/UnusedNullCheckInEquals"/>
-  <rule ref="rulesets/java/unnecessary.xml/UselessParentheses"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now
+  <rule ref="rulesets/java/unnecessary.xml/UselessParentheses"/>-->
   <rule ref="rulesets/java/unnecessary.xml/UselessQualifiedThis"/>
   <rule ref="rulesets/java/unnecessary.xml/UselessOperationOnImmutable"/>
   <rule ref="rulesets/java/unnecessary.xml/UnnecessaryReturn"/>

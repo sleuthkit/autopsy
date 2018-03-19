@@ -42,10 +42,15 @@ import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
-    private org.sleuthkit.datamodel.AbstractFile fileObject;
+    private final org.sleuthkit.datamodel.AbstractFile fileObject;
     private String fileObjectExt;
     final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr", ".cmd"}; //NON-NLS
 
+    /**
+     * 
+     * @param title Name of the action
+     * @param fileNode File to display
+     */
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
         this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.AbstractFile.class);
@@ -127,9 +132,9 @@ public class ExternalViewerAction extends AbstractAction {
         }
         if (!exePath.equals("")) {
             Runtime runtime = Runtime.getRuntime();
-            String[] s = new String[]{exePath, file.getAbsolutePath()};
+            String[] execArray = new String[]{exePath, file.getAbsolutePath()};
             try {
-                runtime.exec(s);
+                runtime.exec(execArray);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + file.getName(), ex); //NON-NLS
                 JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
@@ -165,6 +170,11 @@ public class ExternalViewerAction extends AbstractAction {
         }
     }
 
+    /**
+     * Opens a URL using the default desktop browser
+     * 
+     * @param path URL to open 
+     */
     public static void openURL(String path) {
         String url_path = path.replaceAll("\\\\","/");   
         try {
