@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Container;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +62,6 @@ final class LocalDiskSelectionDialog extends JDialog {
     private static final Logger logger = Logger.getLogger(LocalDiskSelectionDialog.class.getName());
     private static final long serialVersionUID = 1L;
     private List<LocalDisk> disks;
-    private boolean enableOkay = false;
     private final LocalDiskModel model;
 
     /**
@@ -76,32 +74,23 @@ final class LocalDiskSelectionDialog extends JDialog {
         this.disks = new ArrayList<>();
         
         initComponents();
-        setModal(true);
-        setSize(getPreferredSize());
-        setLocationRelativeTo(this.getParent());
-        setAlwaysOnTop(false);
-        setVisible(true);
-        initComponents();
         customInit();
         refreshTable();
         
         localDiskTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if (localDiskTable.getSelectedRow() >= 0 && localDiskTable.getSelectedRow() < disks.size()) {
-                    enableOkay = true;
-                } else {  //The selection changed to nothing valid being selected, such as with ctrl+click
-                    enableOkay = false;
-                }
+                int selectedRow = localDiskTable.getSelectedRow();
+                okButton.setEnabled(selectedRow >= 0 && selectedRow < disks.size());
                 
-                try {
+                /*try {
                     firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "LocalDiskSelectionDialog listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.moduleErr"),
                             NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.moduleErr.msg"),
                             MessageNotifyUtil.MessageType.ERROR);
-                }
+                }*/
             }
         });
     }
@@ -111,6 +100,17 @@ final class LocalDiskSelectionDialog extends JDialog {
         errorLabel.setVisible(false);
         errorLabel.setText("");
         localDiskTable.setEnabled(false);
+    }
+    
+    /**
+     * Display the dialog.
+     */
+    void display() {
+        setModal(true);
+        setSize(getPreferredSize());
+        setLocationRelativeTo(this.getParent());
+        setAlwaysOnTop(false);
+        setVisible(true);
     }
 
     /**
@@ -132,9 +132,7 @@ final class LocalDiskSelectionDialog extends JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
-        setPreferredSize(new java.awt.Dimension(485, 180));
         setResizable(false);
-        setSize(new java.awt.Dimension(485, 180));
 
         selectLocalDiskLabel.setFont(selectLocalDiskLabel.getFont().deriveFont(selectLocalDiskLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(selectLocalDiskLabel, org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.selectLocalDiskLabel.text")); // NOI18N
@@ -155,6 +153,7 @@ final class LocalDiskSelectionDialog extends JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.okButton.text")); // NOI18N
+        okButton.setEnabled(false);
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
@@ -162,6 +161,11 @@ final class LocalDiskSelectionDialog extends JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.cancelButton.text")); // NOI18N
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -172,16 +176,16 @@ final class LocalDiskSelectionDialog extends JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(localDiskScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(selectLocalDiskLabel)
-                            .addComponent(errorLabel))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(refreshLocalDisksButton)))
+                        .addComponent(refreshLocalDisksButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(selectLocalDiskLabel)
+                            .addComponent(errorLabel))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -198,8 +202,10 @@ final class LocalDiskSelectionDialog extends JDialog {
                     .addComponent(cancelButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(errorLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(27, Short.MAX_VALUE))
         );
+
+        pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void refreshLocalDisksButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshLocalDisksButtonActionPerformed
@@ -209,8 +215,13 @@ final class LocalDiskSelectionDialog extends JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         int selectedRow = localDiskTable.getSelectedRow();
         LocalDisk localDisk = disks.get(selectedRow);
-        firePropertyChange(LocalDiskPanel.LOCAL_DISK_SELECTION_EVENT, null, localDisk);
+        dispose();
     }//GEN-LAST:event_okButtonActionPerformed
+
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        localDiskTable.clearSelection();
+        dispose();
+    }//GEN-LAST:event_cancelButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
@@ -253,6 +264,24 @@ final class LocalDiskSelectionDialog extends JDialog {
      */
     public void refreshTable() {
         model.loadDisks();
+        localDiskTable.clearSelection();
+        //okButton.setEnabled(false);
+    }
+    
+    /**
+     * Get the local disk selected from the table.
+     * 
+     * @return The LocalDisk object associated with the selection in the table.
+     */
+    LocalDisk getLocalDiskSelection() {
+        if (disks.size() > 0) {
+            int selectedRow = localDiskTable.getSelectedRow();
+            if (selectedRow >= 0 && selectedRow < disks.size()) {
+                return disks.get(selectedRow);
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -278,7 +307,6 @@ final class LocalDiskSelectionDialog extends JDialog {
             errorLabel.setText("");
             localDiskTable.setEnabled(false);
             ready = false;
-            enableOkay = false;
             loadingDisks = true;
             worker = new LocalDiskThread();
             worker.execute();
@@ -418,7 +446,6 @@ final class LocalDiskSelectionDialog extends JDialog {
                     logger.log(Level.SEVERE, "Fatal error when loading local disks", ex); //NON-NLS
                 } finally {
                     if (!this.isCancelled()) {
-                        enableOkay = false;
                         displayErrors();
                         worker = null;
                         loadingDisks = false;

@@ -103,7 +103,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      */
     @Override
     public JPanel getPanel() {
-        configPanel.refreshTable();
+        //DLG: configPanel.refreshTable();
         return configPanel;
     }
 
