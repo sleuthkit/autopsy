@@ -182,7 +182,7 @@
   <rule ref="rulesets/java/imports.xml/ImportFromSamePackage"/>
   <rule ref="rulesets/java/imports.xml/DuplicateImports"/>
   <rule ref="rulesets/java/imports.xml/DontImportJavaLang"/>
-  <rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>
+  <!--<rule ref="rulesets/java/imports.xml/UnnecessaryFullyQualifiedName"/>-->
   <!-- Disabled because it generated a lot of errors for non-Beans
   <rule ref="rulesets/java/javabeans.xml/BeanMembersShouldSerialize"/>-->
   <rule ref="rulesets/java/javabeans.xml/MissingSerialVersionUID"/>
