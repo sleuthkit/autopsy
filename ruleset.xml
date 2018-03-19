@@ -99,7 +99,7 @@
   <rule ref="rulesets/java/design.xml/AvoidDeeplyNestedIfStmts"/>
   <rule ref="rulesets/java/design.xml/SwitchDensity"/>
   <rule ref="rulesets/java/design.xml/ConstructorCallsOverridableMethod"/>
-  <rule ref="rulesets/java/design.xml/AccessorClassGeneration"/>
+  <!--<rule ref="rulesets/java/design.xml/AccessorClassGeneration"/>-->
   <rule ref="rulesets/java/design.xml/FinalFieldCouldBeStatic"/>
   <rule ref="rulesets/java/design.xml/CloseResource"/>
   <rule ref="rulesets/java/design.xml/NonStaticInitializer"/>
@@ -115,7 +115,8 @@
   <!-- Disabled.  Could enforce in future, but not top priority right now.
   <rule ref="rulesets/java/design.xml/UseLocaleWithCaseConversions"/> -->
   <rule ref="rulesets/java/design.xml/AvoidProtectedFieldInFinalClass"/>
-  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>
+  <!-- Disabled.  Could enforce in future, but not top priority right now.
+  <rule ref="rulesets/java/design.xml/AvoidSynchronizedAtMethodLevel"/>-->
   <rule ref="rulesets/java/design.xml/UseNotifyAllInsteadOfNotify"/>
   <rule ref="rulesets/java/design.xml/AbstractClassWithoutAbstractMethod"/>
   <rule ref="rulesets/java/design.xml/SimplifyConditional"/>
