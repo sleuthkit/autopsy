@@ -111,7 +111,7 @@ public class CorrelationAttributeInstance implements Serializable {
     public String toString() {
         return this.getID()
                 + this.getCorrelationCase().getCaseUUID()
-                + this.getCorrelationDataSource().getName()
+                + this.getCorrelationDataSource().getDeviceID()
                 + this.getFilePath()
                 + this.getKnownStatus()
                 + this.getComment();
