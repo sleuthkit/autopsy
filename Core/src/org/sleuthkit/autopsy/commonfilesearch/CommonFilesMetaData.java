@@ -46,7 +46,9 @@ public class CommonFilesMetaData {
     CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
         dedupedFiles = theDedupedFiles;
         instanceCountMap = theInstanceCountMap;
+        dataSourceMap = new HashMap<>();
         dataSourcesMap = theDataSourceMap;
+        
     }
 
     public List<AbstractFile> getFilesList() {

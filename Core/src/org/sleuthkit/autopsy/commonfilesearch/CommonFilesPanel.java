@@ -103,8 +103,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Map<Long, String> dataSourceMap = new HashMap<>();
                 
                 while(resultSet.next()){
-                    Long objectId = resultSet.getLong(0);
-                    String dataSourceName = resultSet.getString(1);
+                    Long objectId = resultSet.getLong(1);
+                    String dataSourceName = resultSet.getString(2);
                     dataSourceMap.put(objectId, dataSourceName);
                 }
                 
