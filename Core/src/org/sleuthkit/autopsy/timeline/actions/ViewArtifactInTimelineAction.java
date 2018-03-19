@@ -25,11 +25,11 @@ import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * An action that shows the given artifact in the Timeline List View.

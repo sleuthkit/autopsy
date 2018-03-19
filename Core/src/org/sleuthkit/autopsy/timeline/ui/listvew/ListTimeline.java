@@ -85,17 +85,21 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ChronoFieldListCell;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.BaseTypes;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.BaseTypes;
+import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.FileSystemTypes;
+import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_ACCESSED;
+import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_CHANGED;
+import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_CREATED;
+import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_MODIFIED;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
  * The inner component that makes up the List view. Manages the TableView.

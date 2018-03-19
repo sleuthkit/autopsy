@@ -48,6 +48,7 @@ import javafx.collections.ObservableMap;
 import javafx.concurrent.Worker;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -57,27 +58,29 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
-import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
-import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.EventDB;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.FileSystemTypes;
+import org.sleuthkit.datamodel.timeline.RootEventType;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
+import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 
 /**
  * Provides higher-level public API (over EventsDB) to access events. In theory
@@ -130,8 +133,8 @@ public class EventsRepository {
         return hashSetMap;
     }
 
-    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
-        return eventDB.getBoundingEventsInterval(timeRange, filter);
+    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone tz) {
+        return eventDB.getBoundingEventsInterval(timeRange, filter,tz );
     }
 
     /**
@@ -145,7 +148,7 @@ public class EventsRepository {
     public EventsRepository(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
         this.autoCase = autoCase;
         //TODO: we should check that case is open, or get passed a case object/directory -jm
-        this.eventDB = EventDB.getEventDB(autoCase);
+        this.eventDB = EventDB.getEventDB(autoCase.getSleuthkitCase());
         populateFilterData(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder()
                 .maximumSize(5000L)
@@ -158,7 +161,7 @@ public class EventsRepository {
         eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
-                ).build(CacheLoader.from(eventDB::getEventStripes));
+                ).build(CacheLoader.from((params) -> eventDB.getEventStripes(params,TimeLineController.getJodaTimeZone())));
         maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
         minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
@@ -352,7 +355,7 @@ public class EventsRepository {
      */
     public void syncTagsFilter(TagsFilter tagsFilter) {
         for (TagName t : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(t, autoCase));
+            tagsFilter.addSubFilter(new TagNameFilter(t));
         }
         for (TagNameFilter t : tagsFilter.getSubFilters()) {
             t.setDisabled(tagNames.contains(t.getTagName()) == false);
@@ -360,7 +363,7 @@ public class EventsRepository {
     }
 
     public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
-        return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
+        return eventDB.getSQLWhere(f1).equals(eventDB.getSQLWhere(f2));
     }
 
     /**

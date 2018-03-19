@@ -31,6 +31,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javax.annotation.concurrent.GuardedBy;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -41,27 +42,24 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
-import org.sleuthkit.autopsy.timeline.filters.DataSourceFilter;
-import org.sleuthkit.autopsy.timeline.filters.DataSourcesFilter;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.HashHitsFilter;
-import org.sleuthkit.autopsy.timeline.filters.HashSetFilter;
-import org.sleuthkit.autopsy.timeline.filters.HideKnownFilter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
-import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
-import org.sleuthkit.autopsy.timeline.filters.TextFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
+import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.filters.Filter;
+import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
+import org.sleuthkit.datamodel.timeline.filters.HashSetFilter;
+import org.sleuthkit.datamodel.timeline.filters.HideKnownFilter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
+import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
+import org.sleuthkit.datamodel.timeline.filters.TextFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -69,6 +67,12 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.RootEventType;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
  * This class acts as the model for a TimelineView
@@ -249,15 +253,15 @@ public final class FilteredEventsModel {
 
         TagsFilter tagsFilter = new TagsFilter();
         repo.getTagNames().stream().forEach(t -> {
-            TagNameFilter tagNameFilter = new TagNameFilter(t, autoCase);
+            TagNameFilter tagNameFilter = new TagNameFilter(t);
             tagNameFilter.setSelected(Boolean.TRUE);
             tagsFilter.addSubFilter(tagNameFilter);
         });
         return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, Collections.emptySet());
     }
 
-    public Interval getBoundingEventsInterval() {
-        return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter());
+    public Interval getBoundingEventsInterval(DateTimeZone tz) {
+        return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter(), tz);
     }
 
     public SingleEvent getEventById(Long eventID) {

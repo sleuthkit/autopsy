@@ -50,11 +50,11 @@ import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.RootEventType;
 
 /**
  * Customized StackedBarChart<String, Number> used to display the event counts
@@ -257,7 +257,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         @Override
         protected Interval adjustInterval(Interval i) {
             //extend range to block bounderies (ie day, month, year)
-            RangeDivisionInfo iInfo = RangeDivisionInfo.getRangeDivisionInfo(i);
+            RangeDivisionInfo iInfo = RangeDivisionInfo.getRangeDivisionInfo(i, TimeLineController.getJodaTimeZone() );
             final long lowerBound = iInfo.getLowerBound();
             final long upperBound = iInfo.getUpperBound();
             final DateTime lowerDate = new DateTime(lowerBound, TimeLineController.getJodaTimeZone());

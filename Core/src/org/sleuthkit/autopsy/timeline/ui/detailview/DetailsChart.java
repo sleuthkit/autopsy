@@ -44,11 +44,11 @@ import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * A TimeLineChart that implements the visual aspects of the DetailView

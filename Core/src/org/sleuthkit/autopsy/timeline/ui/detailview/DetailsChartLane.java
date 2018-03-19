@@ -52,14 +52,14 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import org.sleuthkit.datamodel.timeline.EventCluster;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout

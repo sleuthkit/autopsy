@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import javafx.scene.chart.Axis;
 import javafx.scene.chart.XYChart;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * No-Op axis that doesn't do anything usefull but is necessary to pass

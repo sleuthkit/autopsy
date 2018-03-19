@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * abstract EventTreeItem for event types

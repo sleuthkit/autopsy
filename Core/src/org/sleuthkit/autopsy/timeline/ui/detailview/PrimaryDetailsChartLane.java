@@ -25,9 +25,9 @@ import javafx.scene.chart.Axis;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import org.sleuthkit.datamodel.timeline.EventCluster;
+import org.sleuthkit.datamodel.timeline.EventStripe;
 
 /**
  * Custom implementation of XYChart to graph events on a horizontal

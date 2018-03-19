@@ -34,7 +34,11 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.DisplayNameProvider;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.TimeUnits;
 
 /**
  * A Panel that acts as a view for a given
@@ -118,7 +122,7 @@ public class ZoomSettingsPane extends TitledPane {
                 filteredEvents.timeRangeProperty(),
                 TimeUnits.class,
                 //for the purposes of this slider we want the TimeUnit one bigger than RangeDivisionInfo indicates
-                modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
+                modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange, TimeLineController.getJodaTimeZone()).getPeriodSize().ordinal() - 1,
                 index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
         timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
 

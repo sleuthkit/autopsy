@@ -95,7 +95,7 @@ import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
  * A container for an AbstractTimelineView. Has a Toolbar on top to hold
@@ -249,7 +249,7 @@ final public class ViewFrame extends BorderPane {
         public void invalidated(Observable observable) {
             if (rangeSlider.isHighValueChanging() == false
                     && rangeSlider.isLowValueChanging() == false) {
-                Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval()).getLowerBound();
+                Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
                 if (false == controller.pushTimeRange(new Interval(
                         (long) (rangeSlider.getLowValue() + minTime),
                         (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
@@ -528,7 +528,7 @@ final public class ViewFrame extends BorderPane {
                 updateMessage(ViewFrame_histogramTask_preparing());
 
                 long max = 0;
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
                 Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
@@ -601,7 +601,7 @@ final public class ViewFrame extends BorderPane {
      * Refresh the time selection UI to match the current zoom parameters.
      */
     private void refreshTimeUI() {
-        RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
+        RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
         final long minTime = rangeDivisionInfo.getLowerBound();
         final long maxTime = rangeDivisionInfo.getUpperBound();
 

@@ -36,8 +36,8 @@ import javafx.scene.layout.Pane;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.MultiEvent;
 
 /**
  *

@@ -81,20 +81,20 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
-import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.IntervalUtils;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.TimeUnits;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -369,7 +369,7 @@ public class TimeLineController {
     }
 
     public void zoomOutToActivity() {
-        Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
+        Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval(getJodaTimeZone());
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 

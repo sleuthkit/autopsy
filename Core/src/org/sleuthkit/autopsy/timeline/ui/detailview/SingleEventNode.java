@@ -33,7 +33,7 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
  *

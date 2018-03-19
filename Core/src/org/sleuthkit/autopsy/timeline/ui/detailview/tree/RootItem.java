@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * TreeItem for the root of all the events in the EventsTree.

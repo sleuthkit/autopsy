@@ -37,7 +37,7 @@ import javafx.scene.chart.Axis;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
  * from <a
@@ -263,7 +263,7 @@ final class DateAxis extends Axis<DateTime> {
         if (range == null) {
             return tickDates;
         }
-        rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo((Interval) range);
+        rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo((Interval) range,TimeLineController.getJodaTimeZone());
         final DateTime lowerBound1 = getLowerBound();
         final DateTime upperBound1 = getUpperBound();
 
@@ -335,7 +335,7 @@ final class DateAxis extends Axis<DateTime> {
      */
     @Override
     protected void setRange(Object range, boolean animating) {
-        rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo((Interval) range);
+        rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo((Interval) range,TimeLineController.getJodaTimeZone());
         setLowerBound(new DateTime(rangeDivisionInfo.getLowerBound(), TimeLineController.getJodaTimeZone()));
         setUpperBound(new DateTime(rangeDivisionInfo.getUpperBound(), TimeLineController.getJodaTimeZone()));
     }

@@ -54,13 +54,13 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
 
 /**
  * Controller class for a DetailsChart based implementation of a timeline view.
