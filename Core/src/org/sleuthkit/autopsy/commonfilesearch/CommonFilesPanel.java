@@ -75,11 +75,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         String title = Bundle.CommonFilesPanel_search_results_title();
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<List<AbstractFile>, Void>() {
+        new SwingWorker<CommonFilesMetaData, Void>() {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
+            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
                 
                 //contents of this whole function should be wrapped in a business logic class for the sake of testing
                 
@@ -93,22 +93,22 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Use file.getDataSourceID() to get datasourceid and map it to the appropriate row from above
                 */
 
-                Case currentCase = Case.getOpenCase();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+//                Case currentCase = Case.getOpenCase();
+//                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+//                
+//                CaseDbQuery query = tskDb.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
+//
+//                ResultSet resultSet = query.getResultSet();
+//                
+//                Map<Long, String> dataSourceMap = new HashMap<>();
+//                
+//                while(resultSet.next()){
+//                    Long objectId = resultSet.getLong(1);
+//                    String dataSourceName = resultSet.getString(2);
+//                    dataSourceMap.put(objectId, dataSourceName);
+//                }
                 
-                CaseDbQuery query = tskDb.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
-
-                ResultSet resultSet = query.getResultSet();
-                
-                Map<Long, String> dataSourceMap = new HashMap<>();
-                
-                while(resultSet.next()){
-                    Long objectId = resultSet.getLong(0);
-                    String dataSourceName = resultSet.getString(1);
-                    dataSourceMap.put(objectId, dataSourceName);
-                }
-                
-                return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
+                return new CommonFilesMetaData();
             }
 
             @Override
@@ -116,9 +116,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    List<AbstractFile> contentList = get();                                         //
-                                                                                                    //// To background thread (doInBackground)
-                    CommonFilesMetaData metadata = CommonFilesMetaData.CollateFiles(contentList);    //
+                    CommonFilesMetaData metadata = get();
                                         
                     CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
