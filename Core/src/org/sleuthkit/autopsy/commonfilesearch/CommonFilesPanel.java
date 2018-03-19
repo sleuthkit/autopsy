@@ -65,11 +65,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.title=Common Files",
-        "CommonFilesPanel.search.results.pathText=Common Files Search Results\\:",
+        "CommonFilesPanel.search.results.pathText=Common Files Search Results",
         "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
         "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
-        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files."})
+        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files.",
+        "CommonFilesPanel.search.done.sqlException=Unable to query db for files or data sources."})
     private void search() {
 
         String title = Bundle.CommonFilesPanel_search_results_title();
@@ -142,10 +143,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         LOGGER.log(Level.SEVERE, "Failed to load files from database.", ex);
                         errorMessage = Bundle.CommonFilesPanel_search_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
-                        LOGGER.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
                         errorMessage = Bundle.CommonFilesPanel_search_done_noCurrentCaseException();
+                    } else if (inner instanceof SQLException) {
+                        LOGGER.log(Level.SEVERE, "Unable to query db for files or datasources.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_search_done_sqlException();
                     } else {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search", ex);
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search.", ex);
                         errorMessage = Bundle.CommonFilesPanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
