@@ -26,6 +26,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An interface for implementations of a keyword search service.
+ * You can find the implementations by using Lookup, such as:
+ *   Lookup.getDefault().lookup(KeywordSearchService.class)
  *
  * TODO (AUT-2158: This interface should not extend Closeable.
  */

@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * A utility that runs an ingest job, blocking until the job is completed.
  */
-public final class IngestRunner {
+public final class IngestJobRunner {
 
     /**
      * Runs an ingest job, blocking until the job is completed.
@@ -70,7 +70,7 @@ public final class IngestRunner {
     /**
      * IngestRunner instances cannot be instatiated.
      */
-    private IngestRunner() {
+    private IngestJobRunner() {
     }
 
     /**
