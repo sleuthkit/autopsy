@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,8 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -40,13 +43,41 @@ public class CommonFilesMetaData {
     
     private final List<AbstractFile> dedupedFiles;
     private final Map<String, Integer> instanceCountMap;
-    private final Map<Long, String> dataSourceMap;
-    private final Map<String, String> dataSourcesMap;
+    private final Map<Long, String> dataSourceIdToNameMap;
+    private final Map<String, String> md5ToDataSourcesStringMap;
+    
+    private SleuthkitCase sleuthkitCase;
 
+    CommonFilesMetaData() {
+        dedupedFiles = new ArrayList<>();
+        instanceCountMap = new HashMap<>();
+        md5ToDataSourcesStringMap = new HashMap<>();
+        dataSourceIdToNameMap = new HashMap<>();
+        
+        this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+        
+        this.loadDataSourcesMap();
+        
+        this.collateFiles();        
+    }
+    
+    private void loadDataSourcesMap(){
+        SleuthkitCase.CaseDbQuery query = this.sleuthkitCase.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
+
+        ResultSet resultSet = query.getResultSet();
+                
+        while(resultSet.next()){
+            Long objectId = resultSet.getLong(1);
+            String dataSourceName = resultSet.getString(2);
+            this.dataSourceIdToNameMap.put(objectId, dataSourceName);
+        }
+    }
+    
     CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
         dedupedFiles = theDedupedFiles;
         instanceCountMap = theInstanceCountMap;
-        dataSourcesMap = theDataSourceMap;
+        md5ToDataSourcesStringMap = theDataSourceMap;
+        dataSourceIdToNameMap = new HashMap<>();
     }
 
     public List<AbstractFile> getFilesList() {
@@ -58,7 +89,7 @@ public class CommonFilesMetaData {
     }
 
     public Map<String, String> getDataSourceMap() {
-        return Collections.unmodifiableMap(dataSourcesMap);
+        return Collections.unmodifiableMap(md5ToDataSourcesStringMap);
     }
 
     /**
@@ -72,10 +103,9 @@ public class CommonFilesMetaData {
      * @return object with deduped file list and maps of files to data sources
      * and number instances
      */
-    static CommonFilesMetaData CollateFiles(List<AbstractFile> files) {
-        List<AbstractFile> deDupedFiles = new ArrayList<>();
-        java.util.Map<String, String> dataSourceMap = new HashMap<>();
-        java.util.Map<String, Integer> instanceCountMap = new HashMap<>();
+    private void collateFiles() {
+        
+        List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
 
         AbstractFile previousFile = null;
         String previousMd5 = "";
@@ -91,9 +121,9 @@ public class CommonFilesMetaData {
                 addDataSource(dataSources, file);
             } else {
                 if (previousFile != null) {
-                    deDupedFiles.add(previousFile);
-                    instanceCountMap.put(previousMd5, instanceCount);
-                    dataSourceMap.put(previousMd5, String.join(", ", dataSources));
+                    this.dedupedFiles.add(previousFile);
+                    this.instanceCountMap.put(previousMd5, instanceCount);
+                    this.md5ToDataSourcesStringMap.put(previousMd5, String.join(", ", dataSources));
                 }
                 previousFile = file;
                 previousMd5 = currentMd5;
@@ -102,16 +132,11 @@ public class CommonFilesMetaData {
                 addDataSource(dataSources, file);
             }
         }
-        CommonFilesMetaData data = new CommonFilesMetaData(deDupedFiles, dataSourceMap, instanceCountMap);
-        return data;
     }
 
-    private static void addDataSource(Set<String> dataSources, AbstractFile file) {
-        try {
-            dataSources.add(file.getDataSource().getName());
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, String.format("Unable to determine data source for file with ID: {0}.", file.getId()), ex);
-            dataSources.add("Unknown Source");
-        }
+    private void addDataSource(Set<String> dataSources, AbstractFile file) {
+        long datasourceId = file.getDataSourceObjectId();
+        String dataSourceName = this.dataSourceIdToNameMap.get(datasourceId);
+        dataSources.add(dataSourceName);
     }
 }
