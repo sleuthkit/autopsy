@@ -265,7 +265,7 @@ class AddArchiveTask implements Runnable {
     }
 
     /**
-     * Get a list of data source processors. LocalDisk, LocalFiles, and
+     * Get a list of data source processors. LocalFiles, and
      * ArchiveDSP are removed from the list.
      *
      * @return List of data source processors
