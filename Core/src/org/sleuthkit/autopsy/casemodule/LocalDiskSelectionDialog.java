@@ -235,7 +235,7 @@ final class LocalDiskSelectionDialog extends JDialog {
     /**
      * Refreshes the list of disks in the table.
      */
-    public void refreshTable() {
+    private void refreshTable() {
         model.loadDisks();
         localDiskTable.clearSelection();
     }
