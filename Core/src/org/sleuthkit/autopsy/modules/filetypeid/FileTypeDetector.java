@@ -164,7 +164,15 @@ public class FileTypeDetector {
         return FileTypeDetector.getTikaDetectedTypes().contains(removeOptionalParameter(mimeType));
     }
 
-    public String getTikaMIMEType(AbstractFile file){
+    /**
+     * Get the MIME type which the Apache Tika library detects for the file
+     * 
+     * @param file The file to test.
+     *
+     * @return A MIME type name. If file type could not be detected, or results
+     *         were uncertain, octet-stream is returned.
+     */
+    public static String getTikaMIMEType(AbstractFile file){
         String mimeType;
         /*
          * If the file does not match a user-defined type, send the initial
@@ -252,7 +260,7 @@ public class FileTypeDetector {
          * bytes to Tika.
          */
         if (null == mimeType) {
-            mimeType = getTikaMIMEType(file);
+            mimeType = FileTypeDetector.getTikaMIMEType(file);
         }
 
         /*
@@ -270,7 +278,7 @@ public class FileTypeDetector {
      *
      * @return MIME type without the optional parameter
      */
-    private String removeOptionalParameter(String mimeType) {
+    private static String removeOptionalParameter(String mimeType) {
         int indexOfSemicolon = mimeType.indexOf(';');
         if (indexOfSemicolon != -1) {
             return mimeType.substring(0, indexOfSemicolon).trim();

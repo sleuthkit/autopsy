@@ -581,8 +581,10 @@ class SevenZipExtractor {
                         continue;
                     }
                     String abstractFileMimeType = fileTypeDetector.getMIMEType(unpackedFile);
+                    //if the file was previously determined to be an OCTET stream 
+                    //its possible that upon being unpacked successfully it's type has changed.
                     if (abstractFileMimeType.equals(MimeTypes.OCTET_STREAM)) {
-                        abstractFileMimeType = fileTypeDetector.getTikaMIMEType(unpackedFile);
+                        abstractFileMimeType = FileTypeDetector.getTikaMIMEType(unpackedFile);
                         unpackedFile.setMIMEType(abstractFileMimeType);
                     }
                     if (isSevenZipExtractionSupported(unpackedFile.getMIMEType())) {
