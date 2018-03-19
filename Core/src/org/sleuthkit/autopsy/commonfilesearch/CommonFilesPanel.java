@@ -19,7 +19,11 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionListener;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -35,6 +39,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -74,7 +79,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
+            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
                 
                 //contents of this whole function should be wrapped in a business logic class for the sake of testing
                 
@@ -90,7 +95,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+                
+                CaseDbQuery query = tskDb.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
 
+                ResultSet resultSet = query.getResultSet();
+                
+                Map<Long, String> dataSourceMap = new HashMap<>();
+                
+                while(resultSet.next()){
+                    Long objectId = resultSet.getLong(0);
+                    String dataSourceName = resultSet.getString(1);
+                    dataSourceMap.put(objectId, dataSourceName);
+                }
+                
                 return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
             }
 
@@ -101,7 +118,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     List<AbstractFile> contentList = get();                                         //
                                                                                                     //// To background thread (doInBackground)
-                    CommonFilesMetaData metadata = CommonFilesMetaData.DeDupeFiles(contentList);    //
+                    CommonFilesMetaData metadata = CommonFilesMetaData.CollateFiles(contentList);    //
                                         
                     CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
