@@ -77,8 +77,8 @@ public final class RunIngestModulesAction extends AbstractAction {
     }
 
     /**
-     * Creates an action which will make a run ingest modules wizard when it is
-     * performed.
+     * Constructs an action that invokes the Run Ingest Modules wizard for one
+     * or more data sources.
      *
      * @param dataSources - the data sources you want to run ingest on
      */
@@ -88,6 +88,7 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
         this.parentFile = null;
     }
+
     /**
      * Constructs an action that invokes the Run Ingest Modules wizard for the
      * children of a file.
@@ -107,7 +108,6 @@ public final class RunIngestModulesAction extends AbstractAction {
         }
     }
 
-    
     /**
      * Opens a run ingest modules wizard with the list of data sources.
      *

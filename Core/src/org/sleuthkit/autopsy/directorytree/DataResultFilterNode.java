@@ -391,7 +391,6 @@ public class DataResultFilterNode extends FilterNode {
             Content c = ban.getLookup().lookup(File.class);
             Node n = null;
             boolean md5Action = false;
-            boolean encryptedZip = false;
             if (c != null) {
                 n = new FileNode((AbstractFile) c);
                 md5Action = true;

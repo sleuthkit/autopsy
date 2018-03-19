@@ -828,15 +828,14 @@ public class IngestManager {
                     progress.start();
                 }
 
-                startIngestJob(job);               
+                startIngestJob(job);
                 return null;
-                
+
             } finally {
                 if (null != progress) {
                     progress.finish();
                 }
                 startIngestJobFutures.remove(threadId);
-               
             }
         }
 

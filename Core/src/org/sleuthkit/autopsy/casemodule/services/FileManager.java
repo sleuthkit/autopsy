@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -87,15 +87,16 @@ public class FileManager implements Closeable {
         }
         return caseDb.findAllFilesWhere(createFileTypeInCondition(mimeTypes));
     }
-
-      /**
-     * Finds all files with types that match one of a collection of MIME types.
-     *
-     * @param mimeTypes The MIME types.
-     *
-     * @return The files.
-     *
-     * @throws TskCoreException If there is a problem querying the case
+   
+    /**
+     * Finds all parent_paths that match the specified parentPath and are in the specified data source.
+     * 
+     * @param dataSourceObjectID - the id of the data source to get files from
+     * @param parentPath - the parent path that all files should be like
+     * 
+     * @return The list of files
+     * 
+     * @throws TskCoreException  If there is a problem querying the case
      *                          database.
      */
     public synchronized List<AbstractFile> findFilesByParentPath(long dataSourceObjectID, String parentPath) throws TskCoreException {
@@ -137,6 +138,14 @@ public class FileManager implements Closeable {
         return "mime_type IN ('" + types + "')";
     }
 
+    /**
+     * Converts a data source object id and a parent path into SQL 
+     * data_source_obj_id = ? AND parent_path LIKE ?%
+     * 
+     * @param dataSourceObjectID
+     * @param parentPath
+     * @return 
+     */
     private static String createParentPathCondition(long dataSourceObjectID, String parentPath){
         return "data_source_obj_id = " + dataSourceObjectID +" AND parent_path LIKE '" + parentPath +"%'";
     }
