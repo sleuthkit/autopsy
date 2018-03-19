@@ -361,8 +361,37 @@ public class FileManager implements Closeable {
                 ctime, crtime, atime, mtime,
                 isFile, parentObj, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
     }
-
-    public synchronized DerivedFile updateDerivedFile(String name, long id,
+    /**
+     * Update a derived file which already exists in the the case.
+     *
+     * @param fileName        The name of the file.
+     * @param id              The object id of the file.
+     * @param localPath       The local path of the file, relative to the case
+     *                        folder and including the file name.
+     * @param size            The size of the file in bytes.
+     * @param ctime           The change time of the file.
+     * @param crtime          The create time of the file
+     * @param atime           The accessed time of the file.
+     * @param mtime           The modified time of the file.
+     * @param isFile          True if a file, false if a directory.
+     * @param parentObj       The parent object from which the file was derived.
+     * @param rederiveDetails The details needed to re-derive file (will be
+     *                        specific to the derivation method), currently
+     *                        unused.
+     * @param toolName        The name of the derivation method or tool,
+     *                        currently unused.
+     * @param toolVersion     The version of the derivation method or tool,
+     *                        currently unused.
+     * @param otherDetails    Other details of the derivation method or tool,
+     *                        currently unused.
+     * @param encodingType    Type of encoding used on the file
+     *
+     * @return A DerivedFile object representing the derived file.
+     *
+     * @throws TskCoreException if there is a problem adding the file to the
+     *                          case database.
+     */
+    public synchronized DerivedFile updateDerivedFile(String fileName, long id,
             String localPath,
             long size,
             long ctime, long crtime, long atime, long mtime,
@@ -373,7 +402,7 @@ public class FileManager implements Closeable {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
-        return caseDb.updateDerivedFile(name, id, localPath, size,
+        return caseDb.updateDerivedFile(fileName, id, localPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentObj, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
     }
