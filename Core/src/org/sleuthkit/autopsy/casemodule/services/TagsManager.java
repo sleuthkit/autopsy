@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -98,11 +99,11 @@ public class TagsManager implements Closeable {
             tagDisplayNames.add(tagType.getDisplayName());
         });
         try {
-            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+            TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
             for (TagName tagName : tagsManager.getAllTagNames()) {
                 tagDisplayNames.add(tagName.getDisplayName());
             }
-        } catch (IllegalStateException ignored) {
+        } catch (NoCurrentCaseException ignored) {
             /*
              * No current case, nothing more to add to the set.
              */
@@ -339,8 +340,8 @@ public class TagsManager implements Closeable {
         ContentTag tag;
         tag = caseDb.addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
         try {
-            Case.getCurrentCase().notifyContentTagAdded(tag);
-        } catch (IllegalStateException ex) {
+            Case.getOpenCase().notifyContentTagAdded(tag);
+        } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }
         return tag;
@@ -357,8 +358,8 @@ public class TagsManager implements Closeable {
     public void deleteContentTag(ContentTag tag) throws TskCoreException {
         caseDb.deleteContentTag(tag);
         try {
-            Case.getCurrentCase().notifyContentTagDeleted(tag);
-        } catch (IllegalStateException ex) {
+            Case.getOpenCase().notifyContentTagDeleted(tag);
+        } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Deleted a tag from a closed case", ex);
         }
     }
@@ -469,8 +470,8 @@ public class TagsManager implements Closeable {
     public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
         BlackboardArtifactTag tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         try {
-            Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(tag);
-        } catch (IllegalStateException ex) {
+            Case.getOpenCase().notifyBlackBoardArtifactTagAdded(tag);
+        } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Added a tag to a closed case", ex);
         }
         return tag;
@@ -487,8 +488,8 @@ public class TagsManager implements Closeable {
     public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
         caseDb.deleteBlackboardArtifactTag(tag);
         try {
-            Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
-        } catch (IllegalStateException ex) {
+            Case.getOpenCase().notifyBlackBoardArtifactTagDeleted(tag);
+        } catch (NoCurrentCaseException ex) {
             throw new TskCoreException("Deleted a tag from a closed case", ex);
         }
     }

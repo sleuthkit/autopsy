@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
@@ -37,6 +38,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -86,10 +88,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
-            blackboard = Case.getCurrentCase().getServices().getBlackboard();
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
         }
     }
 
@@ -100,6 +104,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             if (isFileEncrypted(file)) {
                 return flagFile(file);
             }
+        } catch (ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, String.format("Unable to read file '%s'", file.getParentPath() + file.getName()), ex);
+            return IngestModule.ProcessResult.ERROR;
         } catch (IOException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to process file '%s'", file.getParentPath() + file.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
@@ -184,7 +191,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      *
      * @return True if the AbstractFile is encrypted.
      */
-    private boolean isFileEncrypted(AbstractFile file) throws IOException, TskCoreException {
+    private boolean isFileEncrypted(AbstractFile file) throws ReadContentInputStreamException, IOException, TskCoreException {
         /*
          * Criteria for the checks in this method are partially based on
          * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
@@ -223,13 +230,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         }
 
         if (possiblyEncrypted) {
-            try {
-                calculatedEntropy = calculateEntropy(file);
-                if (calculatedEntropy >= minimumEntropy) {
-                    return true;
-                }
-            } catch (IOException ex) {
-                throw new IOException("Unable to calculate the entropy.", ex);
+            calculatedEntropy = calculateEntropy(file);
+            if (calculatedEntropy >= minimumEntropy) {
+                return true;
             }
         }
 
@@ -247,7 +250,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      * @throws IOException If there is a failure closing or reading from the
      *                     InputStream.
      */
-    private double calculateEntropy(AbstractFile file) throws IOException {
+    private double calculateEntropy(AbstractFile file) throws ReadContentInputStreamException, IOException {
         /*
          * Logic in this method is based on
          * https://github.com/willjasen/entropy/blob/master/entropy.java
@@ -283,18 +286,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             return -entropyAccumulator;
 
-        } catch (IOException ex) {
-            throw new IOException("IOException occurred while trying to read data from InputStream.", ex);
         } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-                if (bin != null) {
-                    bin.close();
-                }
-            } catch (IOException ex) {
-                throw new IOException("Failed to close InputStream.", ex);
+            if (in != null) {
+                in.close();
+            }
+            if (bin != null) {
+                bin.close();
             }
         }
     }

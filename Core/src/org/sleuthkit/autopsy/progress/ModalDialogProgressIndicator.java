@@ -227,6 +227,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
     public synchronized void finish() {
         SwingUtilities.invokeLater(() -> {
             this.dialog.setVisible(false);
+            this.dialog.dispose();
         });
     }
 
@@ -247,7 +248,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
                     DialogDescriptor.BOTTOM_ALIGN,
                     HelpCtx.DEFAULT_HELP,
                     buttonListener);
-            dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+            dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor, parent);
         } else {
             /*
              * Dialog without buttons.
@@ -256,6 +257,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
             dialog.add(progressPanel);
             dialog.pack();
         }
+        dialog.setResizable(false);
         dialog.setLocationRelativeTo(parent);
         this.dialog.setVisible(true);
     }

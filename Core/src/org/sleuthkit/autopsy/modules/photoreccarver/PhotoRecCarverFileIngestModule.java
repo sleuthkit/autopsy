@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -77,6 +78,8 @@ import org.sleuthkit.datamodel.TskData;
 })
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
+    static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
+    
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
     private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
@@ -94,15 +97,24 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
-    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private long jobId;
+    
+    private final boolean keepCorruptedFiles;
 
     private static class IngestJobTotals {
-
-        private AtomicLong totalItemsRecovered = new AtomicLong(0);
-        private AtomicLong totalItemsWithErrors = new AtomicLong(0);
-        private AtomicLong totalWritetime = new AtomicLong(0);
-        private AtomicLong totalParsetime = new AtomicLong(0);
+        private final AtomicLong totalItemsRecovered = new AtomicLong(0);
+        private final AtomicLong totalItemsWithErrors = new AtomicLong(0);
+        private final AtomicLong totalWritetime = new AtomicLong(0);
+        private final AtomicLong totalParsetime = new AtomicLong(0);
+    }
+    /**
+     * Create a PhotoRec Carver ingest module instance.
+     * 
+     * @param settings Ingest job settings used to configure the module.
+     */
+    PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
+        keepCorruptedFiles = settings.isKeepCorruptedFiles();
     }
 
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
@@ -228,8 +240,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     "/d", // NON-NLS
                     outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
-                    tempFilePath.toFile().toString(),
-                    "search");  // NON-NLS
+                    tempFilePath.toFile().toString());
+            if (keepCorruptedFiles) {
+                processAndSettings.command().add("options,keep_corrupted_file,search"); // NON-NLS
+            } else {
+                processAndSettings.command().add("search"); // NON-NLS
+            }
             
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
@@ -301,9 +317,14 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                 context.addFilesToJob(new ArrayList<>(carvedItems));
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
             }
+        } catch (ReadContentInputStreamException ex) {
+            totals.totalItemsWithErrors.incrementAndGet();
+            logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d) with the PhotoRec carver.", file.getName(), file.getId()), ex); // NON-NLS
+            MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
+            return IngestModule.ProcessResult.ERROR;
         } catch (IOException ex) {
             totals.totalItemsWithErrors.incrementAndGet();
-            logger.log(Level.SEVERE, "Error processing " + file.getName() + " with PhotoRec carver", ex); // NON-NLS
+            logger.log(Level.SEVERE, String.format("Error writing file '%s' (id=%d) to '%s' with the PhotoRec carver.", file.getName(), file.getId(), tempFilePath), ex); // NON-NLS
             MessageNotifyUtil.Notify.error(PhotoRecCarverIngestModuleFactory.getModuleName(), NbBundle.getMessage(PhotoRecCarverFileIngestModule.class, "PhotoRecIngestModule.error.msg", file.getName()));
             return IngestModule.ProcessResult.ERROR;
         } finally {
@@ -404,7 +425,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path = Paths.get(Case.getCurrentCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        Path path;
+        try {
+            path = Paths.get(Case.getOpenCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
+        }
         try {
             Files.createDirectory(path);
             if (UNCPathUtilities.isUNC(path)) {
@@ -438,8 +464,8 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws IngestModuleException
      */
     public static File locateExecutable() throws IngestModule.IngestModuleException {
-        File exeFile = null;
-        Path execName = null;
+        File exeFile;
+        Path execName;
         String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
             execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_EXECUTABLE);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -486,7 +487,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          * If this is the "main" panel, only allow it to be closed when no case
          * is open or no there are no data sources in the current case.
          */
-        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
+        return (!this.isMain) || openCase.hasData() == false;
     }
 
     /**
@@ -528,8 +535,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             try {
-                Case.getCurrentCase();
-            } catch (IllegalStateException ex) {
+                Case.getOpenCase();
+            } catch (NoCurrentCaseException ex) {
                 return;
             }
 

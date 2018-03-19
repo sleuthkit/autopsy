@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
@@ -29,17 +28,16 @@ import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.SpecialDirectory;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Parent class for special directory types (Local and Virtual)
  */
 public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<SpecialDirectory> {
-
+    
     public SpecialDirectoryNode(SpecialDirectory sd) {
         super(sd);
     }
-        
+
     /**
      * Right click action for this node
      *
@@ -61,9 +59,8 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
-        actions.add(new FileSearchAction(
-                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-        actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+        actions.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actions.add(new RunIngestModulesAction(content));
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }

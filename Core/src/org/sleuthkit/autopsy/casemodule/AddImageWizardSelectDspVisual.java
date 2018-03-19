@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,10 +58,15 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         initComponents();
         selectedDsp = lastDspUsed;
         //if the last selected DSP was the Local Disk DSP and it would be disabled then we want to select a different DSP
-        if ((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) && selectedDsp.equals(LocalDiskDSProcessor.getType())) {
-            selectedDsp = ImageDSProcessor.getType();
+        try {
+            if ((Case.getOpenCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) && selectedDsp.equals(LocalDiskDSProcessor.getType())) {
+                selectedDsp = ImageDSProcessor.getType();
+            }
+            createDataSourceProcessorButtons();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
         }
-        createDataSourceProcessorButtons();
+        
         //add actionlistner to listen for change
     }
 
@@ -96,7 +101,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
      * Create the a button for each DataSourceProcessor that should exist as an
      * option.
      */
-    private void createDataSourceProcessorButtons() {
+    private void createDataSourceProcessorButtons() throws NoCurrentCaseException {
         //Listener for button selection
         ActionListener cbActionListener = new ActionListener() {
             @Override
@@ -126,7 +131,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             //Add the button
             JToggleButton dspButton = createDspButton(dspType);
             dspButton.addActionListener(cbActionListener);
-            if ((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) && dspType.equals(LocalDiskDSProcessor.getType())){
+            if ((Case.getOpenCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) && dspType.equals(LocalDiskDSProcessor.getType())){
                 dspButton.setEnabled(false); //disable the button for local disk DSP when this is a multi user case
                 dspButton.setSelected(false);
                 shouldAddMultiUserWarning = true;

@@ -27,6 +27,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -139,8 +140,8 @@ public class AddContentTagAction extends AddTagAction {
                         }
                     }
 
-                    Case.getCurrentCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
-                } catch (TskCoreException ex) {
+                    Case.getOpenCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     AbstractFile fileCopy = file;
                     SwingUtilities.invokeLater(() -> {

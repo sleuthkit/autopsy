@@ -32,7 +32,7 @@
     </condition>  
     <condition property="os.family" value="windows">  
         <os family="windows"/>  
-    </condition> 
+    </condition>  
     
     <condition property="os.family" value="mac">  
         <os family="mac"/>  

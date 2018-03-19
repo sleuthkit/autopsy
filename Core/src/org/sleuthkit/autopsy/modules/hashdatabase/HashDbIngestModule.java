@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -61,7 +62,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
-    private final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+    private final SleuthkitCase skCase;
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
     private List<HashDb> knownBadHashSets = new ArrayList<>();
@@ -87,8 +88,9 @@ public class HashDbIngestModule implements FileIngestModule {
         return totals;
     }
 
-    HashDbIngestModule(HashLookupModuleSettings settings) {
+    HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
         this.settings = settings;
+        skCase = Case.getOpenCase().getSleuthkitCase();
     }
 
     @Override
@@ -144,7 +146,12 @@ public class HashDbIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        try {
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        }
 
         // Skip unallocated space files.
         if ((file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -56,7 +57,8 @@ public class IngestEventsListener {
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttribute.class.getName());
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
-    private static int ceModuleInstanceCount = 0;
+    private static int correlationModuleInstanceCount;
+    private static boolean flagNotableItems;
     private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
@@ -87,21 +89,20 @@ public class IngestEventsListener {
     }
 
     /**
-     * Enable this IngestEventsListener to add contents to the Correlation
-     * Engine.
-     *
+     * Increase the number of IngestEventsListeners adding contents to the
+     * Correlation Engine.
      */
     public synchronized static void incrementCorrelationEngineModuleCount() {
-        ceModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
+        correlationModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
     }
 
     /**
-     * Disable this IngestEventsListener from adding contents to the Correlation
-     * Engine.
+     * Decrease the number of IngestEventsListeners adding contents to the
+     * Correlation Engine.
      */
     public synchronized static void decrementCorrelationEngineModuleCount() {
         if (getCeModuleInstanceCount() > 0) {  //prevent it ingestJobCounter from going negative
-            ceModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
+            correlationModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
         }
     }
 
@@ -110,17 +111,35 @@ public class IngestEventsListener {
      * is being run during injest to 0.
      */
     synchronized static void resetCeModuleInstanceCount() {
-        ceModuleInstanceCount = 0;  //called when a case is opened in case for some reason counter was not reset
+        correlationModuleInstanceCount = 0;  //called when a case is opened in case for some reason counter was not reset
     }
 
     /**
-     * Wether or not the Correlation Engine Module is enabled for any of the
+     * Whether or not the Correlation Engine Module is enabled for any of the
      * currently running ingest jobs.
      *
      * @return boolean True for Correlation Engine enabled, False for disabled
      */
-    private synchronized static int getCeModuleInstanceCount() {
-        return ceModuleInstanceCount;
+    public synchronized static int getCeModuleInstanceCount() {
+        return correlationModuleInstanceCount;
+    }
+    
+    /**
+     * Are notable items being flagged?
+     * 
+     * @return True if flagging notable items; otherwise false.
+     */
+    public synchronized static boolean isFlagNotableItems() {
+        return flagNotableItems;
+    }
+    
+    /**
+     * Configure the listener to flag notable items or not.
+     * 
+     * @param value True to flag notable items; otherwise false.
+     */
+    public synchronized static void setFlagNotableItems(boolean value) {
+        flagNotableItems = value;
     }
 
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
@@ -144,9 +163,9 @@ public class IngestEventsListener {
             tifArtifact.addAttributes(attributes);
             try {
                 // index the artifact for keyword search
-                Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
+                Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
                 blackboard.indexArtifact(tifArtifact);
-            } catch (Blackboard.BlackboardException ex) {
+            } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }
 
@@ -173,7 +192,7 @@ public class IngestEventsListener {
                 }
                 switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                     case DATA_ADDED: {
-                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt));
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, isFlagNotableItems()));
                         break;
                     }
                 }
@@ -211,10 +230,12 @@ public class IngestEventsListener {
 
         private final EamDb dbManager;
         private final PropertyChangeEvent event;
+        private final boolean flagNotableItemsEnabled;
 
-        private DataAddedTask(EamDb db, PropertyChangeEvent evt) {
+        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled) {
             dbManager = db;
             event = evt;
+            this.flagNotableItemsEnabled = flagNotableItemsEnabled;
         }
 
         @Override
@@ -240,10 +261,12 @@ public class IngestEventsListener {
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                             // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
                             // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
-                            List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                            if (!caseDisplayNames.isEmpty()) {
-                                postCorrelatedBadArtifactToBlackboard(bbArtifact,
-                                        caseDisplayNames);
+                            if (flagNotableItemsEnabled) {
+                                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                if (!caseDisplayNames.isEmpty()) {
+                                    postCorrelatedBadArtifactToBlackboard(bbArtifact,
+                                            caseDisplayNames);
+                                }
                             }
                             eamArtifacts.add(eamArtifact);
                         }

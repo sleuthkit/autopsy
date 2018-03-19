@@ -6,6 +6,13 @@
      
     </configurations>
     <dependencies >
+        
+        
+        <dependency conf="core->default" org="com.github.jgraph" name="jgraphx" rev="v3.8.0"/>
+        
+        
+        
+        
         <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="5.11.1"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-client" rev="2.8.0"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-framework" rev="2.8.0"/>

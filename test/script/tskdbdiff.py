@@ -489,7 +489,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
                 if 'BulkExtractor' in path or 'Smirk' in path:
                     # chop off the last folder (which contains a date/time)
                     path = path[:path.rfind('\\')]
-            if '\\Reports\\AutopsyTestCase HTML Report' in path:
+            if 'Reports\\AutopsyTestCase HTML Report' in path:
                 path = 'Reports\\AutopsyTestCase HTML Report'
 
         if parent_id in files_table.keys():
