@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -41,12 +40,13 @@ public class CommonFilesMetaData {
     
     private final List<AbstractFile> dedupedFiles;
     private final Map<String, Integer> instanceCountMap;
-    private final Map<String, String> dataSourceMap;
+    private final Map<Long, String> dataSourceMap;
+    private final Map<String, String> dataSourcesMap;
 
     CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
         dedupedFiles = theDedupedFiles;
         instanceCountMap = theInstanceCountMap;
-        dataSourceMap = theDataSourceMap;
+        dataSourcesMap = theDataSourceMap;
     }
 
     public List<AbstractFile> getFilesList() {
@@ -58,7 +58,7 @@ public class CommonFilesMetaData {
     }
 
     public Map<String, String> getDataSourceMap() {
-        return Collections.unmodifiableMap(dataSourceMap);
+        return Collections.unmodifiableMap(dataSourcesMap);
     }
 
     /**
@@ -72,7 +72,7 @@ public class CommonFilesMetaData {
      * @return object with deduped file list and maps of files to data sources
      * and number instances
      */
-    static CommonFilesMetaData DeDupeFiles(List<AbstractFile> files) {
+    static CommonFilesMetaData CollateFiles(List<AbstractFile> files) {
         List<AbstractFile> deDupedFiles = new ArrayList<>();
         java.util.Map<String, String> dataSourceMap = new HashMap<>();
         java.util.Map<String, Integer> instanceCountMap = new HashMap<>();
