@@ -2487,39 +2487,32 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                         SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                        try {
-                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                            ingestLock.wait();
-
-                            // at this point we got the content object(s) from the current DSP.
-                            // check whether the data source was processed successfully
-                            if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
-                                    || dataSource.getContent().isEmpty()) {
-                                // move onto the the next DSP that can process this data source
-                                SYS_LOGGER.log(Level.SEVERE, "Data source processor {0} was unable to process {1}", new Object[]{selectedProcessor.getDataSourceType(), dataSource.getPath()});
-                                continue;
-                            }
-
-                            return;
-                        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                            // Log that the current DSP failed and set the error flag. We consider it an error
-                            // if a DSP fails even if a later one succeeds since we expected to be able to process
-                            // the data source which each DSP on the list.
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                            currentJob.setErrorsOccurred(true);
+                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        ingestLock.wait();
+                       
+                        // at this point we got the content object(s) from the current DSP.
+                        // check whether the data source was processed successfully
+                        if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                || dataSource.getContent().isEmpty()) {
+                            // move onto the the next DSP that can process this data source
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
-                            SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                            logDataSourceProcessorResult(dataSource);
+                            continue;
                         }
+                        
+                        logDataSourceProcessorResult(dataSource);
+                        return;
                     }
                     // If we get to this point, none of the processors were successful
                     SYS_LOGGER.log(Level.SEVERE, "All data source processors failed to process {0}", dataSource.getPath());
                     jobLogger.logFailedToAddDataSource();
+                    setCaseNodeDataErrorsOccurred(caseDirectoryPath);
+                    currentJob.setErrorsOccurred(true);
                     // Throw an exception. It will get caught & handled upstream and will result in AIM auto-pause.
                     throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Failed to process " + dataSource.getPath() + " with all data source processors");
                 }
             } finally {
                 currentJob.setDataSourceProcessor(null);
-                logDataSourceProcessorResult(dataSource);
             }
         }
 
@@ -2548,8 +2541,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     case NO_ERRORS:
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
-                            currentJob.setErrorsOccurred(true);
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
@@ -2560,8 +2551,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
-                            currentJob.setErrorsOccurred(true);
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
@@ -2570,8 +2559,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                             SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                         }
-                        currentJob.setErrorsOccurred(true);
-                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                         jobLogger.logFailedToAddDataSource();
                         break;
                 }
@@ -2584,8 +2571,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  * cancelCurrentJob.
                  */
                 SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
-                currentJob.setErrorsOccurred(true);
-                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logDataSourceProcessorCancelled();
             }
         }

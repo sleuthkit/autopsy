@@ -369,7 +369,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
     }
 

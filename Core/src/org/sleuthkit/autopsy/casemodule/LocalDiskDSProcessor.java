@@ -252,7 +252,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         this.deviceId = deviceId;
         this.drivePath = dataSourcePath.toString();
         this.sectorSize = 0;

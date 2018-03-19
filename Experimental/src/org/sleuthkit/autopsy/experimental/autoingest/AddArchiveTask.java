@@ -178,37 +178,30 @@ class AddArchiveTask implements Runnable {
 
                     logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file});
                     synchronized (archiveDspLock) {
-                        try {
-                            UUID taskId = UUID.randomUUID();
-                            currentCase.notifyAddingDataSource(taskId);
-                            AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
-                            DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
-                            selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
-                            archiveDspLock.wait();
+                        UUID taskId = UUID.randomUUID();
+                        currentCase.notifyAddingDataSource(taskId);
+                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
+                        DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
+                        selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
+                        archiveDspLock.wait();
 
-                            // at this point we got the content object(s) from the current DSP.
-                            // check whether the data source was processed successfully
-                            if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
-                                    || internalDataSource.getContent().isEmpty()) {
-                                // move onto the the next DSP that can process this data source
-                                logger.log(Level.SEVERE, "Data source processor {0} was unable to process {1}", new Object[]{selectedProcessor.getDataSourceType(), internalDataSource.getPath()});
-                                continue;
+                        // at this point we got the content object(s) from the current DSP.
+                        // check whether the data source was processed successfully
+                        if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                || internalDataSource.getContent().isEmpty()) {
+                            // move onto the the next DSP that can process this data source
+                            for (String errorMessage : internalDataSource.getDataSourceProcessorErrorMessages()) {
+                                logger.log(Level.SEVERE, "Data source processor {0} was unable to process {1}: {2}", new Object[]{selectedProcessor.getDataSourceType(), internalDataSource.getPath(), errorMessage});
                             }
-
-                            // if we are here it means the data source was addedd successfully
-                            success = true;
-                            newDataSources.addAll(internalDataSource.getContent());
-
-                            // skip all other DSPs for this data source
-                            break;
-                        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                            // Log that the current DSP failed and set the error flag. We consider it an error
-                            // if a DSP fails even if a later one succeeds since we expected to be able to process
-                            // the data source which each DSP on the list.
-                            criticalErrorOccurred = true;
-                            errorMessages.add(ex.getMessage());
-                            logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{newFilePath.toString(), selectedProcessor.getDataSourceType()});
+                            continue;
                         }
+
+                        // if we are here it means the data source was addedd successfully
+                        success = true;
+                        newDataSources.addAll(internalDataSource.getContent());
+
+                        // skip all other DSPs for this data source
+                        break;
                     }
                 }
 
