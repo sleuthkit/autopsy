@@ -290,7 +290,7 @@ public final class Reports implements AutopsyVisitableItem {
             public void actionPerformed(ActionEvent e) {
                 String reportPath = ReportNode.this.report.getPath();
                 
-                if (reportPath.toLowerCase().startsWith("http://")) {
+                if (reportPath.toLowerCase().startsWith("http")) {
                     ExternalViewerAction.openURL(reportPath);
                 }
                 else {
