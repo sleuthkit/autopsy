@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
 import org.sleuthkit.autopsy.testutils.IngestJobRunner;
@@ -146,23 +147,7 @@ public class IngestFileFiltersTest extends TestCase {
     }
     
     public void testFileType() {
-        FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
-        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
-        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
-        template.setEnabled(true);
-        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
-        templates.add(template);
-        //return new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
-        //IngestJobSettings ingestJobSettings = setIngestJobSettings();
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
-        try {
-            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(callBack.getDataSourceContent(), ingestJobSettings);
-            assertEquals(0, errs.size());
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-
+        runInjestJob(null);
         FileManager fileManager;
         try {
             fileManager = Case.getOpenCase().getServices().getFileManager();
@@ -176,4 +161,21 @@ public class IngestFileFiltersTest extends TestCase {
         System.out.println("Test case testFileType is successfully done.");
     }
     
+    private void runInjestJob(FilesSet filters) {
+        FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
+        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
+        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
+        template.setEnabled(true);
+        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+        templates.add(template);
+        IngestJobSettings ingestJobSettings = filters == null ? new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates) : 
+                new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filters);
+        try {
+            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(callBack.getDataSourceContent(), ingestJobSettings);
+            assertEquals(0, errs.size());
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }        
+    }
 }
