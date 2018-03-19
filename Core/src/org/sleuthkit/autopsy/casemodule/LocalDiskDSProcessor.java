@@ -103,7 +103,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      */
     @Override
     public JPanel getPanel() {
-        //DLG: configPanel.refreshTable();
+        configPanel.resetLocalDiskSelection();
         return configPanel;
     }
 
@@ -137,7 +137,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             deviceId = UUID.randomUUID().toString();
-            drivePath = configPanel.getContentPaths();
+            drivePath = configPanel.getContentPath();
             sectorSize = configPanel.getSectorSize();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();

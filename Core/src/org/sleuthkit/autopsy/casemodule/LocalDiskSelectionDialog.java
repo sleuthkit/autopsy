@@ -38,24 +38,14 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 @NbBundle.Messages({
-    "LocalDiskSelectionDialog.title.text=Select Local Disk",
-    "LocalDiskSelectionDialog.refreshTablebutton.text=Refresh Local Disks",
-    "LocalDiskSelectionDialog.listener.getOpenCase.errTitle=No open case available",
-    "LocalDiskSelectionDialog.listener.getOpenCase.errMsg=LocalDiskSelectionDialog listener couldn't get the open case.",
-    "LocalDiskSelectionDialog.localDiskModel.loading.msg=Loading local disks...",
-    "LocalDiskSelectionDialog.localDiskModel.nodrives.msg=No Accessible Drives",
-    "LocalDiskSelectionDialog.moduleErr=Module Error",
-    "LocalDiskSelectionDialog.moduleErr.msg=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.",
-    "LocalDiskSelectionDialog.errLabel.disksNotDetected.text=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
-    "LocalDiskSelectionDialog.errLabel.disksNotDetected.toolTipText=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
-    "LocalDiskSelectionDialog.errLabel.drivesNotDetected.text=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
-    "LocalDiskSelectionDialog.errLabel.drivesNotDetected.toolTipText=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
-    "LocalDiskSelectionDialog.errLabel.someDisksNotDetected.text=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
-    "LocalDiskSelectionDialog.errLabel.someDisksNotDetected.toolTipText=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\")."
+    "LocalDiskSelectionDialog.moduleErrorMessage.title=Module Error",
+    "LocalDiskSelectionDialog.moduleErrorMessage.body=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.",
+    "LocalDiskSelectionDialog.errorMessage.disksNotDetected=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
+    "LocalDiskSelectionDialog.errorMessage.drivesNotDetected=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
+    "LocalDiskSelectionDialog.errorMessage.someDisksNotDetected=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\")."
 })
 /**
- * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
- * C:.
+ * Local disk selection dialog for loading a disk into the LocalDiskPanel.
  */
 final class LocalDiskSelectionDialog extends JDialog {
 
@@ -65,16 +55,15 @@ final class LocalDiskSelectionDialog extends JDialog {
     private final LocalDiskModel model;
 
     /**
-     * Creates new form LocalDiskSelectionDialog
+     * Creates a new LocalDiskSelectionDialog instance.
      */
     LocalDiskSelectionDialog() {
-        super((Window) LocalDiskPanel.getDefault().getTopLevelAncestor(), NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.title.text"), ModalityType.MODELESS);
+        super((Window) LocalDiskPanel.getDefault().getTopLevelAncestor(), ModalityType.MODELESS);
         
         this.model = new LocalDiskModel();
         this.disks = new ArrayList<>();
         
         initComponents();
-        customInit();
         refreshTable();
         
         localDiskTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -82,24 +71,8 @@ final class LocalDiskSelectionDialog extends JDialog {
             public void valueChanged(ListSelectionEvent e) {
                 int selectedRow = localDiskTable.getSelectedRow();
                 okButton.setEnabled(selectedRow >= 0 && selectedRow < disks.size());
-                
-                /*try {
-                    firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "LocalDiskSelectionDialog listener threw exception", e); //NON-NLS
-                    MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.moduleErr"),
-                            NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.moduleErr.msg"),
-                            MessageNotifyUtil.MessageType.ERROR);
-                }*/
             }
         });
-    }
-
-    @SuppressWarnings("unchecked")
-    private void customInit() {
-        errorLabel.setVisible(false);
-        errorLabel.setText("");
-        localDiskTable.setEnabled(false);
     }
     
     /**
@@ -131,6 +104,7 @@ final class LocalDiskSelectionDialog extends JDialog {
         cancelButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle(org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.title")); // NOI18N
         setAlwaysOnTop(true);
         setResizable(false);
 
@@ -213,8 +187,6 @@ final class LocalDiskSelectionDialog extends JDialog {
     }//GEN-LAST:event_refreshLocalDisksButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        int selectedRow = localDiskTable.getSelectedRow();
-        LocalDisk localDisk = disks.get(selectedRow);
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
@@ -233,13 +205,16 @@ final class LocalDiskSelectionDialog extends JDialog {
     private javax.swing.JLabel selectLocalDiskLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Fire a property change event to update the UI.
+     */
     private void fireUpdateEvent() {
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "LocalDiskSelectionDialog listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.moduleErr.msg"),
+            MessageNotifyUtil.Notify.show(Bundle.LocalDiskSelectionDialog_moduleErrorMessage_title(),
+                    Bundle.LocalDiskSelectionDialog_moduleErrorMessage_body(),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }
@@ -250,13 +225,11 @@ final class LocalDiskSelectionDialog extends JDialog {
      * @return String selected disk path
      */
     String getContentPaths() {
-        if (disks.size() > 0) {
-            int selectedRow = localDiskTable.getSelectedRow();
-            LocalDisk selected = disks.get(selectedRow);
+        LocalDisk selected = getLocalDiskSelection();
+        if (selected != null) {
             return selected.getPath();
-        } else {
-            return "";
         }
+        return "";
     }
 
     /**
@@ -265,7 +238,6 @@ final class LocalDiskSelectionDialog extends JDialog {
     public void refreshTable() {
         model.loadDisks();
         localDiskTable.clearSelection();
-        //okButton.setEnabled(false);
     }
     
     /**
@@ -280,10 +252,13 @@ final class LocalDiskSelectionDialog extends JDialog {
                 return disks.get(selectedRow);
             }
         }
-        
         return null;
     }
 
+    @NbBundle.Messages({
+        "LocalDiskSelectionDialog.tableMessage.loading=Loading local disks...",
+        "LocalDiskSelectionDialog.tableMessage.noDrives=No Accessible Drives",
+    })
     /**
      * Table model for displaing information from LocalDisk Objects in a table.
      */
@@ -292,9 +267,6 @@ final class LocalDiskSelectionDialog extends JDialog {
         private LocalDiskThread worker = null;
         private boolean ready = false;
         private volatile boolean loadingDisks = false;
-
-        private final String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.localDiskModel.loading.msg");
-        private final String NO_DRIVES = NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.localDiskModel.nodrives.msg");
 
         private void loadDisks() {
 
@@ -326,17 +298,18 @@ final class LocalDiskSelectionDialog extends JDialog {
 
         }
 
-        @NbBundle.Messages({"LocalDiskSelectionDialog.diskTable.column1.title=Disk Name",
-            "LocalDiskSelectionDialog.diskTable.column2.title=Disk Size"
+        @NbBundle.Messages({
+            "LocalDiskSelectionDialog.columnName.diskName=Disk Name",
+            "LocalDiskSelectionDialog.columnName.diskSize=Disk Size"
         })
 
         @Override
         public String getColumnName(int columnIndex) {
             switch (columnIndex) {
                 case 0:
-                    return NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.diskTable.column1.title");
+                    return Bundle.LocalDiskSelectionDialog_columnName_diskName();
                 case 1:
-                    return NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.diskTable.column2.title");
+                    return Bundle.LocalDiskSelectionDialog_columnName_diskSize();
                 default:
                     return "Unnamed"; //NON-NLS
             }
@@ -356,7 +329,7 @@ final class LocalDiskSelectionDialog extends JDialog {
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (ready) {
                 if (disks.isEmpty()) {
-                    return NO_DRIVES;
+                    return Bundle.LocalDiskSelectionDialog_tableMessage_noDrives();
                 }
                 switch (columnIndex) {
                     case 0:
@@ -367,7 +340,7 @@ final class LocalDiskSelectionDialog extends JDialog {
                         return disks.get(rowIndex).getPath();
                 }
             } else {
-                return LOADING;
+                return Bundle.LocalDiskSelectionDialog_tableMessage_loading();
             }
         }
 
@@ -413,23 +386,17 @@ final class LocalDiskSelectionDialog extends JDialog {
             private void displayErrors() {
                 if (physicalDrives.isEmpty() && partitions.isEmpty()) {
                     if (PlatformUtil.isWindowsOS()) {
-                        errorLabel.setText(
-                                NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.errLabel.disksNotDetected.text"));
-                        errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                                "LocalDiskSelectionDialog.errLabel.disksNotDetected.toolTipText"));
+                        errorLabel.setText(Bundle.LocalDiskSelectionDialog_errorMessage_disksNotDetected());
+                        errorLabel.setToolTipText(Bundle.LocalDiskSelectionDialog_errorMessage_disksNotDetected());
                     } else {
-                        errorLabel.setText(
-                                NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.errLabel.drivesNotDetected.text"));
-                        errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                                "LocalDiskSelectionDialog.errLabel.drivesNotDetected.toolTipText"));
+                        errorLabel.setText(Bundle.LocalDiskSelectionDialog_errorMessage_drivesNotDetected());
+                        errorLabel.setToolTipText(Bundle.LocalDiskSelectionDialog_errorMessage_drivesNotDetected());
                     }
                     errorLabel.setVisible(true);
                     localDiskTable.setEnabled(false);
                 } else if (physicalDrives.isEmpty()) {
-                    errorLabel.setText(
-                            NbBundle.getMessage(this.getClass(), "LocalDiskSelectionDialog.errLabel.someDisksNotDetected.text"));
-                    errorLabel.setToolTipText(NbBundle.getMessage(this.getClass(),
-                            "LocalDiskSelectionDialog.errLabel.someDisksNotDetected.toolTipText"));
+                    errorLabel.setText(Bundle.LocalDiskSelectionDialog_errorMessage_someDisksNotDetected());
+                    errorLabel.setToolTipText(Bundle.LocalDiskSelectionDialog_errorMessage_someDisksNotDetected());
                     errorLabel.setVisible(true);
                 }
             }

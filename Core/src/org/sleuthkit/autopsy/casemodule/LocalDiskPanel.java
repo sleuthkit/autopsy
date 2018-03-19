@@ -20,9 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -36,19 +34,16 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
-@NbBundle.Messages({"LocalDiskPanel.refreshTablebutton.text=Refresh Local Disks",
-    "LocalDiskPanel.listener.getOpenCase.errTitle=No open case available",
-    "LocalDiskPanel.listener.getOpenCase.errMsg=LocalDiskPanel listener couldn't get the open case.",
-    "LocalDiskPanel.localDiskModel.loading.msg=Loading local disks...",
-    "LocalDiskPanel.localDiskModel.nodrives.msg=No Accessible Drives",
-    "LocalDiskPanel.moduleErr=Module Error",
-    "LocalDiskPanel.moduleErr.msg=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.",
-    "LocalDiskPanel.errLabel.disksNotDetected.text=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
-    "LocalDiskPanel.errLabel.disksNotDetected.toolTipText=Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
-    "LocalDiskPanel.errLabel.drivesNotDetected.text=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
-    "LocalDiskPanel.errLabel.drivesNotDetected.toolTipText=Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required",
-    "LocalDiskPanel.errLabel.someDisksNotDetected.text=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").",
-    "LocalDiskPanel.errLabel.someDisksNotDetected.toolTipText=Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\")."
+@NbBundle.Messages({
+    "LocalDiskPanel.errorMessage.noOpenCaseTitle=No open case available",
+    "LocalDiskPanel.errorMessage.noOpenCaseBody=LocalDiskPanel listener couldn't get the open case.",
+    "LocalDiskPanel.imageWriterError.directoryNotExist=Error - directory does not exist",
+    "LocalDiskPanel.imageWriterError.emptyPath=Error - enter path for VHD",
+    "LocalDiskPanel.imageWriterError.isDirectory=Error - VHD path is a directory",
+    "LocalDiskPanel.imageWriterError.fileExists=Error - VHD path already exists",
+    "LocalDiskPanel.moduleErrorMessage.title=Module Error",
+    "LocalDiskPanel.moduleErrorMessage.body=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.",
+    "LocalDiskPanel.localDiskMessage.unspecified=Unspecified"
 })
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
@@ -179,7 +174,6 @@ final class LocalDiskPanel extends JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(localDiskLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.localDiskLabel.text")); // NOI18N
 
         localDiskNameTextField.setEditable(false);
-        localDiskNameTextField.setText(org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.localDiskNameTextField.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -292,32 +286,20 @@ final class LocalDiskPanel extends JPanel {
         if (selectedLocalDisk != null) {
             localDisk = selectedLocalDisk;
             localDiskNameTextField.setText(selectedLocalDisk.getName());
-        }
-        
-        if (localDisk != null) {
+            
             enableNext = true;
             try {
-                setPotentialImageWriterPath(localDisk); //DLG:
+                setPotentialImageWriterPath(localDisk);
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-                MessageNotifyUtil.Notify.show(Bundle.LocalDiskPanel_listener_getOpenCase_errTitle(),
-                        Bundle.LocalDiskPanel_listener_getOpenCase_errMsg(),
+                MessageNotifyUtil.Notify.show(Bundle.LocalDiskPanel_errorMessage_noOpenCaseTitle(),
+                        Bundle.LocalDiskPanel_errorMessage_noOpenCaseBody(),
                         MessageNotifyUtil.MessageType.ERROR);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", ex); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
-                        MessageNotifyUtil.MessageType.ERROR);
-            }
-        } else {  //The selection changed to nothing valid being selected, such as with ctrl+click
-            enableNext = false;
-            try {
-                firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", ex); //NON-NLS
-                MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
+                MessageNotifyUtil.Notify.show(Bundle.LocalDiskPanel_moduleErrorMessage_title(),
+                        Bundle.LocalDiskPanel_moduleErrorMessage_body(),
                         MessageNotifyUtil.MessageType.ERROR);
             }
         }
@@ -346,10 +328,19 @@ final class LocalDiskPanel extends JPanel {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
+            MessageNotifyUtil.Notify.show(Bundle.LocalDiskPanel_moduleErrorMessage_title(),
+                    Bundle.LocalDiskPanel_moduleErrorMessage_body(),
                     MessageNotifyUtil.MessageType.ERROR);
         }
+    }
+    
+    /**
+     * Reset the local disk selection to "Unspecified".
+     */
+    void resetLocalDiskSelection() {
+        localDisk = null;
+        localDiskNameTextField.setText(Bundle.LocalDiskPanel_localDiskMessage_unspecified());
+        enableNext = false;
     }
 
     /**
@@ -357,7 +348,7 @@ final class LocalDiskPanel extends JPanel {
      *
      * @return String selected disk path
      */
-    String getContentPaths() {
+    String getContentPath() {
         if (localDisk != null) {
             return localDisk.getPath();
         } else {
@@ -424,7 +415,7 @@ final class LocalDiskPanel extends JPanel {
 
         if (pathTextField.getText().isEmpty()) {
             imageWriterErrorLabel.setVisible(true);
-            imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterEmptyPathError.text"));
+            imageWriterErrorLabel.setText(Bundle.LocalDiskPanel_imageWriterError_emptyPath());
             return false;
         }
 
@@ -432,17 +423,17 @@ final class LocalDiskPanel extends JPanel {
         if (((f.getParentFile() != null) && (!f.getParentFile().exists()))
                 || (f.getParentFile() == null)) {
             imageWriterErrorLabel.setVisible(true);
-            imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterDirError.text"));
+            imageWriterErrorLabel.setText(Bundle.LocalDiskPanel_imageWriterError_directoryNotExist());
             return false;
         }
         if (f.isDirectory()) {
             imageWriterErrorLabel.setVisible(true);
-            imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterIsDirError.text"));
+            imageWriterErrorLabel.setText(Bundle.LocalDiskPanel_imageWriterError_isDirectory());
             return false;
         }
         if (f.exists()) {
             imageWriterErrorLabel.setVisible(true);
-            imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterFileExistsError.text"));
+            imageWriterErrorLabel.setText(Bundle.LocalDiskPanel_imageWriterError_fileExists());
             return false;
         }
         imageWriterErrorLabel.setVisible(false);
