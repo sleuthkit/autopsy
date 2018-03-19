@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,9 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -39,40 +39,40 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CommonFilesMetaData {
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
-    
     private final List<AbstractFile> dedupedFiles;
     private final Map<String, Integer> instanceCountMap;
     private final Map<Long, String> dataSourceIdToNameMap;
     private final Map<String, String> md5ToDataSourcesStringMap;
-    
+
     private SleuthkitCase sleuthkitCase;
 
-    CommonFilesMetaData() {
+    CommonFilesMetaData() throws TskCoreException, SQLException, NoCurrentCaseException {
         dedupedFiles = new ArrayList<>();
         instanceCountMap = new HashMap<>();
         md5ToDataSourcesStringMap = new HashMap<>();
         dataSourceIdToNameMap = new HashMap<>();
-        
-        this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
-        
-        this.loadDataSourcesMap();
-        
-        this.collateFiles();        
-    }
-    
-    private void loadDataSourcesMap(){
-        SleuthkitCase.CaseDbQuery query = this.sleuthkitCase.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
 
-        ResultSet resultSet = query.getResultSet();
-                
-        while(resultSet.next()){
-            Long objectId = resultSet.getLong(1);
-            String dataSourceName = resultSet.getString(2);
-            this.dataSourceIdToNameMap.put(objectId, dataSourceName);
+        this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+
+        this.loadDataSourcesMap();
+
+        this.collateFiles();
+    }
+
+    private void loadDataSourcesMap() throws SQLException, TskCoreException {
+
+        try (
+                SleuthkitCase.CaseDbQuery query = this.sleuthkitCase.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
+                ResultSet resultSet = query.getResultSet()) {
+
+            while (resultSet.next()) {
+                Long objectId = resultSet.getLong(1);
+                String dataSourceName = resultSet.getString(2);
+                this.dataSourceIdToNameMap.put(objectId, dataSourceName);
+            }
         }
     }
-    
+
     CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
         dedupedFiles = theDedupedFiles;
         instanceCountMap = theInstanceCountMap;
@@ -92,19 +92,8 @@ public class CommonFilesMetaData {
         return Collections.unmodifiableMap(md5ToDataSourcesStringMap);
     }
 
-    /**
-     * De-dupe list of abstract files and count instances of dupes. Also
-     * collates data sources.
-     *
-     * Assumes files are sorted by md5 and that there is at least two of any
-     * given file (no singles are included, only sets of 2 or more).
-     *
-     * @param files objects to dedupe
-     * @return object with deduped file list and maps of files to data sources
-     * and number instances
-     */
-    private void collateFiles() {
-        
+    private void collateFiles() throws TskCoreException {
+
         List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
 
         AbstractFile previousFile = null;
