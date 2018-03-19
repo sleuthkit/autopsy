@@ -246,10 +246,16 @@ class SevenZipExtractor {
         return null;
     }
 
-    void unpack(AbstractFile archiveFile) {
-        unpack(archiveFile, null);
-    }
-
+    /**
+     * Get the data source object id of the root data source for the specified
+     * archive
+     *
+     * @param file the archive which the root data source id is being found
+     *
+     * @return the data source object id of the root data source
+     *
+     * @throws TskCoreException
+     */
     private long getRootArchiveId(AbstractFile file) throws TskCoreException {
         long id = file.getId();
         Content parentContent = file.getParent();
@@ -260,6 +266,20 @@ class SevenZipExtractor {
         return id;
     }
 
+    /**
+     * Query the database and get the list of files which exist for this archive
+     * which have already been added to the case database.
+     *
+     * @param archiveFile     the archiveFile to get the files associated with
+     * @param archiveFilePath the archive file path that must be contained in
+     *                        the parent_path of files
+     *
+     * @return the list of files which already exist in the case database for
+     *         this archive
+     *
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     */
     private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
         //check if already has derived files, skip
         if (archiveFile.hasChildren()) {
@@ -271,6 +291,13 @@ class SevenZipExtractor {
         return new ArrayList<>();
     }
 
+    /**
+     * Get the archiveFilePath
+     *
+     * @param archiveFile the archiveFile to get the path for
+     *
+     * @return the archiveFilePath to be used by the unpack method
+     */
     private String getArchiveFilePath(AbstractFile archiveFile) {
         try {
             return archiveFile.getUniquePath();
@@ -279,6 +306,12 @@ class SevenZipExtractor {
         }
     }
 
+    /**
+     * Create the local directories if they do not exist for the archive
+     *
+     * @param uniqueArchiveFileName the unique name which corresponds to the
+     *                              archive file in this datasource
+     */
     private void makeLocalDirectories(String uniqueArchiveFileName) {
         final String localRootAbsPath = getLocalRootAbsPath(uniqueArchiveFileName);
         final File localRoot = new File(localRootAbsPath);
@@ -287,6 +320,18 @@ class SevenZipExtractor {
         }
     }
 
+    /**
+     * Get the path in the archive of the specified item
+     *
+     * @param item        - the item to get the path for
+     * @param itemNumber  - the item number to help provide uniqueness to the
+     *                    path
+     * @param archiveFile - the archive file the item exists in
+     *
+     * @return a string representing the path to the item in the archive
+     *
+     * @throws SevenZipException
+     */
     private String getPathInArchive(ISimpleInArchiveItem item, int itemNumber, AbstractFile archiveFile) throws SevenZipException {
         String pathInArchive = item.getPath();
 
@@ -332,14 +377,36 @@ class SevenZipExtractor {
         return pathInArchive;
     }
 
+    /*
+     * Get the String that will represent the key for the hashmap which keeps
+     * track of existing files from an AbstractFile
+     */
     private String getKeyAbstractFile(AbstractFile fileInDatabase) {
         return fileInDatabase == null ? null : fileInDatabase.getParentPath() + fileInDatabase.getName();
     }
 
+    /*
+     * Get the String that will represent the key for the hashmap which keeps
+     * track of existing files from an unpacked node and the archiveFilePath
+     */
     private String getKeyFromUnpackedNode(UnpackedTree.UnpackedNode node, String archiveFilePath) {
         return node == null ? null : archiveFilePath + "/" + node.getFileName();
     }
 
+    /**
+     * Unpack an archive item to the disk using a password if specified.
+     *
+     * @param item                - the archive item to unpack
+     * @param unpackedNode        - the unpackedNode to add derivedInfo to
+     * @param password            - the password for the archive, null if not
+     *                            used
+     * @param freeDiskSpace       - the amount of free disk space
+     * @param uniqueExtractedName - the name of the file to extract the item to
+     *
+     * @return unpackedNode - the updated unpackedNode
+     *
+     * @throws SevenZipException
+     */
     private SevenZipExtractor.UnpackedTree.UnpackedNode unpackNode(ISimpleInArchiveItem item, SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode, String password, long freeDiskSpace, String uniqueExtractedName) throws SevenZipException {
         //unpack locally if a file
         final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
@@ -392,8 +459,20 @@ class SevenZipExtractor {
     /**
      * Unpack the file to local folder and return a list of derived files
      *
-     * @param pipelineContext current ingest context
-     * @param archiveFile     file to unpack
+     * @param archiveFile file to unpack
+     *
+     * @return list of unpacked derived files
+     */
+    void unpack(AbstractFile archiveFile) {
+        unpack(archiveFile, null);
+    }
+
+    /**
+     * Unpack the file to local folder and return a list of derived files, use
+     * the password if specified.
+     *
+     * @param archiveFile - file to unpack
+     * @param password    - the password to use, null for no password
      *
      * @return list of unpacked derived files
      */
@@ -922,7 +1001,21 @@ class SevenZipExtractor {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }
         }
-        
+
+        /**
+         * Add derived files to the case if they do not exist, update the
+         * derived file data if the new file contains more information than the
+         * existing one, and do nothing if the existing information is complete.
+         *
+         * @param node            - the UnpackedNode for the file which is being
+         *                        added or updated
+         * @param fileManager     - the file manager to perform the adding or
+         *                        updating
+         * @param statusMap       - the map of existing files and their status
+         * @param archiveFilePath - the archive file path for the unpacked node
+         *
+         * @throws TskCoreException
+         */
         private void updateOrAddFileToCaseRec(UnpackedNode node, FileManager fileManager, HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException {
             DerivedFile df;
             try {
@@ -1142,33 +1235,63 @@ class SevenZipExtractor {
         }
     }
 
-    private class ZipFileStatusWrapper {
+    /**
+     * A class which wraps an AbstractFile and an enum identifing whether the
+     * file which exists in the case database is current
+     */
+    private final class ZipFileStatusWrapper {
 
         private final AbstractFile abstractFile;
         private ZipFileStatus zipStatus;
 
+        /**
+         * Construct a ZipFileStatusWrapper to wrap the given AbstractFile and
+         * status
+         *
+         * @param file   - The AbstractFile which exists in the case database
+         * @param status - an indicator of if the file information is current
+         */
         private ZipFileStatusWrapper(AbstractFile file, ZipFileStatus status) {
             abstractFile = file;
             zipStatus = status;
         }
 
+        /**
+         * Get the AbstractFile contained in this object
+         *
+         * @return abstractFile - The abstractFile this object wraps
+         */
         private AbstractFile getFile() {
             return abstractFile;
         }
 
+        /**
+         * Get whether the file should be skipped or updated
+         *
+         * @return zipStatus - an Enum value indicating if the file is current
+         */
         private ZipFileStatus getStatus() {
             return zipStatus;
         }
 
+        /**
+         * Set the zipStatus of the file being wrapped when it changes
+         *
+         * @param status - an Enum value indicating if the file is current
+         */
         private void setStatus(ZipFileStatus status) {
             zipStatus = status;
         }
 
     }
 
+    /**
+     * The status of the file from the archive in regards to whether it should
+     * be updated
+     */
     private enum ZipFileStatus {
-        UPDATE, //NON-NLS
-        SKIP,//NON-NLS
-        EXISTS //NON-NLS
+        UPDATE, //Should be updated //NON-NLS
+        SKIP, //File is current can be skipped //NON-NLS
+        EXISTS //File exists but it is unknown if it is current //NON-NLS
     }
 }
