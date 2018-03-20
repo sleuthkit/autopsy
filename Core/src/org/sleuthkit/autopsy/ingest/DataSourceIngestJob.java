@@ -702,26 +702,27 @@ final class DataSourceIngestJob {
                 }
             }
         }
-        if (this.cancelled) {
-            try {
-                ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+        if (ingestJob != null) {
+            if (this.cancelled) {
+                try {
+                    ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                }
+            } else {
+                try {
+                    ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                }
             }
-        } else {
             try {
-                ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                this.ingestJob.setEndDateTime(new Date());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
             }
-        }
-        try {
-            this.ingestJob.setEndDateTime(new Date());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
         }
         this.parentJob.dataSourceJobFinished(this);
-
     }
 
     /**
