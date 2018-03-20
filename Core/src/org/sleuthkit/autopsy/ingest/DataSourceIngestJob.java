@@ -165,7 +165,7 @@ final class DataSourceIngestJob {
     private String currentFileIngestModule = "";
     private String currentFileIngestTask = "";
     private final List<IngestModuleInfo> ingestModules = new ArrayList<>();
-    private IngestJobInfo ingestJob;
+    private volatile IngestJobInfo ingestJob;
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -414,17 +414,17 @@ final class DataSourceIngestJob {
     List<IngestModuleError> start() {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
+            try {
+                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
+            }
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
                 logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
                 logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
-            }
-            try {
-                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }
         return errors;
