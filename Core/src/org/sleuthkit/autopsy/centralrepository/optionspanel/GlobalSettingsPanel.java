@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.awt.Cursor;
+import java.awt.EventQueue;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -66,27 +67,27 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         IngestManager.getInstance().addIngestJobEventListener(ingestJobEventListener);
         ingestStateUpdated();
     }
-    
+
     @Messages({"GlobalSettingsPanel.updateFailed.title=Update failed",
-               "GlobalSettingsPanel.updateFailed.message=Failed to update database. Central repository has been disabled."
+        "GlobalSettingsPanel.updateFailed.message=Failed to update database. Central repository has been disabled."
     })
-    private void updateDatabase(){
-        
-        if(EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)){
+    private void updateDatabase() {
+
+        if (EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)) {
             return;
         }
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        
+
         try {
             boolean result = EamDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            if(! result){
+            if (!result) {
                 JOptionPane.showMessageDialog(this,
-                                        NbBundle.getMessage(this.getClass(),
-                                                "GlobalSettingsPanel.updateFailed.message"),
-                                        NbBundle.getMessage(this.getClass(),
-                                                "GlobalSettingsPanel.updateFailed.title"),
-                                        JOptionPane.WARNING_MESSAGE);
+                        NbBundle.getMessage(this.getClass(),
+                                "GlobalSettingsPanel.updateFailed.message"),
+                        NbBundle.getMessage(this.getClass(),
+                                "GlobalSettingsPanel.updateFailed.title"),
+                        JOptionPane.WARNING_MESSAGE);
             }
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -449,11 +450,37 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
          */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
-            if (AutopsyEvent.SourceType.LOCAL == ((AutopsyEvent) event).getSourceType()) {
-                ingestStateUpdated();
+            if (isLocalIngestJobEvent(event)) {
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        ingestStateUpdated();
+                    }
+                });
             }
         }
     };
+
+    /**
+     * Check that the supplied event is a local IngestJobEvent whose type is
+     * STARTED, CANCELLED, or COMPLETED.
+     *
+     * @param event The PropertyChangeEvent to check against.
+     *
+     * @return True is the event is a local IngestJobEvent whose type is
+     *         STARTED, CANCELLED, or COMPLETED; otherwise false.
+     */
+    private boolean isLocalIngestJobEvent(PropertyChangeEvent event) {
+        if (event instanceof AutopsyEvent) {
+            if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                String eventType = event.getPropertyName();
+                return (eventType.equals(IngestManager.IngestJobEvent.STARTED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()));
+            }
+        }
+        return false;
+    }
 
     @Messages({"GlobalSettingsPanel.validationErrMsg.ingestRunning=You cannot change settings while ingest is running."})
     private void ingestStateUpdated() {
@@ -468,6 +495,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         if (IngestManager.getInstance().isIngestRunning()) {
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             cbUseCentralRepo.setEnabled(false);
+            enableAllSubComponents(false);
         } else if (!cbUseCentralRepo.isEnabled()) {
             cbUseCentralRepo.setEnabled(true);
             load();
