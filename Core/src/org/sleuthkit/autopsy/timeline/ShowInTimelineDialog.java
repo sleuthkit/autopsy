@@ -206,7 +206,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      * @param artifact   The BlackboardArtifact to configure this dialog for.
      */
     @NbBundle.Messages({"ShowInTimelineDialog.artifactTitle=View Result in Timeline."})
-    ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) {
+    ShowInTimelineDialog(TimeLineController controller, BlackboardArtifact artifact) throws TskCoreException {
         //get events IDs from artifact
         this(controller, controller.getEventsModel().getEventIDsForArtifact(artifact));
 
@@ -236,7 +236,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     @NbBundle.Messages({"# {0} - file path",
         "ShowInTimelineDialog.fileTitle=View {0} in timeline.",
         "ShowInTimelineDialog.eventSelectionValidator.message=You must select an event."})
-    ShowInTimelineDialog(TimeLineController controller, AbstractFile file) {
+    ShowInTimelineDialog(TimeLineController controller, AbstractFile file) throws TskCoreException {
         this(controller, controller.getEventsModel().getEventIDsForFile(file, false));
 
         /*

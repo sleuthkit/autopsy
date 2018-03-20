@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides access to per-case timeline properties (key-value store).
@@ -54,18 +55,20 @@ class PerCaseTimelineProperties {
      *
      * @throws IOException if there is a problem reading the state from disk
      */
-    public synchronized boolean isDBStale() throws IOException {
-
-        String stale = getProperty(STALE_KEY);
-        return StringUtils.isBlank(stale) ? true : Boolean.valueOf(stale);
-
+    public synchronized boolean isDBStale() throws TskCoreException {
+        try {
+            String stale = getProperty(STALE_KEY);
+            return StringUtils.isBlank(stale) ? true : Boolean.valueOf(stale);
+        } catch (IOException iOException) {
+            throw new TskCoreException("Error reading staleness of timeline DB", iOException);
+        }
     }
 
     /**
      * record the state of the events db as stale(true) or not stale(false).
      *
      * @param stale the new state of the event db. true for stale, false for not
-     *              stale.
+     * stale.
      *
      * @throws IOException if there was a problem writing the state to disk.
      */
@@ -131,7 +134,7 @@ class PerCaseTimelineProperties {
     /**
      * Sets the given property to the given value.
      *
-     * @param propertyKey   - The key of the property to be modified.
+     * @param propertyKey - The key of the property to be modified.
      * @param propertyValue - the value to set the property to.
      *
      * @throws IOException if there was a problem writing the property to disk

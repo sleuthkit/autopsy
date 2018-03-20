@@ -52,6 +52,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
@@ -76,6 +77,7 @@ import javax.swing.JMenuItem;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -185,10 +187,15 @@ class ListTimeline extends BorderPane {
     private final ListChangeListener<CombinedEvent> selectedEventListener = new ListChangeListener<CombinedEvent>() {
         @Override
         public void onChanged(ListChangeListener.Change<? extends CombinedEvent> c) {
-            controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
-                    .filter(Objects::nonNull)
-                    .map(CombinedEvent::getRepresentativeEventID)
-                    .collect(Collectors.toSet()));
+            try {
+                controller.selectEventIDs(table.getSelectionModel().getSelectedItems().stream()
+                        .filter(Objects::nonNull)
+                        .map(CombinedEvent::getRepresentativeEventID)
+                        .collect(Collectors.toSet()));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error selecting events.", ex);
+                new Alert(Alert.AlertType.ERROR, "error selecting events.").showAndWait();
+            }
         }
     };
 
@@ -236,19 +243,19 @@ class ListTimeline extends BorderPane {
 
         //// set up cell and cell-value factories for columns
         dateTimeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        dateTimeColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
-                TimeLineController.getZonedFormatter().print(singleEvent.getStartMillis())));
+        dateTimeColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
+                -> TimeLineController.getZonedFormatter().print(singleEvent.getStartMillis())));
 
         descriptionColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
-                singleEvent.getDescription(DescriptionLoD.FULL)));
+        descriptionColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
+                -> singleEvent.getDescription(DescriptionLoD.FULL)));
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());
 
         knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent ->
-                singleEvent.getKnown().getName()));
+        knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
+                -> singleEvent.getKnown().getName()));
 
         taggedColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         taggedColumn.setCellFactory(col -> new TaggedCell());
@@ -331,7 +338,7 @@ class ListTimeline extends BorderPane {
      * ListViewPane will provide to its host ViewFrame.
      *
      * @return A List of time navigation controls in the from of JavaFX scene
-     *         graph Nodes.
+     * graph Nodes.
      */
     List<Node> getTimeNavigationControls() {
         return Collections.singletonList(navControls);
@@ -342,7 +349,7 @@ class ListTimeline extends BorderPane {
      * focus it.
      *
      * @param index The index of the item that should be scrolled in to view and
-     *              focused.
+     * focused.
      */
     private void scrollToAndFocus(Integer index) {
         table.requestFocus();
@@ -558,7 +565,7 @@ class ListTimeline extends BorderPane {
          * Constructor
          *
          * @param textSupplier Function that takes a SingleEvent and produces a
-         *                     String to show in this TableCell.
+         * String to show in this TableCell.
          */
         TextEventTableCell(Function<SingleEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
@@ -730,14 +737,14 @@ class ListTimeline extends BorderPane {
                     ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
                     ZoneId timeZoneID = TimeLineController.getTimeZoneID();
                     TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
-                    
+
                     int focusedIndex = table.getFocusModel().getFocusedIndex();
                     CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
                     if (-1 == focusedIndex || null == focusedItem) {
                         focusedItem = visibleEvents.first();
                         focusedIndex = table.getItems().indexOf(focusedItem);
                     }
-                    
+
                     ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
                     ZonedDateTime nextDateTime = focusedDateTime.plus(1, selectedUnit);//
                     for (ChronoField field : SCROLL_BY_UNITS) {
@@ -746,7 +753,7 @@ class ListTimeline extends BorderPane {
                         }
                     }
                     long nextMillis = nextDateTime.toInstant().toEpochMilli();
-                    
+
                     int nextIndex = table.getItems().size() - 1;
                     for (int i = focusedIndex; i < table.getItems().size(); i++) {
                         if (table.getItems().get(i).getStartMillis() >= nextMillis) {
@@ -774,24 +781,24 @@ class ListTimeline extends BorderPane {
                     ZoneId timeZoneID = TimeLineController.getTimeZoneID();
                     ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
                     TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
-                    
+
                     int focusedIndex = table.getFocusModel().getFocusedIndex();
                     CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
                     if (-1 == focusedIndex || null == focusedItem) {
                         focusedItem = visibleEvents.last();
                         focusedIndex = table.getItems().indexOf(focusedItem);
                     }
-                    
+
                     ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
                     ZonedDateTime previousDateTime = focusedDateTime.minus(1, selectedUnit);//
-                    
+
                     for (ChronoField field : SCROLL_BY_UNITS) {
                         if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
                             previousDateTime = previousDateTime.with(field, field.rangeRefinedBy(previousDateTime).getMaximum());//
                         }
                     }
                     long previousMillis = previousDateTime.toInstant().toEpochMilli();
-                    
+
                     int previousIndex = 0;
                     for (int i = focusedIndex; i > 0; i--) {
                         if (table.getItems().get(i).getStartMillis() <= previousMillis) {
@@ -799,7 +806,7 @@ class ListTimeline extends BorderPane {
                             break;
                         }
                     }
-                    
+
                     scrollToAndFocus(previousIndex);
                 }
             });

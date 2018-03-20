@@ -29,6 +29,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -50,7 +51,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102),
+    @ActionReference(path = "Menu/Tools", position = 102)
+    ,
     @ActionReference(path = "Toolbars/Case", position = 102)})
 public final class OpenTimelineAction extends CallableSystemAction {
 
@@ -99,18 +101,23 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 }
             }
             setEnabled(false);
-        }else if("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
+        } else if ("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
             Platform.runLater(PromptDialogManager::showTimeLineDisabledMessage);
             setEnabled(false);
-        }else {
-            showTimeline();
+        } else {
+            try {
+                showTimeline();
+            } catch (TskCoreException ex) {
+                MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
+                logger.log(Level.SEVERE, "Error showingtimeline.", ex);
+            }
         }
     }
 
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
+    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) throws TskCoreException {
         try {
             Case currentCase = Case.getOpenCase();
             if (currentCase.hasData() == false) {
@@ -118,20 +125,13 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
                 return;
             }
-            try {
-                if (timeLineController == null) {
-                    timeLineController = new TimeLineController(currentCase);
-                } else if (timeLineController.getAutopsyCase() != currentCase) {
-                    timeLineController.shutDownTimeLine();
-                    timeLineController = new TimeLineController(currentCase);
-                }
-
-                timeLineController.showTimeLine(file, artifact);
-
-            } catch (IOException iOException) {
-                MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
-                logger.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
+            if (timeLineController == null) {
+                timeLineController = new TimeLineController(currentCase);
+            } else if (timeLineController.getAutopsyCase() != currentCase) {
+                timeLineController.shutDownTimeLine();
+                timeLineController = new TimeLineController(currentCase);
             }
+            timeLineController.showTimeLine(file, artifact);
         } catch (NoCurrentCaseException e) {
             //there is no case...   Do nothing.
         }
@@ -141,7 +141,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      * Open the Timeline window with the default initial view.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void showTimeline() {
+    public void showTimeline() throws TskCoreException {
         showTimeline(null, null);
     }
 
@@ -153,7 +153,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      * @param file The AbstractFile to show in the Timeline.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void showFileInTimeline(AbstractFile file) {
+    public void showFileInTimeline(AbstractFile file) throws TskCoreException {
         showTimeline(file, null);
     }
 
@@ -164,7 +164,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
      * @param artifact The BlackboardArtifact to show in the Timeline.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void showArtifactInTimeline(BlackboardArtifact artifact) {
+    public void showArtifactInTimeline(BlackboardArtifact artifact) throws TskCoreException {
         showTimeline(null, artifact);
     }
 

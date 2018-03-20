@@ -42,7 +42,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.autopsy.timeline.db.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
@@ -260,7 +259,7 @@ public final class FilteredEventsModel {
         return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, Collections.emptySet());
     }
 
-    public Interval getBoundingEventsInterval(DateTimeZone tz) {
+    public Interval getBoundingEventsInterval(DateTimeZone tz) throws TskCoreException {
         return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter(), tz);
     }
 
@@ -280,11 +279,11 @@ public final class FilteredEventsModel {
      *
      * @return a map from tagname displayname to count of applications
      */
-    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) throws TskCoreException {
         return repo.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public List<Long> getEventIDs(Interval timeRange, Filter filter) {
+    public List<Long> getEventIDs(Interval timeRange, Filter filter) throws TskCoreException {
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {
@@ -303,7 +302,7 @@ public final class FilteredEventsModel {
      *
      * @return A List of combined events, sorted by timestamp.
      */
-    public List<CombinedEvent> getCombinedEvents() {
+    public List<CombinedEvent> getCombinedEvents() throws TskCoreException {
         return repo.getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
     }
 
@@ -339,7 +338,7 @@ public final class FilteredEventsModel {
     /**
      * @return the smallest interval spanning all the given events
      */
-    public Interval getSpanningInterval(Collection<Long> eventIDs) {
+    public Interval getSpanningInterval(Collection<Long> eventIDs) throws TskCoreException {
         return repo.getSpanningInterval(eventIDs);
     }
 
@@ -391,17 +390,17 @@ public final class FilteredEventsModel {
         return repo.getEventStripes(params);
     }
 
-    synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) {
+    synchronized public boolean handleContentTagAdded(ContentTagAddedEvent evt) throws TskCoreException {
         ContentTag contentTag = evt.getAddedTag();
         Content content = contentTag.getContent();
-        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag, null);
+        Set<Long> updatedEventIDs = repo.addTag(content.getId(), null, contentTag);
         return postTagsAdded(updatedEventIDs);
     }
 
-    synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) {
+    synchronized public boolean handleArtifactTagAdded(BlackBoardArtifactTagAddedEvent evt) throws TskCoreException {
         BlackboardArtifactTag artifactTag = evt.getAddedTag();
         BlackboardArtifact artifact = artifactTag.getArtifact();
-        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag, null);
+        Set<Long> updatedEventIDs = repo.addTag(artifact.getObjectID(), artifact.getArtifactID(), artifactTag);
         return postTagsAdded(updatedEventIDs);
     }
 
@@ -446,7 +445,7 @@ public final class FilteredEventsModel {
      * @return A List of event IDs for the events that are derived from the
      *         given file.
      */
-    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) {
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return repo.getEventIDsForFile(file, includeDerivedArtifacts);
     }
 
@@ -459,7 +458,7 @@ public final class FilteredEventsModel {
      * @return A List of event IDs for the events that are derived from the
      *         given artifact.
      */
-    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return repo.getEventIDsForArtifact(artifact);
     }
 

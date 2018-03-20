@@ -20,10 +20,14 @@ package org.sleuthkit.autopsy.timeline.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -37,12 +41,13 @@ import org.sleuthkit.datamodel.timeline.EventType;
 public final class ViewArtifactInTimelineAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(ViewFileInTimelineAction.class.getName());
 
-    private static final Set<ArtifactEventType> ARTIFACT_EVENT_TYPES =
-            EventType.allTypes.stream()
-            .filter((EventType t) -> t instanceof ArtifactEventType)
-            .map(ArtifactEventType.class::cast)
-            .collect(Collectors.toSet());
+    private static final Set<ArtifactEventType> ARTIFACT_EVENT_TYPES
+            = EventType.allTypes.stream()
+                    .filter((EventType t) -> t instanceof ArtifactEventType)
+                    .map(ArtifactEventType.class::cast)
+                    .collect(Collectors.toSet());
 
     private final BlackboardArtifact artifact;
 
@@ -54,7 +59,12 @@ public final class ViewArtifactInTimelineAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SystemAction.get(OpenTimelineAction.class).showArtifactInTimeline(artifact);
+        try {
+            SystemAction.get(OpenTimelineAction.class).showArtifactInTimeline(artifact);
+        } catch (TskCoreException ex) {
+            MessageNotifyUtil.Message.error("Error opening Timeline");
+            logger.log(Level.SEVERE, "Error showing timeline.", ex);
+        }
     }
 
     /**
