@@ -49,6 +49,16 @@ public class TableFilterNode extends FilterNode {
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
     }
+    
+    /**
+     * Constructs a filter node that generates children using TableFilterChildrenWithDescendants.
+     * This enables row to have descendants.
+     * @param node The node to wrap
+     */
+    public TableFilterNode(Node node){
+        super(node, TableFilterChildrenWithDescendants.createInstance(node, true), Lookups.proxy(node));
+        this.createChildren = true;
+    }
 
     /**
      * Constructs a filter node that creates at most one layer of child nodes
