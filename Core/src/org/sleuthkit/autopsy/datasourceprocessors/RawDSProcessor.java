@@ -18,10 +18,18 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -32,12 +40,25 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * also provides a run method overload to allow it to be used independently of
  * the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class RawDSProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+)
+public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private final RawDSInputPanel configPanel;
     private AddRawImageTask addImageTask;
-
+    private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);   
+    private static final List<FileFilter> filtersList = new ArrayList<>();
+    static {
+        filtersList.add(rawFilter);
+        filtersList.add(encaseFilter);
+    }
+    
+    // By default, split image into 2GB unallocated space chunks
+    private static final long DEFAULT_CHUNK_SIZE = 2000000000L; // 2 GB
+    
     /*
      * Constructs a Raw data source processor that implements the
      * DataSourceProcessor service provider interface to allow integration with
@@ -157,6 +178,30 @@ public class RawDSProcessor implements DataSourceProcessor {
     @Override
     public void reset() {
         configPanel.reset();
+    }
+    
+    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
+        for (FileFilter filter : filters) {
+            if (filter.accept(file)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        // check file extension for supported types
+        if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
+            return 0;
+        }
+
+        return 2;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        run(deviceId, dataSourcePath.toString(), Calendar.getInstance().getTimeZone().getID(), DEFAULT_CHUNK_SIZE, progressMonitor, callBack);
     }
 
 }
