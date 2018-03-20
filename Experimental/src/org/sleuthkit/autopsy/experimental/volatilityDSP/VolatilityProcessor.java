@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourceprocessors;
+package org.sleuthkit.autopsy.experimental.volatilityDSP;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
@@ -103,6 +102,7 @@ class VolatilityProcessor {
         }
 
         progressMonitor.setIndeterminate(false);
+        progressMonitor.setProgressMax(pluginsToRun.size());
         for (int i = 0; i < pluginsToRun.size(); i++) {
             if (isCancelled)
                 break;
@@ -243,20 +243,8 @@ class VolatilityProcessor {
             if (fileName.length() < 1) {
                 continue;
             }
-           // if there is no extension, add a wildcard to the end
-            if (fileName.contains(".") == false) {
-                // if there is already the same entry with ".exe" in the set, just use that one
-                if (fileSet.contains(file + ".exe"))
-                    continue;
-                // if plugin is handles then skip if filename does not have an extension helps with 
-                // cases when there really is no just a directory or if it truly does not have an extension
-                if (pluginName.matches("handles"))
-                    continue;
-                fileName = fileName + ".%";
-            }
 
             String filePath = volfile.getParent();
-            
         
             try {
                 List<AbstractFile> resolvedFiles;
@@ -266,6 +254,22 @@ class VolatilityProcessor {
                     // File changed the slashes back to \ on us...
                     filePath = filePath.replaceAll("\\\\", "/");
                     resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
+                }
+                
+                // if we didn't get anything, then try adding a wildcard for extension
+                if ((resolvedFiles.isEmpty()) && (fileName.contains(".") == false)) {
+                    
+                    // if there is already the same entry with ".exe" in the set, just use that one
+                    if (fileSet.contains(file + ".exe"))
+                        continue;
+                    
+                    fileName = fileName + ".%";
+                    if (filePath == null) {
+                        resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
+                    } else {
+                        resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
+                    }
+
                 }
                 
                 if (resolvedFiles.isEmpty()) {
@@ -363,7 +367,12 @@ class VolatilityProcessor {
         filePath = filePath.replaceAll("%systemroot%", "/windows/");
         filePath = filePath.replaceAll("device/","");
         // helps with finding files in handles plugin
-        filePath = filePath.substring(filePath.indexOf("harddiskvolume[0-9]/") -1);
+        // example: \Device\clfs\Device\HarddiskVolume2\Users\joe\AppData\Local\Microsoft\Windows\UsrClass.dat{e15d4b01-1598-11e8-93e6-080027b5e733}.TM
+        if (filePath.contains("/harddiskvolume")) {
+            // 16 advances beyond harddiskvolume and the number
+            filePath = filePath.substring(filePath.indexOf("/harddiskvolume") + 16);
+        }
+        
         // no point returning these. We won't map to them
         if (filePath.startsWith("/namedpipe/"))
             return "";

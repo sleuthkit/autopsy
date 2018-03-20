@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourceprocessors;
+package org.sleuthkit.autopsy.experimental.volatilityDSP;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -52,8 +52,9 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private final List<String> PluginListNames = new ArrayList<>();
     private final Map<String, Boolean> pluginListStates = new HashMap<>(); // is set by listeners when users select and deselect items
     private final Boolean isEnabled = true;
+    
     /**
-     * Creates new form RawDSInputPanel
+     * Creates new  MemoryDSInputPanel panel for user input
      */
     private MemoryDSInputPanel(String context) {
         this.pluginList = new String[]{"amcache","cmdline","cmdscan","consoles","malfind","netscan","notepad","pslist","psxview","shellbags","shimcache","shutdown","userassist", "apihooks","connscan","devicetree","dlllist","envars","filescan","gahti","getservicesids","getsids","handles","hashdump","hivelist","hivescan","impscan","ldrmodules","lsadump","modules","mutantscan","privs","psscan","pstree","sockets","svcscan","shimcache","timeliner","unloadedmodules","userhandles","vadinfo","verinfo"};
@@ -71,7 +72,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     }
 
     /**
-     * Creates and returns an instance of a RawDSInputPanel.
+     * Creates and returns an instance the panel
      */
     static synchronized MemoryDSInputPanel createInstance(String context) {
         MemoryDSInputPanel instance = new MemoryDSInputPanel(context);
@@ -184,11 +185,11 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         listsScrollPane = new javax.swing.JScrollPane();
         PluginList = new javax.swing.JTable();
 
-        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.pathLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.text")); // NOI18N
 
-        pathTextField.setText(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.pathTextField.text")); // NOI18N
+        pathTextField.setText(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.browseButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
@@ -196,9 +197,9 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         });
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.errorLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.timeZoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.timeZoneLabel.text")); // NOI18N
 
         timeZoneComboBox.setMaximumRowCount(30);
 

@@ -41,7 +41,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourceprocessors.MemoryDSProcessor;
 
 /**
  * Panel which displays the available DataSourceProcessors and allows selection
@@ -196,7 +195,6 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         dspList.add(LocalDiskDSProcessor.getType());
         dspList.add(LocalFilesDSProcessor.getType());
         dspList.add(RawDSProcessor.getType());
-        dspList.add(MemoryDSProcessor.getType());
         // now add any addtional DSPs that haven't already been added
         for (String dspType : datasourceProcessorsMap.keySet()) {
             if (!dspList.contains(dspType)) {
