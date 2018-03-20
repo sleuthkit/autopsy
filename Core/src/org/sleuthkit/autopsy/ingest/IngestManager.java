@@ -121,7 +121,7 @@ public class IngestManager {
     private final AtomicLong nextIngestManagerTaskId = new AtomicLong(0L);
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS;
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
-    private final Map<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
+    private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
     private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
@@ -399,13 +399,17 @@ public class IngestManager {
             ingestMonitor.start();
         }
 
-        ingestJobsById.put(job.getId(), job);
+        synchronized (ingestJobsById) {
+            ingestJobsById.put(job.getId(), job);
+        }
         errors = job.start();
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
             IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
         } else {
-            this.ingestJobsById.remove(job.getId());
+            synchronized (ingestJobsById) {
+                this.ingestJobsById.remove(job.getId());
+            }
             for (IngestModuleError error : errors) {
                 logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
             }
@@ -438,7 +442,9 @@ public class IngestManager {
      */
     void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
-        ingestJobsById.remove(jobId);
+        synchronized (ingestJobsById) {
+            ingestJobsById.remove(jobId);
+        }
         if (!job.isCancelled()) {
             IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
             fireIngestJobCompleted(jobId);
@@ -455,7 +461,9 @@ public class IngestManager {
      * @return True or false.
      */
     public boolean isIngestRunning() {
-        return !ingestJobsById.isEmpty();
+        synchronized (ingestJobsById) {
+            return !ingestJobsById.isEmpty();
+        }
     }
 
     /**
@@ -467,9 +475,11 @@ public class IngestManager {
         startIngestJobFutures.values().forEach((handle) -> {
             handle.cancel(true);
         });
-        this.ingestJobsById.values().forEach((job) -> {
-            job.cancel(reason);
-        });
+        synchronized (ingestJobsById) {
+            this.ingestJobsById.values().forEach((job) -> {
+                job.cancel(reason);
+            });
+        }
     }
 
     /**
@@ -770,9 +780,11 @@ public class IngestManager {
      */
     List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
-        ingestJobsById.values().forEach((job) -> {
-            snapShots.addAll(job.getDataSourceIngestJobSnapshots());
-        });
+        synchronized (ingestJobsById) {
+            ingestJobsById.values().forEach((job) -> {
+                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+            });
+        }
         return snapShots;
     }
 
@@ -808,7 +820,9 @@ public class IngestManager {
         public Void call() {
             try {
                 if (Thread.currentThread().isInterrupted()) {
-                    ingestJobsById.remove(job.getId());
+                    synchronized (ingestJobsById) {
+                        ingestJobsById.remove(job.getId());
+                    }
                     return null;
                 }
 

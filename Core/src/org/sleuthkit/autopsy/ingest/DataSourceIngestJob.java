@@ -518,7 +518,7 @@ final class DataSourceIngestJob {
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
             logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this, this.files);
+            DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
             logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
@@ -827,7 +827,7 @@ final class DataSourceIngestJob {
     }
 
     /**
-     * Adds more files from the data source for this job to the job, i.e., adds
+     * Adds more files from the data source for this job to the job, e.g., adds
      * extracted or carved files. Not currently supported for the second stage
      * of the job.
      *
@@ -835,9 +835,7 @@ final class DataSourceIngestJob {
      */
     void addFiles(List<AbstractFile> files) {
         if (DataSourceIngestJob.Stages.FIRST == this.stage) {
-            for (AbstractFile file : files) {
-                DataSourceIngestJob.taskScheduler.scheduleFastTrackedFileIngestTask(this, file);
-            }
+            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, files);
         } else {
             DataSourceIngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }
