@@ -22,7 +22,10 @@ import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.CommonFileNode;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * Makes nodes for common files search results.
@@ -49,7 +52,6 @@ final class CommonFilesChildren extends ChildFactory<AbstractFile>  {
         String dataSources = metaData.getDataSourceMap().get(md5Hash);     
 
         return new CommonFileNode(t, instanceCount, dataSources);
-
     }
 
     @Override
