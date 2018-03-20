@@ -41,17 +41,32 @@ import org.sleuthkit.datamodel.*;
 
 abstract class Extract {
 
-    protected Case currentCase = Case.getCurrentCase();
-    protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+    protected Case currentCase;
+    protected SleuthkitCase tskCase;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
     String moduleName = "";
     boolean dataFound = false;
 
-    Extract() {
+    Extract() {        
     }
 
-    void init() throws IngestModuleException {
+    final void init() throws IngestModuleException {
+        try {
+            currentCase = Case.getOpenCase();
+            tskCase = currentCase.getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
+        }
+        configExtractor();
+    }
+    
+    /**
+     * Override to add any module-specific configuration
+     * 
+     * @throws IngestModuleException 
+     */
+    void configExtractor() throws IngestModuleException  {        
     }
 
     abstract void process(Content dataSource, IngestJobContext context);

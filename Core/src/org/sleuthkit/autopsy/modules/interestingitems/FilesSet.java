@@ -547,7 +547,7 @@ public final class FilesSet implements Serializable {
             /**
              * Construct a meta-type condition.
              *
-             * @param metaType The meta-type to match, must.
+             * @param type The meta-type to match, must.
              */
             public MetaTypeCondition(Type type) {
                 this.type = type;
