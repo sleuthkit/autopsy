@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.EnumSet;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -44,12 +43,12 @@ final class CommonFilesSearchAction extends CallableSystemAction {
 
     CommonFilesSearchAction() {
         super();
-        this.setEnabled(this.caseHasMultipleSources());
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
-            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                this.setEnabled(evt.getNewValue() != null && this.caseHasMultipleSources());
-            }
-        });
+        this.setEnabled(true); //this.caseHasMultipleSources());
+//        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+//            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+//                this.setEnabled(evt.getNewValue() != null && this.caseHasMultipleSources());
+//            }
+//        });
     }
     
     private boolean caseHasMultipleSources(){
