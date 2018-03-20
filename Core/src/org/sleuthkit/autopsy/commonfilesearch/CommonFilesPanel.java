@@ -19,17 +19,12 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionListener;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -37,9 +32,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -80,34 +72,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
-                
-                //contents of this whole function should be wrapped in a business logic class for the sake of testing
-                
-                /*
-                
-                Use this query to grab mapping of object_id to datasourcename:
-                    select name, obj_id from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info));
-                
-                Use SleuthkitCase.executeSql to run the query and get back a result set which can be iterated like a regular old jdbc object.
-                
-                Use file.getDataSourceID() to get datasourceid and map it to the appropriate row from above
-                */
-
-//                Case currentCase = Case.getOpenCase();
-//                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-//                
-//                CaseDbQuery query = tskDb.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
-//
-//                ResultSet resultSet = query.getResultSet();
-//                
-//                Map<Long, String> dataSourceMap = new HashMap<>();
-//                
-//                while(resultSet.next()){
-//                    Long objectId = resultSet.getLong(1);
-//                    String dataSourceName = resultSet.getString(2);
-//                    dataSourceMap.put(objectId, dataSourceName);
-//                }
+            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { 
                 
                 return new CommonFilesMetaData();
             }
