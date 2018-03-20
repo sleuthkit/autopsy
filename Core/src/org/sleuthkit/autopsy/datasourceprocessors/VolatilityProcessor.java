@@ -248,6 +248,10 @@ class VolatilityProcessor {
                 // if there is already the same entry with ".exe" in the set, just use that one
                 if (fileSet.contains(file + ".exe"))
                     continue;
+                // if plugin is handles then skip if filename does not have an extension helps with 
+                // cases when there really is no just a directory or if it truly does not have an extension
+                if (pluginName.matches("handles"))
+                    continue;
                 fileName = fileName + ".%";
             }
 
@@ -307,35 +311,35 @@ class VolatilityProcessor {
     private void scanOutputFile(String pluginName, File PluginOutput) {
            
         if (pluginName.matches("dlllist")) {
-           Set<String> fileSet = parse_DllList(PluginOutput);
+           Set<String> fileSet = parseDllList(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("handles")) {
            Set<String> fileSet = parseHandles(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("cmdline")) { 
-           Set<String> fileSet = parse_Cmdline(PluginOutput);
+           Set<String> fileSet = parseCmdline(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("psxview")){
-           Set<String> fileSet = parse_Psxview(PluginOutput);
+           Set<String> fileSet = parsePsxview(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("pslist")) {
-           Set<String> fileSet = parse_Pslist(PluginOutput);
+           Set<String> fileSet = parsePslist(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("psscan")) { 
-            Set<String> fileSet = parse_Psscan(PluginOutput);
+            Set<String> fileSet = parsePsscan(PluginOutput);
             flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("pstree")) {
-           Set<String> fileSet = parse_Pstree(PluginOutput);
+           Set<String> fileSet = parsePstree(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("svcscan")) {
-           Set<String> fileSet = parse_Svcscan(PluginOutput);
+           Set<String> fileSet = parseSvcscan(PluginOutput);
            flagFiles(fileSet, pluginName);
         } else if (pluginName.matches("filescan")) {
             // BC: Commented out.  Too many hits to flag
-           //Set<String> fileSet = Parse_Filescan(PluginOutput);
+           //Set<String> fileSet = ParseFilescan(PluginOutput);
            //lookupFiles(fileSet, pluginName);  
         } else if (pluginName.matches("shimcache")) { 
-           Set<String> fileSet = parse_Shimcache(PluginOutput);
+           Set<String> fileSet = parseShimcache(PluginOutput);
            flagFiles(fileSet, pluginName);
         }        
     } 
@@ -355,8 +359,11 @@ class VolatilityProcessor {
         filePath = filePath.replaceAll("\\\\", "/");
         filePath = filePath.toLowerCase();
         filePath = filePath.replaceAll("/systemroot/", "/windows/");
+        // catches 1 type of file in cmdline
+        filePath = filePath.replaceAll("%systemroot%", "/windows/");
         filePath = filePath.replaceAll("device/","");
-        filePath = filePath.replaceAll("harddiskvolume[0-9]/", "");
+        // helps with finding files in handles plugin
+        filePath = filePath.substring(filePath.indexOf("harddiskvolume[0-9]/") -1);
         // no point returning these. We won't map to them
         if (filePath.startsWith("/namedpipe/"))
             return "";
@@ -397,9 +404,8 @@ class VolatilityProcessor {
         return fileSet;
     }
     
-    private Set<String> parse_DllList(File PluginFile) {
+    private Set<String> parseDllList(File PluginFile) {
         Set<String> fileSet = new HashSet<>();
-        int counter = 0;
         // read the first line from the text file
         try (BufferedReader br = new BufferedReader(new FileReader(PluginFile))) {
             String line;
@@ -407,7 +413,6 @@ class VolatilityProcessor {
                     
                 String TAG = "Command line : ";
                 if (line.startsWith(TAG)) {
-                    counter = counter + 1;
                     String file_path;
 
                     // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
@@ -433,7 +438,6 @@ class VolatilityProcessor {
                 // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
                 // 0x7c900000    0xb2000     0xffff C:\WINDOWS\system32\ntdll.dll
                 else if (line.startsWith("0x") && line.length() > 33) {
-                    counter = counter + 1;
                     // These lines do not have arguments
                     String file_path = line.substring(33);
                     fileSet.add(normalizePath(file_path));
@@ -447,7 +451,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
     
-   private Set<String> parse_Filescan(File PluginFile) {
+   private Set<String> parseFilescan(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -469,7 +473,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
     
-    private Set<String> parse_Cmdline(File PluginFile) {
+    private Set<String> parseCmdline(File PluginFile) {
         Set<String> fileSet = new HashSet<>();
         // read the first line from the text file
         try (BufferedReader br = new BufferedReader(new FileReader(PluginFile))) {
@@ -510,7 +514,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
     
-    private Set<String> parse_Shimcache(File PluginFile) {
+    private Set<String> parseShimcache(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -540,7 +544,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
     
-    private Set<String> parse_Psscan(File PluginFile) {
+    private Set<String> parsePsscan(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -567,7 +571,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
 
-    private Set<String> parse_Pslist(File PluginFile) {
+    private Set<String> parsePslist(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -594,7 +598,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
 
-    private Set<String> parse_Psxview(File PluginFile) {
+    private Set<String> parsePsxview(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -621,7 +625,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
 
-    private Set<String> parse_Pstree(File PluginFile) {
+    private Set<String> parsePstree(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
@@ -648,7 +652,7 @@ class VolatilityProcessor {
         return fileSet;     
     }
 
-    private Set<String> parse_Svcscan(File PluginFile) {
+    private Set<String> parseSvcscan(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
