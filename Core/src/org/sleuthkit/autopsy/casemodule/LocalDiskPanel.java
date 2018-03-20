@@ -407,7 +407,7 @@ final class LocalDiskPanel extends JPanel {
     }
 
     private boolean imageWriterPathIsValid() {
-        if ((!copyImageCheckbox.isSelected()) || !(localDisk != null)) {
+        if ((!copyImageCheckbox.isSelected()) || localDisk == null) {
             imageWriterErrorLabel.setVisible(false);
             imageWriterErrorLabel.setText("");
             return true;
