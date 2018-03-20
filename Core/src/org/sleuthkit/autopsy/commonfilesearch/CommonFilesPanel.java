@@ -88,7 +88,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(contentFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
                                         
-                    TableFilterNode tableFilterNode = new TableFilterNode(dataResultFilterNode, true);
+                    TableFilterNode tableFilterNode = new TableFilterNode(dataResultFilterNode);
                     
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
