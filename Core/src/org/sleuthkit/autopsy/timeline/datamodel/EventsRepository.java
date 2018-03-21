@@ -108,8 +108,8 @@ public class EventsRepository {
     private final Case autoCase;
     private final FilteredEventsModel modelInstance;
 
-    private final LoadingCache<Void, Long> maxCache;
-    private final LoadingCache<Void, Long> minCache;
+    private final LoadingCache<Object, Long> maxCache;
+    private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, SingleEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
     private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
@@ -172,15 +172,15 @@ public class EventsRepository {
                         return eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone());
                     }
                 });
-        maxCache = CacheBuilder.newBuilder().build(new CacheLoader<Void, Long>() {
+        maxCache = CacheBuilder.newBuilder().build(new CacheLoader<Object, Long>() {
             @Override
-            public Long load(Void nil) throws TskCoreException {
+            public Long load(Object ignored) throws TskCoreException {
                 return eventManager.getMaxTime();
             }
         });
-        minCache = CacheBuilder.newBuilder().build(new CacheLoader<Void, Long>() {
+        minCache = CacheBuilder.newBuilder().build(new CacheLoader<Object, Long>() {
             @Override
-            public Long load(Void nil) throws TskCoreException {
+            public Long load(Object ignored) throws TskCoreException {
                 return eventManager.getMinTime();
             }
         });
@@ -191,7 +191,7 @@ public class EventsRepository {
      * @return min time (in seconds from unix epoch)
      */
     public Long getMaxTime() {
-        return maxCache.getUnchecked(null); // NON-NLS
+        return maxCache.getUnchecked("max"); // NON-NLS
 
     }
 
@@ -199,7 +199,7 @@ public class EventsRepository {
      * @return max tie (in seconds from unix epoch)
      */
     public Long getMinTime() {
-        return minCache.getUnchecked(null); // NON-NLS
+        return minCache.getUnchecked("min"); // NON-NLS
 
     }
 
@@ -227,7 +227,7 @@ public class EventsRepository {
         return eventCountsCache.getUnchecked(params);
     }
 
-    synchronized public int countAllEvents() {
+    synchronized public int countAllEvents() throws TskCoreException {
         return eventManager.countAllEvents();
     }
 
