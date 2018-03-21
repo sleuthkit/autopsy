@@ -21,12 +21,12 @@ package org.sleuthkit.autopsy.experimental.volatilityDSP;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -41,13 +41,11 @@ final class AddMemoryImageTask implements Runnable {
     private final String deviceId;
     private final String imageFilePath;
     private final String timeZone;
-    private final List<String> PluginsToRun; 
+    private final List<String> pluginsToRun; 
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
-    private boolean criticalErrorOccurred;
-    private static final long TWO_GB = 2000000000L;
-    private boolean isCancelled = false;
     private VolatilityProcessor volatilityProcessor = null;
+    private boolean isCancelled = false;
    
     /**
      * Constructs a runnable that adds a raw data source to a case database.
@@ -68,7 +66,7 @@ final class AddMemoryImageTask implements Runnable {
     AddMemoryImageTask(String deviceId, String imageFilePath, List<String> PluginsToRun, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.imageFilePath = imageFilePath;
-        this.PluginsToRun = PluginsToRun;
+        this.pluginsToRun = PluginsToRun;
         this.timeZone = timeZone;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
@@ -79,21 +77,24 @@ final class AddMemoryImageTask implements Runnable {
      */
     @Override
     public void run() {
-        /*
-         * Process the input image file.
-         */
         progressMonitor.setIndeterminate(true);
         progressMonitor.setProgress(0);
         List<String> errorMessages = new ArrayList<>();
+        boolean criticalErrorOccurred = false;
         Image dataSource = addImageToCase(errorMessages);
-
+        if (dataSource == null) {
+            criticalErrorOccurred = true;
+        }
         /* call Volatility to process the image */
-        if (dataSource != null) {
-            volatilityProcessor = new VolatilityProcessor(imageFilePath, PluginsToRun, dataSource, progressMonitor);
-            // @@@ run() needs a way to return if a critical eror occured.
-            volatilityProcessor.run();
-            List<String> volErrorMsgs = volatilityProcessor.getErrorMessages();
-            errorMessages.addAll(volErrorMsgs);
+        else {
+            if (isCancelled)
+                return;
+            
+            volatilityProcessor = new VolatilityProcessor(imageFilePath, dataSource, pluginsToRun, progressMonitor);
+            if (volatilityProcessor.run()) {
+                criticalErrorOccurred = true;
+            }
+            errorMessages.addAll(volatilityProcessor.getErrorMessages());
         }
 
         progressMonitor.setProgress(100);
@@ -110,10 +111,7 @@ final class AddMemoryImageTask implements Runnable {
             result = DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS;
         }
         
-        List <Content> newDataSources = new ArrayList();
-        newDataSources.add(dataSource);
-        callback.done(result, errorMessages, newDataSources);
-        criticalErrorOccurred = false;
+        callback.done(result, errorMessages, new ArrayList<>(Arrays.asList(dataSource)));
     }
 
     /**
@@ -140,7 +138,6 @@ final class AddMemoryImageTask implements Runnable {
         if (!imageFile.exists()) {
             errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddMemoryImageTask_for_device() 
                     + deviceId + Bundle.AddMemoryImageTask_image_notExisting());
-            criticalErrorOccurred = true;
             return null;
         }
         
@@ -152,7 +149,6 @@ final class AddMemoryImageTask implements Runnable {
             return dataSource;
         } catch (TskCoreException ex) {
             errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
-            criticalErrorOccurred = true;
             return null;
         } finally {
             caseDatabase.releaseExclusiveLock();
@@ -160,9 +156,9 @@ final class AddMemoryImageTask implements Runnable {
     }
 
     void cancelTask() {
+        isCancelled = true;
         if (volatilityProcessor != null) {
             volatilityProcessor.cancel();
         }
-        isCancelled = true;
     }
 }

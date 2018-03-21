@@ -23,18 +23,12 @@ import java.io.FileReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -58,7 +52,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 
 /**
- *
+ * Runs Volatility and parses output
  */
 class VolatilityProcessor {
     private static final String VOLATILITY_DIRECTORY = "Volatility"; //NON-NLS
@@ -76,20 +70,32 @@ class VolatilityProcessor {
     private FileManager fileManager;
     private final List <String> errorMsgs = new ArrayList<>();
 
-    public VolatilityProcessor(String ImagePath, List<String> plugInToRuns, Image dataSource, DataSourceProcessorProgressMonitor progressMonitor) {
+    /**
+     * 
+     * @param ImagePath String path to memory image file
+     * @param dataSource Object for memory image that was added to case DB
+     * @param plugInToRuns list of Volatility plugins to run
+     * @param progressMonitor DSP progress monitor to report status
+     */
+    VolatilityProcessor(String ImagePath, Image dataSource, List<String> plugInToRun, DataSourceProcessorProgressMonitor progressMonitor) {
         this.memoryImagePath = ImagePath;
-        this.pluginsToRun = plugInToRuns;
+        this.pluginsToRun = plugInToRun;
         this.dataSource = dataSource;
         this.progressMonitor = progressMonitor;
     }
     
-    public void run() {  
-        Path execName = Paths.get(VOLATILITY_DIRECTORY, VOLATILITY_EXECUTABLE);
-        executableFile = locateExecutable(execName.toString());
+    
+    /**
+     * Run volatility and parse the outputs
+     * @returns true if there was a critical error
+     */
+    boolean run() {  
+        executableFile = locateExecutable();
         if (executableFile == null) {
             logger.log(Level.SEVERE, "Volatility exe not found");
-            return;
+            return true;
         }
+        
         final Case currentCase = Case.getCurrentCase();
         fileManager = currentCase.getServices().getFileManager();
 
@@ -109,11 +115,15 @@ class VolatilityProcessor {
             String pluginToRun = pluginsToRun.get(i);
             progressMonitor.setProgressText("Processing " + pluginToRun + " module");
             executeAndParseVolatility(pluginToRun);
-            progressMonitor.setProgress(i / pluginsToRun.size() * 100);
+            progressMonitor.setProgress(i);
         } 
-        // @@@ NEed to report back here if there were errors
+        return false;
     }
     
+    /**
+     * Get list of error messages that were generated during call to run()
+     * @return 
+     */
     List<String> getErrorMessages() {
         return errorMsgs;
     }
@@ -125,12 +135,15 @@ class VolatilityProcessor {
             File memoryImage = new File(memoryImagePath);
             commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
             
+            // run imginfo if we haven't run it yet
             File imageInfoOutputFile = new File(moduleOutputPath + "\\imageinfo.txt");
             if (imageInfoOutputFile.exists()) {
                String memoryProfile = parseImageInfoOutput(imageInfoOutputFile);
                if (memoryProfile == null) {
-                   // @@@ LOG THIS 
-                   return;
+                    String msg = "Error parsing Volatility imginfo output";
+                    logger.log(Level.SEVERE, msg);
+                    errorMsgs.add(msg);
+                    return;
                }
                commandLine.add("--profile=" + memoryProfile);
             }
@@ -147,16 +160,19 @@ class VolatilityProcessor {
             
             int exitVal = ExecUtil.execute(processBuilder);
             if (exitVal != 0) {
-                logger.log(Level.SEVERE, "Volatility non-0 exit value for module: " + pluginToRun);
+                String msg = "Volatility non-0 exit value for module: " + pluginToRun;
+                logger.log(Level.SEVERE, msg);
+                errorMsgs.add(msg);
                 return;
             }
             
             if (isCancelled)
                 return;
             
+            // add the output to the case
             final Case currentCase = Case.getCurrentCase();
-            
             Report report = currentCase.getSleuthkitCase().addReport(outputFile, "Volatility", "Volatility " + pluginToRun + " Module", dataSource);
+            
             KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
             if (null == searchService) {
                 logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
@@ -179,11 +195,13 @@ class VolatilityProcessor {
      *
      * @return A File reference or null
      */
-    private static File locateExecutable(String executableToFindName) {
+    private static File locateExecutable() {
         // Must be running under a Windows operating system.
         if (!PlatformUtil.isWindowsOS()) {
            return null;
         }
+        
+        String executableToFindName = Paths.get(VOLATILITY_DIRECTORY, VOLATILITY_EXECUTABLE).toString();
 
         File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, VolatilityProcessor.class.getPackage().getName(), false);
         if (null == exeFile) {
@@ -312,6 +330,12 @@ class VolatilityProcessor {
         }
     }
     
+    /**
+     * Scan the output of Volatility and create artifacts as needed
+     * 
+     * @param pluginName Name of volatility module run
+     * @param PluginOutput File that contains the output to parse
+     */
     private void scanOutputFile(String pluginName, File PluginOutput) {
            
         if (pluginName.matches("dlllist")) {
@@ -348,6 +372,13 @@ class VolatilityProcessor {
         }        
     } 
 
+    /** 
+     * Normalize the path we parse out of the output before
+     * we look it up in the case DB
+     * 
+     * @param filePath Path to normalize
+     * @return Normalized version
+     */
     private String normalizePath(String filePath) {
         if (filePath == null)
             return "";
@@ -362,10 +393,11 @@ class VolatilityProcessor {
         // change slash direction
         filePath = filePath.replaceAll("\\\\", "/");
         filePath = filePath.toLowerCase();
+        
         filePath = filePath.replaceAll("/systemroot/", "/windows/");
         // catches 1 type of file in cmdline
         filePath = filePath.replaceAll("%systemroot%", "/windows/");
-        filePath = filePath.replaceAll("device/","");
+        filePath = filePath.replaceAll("/device/","");
         // helps with finding files in handles plugin
         // example: \Device\clfs\Device\HarddiskVolume2\Users\joe\AppData\Local\Microsoft\Windows\UsrClass.dat{e15d4b01-1598-11e8-93e6-080027b5e733}.TM
         if (filePath.contains("/harddiskvolume")) {
@@ -380,11 +412,11 @@ class VolatilityProcessor {
         return filePath;
     }
     
-    private Set<String> parseHandles(File PluginFile) {
+    private Set<String> parseHandles(File pluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
+             BufferedReader br = new BufferedReader(new FileReader(pluginFile));
              // Ignore the first two header lines
              br.readLine();
              br.readLine();
@@ -400,23 +432,28 @@ class VolatilityProcessor {
                     if (file_path.contains("\"")) {
                          file_path = file_path.substring(0, file_path.indexOf("\""));
                     }
-                    else {
-                       // ERROR
+                    // this file has a lot of device entries that are not files
+                    if (file_path.startsWith("\\Device\\")) {
+                        if (file_path.contains("HardDiskVolume") == false) 
+                            continue;
                     }
+                            
                     fileSet.add(normalizePath(file_path));
                  }
              }    
              br.close();
-        } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+        } catch (IOException ex) {
+            String msg = "Error parsing handles output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;
     }
     
-    private Set<String> parseDllList(File PluginFile) {
+    private Set<String> parseDllList(File pluginFile) {
         Set<String> fileSet = new HashSet<>();
         // read the first line from the text file
-        try (BufferedReader br = new BufferedReader(new FileReader(PluginFile))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(pluginFile))) {
             String line;
             while ((line = br.readLine()) != null) {
                     
@@ -430,8 +467,6 @@ class VolatilityProcessor {
                         file_path = line.substring(TAG.length() + 1);
                         if (file_path.contains("\"")) {
                             file_path = file_path.substring(0, file_path.indexOf("\""));
-                        } else {
-                            // ERROR
                         }
                     } 
                     // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
@@ -452,10 +487,10 @@ class VolatilityProcessor {
                     fileSet.add(normalizePath(file_path));
                 }
             }
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error opening DllList output", ex);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error parsing DllList output", ex);
+            String msg = "Error parsing dlllist output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -477,7 +512,9 @@ class VolatilityProcessor {
             }    
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing filescan output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -499,9 +536,7 @@ class VolatilityProcessor {
                             file_path = line.substring(TAG.length() + 1);
                             if (file_path.contains("\"")) {
                                 file_path = file_path.substring(0, file_path.indexOf("\""));
-                            } else {
-                                // ERROR
-                            }
+                            } 
                         } 
                         // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
                         // grab everything before the next space - we don't want arguments
@@ -515,10 +550,11 @@ class VolatilityProcessor {
                     }
                 }
             }
-        } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error opening cmdline output", ex);
+        
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error parsing cmdline output", ex);
+            String msg = "Error parsing cmdline output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -539,16 +575,15 @@ class VolatilityProcessor {
                     file_path = line.substring(62);
                     if (file_path.contains("\"")) {
                         file_path = file_path.substring(0, file_path.indexOf("\""));
-                    }
-                    else {
-                        // ERROR
-                    }
+                    }                   
                     fileSet.add(normalizePath(file_path));
-                    } 
+                } 
              }
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing shimcache output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -575,7 +610,9 @@ class VolatilityProcessor {
              }    
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing psscan output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -602,7 +639,9 @@ class VolatilityProcessor {
              }    
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing pslist output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -629,7 +668,9 @@ class VolatilityProcessor {
              }    
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing psxview output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -656,7 +697,9 @@ class VolatilityProcessor {
              }    
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing pstree output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
@@ -675,9 +718,6 @@ class VolatilityProcessor {
                         file_path = line.substring(TAG.length()+1);
                         if (file_path.contains("\"")) {
                             file_path = file_path.substring(0, file_path.indexOf("\""));
-                        }
-                        else {
-                            // ERROR
                         }
                     }
                     // Binary Path: -
@@ -703,7 +743,9 @@ class VolatilityProcessor {
              }    
              br.close();
         } catch (IOException ex) { 
-            //Exceptions.printStackTrace(ex);
+            String msg = "Error parsing svcscan output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
         } 
         return fileSet;     
     }
