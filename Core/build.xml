@@ -30,10 +30,16 @@
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
         </copy>
-               <!--Copy ewfexport to release-->
+        <!--Copy ewfexport to release-->
         <copy todir="${basedir}/release/ewfexport_exec" >
             <fileset dir="${thirdparty.dir}/ewfexport_exec"/>
         </copy>
+
+        <!--Copy Volatility to release-->
+        <copy todir="${basedir}/release/Volatility" >
+            <fileset dir="${thirdparty.dir}/Volatility"/>
+        </copy>
+            
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />

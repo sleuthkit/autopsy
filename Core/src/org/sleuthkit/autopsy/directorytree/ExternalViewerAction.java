@@ -150,7 +150,14 @@ public class ExternalViewerAction extends AbstractAction {
             }
         } else {
             try {
-                Desktop.getDesktop().open(file);
+                String localpath = file.getPath();
+                if (localpath.toLowerCase().contains("http")) {
+                    String url_path = file.getPath().replaceAll("\\\\","/");   
+                    Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/","//")));
+                } else {
+                    Desktop.getDesktop().open(file);
+                }
+
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not find a viewer for the given file: " + file.getName(), ex); //NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
@@ -175,6 +182,12 @@ public class ExternalViewerAction extends AbstractAction {
                         Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_title(),
                         JOptionPane.ERROR_MESSAGE);
+            } catch (URISyntaxException ex) {
+               logger.log(Level.WARNING, "Could not open URL provided: " + file.getPath(), ex);
+               JOptionPane.showMessageDialog(null,
+                       Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
+                       Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                       JOptionPane.ERROR_MESSAGE);
             }
         }
     }
