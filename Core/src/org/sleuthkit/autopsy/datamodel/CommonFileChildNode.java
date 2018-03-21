@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -28,22 +27,15 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
-public class CommonFileNode extends FileNode {
+public class CommonFileChildNode extends FileNode {
+        
+    private final String dataSource;
     
-    private final int commonFileCount;
-    
-    private final String dataSources;
-    
-    public CommonFileNode(AbstractFile fsContent, int commonFileCount, String dataSources) {
+    public CommonFileChildNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
-        this.commonFileCount = commonFileCount;
-        this.dataSources = dataSources;
+        this.dataSource = dataSource;
         this.setDisplayName(fsContent.getName());
-    }
-    
-    int getCommonFileCount(){
-        return this.commonFileCount;
     }
     
     @Override
@@ -51,17 +43,17 @@ public class CommonFileNode extends FileNode {
         return this.content;
     }
     
-    String getDataSources(){
-        return this.dataSources;
+    String getDataSource(){
+        return this.dataSource;
     }
 
     @Override
     protected Sheet createSheet() {
-        Sheet s = new Sheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = new Sheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
@@ -70,10 +62,10 @@ public class CommonFileNode extends FileNode {
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
             final String propString = propType.toString();
-            ss.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
+            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }
 
-        return s;
+        return sheet;
     }
     
     /**
@@ -83,27 +75,18 @@ public class CommonFileNode extends FileNode {
      *                are put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, CommonFileNode node) {
+    static private void fillPropertyMap(Map<String, Object> map, CommonFileChildNode node) {
         map.put(CommonFilePropertyType.Name.toString(), node.getContent().getName());
-        map.put(CommonFilePropertyType.Id.toString(), node.getContent().getId());
-        map.put(CommonFilePropertyType.InstanceCount.toString(), node.getCommonFileCount());
-        map.put(CommonFilePropertyType.Md5Hash.toString(), StringUtils.defaultString(node.getContent().getMd5Hash()));
-        map.put(CommonFilePropertyType.DataSources.toString(), node.getDataSources());
+        map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
     }
     
     @NbBundle.Messages({
         "CommonFilePropertyType.nameColLbl=Name",
-        "CommonFilePropertyType.idColLbl1=Id",
-        "CommonFilePropertyType.instanceColLbl1=Instance Count",
-        "CommonFilePropertyType.md5HashColLbl=MD5 Hash",
-        "CommonFilePropertyType.dataSourcesColLbl=Data Sources"})
+        "CommonFilePropertyType.dataSourcesColLbl=Data Source"})
     public enum CommonFilePropertyType {
         
         Name(Bundle.CommonFilePropertyType_nameColLbl()),
-        Id(Bundle.CommonFilePropertyType_idColLbl1()),
-        InstanceCount(Bundle.CommonFilePropertyType_instanceColLbl1()),
-        Md5Hash(Bundle.CommonFilePropertyType_md5HashColLbl()),
-        DataSources(Bundle.CommonFilePropertyType_dataSourcesColLbl());
+        DataSource(Bundle.CommonFilePropertyType_dataSourcesColLbl());
         
         final private String displayString;
         
