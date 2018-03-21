@@ -536,7 +536,7 @@ class SevenZipExtractor {
             // it will be opened incorrectly when using 7zip's built-in auto-detect functionality.
             // All other archive formats are still opened using 7zip built-in auto-detect functionality.
             ArchiveFormat options = get7ZipOptions(archiveFile);
-            if (password != null) {
+            if (password == null) {
                 inArchive = SevenZip.openInArchive(options, stream);
             } else {
                 inArchive = SevenZip.openInArchive(options, stream, password);
@@ -561,8 +561,8 @@ class SevenZipExtractor {
             //initialize tree hierarchy to keep track of unpacked file structure
             SevenZipExtractor.UnpackedTree unpackedTree = new SevenZipExtractor.UnpackedTree(moduleDirRelative + "/" + uniqueArchiveFileName, archiveFile);
 
-            //WJS-TODO figure out size
-            long freeDiskSpace = 80000000000000L;// services.getFreeDiskSpace();
+            long freeDiskSpace = services.getFreeDiskSpace();
+
             //unpack and process every item in archive
             int itemNumber = 0;
 

@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
@@ -30,6 +31,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -48,7 +50,9 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * children.
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {
-
+    
+    private static Logger logger = Logger.getLogger(FileNode.class.getName());
+    
     /**
      * Gets the path to the icon file that should be used to visually represent
      * an AbstractFile, using the file name extension to select the icon.
@@ -177,6 +181,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
                     actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
                 }
             } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
             }
         }
         return actionsList.toArray(new Action[actionsList.size()]);

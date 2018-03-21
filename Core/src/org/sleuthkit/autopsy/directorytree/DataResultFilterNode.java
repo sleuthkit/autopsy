@@ -411,6 +411,7 @@ public class DataResultFilterNode extends FilterNode {
                             actionsList.add(new ExtractArchiveWithPasswordAction((AbstractFile)c));
                         }
                     } catch (TskCoreException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
                     }
                 }
             } else if ((c = ban.getLookup().lookup(SlackFile.class)) != null) {

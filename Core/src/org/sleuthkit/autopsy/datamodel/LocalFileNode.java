@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -48,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
-    private static final Logger LOGGER = Logger.getLogger(LocalFileNode.class.getName());
+    private static final Logger logger = Logger.getLogger(LocalFileNode.class.getName());
 
     public LocalFileNode(AbstractFile af) {
         super(af);
@@ -124,6 +125,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                     actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
                 }
             } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
             }
         }
         return actionsList.toArray(new Action[0]);
