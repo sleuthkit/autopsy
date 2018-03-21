@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,31 +19,30 @@
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Responsible for opening and closing the core windows when a case is opened
  * and closed.
  *
- * @author jantonius
  */
-public class CoreComponentControl {
+final public class CoreComponentControl {
 
     private static final Logger logger = Logger.getLogger(CoreComponentControl.class.getName());
-    private static final String DIRECTORY_TREE = NbBundle.getMessage(CoreComponentControl.class,
-            "CoreComponentControl.CTL_DirectoryTreeTopComponent");
-    private static final String FAVORITES = NbBundle.getMessage(CoreComponentControl.class,
-            "CoreComponentControl.CTL_FavoritesTopComponent");
+    @NbBundle.Messages("CoreComponentControl.CTL_DirectoryTreeTopComponent=Directory Tree")
+    private static final String DIRECTORY_TREE = Bundle.CoreComponentControl_CTL_DirectoryTreeTopComponent();
+    @NbBundle.Messages("CoreComponentControl.CTL_FavoritesTopComponent=Favorites")
+    private static final String FAVORITES = Bundle.CoreComponentControl_CTL_FavoritesTopComponent();
+
+    private CoreComponentControl() {
+    }
 
     /**
      * Opens all TopComponent windows that are needed
@@ -56,22 +55,22 @@ public class CoreComponentControl {
         Collection<? extends DataExplorer> dataExplorers = Lookup.getDefault().lookupAll(DataExplorer.class);
         for (DataExplorer de : dataExplorers) {
             TopComponent explorerWin = de.getTopComponent();
-            Mode m = WindowManager.getDefault().findMode("explorer"); //NON-NLS
-            if (m != null) {
-                m.dockInto(explorerWin); // redock into the explorer mode
-            } else {
+            Mode explorerMode = WindowManager.getDefault().findMode("explorer"); //NON-NLS
+            if (explorerMode == null) {
                 logger.log(Level.WARNING, "Could not find explorer mode and dock explorer window"); //NON-NLS
+            } else {
+                explorerMode.dockInto(explorerWin); // redock into the explorer mode
             }
             explorerWin.open(); // open that top component
         }
 
         // find the data content top component
         TopComponent contentWin = DataContentTopComponent.findInstance();
-        Mode m = WindowManager.getDefault().findMode("output"); //NON-NLS
-        if (m != null) {
-            m.dockInto(contentWin); // redock into the output mode
-        } else {
+        Mode outputMode = WindowManager.getDefault().findMode("output"); //NON-NLS
+        if (outputMode == null) {
             logger.log(Level.WARNING, "Could not find output mode and dock content window"); //NON-NLS
+        } else {
+            outputMode.dockInto(contentWin); // redock into the output mode
         }
 
         contentWin.open(); // open that top component
@@ -86,20 +85,15 @@ public class CoreComponentControl {
      * be thrown from JFXPanel.
      */
     public static void closeCoreWindows() {
-        WindowManager wm = WindowManager.getDefault();
-        Set<? extends Mode> modes = wm.getModes();
-        Iterator<? extends Mode> iter = wm.getModes().iterator();
-
         TopComponent directoryTree = null;
         TopComponent favorites = null;
-        String tcName = "";
-        while (iter.hasNext()) {
-            Mode mode = iter.next();
-            for (TopComponent tc : mode.getTopComponents()) {
-                tcName = tc.getName();
+        final WindowManager windowManager = WindowManager.getDefault();
+        for (Mode mode : windowManager.getModes()) {
+            for (TopComponent tc : windowManager.getOpenedTopComponents(mode)) {
+                String tcName = tc.getName();
+
                 if (tcName == null) {
                     logger.log(Level.INFO, "tcName was null"); //NON-NLS
-                    tcName = "";
                 }
                 // switch requires constant strings, so converted to if/else.
                 if (DIRECTORY_TREE.equals(tcName)) {

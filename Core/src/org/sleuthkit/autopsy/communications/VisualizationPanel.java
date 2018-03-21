@@ -129,7 +129,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxGraphComponent graphComponent;
     private final CommunicationsGraph graph;
 
-    private mxUndoManager undoManager = new mxUndoManager();
+    private final mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband;
     private final mxFastOrganicLayout fastOrganicLayout;
     private final mxCircleLayout circleLayout;

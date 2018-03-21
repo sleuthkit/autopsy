@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2017 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -143,15 +143,14 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a data source ingest task and file ingest tasks for an ingest
-     * job.
+     * Schedules a data source level ingest task and file level ingest tasks for
+     * an ingest job. Either all of the files in the data source or a given
+     * subset of the files will be scheduled.
      *
-     * @param job The job for which the tasks are to be scheduled.
-     *
-     * @throws InterruptedException if the calling thread is blocked due to a
-     *                              full tasks queue and is interrupted.
+     * @param job   The data source ingest job.
+     * @param files A subset of the files for the data source.
      */
-    synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
+    synchronized void scheduleIngestTasks(DataSourceIngestJob job, List<AbstractFile> files) {
         if (!job.isCancelled()) {
             // Scheduling of both a data source ingest task and file ingest tasks 
             // for a job must be an atomic operation. Otherwise, the data source 
@@ -159,14 +158,14 @@ final class IngestTasksScheduler {
             // resulting in a potential false positive when another thread checks 
             // whether or not all the tasks for the job are completed.
             this.scheduleDataSourceIngestTask(job);
-            this.scheduleFileIngestTasks(job);
+            this.scheduleFileIngestTasks(job, files);
         }
     }
 
     /**
-     * Schedules a data source ingest task for an ingest job.
+     * Schedules a data source level ingest task for a data source ingest job.
      *
-     * @param job The job for which the tasks are to be scheduled.
+     * @param job The data source ingest job.
      */
     synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
         if (!job.isCancelled()) {
@@ -186,16 +185,22 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules file ingest tasks for an ingest job.
+     * Schedules file level ingest tasks for a data source ingest job. Either
+     * all of the files in the data source or a given subset of the files will
+     * be scheduled.
      *
-     * @param job The job for which the tasks are to be scheduled.
+     * @param job   The data source ingest job.
+     * @param files A subset of the files for the data source.
      */
-    synchronized void scheduleFileIngestTasks(DataSourceIngestJob job) {
+    synchronized void scheduleFileIngestTasks(DataSourceIngestJob job, List<AbstractFile> files) {
         if (!job.isCancelled()) {
-            // Get the top level files for the data source associated with this job
-            // and add them to the root directories priority queue.  
-            List<AbstractFile> topLevelFiles = getTopLevelFiles(job.getDataSource());
-            for (AbstractFile firstLevelFile : topLevelFiles) {
+            List<AbstractFile> candidateFiles = new ArrayList<>();
+            if (files.isEmpty()) {
+                getTopLevelFiles(job.getDataSource(), candidateFiles);
+            } else {
+                candidateFiles.addAll(files);
+            }
+            for (AbstractFile firstLevelFile : candidateFiles) {
                 FileIngestTask task = new FileIngestTask(job, firstLevelFile);
                 if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
                     this.tasksInProgress.add(task);
@@ -207,12 +212,14 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules a file ingest task for an ingest job.
+     * Schedules a file ingest task for a data source ingest job. The task that
+     * is created is added directly to the pending file tasks queues, i.e., it
+     * is "fast tracked."
      *
-     * @param job  The job for which the tasks are to be scheduled.
-     * @param file The file to be associated with the task.
+     * @param job  The data source ingest job.
+     * @param file A file.
      */
-    synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
+    synchronized void scheduleFastTrackedFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
         if (!job.isCancelled()) {
             FileIngestTask task = new FileIngestTask(job, file);
             if (IngestTasksScheduler.shouldEnqueueFileTask(task)) {
@@ -279,12 +286,10 @@ final class IngestTasksScheduler {
      * files and virtual directories for a data source. Used to create file
      * tasks to put into the root directories queue.
      *
-     * @param dataSource The data source.
-     *
-     * @return A list of top level files.
+     * @param dataSource    The data source.
+     * @param topLevelFiles The top level files are added to this list.
      */
-    private static List<AbstractFile> getTopLevelFiles(Content dataSource) {
-        List<AbstractFile> topLevelFiles = new ArrayList<>();
+    private static void getTopLevelFiles(Content dataSource, List<AbstractFile> topLevelFiles) {
         Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirectoryVisitor());
         if (rootObjects.isEmpty() && dataSource instanceof AbstractFile) {
             // The data source is itself a file to be processed.
@@ -312,7 +317,6 @@ final class IngestTasksScheduler {
                 }
             }
         }
-        return topLevelFiles;
     }
 
     /**
@@ -405,7 +409,7 @@ final class IngestTasksScheduler {
             return false;
         }
 
-        /**
+        /*
          * Check if the file is a member of the file ingest filter that is being
          * applied to the current run of ingest, checks if unallocated space
          * should be processed inside call to fileIsMemberOf
@@ -414,8 +418,8 @@ final class IngestTasksScheduler {
             return false;
         }
 
-// Skip the task if the file is one of a select group of special, large
-// NTFS or FAT file system files.
+        // Skip the task if the file is one of a select group of special, large
+        // NTFS or FAT file system files.
         if (file instanceof org.sleuthkit.datamodel.File) {
             final org.sleuthkit.datamodel.File f = (org.sleuthkit.datamodel.File) file;
 

@@ -407,19 +407,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getMtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getCtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getAtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getCrtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
                         "",
@@ -427,7 +427,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 ss.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
                         Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
                         "",
-                        file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
+                        file == null ? "" : StringUtils.defaultString(file.getMd5Hash())));
             }
         } else {
             String dataSourceStr = "";
@@ -456,16 +456,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return s;
     }
 
-    
-      /**
+    /**
      * Used by (subclasses of) BlackboardArtifactNode to add the tags property
      * to their sheets.
      *
      * @param ss the modifiable Sheet.Set returned by
      *           Sheet.get(Sheet.PROPERTIES)
      */
-    @NbBundle.Messages({ 
-    "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
+    @NbBundle.Messages({
+        "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
     protected void addTagProperty(Sheet.Set ss) throws MissingResourceException {
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
