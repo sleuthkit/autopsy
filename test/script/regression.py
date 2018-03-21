@@ -889,9 +889,9 @@ class TestConfiguration(object):
         else:
             linkStr = linkStr + socket.gethostname() + "\\" + linkOutputDir
         if self.testUserCase == "multi":
-            linkStr = linkStr + "\">Enterprise Viking Tests</a>"
+            linkStr = linkStr + "\">Enterprise Tests</a>"
         else:
-            linkStr = linkStr + "\">Standalone Viking Tests</a>"
+            linkStr = linkStr + "\">Standalone Tests</a>"
         linkFile.write(linkStr + "\n")
         linkFile.close()
  

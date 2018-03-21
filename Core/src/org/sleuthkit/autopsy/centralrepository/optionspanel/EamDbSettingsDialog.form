@@ -44,7 +44,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Component id="pnSQLiteSettings" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="11" max="32767" attributes="0"/>
               <Component id="pnButtons" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
           </Group>
@@ -133,7 +133,7 @@
                       <Group type="102" attributes="0">
                           <Component id="cbDatabaseType" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="lbSingleUserSqLite" max="32767" attributes="0"/>
+                          <Component id="lbSingleUserSqLite" pref="467" max="32767" attributes="0"/>
                           <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
@@ -173,29 +173,29 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="lbDatabasePath" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
+                      <Component id="lbDatabasePath" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="tfDatabasePath" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
                       <Component id="bnDatabasePathFileOpen" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="tbDbHostname" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbHostName" alignment="3" min="-2" pref="22" max="-2" attributes="0"/>
+                      <Component id="lbHostName" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="tbDbPort" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbPort" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                      <Component id="lbPort" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="tbDbUsername" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbUserName" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                      <Component id="lbUserName" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="jpDbPassword" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbUserPassword" min="-2" pref="20" max="-2" attributes="0"/>
+                      <Component id="lbUserPassword" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">

@@ -1565,7 +1565,7 @@ public class Case {
         String normalizedLocalPath;
         try {
             if (localPath.toLowerCase().contains("http:")) {
-		        normalizedLocalPath = localPath;
+		            normalizedLocalPath = localPath;
             } else {
                 normalizedLocalPath = Paths.get(localPath).normalize().toString();
             }

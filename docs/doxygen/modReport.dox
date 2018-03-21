@@ -75,6 +75,19 @@ Typically a general report module should interact with both the Blackboard API i
 
 You should call org.sleuthkit.autopsy.casemodule.Case.addReport() with the path to your report so that it is shown in the Autopsy tree.  You can specify a specific file or folder and the user can then view it later.
 
+\subsection report_create_module_indexing Indexing Reports
+
+After you have called org.sleuthkit.autopsy.casemodule.Case.addReport() and created a report, you can pass it to org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService.index() so that it is indexed and can then be found by a user.  This is most commonly used when an Ingest Module runs a 3rd party tool and the output of that tool is added back into Autopsy as a report.  Here is some example code:
+
+\code{.java}
+KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+if (null == searchService) {
+    logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
+} else {
+    searchService.index(report);
+}
+\endcode
+
 \subsection report_create_module_layer Installing your Report Module
 
 Report modules developed using Java must be registered in a layer.xml file. This file allows Autopsy to find the report module.

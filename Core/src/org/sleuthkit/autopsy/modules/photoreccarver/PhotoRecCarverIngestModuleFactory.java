@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 
 /**
  * A factory for creating instances of file ingest modules that carve
@@ -81,7 +82,17 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        return new PhotoRecCarverIngestJobSettingsPanel((PhotoRecCarverIngestJobSettings) settings);
+        if (settings instanceof PhotoRecCarverIngestJobSettings) {
+            return new PhotoRecCarverIngestJobSettingsPanel((PhotoRecCarverIngestJobSettings) settings);
+        }
+        /*
+         * Compatibility check for older versions.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new PhotoRecCarverIngestJobSettingsPanel(new PhotoRecCarverIngestJobSettings());
+        }
+        
+        throw new IllegalArgumentException("Expected settings argument to be an instance of PhotoRecCarverIngestJobSettings");
     }
 
 }
