@@ -23,6 +23,9 @@ import java.awt.event.ActionListener;
 import static java.awt.event.ItemEvent.SELECTED;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -33,6 +36,7 @@ import javax.swing.event.ListDataListener;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -40,6 +44,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -114,22 +121,33 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.title=Common Files",
-        "CommonFilesPanel.search.results.pathText=Common Files Search Results",
+        "CommonFilesPanel.search.results.pathText=Common Files Search Results\\:",
         "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
         "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
-        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files.",
-        "CommonFilesPanel.search.done.sqlException=Unable to query db for files or data sources."})
+        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files."})
     private void search() {
 
         String title = Bundle.CommonFilesPanel_search_results_title();
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<CommonFilesMetaData, Void>() {
+        new SwingWorker<List<AbstractFile>, Void>() {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+            protected List<AbstractFile> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { //return type should be CommonFilesMetaData - done will be adjusted accordingly
+                
+                //contents of this whole function should be wrapped in a business logic class for the sake of testing
+                
+                /*
+                
+                Use this query to grab mapping of object_id to datasourcename:
+                    select name, obj_id from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info));
+                
+                Use SleuthkitCase.executeSql to run the query and get back a result set which can be iterated like a regular old jdbc object.
+                
+                Use file.getDataSourceID() to get datasourceid and map it to the appropriate row from above
+                */
 
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -152,19 +170,21 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    CommonFilesMetaData metadata = get();
+                    List<AbstractFile> contentList = get();                                         //
+                                                                                                    //// To background thread (doInBackground)
+                    CommonFilesMetaData metadata = CommonFilesMetaData.CollateFiles(contentList);    //
+                                        
+                    CommonFilesSearchNode contentFilesNode = new CommonFilesSearchNode(metadata);
 
-                    CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
-
-                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
-
-                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
-
+                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(contentFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
+                                        
+                    TableFilterNode tableFilterNode = new TableFilterNode(dataResultFilterNode, true);
+                    
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
                             pathText,
-                            tableFilterWithDescendantsNode,
-                            metadata.getFilesMap().size());
+                            tableFilterNode,
+                            metadata.getFilesList().size());
 
                     component.requestActive(); // make it the active top component
 
@@ -178,13 +198,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         LOGGER.log(Level.SEVERE, "Failed to load files from database.", ex);
                         errorMessage = Bundle.CommonFilesPanel_search_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
-                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
+                        LOGGER.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
                         errorMessage = Bundle.CommonFilesPanel_search_done_noCurrentCaseException();
-                    } else if (inner instanceof SQLException) {
-                        LOGGER.log(Level.SEVERE, "Unable to query db for files or datasources.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_sqlException();
                     } else {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search.", ex);
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search", ex);
                         errorMessage = Bundle.CommonFilesPanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
