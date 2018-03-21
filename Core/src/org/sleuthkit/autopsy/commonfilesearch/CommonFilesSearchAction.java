@@ -19,17 +19,10 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.util.EnumSet;
-import java.util.logging.Level;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
@@ -43,23 +36,8 @@ final class CommonFilesSearchAction extends CallableSystemAction {
 
     CommonFilesSearchAction() {
         super();
-        this.setEnabled(true); //this.caseHasMultipleSources());
-//        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
-//            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-//                this.setEnabled(evt.getNewValue() != null && this.caseHasMultipleSources());
-//            }
-//        });
-    }
-    
-    private boolean caseHasMultipleSources(){
-        try {
-            Case currentCase = Case.getOpenCase();
-            SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            return tskDb.getDataSources().size() >= 2;
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Unable to count datasources.", ex);
-        }
-        return false;
+        this.setEnabled(true);
+
     }
 
     public static synchronized CommonFilesSearchAction getDefault() {

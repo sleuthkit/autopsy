@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import static java.awt.event.ItemEvent.SELECTED;
 import java.sql.ResultSet;
@@ -85,8 +86,21 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         }
         this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
         initComponents();
+        updateUIButtons();
+    }
+    private void updateUIButtons() {
+        boolean multipleDataSources = this.caseHasMultipleSources();
+        allDataSourcesRadioButton.setEnabled(multipleDataSources);
+        allDataSourcesRadioButton.setSelected(false);
+        if(!multipleDataSources) {
+           withinDataSourceRadioButton.setSelected(true);
+           withinDataSourceSelected(true);
+        }
     }
     
+    private boolean caseHasMultipleSources(){
+        return dataSourceMap.size() >= 2;
+    }
     private void buildDataSourceMap(Map<Long, String> dataSourceMap) throws TskCoreException, NoCurrentCaseException, SQLException  {
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -250,7 +264,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         dataSourcesButtonGroup = new javax.swing.ButtonGroup();
         searchButton = new javax.swing.JButton();
-        allDatasourcesRadio = new javax.swing.JRadioButton();
+        allDataSourcesRadioButton = new javax.swing.JRadioButton();
         withinDataSourceRadioButton = new javax.swing.JRadioButton();
         selectDataSourceComboBox = new javax.swing.JComboBox<>();
 
@@ -264,13 +278,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         });
 
-        dataSourcesButtonGroup.add(allDatasourcesRadio);
-        allDatasourcesRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(allDatasourcesRadio, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allDatasourcesRadio.text")); // NOI18N
-        allDatasourcesRadio.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        allDatasourcesRadio.addActionListener(new java.awt.event.ActionListener() {
+        dataSourcesButtonGroup.add(allDataSourcesRadioButton);
+        allDataSourcesRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(allDataSourcesRadioButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allDataSourcesRadioButton.text")); // NOI18N
+        allDataSourcesRadioButton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        allDataSourcesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                allDatasourcesRadioActionPerformed(evt);
+                allDataSourcesRadioButtonActionPerformed(evt);
             }
         });
 
@@ -301,13 +315,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(searchButton)
                     .addComponent(withinDataSourceRadioButton)
-                    .addComponent(allDatasourcesRadio))
+                    .addComponent(allDataSourcesRadioButton))
                 .addContainerGap(26, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(allDatasourcesRadio)
+                .addComponent(allDataSourcesRadioButton)
                 .addGap(2, 2, 2)
                 .addComponent(withinDataSourceRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -322,24 +336,30 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         search();
     }//GEN-LAST:event_searchButtonActionPerformed
 
-    private void allDatasourcesRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDatasourcesRadioActionPerformed
-         selectDataSourceComboBox.setEnabled(evt.getID() == SELECTED);
+    private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
+         selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
          singleDataSource = false;
         
-    }//GEN-LAST:event_allDatasourcesRadioActionPerformed
+    }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
 
     private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
         selectedDataSource = selectDataSourceComboBox.getSelectedItem().toString();
     }//GEN-LAST:event_selectDataSourceComboBoxActionPerformed
 
     private void withinDataSourceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withinDataSourceRadioButtonActionPerformed
-        selectDataSourceComboBox.setEnabled(evt.getID() != SELECTED);
-        singleDataSource = true;
+        withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
+    private void withinDataSourceSelected(boolean selected) {
+        selectDataSourceComboBox.setEnabled(selected);
+        if(selectDataSourceComboBox.isEnabled()) {
+            selectDataSourceComboBox.setSelectedIndex(0);
+            singleDataSource = true;
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JRadioButton allDatasourcesRadio;
+    private javax.swing.JRadioButton allDataSourcesRadioButton;
     private javax.swing.ButtonGroup dataSourcesButtonGroup;
     private javax.swing.JButton searchButton;
     private javax.swing.JComboBox<String> selectDataSourceComboBox;
