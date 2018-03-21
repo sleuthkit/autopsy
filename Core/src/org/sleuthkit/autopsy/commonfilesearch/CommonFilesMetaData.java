@@ -24,10 +24,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -39,17 +37,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class CommonFilesMetaData {
 
-    private final List<AbstractFile> dedupedFiles;
-    private final Map<String, Integer> instanceCountMap;
+    private final Map<AbstractFile, List<AbstractFile>> parentNodes;
     private final Map<Long, String> dataSourceIdToNameMap;
-    private final Map<String, String> md5ToDataSourcesStringMap;
 
-    private SleuthkitCase sleuthkitCase;
+    private final SleuthkitCase sleuthkitCase;
 
     CommonFilesMetaData() throws TskCoreException, SQLException, NoCurrentCaseException {
-        dedupedFiles = new ArrayList<>();
-        instanceCountMap = new HashMap<>();
-        md5ToDataSourcesStringMap = new HashMap<>();
+        parentNodes = new HashMap<>();
         dataSourceIdToNameMap = new HashMap<>();
 
         this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
@@ -73,59 +67,45 @@ public class CommonFilesMetaData {
         }
     }
 
-    CommonFilesMetaData(List<AbstractFile> theDedupedFiles, Map<String, String> theDataSourceMap, Map<String, Integer> theInstanceCountMap) {
-        dedupedFiles = theDedupedFiles;
-        instanceCountMap = theInstanceCountMap;
-        md5ToDataSourcesStringMap = theDataSourceMap;
-        dataSourceIdToNameMap = new HashMap<>();
+    public Map<AbstractFile, List<AbstractFile>> getFilesMap() {
+        return Collections.unmodifiableMap(this.parentNodes);
     }
 
-    public List<AbstractFile> getFilesList() {
-        return Collections.unmodifiableList(dedupedFiles);
-    }
-
-    public Map<String, Integer> getInstanceMap() {
-        return Collections.unmodifiableMap(instanceCountMap);
-    }
-
-    public Map<String, String> getDataSourceMap() {
-        return Collections.unmodifiableMap(md5ToDataSourcesStringMap);
+    public Map<Long, String> getDataSourceIdToNameMap() {
+        return Collections.unmodifiableMap(dataSourceIdToNameMap);
     }
 
     private void collateFiles() throws TskCoreException {
 
-        List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
+        List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere(getSqlWhereClause());
 
         AbstractFile previousFile = null;
-        String previousMd5 = "";
-        int instanceCount = 0;
+        List<AbstractFile> children = new ArrayList<>();
 
-        Set<String> dataSources = new HashSet<>();
+        String previousMd5 = "";
 
         for (AbstractFile file : files) {
 
             String currentMd5 = file.getMd5Hash();
             if (currentMd5.equals(previousMd5)) {
-                instanceCount++;
-                addDataSource(dataSources, file);
+                children.add(file);
             } else {
                 if (previousFile != null) {
-                    this.dedupedFiles.add(previousFile);
-                    this.instanceCountMap.put(previousMd5, instanceCount);
-                    this.md5ToDataSourcesStringMap.put(previousMd5, String.join(", ", dataSources));
+                    this.parentNodes.put(previousFile, children);
                 }
                 previousFile = file;
-                previousMd5 = currentMd5;
-                instanceCount = 1;
-                dataSources.clear();
-                addDataSource(dataSources, file);
+                children.clear();
+                children.add(file);
             }
         }
     }
 
-    private void addDataSource(Set<String> dataSources, AbstractFile file) {
-        long datasourceId = file.getDataSourceObjectId();
-        String dataSourceName = this.dataSourceIdToNameMap.get(datasourceId);
-        dataSources.add(dataSourceName);
+    //TODO subclass this type and make this abstract
+    protected String getSqlWhereClause() {
+        return "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+    }
+
+    public List<AbstractFile> getChildrenForFile(AbstractFile t) {
+        return this.parentNodes.get(t);
     }
 }
