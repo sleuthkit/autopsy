@@ -128,7 +128,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                            break;
                        }
                    }
-                   return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where data_source_obj_id="+ selectedObjId +" and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
+                   return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where data_source_obj_id="+ selectedObjId +" and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id="+ selectedObjId +" order by md5");
                 }   
                 return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");
             }
