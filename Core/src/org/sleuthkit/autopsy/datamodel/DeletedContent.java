@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -206,11 +207,11 @@ public class DeletedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         // new file was added
                         // @@@ COULD CHECK If the new file is deleted before notifying...
                         update();
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */
@@ -225,9 +226,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                      * received for a case that is already closed.
                      */
                     try {
-                        Case.getCurrentCase();
+                        Case.getOpenCase();
                         update();
-                    } catch (IllegalStateException notUsed) {
+                    } catch (NoCurrentCaseException notUsed) {
                         /**
                          * Case is closed, do nothing.
                          */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TagName;
@@ -82,11 +84,11 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
         new Thread(() -> {
             for (BlackboardArtifact artifact : selectedArtifacts) {
                 try {
-                    Case.getCurrentCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
-                } catch (TskCoreException ex) {
+                    Case.getOpenCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null,
+                        JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                 NbBundle.getMessage(this.getClass(),
                                         "AddBlackboardArtifactTagAction.unableToTag.msg",
                                         artifact.getDisplayName()),

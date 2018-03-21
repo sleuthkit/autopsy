@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,18 +29,21 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -78,7 +81,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     private final BlackboardArtifact artifact;
     private Content associated = null;
+
     private List<NodeProperty<? extends Object>> customProperties;
+
+    private final static String NO_DESCR = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.noDesc.text");
+
 
     /*
      * Artifact types which should have the full unique path of the associated
@@ -178,11 +185,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * The finalizer removes event listeners as the BlackboardArtifactNode
-     * is being garbage collected. Yes, we know that finalizers are considered
-     * to be "bad" but since the alternative also relies on garbage collection
+     * The finalizer removes event listeners as the BlackboardArtifactNode is
+     * being garbage collected. Yes, we know that finalizers are considered to
+     * be "bad" but since the alternative also relies on garbage collection
      * being run and we know that finalize will be called when the object is
      * being GC'd it seems like this is a reasonable solution.
+     *
      * @throws Throwable
      */
     @Override
@@ -258,7 +266,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
                     if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                        BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                        BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
                             if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 artifact.getDisplayName();
@@ -268,7 +276,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         }
                     }
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 // Do nothing since the display name will be set to the file name.
             }
         }
@@ -300,7 +308,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
         "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Artifact Details",
         "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
-        "BlackboardArtifactNode.artifact.displayName=Artifact"})
+        "BlackboardArtifactNode.artifact.displayName=Artifact",
+        "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
+        "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash"})
 
     @Override
     protected Sheet createSheet() {
@@ -310,7 +320,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        final String NO_DESCR = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.noDesc.text");
 
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, artifact);
@@ -323,7 +332,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
-                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
                             NO_DESCR,
@@ -333,7 +342,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                             NO_DESCR,
                             associatedArtifact.getShortDescription()));
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 // Do nothing since the display name will be set to the file name.
             }
         }
@@ -398,23 +407,27 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getMtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getCtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getAtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                         "",
-                        file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
+                        file == null ? "" : ContentUtils.getStringTime(file.getCrtime(), file)));
                 ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.name"),
                         NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
                         "",
                         associated.getSize()));
+                ss.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_artifactMD5_name(),
+                        Bundle.BlackboardArtifactNode_createSheet_artifactMD5_displayName(),
+                        "",
+                        file == null ? "" : StringUtils.defaultString(file.getMd5Hash())));
             }
         } else {
             String dataSourceStr = "";
@@ -438,18 +451,31 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
 
+        addTagProperty(ss);
+
+        return s;
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the tags property
+     * to their sheets.
+     *
+     * @param ss the modifiable Sheet.Set returned by
+     *           Sheet.get(Sheet.PROPERTIES)
+     */
+    @NbBundle.Messages({
+        "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
+    protected void addTagProperty(Sheet.Set ss) throws MissingResourceException {
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
         try {
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated));
-        } catch (TskCoreException ex) {
+            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getContentTagsByContent(associated));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
         }
-        ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
+        ss.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
-
-        return s;
     }
 
     private void updateSheet() {

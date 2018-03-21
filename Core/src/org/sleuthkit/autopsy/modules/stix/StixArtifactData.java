@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -49,20 +50,28 @@ class StixArtifactData {
     }
 
     public StixArtifactData(long a_objId, String a_observableId, String a_objType) {
-        Case case1 = Case.getCurrentCase();
-        SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
         try {
+            Case case1 = Case.getOpenCase();
+            SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
             file = sleuthkitCase.getAbstractFileById(a_objId);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             file = null;
         }
         observableId = a_observableId;
         objType = a_objType;
     }
 
-    @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search."})
+    @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search.",
+            "StixArtifactData.noOpenCase.errMsg=No open case available."})
     public void createArtifact(String a_title) throws TskCoreException {
-        Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        Blackboard blackboard;
+        try {
+            blackboard = Case.getOpenCase().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_noOpenCase_errMsg(), ex.getLocalizedMessage());
+            return;
+        }
 
         String setName;
         if (a_title != null) {

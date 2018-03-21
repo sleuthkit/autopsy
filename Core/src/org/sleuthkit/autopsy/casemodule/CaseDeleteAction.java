@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -44,7 +45,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class CaseDeleteAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(CaseDeleteAction.class.getName());
+    private static final Logger logger = Logger.getLogger(CaseDeleteAction.class.getName());
 
     CaseDeleteAction() {
         putValue(Action.NAME, NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction"));
@@ -65,7 +66,7 @@ final class CaseDeleteAction extends CallableSystemAction {
         "# {0} - exception message", "Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}",})
     public void actionPerformed(ActionEvent e) {
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getOpenCase();
             String caseName = currentCase.getName();
             String caseDirectory = currentCase.getCaseDirectory();
 
@@ -95,9 +96,9 @@ final class CaseDeleteAction extends CallableSystemAction {
                         try {
                             get();
                         } catch (InterruptedException | ExecutionException ex) {
-                            LOGGER.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
                             JOptionPane.showMessageDialog(
-                                    null,
+                                    WindowManager.getDefault().getMainWindow(),
                                     Bundle.Case_deleteCaseFailureMessageBox_message(ex.getLocalizedMessage()),
                                     Bundle.Case_deleteCaseFailureMessageBox_title(),
                                     JOptionPane.ERROR_MESSAGE);
@@ -109,8 +110,8 @@ final class CaseDeleteAction extends CallableSystemAction {
                     }
                 }.execute();
             }
-        } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Case delete action called with no current case", ex);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Case delete action called with no current case", ex);
         }
     }
 

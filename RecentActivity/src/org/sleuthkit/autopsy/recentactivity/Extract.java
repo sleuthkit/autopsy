@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -40,17 +41,32 @@ import org.sleuthkit.datamodel.*;
 
 abstract class Extract {
 
-    protected Case currentCase = Case.getCurrentCase();
-    protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+    protected Case currentCase;
+    protected SleuthkitCase tskCase;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
     String moduleName = "";
     boolean dataFound = false;
 
-    Extract() {
+    Extract() {        
     }
 
-    void init() throws IngestModuleException {
+    final void init() throws IngestModuleException {
+        try {
+            currentCase = Case.getOpenCase();
+            tskCase = currentCase.getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
+        }
+        configExtractor();
+    }
+    
+    /**
+     * Override to add any module-specific configuration
+     * 
+     * @throws IngestModuleException 
+     */
+    void configExtractor() throws IngestModuleException  {        
     }
 
     abstract void process(Content dataSource, IngestJobContext context);
@@ -106,15 +122,19 @@ abstract class Extract {
      *
      * @param bbart Blackboard artifact to be indexed
      */
-    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search."})
+    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
+               "Extract.noOpenCase.errMsg=No open case available."})
     void indexArtifact(BlackboardArtifact bbart) {
-        Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
+            Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
             // index the artifact for keyword search
             blackboard.indexArtifact(bbart);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.Extract_noOpenCase_errMsg(), bbart.getDisplayName());
         }
     }
 

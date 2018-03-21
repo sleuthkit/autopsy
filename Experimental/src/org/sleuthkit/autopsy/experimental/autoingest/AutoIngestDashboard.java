@@ -31,6 +31,10 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
@@ -82,6 +86,11 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
     private AutoIngestMonitor autoIngestMonitor;
+    
+    /**
+     * Maintain a mapping of each service to it's last status update.
+     */
+    private final ConcurrentHashMap<String, String> statusByService;
 
     /**
      * Creates a dashboard for monitoring an automated ingest cluster.
@@ -105,6 +114,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * Constructs a panel for monitoring an automated ingest cluster.
      */
     private AutoIngestDashboard() {
+        this.statusByService = new ConcurrentHashMap<>();
+        
         pendingTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
         runningTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
@@ -112,6 +123,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
         initComponents();
+        statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
+        statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
         initPendingJobsTable();
         initRunningJobsTable();
@@ -122,6 +136,25 @@ final class AutoIngestDashboard extends JPanel implements Observer {
          */
         UIManager.put("PopupMenu.consumeEventOnClose", false);
     }
+    
+    /**
+     * Update status of the services on the dashboard
+     */
+    private void displayServicesStatus() {
+        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message", 
+                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()), 
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
+                statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
+        String upStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+        if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
+                || statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()).compareTo(upStatus) != 0
+                || statusByService.get(ServicesMonitor.Service.MESSAGING.toString()).compareTo(upStatus) != 0) {
+            tbServicesStatusMessage.setForeground(Color.RED);
+        } else {
+            tbServicesStatusMessage.setForeground(Color.BLACK);
+        }
+    }
 
     /**
      * Queries the services monitor and sets the text for the services status
@@ -129,15 +162,12 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void setServicesStatusMessage() {
         new SwingWorker<Void, Void>() {
-            String caseDatabaseServerStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
-            String keywordSearchServiceStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
-            String messagingStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
-
+            
             @Override
             protected Void doInBackground() throws Exception {
-                caseDatabaseServerStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
-                keywordSearchServiceStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH);
-                messagingStatus = getServiceStatus(ServicesMonitor.Service.MESSAGING);
+                statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE));
+                statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH));
+                statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), getServiceStatus(ServicesMonitor.Service.MESSAGING));
                 return null;
             }
 
@@ -166,15 +196,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
             @Override
             protected void done() {
-                tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message", caseDatabaseServerStatus, keywordSearchServiceStatus, keywordSearchServiceStatus, messagingStatus));
-                String upStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
-                if (caseDatabaseServerStatus.compareTo(upStatus) != 0
-                        || keywordSearchServiceStatus.compareTo(upStatus) != 0
-                        || messagingStatus.compareTo(upStatus) != 0) {
-                    tbServicesStatusMessage.setForeground(Color.RED);
-                } else {
-                    tbServicesStatusMessage.setForeground(Color.BLACK);
-                }
+                displayServicesStatus();
             }
 
         }.execute();
@@ -247,9 +269,16 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             }
             int row = pendingTable.getSelectedRow();
 
-            boolean enablePrioritizeButtons = (row >= 0 && row < pendingTable.getRowCount());
+            boolean enablePrioritizeButtons = false;
+            boolean enableDeprioritizeButtons = false;
+            if (row >= 0 && row < pendingTable.getRowCount()) {
+                enablePrioritizeButtons = true;
+                enableDeprioritizeButtons = (Integer) pendingTableModel.getValueAt(row, JobsTableModelColumns.PRIORITY.ordinal()) > 0;
+            }
             this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
             this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
+            this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
+            this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
         });
     }
 
@@ -406,10 +435,38 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * auto ingest job tables.
      */
     private void startUp() throws AutoIngestMonitor.AutoIngestMonitorException {
-        setServicesStatusMessage();
-        ServicesMonitor.getInstance().addSubscriber((PropertyChangeEvent evt) -> {
-            setServicesStatusMessage();
-        });
+
+        PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
+            
+            String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
+            String status = evt.getNewValue().toString();
+            
+            if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+                status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+                LOGGER.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
+            } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+                status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
+                LOGGER.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
+            } else {
+                LOGGER.log(Level.INFO, "Status for {0} is {1}", new Object[]{serviceDisplayName, status}); //NON-NLS
+            }
+            
+            // if the status update is for an existing service who's status hasn't changed - do nothing.       
+            if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
+                return;
+            }
+            
+            statusByService.put(serviceDisplayName, status);
+            displayServicesStatus();
+        };
+        
+        // Subscribe to all multi-user services in order to display their status
+        Set<String> servicesList = new HashSet<>();
+        servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()); 
+        servicesList.add(ServicesMonitor.Service.MESSAGING.toString());
+        ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
+        
         autoIngestMonitor = new AutoIngestMonitor();
         autoIngestMonitor.addObserver(this);
         autoIngestMonitor.startUp();
@@ -655,6 +712,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         prioritizeJobButton = new javax.swing.JButton();
         prioritizeCaseButton = new javax.swing.JButton();
         clusterMetricsButton = new javax.swing.JButton();
+        deprioritizeJobButton = new javax.swing.JButton();
+        deprioritizeCaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -759,6 +818,24 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(deprioritizeJobButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeJobButton.text")); // NOI18N
+        deprioritizeJobButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeJobButton.toolTipText")); // NOI18N
+        deprioritizeJobButton.setEnabled(false);
+        deprioritizeJobButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deprioritizeJobButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(deprioritizeCaseButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeCaseButton.text")); // NOI18N
+        deprioritizeCaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeCaseButton.toolTipText")); // NOI18N
+        deprioritizeCaseButton.setEnabled(false);
+        deprioritizeCaseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deprioritizeCaseButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -773,11 +850,15 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGap(18, 18, 18)
                                 .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deprioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
                                 .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deprioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
                                 .addComponent(clusterMetricsButton))
                             .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lbCompleted, javax.swing.GroupLayout.Alignment.LEADING)
@@ -816,7 +897,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                     .addComponent(refreshButton)
                     .addComponent(prioritizeJobButton)
                     .addComponent(prioritizeCaseButton)
-                    .addComponent(clusterMetricsButton))
+                    .addComponent(clusterMetricsButton)
+                    .addComponent(deprioritizeJobButton)
+                    .addComponent(deprioritizeCaseButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -835,9 +918,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_refreshButtonActionPerformed
 
-    @Messages({
-        "AutoIngestDashboard.PrioritizeJobError=Failed to prioritize job \"%s\"."
-    })
+    @Messages({"AutoIngestDashboard.errorMessage.jobPrioritization=Failed to prioritize job \"%s\"."})
     private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -847,7 +928,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
                 refreshTables(jobsSnapshot);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeJobError"), job.getManifest().getFilePath());
+                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobPrioritization(), job.getManifest().getFilePath());
                 LOGGER.log(Level.SEVERE, errorMessage, ex);
                 MessageNotifyUtil.Message.error(errorMessage);
             }
@@ -855,9 +936,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_prioritizeJobButtonActionPerformed
 
-    @Messages({
-        "AutoIngestDashboard.PrioritizeCaseError=Failed to prioritize job \"%s\"."
-    })
+    @Messages({"AutoIngestDashboard.errorMessage.casePrioritization=Failed to prioritize case \"%s\"."})
     private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -867,7 +946,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
                 refreshTables(jobsSnapshot);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeCaseError"), caseName);
+                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_casePrioritization(), caseName);
                 LOGGER.log(Level.SEVERE, errorMessage, ex);
                 MessageNotifyUtil.Message.error(errorMessage);
             }
@@ -879,10 +958,48 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
 
+    @Messages({"AutoIngestDashboard.errorMessage.jobDeprioritization=Failed to deprioritize job \"%s\"."})
+    private void deprioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeJobButtonActionPerformed
+        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
+            JobsSnapshot jobsSnapshot;
+            try {
+                jobsSnapshot = autoIngestMonitor.deprioritizeJob(job);
+                refreshTables(jobsSnapshot);
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobDeprioritization(), job.getManifest().getFilePath());
+                LOGGER.log(Level.SEVERE, errorMessage, ex);
+                MessageNotifyUtil.Message.error(errorMessage);
+            }
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_deprioritizeJobButtonActionPerformed
+
+    @Messages({"AutoIngestDashboard.errorMessage.caseDeprioritization=Failed to deprioritize case \"%s\"."})
+    private void deprioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeCaseButtonActionPerformed
+        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+            JobsSnapshot jobsSnapshot;
+            try {
+                jobsSnapshot = autoIngestMonitor.deprioritizeCase(caseName);
+                refreshTables(jobsSnapshot);
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_caseDeprioritization(), caseName);
+                LOGGER.log(Level.SEVERE, errorMessage, ex);
+                MessageNotifyUtil.Message.error(errorMessage);
+            }
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_deprioritizeCaseButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
     private javax.swing.JScrollPane completedScrollPane;
     private javax.swing.JTable completedTable;
+    private javax.swing.JButton deprioritizeCaseButton;
+    private javax.swing.JButton deprioritizeJobButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel lbCompleted;
     private javax.swing.JLabel lbPending;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,9 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
@@ -85,7 +87,14 @@ public class ExternalViewerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         // Get the temp folder path of the case
-        String tempPath = Case.getCurrentCase().getTempDirectory();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+        String tempPath = openCase.getTempDirectory();
         tempPath = tempPath + File.separator + this.fileObject.getName();
 
         // create the temporary file
@@ -137,32 +146,32 @@ public class ExternalViewerAction extends AbstractAction {
                 runtime.exec(execArray);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + file.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
             }
         } else {
             try {
                 Desktop.getDesktop().open(file);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not find a viewer for the given file: " + file.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_title(),
                         JOptionPane.ERROR_MESSAGE);
             } catch (UnsupportedOperationException ex) {
                 logger.log(Level.WARNING, "Platform cannot open " + file.getName() + " in the defined editor.", ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_support_message(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_title(),
                         JOptionPane.ERROR_MESSAGE);
             } catch (IllegalArgumentException ex) {
                 logger.log(Level.WARNING, "Could not find the given file: " + file.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_missingFile_message(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_title(),
                         JOptionPane.ERROR_MESSAGE);
             } catch (SecurityException ex) {
                 logger.log(Level.WARNING, "Could not get permission to open the given file: " + file.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null,
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_title(),
                         JOptionPane.ERROR_MESSAGE);

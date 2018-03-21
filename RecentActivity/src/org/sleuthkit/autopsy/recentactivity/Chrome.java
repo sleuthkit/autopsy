@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  *
@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -55,12 +56,12 @@ import org.sleuthkit.datamodel.TskData;
  */
 class Chrome extends Extract {
 
-    private static final String historyQuery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
+    private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
-    private static final String cookieQuery = "SELECT name, value, host_key, expires_utc,last_access_utc, creation_utc FROM cookies"; //NON-NLS
-    private static final String downloadQuery = "SELECT full_path, url, start_time, received_bytes FROM downloads"; //NON-NLS
-    private static final String downloadQueryVersion30 = "SELECT current_path AS full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
-    private static final String loginQuery = "SELECT origin_url, username_value, signon_realm from logins"; //NON-NLS
+    private static final String COOKIE_QUERY = "SELECT name, value, host_key, expires_utc,last_access_utc, creation_utc FROM cookies"; //NON-NLS
+    private static final String DOWNLOAD_QUERY = "SELECT full_path, url, start_time, received_bytes FROM downloads"; //NON-NLS
+    private static final String DOWNLOAD_QUERY_V30 = "SELECT current_path AS full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
+    private static final String LOGIN_QUERY = "SELECT origin_url, username_value, signon_realm from logins"; //NON-NLS
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;
@@ -115,15 +116,22 @@ class Chrome extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < historyFiles.size()) {
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFiles.get(j).getName().toString() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = historyFiles.get(j++);
             if (historyFile.getSize() == 0) {
                 continue;
             }
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome web history artifacts file '%s' (id=%d).",
+                        historyFile.getName(), historyFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
+                        this.getName(), historyFile.getName()));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome web history artifacts file '%s' (id=%d).",
+                        temps, historyFile.getName(), historyFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getHistory.errMsg.errAnalyzingFile",
                         this.getName(), historyFile.getName()));
                 continue;
@@ -134,7 +142,7 @@ class Chrome extends Extract {
                 break;
             }
             List<HashMap<String, Object>> tempList;
-            tempList = this.dbConnect(temps, historyQuery);
+            tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0}- Now getting history from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -175,7 +183,7 @@ class Chrome extends Extract {
      */
     private void getBookmark() {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> bookmarkFiles = null;
+        List<AbstractFile> bookmarkFiles;
         try {
             bookmarkFiles = fileManager.findFiles(dataSource, "Bookmarks", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
@@ -199,11 +207,18 @@ class Chrome extends Extract {
             if (bookmarkFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + bookmarkFile.getName().toString() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome bookmark artifacts file '%s' (id=%d).",
+                        bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
+                        this.getName(), bookmarkFile.getName()));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome bookmark artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome bookmark artifacts file '%s' (id=%d).",
+                        temps, bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile",
                         this.getName(), bookmarkFile.getName()));
                 continue;
@@ -341,14 +356,20 @@ class Chrome extends Extract {
             if (cookiesFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + cookiesFile.getName().toString() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome cookie artifacts file '%s' (id=%d).",
+                        cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile",
+                        this.getName(), cookiesFile.getName()));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome cookie artifacts.{0}", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile", this.getName(),
-                                cookiesFile.getName()));
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome cookie artifacts file '%s' (id=%d).",
+                        temps, cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getCookie.errMsg.errAnalyzeFile",
+                        this.getName(), cookiesFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -357,10 +378,10 @@ class Chrome extends Extract {
                 break;
             }
 
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, cookieQuery);
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, COOKIE_QUERY);
             logger.log(Level.INFO, "{0}- Now getting cookies from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                         ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : ""))); //NON-NLS
@@ -401,7 +422,7 @@ class Chrome extends Extract {
      */
     private void getDownload() {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> downloadFiles = null;
+        List<AbstractFile> downloadFiles;
         try {
             downloadFiles = fileManager.findFiles(dataSource, "History", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
@@ -424,11 +445,18 @@ class Chrome extends Extract {
             if (downloadFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + downloadFile.getName().toString() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome download artifacts file '%s' (id=%d).",
+                        downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
+                        this.getName(), downloadFile.getName()));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome download artifacts file '%s' (id=%d).",
+                        temps, downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getDownload.errMsg.errAnalyzeFiles1",
                         this.getName(), downloadFile.getName()));
                 continue;
@@ -442,14 +470,14 @@ class Chrome extends Extract {
             List<HashMap<String, Object>> tempList;
 
             if (isChromePreVersion30(temps)) {
-                tempList = this.dbConnect(temps, downloadQuery);
+                tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
             } else {
-                tempList = this.dbConnect(temps, downloadQueryVersion30);
+                tempList = this.dbConnect(temps, DOWNLOAD_QUERY_V30);
             }
 
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), (result.get("full_path").toString()))); //NON-NLS
                 long pathID = Util.findID(dataSource, (result.get("full_path").toString())); //NON-NLS
@@ -517,14 +545,20 @@ class Chrome extends Extract {
             if (signonFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + signonFile.getName().toString() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + signonFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(signonFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome login artifacts file '%s' (id=%d).",
+                        signonFile.getName(), signonFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                        this.getName(), signonFile.getName()));
+                continue;
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome login artifacts.{0}", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles", this.getName(),
-                                signonFile.getName()));
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome login artifacts file '%s' (id=%d).",
+                        temps, signonFile.getName(), signonFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                        this.getName(), signonFile.getName()));
                 continue;
             }
             File dbFile = new File(temps);
@@ -532,7 +566,7 @@ class Chrome extends Extract {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, loginQuery);
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();

@@ -37,7 +37,9 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -146,8 +148,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         }
         SleuthkitCase tskCase;
         try {
-            tskCase = Case.getCurrentCase().getSleuthkitCase();
-        } catch (IllegalStateException ex) {
+            tskCase = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
             return false;
         }
@@ -254,10 +256,23 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         if (key instanceof KeyValueQueryContent) {
             AdHocQueryResult adHocQueryResult = new AdHocQueryResult((KeyValueQueryContent) key);
 
-            Node kvNode = new KeyValueNode(key, Children.LEAF);
+            /**
+             * Place the Content, Artifact and hit results into the lookup for
+             * the node if they are available.
+             */
+            ArrayList<Object> lookups = new ArrayList<>();
+            lookups.add(adHocQueryResult);
+            if (((KeyValueQueryContent) key).getContent() != null) {
+                lookups.add(((KeyValueQueryContent) key).getContent());
+            }
+            if (((KeyValueQueryContent) key).getArtifact() != null) {
+                lookups.add(((KeyValueQueryContent) key).getArtifact());
+            }
+
+            Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.fixed(lookups.toArray()));
 
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            resultNode = new KeywordSearchFilterNode(adHocQueryResult, kvNode);
+            resultNode = new KeywordSearchFilterNode(kvNode);
         } else {
             resultNode = new EmptyNode("This Node Is Empty");
             resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noResultsFound.text"));
@@ -268,14 +283,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     }
 
     /**
-     * This class encapsulates content, query results, and an associated Solr
-     * object ID for storing in the Lookup to be read later.
+     * This class encapsulates query results and an associated Solr object ID
+     * for storing in the Lookup to be read later.
      */
     final class AdHocQueryResult {
 
         private final long solrObjectId;
-        private final Content content;
-        private final BlackboardArtifact artifact;
         private final QueryResults results;
 
         /**
@@ -283,14 +296,10 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          *
          * @param solrObjectId The Solr object ID associated with the object in
          *                     which the hit was found.
-         * @param content      The content for the query result.
-         * @param artifact     The artifact associated with the query result.
          * @param results      The query results.
          */
         AdHocQueryResult(KeyValueQueryContent key) {
             this.solrObjectId = key.getSolrObjectId();
-            this.content = key.getContent();
-            this.artifact = key.getArtifact();
             this.results = key.getHits();
         }
 
@@ -302,28 +311,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          */
         long getSolrObjectId() {
             return solrObjectId;
-        }
-
-        /**
-         * Get the content for the query result. This can be either a file or a
-         * data source, and it may or may not be the content in which the hit
-         * occurred. If the hit is in a file, the Content object represents that
-         * file. But if the hit is in an artifact, the Content object represents
-         * the source file or data source of the artifact.
-         *
-         * @return The content object.
-         */
-        Content getContent() {
-            return content;
-        }
-
-        /**
-         * Get the artifact for the query result.
-         *
-         * @return The artifact.
-         */
-        BlackboardArtifact getArtifact() {
-            return artifact;
         }
 
         /**

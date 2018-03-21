@@ -1,16 +1,16 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2014-2018 Basis Technology Corp.
  * contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,8 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jdom2.CDATA;
 import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
@@ -67,7 +69,7 @@ class ReportKML implements GeneralReportModule {
         PURPLE("style.kml#purpleFeature"),
         WHITE("style.kml#whiteFeature"),
         YELLOW("style.kml#yellowFeature");
-        private String color;
+        private final String color;
 
         FeatureColor(String color) {
             this.color = color;
@@ -98,14 +100,18 @@ class ReportKML implements GeneralReportModule {
      */
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(true);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.querying"));
         String kmlFileFullPath = baseReportDir + REPORT_KML; //NON-NLS
         
-        currentCase = Case.getCurrentCase();
         skCase = currentCase.getSleuthkitCase();
 
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportKML.progress.loading"));
@@ -197,6 +203,8 @@ class ReportKML implements GeneralReportModule {
          */
         try {
             for (BlackboardArtifact artifact : skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF)) {
+                String fileName = "";
+                long fileId = 0;
                 try {
                     Long timestamp = getLong(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED);
                     String desc = getDescriptionFromArtifact(artifact, "EXIF Metadata With Locations"); //NON-NLS
@@ -206,7 +214,9 @@ class ReportKML implements GeneralReportModule {
 
                     if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
                         AbstractFile abstractFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
-                        Path path = null;
+                        fileName = abstractFile.getName();
+                        fileId = abstractFile.getId();
+                        Path path;
                         copyFileUsingStream(abstractFile, Paths.get(baseReportDir, abstractFile.getName()).toFile());
                         try {
                             path = Paths.get(removeLeadingImgAndVol(abstractFile.getUniquePath()));
@@ -219,6 +229,8 @@ class ReportKML implements GeneralReportModule {
                         }
                         gpsExifMetadataFolder.addContent(makePlacemarkWithPicture(abstractFile.getName(), FeatureColor.RED, desc, timestamp, point, path, formattedCoordinates));
                     }
+                } catch (ReadContentInputStreamException ex) {
+                    logger.log(Level.WARNING, String.format("Error reading file '%s' (id=%d).", fileName, fileId), ex);
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Could not extract photo information.", ex); //NON-NLS
                     result = ReportProgressPanel.ReportStatus.ERROR;
@@ -375,7 +387,7 @@ class ReportKML implements GeneralReportModule {
             if (result == ReportProgressPanel.ReportStatus.ERROR) {
                 prependedStatus = "Incomplete ";
             }
-            Case.getCurrentCase().addReport(kmlFileFullPath,
+            Case.getOpenCase().addReport(kmlFileFullPath,
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
                     prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {
@@ -384,6 +396,9 @@ class ReportKML implements GeneralReportModule {
         } catch (TskCoreException ex) {
             String errorMessage = String.format("Error adding %s to case as a report", kmlFileFullPath); //NON-NLS
             logger.log(Level.SEVERE, errorMessage, ex);
+            result = ReportProgressPanel.ReportStatus.ERROR;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             result = ReportProgressPanel.ReportStatus.ERROR;
         }
 
@@ -404,9 +419,7 @@ class ReportKML implements GeneralReportModule {
             BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
             if (bba != null) {
                 Double value = bba.getValueDouble();
-                if (value != null) {
-                    returnValue = value;
-                }
+                returnValue = value;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Double value: " + type.toString(), ex); //NON-NLS
@@ -428,9 +441,7 @@ class ReportKML implements GeneralReportModule {
             BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
             if (bba != null) {
                 Long value = bba.getValueLong();
-                if (value != null) {
-                    returnValue = value;
-                }
+                returnValue = value;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Long value: " + type.toString(), ex); //NON-NLS
@@ -452,9 +463,7 @@ class ReportKML implements GeneralReportModule {
             BlackboardAttribute bba = artifact.getAttribute(new BlackboardAttribute.Type(type));
             if (bba != null) {
                 Integer value = bba.getValueInt();
-                if (value != null) {
-                    returnValue = value;
-                }
+                returnValue = value;
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting Integer value: " + type.toString(), ex); //NON-NLS
@@ -661,12 +670,12 @@ class ReportKML implements GeneralReportModule {
         Element coordinates = new Element("coordinates", ns).addContent(longitude + "," + latitude + "," + altitude); //NON-NLS
 
         if (altitude != 0) {
-            /* 
-            Though we are including a non-zero altitude, clamp it to the 
-            ground because inaccuracies from the GPS data can cause the terrain
-            to occlude points when zoomed in otherwise. Show the altitude, but
-            keep the point clamped to the ground. We may change this later for
-            flying GPS sensors.
+            /*
+             * Though we are including a non-zero altitude, clamp it to the
+             * ground because inaccuracies from the GPS data can cause the
+             * terrain to occlude points when zoomed in otherwise. Show the
+             * altitude, but keep the point clamped to the ground. We may change
+             * this later for flying GPS sensors.
              */
             Element altitudeMode = new Element("altitudeMode", ns).addContent("clampToGround"); //NON-NLS
             point.addContent(altitudeMode);
@@ -811,9 +820,11 @@ class ReportKML implements GeneralReportModule {
      * @param inputFile  The input AbstractFile to copy
      * @param outputFile the output file
      *
-     * @throws IOException
+     * @throws ReadContentInputStreamException When a read error occurs.
+     * @throws IOException                     When a general file exception
+     *                                         occurs.
      */
-    private void copyFileUsingStream(AbstractFile inputFile, File outputFile) throws IOException {
+    private void copyFileUsingStream(AbstractFile inputFile, File outputFile) throws ReadContentInputStreamException, IOException {
         byte[] buffer = new byte[65536];
         int length;
         outputFile.createNewFile();

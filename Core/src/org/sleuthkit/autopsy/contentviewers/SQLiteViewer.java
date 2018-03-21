@@ -39,34 +39,42 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
+/**
+ * A file content viewer for SQLite database files.
+ */
 public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
+    private static final long serialVersionUID = 1L;
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
-    private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
-    private Connection connection = null;
-
-    private String tmpDBPathName = null;
-    private File tmpDBFile = null;
-
-    private final Map<String, String> dbTablesMap = new TreeMap<>();
-
     private static final int ROWS_PER_PAGE = 100;
+    private static final Logger logger = Logger.getLogger(FileViewer.class.getName());
+    private final SQLiteTableView selectedTableView = new SQLiteTableView();
+    private AbstractFile sqliteDbFile;
+    private File tmpDbFile;
+    private Connection connection;
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
-
-    SQLiteTableView selectedTableView = new SQLiteTableView();
-
     private SwingWorker<? extends Object, ? extends Object> worker;
 
     /**
-     * Creates new form SQLiteViewer
+     * Constructs a file content viewer for SQLite database files.
      */
     public SQLiteViewer() {
         initComponents();
@@ -205,7 +213,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
-
         currPage++;
         if (currPage * ROWS_PER_PAGE > numRows) {
             nextPageButton.setEnabled(false);
@@ -219,7 +226,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
-
         currPage--;
         if (currPage == 1) {
             prevPageButton.setEnabled(false);
@@ -238,7 +244,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         if (null == tableName) {
             return;
         }
-
         selectTable(tableName);
     }//GEN-LAST:event_tablesDropdownListActionPerformed
 
@@ -264,7 +269,8 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void setFile(AbstractFile file) {
-        processSQLiteFile(file);
+        sqliteDbFile = file;
+        processSQLiteFile();
     }
 
     @Override
@@ -274,9 +280,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void resetComponent() {
-
-        dbTablesMap.clear();
-
         tablesDropdownList.setEnabled(true);
         tablesDropdownList.removeAllItems();
         numEntriesField.setText("");
@@ -287,103 +290,151 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 connection.close();
                 connection = null;
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
             }
         }
 
         // delete last temp file
-        if (null != tmpDBFile) {
-            tmpDBFile.delete();
-            tmpDBFile = null;
+        if (null != tmpDbFile) {
+            tmpDbFile.delete();
+            tmpDbFile = null;
         }
+        
+        sqliteDbFile = null;
     }
 
     /**
-     * Process the given SQLite DB file
-     *
-     * @param sqliteFile -
-     *
-     * @return none
+     * Process the given SQLite DB file.
      */
-    private void processSQLiteFile(AbstractFile sqliteFile) {
-
-        tablesDropdownList.removeAllItems();
-
-        new SwingWorker<Boolean, Void>() {
+    @NbBundle.Messages({
+        "SQLiteViewer.comboBox.noTableEntry=No tables found",
+        "SQLiteViewer.errorMessage.interrupted=The processing of the file was interrupted.",
+        "SQLiteViewer.errorMessage.noCurrentCase=The case has been closed.",
+        "SQLiteViewer.errorMessage.failedToExtractFile=The file could not be extracted from the data source.",
+        "SQLiteViewer.errorMessage.failedToQueryDatabase=The database tables in the file could not be read.",
+        "SQLiteViewer.errorMessage.failedToinitJDBCDriver=The JDBC driver for SQLite could not be loaded.",
+        "# {0} - exception message", "SQLiteViewer.errorMessage.unexpectedError=An unexpected error occurred:\n{0).",})
+    private void processSQLiteFile() {
+        SwingUtilities.invokeLater(() -> {
+            tablesDropdownList.removeAllItems();
+        });
+        new SwingWorker<Map<String, String>, Void>() {
             @Override
-            protected Boolean doInBackground() throws Exception {
+            protected Map<String, String> doInBackground() throws NoCurrentCaseException, TskCoreException, IOException, SQLException, ClassNotFoundException {
+                // Copy the file to temp folder
+                String tmpDBPathName = Case.getOpenCase().getTempDirectory() + File.separator + sqliteDbFile.getName();
+                tmpDbFile = new File(tmpDBPathName);
+                ContentUtils.writeToFile(sqliteDbFile, tmpDbFile);
 
-                try {
-                    // Copy the file to temp folder
-                    tmpDBPathName = Case.getCurrentCase().getTempDirectory() + File.separator + sqliteFile.getName() + "-" + sqliteFile.getId();
-                    tmpDBFile = new File(tmpDBPathName);
-                    ContentUtils.writeToFile(sqliteFile, tmpDBFile);
+                // Look for any meta files associated with this DB - WAL, SHM, etc. 
+                findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
+                findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
 
-                    // Open copy using JDBC
-                    Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver 
-                    connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
+                // Load the SQLite JDBC driver, if necessary.
+                Class.forName("org.sqlite.JDBC"); //NON-NLS  
+                connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
 
-                    // Read all table names and schema
-                    return getTables();
-                } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to copy DB file.", ex); //NON-NLS
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to Open DB.", ex); //NON-NLS
-                } catch (ClassNotFoundException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to initialize JDBC Sqlite.", ex); //NON-NLS
-                }
-                return false;
+                // Query the file for the table names and schemas.
+                return getTables();
             }
 
             @Override
             protected void done() {
                 super.done();
                 try {
-                    boolean status = get();
-                    if ((status == true) && (dbTablesMap.size() > 0)) {
+                    Map<String, String> dbTablesMap = get();
+                    if (dbTablesMap.isEmpty()) {
+                        tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
+                        tablesDropdownList.setEnabled(false);
+                    } else {
                         dbTablesMap.keySet().forEach((tableName) -> {
                             tablesDropdownList.addItem(tableName);
                         });
-                    } else {
-                        // Populate error message
-                        tablesDropdownList.addItem("No tables found");
-                        tablesDropdownList.setEnabled(false);
                     }
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening DB file", ex); //NON-NLS
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, String.format("Interrupted while opening SQLite database file '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+                    MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_interrupted());
+                } catch (ExecutionException ex) {
+                    String errorMessage;
+                    Throwable cause = ex.getCause();
+                    if (cause instanceof NoCurrentCaseException) {
+                        logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
+                        errorMessage = Bundle.SQLiteViewer_errorMessage_noCurrentCase();
+                    } else if (cause instanceof TskCoreException || cause instanceof IOException) {
+                        logger.log(Level.SEVERE, String.format("Failed to create temp copy of DB file '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+                        errorMessage = Bundle.SQLiteViewer_errorMessage_failedToExtractFile();
+                    } else if (cause instanceof SQLException) {
+                        logger.log(Level.SEVERE, String.format("Failed to get tables from DB file  '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+                        errorMessage = Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase();
+                    } else if (cause instanceof ClassNotFoundException) {
+                        logger.log(Level.SEVERE, String.format("Failed to initialize JDBC SQLite '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+                        errorMessage = Bundle.SQLiteViewer_errorMessage_failedToinitJDBCDriver();
+                    } else {
+                        logger.log(Level.SEVERE, String.format("Unexpected exception while processing DB file  '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+                        errorMessage = Bundle.SQLiteViewer_errorMessage_unexpectedError(cause.getLocalizedMessage());
+                    }
+                    MessageNotifyUtil.Message.error(errorMessage);
                 }
             }
         }.execute();
-
     }
 
     /**
-     * Gets the table names and their schema from loaded SQLite db file
+     * Searches for a meta file associated with the give SQLite db If found,
+     * copies the file to the temp folder
      *
-     * @return true if success, false otherwise
+     * @param sqliteFile   - SQLIte db file being processed
+     * @param metaFileName name of meta file to look for
      */
-    private boolean getTables() {
+    private void findAndCopySQLiteMetaFile(AbstractFile sqliteFile, String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
+        Case openCase = Case.getOpenCase();
+        SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
+        Services services = new Services(sleuthkitCase);
+        FileManager fileManager = services.getFileManager();
+        List<AbstractFile> metaFiles = fileManager.findFiles(sqliteFile.getDataSource(), metaFileName, sqliteFile.getParent().getName());
+        if (metaFiles != null) {
+            for (AbstractFile metaFile : metaFiles) {
+                String tmpMetafilePathName = openCase.getTempDirectory() + File.separator + metaFile.getName();
+                File tmpMetafile = new File(tmpMetafilePathName);
+                ContentUtils.writeToFile(metaFile, tmpMetafile);
+            }
+        }
+    }
 
+    /**
+     * Gets the table names and schemas from the SQLite database file.
+     *
+     * @return A mapping of table names to SQL CREATE TABLE statements.
+     */
+    private Map<String, String> getTables() throws SQLException {
+        Map<String, String> dbTablesMap = new TreeMap<>();
+        Statement statement = null;
+        ResultSet resultSet = null;
         try {
-            Statement statement = connection.createStatement();
-
-            ResultSet resultSet = statement.executeQuery(
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(
                     "SELECT name, sql FROM sqlite_master "
                     + " WHERE type= 'table' "
                     + " ORDER BY name;"); //NON-NLS
-
             while (resultSet.next()) {
                 String tableName = resultSet.getString("name"); //NON-NLS
                 String tableSQL = resultSet.getString("sql"); //NON-NLS
-
                 dbTablesMap.put(tableName, tableSQL);
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting table names from the DB", e); //NON-NLS
+        } finally {
+            if (null != resultSet) {
+                resultSet.close();
+            }
+            if (null != statement) {
+                statement.close();
+            }
         }
-        return true;
+        return dbTablesMap;
     }
 
+    @NbBundle.Messages({"# {0} - tableName",
+        "SQLiteViewer.selectTable.errorText=Error getting row count for table: {0}"
+    })
     private void selectTable(String tableName) {
         if (worker != null && !worker.isDone()) {
             worker.cancel(false);
@@ -394,17 +445,24 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             @Override
             protected Integer doInBackground() throws Exception {
 
+                Statement statement = null;
+                ResultSet resultSet = null;
                 try {
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
+                    statement = connection.createStatement();
+                    resultSet = statement.executeQuery(
                             "SELECT count (*) as count FROM " + tableName); //NON-NLS
 
                     return resultSet.getInt("count");
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table.", ex); //NON-NLS
+                    throw ex;
+                } finally {
+                    if (null != resultSet) {
+                        resultSet.close();
+                    }
+                    if (null != statement) {
+                        statement.close();
+                    }
                 }
-                //NON-NLS
-                return 0;
             }
 
             @Override
@@ -421,7 +479,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                     prevPageButton.setEnabled(false);
 
-
                     if (numRows > 0) {
                         nextPageButton.setEnabled(((numRows > ROWS_PER_PAGE)));
                         readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
@@ -430,14 +487,26 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         selectedTableView.setupTable(Collections.emptyList());
                     }
 
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table.", ex); //NON-NLS
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, "Interrupted while getting row count from table " + tableName, ex); //NON-NLS
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            Bundle.SQLiteViewer_selectTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
+                } catch (ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Unexpected exception while getting row count from table " + tableName, ex); //NON-NLS  
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getCause().getMessage(),
+                            Bundle.SQLiteViewer_selectTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
         worker.execute();
     }
 
+    @NbBundle.Messages({"# {0} - tableName",
+        "SQLiteViewer.readTable.errorText=Error getting rows for table: {0}"})
     private void readTable(String tableName, int startRow, int numRowsToRead) {
 
         if (worker != null && !worker.isDone()) {
@@ -448,9 +517,12 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         worker = new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
             @Override
             protected ArrayList<Map<String, Object>> doInBackground() throws Exception {
+
+                Statement statement = null;
+                ResultSet resultSet = null;
                 try {
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
+                    statement = connection.createStatement();
+                    resultSet = statement.executeQuery(
                             "SELECT * FROM " + tableName
                             + " LIMIT " + Integer.toString(numRowsToRead)
                             + " OFFSET " + Integer.toString(startRow - 1)
@@ -458,10 +530,15 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                     return resultSetToArrayList(resultSet);
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to get data for table " + tableName, ex); //NON-NLS
+                    throw ex;
+                } finally {
+                    if (null != resultSet) {
+                        resultSet.close();
+                    }
+                    if (null != statement) {
+                        statement.close();
+                    }
                 }
-                //NON-NLS
-                return null;
             }
 
             @Override
@@ -476,11 +553,21 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     ArrayList<Map<String, Object>> rows = get();
                     if (Objects.nonNull(rows)) {
                         selectedTableView.setupTable(rows);
-                    }else{
+                    } else {
                         selectedTableView.setupTable(Collections.emptyList());
                     }
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, "Interrupted while reading table " + tableName, ex); //NON-NLS
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            Bundle.SQLiteViewer_readTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
+                } catch (ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getCause().getMessage(),
+                            Bundle.SQLiteViewer_readTable_errorText(tableName),
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         };

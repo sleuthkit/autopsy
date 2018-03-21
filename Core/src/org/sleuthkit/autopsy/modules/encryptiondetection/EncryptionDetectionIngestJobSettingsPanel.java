@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
+import java.text.ParseException;
+import java.util.logging.Level;
+import javax.swing.text.DefaultFormatter;
+import javax.swing.text.DefaultFormatterFactory;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
@@ -29,9 +32,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     private static final int MEGABYTE_SIZE = 1048576;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
-    private static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
-    private static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
+    private static final int INVALID_TEXT_FIELD_INPUT_RETURN = -1;
+
+    private final Logger logger = Logger.getLogger(EncryptionDetectionIngestJobSettingsPanel.class.getName());
+
+    private final DefaultFormatterFactory minimumFileSizeTextFormatterFactory = new DefaultFormatterFactory(new StringIntegerFormatter());
+    private final DefaultFormatterFactory minimumEntropyTextFormatterFactory = new DefaultFormatterFactory(new StringDoubleFormatter());
 
     /**
      * Instantiate the ingest job settings panel.
@@ -57,9 +63,6 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
 
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        validateMinimumEntropy();
-        validateMinimumFileSize();
-
         return new EncryptionDetectionIngestJobSettings(
                 Double.valueOf(minimumEntropyTextbox.getText()),
                 Integer.valueOf(minimumFileSizeTextbox.getText()) * MEGABYTE_SIZE,
@@ -68,42 +71,44 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     }
 
     /**
-     * Validate the minimum entropy input.
-     *
-     * @throws IllegalArgumentException If the input is empty, invalid, or out
-     *                                  of range.
+     * Formatter to handle conversion between String and Double.
      */
-    @Messages({
-        "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text=Minimum entropy input must be a number between 6.0 and 8.0."
-    })
-    private void validateMinimumEntropy() throws IllegalArgumentException {
-        try {
-            double minimumEntropy = Double.valueOf(minimumEntropyTextbox.getText());
-            if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text"));
+    private final class StringDoubleFormatter extends DefaultFormatter {
+
+        @Override
+        public Object stringToValue(String string) throws ParseException {
+            try {
+                return Double.parseDouble(string);
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("The String input '%s' is not valid for Double conversion.", string), ex);
+                /*
+                 * Return a valid number outside the acceptable value range so
+                 * it can be run through the validator in the file ingest
+                 * module.
+                 */
+                return new Double(INVALID_TEXT_FIELD_INPUT_RETURN);
             }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyInput.validationError.text"));
         }
     }
 
     /**
-     * Validate the minimum file size input.
-     *
-     * @throws IllegalArgumentException If the input is empty, invalid, or out
-     *                                  of range.
+     * Formatter to handle conversion between String and Integer.
      */
-    @Messages({
-        "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text=Minimum file size input must be an integer (in megabytes) of 1 or greater."
-    })
-    private void validateMinimumFileSize() throws IllegalArgumentException {
-        try {
-            int minimumFileSize = Integer.valueOf(minimumFileSizeTextbox.getText());
-            if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
-                throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text"));
+    private final class StringIntegerFormatter extends DefaultFormatter {
+
+        @Override
+        public Object stringToValue(String string) throws ParseException {
+            try {
+                return Integer.parseInt(string);
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, String.format("The String input '%s' is not valid for Integer conversion.", string), ex);
+                /*
+                 * Return a valid number outside the acceptable value range so
+                 * it can still be run through the validator in the file ingest
+                 * module.
+                 */
+                return INVALID_TEXT_FIELD_INPUT_RETURN;
             }
-        } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(), "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeInput.validationError.text"));
         }
     }
 
@@ -116,18 +121,14 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        minimumEntropyTextbox = new javax.swing.JTextField();
-        minimumFileSizeTextbox = new javax.swing.JTextField();
         fileSizeMultiplesEnforcedCheckbox = new javax.swing.JCheckBox();
         slackFilesAllowedCheckbox = new javax.swing.JCheckBox();
         minimumEntropyLabel = new javax.swing.JLabel();
         minimumFileSizeLabel = new javax.swing.JLabel();
         mbLabel = new javax.swing.JLabel();
         detectionSettingsLabel = new javax.swing.JLabel();
-
-        minimumEntropyTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyTextbox.text")); // NOI18N
-
-        minimumFileSizeTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeTextbox.text")); // NOI18N
+        minimumFileSizeTextbox = new javax.swing.JFormattedTextField();
+        minimumEntropyTextbox = new javax.swing.JFormattedTextField();
 
         org.openide.awt.Mnemonics.setLocalizedText(fileSizeMultiplesEnforcedCheckbox, org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.fileSizeMultiplesEnforcedCheckbox.text")); // NOI18N
 
@@ -142,6 +143,17 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
         detectionSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(detectionSettingsLabel, org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.detectionSettingsLabel.text")); // NOI18N
 
+        minimumFileSizeTextbox.setFormatterFactory(minimumFileSizeTextFormatterFactory);
+        minimumFileSizeTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeTextbox.text")); // NOI18N
+        minimumFileSizeTextbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                minimumFileSizeTextboxActionPerformed(evt);
+            }
+        });
+
+        minimumEntropyTextbox.setFormatterFactory(minimumEntropyTextFormatterFactory);
+        minimumEntropyTextbox.setText(org.openide.util.NbBundle.getMessage(EncryptionDetectionIngestJobSettingsPanel.class, "EncryptionDetectionIngestJobSettingsPanel.minimumEntropyTextbox.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -151,20 +163,18 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(slackFilesAllowedCheckbox)
                     .addComponent(detectionSettingsLabel)
+                    .addComponent(fileSizeMultiplesEnforcedCheckbox)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(minimumFileSizeLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(minimumEntropyLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(minimumFileSizeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(mbLabel))
-                    .addComponent(fileSizeMultiplesEnforcedCheckbox))
-                .addContainerGap(15, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(minimumEntropyLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(33, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -173,29 +183,33 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
                 .addComponent(detectionSettingsLabel)
                 .addGap(16, 16, 16)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(minimumEntropyLabel))
+                    .addComponent(minimumEntropyLabel)
+                    .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(mbLabel)
-                    .addComponent(minimumFileSizeLabel))
+                    .addComponent(minimumFileSizeLabel)
+                    .addComponent(minimumFileSizeTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(fileSizeMultiplesEnforcedCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(slackFilesAllowedCheckbox)
-                .addContainerGap(160, Short.MAX_VALUE))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void minimumFileSizeTextboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minimumFileSizeTextboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_minimumFileSizeTextboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel detectionSettingsLabel;
     private javax.swing.JCheckBox fileSizeMultiplesEnforcedCheckbox;
     private javax.swing.JLabel mbLabel;
     private javax.swing.JLabel minimumEntropyLabel;
-    private javax.swing.JTextField minimumEntropyTextbox;
+    private javax.swing.JFormattedTextField minimumEntropyTextbox;
     private javax.swing.JLabel minimumFileSizeLabel;
-    private javax.swing.JTextField minimumFileSizeTextbox;
+    private javax.swing.JFormattedTextField minimumFileSizeTextbox;
     private javax.swing.JCheckBox slackFilesAllowedCheckbox;
     // End of variables declaration//GEN-END:variables
 }

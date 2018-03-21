@@ -75,8 +75,7 @@ final public class FileSystemDetailsAction extends AbstractAction {
             fsPanel.setOKButtonActionListener(this);
             setContentPane(fsPanel);
             pack();
-            Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-            setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+            setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
             setVisible(true);
         }
 

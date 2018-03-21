@@ -7,6 +7,24 @@
             <suite-component/>
             <module-dependencies>
                 <dependency>
+                    <code-name-base>org.jdesktop.beansbinding</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.27.1.121</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.jdesktop.layout</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.33.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.netbeans.api.progress</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -286,7 +304,6 @@
                     </test-dependency>
                 </test-type>
             </test-dependencies>
-			
             <public-packages>
                 <package>net.sf.sevenzipjbinding</package>
                 <package>net.sf.sevenzipjbinding.impl</package>
@@ -340,6 +357,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/curator-framework-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-dbcp2-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jgraphx-v3.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jgraphx-v3.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-compress-1.14.jar</runtime-relative-path>
@@ -404,6 +429,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/Rejistry-1.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Rejistry-1.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/dd-plist-1.20.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/dd-plist-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>

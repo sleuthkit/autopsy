@@ -23,9 +23,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -56,6 +58,10 @@ class ContentTagNode extends DisplayableItemNode {
         this.tag = tag;
     }
 
+    @Messages({
+        "ContentTagNode.createSheet.artifactMD5.displayName=MD5 Hash",
+        "ContentTagNode.createSheet.artifactMD5.name=MD5 Hash"
+    })
     @Override
     protected Sheet createSheet() {
         Content content = tag.getContent();
@@ -106,7 +112,10 @@ class ContentTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
                 "",
                 content.getSize()));
-
+        properties.put(new NodeProperty<>(Bundle.ContentTagNode_createSheet_artifactMD5_name(),
+                Bundle.ContentTagNode_createSheet_artifactMD5_displayName(),
+                "",
+                file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
         return propertySheet;
     }
 

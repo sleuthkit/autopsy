@@ -82,9 +82,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         profileListPane = new javax.swing.JScrollPane();
         profileList = new javax.swing.JList<>();
         profileListLabel = new javax.swing.JLabel();
-        newProfileButton = new javax.swing.JButton();
-        editProfileButton = new javax.swing.JButton();
-        deleteProfileButton = new javax.swing.JButton();
         profileDescPane = new javax.swing.JScrollPane();
         profileDescArea = new javax.swing.JTextArea();
         profileDescLabel = new javax.swing.JLabel();
@@ -99,6 +96,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         jSeparator2 = new javax.swing.JSeparator();
         jScrollPane2 = new javax.swing.JScrollPane();
         infoTextArea = new javax.swing.JTextArea();
+        buttonEnclosingPanel = new javax.swing.JPanel();
+        editProfileButton = new javax.swing.JButton();
+        newProfileButton = new javax.swing.JButton();
+        deleteProfileButton = new javax.swing.JButton();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
         setPreferredSize(new java.awt.Dimension(800, 488));
@@ -107,42 +108,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         profileListPane.setViewportView(profileList);
 
         org.openide.awt.Mnemonics.setLocalizedText(profileListLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.profileListLabel.text")); // NOI18N
-
-        newProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(newProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.newProfileButton.text")); // NOI18N
-        newProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        newProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
-        newProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        newProfileButton.setPreferredSize(new java.awt.Dimension(111, 25));
-        newProfileButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newProfileButtonActionPerformed(evt);
-            }
-        });
-
-        editProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(editProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.editProfileButton.text")); // NOI18N
-        editProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        editProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
-        editProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        editProfileButton.setPreferredSize(new java.awt.Dimension(111, 25));
-        editProfileButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                editProfileButtonActionPerformed(evt);
-            }
-        });
-
-        deleteProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(deleteProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.deleteProfileButton.text")); // NOI18N
-        deleteProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        deleteProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
-        deleteProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
-        deleteProfileButton.setPreferredSize(new java.awt.Dimension(111, 25));
-        deleteProfileButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteProfileButtonActionPerformed(evt);
-            }
-        });
 
         profileDescArea.setEditable(false);
         profileDescArea.setBackground(new java.awt.Color(240, 240, 240));
@@ -157,7 +122,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         org.openide.awt.Mnemonics.setLocalizedText(filterNameLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.filterNameLabel.text")); // NOI18N
         filterNameLabel.setMinimumSize(new java.awt.Dimension(30, 14));
-        filterNameLabel.setPreferredSize(new java.awt.Dimension(30, 14));
 
         filterNameText.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         filterNameText.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
@@ -201,6 +165,66 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         infoTextArea.setWrapStyleWord(true);
         jScrollPane2.setViewportView(infoTextArea);
 
+        editProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(editProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.editProfileButton.text")); // NOI18N
+        editProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        editProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        editProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        editProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editProfileButtonActionPerformed(evt);
+            }
+        });
+
+        newProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(newProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.newProfileButton.text")); // NOI18N
+        newProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        newProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        newProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        newProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newProfileButtonActionPerformed(evt);
+            }
+        });
+
+        deleteProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.deleteProfileButton.text")); // NOI18N
+        deleteProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        deleteProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        deleteProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        deleteProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteProfileButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout buttonEnclosingPanelLayout = new javax.swing.GroupLayout(buttonEnclosingPanel);
+        buttonEnclosingPanel.setLayout(buttonEnclosingPanelLayout);
+        buttonEnclosingPanelLayout.setHorizontalGroup(
+            buttonEnclosingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(buttonEnclosingPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        buttonEnclosingPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteProfileButton, editProfileButton, newProfileButton});
+
+        buttonEnclosingPanelLayout.setVerticalGroup(
+            buttonEnclosingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(buttonEnclosingPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(buttonEnclosingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -208,20 +232,17 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(profileListLabel))
-                        .addGap(6, 6, 6))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(profileListPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(profileListLabel))
+                            .addGap(6, 6, 6))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                            .addComponent(profileListPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(buttonEnclosingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -238,7 +259,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(layout.createSequentialGroup()
                                                 .addComponent(ingestWarningLabel)
-                                                .addGap(0, 69, Short.MAX_VALUE))
+                                                .addGap(0, 0, Short.MAX_VALUE))
                                             .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING)
                                             .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING)))
                                     .addGroup(layout.createSequentialGroup()
@@ -257,9 +278,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                         .addContainerGap())))
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteProfileButton, editProfileButton, newProfileButton});
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jScrollPane2, profileListPane});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonEnclosingPanel, jScrollPane2, profileListPane});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -281,21 +300,21 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(selectedModulesLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
+                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 173, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(profileListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
-                                .addGap(0, 0, 0)))
-                        .addGap(6, 6, 6)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ingestWarningLabel))
-                        .addGap(6, 6, 6))
+                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 332, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(11, 11, 11)
+                                .addComponent(ingestWarningLabel))
+                            .addGroup(layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(buttonEnclosingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap())
                     .addComponent(jSeparator2)))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -473,6 +492,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel buttonEnclosingPanel;
     private javax.swing.JButton deleteProfileButton;
     private javax.swing.JButton editProfileButton;
     private javax.swing.JTextArea filterDescArea;

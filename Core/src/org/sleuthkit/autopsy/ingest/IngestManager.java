@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,9 @@ import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -107,7 +109,7 @@ import org.sleuthkit.datamodel.Content;
 @ThreadSafe
 public class IngestManager {
 
-    private final static Logger LOGGER = Logger.getLogger(IngestManager.class.getName());
+    private final static Logger logger = Logger.getLogger(IngestManager.class.getName());
     private final static String INGEST_JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
     private final static Set<String> INGEST_JOB_EVENT_NAMES = Stream.of(IngestJobEvent.values()).map(IngestJobEvent::toString).collect(Collectors.toSet());
     private final static String INGEST_MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events"; //NON-NLS
@@ -119,7 +121,7 @@ public class IngestManager {
     private final AtomicLong nextIngestManagerTaskId = new AtomicLong(0L);
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS;
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
-    private final Map<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
+    private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
     private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
@@ -189,20 +191,20 @@ public class IngestManager {
                  * only necessary for multi-user cases.
                  */
                 try {
-                    if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                    if (Case.getOpenCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                         return;
                     }
-                } catch (IllegalStateException noCaseOpenException) {
+                } catch (NoCurrentCaseException noCaseOpenException) {
                     return;
                 }
 
                 String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
-                LOGGER.log(Level.SEVERE, "Service {0} is down, cancelling all running ingest jobs", serviceDisplayName); //NON-NLS
+                logger.log(Level.SEVERE, "Service {0} is down, cancelling all running ingest jobs", serviceDisplayName); //NON-NLS
                 if (isIngestRunning() && RuntimeProperties.runningWithGUI()) {
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            JOptionPane.showMessageDialog(null,
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                     NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
                                     NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
                                     JOptionPane.ERROR_MESSAGE);
@@ -250,14 +252,14 @@ public class IngestManager {
         caseIsOpen = true;
         clearIngestMessageBox();
         try {
-            Case openedCase = Case.getCurrentCase();
+            Case openedCase = Case.getOpenCase();
             String channelPrefix = openedCase.getName();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 jobEventPublisher.openRemoteEventChannel(String.format(INGEST_JOB_EVENT_CHANNEL_NAME, channelPrefix));
                 moduleEventPublisher.openRemoteEventChannel(String.format(INGEST_MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
-        } catch (IllegalStateException | AutopsyEventException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
+        } catch (NoCurrentCaseException | AutopsyEventException ex) {
+            logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.ErrMsg"));
         }
@@ -296,12 +298,31 @@ public class IngestManager {
     /**
      * Queues an ingest job for for one or more data sources.
      *
-     * @param dataSources The data sources to process.
+     * @param dataSources The data sources to analyze.
      * @param settings    The settings for the ingest job.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            if (job.hasIngestPipeline()) {
+                long taskId = nextIngestManagerTaskId.incrementAndGet();
+                Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
+                startIngestJobFutures.put(taskId, task);
+            }
+        }
+    }
+
+    /**
+     * Queues an ingest job for for a data source. Either all of the files in
+     * the data source or a given subset of the files will be analyzed.
+     *
+     * @param dataSource The data source to analyze.
+     * @param files      A subset of the files for the data source.
+     * @param settings   The settings for the ingest job.
+     */
+    public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        if (caseIsOpen) {
+            IngestJob job = new IngestJob(dataSource, files, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -346,61 +367,69 @@ public class IngestManager {
     })
     private IngestJobStartResult startIngestJob(IngestJob job) {
         List<IngestModuleError> errors = null;
-        if (caseIsOpen) {
-            if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-                try {
-                    if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
-                        if (RuntimeProperties.runningWithGUI()) {
-                            EventQueue.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    String serviceDisplayName = ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName();
-                                    JOptionPane.showMessageDialog(null,
-                                            NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
-                                            NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
-                                            JOptionPane.ERROR_MESSAGE);
-                                }
-                            });
-                        }
-                        return new IngestJobStartResult(null, new IngestManagerException("Ingest aborted. Remote database is down"), Collections.<IngestModuleError>emptyList()); //NON-NLS
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return new IngestJobStartResult(null, new IngestManagerException("Exception while getting open case.", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
+        }
+        if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            try {
+                if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
+                    if (RuntimeProperties.runningWithGUI()) {
+                        EventQueue.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                String serviceDisplayName = ServicesMonitor.Service.REMOTE_CASE_DATABASE.getDisplayName();
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                        NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                        JOptionPane.ERROR_MESSAGE);
+                            }
+                        });
                     }
-                } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    return new IngestJobStartResult(null, new IngestManagerException("Database server is down", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
+                    return new IngestJobStartResult(null, new IngestManagerException("Ingest aborted. Remote database is down"), Collections.<IngestModuleError>emptyList()); //NON-NLS
                 }
+            } catch (ServicesMonitor.ServicesMonitorException ex) {
+                return new IngestJobStartResult(null, new IngestManagerException("Database server is down", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
             }
+        }
 
-            if (!ingestMonitor.isRunning()) {
-                ingestMonitor.start();
-            }
+        if (!ingestMonitor.isRunning()) {
+            ingestMonitor.start();
+        }
 
+        synchronized (ingestJobsById) {
             ingestJobsById.put(job.getId(), job);
-            errors = job.start();
-            if (errors.isEmpty()) {
-                this.fireIngestJobStarted(job.getId());
-                IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
-            } else {
+        }
+        errors = job.start();
+        if (errors.isEmpty()) {
+            this.fireIngestJobStarted(job.getId());
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
+        } else {
+            synchronized (ingestJobsById) {
                 this.ingestJobsById.remove(job.getId());
-                for (IngestModuleError error : errors) {
-                    LOGGER.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
-                }
-                IngestManager.LOGGER.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
-                if (RuntimeProperties.runningWithGUI()) {
-                    final StringBuilder message = new StringBuilder(1024);
-                    message.append(Bundle.IngestManager_startupErr_dlgMsg()).append("\n"); //NON-NLS
-                    message.append(Bundle.IngestManager_startupErr_dlgSolution()).append("\n\n"); //NON-NLS
-                    message.append(Bundle.IngestManager_startupErr_dlgErrorList()).append("\n"); //NON-NLS
-                    for (IngestModuleError error : errors) {
-                        String moduleName = error.getModuleDisplayName();
-                        String errorMessage = error.getThrowable().getLocalizedMessage();
-                        message.append(moduleName).append(": ").append(errorMessage).append("\n"); //NON-NLS
-                    }
-                    message.append("\n\n");
-                    EventQueue.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(null, message, Bundle.IngestManager_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
-                    });
-                }
-                return new IngestJobStartResult(null, new IngestManagerException("Errors occurred while starting ingest"), errors); //NON-NLS
             }
+            for (IngestModuleError error : errors) {
+                logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
+            }
+            IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
+            if (RuntimeProperties.runningWithGUI()) {
+                final StringBuilder message = new StringBuilder(1024);
+                message.append(Bundle.IngestManager_startupErr_dlgMsg()).append("\n"); //NON-NLS
+                message.append(Bundle.IngestManager_startupErr_dlgSolution()).append("\n\n"); //NON-NLS
+                message.append(Bundle.IngestManager_startupErr_dlgErrorList()).append("\n"); //NON-NLS
+                for (IngestModuleError error : errors) {
+                    String moduleName = error.getModuleDisplayName();
+                    String errorMessage = error.getThrowable().getLocalizedMessage();
+                    message.append(moduleName).append(": ").append(errorMessage).append("\n"); //NON-NLS
+                }
+                message.append("\n\n");
+                EventQueue.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), message, Bundle.IngestManager_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
+                });
+            }
+            return new IngestJobStartResult(null, new IngestManagerException("Errors occurred while starting ingest"), errors); //NON-NLS
         }
 
         return new IngestJobStartResult(job, null, errors);
@@ -413,12 +442,14 @@ public class IngestManager {
      */
     void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
-        ingestJobsById.remove(jobId);
+        synchronized (ingestJobsById) {
+            ingestJobsById.remove(jobId);
+        }
         if (!job.isCancelled()) {
-            IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
             fireIngestJobCompleted(jobId);
         } else {
-            IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
             fireIngestJobCancelled(jobId);
         }
     }
@@ -430,7 +461,9 @@ public class IngestManager {
      * @return True or false.
      */
     public boolean isIngestRunning() {
-        return !ingestJobsById.isEmpty();
+        synchronized (ingestJobsById) {
+            return !ingestJobsById.isEmpty();
+        }
     }
 
     /**
@@ -442,9 +475,11 @@ public class IngestManager {
         startIngestJobFutures.values().forEach((handle) -> {
             handle.cancel(true);
         });
-        this.ingestJobsById.values().forEach((job) -> {
-            job.cancel(reason);
-        });
+        synchronized (ingestJobsById) {
+            this.ingestJobsById.values().forEach((job) -> {
+                job.cancel(reason);
+            });
+        }
     }
 
     /**
@@ -745,9 +780,11 @@ public class IngestManager {
      */
     List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
-        ingestJobsById.values().forEach((job) -> {
-            snapShots.addAll(job.getDataSourceIngestJobSnapshots());
-        });
+        synchronized (ingestJobsById) {
+            ingestJobsById.values().forEach((job) -> {
+                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+            });
+        }
         return snapShots;
     }
 
@@ -783,7 +820,9 @@ public class IngestManager {
         public Void call() {
             try {
                 if (Thread.currentThread().isInterrupted()) {
-                    ingestJobsById.remove(job.getId());
+                    synchronized (ingestJobsById) {
+                        ingestJobsById.remove(job.getId());
+                    }
                     return null;
                 }
 

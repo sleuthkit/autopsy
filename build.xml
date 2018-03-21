@@ -6,7 +6,7 @@
     <description>Builds the module suite Autopsy 4.</description>
 	
     <import file="nbproject/build-impl.xml"/>
-    
+    <import file="${basedir}/TSKVersion.xml"/>
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
     <property name="netbeans-plat-version" value="8.2" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
@@ -32,7 +32,7 @@
     </condition>  
     <condition property="os.family" value="windows">  
         <os family="windows"/>  
-    </condition> 
+    </condition>  
     
     <condition property="os.family" value="mac">  
         <os family="mac"/>  
@@ -79,6 +79,10 @@
         <delete dir="${zip-tmp}"/>
         <mkdir dir="${zip-tmp}"/>
         <unzip src="${nbdist.dir}/${app.name}.zip" dest="${zip-tmp}"/>
+        
+        <!-- Disable the Experimental module by default for the installed version.  Need to update .lastModified time for change to be seen. -->
+        <replace file="${zip-tmp}/autopsy/autopsy/config/Modules/org-sleuthkit-autopsy-experimental.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
+        <echo file="${zip-tmp}/autopsy/autopsy/.lastModified" message="" />
 
         <!-- step (3) do your copying stuff here, check the ant doc for copy, move, etc file -->
         <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
@@ -87,6 +91,13 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
+        <if>
+            <equals arg1="${os.family}" arg2="unix"/>
+            <then>
+                <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
+                <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
+            </then>
+        </if>
         <if>
             <equals arg1="${os.family}" arg2="windows"/>
             <then>
@@ -286,10 +297,6 @@
     <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
-	    
-        <!-- Disable the Experimental module by default for the installed version.  Need to update .lastModified time for change to be seen. -->
-        <replace file="${nbdist.dir}/${app.name}-installer/autopsy/config/modules/org-sleuthkit-autopsy-experimental.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
-        <echo file="${nbdist.dir}/${app.name}-installer/autopsy/.lastModified" message="" />
         
         <antcall target="build-installer-${os.family}" />
     </target>

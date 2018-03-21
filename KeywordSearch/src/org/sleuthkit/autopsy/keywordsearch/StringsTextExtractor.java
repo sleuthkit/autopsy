@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,14 +29,14 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Extracts raw strings from AbstractFile content.
+ * Extracts raw strings from content.
  */
-class StringsTextExtractor extends FileTextExtractor {
+class StringsTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
 
@@ -108,20 +108,20 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public InputStreamReader getReader(AbstractFile sourceFile) throws TextExtractorException {
-        InputStream stringStream = getInputStream(sourceFile);
+    public InputStreamReader getReader(Content content) throws TextExtractorException {
+        InputStream stringStream = getInputStream(content);
         return new InputStreamReader(stringStream, Server.DEFAULT_INDEXED_TEXT_CHARSET);
     }
 
-    InputStream getInputStream(AbstractFile sourceFile) {
+    InputStream getInputStream(Content content) {
         //check which extract stream to use
         if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)) {
-            return new EnglishOnlyStream(sourceFile);//optimal for english, english only
+            return new EnglishOnlyStream(content);//optimal for english, english only
         } else {
             boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
             boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
 
-            return new InternationalStream(sourceFile, extractScripts, extractUTF8, extractUTF16);
+            return new InternationalStream(content, extractScripts, extractUTF8, extractUTF16);
         }
     }
 
@@ -131,13 +131,13 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public boolean isSupported(AbstractFile file, String detectedFormat) {
+    public boolean isSupported(Content content, String detectedFormat) {
         // strings can be run on anything. 
         return true;
     }
 
     /**
-     * AbstractFile input string stream reader/converter - given AbstractFile,
+     * Content input string stream reader/converter - given Content,
      * extract strings from it and return encoded bytes via read()
      *
      * Note: the utility supports extraction of only LATIN script and UTF8,
@@ -156,7 +156,7 @@ class StringsTextExtractor extends FileTextExtractor {
         private static final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
 
         //args
-        private final AbstractFile content;
+        private final Content content;
 
         //internal working data
         private long contentOffset = 0; //offset in fscontent read into curReadBuf
@@ -174,12 +174,12 @@ class StringsTextExtractor extends FileTextExtractor {
         private final byte[] oneCharBuf = new byte[1];
 
         /**
-         * Construct new string stream from FsContent. Do not attempt to fill
+         * Construct new string stream from Content. Do not attempt to fill
          * entire read buffer if that would break a string
          *
          * @param content Content object from which to extract strings.
          */
-        private EnglishOnlyStream(AbstractFile content) {
+        private EnglishOnlyStream(Content content) {
             this.content = content;
         }
 
@@ -372,7 +372,7 @@ class StringsTextExtractor extends FileTextExtractor {
 
         private static final Logger logger = Logger.getLogger(InternationalStream.class.getName());
         private static final int FILE_BUF_SIZE = 1024 * 1024;
-        private final AbstractFile content;
+        private final Content content;
         private final byte[] oneCharBuf = new byte[1];
         private final StringExtract stringExtractor;
         /**
@@ -400,7 +400,7 @@ class StringsTextExtractor extends FileTextExtractor {
          * @param extractUTF8  whether to extract utf8 encoding
          * @param extractUTF16 whether to extract utf16 encoding
          */
-        private InternationalStream(AbstractFile content, List<SCRIPT> scripts, boolean extractUTF8, boolean extractUTF16) {
+        private InternationalStream(Content content, List<SCRIPT> scripts, boolean extractUTF8, boolean extractUTF16) {
             this.content = content;
             this.stringExtractor = new StringExtract();
             this.stringExtractor.setEnabledScripts(scripts);

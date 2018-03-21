@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -73,6 +74,7 @@ import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
+import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -97,6 +99,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
+import org.sleuthkit.autopsy.keywordsearch.Server;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -132,6 +136,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
+    private static final int DEFAULT_PRIORITY = 0;
     private static final java.util.logging.Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
     private static AutoIngestManager instance;
     private final AutopsyEventPublisher eventPublisher;
@@ -223,10 +228,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         rootInputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeImageFolder());
         rootOutputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder());
-        inputScanSchedulingExecutor.scheduleAtFixedRate(new InputDirScanSchedulingTask(), 0, AutoIngestUserPreferences.getMinutesOfInputScanInterval(), TimeUnit.MINUTES);
+        inputScanSchedulingExecutor.scheduleWithFixedDelay(new InputDirScanSchedulingTask(), 0, AutoIngestUserPreferences.getMinutesOfInputScanInterval(), TimeUnit.MINUTES);
         jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
-        jobStatusPublishingExecutor.scheduleAtFixedRate(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        jobStatusPublishingExecutor.scheduleWithFixedDelay(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         state = State.RUNNING;
         errorState = ErrorState.NONE;
@@ -530,7 +535,49 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Removes the priority (set to zero) of all pending ingest jobs for a
+     * specified case.
+     *
+     * @param caseName The name of the case to be deprioritized.
+     *
+     * @throws AutoIngestManagerException If there is an error removing the
+     *                                    priority of the jobs for the case.
      */
+    void deprioritizeCase(final String caseName) throws AutoIngestManagerException {
+        if (state != State.RUNNING) {
+            return;
+        }
+
+        List<AutoIngestJob> jobsToDeprioritize = new ArrayList<>();
+        synchronized (jobsLock) {
+            for (AutoIngestJob job : pendingJobs) {
+                if (job.getManifest().getCaseName().equals(caseName)) {
+                    jobsToDeprioritize.add(job);
+                }
+            }
+            if (!jobsToDeprioritize.isEmpty()) {
+                for (AutoIngestJob job : jobsToDeprioritize) {
+                    int oldPriority = job.getPriority();
+                    job.setPriority(DEFAULT_PRIORITY);
+                    try {
+                        this.updateCoordinationServiceManifestNode(job);
+                    } catch (CoordinationServiceException | InterruptedException ex) {
+                        job.setPriority(oldPriority);
+                        throw new AutoIngestManagerException("Error updating case priority", ex);
+                    }
+                }
+            }
+
+            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+        }
+
+        if (!jobsToDeprioritize.isEmpty()) {
+            new Thread(() -> {
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+            }).start();
+        }
+    }
+
     /**
      * Bumps the priority of all pending ingest jobs for a specified case.
      *
@@ -545,7 +592,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             return;
         }
 
-        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
         int maxPriority = 0;
         synchronized (jobsLock) {
             for (AutoIngestJob job : pendingJobs) {
@@ -553,12 +600,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     maxPriority = job.getPriority();
                 }
                 if (job.getManifest().getCaseName().equals(caseName)) {
-                    prioritizedJobs.add(job);
+                    jobsToPrioritize.add(job);
                 }
             }
-            if (!prioritizedJobs.isEmpty()) {
+            if (!jobsToPrioritize.isEmpty()) {
                 ++maxPriority;
-                for (AutoIngestJob job : prioritizedJobs) {
+                for (AutoIngestJob job : jobsToPrioritize) {
                     int oldPriority = job.getPriority();
                     job.setPriority(maxPriority);
                     try {
@@ -573,7 +620,58 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
         }
 
-        if (!prioritizedJobs.isEmpty()) {
+        if (!jobsToPrioritize.isEmpty()) {
+            new Thread(() -> {
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+            }).start();
+        }
+    }
+
+    /**
+     * Removes the priority (set to zero) of an auto ingest job.
+     *
+     * @param manifestPath The manifest file path for the job to be
+     *                     deprioritized.
+     *
+     * @throws AutoIngestManagerException If there is an error removing the
+     *                                    priority of the job.
+     */
+    void deprioritizeJob(Path manifestPath) throws AutoIngestManagerException {
+        if (state != State.RUNNING) {
+            return;
+        }
+
+        AutoIngestJob jobToDeprioritize = null;
+        synchronized (jobsLock) {
+            /*
+             * Find the job in the pending jobs list.
+             */
+            for (AutoIngestJob job : pendingJobs) {
+                if (job.getManifest().getFilePath().equals(manifestPath)) {
+                    jobToDeprioritize = job;
+                }
+            }
+
+            /*
+             * Remove the priority and update the coordination service manifest
+             * node data for the job.
+             */
+            if (null != jobToDeprioritize) {
+                int oldPriority = jobToDeprioritize.getPriority();
+                jobToDeprioritize.setPriority(DEFAULT_PRIORITY);
+                try {
+                    this.updateCoordinationServiceManifestNode(jobToDeprioritize);
+                } catch (CoordinationServiceException | InterruptedException ex) {
+                    jobToDeprioritize.setPriority(oldPriority);
+                    throw new AutoIngestManagerException("Error updating job priority", ex);
+                }
+            }
+
+            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+        }
+
+        if (null != jobToDeprioritize) {
+            final String caseName = jobToDeprioritize.getManifest().getCaseName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
@@ -594,7 +692,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
         int maxPriority = 0;
-        AutoIngestJob prioritizedJob = null;
+        AutoIngestJob jobToPrioritize = null;
         synchronized (jobsLock) {
             /*
              * Find the job in the pending jobs list and record the highest
@@ -605,7 +703,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     maxPriority = job.getPriority();
                 }
                 if (job.getManifest().getFilePath().equals(manifestPath)) {
-                    prioritizedJob = job;
+                    jobToPrioritize = job;
                 }
             }
 
@@ -613,14 +711,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
              * Bump the priority by one and update the coordination service
              * manifest node data for the job.
              */
-            if (null != prioritizedJob) {
+            if (null != jobToPrioritize) {
                 ++maxPriority;
-                int oldPriority = prioritizedJob.getPriority();
-                prioritizedJob.setPriority(maxPriority);
+                int oldPriority = jobToPrioritize.getPriority();
+                jobToPrioritize.setPriority(maxPriority);
                 try {
-                    this.updateCoordinationServiceManifestNode(prioritizedJob);
+                    this.updateCoordinationServiceManifestNode(jobToPrioritize);
                 } catch (CoordinationServiceException | InterruptedException ex) {
-                    prioritizedJob.setPriority(oldPriority);
+                    jobToPrioritize.setPriority(oldPriority);
                     throw new AutoIngestManagerException("Error updating job priority", ex);
                 }
             }
@@ -628,8 +726,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
         }
 
-        if (null != prioritizedJob) {
-            final String caseName = prioritizedJob.getManifest().getCaseName();
+        if (null != jobToPrioritize) {
+            final String caseName = jobToPrioritize.getManifest().getCaseName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
@@ -2156,6 +2254,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
+                            
+                            // Create the case directory now in case it is needed by selectSolrServerForCase
+                            Case.createCaseDirectory(caseDirectoryPath.toString(), CaseType.MULTI_USER_CASE);
+                            
+                            // If a list of servers exists, choose one to use for this case
+                            Server.selectSolrServerForCase(rootOutputDirectory, caseDirectoryPath);
+                            
                             CaseDetails caseDetails = new CaseDetails(caseName);
                             Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
                             /*
@@ -2166,16 +2271,18 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
                         }
                         currentJob.setCaseDirectoryPath(caseDirectoryPath);
-                        Case caseForJob = Case.getCurrentCase();
+                        Case caseForJob = Case.getOpenCase();
                         SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
                         return caseForJob;
 
+                    } catch (KeywordSearchModuleException ex) {
+                        throw new CaseManagementException(String.format("Error creating solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
-                    } catch (IllegalStateException ex) {
+                    } catch (NoCurrentCaseException ex) {
                         /*
                          * Deal with the unfortunate fact that
-                         * Case.getCurrentCase throws IllegalStateException.
+                         * Case.getOpenCase throws NoCurrentCaseException.
                          */
                         throw new CaseManagementException(String.format("Error getting current case %s for %s", caseName, manifest.getFilePath()), ex);
                     }
@@ -2380,29 +2487,32 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
                         SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                        try {
-                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                            ingestLock.wait();
-                            return;
-                        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                            // Log that the current DSP failed and set the error flag. We consider it an error
-                            // if a DSP fails even if a later one succeeds since we expected to be able to process
-                            // the data source which each DSP on the list.
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                            currentJob.setErrorsOccurred(true);
+                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        ingestLock.wait();
+                       
+                        // at this point we got the content object(s) from the current DSP.
+                        // check whether the data source was processed successfully
+                        if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                || dataSource.getContent().isEmpty()) {
+                            // move onto the the next DSP that can process this data source
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
-                            SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                            logDataSourceProcessorResult(dataSource);
+                            continue;
                         }
+                        
+                        logDataSourceProcessorResult(dataSource);
+                        return;
                     }
                     // If we get to this point, none of the processors were successful
                     SYS_LOGGER.log(Level.SEVERE, "All data source processors failed to process {0}", dataSource.getPath());
                     jobLogger.logFailedToAddDataSource();
+                    setCaseNodeDataErrorsOccurred(caseDirectoryPath);
+                    currentJob.setErrorsOccurred(true);
                     // Throw an exception. It will get caught & handled upstream and will result in AIM auto-pause.
                     throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Failed to process " + dataSource.getPath() + " with all data source processors");
                 }
             } finally {
                 currentJob.setDataSourceProcessor(null);
-                logDataSourceProcessorResult(dataSource);
             }
         }
 
@@ -2431,8 +2541,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     case NO_ERRORS:
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
-                            currentJob.setErrorsOccurred(true);
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
@@ -2443,8 +2551,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
-                            currentJob.setErrorsOccurred(true);
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
@@ -2453,8 +2559,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
                             SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                         }
-                        currentJob.setErrorsOccurred(true);
-                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                         jobLogger.logFailedToAddDataSource();
                         break;
                 }
@@ -2467,8 +2571,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  * cancelCurrentJob.
                  */
                 SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
-                currentJob.setErrorsOccurred(true);
-                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logDataSourceProcessorCancelled();
             }
         }

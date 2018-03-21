@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskData;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  *
@@ -2343,9 +2344,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Test creating a case from an Autopsy case
             // The case may already be in the database - the result is the same either way
             try {
-                caseB = EamDb.getInstance().newCase(Case.getCurrentCase());
+                caseB = EamDb.getInstance().newCase(Case.getOpenCase());
                 assertTrue("Failed to create correlation case from Autopsy case", caseB != null);
-            } catch (EamDbException ex) {
+            } catch (EamDbException | NoCurrentCaseException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex);
                 return;
@@ -2412,9 +2413,9 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // Test getting a case from an Autopsy case
             try {
-                CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getOpenCase());
                 assertTrue("getCase returned null for current Autopsy case", tempCase != null);
-            } catch (EamDbException ex) {
+            } catch (EamDbException | NoCurrentCaseException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex);
             }

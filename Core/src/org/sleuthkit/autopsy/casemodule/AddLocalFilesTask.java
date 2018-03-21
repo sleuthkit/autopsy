@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,10 +87,10 @@ class AddLocalFilesTask implements Runnable {
         List<String> errors = new ArrayList<>();
         try {
             progress.setIndeterminate(true);
-            FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", localFilePaths, new ProgressUpdater());
             newDataSources.add(newDataSource);
-        } catch (TskDataException | TskCoreException ex) {
+        } catch (TskDataException | TskCoreException | NoCurrentCaseException ex) {
             errors.add(ex.getMessage());
             LOGGER.log(Level.SEVERE, String.format("Failed to add datasource: %s", ex.getMessage()), ex);
         } finally {

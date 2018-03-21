@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import javax.swing.JMenuItem;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -142,7 +143,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setIconTextGap(2);
-        viewArtifactButton.setPreferredSize(new java.awt.Dimension(93, 23));
         viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewArtifactButtonActionPerformed(evt);
@@ -154,7 +154,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
         viewContentButton.setIconTextGap(2);
-        viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
         viewContentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewContentButtonActionPerformed(evt);
@@ -249,8 +248,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 long objId = artifact.getObjectID();
                 AbstractFile file = null;
                 try {
-                    file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(objId);
-                } catch (TskException ex) {
+                    file = Case.getOpenCase().getSleuthkitCase().getAbstractFileById(objId);
+                } catch (TskException | NoCurrentCaseException ex) {
 
                 }
                 if (file == null) {

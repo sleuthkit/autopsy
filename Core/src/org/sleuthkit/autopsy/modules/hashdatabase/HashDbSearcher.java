@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,9 +22,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -34,7 +37,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * the same content.
  */
 class HashDbSearcher {
-
+    private static final Logger logger = Logger.getLogger(HashDbSearcher.class.getName());
     /**
      * Given a string hash value, find all files with that hash.
      *
@@ -42,8 +45,8 @@ class HashDbSearcher {
      *
      * @return a List of all FsContent with the given hash
      */
-    static List<AbstractFile> findFilesByMd5(String md5Hash) {
-        final Case currentCase = Case.getCurrentCase();
+    static List<AbstractFile> findFilesByMd5(String md5Hash) throws NoCurrentCaseException {
+        final Case currentCase = Case.getOpenCase();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.findFilesByMd5(md5Hash);
     }
@@ -56,7 +59,7 @@ class HashDbSearcher {
      *
      * @return a Map of md5 hashes mapped to the list of files hit
      */
-    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash) {
+    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash) throws NoCurrentCaseException {
         Map<String, List<AbstractFile>> map = new LinkedHashMap<String, List<AbstractFile>>();
         for (String md5 : md5Hash) {
             List<AbstractFile> files = findFilesByMd5(md5);
@@ -69,7 +72,7 @@ class HashDbSearcher {
 
     // Same as above, but with a given ProgressHandle to accumulate and StringWorker to check if cancelled
 
-    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker<Object, Void> worker) {
+    static Map<String, List<AbstractFile>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker<Object, Void> worker) throws NoCurrentCaseException {
         Map<String, List<AbstractFile>> map = new LinkedHashMap<String, List<AbstractFile>>();
         if (!worker.isCancelled()) {
             progress.switchToDeterminate(md5Hash.size());
@@ -101,9 +104,14 @@ class HashDbSearcher {
      */
     static List<AbstractFile> findFiles(FsContent file) {
         String md5;
-        if ((md5 = file.getMd5Hash()) != null) {
-            return findFilesByMd5(md5);
-        } else {
+        try {
+            if ((md5 = file.getMd5Hash()) != null) {
+                return findFilesByMd5(md5);
+            } else {
+                return Collections.<AbstractFile>emptyList();
+            }
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return Collections.<AbstractFile>emptyList();
         }
     }
@@ -114,8 +122,8 @@ class HashDbSearcher {
      *
      * @return true if the search feature is ready.
      */
-    static boolean allFilesMd5Hashed() {
-        final Case currentCase = Case.getCurrentCase();
+    static boolean allFilesMd5Hashed() throws NoCurrentCaseException {
+        final Case currentCase = Case.getOpenCase();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.allFilesMd5Hashed();
     }
@@ -125,8 +133,8 @@ class HashDbSearcher {
      *
      * @return the number of files with an MD5
      */
-    static int countFilesMd5Hashed() {
-        final Case currentCase = Case.getCurrentCase();
+    static int countFilesMd5Hashed() throws NoCurrentCaseException {
+        final Case currentCase = Case.getOpenCase();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.countFilesMd5Hashed();
     }

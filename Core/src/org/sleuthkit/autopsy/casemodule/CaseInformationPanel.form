@@ -38,9 +38,9 @@
               <Component id="tabbedPane" pref="709" max="32767" attributes="0"/>
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="editDetailsButton" linkSize="3" min="-2" pref="88" max="-2" attributes="0"/>
+                  <Component id="editDetailsButton" min="-2" pref="128" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
-                  <Component id="closeButton" linkSize="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="closeButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>

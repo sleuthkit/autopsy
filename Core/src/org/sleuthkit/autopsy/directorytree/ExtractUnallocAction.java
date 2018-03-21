@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -68,14 +69,20 @@ final class ExtractUnallocAction extends AbstractAction {
     private long currentImage = 0L;
     private final boolean isImage;
 
-    public ExtractUnallocAction(String title, Volume volume) {
+    public ExtractUnallocAction(String title, Volume volume){
         super(title);
         isImage = false;
-        OutputFileData outputFileData = new OutputFileData(volume);
-        filesToExtract.add(outputFileData);
+        try {
+            OutputFileData outputFileData = new OutputFileData(volume);
+            filesToExtract.add(outputFileData);
+        } catch (NoCurrentCaseException ex) { 
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            setEnabled(false);
+        }
+        
     }
 
-    public ExtractUnallocAction(String title, Image image) {
+    public ExtractUnallocAction(String title, Image image) throws NoCurrentCaseException {
         super(title);
         isImage = true;
         currentImage = image.getId();
@@ -100,7 +107,8 @@ final class ExtractUnallocAction extends AbstractAction {
             "ExtractUnallocAction.volumeInProgress=Already extracting unallocated space into {0} - will skip this volume",
             "ExtractUnallocAction.volumeError=Error extracting unallocated space from volume",
             "ExtractUnallocAction.noFiles=No unallocated files found on volume",
-            "ExtractUnallocAction.imageError=Error extracting unallocated space from image"})
+            "ExtractUnallocAction.imageError=Error extracting unallocated space from image",
+            "ExtractUnallocAction.noOpenCase.errMsg=No open case available."})
     @Override
     public void actionPerformed(ActionEvent e) {
         if (filesToExtract != null && filesToExtract.size() > 0) {
@@ -109,6 +117,13 @@ final class ExtractUnallocAction extends AbstractAction {
             if (isImage && isImageInProgress(currentImage)) {
                 MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.notifyMsg.unallocAlreadyBeingExtr.msg"));
                 //JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already being extracted on this Image. Please select a different Image.");
+                return;
+            }
+            Case openCase;
+            try {
+                openCase = Case.getOpenCase();
+            } catch (NoCurrentCaseException ex) {
+                MessageNotifyUtil.Message.info(Bundle.ExtractAction_noOpenCase_errMsg());
                 return;
             }
             List<OutputFileData> copyList = new ArrayList<OutputFileData>() {
@@ -130,7 +145,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 }
             };
 
-            fileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
+            fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
             fileChooser.setDialogTitle(
                     NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -586,15 +601,17 @@ final class ExtractUnallocAction extends AbstractAction {
          * Contingency constructor in event no VolumeSystem exists on an Image.
          *
          * @param img Image file to be analyzed
+         * 
+         * @throws NoCurrentCaseException if there is no open case.
          */
-        OutputFileData(Image img) {
+        OutputFileData(Image img) throws NoCurrentCaseException {
             this.layoutFiles = getUnallocFiles(img);
             Collections.sort(layoutFiles, new SortObjId());
             this.volumeId = 0;
             this.imageId = img.getId();
             this.imageName = img.getName();
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + 0 + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getCurrentCase().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(Case.getOpenCase().getExportDirectory() + File.separator + this.fileName);
             this.sizeInBytes = calcSizeInBytes();
         }
 
@@ -602,8 +619,10 @@ final class ExtractUnallocAction extends AbstractAction {
          * Default constructor for extracting info from Volumes.
          *
          * @param volume Volume file to be analyzed
+         * 
+         * @throws NoCurrentCaseException if there is no open case.
          */
-        OutputFileData(Volume volume) {
+        OutputFileData(Volume volume) throws NoCurrentCaseException {
             try {
                 this.imageName = volume.getDataSource().getName();
                 this.imageId = volume.getDataSource().getId();
@@ -614,7 +633,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 this.imageId = 0;
             }
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + volumeId + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getCurrentCase().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(Case.getOpenCase().getExportDirectory() + File.separator + this.fileName);
             this.layoutFiles = getUnallocFiles(volume);
             Collections.sort(layoutFiles, new SortObjId());
             this.sizeInBytes = calcSizeInBytes();

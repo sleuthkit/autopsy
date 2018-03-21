@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.communications;
 
 import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.awt.ActionID;
@@ -29,9 +31,10 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
  * Action that opens the CVT. Available through the Tools menu and the main
@@ -41,18 +44,27 @@ import org.openide.windows.WindowManager;
         id = "org.sleuthkit.autopsy.communicationsVisualization.OpenCVTAction")
 @ActionRegistration(displayName = "#CTL_OpenCVTAction", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 102)})
+    @ActionReference(path = "Menu/Tools", position = 102)
+    ,
+ @ActionReference(path = "Toolbars/Case", position = 102)})
 @Messages("CTL_OpenCVTAction=Communications")
-public final class OpenCommVisualizationToolAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class OpenCommVisualizationToolAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-
+    private final PropertyChangeListener pcl;
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/emblem-web24.png"))); //NON-NLS
 
     public OpenCommVisualizationToolAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
         setEnabled(false); //disabled by default.  Will be enabled in Case.java when a case is opened.
+        pcl = (PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                setEnabled(RuntimeProperties.runningWithGUI() && evt.getNewValue() != null);
+            }
+        };
+        Case.addPropertyChangeListener(pcl);
+
     }
 
     @Override

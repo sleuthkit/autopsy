@@ -82,6 +82,8 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 
 Day = 0
 
+# HTML file name for links of output directories
+OUTPUT_DIR_LINK_FILE="output_dir_link.html"
 
 def usage():
     print ("-f PATH single file")
@@ -106,6 +108,7 @@ def main():
     if not parse_result:
         Errors.print_error("The arguments were given wrong")
         exit(1)
+
     test_config = TestConfiguration(args)
     case_type = test_config.userCaseType.lower()
     if case_type.startswith('multi'):
@@ -874,6 +877,24 @@ class TestConfiguration(object):
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
 
         os.makedirs(self.output_dir)
+
+        #write the output_dir to a html file
+
+        linkFile = open(os.path.join(self.args.diff_files_output_folder, OUTPUT_DIR_LINK_FILE), "a")
+        index = self.output_dir.find("\\")
+        linkStr = "<a href=\"file://"
+        linkOutputDir =  self.output_dir[index+2:].replace("//", "/").replace("\\\\", "\\")
+        if index == 0:
+            linkStr = linkStr + linkOutputDir
+        else:
+            linkStr = linkStr + socket.gethostname() + "\\" + linkOutputDir
+        if self.testUserCase == "multi":
+            linkStr = linkStr + "\">Enterprise Viking Tests</a>"
+        else:
+            linkStr = linkStr + "\">Standalone Viking Tests</a>"
+        linkFile.write(linkStr + "\n")
+        linkFile.close()
+ 
         self.csv = make_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
         log_name = ''
@@ -1097,7 +1118,7 @@ class TestResultsDiffer(object):
             print("This run took " + diff + "% longer to run than the last run.")
             return False
 
-
+        
 class Reports(object):
     def generate_reports(test_data):
         """Generate the reports for a single test

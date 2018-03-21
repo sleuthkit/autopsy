@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * shows the same data that can also be found in the ResultViewer table, just a
  * different order and allows the full path to be visible in the bottom area.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 3)
+@ServiceProvider(service = DataContentViewer.class, position = 6)
 public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     /**

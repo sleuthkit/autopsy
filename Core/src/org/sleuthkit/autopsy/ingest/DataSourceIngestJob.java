@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2017 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,9 @@ import javax.swing.JOptionPane;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -55,13 +57,16 @@ final class DataSourceIngestJob {
 
     /**
      * These fields define a data source ingest job: the parent ingest job, an
-     * ID, the user's ingest job settings, and the data source to be processed.
+     * ID, the user's ingest job settings, and the data source to be analyzed.
+     * Optionally, there is a set of files to be analyzed instead of analyzing
+     * all of the files in the data source.
      */
     private final IngestJob parentJob;
     private static final AtomicLong nextJobId = new AtomicLong(0L);
     private final long id;
     private final IngestJobSettings settings;
     private final Content dataSource;
+    private final List<AbstractFile> files = new ArrayList<>();
 
     /**
      * A data source ingest job runs in stages.
@@ -160,7 +165,7 @@ final class DataSourceIngestJob {
     private String currentFileIngestModule = "";
     private String currentFileIngestTask = "";
     private final List<IngestModuleInfo> ingestModules = new ArrayList<>();
-    private IngestJobInfo ingestJob;
+    private volatile IngestJobInfo ingestJob;
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -169,7 +174,7 @@ final class DataSourceIngestJob {
 
     /**
      * Constructs an object that encapsulates a data source and the ingest
-     * module pipelines used to process it.
+     * module pipelines used to analyze it.
      *
      * @param parentJob        The ingest job of which this data source ingest
      *                         job is a part.
@@ -179,9 +184,27 @@ final class DataSourceIngestJob {
      *                         progress handles.
      */
     DataSourceIngestJob(IngestJob parentJob, Content dataSource, IngestJobSettings settings, boolean runInteractively) {
+        this(parentJob, dataSource, Collections.emptyList(), settings, runInteractively);
+    }
+
+    /**
+     * Constructs an object that encapsulates a data source and the ingest
+     * module pipelines used to analyze it. Either all of the files in the data
+     * source or a given subset of the files will be analyzed.
+     *
+     * @param parentJob        The ingest job of which this data source ingest
+     *                         job is a part.
+     * @param dataSource       The data source to be ingested.
+     * @param files            A subset of the files for the data source.
+     * @param settings         The settings for the ingest job.
+     * @param runInteractively Whether or not this job should use NetBeans
+     *                         progress handles.
+     */
+    DataSourceIngestJob(IngestJob parentJob, Content dataSource, List<AbstractFile> files, IngestJobSettings settings, boolean runInteractively) {
         this.parentJob = parentJob;
         this.id = DataSourceIngestJob.nextJobId.getAndIncrement();
         this.dataSource = dataSource;
+        this.files.addAll(files);
         this.settings = settings;
         this.doUI = runInteractively;
         this.createTime = new Date().getTime();
@@ -253,12 +276,12 @@ final class DataSourceIngestJob {
              */
             Thread.currentThread().interrupt();
         }
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
+            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
             this.addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
             this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
             this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to add ingest modules to database.", ex);
         }
     }
@@ -337,7 +360,7 @@ final class DataSourceIngestJob {
      * @return True or false.
      */
     FilesSet getFileIngestFilter() {
-        return this.settings.getFileIngestFilter();
+        return this.settings.getFileFilter();
     }
 
     /**
@@ -391,17 +414,17 @@ final class DataSourceIngestJob {
     List<IngestModuleError> start() {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
+            try {
+                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
+            }
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
                 logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
                 logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
-            }
-            try {
-                this.ingestJob = Case.getCurrentCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }
         return errors;
@@ -501,7 +524,7 @@ final class DataSourceIngestJob {
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
             logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this);
+            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
 
             /**
              * No data source ingest task has been scheduled for this stage, and
@@ -551,7 +574,7 @@ final class DataSourceIngestJob {
                         // data source ingest module or the entire ingest job.
                         DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
                         String dialogTitle = NbBundle.getMessage(DataSourceIngestJob.this.getClass(), "IngestJob.cancellationDialog.title");
-                        JOptionPane.showConfirmDialog(null, panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
+                        JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (panel.cancelAllDataSourceIngestModules()) {
                             DataSourceIngestJob.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         } else {
@@ -679,26 +702,27 @@ final class DataSourceIngestJob {
                 }
             }
         }
-        if (this.cancelled) {
-            try {
-                ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+        if (ingestJob != null) {
+            if (this.cancelled) {
+                try {
+                    ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                }
+            } else {
+                try {
+                    ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                }
             }
-        } else {
             try {
-                ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                this.ingestJob.setEndDateTime(new Date());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
             }
-        }
-        try {
-            this.ingestJob.setEndDateTime(new Date());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
         }
         this.parentJob.dataSourceJobFinished(this);
-
     }
 
     /**
@@ -804,7 +828,7 @@ final class DataSourceIngestJob {
     }
 
     /**
-     * Adds more files from the data source for this job to the job, i.e., adds
+     * Adds more files from the data source for this job to the job, e.g., adds
      * extracted or carved files. Not currently supported for the second stage
      * of the job.
      *
@@ -812,9 +836,7 @@ final class DataSourceIngestJob {
      */
     void addFiles(List<AbstractFile> files) {
         if (DataSourceIngestJob.Stages.FIRST == this.stage) {
-            for (AbstractFile file : files) {
-                DataSourceIngestJob.taskScheduler.scheduleFileIngestTask(this, file);
-            }
+            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, files);
         } else {
             DataSourceIngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }
@@ -991,7 +1013,7 @@ final class DataSourceIngestJob {
         this.cancelled = true;
         this.cancellationReason = reason;
         DataSourceIngestJob.taskScheduler.cancelPendingTasksForIngestJob(this);
-        
+
         if (this.doUI) {
             synchronized (this.dataSourceIngestProgressLock) {
                 if (null != dataSourceIngestProgress) {

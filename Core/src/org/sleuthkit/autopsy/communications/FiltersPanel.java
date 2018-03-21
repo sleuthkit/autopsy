@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,12 +30,11 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
-import org.openide.explorer.ExplorerManager;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
+import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -48,7 +47,6 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
-import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DataSource;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
@@ -56,18 +54,23 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel that holds the Filter control widgets and translates user filtering
- * changes into queries against the CommunicationsManager.
+ * Panel that holds the Filter control widgets and triggers queries against the
+ * CommunicationsManager on user filtering changes.
  */
-final public class FiltersPanel extends javax.swing.JPanel {
+final public class FiltersPanel extends JPanel {
 
-    private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(FiltersPanel.class.getName());
 
-    private ExplorerManager em;
-
+    /**
+     * Map from Account.Type to the checkbox for that account type's filter.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<Account.Type, JCheckBox> accountTypeMap = new HashMap<>();
+
+    /**
+     * Map from datasource device id to the checkbox for that datasource.
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final Map<String, JCheckBox> devicesMap = new HashMap<>();
 
@@ -75,6 +78,11 @@ final public class FiltersPanel extends javax.swing.JPanel {
      * Listens to ingest events to enable refresh button
      */
     private final PropertyChangeListener ingestListener;
+
+    /**
+     * Flag that indicates the UI is not up-sto-date with respect to the case DB
+     * and it should be refreshed (by reapplying the filters).
+     */
     private boolean needsRefresh;
 
     /**
@@ -84,8 +92,15 @@ final public class FiltersPanel extends javax.swing.JPanel {
      */
     private final ItemListener validationListener;
 
-    @NbBundle.Messages({"refreshText=Refresh Results",
-        "applyText=Apply"})
+    /**
+     * Is the device account type filter enabled or not. It should be enabled
+     * when the Table/Brows mode is active and disabled when the visualization
+     * is active. Initially false since the browse/table mode is active
+     * initially.
+     */
+    private boolean deviceAccountTypeEnabled;
+
+    @NbBundle.Messages({"refreshText=Refresh Results", "applyText=Apply"})
     public FiltersPanel() {
         initComponents();
         deviceRequiredLabel.setVisible(false);
@@ -106,8 +121,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
         updateTimeZone();
         validationListener = itemEvent -> validateFilters();
 
-        updateFilters();
-        setAllDevicesSelected(true);
+        updateFilters(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME)) {
                 updateTimeZone();
@@ -119,10 +133,10 @@ final public class FiltersPanel extends javax.swing.JPanel {
             if (eventType.equals(DATA_ADDED.toString())) {
                 // Indicate that a refresh may be needed, unless the data added is Keyword or Hashset hits
                 ModuleDataEvent eventData = (ModuleDataEvent) pce.getOldValue();
-                if (null != eventData && 
-                        eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() &&
-                        eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    updateFilters();
+                if (null != eventData
+                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+                        && eventData.getBlackboardArtifactType().getTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                    updateFilters(false);
                     needsRefresh = true;
                     validateFilters();
                 }
@@ -154,32 +168,29 @@ final public class FiltersPanel extends javax.swing.JPanel {
     /**
      * Update the filter widgets, and apply them.
      */
-    void updateAndApplyFilters() {
-        updateFilters();
-        if (em != null) {
-            applyFilters();
-        }
+    void updateAndApplyFilters(boolean initialState) {
+        updateFilters(initialState);
+        applyFilters();
     }
 
     private void updateTimeZone() {
         dateRangeLabel.setText("Date Range ( " + Utils.getUserPreferredZoneId().toString() + "):");
     }
 
-    private void updateFilters() {
+    /**
+     * Updates the filter widgets to reflect he data sources/types in the case.
+     */
+    private void updateFilters(boolean initialState) {
         updateAccountTypeFilter();
-        updateDeviceFilter();
+        updateDeviceFilter(initialState);
     }
 
     @Override
     public void addNotify() {
         super.addNotify();
-        /*
-         * Since we get the exploreremanager from the parent JComponenet, wait
-         * till this FiltersPanel is actaully added to a parent.
-         */
-        em = ExplorerManager.find(this);
         IngestManager.getInstance().addIngestModuleEventListener(ingestListener);
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
+            //clear the device filter widget when the case changes.
             devicesMap.clear();
             devicesPane.removeAll();
         });
@@ -198,51 +209,50 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         //TODO: something like this commented code could be used to show only
         //the account types that are found:
-        //final CommunicationsManager communicationsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+        //final CommunicationsManager communicationsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
             if (type.equals(Account.Type.CREDIT_CARD)) {
                 //don't show a check box for credit cards
-            } else if (type.equals(Account.Type.DEVICE)) {
-                //don't show a check box fro device
             } else {
                 accountTypeMap.computeIfAbsent(type, t -> {
                     final JCheckBox jCheckBox = new JCheckBox(
                             "<html><table cellpadding=0><tr><td><img src=\""
-                            + FiltersPanel.class.getResource("/org/sleuthkit/autopsy/communications/images/"
-                                    + Utils.getIconFileName(type))
+                            + FiltersPanel.class.getResource(Utils.getIconFilePath(type))
                             + "\"/></td><td width=" + 3 + "><td>" + type.getDisplayName() + "</td></tr></table></html>",
                             true
                     );
                     jCheckBox.addItemListener(validationListener);
                     accountTypePane.add(jCheckBox);
+                    if (t.equals(Account.Type.DEVICE)) {
+                        //Deveice type filter is enabled based on whether we are in table or graph view.
+                        jCheckBox.setEnabled(deviceAccountTypeEnabled);
+                    }
                     return jCheckBox;
                 });
             }
-        }
-        );
+        });
     }
 
     /**
      * Populate the devices filter widgets
      */
-    private void updateDeviceFilter() {
+    private void updateDeviceFilter(boolean initialState) {
         try {
-            final SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
+            final SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
                 //store the device id in the map, but display a datasource name in the UI.
                 devicesMap.computeIfAbsent(dataSource.getDeviceId(), ds -> {
-                    final JCheckBox jCheckBox = new JCheckBox(dsName, false);
+                    final JCheckBox jCheckBox = new JCheckBox(dsName, initialState);
                     jCheckBox.addItemListener(validationListener);
                     devicesPane.add(jCheckBox);
                     return jCheckBox;
                 });
-            };
-
-        } catch (IllegalStateException ex) {
+            }
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
@@ -264,7 +274,6 @@ final public class FiltersPanel extends javax.swing.JPanel {
 
         filtersTitleLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/funnel.png"))); // NOI18N
         filtersTitleLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.filtersTitleLabel.text")); // NOI18N
-        filtersTitleLabel.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
 
         unCheckAllAccountTypesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.unCheckAllAccountTypesButton.text")); // NOI18N
         unCheckAllAccountTypesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -333,7 +342,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             }
         });
 
-        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/image.png"))); // NOI18N
+        devicesLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png"))); // NOI18N
         devicesLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.devicesLabel.text")); // NOI18N
 
         checkAllDevicesButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.checkAllDevicesButton.text")); // NOI18N
@@ -421,13 +430,16 @@ final public class FiltersPanel extends javax.swing.JPanel {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                         .addComponent(endCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(12, 12, 12)
+                        .addComponent(endDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(startCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(12, 12, 12)
+                        .addComponent(startDatePicker, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
+
+        jPanel4Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {endCheckBox, startCheckBox});
+
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
@@ -445,8 +457,8 @@ final public class FiltersPanel extends javax.swing.JPanel {
         refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
         refreshButton.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.refreshButton.text")); // NOI18N
 
-        needsRefreshLabel.setForeground(new java.awt.Color(255, 0, 0));
         needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
+        needsRefreshLabel.setForeground(new java.awt.Color(255, 0, 0));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -457,7 +469,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(filtersTitleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(applyFiltersButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(refreshButton))
             .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -486,26 +498,22 @@ final public class FiltersPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Query for accounts using the selected filters, and send the results to
-     * the AccountsBrowser via the ExplorerManager.
+     * Post an event with the new filters.
      */
     private void applyFilters() {
+        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter()));
+        needsRefresh = false;
+        validateFilters();
+    }
+
+    private CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
         commsFilter.addAndFilter(getDateRangeFilter());
         commsFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
                 ImmutableSet.of(CALL_LOG, MESSAGE)));
-
-        try {
-            final CommunicationsManager commsManager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
-            em.setRootContext(new AbstractNode(Children.create(new AccountsRootChildren(commsManager, commsFilter), true)));
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
-        }
-
-        needsRefresh = false;
-        validateFilters();
+        return commsFilter;
     }
 
     /**
@@ -536,11 +544,31 @@ final public class FiltersPanel extends javax.swing.JPanel {
         return accountTypeFilter;
     }
 
+    /**
+     * Get an DateRangeFilter that matches the state of the UI widgets
+     *
+     * @return an DateRangeFilter
+     */
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
         long start = startDatePicker.isEnabled() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
         long end = endDatePicker.isEnabled() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
         return new DateRangeFilter(start, end);
+    }
+
+    /**
+     * Enable or disable the device account type filter. The filter should be
+     * disabled for the browse/table mode and enabled for the visualization.
+     *
+     * @param enable True to enable the device account type filter, False to
+     *               disable it.
+     */
+    void setDeviceAccountTypeEnabled(boolean enable) {
+        deviceAccountTypeEnabled = enable;
+        JCheckBox deviceCheckbox = accountTypeMap.get(Account.Type.DEVICE);
+        if (deviceCheckbox != null) {
+            deviceCheckbox.setEnabled(deviceAccountTypeEnabled);
+        }
     }
 
     /**
@@ -574,6 +602,7 @@ final public class FiltersPanel extends javax.swing.JPanel {
     private void setAllSelected(Map<?, JCheckBox> map, boolean selected) {
         map.values().forEach(box -> box.setSelected(selected));
     }
+
     private void unCheckAllAccountTypesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unCheckAllAccountTypesButtonActionPerformed
         setAllAccountTypesSelected(false);
     }//GEN-LAST:event_unCheckAllAccountTypesButtonActionPerformed
