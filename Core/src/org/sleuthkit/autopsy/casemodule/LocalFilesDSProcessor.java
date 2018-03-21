@@ -51,8 +51,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * method overload to allow it to be used independently of the wizard.
  */
 @ServiceProviders(value = {
-    @ServiceProvider(service = DataSourceProcessor.class)
-    ,
+    @ServiceProvider(service = DataSourceProcessor.class),
     @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
 )
 @Messages({
@@ -369,7 +368,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
     }
 

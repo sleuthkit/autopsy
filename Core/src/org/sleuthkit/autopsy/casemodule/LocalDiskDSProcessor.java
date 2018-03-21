@@ -18,20 +18,15 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
-import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 
 /**
  * A local drive data source processor that implements the DataSourceProcessor
@@ -39,11 +34,8 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * wizard. It also provides a run method overload to allow it to be used
  * independently of the wizard.
  */
-@ServiceProviders(value = {
-    @ServiceProvider(service = DataSourceProcessor.class),
-    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
-)
-public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
+@ServiceProvider(service = DataSourceProcessor.class)
+public class LocalDiskDSProcessor implements DataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalDiskDSProcessor.class, "LocalDiskDSProcessor.dsType.text");
     private final LocalDiskPanel configPanel;
@@ -103,7 +95,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      */
     @Override
     public JPanel getPanel() {
-        configPanel.refreshTable();
+        configPanel.resetLocalDiskSelection();
         return configPanel;
     }
 
@@ -137,7 +129,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
             deviceId = UUID.randomUUID().toString();
-            drivePath = configPanel.getContentPaths();
+            drivePath = configPanel.getContentPath();
             sectorSize = configPanel.getSectorSize();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
@@ -228,38 +220,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
         timeZone = null;
         ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = false;
-    }
-
-    @Override
-    public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
-
-        // verify that the data source is not a file or a directory
-        File file = dataSourcePath.toFile();
-        // ELTODO this needs to be tested more. should I keep isDirectory or just test for isFile?
-        if (file.isFile() || file.isDirectory()) {
-            return 0;
-        }
-
-        // check whether data source is an existing disk or partition
-        // ELTODO this needs to be tested more. do these methods actually work correctly? 
-        // or should I use PlatformUtil.getPhysicalDrives() and PlatformUtil.getPartitions() instead?
-        String path = dataSourcePath.toString();
-        if ((DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)) && DriveUtils.driveExists(path)) {
-            return 90;
-        }
-
-        return 0;
-    }
-
-    @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
-        this.deviceId = deviceId;
-        this.drivePath = dataSourcePath.toString();
-        this.sectorSize = 0;
-        this.timeZone = Calendar.getInstance().getTimeZone().getID();
-        this.ignoreFatOrphanFiles = false;
-        setDataSourceOptionsCalled = true;
-        run(deviceId, drivePath, sectorSize, timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
     }
 
     /**
