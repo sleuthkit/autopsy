@@ -364,17 +364,17 @@ public class FileManager implements Closeable {
     /**
      * Update a derived file which already exists in the the case.
      *
-     * @param fileName        The name of the file.
-     * @param id              The object id of the file.
+     * @param derivedFile     The derived file you wish to update
      * @param localPath       The local path of the file, relative to the case
      *                        folder and including the file name.
      * @param size            The size of the file in bytes.
      * @param ctime           The change time of the file.
      * @param crtime          The create time of the file
      * @param atime           The accessed time of the file.
+     * @param mimeType	      The MIME type the updated file should have, null
+     *                        to unset it
      * @param mtime           The modified time of the file.
      * @param isFile          True if a file, false if a directory.
-     * @param parentObj       The parent object from which the file was derived.
      * @param rederiveDetails The details needed to re-derive file (will be
      *                        specific to the derivation method), currently
      *                        unused.
@@ -391,20 +391,18 @@ public class FileManager implements Closeable {
      * @throws TskCoreException if there is a problem adding the file to the
      *                          case database.
      */
-    public synchronized DerivedFile updateDerivedFile(String fileName, long id,
-            String localPath,
+    public synchronized DerivedFile updateDerivedFile(DerivedFile derivedFile, String localPath,
             long size,
             long ctime, long crtime, long atime, long mtime,
-            boolean isFile,
-            Content parentObj,
+            boolean isFile, String mimeType,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails,
             TskData.EncodingType encodingType) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
-        return caseDb.updateDerivedFile(fileName, id, localPath, size,
+        return caseDb.updateDerivedFile(derivedFile, localPath, size,
                 ctime, crtime, atime, mtime,
-                isFile, parentObj, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
+                isFile, mimeType, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
     }
 
     /**

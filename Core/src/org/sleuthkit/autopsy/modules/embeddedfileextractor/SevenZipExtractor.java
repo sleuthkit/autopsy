@@ -40,7 +40,6 @@ import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
-import org.apache.tika.mime.MimeTypes;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -659,13 +658,6 @@ class SevenZipExtractor {
                     if (unpackedFile == null) {
                         continue;
                     }
-                    String abstractFileMimeType = fileTypeDetector.getMIMEType(unpackedFile);
-                    //if the file was previously determined to be an OCTET stream 
-                    //its possible that upon being unpacked successfully it's type has changed.
-                    if (abstractFileMimeType.equals(MimeTypes.OCTET_STREAM)) {
-                        abstractFileMimeType = FileTypeDetector.getTikaMIMEType(unpackedFile);
-                        unpackedFile.setMIMEType(abstractFileMimeType);
-                    }
                     if (isSevenZipExtractionSupported(unpackedFile.getMIMEType())) {
                         archiveDepthCountTree.addArchive(parentAr, unpackedFile.getId());
                     }
@@ -1036,9 +1028,11 @@ class SevenZipExtractor {
                         }
                     }
                     if (existingFile.getStatus() == ZipFileStatus.UPDATE) {
-                        df = fileManager.updateDerivedFile(node.getFileName(), existingFile.getFile().getId(), node.getLocalRelPath(), node.getSize(),
-                                node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                                node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
+                        //if the we are updating a file and its mime type was octet-stream we want to re-type it
+                        String mimeType = existingFile.getFile().getMIMEType().equalsIgnoreCase("application/octet-stream") ? null : existingFile.getFile().getMIMEType();
+                        df = fileManager.updateDerivedFile((DerivedFile) existingFile.getFile(), node.getLocalRelPath(), node.getSize(),
+                                node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(), 
+                                node.isIsFile(), mimeType, "", EmbeddedFileExtractorModuleFactory.getModuleName(),
                                 "", "", TskData.EncodingType.XOR1);
                     } else {
                         //ALREADY CURRENT - SKIP

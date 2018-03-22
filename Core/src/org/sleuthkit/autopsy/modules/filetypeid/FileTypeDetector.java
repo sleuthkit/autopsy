@@ -165,48 +165,6 @@ public class FileTypeDetector {
     }
 
     /**
-     * Get the MIME type which the Apache Tika library detects for the file
-     * 
-     * @param file The file to test.
-     *
-     * @return A MIME type name. If file type could not be detected, or results
-     *         were uncertain, octet-stream is returned.
-     */
-    public static String getTikaMIMEType(AbstractFile file){
-        String mimeType;
-        /*
-         * If the file does not match a user-defined type, send the initial
-         * bytes to Tika.
-         */
-            ReadContentInputStream stream = new ReadContentInputStream(file);
-
-            try (TikaInputStream tikaInputStream = TikaInputStream.get(stream)) {
-                String tikaType = tika.detect(tikaInputStream, file.getName());
-
-                /*
-                 * Remove the Tika suffix from the MIME type name.
-                 */
-                mimeType = tikaType.replace("tika-", ""); //NON-NLS
-                /*
-                 * Remove the optional parameter from the MIME type.
-                 */
-                mimeType = removeOptionalParameter(mimeType);
-
-            } catch (Exception ignored) {
-                /*
-                 * This exception is swallowed and not logged rather than
-                 * propagated because files in data sources are not always
-                 * consistent with their file system metadata, making for read
-                 * errors. Also, Tika can be a bit flaky at times, making this a
-                 * best effort endeavor. Default to octet-stream.
-                 */
-                mimeType = MimeTypes.OCTET_STREAM;
-            }
-            return mimeType;
-
-    }
-    
-    /**
      * Detects the MIME type of a file, then writes it the AbstractFile object
      * representing the file and returns the detected type.
      *
@@ -214,16 +172,19 @@ public class FileTypeDetector {
      *
      * @return A MIME type name. If file type could not be detected, or results
      *         were uncertain, octet-stream is returned.
-     *
+     * 
+ 
      */
     public String getMIMEType(AbstractFile file) {
         /*
          * Check to see if the file has already been typed.
          */
         String mimeType = file.getMIMEType();
-
         if (null != mimeType) {
-                return removeOptionalParameter(mimeType);
+            // We remove the optional parameter to allow this method to work
+            // with legacy databases that may contain MIME types with the
+            // optional parameter attached.
+            return removeOptionalParameter(mimeType);
         }
 
         /*
@@ -260,7 +221,30 @@ public class FileTypeDetector {
          * bytes to Tika.
          */
         if (null == mimeType) {
-            mimeType = FileTypeDetector.getTikaMIMEType(file);
+            ReadContentInputStream stream = new ReadContentInputStream(file);
+
+            try (TikaInputStream tikaInputStream = TikaInputStream.get(stream)) {
+                String tikaType = tika.detect(tikaInputStream, file.getName());
+
+                /*
+                 * Remove the Tika suffix from the MIME type name.
+                 */
+                mimeType = tikaType.replace("tika-", ""); //NON-NLS
+                /*
+                 * Remove the optional parameter from the MIME type.
+                 */
+                mimeType = removeOptionalParameter(mimeType);
+
+            } catch (Exception ignored) {
+                /*
+                 * This exception is swallowed and not logged rather than
+                 * propagated because files in data sources are not always
+                 * consistent with their file system metadata, making for read
+                 * errors. Also, Tika can be a bit flaky at times, making this a
+                 * best effort endeavor. Default to octet-stream.
+                 */
+                mimeType = MimeTypes.OCTET_STREAM;
+            }
         }
 
         /*
@@ -278,7 +262,7 @@ public class FileTypeDetector {
      *
      * @return MIME type without the optional parameter
      */
-    private static String removeOptionalParameter(String mimeType) {
+    private String removeOptionalParameter(String mimeType) {
         int indexOfSemicolon = mimeType.indexOf(';');
         if (indexOfSemicolon != -1) {
             return mimeType.substring(0, indexOfSemicolon).trim();
@@ -296,7 +280,7 @@ public class FileTypeDetector {
      */
     private String detectUserDefinedType(AbstractFile file) {
         String retValue = null;
-
+        
         for (FileType fileType : userDefinedFileTypes) {
             if (fileType.matches(file)) {
                 retValue = fileType.getMimeType();
@@ -307,8 +291,7 @@ public class FileTypeDetector {
     }
 
     /**
-     * Determines whether or not a file matches a custom file type defined by
-     * Autopsy.
+     * Determines whether or not a file matches a custom file type defined by Autopsy.
      *
      * @param file The file to test.
      *
