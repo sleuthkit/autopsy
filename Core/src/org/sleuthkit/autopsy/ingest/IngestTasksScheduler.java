@@ -211,16 +211,23 @@ final class IngestTasksScheduler {
              * method is adding derived files from a higher priority task that
              * preceded the tasks currently in the queue.
              */
-            for (FileIngestTask newTask : newTasksForFileIngestThreads) {
-                try {
-                    this.queuedAndRunningFileTasks.add(newTask);
-                    this.fileTaskQueueForIngestThreads.addFirst(newTask);
-                } catch (InterruptedException ex) {
-                    this.queuedAndRunningFileTasks.remove(newTask);
-                    IngestTasksScheduler.logger.log(Level.INFO, "Ingest cancelled while blocked on a full file ingest threads queue", ex);
-                    Thread.currentThread().interrupt();
-                    break;
+            if (!newTasksForFileIngestThreads.isEmpty()) {
+                for (FileIngestTask newTask : newTasksForFileIngestThreads) {
+                    try {
+                        this.queuedAndRunningFileTasks.add(newTask);
+                        this.fileTaskQueueForIngestThreads.addFirst(newTask);
+                    } catch (InterruptedException ex) {
+                        this.queuedAndRunningFileTasks.remove(newTask);
+                        IngestTasksScheduler.logger.log(Level.INFO, "Ingest cancelled while blocked on a full file ingest threads queue", ex);
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
+            } else {
+                /*
+                 * Only directory tasks were queued, so shuffle.
+                 */
+                this.shuffleFileTaskQueues();
             }
         }
     }
