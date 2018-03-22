@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
  * Makes nodes for common files search results.
  */
 final class CommonFilesChildren extends ChildFactory<AbstractFile> {
-//should this be ChildFactory<CommonFileParentNode>????
 
     private CommonFilesMetaData metaData;
 

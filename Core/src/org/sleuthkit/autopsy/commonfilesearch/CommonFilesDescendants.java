@@ -27,12 +27,11 @@ import org.sleuthkit.autopsy.datamodel.CommonFileChildNode;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author bsweeney
+ * Child generator for FileNodes of CommonFileParentNodes
  */
 public class CommonFilesDescendants extends ChildFactory<AbstractFile> {
 
-    private List<AbstractFile> descendants;
+    private final List<AbstractFile> descendants;
     private Map<Long, String> dataSourceMap;
     
     
