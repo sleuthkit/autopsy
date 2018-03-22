@@ -33,7 +33,7 @@
                   <Component id="withinDataSourceRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="allDataSourcesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="26" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
