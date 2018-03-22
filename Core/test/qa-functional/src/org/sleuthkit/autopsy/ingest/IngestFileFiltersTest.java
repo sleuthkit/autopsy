@@ -64,7 +64,6 @@ public class IngestFileFiltersTest extends TestCase {
 
     @Override
     public void setUp() {
-        System.out.println("Set up tests");
         // Delete the test directory, if it exists
         if (CASE_DIRECTORY_PATH.toFile().exists()) {
             try {
@@ -103,7 +102,6 @@ public class IngestFileFiltersTest extends TestCase {
 
     @Override
     public void tearDown() {
-        System.out.println("Test clean up");
         try {
             Case.closeCurrentCase();
             //Seems like we need some time to close the case.
@@ -130,7 +128,6 @@ public class IngestFileFiltersTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        System.out.println("Test case 'testFileNotFound' successfully done.");
     }
 
     public void testFileFound() {
@@ -143,11 +140,10 @@ public class IngestFileFiltersTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        System.out.println("Test case 'testFileFound' successfully done.");
     }
     
     public void testFileType() {
-        runInjestJob(null);
+        runInjestJob();
         FileManager fileManager;
         try {
             fileManager = Case.getOpenCase().getServices().getFileManager();
@@ -158,18 +154,16 @@ public class IngestFileFiltersTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        System.out.println("Test case testFileType is successfully done.");
     }
     
-    private void runInjestJob(FilesSet filters) {
+    private void runInjestJob() {
         FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
         IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
         template.setEnabled(true);
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(template);
-        IngestJobSettings ingestJobSettings = filters == null ? new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates) : 
-                new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filters);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
         try {
             List<IngestModuleError> errs = IngestJobRunner.runIngestJob(callBack.getDataSourceContent(), ingestJobSettings);
             assertEquals(0, errs.size());
