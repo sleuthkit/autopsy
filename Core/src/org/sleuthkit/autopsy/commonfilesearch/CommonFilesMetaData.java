@@ -93,6 +93,7 @@ public class CommonFilesMetaData {
                 if (previousFile != null) {
                     this.parentNodes.put(previousFile, children);
                 }
+                previousMd5 = currentMd5;
                 previousFile = file;
                 children.clear();
                 children.add(file);
