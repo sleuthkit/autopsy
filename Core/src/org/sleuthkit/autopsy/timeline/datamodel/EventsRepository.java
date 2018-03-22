@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -61,7 +59,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -72,6 +69,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.timeline.CombinedEvent;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.EventType;
@@ -84,7 +82,7 @@ import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 
 /**
- * Provides higher-level public API (over EventsDB) to access events. In theory
+ * Provides higher-level public API (over TimelineManager) to access events. In theory
  * this insulates the rest of the timeline module form the details of the db
  * implementation. Since there are no other implementations of the database or
  * clients of this class, and no Java Interface defined yet, in practice this
@@ -93,7 +91,7 @@ import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
  *
  * Concurrency Policy:
  *
- * Since almost everything just delegates to the EventDB, which is internally
+ * Since almost everything just delegates to the TimelineManager, which is internally
  * synchronized, we only have to worry about rebuildRepository() which we
  * synchronize on our intrinsic lock.
  *
@@ -134,13 +132,13 @@ public class EventsRepository {
         return hashSetMap;
     }
 
-    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone tz) throws TskCoreException {
-        return eventManager.getBoundingEventsInterval(timeRange, filter, tz);
+    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
+        return eventManager.getBoundingEventsInterval(timeRange, filter, timeZone);
     }
 
     /**
      * @return a FilteredEvetns object with this repository as underlying source
-     * of events
+     *         of events
      */
     public FilteredEventsModel getEventsModel() {
         return modelInstance;
@@ -162,7 +160,12 @@ public class EventsRepository {
         eventCountsCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(CacheLoader.from(eventManager::countEventsByType));
+                .build(new CacheLoader<ZoomParams, Map<EventType, Long>>() {
+                    @Override
+                    public Map<EventType, Long> load(ZoomParams params) throws Exception {
+                        return eventManager.countEventsByType(params);
+                    }
+                });
         eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
@@ -235,13 +238,16 @@ public class EventsRepository {
      * Get a List of event IDs for the events that are derived from the given
      * file.
      *
-     * @param file The AbstractFile to get derived event IDs for.
+     * @param file                    The AbstractFile to get derived event IDs
+     *                                for.
      * @param includeDerivedArtifacts If true, also get event IDs for events
-     * derived from artifacts derived form this file. If false, only gets events
-     * derived directly from this file (file system timestamps).
+     *                                derived from artifacts derived form this
+     *                                file. If false, only gets events derived
+     *                                directly from this file (file system
+     *                                timestamps).
      *
      * @return A List of event IDs for the events that are derived from the
-     * given file.
+     *         given file.
      */
     public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
@@ -254,7 +260,7 @@ public class EventsRepository {
      * @param artifact The BlackboardArtifact to get derived event IDs for.
      *
      * @return A List of event IDs for the events that are derived from the
-     * given artifact.
+     *         given artifact.
      */
     public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return eventManager.getEventIDsForArtifact(artifact);
@@ -279,7 +285,7 @@ public class EventsRepository {
      * together.
      *
      * @param timeRange The Interval that all returned events must be within.
-     * @param filter The Filter that all returned events must pass.
+     * @param filter    The Filter that all returned events must pass.
      *
      * @return A List of combined events, sorted by timestamp.
      */
@@ -368,7 +374,7 @@ public class EventsRepository {
      * that don't have them. New filters are selected by default.
      *
      * @param tagsFilter the tags filter to modify so it is consistent with the
-     * tags in use in the case
+     *                   tags in use in the case
      */
     public void syncTagsFilter(TagsFilter tagsFilter) {
         for (TagName t : tagNames) {
@@ -379,8 +385,8 @@ public class EventsRepository {
         }
     }
 
-    public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
-        return eventManager.getSQLWhere(f1).equals(eventManager.getSQLWhere(f2));
+    public boolean areFiltersEquivalent(RootFilter filter1, RootFilter filter2) {
+        return eventManager.getSQLWhere(filter1).equals(eventManager.getSQLWhere(filter2));
     }
 
     /**
@@ -388,11 +394,11 @@ public class EventsRepository {
      * rebuild the entire repo.
      *
      * @param onStateChange called when he background task changes state.
-     * Clients can use this to handle failure, or cleanup operations for
-     * example.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
      *
      * @return the task that will rebuild the repo in a background thread. The
-     * task has already been started.
+     *         task has already been started.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public CancellationProgressTask<Void> rebuildRepository(Consumer<Worker.State> onStateChange) {
@@ -404,11 +410,11 @@ public class EventsRepository {
      * drop and rebuild the tags in the repo.
      *
      * @param onStateChange called when he background task changes state.
-     * Clients can use this to handle failure, or cleanup operations for
-     * example.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
      *
      * @return the task that will rebuild the repo in a background thread. The
-     * task has already been started.
+     *         task has already been started.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public CancellationProgressTask<Void> rebuildTags(Consumer<Worker.State> onStateChange) {
@@ -418,13 +424,13 @@ public class EventsRepository {
     /**
      * rebuild the repo.
      *
-     * @param mode the rebuild mode to use.
+     * @param mode          the rebuild mode to use.
      * @param onStateChange called when he background task changes state.
-     * Clients can use this to handle failure, or cleanup operations for
-     * example.
+     *                      Clients can use this to handle failure, or cleanup
+     *                      operations for example.
      *
      * @return the task that will rebuild the repo in a background thread. The
-     * task has already been started.
+     *         task has already been started.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private CancellationProgressTask<Void> rebuildRepository(final DBPopulationMode mode, Consumer<Worker.State> onStateChange) {
@@ -699,7 +705,7 @@ public class EventsRepository {
         /**
          * populate all the events of one type
          *
-         * @param type the type to populate
+         * @param type  the type to populate
          * @param trans the db transaction to use
          */
         @NbBundle.Messages({"# {0} - event type ", "progressWindow.populatingXevents=Populating {0} events"})

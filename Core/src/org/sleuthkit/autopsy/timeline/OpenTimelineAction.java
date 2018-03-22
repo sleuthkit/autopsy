@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.awt.Component;
-import java.io.IOException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javax.swing.ImageIcon;
@@ -29,7 +28,6 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -48,6 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An Action that opens the Timeline window. Has methods to open the window in
  * various specific states (e.g., showing a specific artifact in the List View)
  */
+
+
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
@@ -60,7 +60,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
     private static final Logger logger = Logger.getLogger(OpenTimelineAction.class.getName());
     private static final int FILE_LIMIT = 6_000_000;
 
-    private static TimeLineController timeLineController = null;
+    private static TimeLineController timeLineController;
 
     private final JMenuItem menuItem;
     private final JButton toolbarButton = new JButton(getName(),

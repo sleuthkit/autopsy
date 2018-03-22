@@ -23,16 +23,15 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
-import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
@@ -45,7 +44,7 @@ public final class ViewArtifactInTimelineAction extends AbstractAction {
 
     private static final Set<ArtifactEventType> ARTIFACT_EVENT_TYPES
             = EventType.allTypes.stream()
-                    .filter((EventType t) -> t instanceof ArtifactEventType)
+                    .filter(ArtifactEventType.class::isInstance)
                     .map(ArtifactEventType.class::cast)
                     .collect(Collectors.toSet());
 
