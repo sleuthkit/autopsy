@@ -114,6 +114,17 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
                 }
             });
         }
+        
+        @Override
+        public void setProgressMax(final int max) {
+            // update the progress bar asynchronously
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getComponent().getProgressBar().setMaximum(max);
+                }
+            });
+        }
 
         @Override
         public void setProgressText(final String text) {

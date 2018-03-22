@@ -286,15 +286,19 @@ public final class Reports implements AutopsyVisitableItem {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String reportPath = ReportNode.this.report.getPath();
-                String extension = "";
-                int extPosition = reportPath.lastIndexOf('.');
-
-                if (extPosition != -1) {
-                    extension = reportPath.substring(extPosition, reportPath.length()).toLowerCase();
+                
+                if (reportPath.toLowerCase().startsWith("http")) {
+                    ExternalViewerAction.openURL(reportPath);
                 }
+                else {
+                    String extension = "";
+                    int extPosition = reportPath.lastIndexOf('.');
+                    if (extPosition != -1) {
+                        extension = reportPath.substring(extPosition, reportPath.length()).toLowerCase();
+                    }
 
-                File file = new File(reportPath);
-                ExternalViewerAction.openFile("", extension, file);
+                    ExternalViewerAction.openFile("", extension, new File(reportPath));
+                }
             }
         }
     }

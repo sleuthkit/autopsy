@@ -620,7 +620,11 @@ public final class FilesSet implements Serializable {
          */
         private static abstract class AbstractTextCondition implements TextCondition {
 
-            private static final long serialVersionUID = 1L;
+            /*
+             * To ensure compatibility with existing serialized configuration
+             * settings, this class cannot have a 'serialVersionUID'.
+             */
+            
             private final TextMatcher textMatcher;
 
             /**
@@ -766,7 +770,11 @@ public final class FilesSet implements Serializable {
          */
         public static final class DateCondition implements FileAttributeCondition {
 
-            private static final long serialVersionUID = 1L;
+            /*
+             * To ensure compatibility with existing serialized configuration
+             * settings, this class cannot have a 'serialVersionUID'.
+             */
+            
             private final static long SECS_PER_DAY = 60 * 60 * 24;
 
             private int daysIncluded;

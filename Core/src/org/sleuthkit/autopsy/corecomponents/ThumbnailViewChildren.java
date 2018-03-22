@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
@@ -86,7 +85,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     /**
      * The constructor
      *
-     * @param parent    The node which is the parent of this children.
+     * @param parent The node which is the parent of this children.
      * @param thumbSize The hight and/or width of the thumbnails in pixels.
      */
     ThumbnailViewChildren(Node parent, int thumbSize) {
@@ -108,9 +107,9 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         // get list of supported children sorted by persisted criteria
         final List<Node> suppContent
                 = Stream.of(parent.getChildren().getNodes())
-                .filter(ThumbnailViewChildren::isSupported)
-                .sorted(getComparator())
-                .collect(Collectors.toList());
+                        .filter(ThumbnailViewChildren::isSupported)
+                        .sorted(getComparator())
+                        .collect(Collectors.toList());
 
         if (suppContent.isEmpty()) {
             //if there are no images, there is nothing more to do
@@ -139,7 +138,13 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         } else {
             List<SortCriterion> sortCriteria = loadSortCriteria((TableFilterNode) parent);
 
-            //make a comparatator that will sort the nodes.
+            /**
+             * Make a comparator that will sort the nodes.
+             *
+             * Map each SortCriterion to a Comparator<Node> and then collapse
+             * them to a single comparator that uses the next subsequent
+             * Comparator to break ties.
+             */
             return sortCriteria.stream()
                     .map(this::getCriterionComparator)
                     .collect(Collectors.reducing(Comparator::thenComparing))
@@ -148,7 +153,9 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     }
 
     /**
-     * Make a comparator from the given criterion
+     * Make a comparator from the given criterion. The comparator compares Nodes
+     * according to the value of the property specified in the SortCriterion.
+     *
      *
      * @param criterion The criterion to make a comparator for.
      *
@@ -157,8 +164,15 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private Comparator<Node> getCriterionComparator(SortCriterion criterion) {
         @SuppressWarnings("unchecked")
         Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProperty()),
-                Comparator.nullsFirst(Comparator.naturalOrder()));
-        return criterion.getSortOrder() == SortOrder.ASCENDING ? c : c.reversed();
+                Comparator.nullsFirst(Comparator.naturalOrder()));// Null values go first, unless reversed below.
+        switch (criterion.getSortOrder()) {
+            case DESCENDING:
+            case UNSORTED:
+                return c.reversed();
+            case ASCENDING:
+            default:
+                return c;
+        }
     }
 
     /**
@@ -260,7 +274,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
          * The constructor
          *
          * @param wrappedNode The original node that this Node wraps.
-         * @param thumbSize   The hight and/or width of the thumbnail in pixels.
+         * @param thumbSize The hight and/or width of the thumbnail in pixels.
          */
         private ThumbnailViewNode(Node wrappedNode, int thumbSize) {
             super(wrappedNode, FilterNode.Children.LEAF);
