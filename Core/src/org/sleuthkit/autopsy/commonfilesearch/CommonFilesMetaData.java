@@ -51,6 +51,7 @@ public class CommonFilesMetaData {
         this.loadDataSourcesMap();
 
         this.collateFiles();
+        
     }
 
     private void loadDataSourcesMap() throws SQLException, TskCoreException {
