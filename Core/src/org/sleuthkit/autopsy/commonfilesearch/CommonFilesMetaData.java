@@ -33,10 +33,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Utility and wrapper around data required for Common Files Search results
+ * Utility and wrapper around data required for Common Files Search results.
+ * Subclass this to implement different selections of files from the case.
  */
-public class CommonFilesMetaData {
-
+abstract class CommonFilesMetaData {
+        
     private final Map<AbstractFile, List<AbstractFile>> parentNodes;
     private final Map<Long, String> dataSourceIdToNameMap;
 
@@ -48,12 +49,10 @@ public class CommonFilesMetaData {
 
         this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
 
-        this.loadDataSourcesMap();
-
-        this.collateFiles();
-        
+        this.loadDataSourcesMap();        
     }
 
+    //TODO chopping block - this will be passed in through the constructor eventually
     private void loadDataSourcesMap() throws SQLException, TskCoreException {
 
         try (
@@ -68,15 +67,22 @@ public class CommonFilesMetaData {
         }
     }
 
-    public Map<AbstractFile, List<AbstractFile>> getFilesMap() {
+    Map<AbstractFile, List<AbstractFile>> getFilesMap() {
         return Collections.unmodifiableMap(this.parentNodes);
     }
 
-    public Map<Long, String> getDataSourceIdToNameMap() {
+    Map<Long, String> getDataSourceIdToNameMap() {
         return Collections.unmodifiableMap(dataSourceIdToNameMap);
     }
 
-    private void collateFiles() throws TskCoreException {
+    /**
+     * Sorts files in selection into a parent/child hierarchy where actual files
+     * are nested beneath a parent node which represents the common match.
+     * 
+     * @return returns a reference to itself for ease of use.
+     * @throws TskCoreException 
+     */
+    CommonFilesMetaData collateFiles() throws TskCoreException {
 
         List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere(getSqlWhereClause());
 
@@ -100,14 +106,26 @@ public class CommonFilesMetaData {
                 children.add(file);
             }
         }
+        
+        return this;
     }
 
-    //TODO subclass this type and make this abstract
-    protected String getSqlWhereClause() {
-        return "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
-    }
+    /**
+     * Implement this in order to specify which files are selected into this 
+     * CommonFilesMetaData and passed along to the view.
+     * 
+     * No SQL-side de-duping should be performed.  Results should be ordered by MD5.
+     * 
+     * @return a SQL WHERE clause to be used in common files selection
+     */
+    protected abstract String getSqlWhereClause();
 
-    public List<AbstractFile> getChildrenForFile(AbstractFile t) {
+    /**
+     * 
+     * @param t
+     * @return 
+     */
+    List<AbstractFile> getChildrenForFile(AbstractFile t) {
         return this.parentNodes.get(t);
     }
 }

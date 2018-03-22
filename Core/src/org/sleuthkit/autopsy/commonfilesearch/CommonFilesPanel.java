@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionListener;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -29,6 +32,7 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -36,6 +40,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -129,9 +135,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @SuppressWarnings("FinallyDiscardsException")
             protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
 
-                /*Case currentCase = Case.getOpenCase();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                
                 if(singleDataSource) {
                    Long selectedObjId = 0L;
                    for (Entry<Long, String> dataSource : dataSourceMap.entrySet()) {
@@ -140,10 +143,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                            break;
                        }
                    }
-                   return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where data_source_obj_id="+ selectedObjId +" and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id="+ selectedObjId +" order by md5");
-                }   
-                return tskDb.findAllFilesWhere("md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5");*/
-                return new CommonFilesMetaData();
+                   return new SingleDataSourceCommonFiles(selectedObjId).collateFiles();
+                } else {
+                   return new AllCommonFiles().collateFiles();
+                }
             }
 
             @Override
