@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import static java.awt.event.ItemEvent.SELECTED;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -33,7 +31,6 @@ import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListDataListener;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -88,10 +85,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         initComponents();
         updateUIButtons();
     }
+    
     private void updateUIButtons() {
         boolean multipleDataSources = this.caseHasMultipleSources();
         allDataSourcesRadioButton.setEnabled(multipleDataSources);
-        allDataSourcesRadioButton.setSelected(false);
+        allDataSourcesRadioButton.setSelected(multipleDataSources);
         if(!multipleDataSources) {
            withinDataSourceRadioButton.setSelected(true);
            withinDataSourceSelected(true);
@@ -101,6 +99,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private boolean caseHasMultipleSources(){
         return dataSourceMap.size() >= 2;
     }
+    
     private void buildDataSourceMap(Map<Long, String> dataSourceMap) throws TskCoreException, NoCurrentCaseException, SQLException  {
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
