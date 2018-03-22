@@ -191,6 +191,12 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
 
     @Override
     public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        
+        // only accept files
+        if (!new File(dataSourcePath.toString()).isFile()) {
+            return 0;
+        }
+        
         // check file extension for supported types
         if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
             return 0;
