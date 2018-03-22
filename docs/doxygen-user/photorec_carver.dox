@@ -20,7 +20,11 @@ Select the checkbox in the Ingest Modules settings screen to enable the PhotoRec
 
 Ingest Settings
 ------
-There are no run-time settings for this module, but the global setting to "Process Unallocated Space" needs to be selected to make this work.
+The run-time setting for this module allows you to choose whether to keep corrupted files.
+
+\image html photo_rec_settings.png
+
+Also note that the "Run ingest modules on" selection needs to include unallocated space for this module to run.
 
 Seeing Results
 ------
