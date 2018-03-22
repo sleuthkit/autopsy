@@ -72,8 +72,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException { 
-                
+            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+
                 return new CommonFilesMetaData();
             }
 
@@ -83,13 +83,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     super.done();
 
                     CommonFilesMetaData metadata = get();
-                                        
+
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
 
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
-                                        
+
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
-                    
+
                     TopComponent component = DataResultTopComponent.createInstance(
                             title,
                             pathText,
