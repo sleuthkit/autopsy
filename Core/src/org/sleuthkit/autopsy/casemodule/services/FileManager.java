@@ -124,7 +124,7 @@ public class FileManager implements Closeable {
      * is for full or partial matches and is case insensitive (a case
      * insensitive SQL LIKE clause is used to query the case database).
      *
-     * @param fileName The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      *
      * @return The matching files and directories.
      *
@@ -149,22 +149,22 @@ public class FileManager implements Closeable {
      * case insensitive (a case insensitive SQL LIKE clause is used to query the
      * case database).
      *
-     * @param fileName   The full or partial file name.
-     * @param parentName The full or partial parent file or directory name.
+     * @param fileName The full name or a pattern to match on part of the name
+     * @param parentSubString Substring that must exist in parent path.  Will be surrounded by % in LIKE query. 
      *
      * @return The matching files and directories.
      *
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(String fileName, String parentName) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(String fileName, String parentSubString) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
         List<AbstractFile> result = new ArrayList<>();
         List<Content> dataSources = caseDb.getRootObjects();
         for (Content dataSource : dataSources) {
-            result.addAll(findFiles(dataSource, fileName, parentName));
+            result.addAll(findFiles(dataSource, fileName, parentSubString));
         }
         return result;
     }
@@ -175,7 +175,7 @@ public class FileManager implements Closeable {
      * insensitive (a case insensitive SQL LIKE clause is used to query the case
      * database).
      *
-     * @param fileName The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      * @param parent   The parent file or directory.
      *
      * @return The matching files and directories.
@@ -202,7 +202,7 @@ public class FileManager implements Closeable {
      * LIKE clause is used to query the case database).
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      *
      * @return The matching files and directories.
      *
@@ -224,19 +224,19 @@ public class FileManager implements Closeable {
      * database).
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
-     * @param parentName The full or partial parent file or directory name.
+     * @param fileName The full name or a pattern to match on part of the name
+     * @param parentSubString Substring that must exist in parent path.  Will be surrounded by % in LIKE query. 
      *
      * @return The matching files and directories.
      *
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String parentName) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String parentSubString) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
-        return caseDb.findFiles(dataSource, fileName, parentName);
+        return caseDb.findFiles(dataSource, fileName, parentSubString);
     }
 
     /**
@@ -247,7 +247,7 @@ public class FileManager implements Closeable {
      * database).
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      * @param parent     The parent file or directory.
      *
      * @return The matching files and directories.
