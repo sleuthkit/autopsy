@@ -165,7 +165,7 @@ final class DataSourceIngestJob {
     private String currentFileIngestModule = "";
     private String currentFileIngestTask = "";
     private final List<IngestModuleInfo> ingestModules = new ArrayList<>();
-    private IngestJobInfo ingestJob;
+    private volatile IngestJobInfo ingestJob;
 
     /**
      * A data source ingest job uses this field to report its creation time.
@@ -414,17 +414,17 @@ final class DataSourceIngestJob {
     List<IngestModuleError> start() {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
+            try {
+                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
+            }
             if (this.hasFirstStageDataSourceIngestPipeline() || this.hasFileIngestPipeline()) {
                 logger.log(Level.INFO, "Starting first stage analysis for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startFirstStage();
             } else if (this.hasSecondStageDataSourceIngestPipeline()) {
                 logger.log(Level.INFO, "Starting second stage analysis for {0} (jobId={1}), no first stage configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
                 this.startSecondStage();
-            }
-            try {
-                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }
         }
         return errors;
@@ -518,13 +518,17 @@ final class DataSourceIngestJob {
          */
         if (this.hasFirstStageDataSourceIngestPipeline() && this.hasFileIngestPipeline()) {
             logger.log(Level.INFO, "Scheduling first stage data source and file level analysis tasks for {0} (jobId={1})", new Object[]{dataSource.getName(), this.id}); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this, this.files);
+            DataSourceIngestJob.taskScheduler.scheduleIngestTasks(this);
         } else if (this.hasFirstStageDataSourceIngestPipeline()) {
             logger.log(Level.INFO, "Scheduling first stage data source level analysis tasks for {0} (jobId={1}), no file level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
             logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
-            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
+            if (this.files.isEmpty()) {
+                DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this);
+            } else {
+                DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
+            }
 
             /**
              * No data source ingest task has been scheduled for this stage, and
@@ -702,26 +706,27 @@ final class DataSourceIngestJob {
                 }
             }
         }
-        if (this.cancelled) {
-            try {
-                ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+        if (ingestJob != null) {
+            if (this.cancelled) {
+                try {
+                    ingestJob.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                }
+            } else {
+                try {
+                    ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                }
             }
-        } else {
             try {
-                ingestJob.setIngestJobStatus(IngestJobStatusType.COMPLETED);
+                this.ingestJob.setEndDateTime(new Date());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to set ingest status for ingest job in database.", ex);
+                logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
             }
-        }
-        try {
-            this.ingestJob.setEndDateTime(new Date());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to set end date for ingest job in database.", ex);
         }
         this.parentJob.dataSourceJobFinished(this);
-
     }
 
     /**
@@ -827,7 +832,7 @@ final class DataSourceIngestJob {
     }
 
     /**
-     * Adds more files from the data source for this job to the job, i.e., adds
+     * Adds more files from the data source for this job to the job, e.g., adds
      * extracted or carved files. Not currently supported for the second stage
      * of the job.
      *
@@ -835,9 +840,7 @@ final class DataSourceIngestJob {
      */
     void addFiles(List<AbstractFile> files) {
         if (DataSourceIngestJob.Stages.FIRST == this.stage) {
-            for (AbstractFile file : files) {
-                DataSourceIngestJob.taskScheduler.scheduleFastTrackedFileIngestTask(this, file);
-            }
+            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, files);
         } else {
             DataSourceIngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }

@@ -874,7 +874,7 @@ public class Server {
      * if this does not exist then no server is recorded.
      * 
      * Format of solrServerList.txt:
-     * <host>,<port>
+     * (host),(port)
      * Ex: 10.1.2.34,8983
      * 
      * @param rootOutputDirectory

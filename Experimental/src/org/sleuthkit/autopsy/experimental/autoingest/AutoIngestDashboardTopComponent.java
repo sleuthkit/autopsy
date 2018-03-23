@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,17 +54,27 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
-            if (mode != null) {
-                mode.dockInto(tc);
-            }
 
-            AutoIngestDashboard dashboard;
             try {
-                dashboard = AutoIngestDashboard.createDashboard();
-                tc.add(dashboard);
-                dashboard.setSize(dashboard.getPreferredSize());
                 if (tc.isOpened() == false) {
+                    Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
+                    if (mode != null) {
+                        mode.dockInto(tc);
+                    }
+                    /*
+                     * Make sure we have a clean-slate before attaching a new
+                     * dashboard instance so we don't accumulate them.
+                     */
+                    tc.removeAll();
+
+                    /*
+                     * Create a new dashboard instance to ensure we're using the
+                     * most recent configuration.
+                     */
+                    AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
+                    tc.add(dashboard);
+                    dashboard.setSize(dashboard.getPreferredSize());
+                    
                     tc.open();
                 }
                 tc.toFront();

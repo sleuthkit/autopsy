@@ -93,7 +93,7 @@ public final class RunIngestModulesAction extends AbstractAction {
      * Constructs an action that invokes the Run Ingest Modules wizard for the
      * children of a file.
      *
-     * @param file The file.
+     * @param parentFile The file.
      */
     public RunIngestModulesAction(AbstractFile parentFile) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
