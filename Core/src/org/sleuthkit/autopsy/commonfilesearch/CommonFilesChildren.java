@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
 /**
  * Makes nodes for common files search results.
  */
-final class CommonFilesChildren extends ChildFactory<AbstractFile> {
+final class CommonFilesChildren extends ChildFactory<String> {
 
     private CommonFilesMetaData metaData;
 
@@ -46,22 +46,20 @@ final class CommonFilesChildren extends ChildFactory<AbstractFile> {
     }
 
     @Override
-    protected Node createNodeForKey(AbstractFile t) {
+    protected Node createNodeForKey(String md5) {
 
-        final String md5Hash = t.getMd5Hash();
-
-        List<AbstractFile> children = this.metaData.getChildrenForFile(t);
+        List<AbstractFile> children = this.metaData.getChildrenForFile(md5);
 
         int instanceCount = children.size();
         String dataSources = selectDataSources(children);
 
-        return new CommonFileParentNode(Children.create(new CommonFilesDescendants(children, this.metaData.getDataSourceIdToNameMap()), true), md5Hash, instanceCount, dataSources);
+        return new CommonFileParentNode(Children.create(new CommonFilesDescendants(children, this.metaData.getDataSourceIdToNameMap()), true), md5, instanceCount, dataSources);
     }
 
     @Override
-    protected boolean createKeys(List<AbstractFile> toPopulate) {
-        final Map<org.sleuthkit.datamodel.AbstractFile, List<org.sleuthkit.datamodel.AbstractFile>> filesMap = this.metaData.getFilesMap();
-        Collection<AbstractFile> files = filesMap.keySet();
+    protected boolean createKeys(List<String> toPopulate) {
+        final Map<String, List<org.sleuthkit.datamodel.AbstractFile>> filesMap = this.metaData.getFilesMap();
+        Collection<String> files = filesMap.keySet();
         toPopulate.addAll(files);
         return true;
     }

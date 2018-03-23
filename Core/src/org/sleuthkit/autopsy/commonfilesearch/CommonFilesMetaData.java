@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract class CommonFilesMetaData {
         
-    private final Map<AbstractFile, List<AbstractFile>> parentNodes;
+    private final Map<String, List<AbstractFile>> parentNodes;
     private final Map<Long, String> dataSourceIdToNameMap;
 
     private final SleuthkitCase sleuthkitCase;
@@ -67,7 +67,7 @@ abstract class CommonFilesMetaData {
         }
     }
 
-    Map<AbstractFile, List<AbstractFile>> getFilesMap() {
+    Map<String, List<AbstractFile>> getFilesMap() {
         return Collections.unmodifiableMap(this.parentNodes);
     }
 
@@ -86,24 +86,16 @@ abstract class CommonFilesMetaData {
 
         List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere(getSqlWhereClause());
 
-        AbstractFile previousFile = null;
-        List<AbstractFile> children = new ArrayList<>();
-
-        String previousMd5 = "";
-
         for (AbstractFile file : files) {
 
             String currentMd5 = file.getMd5Hash();
-            if (currentMd5.equals(previousMd5)) {
-                children.add(file);
+            
+            if(parentNodes.containsKey(currentMd5)){
+                parentNodes.get(currentMd5).add(file);
             } else {
-                if (previousFile != null) {
-                    this.parentNodes.put(previousFile, children);
-                }
-                previousMd5 = currentMd5;
-                previousFile = file;
-                children.clear();
+                List<AbstractFile> children = new ArrayList<>();
                 children.add(file);
+                parentNodes.put(currentMd5, children);
             }
         }
         
@@ -125,7 +117,7 @@ abstract class CommonFilesMetaData {
      * @param t
      * @return 
      */
-    List<AbstractFile> getChildrenForFile(AbstractFile t) {
-        return this.parentNodes.get(t);
+    List<AbstractFile> getChildrenForFile(String md5) {
+        return this.parentNodes.get(md5);
     }
 }
