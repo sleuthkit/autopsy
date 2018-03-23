@@ -525,7 +525,7 @@ public final class IngestJobSettings {
      * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
-        String fileName = factory.getClass().getCanonicalName() + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        String fileName =  FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }
@@ -564,7 +564,7 @@ public final class IngestJobSettings {
      * @param settings The ingest job settings for the ingest module
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
-        String moduleSettingsFilePath = Paths.get(this.moduleSettingsFolderPath, FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + MODULE_SETTINGS_FILE_EXT).toString();
+        String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(moduleSettingsFilePath))) {
             out.writeObject(settings);
         } catch (IOException ex) {
