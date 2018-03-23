@@ -113,6 +113,10 @@ ingest to be added to the Interesting Artifacts list in that currently open case
 If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its
 notable status in the Central Repository.
 
+If you would like to prevent the Interesting Items from being created in a particular case, you can disable the flagging through the run time ingest properties. Note that this only disables the Interesting Item results - all files and artifacts are still added to the central repository.
+
+\image html central_repo_disable_flagging.png
+
 \section cr_viewing_results Viewing Results
 
 Results from enabling a central repository and running the Correlation Engine Ingest Module can be seen in two places:
