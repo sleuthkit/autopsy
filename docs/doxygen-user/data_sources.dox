@@ -8,7 +8,6 @@ Autopsy supports four types of data sources:
 - Local Disk: Local storage device (local drive, USB-attached drive, etc.).  (see \ref ds_local)
 - Logical Files: Local files or folders. (see \ref ds_log)
 - Unallocated Space Image Files: Any type of file that does not contain a file system but you want to run through ingest (see \ref ds_unalloc)
-- Memory Image File: A memory dump. (see \ref ds_memory)
 
 \section ds_add Adding a Data Source
 
@@ -109,9 +108,5 @@ To add unallocated space image files:
 -# Choose "Unallocated Space Image File" from the data source types.
 -# Browse to the file.
 -# Choose whether to break the image up into chunks. Breaking the image up will give better performance since the chunks can be processed in parallel,  but there is a chance that keywords or carved files that span chunk boundaries will be missed.
-
-\section ds_memory Adding a Memory Image File
-
-
 
 */
