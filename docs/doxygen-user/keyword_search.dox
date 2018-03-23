@@ -49,7 +49,7 @@ The user can also use the String Viewer first and try different script/language 
 \image html keyword-search-configuration-dialog-general.PNG
 
 ### NIST NSRL Support
-The hash database ingest service can be configured to use the NIST NSRL hash database of known files. The keyword search advanced configuration dialog "General" tab contains an option to skip keyword indexing and search on files that have previously marked as "known" and uninteresting files. Selecting this option can greatly reduce size of the index and improve ingest performance. In most cases, user does not need to keyword search for "known" files.
+The hash lookup ingest service can be configured to use the NIST NSRL hash set of known files. The keyword search advanced configuration dialog "General" tab contains an option to skip keyword indexing and search on files that have previously marked as "known" and uninteresting files. Selecting this option can greatly reduce size of the index and improve ingest performance. In most cases, user does not need to keyword search for "known" files.
 
 ### Result update frequency during ingest
 To control how frequently searches are executed during ingest, the user can adjust the timing setting available in the keyword search advanced configuration dialog "General" tab. Setting the number of minutes lower will result in more frequent index updates and searches being executed and the user will be able to see results more in real-time. However, more frequent updates can affect the overall performance, especially on lower-end systems, and can potentially lengthen the overall time needed for the ingest to complete.
