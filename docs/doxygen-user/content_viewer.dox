@@ -1,27 +1,44 @@
 /*! \page content_viewer_page Content Viewer
 
-The Content Viewer lives in the lower right-hand side of the Autopsy main screen and show pictures, video, hex, text, extracted strings, metadata, etc. They are enabled when you select a file in the file list above it.
+The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is enabled when you select an entry in the \ref ui_results.
 
-The Content Viewer is context-aware, meaning it will present different views of the content based on the type of file selected. For example, a .JPG would show up as a picture, a text file would show up as text, and a .bin file would show up as hex output.
+The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
 
-The screenshots below show some examples of content viewers in action.
-<br>
-\image html content-viewer-1.PNG
-<br>
-<br>
-\image html content-viewer-2.PNG
-<br>
-<br>
-\image html content-viewer-3.PNG
-<br>
-<br>
-\image html content-viewer-4.PNG
-<br>
-<br>
-\image html content-viewer-5.PNG
-<br>
-<br>
-\image html central_repo_content_viewer.png
-Note that the \ref central_repo_page must be enabled to use the Other Data Sources tab.
-<br>
+\image html content_viewer_options_panel.png
+
+When a Result type is selected in the Result Viewer (as opposed to a file), most of the tabs will correspond to the file associated with the result and not the result itself. For example, when selecting a Keyword Hit, the "Hex", "Strings", and "File Metadata" tabs will show data from the file where the keyword was found. The descriptions below will generally assume a file has been selected, but most also apply when we have a file associated with a selected result.
+
+\section cv_hex Hex
+
+The Hex tab is nearly always available and shows the contents of the file.
+
+\image html content_viewer_hex.png
+
+\section cv_strings Strings
+
+The Strings tab shows all text strings found in the file. Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
+
+\image html content_viewer_strings_cyrillic.png
+
+\section cv_app Application
+
+\section cv_indexed_text Indexed Text
+
+\section cv_message Message
+
+The Message tab shows details of emails and SMS messages. 
+
+\image html content_viewer_message.png
+
+\section cv_metadata File Metadata
+
+\section cv_results Results
+
+\section cv_other_occurrences Other Occurrences
+
+The Other Occurrences tab shows what other cases/data sources this file or result has appeared in. The \ref central_repo_page must be enabled to access this tab. See the \ref cr_content_viewer section for more information.
+
+\image html content_viewer_other_occurrences.png
+
+
 */
