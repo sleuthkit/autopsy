@@ -81,7 +81,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         this.dataResultPanel = new DataResultPanel(title, isMain);
         initComponents();
         customizeComponent(isMain, title);
-    }
+    }    
 
     /**
      * Create a new, custom data result top component, in addition to the
@@ -119,6 +119,10 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         activeComponentIds.add(title);
     }
 
+    public void enableTreeMode(){
+        this.dataResultPanel.enableTreeMode();
+    }
+    
     /**
      * Initialize previously created tc instance with additional data
      *
