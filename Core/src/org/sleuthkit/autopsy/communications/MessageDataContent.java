@@ -25,7 +25,12 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 
 /**
  * Extends MessageContentViewer so that it implements DataContent and can be set
- * as the only ContentViewer for a DataResultPanel
+ * as the only ContentViewer for a DataResultPanel. In addition it provides an
+ * ExplorerManager.
+ *
+ * @see org.sleuthkit.autopsy.timeline.DataContentExplorerPanel for another
+ * solution to a very similar problem.
+ *
  */
 final class MessageDataContent extends MessageContentViewer implements DataContent, ExplorerManager.Provider {
 

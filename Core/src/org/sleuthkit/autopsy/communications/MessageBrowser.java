@@ -50,9 +50,46 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private final DataResultPanel messagesResultPanel;
     /* lookup that will be exposed through the (Global Actions Context) */
     private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
-    /* Listener that keeps the proxyLookup in sync with the focused area of the
-     * UI. */
-    private final FocusPropertyListener focusPropertyListener = new FocusPropertyListener();
+
+    /**
+     * Listener that keeps the proxyLookup in sync with the focused area of the
+     * UI.
+     *
+     * Since the embedded MessageContentViewer (attachments panel) is not in its
+     * own TopComponenet, its selection does not get proxied into the Global
+     * Actions Context (GAC), and many of the available actions don't work on
+     * it. Further, we can't put the selection from both the Messages table and
+     * the Attachments table in the GAC because they could both include
+     * AbstractFiles, muddling the selection seen by the actions. Instead,
+     * depending on where the focus is in the window, we want to put different
+     * Content in the Global Actions Context to be picked up by, e.g., the
+     * tagging actions. The best way I could figure to do this was to listen to
+     * all focus events and swap out what is in the lookup appropriately. An
+     * alternative to this would be to investigate using the ContextAwareAction
+     * interface.
+     *
+     * @see org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a similar
+     * situation and a similar solution.
+     */
+    private final PropertyChangeListener focusPropertyListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(final PropertyChangeEvent focusEvent) {
+            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                if (newFocusOwner != null) {
+                    if (isDescendingFrom(newFocusOwner, messageDataContent)) {
+                        //if the focus owner is within the MessageContentViewer ( the attachments table)
+                        proxyLookup.setNewLookups(createLookup(messageDataContent.getExplorerManager(), getActionMap()));
+                    } else if (isDescendingFrom(newFocusOwner, messagesResultPanel)) {
+                        //... or if it is within the Messages table.
+                        proxyLookup.setNewLookups(createLookup(gacExplorerManager, getActionMap()));
+                    }
+                }
+            }
+        }
+    };
 
     /**
      * Constructs the right hand side of the Communications Visualization Tool
@@ -178,38 +215,4 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     private javax.swing.JSplitPane splitPane;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Since the embedded MessageContentViewer (attachments panel) is not in its
-     * own TopComponenet, its selection does not get proxied into the Global
-     * Actions Context (GAC), and many of the available actions don't work on
-     * it. Further, we can't put the selection from both the Messages table and
-     * the Attachments table in the GAC because they could include have
-     * AbstractFiles, muddling the selection seen by the actions. Instead,
-     * depending on where the focus is in the window, we want to put different
-     * Content in the Global Actions Context to be picked up by, e.g., the
-     * tagging actions. The best way I could figure to do this was to listen to
-     * all focus events and swap out what is in the lookup appropriately. An
-     * alternative to this would be to investigate using the ContextAwareAction
-     * interface.
-     */
-    private class FocusPropertyListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(final PropertyChangeEvent focusEvent) {
-
-            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
-                final Component newFocusOwner = (Component) focusEvent.getNewValue();
-
-                if (newFocusOwner != null) {
-                    if (isDescendingFrom(newFocusOwner, messageDataContent)) {
-                        //if the focus owner is within the MessageContentViewer ( the attachments table)
-                        proxyLookup.setNewLookups(createLookup(messageDataContent.getExplorerManager(), getActionMap()));
-                    } else if (isDescendingFrom(newFocusOwner, messagesResultPanel)) {
-                        //... or if it is within the Messages table.
-                        proxyLookup.setNewLookups(createLookup(gacExplorerManager, getActionMap()));
-                    }
-                }
-            }
-        }
-    }
 }
