@@ -58,7 +58,8 @@
       <!-- Disabled because we have lots of undocumented fields -->
       <property name="fieldCommentRequirement" value="Ignored"/>
       <!-- Disabled because we don't require comments on overrides of public fields -->
-      <property name="publicMethodCommentRequirement" value="Required"/>
+      <property name="protectedMethodCommentRequirement" value="Ignored"/>
+      <property name="publicMethodCommentRequirement" value="Ignored"/>
       <!--<property name="methodWithOverrideCommentRequirement" value="Unwanted"/>-->
     </properties>
   </rule>
@@ -243,7 +244,7 @@
   <rule ref="rulesets/java/optimizations.xml/AvoidArrayLoops"/>
   <rule ref="rulesets/java/optimizations.xml/UnnecessaryWrapperObjectCreation"/>
   <rule ref="rulesets/java/optimizations.xml/AddEmptyString"/>
-  <rule ref="rulesets/java/optimizations.xml/RedundantFieldInitializer"/>
+  <!--<rule ref="rulesets/java/optimizations.xml/RedundantFieldInitializer"/>-->
   <rule ref="rulesets/java/optimizations.xml/PrematureDeclaration"/>
   <rule ref="rulesets/java/strictexception.xml/SignatureDeclareThrowsException"/>
   <rule ref="rulesets/java/strictexception.xml/AvoidCatchingThrowable"/>

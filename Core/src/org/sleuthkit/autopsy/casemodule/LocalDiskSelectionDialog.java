@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 /**
  * Local disk selection dialog for loading a disk into the LocalDiskPanel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LocalDiskSelectionDialog extends JDialog {
 
     private static final Logger logger = Logger.getLogger(LocalDiskSelectionDialog.class.getName());
