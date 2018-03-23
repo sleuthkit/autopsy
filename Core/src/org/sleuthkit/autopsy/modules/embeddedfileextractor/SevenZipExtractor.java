@@ -560,8 +560,15 @@ class SevenZipExtractor {
             //initialize tree hierarchy to keep track of unpacked file structure
             SevenZipExtractor.UnpackedTree unpackedTree = new SevenZipExtractor.UnpackedTree(moduleDirRelative + "/" + uniqueArchiveFileName, archiveFile);
 
-            long freeDiskSpace = services.getFreeDiskSpace();
-
+            long freeDiskSpace;
+            try {
+                freeDiskSpace  = services.getFreeDiskSpace();
+            }
+            catch(NullPointerException ex) {            
+                //If ingest has not been run at least once getFreeDiskSpace() will throw a null pointer exception
+                //currently getFreeDiskSpace always returns DISK_FREE_SPACE_UNKNOWN
+                 freeDiskSpace = IngestMonitor.DISK_FREE_SPACE_UNKNOWN;
+            }
             //unpack and process every item in archive
             int itemNumber = 0;
 
