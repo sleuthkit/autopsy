@@ -387,7 +387,11 @@ public final class CoordinationService {
      * @return
      */
     private String getFullyQualifiedNodePath(CategoryNode category, String nodePath) {
-        return categoryNodeToPath.get(category.getDisplayName()) + "/" + nodePath.toUpperCase();
+        if(nodePath.startsWith("/")){
+            return categoryNodeToPath.get(category.getDisplayName()) + nodePath.toUpperCase();
+        }else{
+            return categoryNodeToPath.get(category.getDisplayName()) + "/" + nodePath.toUpperCase();
+        }
     }
 
     /**
