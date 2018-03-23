@@ -18,19 +18,24 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
+import java.util.logging.Level;
 import javafx.beans.binding.BooleanBinding;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public class ZoomToEvents extends Action {
 
+    private static final Logger logger = Logger.getLogger(ZoomToEvents.class.getName());
     private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png", 16, 16, true, true); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomToEvents.action.text=Zoom to events",
@@ -40,7 +45,12 @@ public class ZoomToEvents extends Action {
         setLongText(Bundle.ZoomToEvents_longText());
         setGraphic(new ImageView(MAGNIFIER_OUT));
         setEventHandler(actionEvent -> {
-            controller.zoomOutToActivity();
+            try {
+                controller.zoomOutToActivity();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error invoking ZoomToEvents action", ex);
+                new Alert(Alert.AlertType.ERROR, "Error zomming").showAndWait();
+            }
         });
 
         //disable action when the current time range already encompases the entire case.

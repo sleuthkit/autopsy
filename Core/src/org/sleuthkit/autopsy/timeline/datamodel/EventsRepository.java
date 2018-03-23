@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.db;
+package org.sleuthkit.autopsy.timeline.datamodel;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -48,6 +48,7 @@ import javafx.collections.ObservableMap;
 import javafx.concurrent.Worker;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
@@ -57,18 +58,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.CancellationProgressTask;
-import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.FileSystemTypes;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.RootEventType;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TagNameFilter;
-import org.sleuthkit.autopsy.timeline.filters.TagsFilter;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -76,11 +66,23 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.timeline.ArtifactEventType;
+import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.FileSystemTypes;
+import org.sleuthkit.datamodel.timeline.RootEventType;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
+import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 
 /**
- * Provides higher-level public API (over EventsDB) to access events. In theory
+ * Provides higher-level public API (over TimelineManager) to access events. In theory
  * this insulates the rest of the timeline module form the details of the db
  * implementation. Since there are no other implementations of the database or
  * clients of this class, and no Java Interface defined yet, in practice this
@@ -89,7 +91,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * Concurrency Policy:
  *
- * Since almost everything just delegates to the EventDB, which is internally
+ * Since almost everything just delegates to the TimelineManager, which is internally
  * synchronized, we only have to worry about rebuildRepository() which we
  * synchronize on our intrinsic lock.
  *
@@ -100,7 +102,7 @@ public class EventsRepository {
 
     private final Executor workerExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("eventrepository-worker-%d").build()); //NON-NLS
     private DBPopulationWorker dbWorker;
-    private final EventDB eventDB;
+    private final TimelineManager eventManager;
     private final Case autoCase;
     private final FilteredEventsModel modelInstance;
 
@@ -130,8 +132,8 @@ public class EventsRepository {
         return hashSetMap;
     }
 
-    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter) {
-        return eventDB.getBoundingEventsInterval(timeRange, filter);
+    public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
+        return eventManager.getBoundingEventsInterval(timeRange, filter, timeZone);
     }
 
     /**
@@ -142,25 +144,49 @@ public class EventsRepository {
         return modelInstance;
     }
 
-    public EventsRepository(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) {
+    public EventsRepository(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
-        //TODO: we should check that case is open, or get passed a case object/directory -jm
-        this.eventDB = EventDB.getEventDB(autoCase);
+        this.eventManager = autoCase.getSleuthkitCase().getTimelineManager();
         populateFilterData(autoCase.getSleuthkitCase());
         idToEventCache = CacheBuilder.newBuilder()
                 .maximumSize(5000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(CacheLoader.from(eventDB::getEventById));
+                .build(new CacheLoader<Long, SingleEvent>() {
+                    @Override
+                    public SingleEvent load(Long eventID) throws Exception {
+                        return eventManager.getEventById(eventID);
+                    }
+                });
         eventCountsCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(CacheLoader.from(eventDB::countEventsByType));
+                .build(new CacheLoader<ZoomParams, Map<EventType, Long>>() {
+                    @Override
+                    public Map<EventType, Long> load(ZoomParams params) throws Exception {
+                        return eventManager.countEventsByType(params);
+                    }
+                });
         eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES
-                ).build(CacheLoader.from(eventDB::getEventStripes));
-        maxCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMaxTime));
-        minCache = CacheBuilder.newBuilder().build(CacheLoader.from(eventDB::getMinTime));
+                ).build(new CacheLoader<ZoomParams, List<EventStripe>>() {
+                    @Override
+                    public List<EventStripe> load(ZoomParams params) throws Exception {
+                        return eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone());
+                    }
+                });
+        maxCache = CacheBuilder.newBuilder().build(new CacheLoader<Object, Long>() {
+            @Override
+            public Long load(Object ignored) throws TskCoreException {
+                return eventManager.getMaxTime();
+            }
+        });
+        minCache = CacheBuilder.newBuilder().build(new CacheLoader<Object, Long>() {
+            @Override
+            public Long load(Object ignored) throws TskCoreException {
+                return eventManager.getMinTime();
+            }
+        });
         this.modelInstance = new FilteredEventsModel(this, currentStateProperty);
     }
 
@@ -204,8 +230,8 @@ public class EventsRepository {
         return eventCountsCache.getUnchecked(params);
     }
 
-    synchronized public int countAllEvents() {
-        return eventDB.countAllEvents();
+    synchronized public int countAllEvents() throws TskCoreException {
+        return eventManager.countAllEvents();
     }
 
     /**
@@ -223,8 +249,8 @@ public class EventsRepository {
      * @return A List of event IDs for the events that are derived from the
      *         given file.
      */
-    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) {
-        return eventDB.getEventIDsForFile(file, includeDerivedArtifacts);
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
+        return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
     }
 
     /**
@@ -236,8 +262,8 @@ public class EventsRepository {
      * @return A List of event IDs for the events that are derived from the
      *         given artifact.
      */
-    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
-        return eventDB.getEventIDsForArtifact(artifact);
+    public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) throws TskCoreException {
+        return eventManager.getEventIDsForArtifact(artifact);
     }
 
     private void invalidateCaches() {
@@ -248,8 +274,8 @@ public class EventsRepository {
         idToEventCache.invalidateAll();
     }
 
-    public List<Long> getEventIDs(Interval timeRange, RootFilter filter) {
-        return eventDB.getEventIDs(timeRange, filter);
+    public List<Long> getEventIDs(Interval timeRange, RootFilter filter) throws TskCoreException {
+        return eventManager.getEventIDs(timeRange, filter);
     }
 
     /**
@@ -263,16 +289,16 @@ public class EventsRepository {
      *
      * @return A List of combined events, sorted by timestamp.
      */
-    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) {
-        return eventDB.getCombinedEvents(timeRange, filter);
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) throws TskCoreException {
+        return eventManager.getCombinedEvents(timeRange, filter);
     }
 
-    public Interval getSpanningInterval(Collection<Long> eventIDs) {
-        return eventDB.getSpanningInterval(eventIDs);
+    public Interval getSpanningInterval(Collection<Long> eventIDs) throws TskCoreException {
+        return eventManager.getSpanningInterval(eventIDs);
     }
 
-    public boolean hasNewColumns() {
-        return eventDB.hasNewColumns();
+    public boolean hasNewColumns() throws TskCoreException {
+        return eventManager.hasNewColumns();
     }
 
     /**
@@ -283,8 +309,8 @@ public class EventsRepository {
      *
      * @return a map from tagname displayname to count of applications
      */
-    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) {
-        return eventDB.getTagCountsByTagName(eventIDsWithTags);
+    public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) throws TskCoreException {
+        return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
     /**
@@ -293,13 +319,13 @@ public class EventsRepository {
      *
      * @param skCase
      */
-    synchronized private void populateFilterData(SleuthkitCase skCase) {
+    synchronized private void populateFilterData(SleuthkitCase skCase) throws TskCoreException {
 
-        for (Map.Entry<Long, String> hashSet : eventDB.getHashSetNames().entrySet()) {
+        for (Map.Entry<Long, String> hashSet : eventManager.getHashSetNames().entrySet()) {
             hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
         }
         //because there is no way to remove a datasource we only add to this map.
-        for (Long id : eventDB.getDataSourceIDs()) {
+        for (Long id : eventManager.getDataSourceIDs()) {
             try {
                 datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
             } catch (TskCoreException ex) {
@@ -315,16 +341,16 @@ public class EventsRepository {
         }
     }
 
-    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag, EventDB.EventTransaction trans) {
-        Set<Long> updatedEventIDs = eventDB.addTag(objID, artifactID, tag, trans);
+    synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
+        Set<Long> updatedEventIDs = eventManager.addTag(objID, artifactID, tag);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
     }
 
-    synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) {
-        Set<Long> updatedEventIDs = eventDB.deleteTag(objID, artifactID, tagID, tagged);
+    synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
+        Set<Long> updatedEventIDs = eventManager.deleteTag(objID, artifactID, tagID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -352,15 +378,15 @@ public class EventsRepository {
      */
     public void syncTagsFilter(TagsFilter tagsFilter) {
         for (TagName t : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(t, autoCase));
+            tagsFilter.addSubFilter(new TagNameFilter(t));
         }
         for (TagNameFilter t : tagsFilter.getSubFilters()) {
             t.setDisabled(tagNames.contains(t.getTagName()) == false);
         }
     }
 
-    public boolean areFiltersEquivalent(RootFilter f1, RootFilter f2) {
-        return SQLHelper.getSQLWhere(f1).equals(SQLHelper.getSQLWhere(f2));
+    public boolean areFiltersEquivalent(RootFilter filter1, RootFilter filter2) {
+        return eventManager.getSQLWhere(filter1).equals(eventManager.getSQLWhere(filter2));
     }
 
     /**
@@ -509,49 +535,47 @@ public class EventsRepository {
             "progressWindow.msg.gatheringData=Gathering event data",
             "progressWindow.msg.commitingDb=Committing events database"})
         protected Void call() throws Exception {
-            EventDB.EventTransaction trans = null;
-
+            SleuthkitCase.CaseDbTransaction trans = eventManager.beginTransaction();
             if (dbPopulationMode == DBPopulationMode.FULL) {
                 //drop old db, and add back MAC and artifact events
                 logger.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
                 restartProgressHandle(Bundle.progressWindow_msg_gatheringData(), "", -1D, 1, true);
                 //reset database //TODO: can we do more incremental updates? -jm
-                eventDB.reInitializeDB();
+                eventManager.reInitializeDB();
                 //grab ids of all files
-                List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'" + 
-                        " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
+                List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"
+                        + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
                 final int numFiles = fileIDs.size();
 
-                trans = eventDB.beginTransaction();
-                insertMACTimeEvents(numFiles, fileIDs, trans);
-                insertArtifactDerivedEvents(trans);
+                insertMACTimeEvents(numFiles, fileIDs);
+                insertArtifactDerivedEvents();
             }
 
             //tags
             if (dbPopulationMode == DBPopulationMode.TAGS_ONLY) {
-                trans = eventDB.beginTransaction();
+                trans = eventManager.beginTransaction();
                 logger.log(Level.INFO, "dropping old tags"); // NON-NLS
-                eventDB.reInitializeTags();
+                eventManager.reInitializeTags();
             }
 
             logger.log(Level.INFO, "updating content tags"); // NON-NLS
             List<ContentTag> contentTags = tagsManager.getAllContentTags();
             int currentWorkTotal = contentTags.size();
             restartProgressHandle(Bundle.progressWindow_msg_refreshingFileTags(), "", 0D, currentWorkTotal, true);
-            insertContentTags(currentWorkTotal, contentTags, trans);
+            insertContentTags(currentWorkTotal, contentTags);
 
             logger.log(Level.INFO, "updating artifact tags"); // NON-NLS
             List<BlackboardArtifactTag> artifactTags = tagsManager.getAllBlackboardArtifactTags();
             currentWorkTotal = artifactTags.size();
             restartProgressHandle(Bundle.progressWindow_msg_refreshingResultTags(), "", 0D, currentWorkTotal, true);
-            insertArtifactTags(currentWorkTotal, artifactTags, trans);
+            insertArtifactTags(currentWorkTotal, artifactTags);
 
             logger.log(Level.INFO, "committing db"); // NON-NLS
             Platform.runLater(() -> cancellable.set(false));
             restartProgressHandle(Bundle.progressWindow_msg_commitingDb(), "", -1D, 1, false);
-            eventDB.commitTransaction(trans);
+            eventManager.commitTransaction(trans);
 
-            eventDB.analyze();
+            eventManager.analyze();
             populateFilterData(skCase);
             invalidateCaches();
 
@@ -562,29 +586,29 @@ public class EventsRepository {
             return null;
         }
 
-        private void insertArtifactTags(int currentWorkTotal, List<BlackboardArtifactTag> artifactTags, EventDB.EventTransaction trans) {
+        private void insertArtifactTags(int currentWorkTotal, List<BlackboardArtifactTag> artifactTags) throws TskCoreException {
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelRequested()) {
                     break;
                 }
                 updateProgress(i, currentWorkTotal);
                 BlackboardArtifactTag artifactTag = artifactTags.get(i);
-                eventDB.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag, trans);
+                eventManager.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
             }
         }
 
-        private void insertContentTags(int currentWorkTotal, List<ContentTag> contentTags, EventDB.EventTransaction trans) {
+        private void insertContentTags(int currentWorkTotal, List<ContentTag> contentTags) throws TskCoreException {
             for (int i = 0; i < currentWorkTotal; i++) {
                 if (isCancelRequested()) {
                     break;
                 }
                 updateProgress(i, currentWorkTotal);
                 ContentTag contentTag = contentTags.get(i);
-                eventDB.addTag(contentTag.getContent().getId(), null, contentTag, trans);
+                eventManager.addTag(contentTag.getContent().getId(), null, contentTag);
             }
         }
 
-        private void insertArtifactDerivedEvents(EventDB.EventTransaction trans) {
+        private void insertArtifactDerivedEvents() {
             //insert artifact based events
             //TODO: use (not-yet existing api) to grab all artifacts with timestamps, rather than the hardcoded lists in EventType -jm
             for (EventType type : RootEventType.allTypes) {
@@ -593,13 +617,13 @@ public class EventsRepository {
                 }
                 //skip file_system events, they are already handled above.
                 if (type instanceof ArtifactEventType) {
-                    populateEventType((ArtifactEventType) type, trans);
+                    populateEventType((ArtifactEventType) type);
                 }
             }
         }
 
         @NbBundle.Messages("progressWindow.msg.populateMacEventsFiles=Populating MAC time events for files")
-        private void insertMACTimeEvents(final int numFiles, List<Long> fileIDs, EventDB.EventTransaction trans) {
+        private void insertMACTimeEvents(final int numFiles, List<Long> fileIDs) {
             restartProgressHandle(Bundle.progressWindow_msg_populateMacEventsFiles(), "", 0D, numFiles, true);
             for (int i = 0; i < numFiles; i++) {
                 if (isCancelRequested()) {
@@ -612,7 +636,7 @@ public class EventsRepository {
                     if (isNull(f)) {
                         logger.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                     } else {
-                        insertEventsForFile(f, trans);
+                        insertEventsForFile(f);
                         updateProgress(i, numFiles);
                         updateMessage(f.getName());
                     }
@@ -622,7 +646,7 @@ public class EventsRepository {
             }
         }
 
-        private void insertEventsForFile(AbstractFile f, EventDB.EventTransaction trans) throws TskCoreException {
+        private void insertEventsForFile(AbstractFile f) throws TskCoreException {
             //gather time stamps into map
             EnumMap<FileSystemTypes, Long> timeMap = new EnumMap<>(FileSystemTypes.class);
             timeMap.put(FileSystemTypes.FILE_CREATED, f.getCrtime());
@@ -654,9 +678,9 @@ public class EventsRepository {
                 for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
                     if (timeEntry.getValue() > 0) {
                         // if the time is legitimate ( greater than zero ) insert it
-                        eventDB.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
+                        eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
                                 datasourceID, f.getId(), null, uniquePath, medDesc,
-                                shortDesc, known, hashSets, tags, trans);
+                                shortDesc, known, hashSets, tags);
                     }
                 }
             }
@@ -681,11 +705,11 @@ public class EventsRepository {
         /**
          * populate all the events of one type
          *
-         * @param type the type to populate
-         * @param trans   the db transaction to use
+         * @param type  the type to populate
+         * @param trans the db transaction to use
          */
         @NbBundle.Messages({"# {0} - event type ", "progressWindow.populatingXevents=Populating {0} events"})
-        private void populateEventType(final ArtifactEventType type, EventDB.EventTransaction trans) {
+        private void populateEventType(final ArtifactEventType type) {
             try {
                 //get all the blackboard artifacts corresponding to the given event sub_type
                 final ArrayList<BlackboardArtifact> blackboardArtifacts = skCase.getBlackboardArtifacts(type.getArtifactTypeID());
@@ -694,7 +718,7 @@ public class EventsRepository {
                 for (int i = 0; i < numArtifacts; i++) {
                     try {
                         //for each artifact, extract the relevant information for the descriptions
-                        insertEventForArtifact(type, blackboardArtifacts.get(i), trans);
+                        insertEventForArtifact(type, blackboardArtifacts.get(i));
                         updateProgress(i, numArtifacts);
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "There was a problem inserting event for artifact: " + blackboardArtifacts.get(i).getArtifactID(), ex); // NON-NLS
@@ -705,7 +729,7 @@ public class EventsRepository {
             }
         }
 
-        private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart, EventDB.EventTransaction trans) throws TskCoreException {
+        private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart) throws TskCoreException {
             ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
 
             // if the time is legitimate ( greater than zero ) insert it into the db
@@ -719,7 +743,7 @@ public class EventsRepository {
                 String fullDescription = eventDescription.getFullDescription();
                 String medDescription = eventDescription.getMedDescription();
                 String shortDescription = eventDescription.getShortDescription();
-                eventDB.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags, trans);
+                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags);
             }
         }
     }

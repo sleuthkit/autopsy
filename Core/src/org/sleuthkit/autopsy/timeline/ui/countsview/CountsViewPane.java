@@ -59,9 +59,9 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
  * FXML Controller class for a StackedBarChart<String,Number> based
@@ -376,9 +376,9 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
             }
             FilteredEventsModel eventsModel = getEventsModel();
 
-            final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(eventsModel.getTimeRange());
+            final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(eventsModel.getTimeRange(), TimeLineController.getJodaTimeZone());
             getChart().setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
-            List<Interval> intervals = rangeInfo.getIntervals();
+            List<Interval> intervals = rangeInfo.getIntervals(TimeLineController.getJodaTimeZone());
 
             //clear old data, and reset ranges and series
             resetView(Lists.transform(intervals, rangeInfo::formatForTick));

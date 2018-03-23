@@ -30,10 +30,10 @@ import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
-import org.sleuthkit.autopsy.timeline.filters.TextFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
+import org.sleuthkit.datamodel.timeline.filters.TextFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented

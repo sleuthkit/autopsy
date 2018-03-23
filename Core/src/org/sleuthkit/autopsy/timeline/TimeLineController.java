@@ -54,6 +54,7 @@ import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import static javafx.concurrent.Worker.State.FAILED;
 import static javafx.concurrent.Worker.State.SUCCEEDED;
+import javafx.scene.control.Alert;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.swing.SwingUtilities;
@@ -63,6 +64,7 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -81,20 +83,21 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
-import org.sleuthkit.autopsy.timeline.db.EventsRepository;
+import org.sleuthkit.autopsy.timeline.datamodel.EventsRepository;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
-import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
-import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.IntervalUtils;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.TimeUnits;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -116,7 +119,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
     "TimeLinecontroller.updateNowQuestion=Do you want to update the events database now?"})
 public class TimeLineController {
 
-    private static final Logger LOGGER = Logger.getLogger(TimeLineController.class.getName());
+    private static final Logger logger = Logger.getLogger(TimeLineController.class.getName());
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
@@ -292,7 +295,7 @@ public class TimeLineController {
             MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
                     stale ? Bundle.TimeLineController_setEventsDBStale_errMsgStale()
                             : Bundle.TimeLineController_setEventsDBStale_errMsgNotStale());
-            LOGGER.log(Level.SEVERE, "Error marking the timeline db as stale.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error marking the timeline db as stale.", ex); //NON-NLS
         }
     }
 
@@ -328,7 +331,7 @@ public class TimeLineController {
         return viewMode.get();
     }
 
-    public TimeLineController(Case autoCase) throws IOException {
+    public TimeLineController(Case autoCase) throws TskCoreException {
         this.autoCase = autoCase;
         this.perCaseTimelineProperties = new PerCaseTimelineProperties(autoCase);
         eventsDBStale.set(perCaseTimelineProperties.isDBStale());
@@ -354,7 +357,13 @@ public class TimeLineController {
         historyManager.advance(InitialZoomState);
 
         //clear the selected events when the view mode changes
-        viewMode.addListener(observable -> selectEventIDs(Collections.emptySet()));
+        viewMode.addListener(observable -> {
+            try {
+                selectEventIDs(Collections.emptySet());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error clearing the timeline selection.", ex);
+            }
+        });
     }
 
     /**
@@ -368,8 +377,8 @@ public class TimeLineController {
         pushFilters(filteredEvents.getDefaultFilter());
     }
 
-    public void zoomOutToActivity() {
-        Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval();
+    public void zoomOutToActivity() throws TskCoreException {
+        Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval(getJodaTimeZone());
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
@@ -395,18 +404,16 @@ public class TimeLineController {
      * either file or artifact is not null the user will be prompted to choose a
      * derived event and time range to show in the Timeline List View.
      *
-     * @param repoBuilder    A Function from Consumer<Worker.State> to
-     *                       CancellationProgressTask<?>. Ie a function that
-     *                       given a worker state listener, produces a task with
-     *                       that listener attached. Expected to be a method
-     *                       reference to either
-     *                       EventsRepository.rebuildRepository() or
-     *                       EventsRepository.rebuildTags()
+     * @param repoBuilder A Function from Consumer<Worker.State> to
+     * CancellationProgressTask<?>. Ie a function that given a worker state
+     * listener, produces a task with that listener attached. Expected to be a
+     * method reference to either EventsRepository.rebuildRepository() or
+     * EventsRepository.rebuildTags()
      * @param markDBNotStale After the repo is rebuilt should it be marked not
-     *                       stale
-     * @param file           The AbstractFile from which to choose an event to
-     *                       show in the List View.
-     * @param artifact       The BlackboardArtifact to show in the List View.
+     * stale
+     * @param file The AbstractFile from which to choose an event to show in the
+     * List View.
+     * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
@@ -443,7 +450,7 @@ public class TimeLineController {
                             MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
                                     ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
                                             : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
-                            LOGGER.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
+                            logger.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
                         }
                         if (markDBNotStale) {
                             setEventsDBStale(false);
@@ -453,16 +460,27 @@ public class TimeLineController {
                             SwingUtilities.invokeLater(TimeLineController.this::showWindow);
                             TimeLineController.this.showFullRange();
                         } else {
-                            //prompt user to pick specific event and time range
-                            ShowInTimelineDialog showInTimelineDilaog =
-                                    (file == null)
-                                            ? new ShowInTimelineDialog(TimeLineController.this, artifact)
-                                            : new ShowInTimelineDialog(TimeLineController.this, file);
-                            Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
-                            dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
-                                SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                                showInListView(viewInTimelineRequestedEvent); //show requested event in list view
-                            });
+
+                            try {
+                                //prompt user to pick specific event and time range
+                                ShowInTimelineDialog showInTimelineDilaog = (file == null)
+                                        ? new ShowInTimelineDialog(TimeLineController.this, artifact)
+                                        : new ShowInTimelineDialog(TimeLineController.this, file);
+                                Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
+                                dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
+                                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                                    try {
+                                        showInListView(viewInTimelineRequestedEvent); //show requested event in list view
+                                    } catch (TskCoreException ex) {
+                                        logger.log(Level.SEVERE, "Error showing requested events in listview: " + viewInTimelineRequestedEvent, ex);
+                                        new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+                                    }
+                                });
+                            } catch (TskCoreException tskCoreException) {
+                                logger.log(Level.SEVERE, "Error showing Timeline " , tskCoreException);
+                                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+                            }
+
                         }
                         break;
                     case FAILED:
@@ -493,8 +511,8 @@ public class TimeLineController {
      * Rebuild the entire repo in the background, and show the timeline when
      * done.
      *
-     * @param file     The AbstractFile from which to choose an event to show in
-     *                 the List View.
+     * @param file The AbstractFile from which to choose an event to show in the
+     * List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -506,8 +524,8 @@ public class TimeLineController {
      * Drop the tags table and rebuild it in the background, and show the
      * timeline when done.
      *
-     * @param file     The AbstractFile from which to choose an event to show in
-     *                 the List View.
+     * @param file The AbstractFile from which to choose an event to show in the
+     * List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -529,10 +547,10 @@ public class TimeLineController {
      * ViewInTimelineRequestedEvent in the List View.
      *
      * @param requestEvent Contains the ID of the requested events and the
-     *                     timerange to show.
+     * timerange to show.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void showInListView(ViewInTimelineRequestedEvent requestEvent) {
+    private void showInListView(ViewInTimelineRequestedEvent requestEvent) throws TskCoreException {
         synchronized (filteredEvents) {
             setViewMode(ViewMode.LIST);
             selectEventIDs(requestEvent.getEventIDs());
@@ -563,8 +581,8 @@ public class TimeLineController {
      * Add the case and ingest listeners, prompt for rebuilding the database if
      * necessary, and show the timeline window.
      *
-     * @param file     The AbstractFile from which to choose an event to show in
-     *                 the List View.
+     * @param file The AbstractFile from which to choose an event to show in the
+     * List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -576,7 +594,14 @@ public class TimeLineController {
             Case.addPropertyChangeListener(caseListener);
             listeningToAutopsy = true;
         }
-        Platform.runLater(() -> promptForRebuild(file, artifact));
+        Platform.runLater(() -> {
+            try {
+                promptForRebuild(file, artifact);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error prompting for timeline rebuild.", ex);
+                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+            }
+        });
     }
 
     /**
@@ -585,12 +610,12 @@ public class TimeLineController {
      * confirms, rebuilds the database. Shows the timeline window when the
      * rebuild is done, or immediately if the rebuild is not confirmed.
      *
-     * @param file     The AbstractFile from which to choose an event to show in
-     *                 the List View.
+     * @param file The AbstractFile from which to choose an event to show in the
+     * List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void promptForRebuild(AbstractFile file, BlackboardArtifact artifact) {
+    private void promptForRebuild(AbstractFile file, BlackboardArtifact artifact) throws TskCoreException {
         //if there is an existing prompt or progressdialog, just show that
         if (promptDialogManager.bringCurrentDialogToFront()) {
             return;
@@ -626,7 +651,7 @@ public class TimeLineController {
      * The potential reasons are not necessarily orthogonal to each other.
      *
      * @return A list of reasons why the user might won't to rebuild the
-     *         database.
+     * database.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     @NbBundle.Messages({"TimeLineController.errorTitle=Timeline error.",
@@ -635,7 +660,7 @@ public class TimeLineController {
         "TimeLineController.rebuildReasons.outOfDate=The event data is out of date:  Not all events will be visible.",
         "TimeLineController.rebuildReasons.ingestWasRunning=The Timeline events database was previously populated while ingest was running:  Some events may be missing, incomplete, or inaccurate.",
         "TimeLineController.rebuildReasons.incompleteOldSchema=The Timeline events database was previously populated without incomplete information:  Some features may be unavailable or non-functional unless you update the events database."})
-    private List<String> getRebuildReasons() {
+    private List<String> getRebuildReasons() throws TskCoreException {
         ArrayList<String> rebuildReasons = new ArrayList<>();
 
         try {
@@ -645,7 +670,7 @@ public class TimeLineController {
             }
 
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Error determing the state of the timeline db. We will assume the it is out of date.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error determing the state of the timeline db. We will assume the it is out of date.", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.TimeLineController_errorTitle(),
                     Bundle.TimeLineController_outOfDate_errorMessage());
             rebuildReasons.add(Bundle.TimeLineController_rebuildReasons_outOfDateError());
@@ -666,7 +691,7 @@ public class TimeLineController {
      * around the middle of the currently viewed time range.
      *
      * @param period The period of time to show around the current center of the
-     *               view.
+     * view.
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
         synchronized (filteredEvents) {
@@ -726,7 +751,7 @@ public class TimeLineController {
      * @param timeRange The Interval to view.
      *
      * @return True if the interval was changed. False if the interval was the
-     *         same as the existing one and no change happened.
+     * same as the existing one and no change happened.
      */
     synchronized public boolean pushTimeRange(Interval timeRange) {
         //clamp timerange to case
@@ -821,7 +846,7 @@ public class TimeLineController {
      *
      * @param eventIDs The eventIDs to select
      */
-    synchronized public void selectEventIDs(Collection<Long> eventIDs) {
+    synchronized public void selectEventIDs(Collection<Long> eventIDs) throws TskCoreException {
         selectedTimeRange.set(filteredEvents.getSpanningInterval(eventIDs));
         selectedEventIDs.setAll(eventIDs);
     }
@@ -847,7 +872,7 @@ public class TimeLineController {
 
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, getTitle() + " Unexpected error", ex); //NON-NLS
+                    logger.log(Level.SEVERE, getTitle() + " Unexpected error", ex); //NON-NLS
                 }
             }
         };
@@ -915,7 +940,7 @@ public class TimeLineController {
      * Register the given object to receive events.
      *
      * @param o The object to register. Must implement public methods annotated
-     *          with Subscribe.
+     * with Subscribe.
      */
     synchronized public void registerForEvents(Object o) {
         eventbus.register(o);

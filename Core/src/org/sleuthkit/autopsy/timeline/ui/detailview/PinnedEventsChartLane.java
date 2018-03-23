@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import javafx.collections.SetChangeListener;
 import javafx.scene.chart.Axis;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  *

@@ -51,9 +51,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * Shows all EventBundles from the assigned DetailViewPane in a

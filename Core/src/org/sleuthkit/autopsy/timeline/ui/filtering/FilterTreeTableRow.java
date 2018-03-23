@@ -13,7 +13,7 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.datamodel.timeline.filters.Filter;
 
 /**
  *
