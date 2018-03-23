@@ -135,6 +135,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @SuppressWarnings("FinallyDiscardsException")
             protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
 
+                //TODO cleanup - encapsulate business logic
                 if(singleDataSource) {
                    Long selectedObjId = 0L;
                    for (Entry<Long, String> dataSource : dataSourceMap.entrySet()) {
@@ -162,13 +163,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    TopComponent component = DataResultTopComponent.createInstance(
-                            title,
-                            pathText,
-                            tableFilterWithDescendantsNode,
-                            metadata.getFilesMap().size());
-
-                    component.requestActive(); // make it the active top component
+                    DataResultTopComponent component = DataResultTopComponent.createInstance(title);
+                    
+                    component.enableTreeMode();
+                    
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, metadata.getFilesMap().size(), component);                    
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);

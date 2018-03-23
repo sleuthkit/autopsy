@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -31,7 +30,7 @@ import org.openide.util.NbBundle;
  * Represents a common files match - two or more files which appear to be the
  * same file and appear as children of this node.
  */
-public class CommonFileParentNode extends AbstractNode {
+public class CommonFileParentNode extends DisplayableItemNode {
 
     private final String md5Hash;
     private final int commonFileCount;
@@ -85,20 +84,41 @@ public class CommonFileParentNode extends AbstractNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, CommonFileParentNode node) {
-        map.put(CommonFileParentNode.CommonFileParentPropertyType.Md5Hash.toString(), StringUtils.defaultString(node.getMd5()));
-        map.put(CommonFileParentNode.CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
-        map.put(CommonFileParentNode.CommonFileParentPropertyType.DataSources.toString(), node.getDataSources());
+        map.put(CommonFileParentPropertyType.Name.toString(), "");
+        map.put(CommonFileParentPropertyType.Md5Hash.toString(), StringUtils.defaultString(node.getMd5()));
+        map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
+        map.put(CommonFileParentPropertyType.DataSources.toString(), node.getDataSources());
+        map.put(CommonFileParentPropertyType.DataSource.toString(), "");
+    }
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this); //TODO need to work on this
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+
+    @Override
+    public String getItemType() {
+        return getClass().getName();
     }
 
     @NbBundle.Messages({
+        "CommonFileParentPropertyType.nameColLbl=Name",
         "CommonFileParentPropertyType.instanceColLbl1=Instance Count",
         "CommonFileParentPropertyType.md5HashColLbl=MD5 Hash",
-        "CommonFileParentPropertyType.dataSourcesColLbl=Data Sources"})
+        "CommonFileParentPropertyType.dataSourcesColLbl=Data Sources",
+        "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {
 
+        Name(Bundle.CommonFileParentPropertyType_nameColLbl()),
         Md5Hash(Bundle.CommonFileParentPropertyType_md5HashColLbl()),
         InstanceCount(Bundle.CommonFileParentPropertyType_instanceColLbl1()),
-        DataSources(Bundle.CommonFileParentPropertyType_dataSourcesColLbl());
+        DataSources(Bundle.CommonFileParentPropertyType_dataSourcesColLbl()),
+        DataSource(Bundle.CommonFileParentPropertyType_dataSourcesColLbl());
 
         final private String displayString;
 

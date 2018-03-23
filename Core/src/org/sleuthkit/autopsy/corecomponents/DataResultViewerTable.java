@@ -44,6 +44,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -605,6 +607,26 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         super.clearComponent();
 
+    }
+
+    void enableTreeMode() {
+        this.outlineView.addPropertyColumn(title, title);   //TODO
+        
+        this.outlineView.addTreeExpansionListener(new TreeExpansionListener(){
+            @Override
+            public void treeExpanded(TreeExpansionEvent event) {
+                System.out.println(event.toString());
+            }
+
+            @Override
+            public void treeCollapsed(TreeExpansionEvent event) {
+                System.out.println(event.toString());
+            }
+        });
+        
+        for(Node node : this.currentRoot.getChildren().getNodes()){
+            this.outlineView.expandNode(node);
+        }
     }
 
     /**

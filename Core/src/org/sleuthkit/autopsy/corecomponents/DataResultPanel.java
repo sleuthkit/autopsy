@@ -527,6 +527,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         return explorerManager;
     }
 
+    void enableTreeMode() {
+        for(DataResultViewer viewer : this.resultViewers){
+            if(viewer instanceof DataResultViewerTable){
+                ((DataResultViewerTable)viewer).enableTreeMode();
+            }
+        }
+    }
+
     /**
      * Responds to node selection change events from the explorer manager.
      */
