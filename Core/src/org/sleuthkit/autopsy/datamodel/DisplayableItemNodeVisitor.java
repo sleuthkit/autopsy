@@ -108,6 +108,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(InterestingHits.RootNode ihrn);
 
     T visit(InterestingHits.SetNameNode ihsn);
+    
+    T visit (CommonFileParentNode cfpn);
 
     /*
      * Tags
@@ -177,6 +179,11 @@ public interface DisplayableItemNodeVisitor<T> {
          */
         protected abstract T defaultVisit(DisplayableItemNode c);
 
+        @Override
+        public T visit(CommonFileParentNode p){
+            return defaultVisit(p);
+        }
+        
         @Override
         public T visit(DirectoryNode dn) {
             return defaultVisit(dn);
