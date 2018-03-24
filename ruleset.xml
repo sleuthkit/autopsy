@@ -58,7 +58,7 @@
       <!-- Disabled because we have lots of undocumented fields -->
       <property name="fieldCommentRequirement" value="Ignored"/>
       <!-- Disabled because we don't require comments on overrides of public fields -->
-      <property name="publicMethodCommentRequirement" value="Required"/>
+      <property name="publicMethodCommentRequirement" value="Ignored"/>
       <!--<property name="methodWithOverrideCommentRequirement" value="Unwanted"/>-->
     </properties>
   </rule>
