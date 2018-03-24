@@ -49,14 +49,11 @@ final class IngestTasksScheduler {
     private static final int FAT_NTFS_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
     private static final Logger logger = Logger.getLogger(IngestTasksScheduler.class.getName());
     private static IngestTasksScheduler instance;
-    private final List<DataSourceIngestTask> queuedDataSourceTasks; // RJCTODO: Consider putting this in the queue class
-    private final List<DataSourceIngestTask> runningDataSourceTasks; // RJCTODO: Consider putting this in the queue class
-    private final DataSourceIngestTaskQueue dataSourceTaskQueueForIngestThreads;
+    private final DataSourceIngestTaskQueue dataSourceTaskQueue;
     private final TreeSet<FileIngestTask> rootFileTaskQueue;
     private final Deque<FileIngestTask> directoryFileTaskQueue;
     private final List<FileIngestTask> queuedFileTasks; // RJCTODO: Consider putting this in the queue class
-    private final List<FileIngestTask> runningFileTasks; // RJCTODO: Consider putting this in the queue class
-    private final FileIngestTaskQueue fileTaskQueueForIngestThreads;
+    private final FileIngestTaskQueue fileTaskQueue;
 
     /**
      * Gets the ingest tasks scheduler singleton.
@@ -72,14 +69,11 @@ final class IngestTasksScheduler {
      * Constructs an ingest tasks scheduler.
      */
     private IngestTasksScheduler() {
-        this.queuedDataSourceTasks = new LinkedList<>();
-        this.runningDataSourceTasks = new LinkedList<>();
-        this.dataSourceTaskQueueForIngestThreads = new DataSourceIngestTaskQueue();
+        this.dataSourceTaskQueue = new DataSourceIngestTaskQueue();
         this.rootFileTaskQueue = new TreeSet<>(new RootDirectoryTaskComparator());
         this.directoryFileTaskQueue = new LinkedList<>();
         this.queuedFileTasks = new LinkedList<>();
-        this.runningFileTasks = new LinkedList<>();
-        this.fileTaskQueueForIngestThreads = new FileIngestTaskQueue();
+        this.fileTaskQueue = new FileIngestTaskQueue();
     }
 
     /**
@@ -90,7 +84,7 @@ final class IngestTasksScheduler {
      * @return The queue.
      */
     IngestTaskQueue getDataSourceIngestTaskQueue() {
-        return this.dataSourceTaskQueueForIngestThreads;
+        return this.dataSourceTaskQueue;
     }
 
     /**
@@ -100,7 +94,7 @@ final class IngestTasksScheduler {
      * @return The queue.
      */
     IngestTaskQueue getFileIngestTaskQueue() {
-        return this.fileTaskQueueForIngestThreads;
+        return this.fileTaskQueue;
     }
 
     /**
@@ -132,14 +126,7 @@ final class IngestTasksScheduler {
     synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
         if (!job.isCancelled()) {
             DataSourceIngestTask task = new DataSourceIngestTask(job);
-            this.queuedDataSourceTasks.add(task);
-            try {
-                this.dataSourceTaskQueueForIngestThreads.add(task);
-            } catch (InterruptedException ex) {
-                IngestTasksScheduler.logger.log(Level.INFO, "Ingest cancelled while a data source ingest thread was blocked on a full queue", ex);
-                this.queuedDataSourceTasks.remove(task);
-                Thread.currentThread().interrupt();
-            }
+            this.dataSourceTaskQueue.add(task);
         }
     }
 
@@ -219,7 +206,7 @@ final class IngestTasksScheduler {
                 for (FileIngestTask newTask : newTasksForFileIngestThreads) {
                     try {
                         this.queuedFileTasks.add(newTask);
-                        this.fileTaskQueueForIngestThreads.addFirst(newTask);
+                        this.fileTaskQueue.addFirst(newTask);
                     } catch (InterruptedException ex) {
                         this.queuedFileTasks.remove(newTask);
                         IngestTasksScheduler.logger.log(Level.INFO, "Ingest cancelled while blocked on a full file ingest threads queue", ex);
@@ -243,7 +230,7 @@ final class IngestTasksScheduler {
      * @param task The completed task.
      */
     synchronized void notifyTaskCompleted(DataSourceIngestTask task) {
-        this.queuedDataSourceTasks.remove(task);
+        this.dataSourceTaskQueue.taskCompleted(task);
     }
 
     /**
@@ -266,10 +253,11 @@ final class IngestTasksScheduler {
      * @return True or false.
      */
     synchronized boolean tasksForJobAreCompleted(DataSourceIngestJob job) {
-        return !hasTasksForJob(this.queuedDataSourceTasks, job)
-                && !hasTasksForJob(this.rootFileTaskQueue, job)
-                && !hasTasksForJob(this.directoryFileTaskQueue, job)
-                && !hasTasksForJob(this.queuedFileTasks, job);
+        long jobId = job.getId();
+        return !this.dataSourceTaskQueue.hasTasksForJob(jobId)
+                && !hasTasksForJob(this.rootFileTaskQueue, jobId)
+                && !hasTasksForJob(this.directoryFileTaskQueue, jobId)
+                && !hasTasksForJob(this.queuedFileTasks, jobId);
     }
 
     /**
@@ -280,8 +268,9 @@ final class IngestTasksScheduler {
      * @param job The data source ingest job.
      */
     synchronized void cancelPendingTasksForIngestJob(DataSourceIngestJob job) {
-        this.removeTasksForJob(this.rootFileTaskQueue, job);
-        this.removeTasksForJob(this.directoryFileTaskQueue, job);
+        long jobId = job.getId();
+        IngestTasksScheduler.removeTasksForJob(this.rootFileTaskQueue, jobId);
+        IngestTasksScheduler.removeTasksForJob(this.directoryFileTaskQueue, jobId);
     }
 
     /**
@@ -423,7 +412,7 @@ final class IngestTasksScheduler {
          */
         for (FileIngestTask newTask : newTasksForFileIngestThreads) {
             try {
-                this.fileTaskQueueForIngestThreads.addFirst(newTask);
+                this.fileTaskQueue.addFirst(newTask);
             } catch (InterruptedException ex) {
                 this.queuedFileTasks.remove(newTask);
                 IngestTasksScheduler.logger.log(Level.INFO, "Ingest cancelled while blocked on a full file ingest threads queue", ex);
@@ -511,12 +500,11 @@ final class IngestTasksScheduler {
      * given data source ingest job.
      *
      * @param tasks The tasks.
-     * @param job   The data source ingest job.
+     * @param jobId The data source ingest job id.
      *
      * @return True if there are no tasks for the job, false otherwise.
      */
-    synchronized private boolean hasTasksForJob(Collection<? extends IngestTask> tasks, DataSourceIngestJob job) {
-        long jobId = job.getId();
+    synchronized private static boolean hasTasksForJob(Collection<? extends IngestTask> tasks, long jobId) {
         for (IngestTask task : tasks) {
             if (task.getIngestJob().getId() == jobId) {
                 return true;
@@ -530,10 +518,9 @@ final class IngestTasksScheduler {
      * from a tasks collection.
      *
      * @param tasks The collection from which to remove the tasks.
-     * @param job   THe data source ingest job.
+     * @param jobId The data source ingest job id.
      */
-    synchronized private void removeTasksForJob(Collection<? extends IngestTask> tasks, DataSourceIngestJob job) {
-        long jobId = job.getId();
+    private static void removeTasksForJob(Collection<? extends IngestTask> tasks, long jobId) {
         Iterator<? extends IngestTask> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             IngestTask task = iterator.next();
@@ -552,10 +539,8 @@ final class IngestTasksScheduler {
      * @return The count.
      */
     private static int countTasksForJob(Collection<? extends IngestTask> queue, long jobId) {
-        Iterator<? extends IngestTask> iterator = queue.iterator();
         int count = 0;
-        while (iterator.hasNext()) {
-            IngestTask task = iterator.next();
+        for (IngestTask task : queue) {
             if (task.getIngestJob().getId() == jobId) {
                 count++;
             }
@@ -573,7 +558,6 @@ final class IngestTasksScheduler {
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
         return new IngestJobTasksSnapshot(jobId);
-
     }
 
     /**
@@ -693,22 +677,64 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * A blocking queue of data source ingest tasks for the ingest manager's
-     * data source ingest threads.
+     * A blocking queue of data source ingest tasks that keeps track of both
+     * queued and running jobs.
      */
     private final class DataSourceIngestTaskQueue implements IngestTaskQueue {
 
-        private final BlockingQueue<DataSourceIngestTask> tasks = new LinkedBlockingQueue<>();
+        private final BlockingQueue<DataSourceIngestTask> taskQueue = new LinkedBlockingQueue<>();
+        private final List<DataSourceIngestTask> queuedTasks = new LinkedList<>();
+        private final List<DataSourceIngestTask> runningTasks = new LinkedList<>();
 
-        private void add(DataSourceIngestTask task) throws InterruptedException {
-            this.tasks.put(task);
+        private void add(DataSourceIngestTask task) {
+            synchronized (IngestTasksScheduler.this) {
+                this.queuedTasks.add(task);
+            }
+            try {
+                this.taskQueue.put(task);
+            } catch (InterruptedException ex) {
+                synchronized (IngestTasksScheduler.this) {
+                    this.queuedTasks.remove(task);
+                }
+                IngestTasksScheduler.logger.log(Level.INFO, "Ingest cancelled while blocked on a full file ingest threads queue", ex);
+                Thread.currentThread().interrupt();
+            }
         }
 
         @Override
         public IngestTask getNextTask() throws InterruptedException {
-            return tasks.take();
+            DataSourceIngestTask task = taskQueue.take();
+            synchronized (IngestTasksScheduler.this) {
+                this.queuedTasks.remove(task);
+                this.runningTasks.add(task);
+            }
+            return task;
         }
 
+        private void taskCompleted(DataSourceIngestTask task) {
+            synchronized (IngestTasksScheduler.this) {
+                this.runningTasks.remove(task);
+            }
+        }
+
+        private boolean hasTasksForJob(long jobId) {
+            synchronized (IngestTasksScheduler.this) {
+                return IngestTasksScheduler.hasTasksForJob(this.queuedTasks, jobId) || IngestTasksScheduler.hasTasksForJob(this.runningTasks, jobId);
+            }
+        }
+
+        private int countQueuedTasksForJob(long jobId) {
+            synchronized (IngestTasksScheduler.this) {
+                return IngestTasksScheduler.countTasksForJob(this.queuedTasks, jobId);
+            }
+        }
+
+        private int countRunningTasksForJob(long jobId) {
+            synchronized (IngestTasksScheduler.this) {
+                return IngestTasksScheduler.countTasksForJob(this.runningTasks, jobId);
+            }
+        }
+        
     }
 
     /**
@@ -753,11 +779,11 @@ final class IngestTasksScheduler {
          */
         IngestJobTasksSnapshot(long jobId) {
             this.jobId = jobId;
+            this.dsQueueSize = IngestTasksScheduler.this.dataSourceTaskQueue.countQueuedTasksForJob(jobId);
             this.rootQueueSize = countTasksForJob(IngestTasksScheduler.this.rootFileTaskQueue, jobId);
             this.dirQueueSize = countTasksForJob(IngestTasksScheduler.this.directoryFileTaskQueue, jobId);
-            this.fileQueueSize = countTasksForJob(IngestTasksScheduler.this.fileTaskQueueForIngestThreads.tasks, jobId);
-            this.dsQueueSize = countTasksForJob(IngestTasksScheduler.this.dataSourceTaskQueueForIngestThreads.tasks, jobId);
-            this.runningListSize = countTasksForJob(IngestTasksScheduler.this.queuedDataSourceTasks, jobId) + countTasksForJob(IngestTasksScheduler.this.queuedFileTasks, jobId);
+            this.fileQueueSize = countTasksForJob(IngestTasksScheduler.this.fileTaskQueue.tasks, jobId);
+            this.runningListSize = IngestTasksScheduler.this.dataSourceTaskQueue.countRunningTasksForJob(jobId) + countTasksForJob(IngestTasksScheduler.this.queuedFileTasks, jobId);
         }
 
         /**
