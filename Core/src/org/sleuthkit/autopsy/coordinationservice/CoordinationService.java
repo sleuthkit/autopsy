@@ -387,7 +387,12 @@ public final class CoordinationService {
      * @return
      */
     private String getFullyQualifiedNodePath(CategoryNode category, String nodePath) {
-        return categoryNodeToPath.get(category.getDisplayName()) + "/" + nodePath.toUpperCase();
+        // nodePath on Unix systems starts with a "/" and ZooKeeper doesn't like two slashes in a row
+        if(nodePath.startsWith("/")){
+            return categoryNodeToPath.get(category.getDisplayName()) + nodePath.toUpperCase();
+        }else{
+            return categoryNodeToPath.get(category.getDisplayName()) + "/" + nodePath.toUpperCase();
+        }
     }
 
     /**

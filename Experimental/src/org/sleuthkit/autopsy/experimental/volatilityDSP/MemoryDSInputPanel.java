@@ -363,9 +363,9 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(path);
 
-        boolean isExist = new File(path).exists();
+        boolean isFile = new File(path).isFile();
 
-        return (isExist);
+        return (isFile);
     }
 
     /**

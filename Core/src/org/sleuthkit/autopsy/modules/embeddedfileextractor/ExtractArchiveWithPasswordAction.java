@@ -65,7 +65,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
         super(Bundle.ExtractArchiveWithPasswordAction_name_text());
         archiveFile = file;
     }
-
+  
     @Override
     public void actionPerformed(ActionEvent e) {
         String password = getPassword(Bundle.ExtractArchiveWithPasswordAction_prompt_title(), "");
@@ -161,7 +161,6 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
                 RunIngestModulesAction runIngest = new RunIngestModulesAction(archive);
                 runIngest.actionPerformed(null);
             }
-
         }
     }
 }

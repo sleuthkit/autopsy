@@ -285,7 +285,6 @@ class SevenZipExtractor {
         if (archiveFile.hasChildren() && new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
             return Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
         }
-
         return new ArrayList<>();
     }
 
@@ -367,7 +366,6 @@ class SevenZipExtractor {
                 pathInArchive = "/" + archName + "/" + Integer.toString(itemNumber);
             } else {
                 pathInArchive = "/" + useName;
-
             }
             String msg = NbBundle.getMessage(SevenZipExtractor.class,
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
@@ -603,7 +601,6 @@ class SevenZipExtractor {
                 //this is additional to zip bomb prevention mechanism
                 if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && item.getSize() != null && item.getSize() > 0) { //if free space is known and file is not empty.
                     long newDiskSpace = freeDiskSpace - item.getSize();
-
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.msg",
@@ -733,7 +730,6 @@ class SevenZipExtractor {
                 services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + escapedArchiveFilePath, ex); //NON-NLS
-
             }
 
             String msg = NbBundle.getMessage(SevenZipExtractor.class,
@@ -753,7 +749,6 @@ class SevenZipExtractor {
             }
         }
         return unpackSuccessful;
-
     }
 
     /**
