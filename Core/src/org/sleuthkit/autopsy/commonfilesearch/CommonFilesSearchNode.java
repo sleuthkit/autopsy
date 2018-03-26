@@ -18,16 +18,17 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
  * Encapsulates data used to display common files search results in the top
  * right pane.
  */
-final class CommonFilesSearchNode extends AbstractNode {
+final public class CommonFilesSearchNode extends DisplayableItemNode {
 
     CommonFilesSearchNode(CommonFilesMetaData metaData) {
         super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
@@ -38,5 +39,20 @@ final class CommonFilesSearchNode extends AbstractNode {
     @Override
     public String getName() {
         return Bundle.CommonFilesNode_getName_text();
+    }
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+
+    @Override
+    public String getItemType() {
+        return getClass().getName();
     }
 }
