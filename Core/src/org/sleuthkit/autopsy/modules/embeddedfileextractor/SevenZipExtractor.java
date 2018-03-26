@@ -281,12 +281,11 @@ class SevenZipExtractor {
      */
     private List<AbstractFile> getAlreadyExtractedFiles(AbstractFile archiveFile, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
         //check if already has derived files, skip
-        if (archiveFile.hasChildren()) {
-            //check if local unpacked dir exists 
-            if (new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-                return Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
-            }
+        //check if local unpacked dir exists 
+        if (archiveFile.hasChildren() && new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
+            return Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
         }
+
         return new ArrayList<>();
     }
 
@@ -368,8 +367,10 @@ class SevenZipExtractor {
                 pathInArchive = "/" + archName + "/" + Integer.toString(itemNumber);
             } else {
                 pathInArchive = "/" + useName;
+
             }
-            String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
+            String msg = NbBundle.getMessage(SevenZipExtractor.class,
+                    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.unknownPath.msg",
                     getArchiveFilePath(archiveFile), pathInArchive);
             logger.log(Level.WARNING, msg);
         }
@@ -518,6 +519,7 @@ class SevenZipExtractor {
         parentAr = archiveDepthCountTree.findArchive(archiveId);
         if (parentAr == null) {
             parentAr = archiveDepthCountTree.addArchive(null, archiveId);
+
         } else if (parentAr.getDepth() == MAX_DEPTH) {
             String msg = NbBundle.getMessage(SevenZipExtractor.class,
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnMsg.zipBomb", archiveFile.getName());
@@ -562,12 +564,11 @@ class SevenZipExtractor {
 
             long freeDiskSpace;
             try {
-                freeDiskSpace  = services.getFreeDiskSpace();
-            }
-            catch(NullPointerException ex) {            
+                freeDiskSpace = services.getFreeDiskSpace();
+            } catch (NullPointerException ex) {
                 //If ingest has not been run at least once getFreeDiskSpace() will throw a null pointer exception
                 //currently getFreeDiskSpace always returns DISK_FREE_SPACE_UNKNOWN
-                 freeDiskSpace = IngestMonitor.DISK_FREE_SPACE_UNKNOWN;
+                freeDiskSpace = IngestMonitor.DISK_FREE_SPACE_UNKNOWN;
             }
             //unpack and process every item in archive
             int itemNumber = 0;
@@ -602,6 +603,7 @@ class SevenZipExtractor {
                 //this is additional to zip bomb prevention mechanism
                 if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && item.getSize() != null && item.getSize() > 0) { //if free space is known and file is not empty.
                     long newDiskSpace = freeDiskSpace - item.getSize();
+
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.msg",
@@ -681,7 +683,8 @@ class SevenZipExtractor {
 
             // print a message if the file is allocated
             if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
-                String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.msg",
+                String msg = NbBundle.getMessage(SevenZipExtractor.class,
+                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.msg",
                         archiveFile.getName());
                 String details = NbBundle.getMessage(SevenZipExtractor.class,
                         "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.errUnpacking.details",
@@ -730,9 +733,11 @@ class SevenZipExtractor {
                 services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + escapedArchiveFilePath, ex); //NON-NLS
+
             }
 
-            String msg = NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.encrFileDetected.msg");
+            String msg = NbBundle.getMessage(SevenZipExtractor.class,
+                    "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.encrFileDetected.msg");
             String details = NbBundle.getMessage(SevenZipExtractor.class,
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.encrFileDetected.details",
                     archiveFile.getName(), EmbeddedFileExtractorModuleFactory.getModuleName());
@@ -748,6 +753,7 @@ class SevenZipExtractor {
             }
         }
         return unpackSuccessful;
+
     }
 
     /**
@@ -1028,17 +1034,15 @@ class SevenZipExtractor {
                     statusMap.put(getKeyAbstractFile(df), new ZipFileStatusWrapper(df, ZipFileStatus.EXISTS));
                 } else {
                     String key = getKeyAbstractFile(existingFile.getFile());
-                    if (existingFile.getStatus() == ZipFileStatus.EXISTS) {
-                        if (existingFile.getFile().getSize() < node.getSize()) {
-                            existingFile.setStatus(ZipFileStatus.UPDATE);
-                            statusMap.put(key, existingFile);
-                        }
+                    if (existingFile.getStatus() == ZipFileStatus.EXISTS && existingFile.getFile().getSize() < node.getSize()) {
+                        existingFile.setStatus(ZipFileStatus.UPDATE);
+                        statusMap.put(key, existingFile);
                     }
                     if (existingFile.getStatus() == ZipFileStatus.UPDATE) {
                         //if the we are updating a file and its mime type was octet-stream we want to re-type it
                         String mimeType = existingFile.getFile().getMIMEType().equalsIgnoreCase("application/octet-stream") ? null : existingFile.getFile().getMIMEType();
                         df = fileManager.updateDerivedFile((DerivedFile) existingFile.getFile(), node.getLocalRelPath(), node.getSize(),
-                                node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(), 
+                                node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
                                 node.isIsFile(), mimeType, "", EmbeddedFileExtractorModuleFactory.getModuleName(),
                                 "", "", TskData.EncodingType.XOR1);
                     } else {

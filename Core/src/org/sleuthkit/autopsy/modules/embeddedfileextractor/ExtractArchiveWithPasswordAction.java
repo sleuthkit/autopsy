@@ -144,7 +144,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
             boolean done = false;
             try {
                 done = get();
-                while (done != true) {
+                while (!done) {
                     password = getPassword(Bundle.ExtractArchiveWithPasswordAction_extractFailed_title(), password);
                     if (password == null) {
                         //allow them to cancel if they don't know the correct password
