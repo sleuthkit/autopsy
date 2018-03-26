@@ -171,7 +171,7 @@ class VolatilityProcessor {
             
             // add the output to the case
             final Case currentCase = Case.getCurrentCase();
-            Report report = currentCase.getSleuthkitCase().addReport(outputFile, "Volatility", "Volatility " + pluginToRun + " Module", dataSource);
+            Report report = currentCase.getSleuthkitCase().addReport(outputFile, "Volatility", "Volatility " + pluginToRun + " Module");
             
             KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
             if (null == searchService) {
