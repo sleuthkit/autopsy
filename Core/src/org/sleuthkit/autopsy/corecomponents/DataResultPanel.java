@@ -527,6 +527,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         return explorerManager;
     }
 
+    //TODO do we need this???
     void enableTreeMode() {
         for(DataResultViewer viewer : this.resultViewers){
             if(viewer instanceof DataResultViewerTable){

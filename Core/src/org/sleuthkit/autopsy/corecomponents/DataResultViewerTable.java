@@ -609,6 +609,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     }
 
+    //TODO do we need this???
     void enableTreeMode() {
         this.outlineView.addPropertyColumn(title, title);   //TODO
         
