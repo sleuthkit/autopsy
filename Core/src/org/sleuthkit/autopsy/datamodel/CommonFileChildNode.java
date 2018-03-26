@@ -79,7 +79,6 @@ public class CommonFileChildNode extends FileNode {
         map.put(CommonFilePropertyType.Name.toString(), node.getContent().getName());
         map.put(CommonFilePropertyType.Md5Hash.toString(), "");
         map.put(CommonFilePropertyType.InstanceCount.toString(), "");
-        map.put(CommonFilePropertyType.DataSources.toString(), "");
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
     }
     
@@ -87,15 +86,13 @@ public class CommonFileChildNode extends FileNode {
         "CommonFilePropertyType.nameColLbl=Name",
         "CommonFilePropertyType.instanceColLbl1=Instance Count",
         "CommonFilePropertyType.md5HashColLbl=MD5 Hash",
-        "CommonFilePropertyType.dataSourcesColLbl=Data Sources",
         "CommonFilePropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFilePropertyType {
         
         Name(Bundle.CommonFilePropertyType_nameColLbl()),
         Md5Hash(Bundle.CommonFilePropertyType_md5HashColLbl()),
         InstanceCount(Bundle.CommonFilePropertyType_instanceColLbl1()),
-        DataSources(Bundle.CommonFilePropertyType_dataSourcesColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourcesColLbl());
+        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl());
         
         final private String displayString;
         
