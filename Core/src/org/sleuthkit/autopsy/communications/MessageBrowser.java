@@ -118,10 +118,6 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                 Bundle.MessageBrowser_DataResultViewerTable_title()));
         messagesResultPanel.open();
 
-        //add listener that maintains correct selection in the Global Actions Context
-        KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .addPropertyChangeListener("focusOwner", focusPropertyListener);
-
         this.tableEM.addPropertyChangeListener(new PropertyChangeListener() {
             /**
              * Listener that pushes selections in the tableEM (the Accounts
@@ -174,6 +170,14 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
     @Override
     public Lookup getLookup() {
         return proxyLookup;
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
     @Override

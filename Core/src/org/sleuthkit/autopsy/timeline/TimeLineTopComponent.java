@@ -446,6 +446,17 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
+
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+
+    @Override
+    protected void componentClosed() {
+        super.componentClosed();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .removePropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
     @Override
@@ -476,6 +487,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                     .withZone(TimeLineController.getJodaTimeZone())
                     .toString(zonedFormatter);
             return Bundle.TimeLineResultView_startDateToEndDate_text(start, end);
+
         }
     }
 
