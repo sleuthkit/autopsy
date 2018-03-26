@@ -40,7 +40,6 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
 import org.sleuthkit.autopsy.testutils.IngestJobRunner;
@@ -121,7 +120,7 @@ public class IngestFileFiltersTest extends TestCase {
         try {
             Case openCase = Case.getOpenCase();
             runIngestJob(openCase.getDataSources());
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            FileManager fileManager = openCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
             String mimeType = results.get(0).getMIMEType();
             assertEquals("image/jpeg", mimeType);
