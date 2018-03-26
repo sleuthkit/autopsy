@@ -642,9 +642,9 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
                     mapping[k] = reports_table[k]
             elif k in artifacts_table.keys(): # For an artifact we use it's par_obj_id's path+name plus it's artifact_type name
                 par_obj_id = v[0] # The parent of an artifact can be a file or a report
-                if par_obj_id in mapping.keys()
+                if par_obj_id in mapping.keys():
                     path = mapping[par_obj_id]
-                elif par_obj_id in reports_table.keys()
+                elif par_obj_id in reports_table.keys():
                     path = reports_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
         elif v[0] not in mapping.keys():
