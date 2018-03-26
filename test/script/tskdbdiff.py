@@ -635,14 +635,17 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
     # make a copy of files_table and update it with new data from artifacts_table and reports_table
     mapping = files_table.copy()
     for k, v in objects_table.items():
-        if k not in mapping.keys(): # If the mapping table doesn't have data for obj_id(k) i.e. the object is not a file...
+        if k not in mapping.keys(): # If the mapping table doesn't have data for obj_id
             if k in reports_table.keys(): # For a report we use the report path
                 par_obj_id = v[0]
                 if par_obj_id is not None:
                     mapping[k] = reports_table[k]
             elif k in artifacts_table.keys(): # For an artifact we use it's par_obj_id's path+name plus it's artifact_type name
-                par_obj_id = v[0]
-                path = mapping[par_obj_id] 
+                par_obj_id = v[0] # The parent of an artifact can be a file or a report
+                if par_obj_id in mapping.keys()
+                    path = mapping[par_obj_id]
+                elif par_obj_id in reports_table.keys()
+                    path = reports_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
         elif v[0] not in mapping.keys():
             if v[0] in artifacts_table.keys():
