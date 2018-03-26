@@ -165,7 +165,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     DataResultTopComponent component = DataResultTopComponent.createInstance(title);
                     
-                    component.enableTreeMode();
+                    //component.enableTreeMode();
                     
                     DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, metadata.getFilesMap().size(), component);                    
 
