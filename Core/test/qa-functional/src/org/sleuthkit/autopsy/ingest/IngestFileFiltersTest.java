@@ -53,7 +53,6 @@ public class IngestFileFiltersTest extends TestCase {
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
     private static final Path IMAGE_PATH = Paths.get("test/filter_test1.img");
-    private ProcessorCallback callBack;
     
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
@@ -88,16 +87,16 @@ public class IngestFileFiltersTest extends TestCase {
         assertTrue(CASE_DIR.exists());
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         try {
-            callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
+            ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
+            List<Content> dataSourceContent = callBack.getDataSourceContent();
+            assertEquals(1, dataSourceContent.size());
+            List<String> errorMessages = callBack.getErrorMessages();
+            assertEquals(0, errorMessages.size());
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
             
         }
-        List<Content> dataSourceContent = callBack.getDataSourceContent();
-        assertEquals(1, dataSourceContent.size());
-        List<String> errorMessages = callBack.getErrorMessages();
-        assertEquals(0, errorMessages.size());
     }
 
     @Override
@@ -118,35 +117,11 @@ public class IngestFileFiltersTest extends TestCase {
         assertFalse(CASE_DIR.exists());
     }
     
-    public void testFileNotFound() {
-        try {
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
-            List<AbstractFile> results = fileManager.findFiles("noFound");
-            assertEquals(0, results.size());
-            
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-    }
-
-    public void testFileFound() {
-        try {
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
-            List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
-            assertEquals(1, results.size());
-            assertEquals("file.jpg", results.get(0).getName());
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-    }
-    
     public void testFileType() {
-        runInjestJob();
-        FileManager fileManager;
         try {
-            fileManager = Case.getOpenCase().getServices().getFileManager();
+            Case openCase = Case.getOpenCase();
+            runIngestJob(openCase.getDataSources());
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
             String mimeType = results.get(0).getMIMEType();
             assertEquals("image/jpeg", mimeType);
@@ -156,7 +131,7 @@ public class IngestFileFiltersTest extends TestCase {
         }
     }
     
-    private void runInjestJob() {
+    private void runIngestJob(List<Content> datasources) {
         FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
         IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
@@ -165,7 +140,7 @@ public class IngestFileFiltersTest extends TestCase {
         templates.add(template);
         IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
         try {
-            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(callBack.getDataSourceContent(), ingestJobSettings);
+            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
             assertEquals(0, errs.size());
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
