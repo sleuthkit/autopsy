@@ -142,7 +142,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * Attempt embedded file extraction for the file if it is a supported
          * type/format.
          */
-        if (archiveExtractor.isSevenZipExtractionSupported(abstractFile)) {
+        if (archiveExtractor.isSevenZipExtractionSupported(abstractFile.getMIMEType())) {
             archiveExtractor.unpack(abstractFile);
         } else if (officeExtractor.isContentExtractionSupported(abstractFile)) {
             officeExtractor.extractEmbeddedContent(abstractFile);
