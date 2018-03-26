@@ -458,26 +458,29 @@ class VolatilityProcessor {
             while ((line = br.readLine()) != null) {
                     
                 String TAG = "Command line : ";
-                if (line.startsWith(TAG)) {
-                    String file_path;
+                if (line.startsWith(TAG)) {                    
 
-                    // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
-                    // grab whats inbetween the quotes
-                    if (line.charAt(TAG.length()) == '\"') {
-                        file_path = line.substring(TAG.length() + 1);
-                        if (file_path.contains("\"")) {
-                            file_path = file_path.substring(0, file_path.indexOf("\""));
+                    if(line.length() > TAG.length()) {                        
+                        String file_path;
+
+                        // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
+                        // grab whats inbetween the quotes
+                        if (line.charAt(TAG.length()) == '\"') {
+                            file_path = line.substring(TAG.length() + 1);
+                            if (file_path.contains("\"")) {
+                                file_path = file_path.substring(0, file_path.indexOf("\""));
+                            }
+                        } 
+                        // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
+                        // grab everything before the next space - we don't want arguments
+                        else {
+                            file_path = line.substring(TAG.length());
+                            if (file_path.contains(" ")) {
+                                file_path = file_path.substring(0, file_path.indexOf(" "));
+                            }
                         }
-                    } 
-                    // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
-                    // grab everything before the next space - we don't want arguments
-                    else {
-                        file_path = line.substring(TAG.length());
-                        if (file_path.contains(" ")) {
-                            file_path = file_path.substring(0, file_path.indexOf(" "));
-                        }
+                        fileSet.add(normalizePath(file_path));
                     }
-                    fileSet.add(normalizePath(file_path));
                 }
                 // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
                 // 0x7c900000    0xb2000     0xffff C:\WINDOWS\system32\ntdll.dll
