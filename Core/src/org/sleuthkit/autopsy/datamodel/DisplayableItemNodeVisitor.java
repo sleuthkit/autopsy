@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesSearchNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -110,6 +111,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(InterestingHits.SetNameNode ihsn);
     
     T visit (CommonFileParentNode cfpn);
+    
+    T visit (CommonFilesSearchNode cfsn);
 
     /*
      * Tags
@@ -182,6 +185,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(CommonFileParentNode p){ //TODO this may be fine but how do we add missing functions back to nows?  or do we?
             return defaultVisit(p);
+        }
+        
+        @Override
+        public T visit(CommonFilesSearchNode cfsn){
+            return defaultVisit(cfsn);
         }
         
         @Override
