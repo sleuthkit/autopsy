@@ -349,7 +349,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         //contents and replace the paths, if the contents can't be extracted return 0
         if (localFilePaths.size() == 1) {
             for (final String path : localFilePaths) {
-                if (LOGICAL_EVIDENCE_FILTER.accept(new File(path))) {
+                if (new File(path).isFile() && LOGICAL_EVIDENCE_FILTER.accept(new File(path))) {
                     try {
                         //if the L01 option was chosen
                         localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
