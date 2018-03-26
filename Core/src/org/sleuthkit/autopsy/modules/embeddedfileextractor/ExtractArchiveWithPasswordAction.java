@@ -59,7 +59,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
     @Messages({"ExtractArchiveWithPasswordAction.name.text=Unzip contents with password", "ExtractArchiveWithPasswordAction.prompt.text=Enter Password",
         "ExtractArchiveWithPasswordAction.prompt.title=Enter Password",
         "ExtractArchiveWithPasswordAction.extractFailed.title=Failed to Unpack Files, with Password",
-        "#{0} - archiveFile",
+        "# {0} - archiveFile",
         "ExtractArchiveWithPasswordAction.progress.text=Unpacking contents of archive: {0}"})
     public ExtractArchiveWithPasswordAction(AbstractFile file) {
         super(Bundle.ExtractArchiveWithPasswordAction_name_text());
@@ -85,50 +85,30 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
         return password;
     }
 
-    /*
-     * Exception thrown if an initialization error occurs, e.g., user-defined
-     * file type definitions exist but cannot be loaded.
+    /**
+     * SwingWorker which attempts to extract contents of archive file with a
+     * password and if successful proceeds to let the user run ingest on the
+     * contents.
      */
-    private static class ExtractWithPasswordException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        /**
-         * Constructs an exception to throw if an initialization error occurs,
-         * e.g., user-defined file type definitions exist but cannot be loaded.
-         *
-         * @param message The exception message,
-         */
-        ExtractWithPasswordException(String message) {
-            super(message);
-        }
-
-        /**
-         * Constructs an exception to throw if an initialization error occurs,
-         * e.g., user-defined file type definitions exist but cannot be loaded.
-         *
-         * @param message   The exception message,
-         * @param throwable The underlying cause of the exception.
-         */
-        ExtractWithPasswordException(String message, Throwable throwable) {
-            super(message, throwable);
-        }
-
-    }
-
     private class ExtractAndIngestWorker extends SwingWorker<Boolean, Void> {
 
         private final AbstractFile archive;
         private String password;
         private final ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(WindowManager.getDefault().getMainWindow(), "Extracting Archive");
 
+        /**
+         * Construct an ExtractAndIngestWorker
+         * 
+         * @param pass - the password to initially attempt using
+         * @param file - the password protected archive file to extract the contents of
+         */
         private ExtractAndIngestWorker(String pass, AbstractFile file) {
             archive = file;
             password = pass;
         }
 
         @Override
-        protected Boolean doInBackground() throws ExtractWithPasswordException {
+        protected Boolean doInBackground() {
             boolean done = false;
             try {
                 String moduleDirRelative = Paths.get(Case.getOpenCase().getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
@@ -172,7 +152,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
                     }
                     done = doInBackground();
                 }
-            } catch (InterruptedException | ExtractWithPasswordException ex) {
+            } catch (InterruptedException ex) {
                 logger.log(Level.SEVERE, "Unable to extract archive successfully", ex);
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "Execution Exception: Unable to extract archive successfully", ex.getCause());
