@@ -39,6 +39,7 @@ import com.mxgraph.util.mxUndoableEdit;
 import com.mxgraph.view.mxGraph;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -106,16 +107,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
     private static final String BASE_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images";
-    static final private ImageIcon pinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--pin.png"));
-    static final private ImageIcon addPinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--plus.png"));
-    static final private ImageIcon unpinIcon =
-            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--minus.png"));
-    static final private ImageIcon unlockIcon =
-            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
-    static final private ImageIcon lockIcon =
-            new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
+    static final private ImageIcon pinIcon
+            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--pin.png"));
+    static final private ImageIcon addPinIcon
+            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--plus.png"));
+    static final private ImageIcon unpinIcon
+            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--minus.png"));
+    static final private ImageIcon unlockIcon
+            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
+    static final private ImageIcon lockIcon
+            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
 
     private static final String CANCEL = Bundle.VisualizationPanel_cancelButton_text();
 
@@ -168,13 +169,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         //install rubber band selection handler
         rubberband = new mxRubberband(graphComponent);
 
-        final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt) ->
-                zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getView().getScale()));
+        final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt)
+                -> zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getView().getScale()));
         graph.getView().addListener(mxEvent.SCALE, scaleListener);
         graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, scaleListener);
 
-        //right click handler
         graphComponent.getGraphControl().addMouseWheelListener(new MouseAdapter() {
+            /**
+             * Translate mouse wheel events into zooming.
+             *
+             * @param event The MouseWheelEvent
+             */
             @Override
             public void mouseWheelMoved(final MouseWheelEvent event) {
                 super.mouseWheelMoved(event);
@@ -187,6 +192,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         });
 
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
+            /**
+             * Right click handler: show context menu.
+             *
+             * @param event The MouseEvent
+             */
             @Override
             public void mouseClicked(final MouseEvent event) {
                 super.mouseClicked(event);
@@ -247,8 +257,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(null, new SelectionListener());
-        final mxEventSource.mxIEventListener undoListener = (Object sender, mxEventObject evt) ->
-                undoManager.undoableEditHappened((mxUndoableEdit) evt.getProperty("edit"));
+        final mxEventSource.mxIEventListener undoListener = (Object sender, mxEventObject evt)
+                -> undoManager.undoableEditHappened((mxUndoableEdit) evt.getProperty("edit"));
 
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
@@ -341,11 +351,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         try {
             commsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
-        } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
-
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
         }
 
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
@@ -400,6 +409,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         fitZoomButton = new JButton();
         jLabel2 = new JLabel();
         zoomLabel = new JLabel();
+        clearVizButton = new JButton();
+        jSeparator2 = new JToolBar.Separator();
 
         setLayout(new BorderLayout());
 
@@ -408,11 +419,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         borderLayoutPanel.setLayout(new BorderLayout());
 
-        jTextArea1.setBackground(new Color(240, 240, 240));
         jTextArea1.setColumns(20);
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(5);
         jTextArea1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jTextArea1.text")); // NOI18N
+        jTextArea1.setBackground(new Color(240, 240, 240));
 
         GroupLayout placeHolderPanelLayout = new GroupLayout(placeHolderPanel);
         placeHolderPanel.setLayout(placeHolderPanelLayout);
@@ -473,11 +484,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
 
+        jSeparator1.setOrientation(SwingConstants.VERTICAL);
+
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
         zoomOutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.text")); // NOI18N
-        zoomOutButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.toolTipText")); // NOI18N
         zoomOutButton.setFocusable(false);
         zoomOutButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomOutButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.toolTipText")); // NOI18N
         zoomOutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         zoomOutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -487,9 +500,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
         zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
-        zoomInButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.toolTipText")); // NOI18N
         zoomInButton.setFocusable(false);
         zoomInButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomInButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.toolTipText")); // NOI18N
         zoomInButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         zoomInButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -499,9 +512,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
         zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N
-        zoomActualButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.toolTipText")); // NOI18N
         zoomActualButton.setFocusable(false);
         zoomActualButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        zoomActualButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.toolTipText")); // NOI18N
         zoomActualButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         zoomActualButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -511,9 +524,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         fitZoomButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
         fitZoomButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.text")); // NOI18N
-        fitZoomButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.toolTipText")); // NOI18N
         fitZoomButton.setFocusable(false);
         fitZoomButton.setHorizontalTextPosition(SwingConstants.CENTER);
+        fitZoomButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.toolTipText")); // NOI18N
         fitZoomButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         fitZoomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -525,11 +538,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         zoomLabel.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomLabel.text")); // NOI18N
 
+        clearVizButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/broom.png"))); // NOI18N
+        clearVizButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.text_1")); // NOI18N
+        clearVizButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                clearVizButtonActionPerformed(evt);
+            }
+        });
+
+        jSeparator2.setOrientation(SwingConstants.VERTICAL);
+
         GroupLayout toolbarLayout = new GroupLayout(toolbar);
         toolbar.setLayout(toolbarLayout);
         toolbarLayout.setHorizontalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(clearVizButton)
                 .add(3, 3, 3)
+                .add(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                .add(5, 5, 5)
                 .add(jLabel1)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fastOrganicLayoutButton)
@@ -540,7 +567,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(circleLayoutButton)
                 .addPreferredGap(LayoutStyle.RELATED)
-                .add(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(jLabel2)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(zoomLabel)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(zoomOutButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
@@ -549,11 +580,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(LayoutStyle.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jLabel2)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(zoomLabel)
-                .add(27, 27, 27))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
         toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
@@ -570,7 +597,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     .add(zoomActualButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(fitZoomButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jLabel2)
-                    .add(zoomLabel))
+                    .add(zoomLabel)
+                    .add(clearVizButton)
+                    .add(jSeparator2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(3, 3, 3))
         );
 
@@ -613,6 +642,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         morph(hierarchicalLayout);
     }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
+    private void clearVizButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearVizButtonActionPerformed
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        graph.getModel().beginUpdate();
+        pinnedAccountModel.clear();
+        graph.clear();
+        rebuildGraph();
+        // Updates the display
+        graph.getModel().endUpdate();
+        setCursor(Cursor.getDefaultCursor());
+        
+    }//GEN-LAST:event_clearVizButtonActionPerformed
+
     private void applyOrganicLayout(int iterations) {
         organicLayout.setMaxIterations(iterations);
         morph(organicLayout);
@@ -653,7 +694,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Computing layout", new String[]{CANCEL}, CANCEL, cancelationListener);
         SwingWorker<Void, Void> morphWorker = new SwingWorker<Void, Void>() {
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() {
                 progress.start("Computing layout");
                 layout.execute(graph.getDefaultParent());
                 if (isCancelled()) {
@@ -695,12 +736,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JPanel borderLayoutPanel;
     private JButton circleLayoutButton;
+    private JButton clearVizButton;
     private JButton fastOrganicLayoutButton;
     private JButton fitZoomButton;
     private JButton hierarchyLayoutButton;
     private JLabel jLabel1;
     private JLabel jLabel2;
     private JToolBar.Separator jSeparator1;
+    private JToolBar.Separator jSeparator2;
     private JTextArea jTextArea1;
     private JButton organicLayoutButton;
     private JPanel placeHolderPanel;
@@ -857,7 +900,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(ActionEvent event) {
             progress.setCancelling("Cancelling...");
             cancellable.cancel(true);
             progress.finish();
