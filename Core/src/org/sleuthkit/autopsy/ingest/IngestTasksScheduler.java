@@ -129,7 +129,7 @@ final class IngestTasksScheduler {
      *
      * @param job The data source ingest job.
      */
-    synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) { // RJCTODO: Should this throw instead?
+    synchronized void scheduleDataSourceIngestTask(DataSourceIngestJob job) {
         if (!job.isCancelled()) {
             DataSourceIngestTask task = new DataSourceIngestTask(job);
             try {
