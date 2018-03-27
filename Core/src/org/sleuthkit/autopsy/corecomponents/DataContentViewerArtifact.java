@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
+import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -39,7 +40,6 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.event.TableColumnModelListener;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
@@ -86,6 +86,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         Bundle.DataContentViewerArtifact_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
     private static final int CELL_BOTTOM_MARGIN = 5;
+    private static final int CELL_RIGHT_MARGIN = 1;
 
     public DataContentViewerArtifact() {
         initResultsTable();
@@ -152,12 +153,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 Component comp = resultsTable.prepareRenderer(
                         resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex);
                 final int rowHeight;
-                if (comp instanceof JTextComponent) {
-                    final JTextComponent tc = (JTextComponent) comp;
+             if (comp instanceof JTextArea) {
+                    final JTextArea tc = (JTextArea) comp;
                     final View rootView = tc.getUI().getRootView(tc);
-                    java.awt.Insets i = tc.getInsets(null);
+                    java.awt.Insets i = tc.getInsets();
                     rootView.setSize(resultsTable.getColumnModel().getColumn(valueColIndex)
-                            .getPreferredWidth() - i.left - i.right,
+                            .getWidth() - (i.left + i.right +CELL_RIGHT_MARGIN), //current width minus borders
                             Integer.MAX_VALUE);
                     rowHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
                 } else {
@@ -844,7 +845,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             if (value instanceof String) {
                 jtex.setText((String) value);
                 jtex.setLineWrap(true);
-                jtex.setWrapStyleWord(true);
+                jtex.setWrapStyleWord(false);
             }
             //cell backgroud color when selected
             if (isSelected) {
