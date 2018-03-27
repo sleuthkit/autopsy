@@ -67,7 +67,17 @@ public class PhotoRecCarverIngestModuleFactory extends IngestModuleFactoryAdapte
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        return new PhotoRecCarverFileIngestModule((PhotoRecCarverIngestJobSettings) settings);
+        if (settings instanceof PhotoRecCarverIngestJobSettings) {
+            return new PhotoRecCarverFileIngestModule((PhotoRecCarverIngestJobSettings) settings);
+        }
+        /*
+         * Compatibility check for older versions.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new PhotoRecCarverFileIngestModule(new PhotoRecCarverIngestJobSettings());
+        }
+        
+        throw new IllegalArgumentException("Expected settings argument to be an instance of PhotoRecCarverIngestJobSettings");
     }
 
     @Override

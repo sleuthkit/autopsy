@@ -3,8 +3,10 @@
 \section cvt_overview Overview
 
 The Communications Visualization Tool gives a consolidated view of all communication events for the case. This allows an analyst to quickly view communications data such as:
-* The most commonly used accounts
-* Communications within a specific time frame
+<ul>
+<li> The most commonly used accounts
+<li> Communications within a specific time frame
+</ul>
 
 \section cvt_usage Usage
 
