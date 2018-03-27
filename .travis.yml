@@ -11,7 +11,7 @@ jdk:
 before_install:
  - git clone https://github.com/sleuthkit/sleuthkit.git sleuthkit/sleuthkit 	
 install:
- - sh ./sleuthkit/sleuthkit/install-sleuthkit.sh
+ - ./sleuthkit/sleuthkit/install-sleuthkit.sh
 script:
  - ant build	
 
