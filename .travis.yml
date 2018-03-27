@@ -5,14 +5,14 @@ os:
  - linux
 env:
  global:
-  - TSK_HOME=TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
+  - TSK_HOME=/sleuthkit/sleuthkit
 jdk:
  - oraclejdk8
 before_install:
  - git clone https://github.com/sleuthkit/sleuthkit.git sleuthkit/sleuthkit 	
 install:
- - cd TRAVIS_BUILD_DIR/sleuthkit/sleuthkit 
- - sh TRAVIS_BUILD_DIR/sleuthkit/sleuthkit/install-sleuthkit.sh
+ - cd sleuthkit/sleuthkit 
+ - sh install-sleuthkit.sh
 script:
  - ant build	
 
