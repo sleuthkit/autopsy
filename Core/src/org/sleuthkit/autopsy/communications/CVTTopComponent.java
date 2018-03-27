@@ -71,7 +71,7 @@ public final class CVTTopComponent extends TopComponent {
          * via an Eventbus
          */
         CVTEvents.getCVTEventBus().register(this);
-        CVTEvents.getCVTEventBus().register(vizPanel);
+//        CVTEvents.getCVTEventBus().register(vizPanel);
         CVTEvents.getCVTEventBus().register(accountsBrowser);
     }
 
@@ -88,14 +88,13 @@ public final class CVTTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        vizPanel = new VisualizationPanel();
         browseVisualizeTabPane = new JTabbedPane();
         accountsBrowser = new AccountsBrowser();
-        vizPanel = new VisualizationPanel();
         filtersPane = new FiltersPanel();
 
         browseVisualizeTabPane.setFont(new Font("Tahoma", 0, 18)); // NOI18N
         browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.accountsBrowser.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/table.png")), accountsBrowser); // NOI18N
-        browseVisualizeTabPane.addTab(NbBundle.getMessage(CVTTopComponent.class, "CVTTopComponent.vizPanel.TabConstraints.tabTitle_1"), new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/emblem-web.png")), vizPanel); // NOI18N
 
         filtersPane.setMinimumSize(new Dimension(256, 495));
 
@@ -106,7 +105,7 @@ public final class CVTTopComponent extends TopComponent {
                 .addGap(6, 6, 6)
                 .addComponent(filtersPane, GroupLayout.PREFERRED_SIZE, 265, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(browseVisualizeTabPane, GroupLayout.PREFERRED_SIZE, 786, Short.MAX_VALUE)
+                .addComponent(browseVisualizeTabPane, GroupLayout.DEFAULT_SIZE, 786, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
