@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {
     
-    private static Logger logger = Logger.getLogger(FileNode.class.getName());
+    private static final Logger logger = Logger.getLogger(FileNode.class.getName());
     
     /**
      * Gets the path to the icon file that should be used to visually represent
