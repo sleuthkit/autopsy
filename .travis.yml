@@ -13,7 +13,10 @@ before_install:
 install:
  - cd sleuthkit/sleuthkit 
  - sh install-sleuthkit.sh
+ - sudo make install
 script:
+ - $PWD	
+ - cd sleuthkit/autopsy
  - ant build	
 
 
