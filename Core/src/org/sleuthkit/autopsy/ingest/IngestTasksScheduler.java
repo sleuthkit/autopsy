@@ -414,7 +414,7 @@ final class IngestTasksScheduler {
          * applied to the current run of ingest, checks if unallocated space
          * should be processed inside call to fileIsMemberOf
          */
-        if (file.isFile() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
+        if (!file.isDir() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
             return false;
         }
 
