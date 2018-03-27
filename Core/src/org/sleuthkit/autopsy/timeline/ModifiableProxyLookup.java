@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.timeline;
 
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
@@ -38,7 +38,6 @@ final class ModifiableProxyLookup extends ProxyLookup {
      * @param lookups The new Lookups to delegate to.
      */
     public void setNewLookups(final Lookup... lookups) {
-
         setLookups(lookups);
     }
 }

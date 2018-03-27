@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,12 +41,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import static javax.swing.SwingUtilities.isDescendingFrom;
 import org.controlsfx.control.Notifications;
 import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormatter;
 import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.ExplorerUtils;
+import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -52,6 +59,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -84,22 +92,72 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     private static final Logger LOGGER = Logger.getLogger(TimeLineTopComponent.class.getName());
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private final DataContentPanel contentViewerPanel;
+    private final DataContentExplorerPanel contentViewerPanel;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private DataResultPanel dataResultPanel;
+    private final DataResultPanel dataResultPanel;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private final ExplorerManager em = new ExplorerManager();
+    private final ExplorerManager explorerManager = new ExplorerManager();
 
     private final TimeLineController controller;
 
-    /**
-     * Listener that drives the result viewer or content viewer (depending on
-     * view mode) according to the controller's selected event IDs
-     */
+    /** Lookup that will be exposed through the (Global Actions Context) */
+    private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
+
+    private final PropertyChangeListener focusPropertyListener = new PropertyChangeListener() {
+        /**
+         * Listener that keeps the proxyLookup in sync with the focused area of
+         * the UI.
+         *
+         * Since the embedded MessageContentViewer (attachments panel) inside
+         * the DataContentPanel is not in its own TopComponenet, its selection
+         * does not get proxied into the Global Actions Context (GAC)
+         * automatically, and many of the available actions don't work on it.
+         * Further, we can't put the selection from both the Result table and
+         * the Attachments table in the GAC because they could bouth include
+         * AbstractFiles, muddling the selection seen by the actions. Instead,
+         * depending on where the focus is in the window, we want to put
+         * different Content in the Global Actions Context to be picked up by,
+         * e.g., the tagging actions. The best way I could figure to do this was
+         * to listen to all focus events and swap out what is in the lookup
+         * appropriately. An alternative to this would be to investigate using
+         * the ContextAwareAction interface.
+         *
+         * @see org.sleuthkit.autopsy.communications.MessageBrowser for a
+         * similar situation and a similar solution.
+         *
+         * @param focusEvent The focus change event.
+         */
+        @Override
+        public void propertyChange(final PropertyChangeEvent focusEvent) {
+            if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
+                final Component newFocusOwner = (Component) focusEvent.getNewValue();
+
+                if (newFocusOwner == null) {
+                    return;
+                }
+                if (isDescendingFrom(newFocusOwner, contentViewerPanel)) {
+                    //if the focus owner is within the MessageContentViewer (the attachments table)
+                    proxyLookup.setNewLookups(createLookup(contentViewerPanel.getExplorerManager(), getActionMap()));
+                } else if (isDescendingFrom(newFocusOwner, TimeLineTopComponent.this)) {
+                    //... or if it is within the Results table.
+                    proxyLookup.setNewLookups(createLookup(explorerManager, getActionMap()));
+
+                }
+            }
+        }
+    };
+
     @NbBundle.Messages({"TimelineTopComponent.selectedEventListener.errorMsg=There was a problem getting the content for the selected event."})
     private final InvalidationListener selectedEventsListener = new InvalidationListener() {
+        /**
+         * Listener that drives the result viewer or content viewer (depending
+         * on view mode) according to the controller's selected event IDs
+         *
+         * @param observable Observable that was invalidated. Usually
+         *                   irrelevant.
+         */
         @Override
         public void invalidated(Observable observable) {
             List<Long> selectedEventIDs = controller.getSelectedEventIDs();
@@ -118,10 +176,10 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
                         SwingUtilities.invokeLater(() -> {
                             //set generic container node as root context 
-                            em.setRootContext(new AbstractNode(children));
+                            explorerManager.setRootContext(new AbstractNode(children));
                             try {
                                 //set selected nodes for actions
-                                em.setSelectedNodes(childArray);
+                                explorerManager.setSelectedNodes(childArray);
                             } catch (PropertyVetoException ex) {
                                 //I don't know why this would ever happen.
                                 LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
@@ -172,7 +230,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                  */
                 SwingUtilities.invokeLater(() -> {
                     splitYPane.remove(contentViewerPanel);
-                    if ((horizontalSplitPane.getParent() == splitYPane) == false) {
+                    if (horizontalSplitPane.getParent() != splitYPane) {
                         splitYPane.setBottomComponent(horizontalSplitPane);
                         horizontalSplitPane.setRightComponent(contentViewerPanel);
                     }
@@ -197,7 +255,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
      */
     public TimeLineTopComponent(TimeLineController controller) {
         initComponents();
-        associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
+        associateLookup(proxyLookup);
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
 
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
@@ -206,7 +264,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         this.controller = controller;
 
         //create linked result and content views
-        contentViewerPanel = DataContentPanel.createInstance();
+        contentViewerPanel = new DataContentExplorerPanel();
         dataResultPanel = DataResultPanel.createInstanceUninitialized("", "", Node.EMPTY, 0, contentViewerPanel);
 
         //add them to bottom splitpane
@@ -214,6 +272,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         horizontalSplitPane.setRightComponent(contentViewerPanel);
 
         dataResultPanel.open(); //get the explorermanager
+        contentViewerPanel.initialize();
 
         Platform.runLater(this::initFXComponents);
 
@@ -224,6 +283,10 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         //Listen to ViewMode and adjust GUI componenets as needed.
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
         syncViewMode();
+
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
     /**
@@ -255,7 +318,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         final TabPane leftTabPane = new TabPane(filterTab, eventsTreeTab);
         VBox.setVgrow(leftTabPane, Priority.ALWAYS);
         controller.viewModeProperty().addListener(viewMode -> {
-            if (controller.getViewMode().equals(ViewMode.DETAIL) == false) {
+            if (controller.getViewMode() != ViewMode.DETAIL) {
                 //if view mode is not details, switch back to the filter tab
                 leftTabPane.getSelectionModel().select(filterTab);
             }
@@ -383,11 +446,22 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
+
+        //add listener that maintains correct selection in the Global Actions Context
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addPropertyChangeListener("focusOwner", focusPropertyListener);
+    }
+
+    @Override
+    protected void componentClosed() {
+        super.componentClosed();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .removePropertyChangeListener("focusOwner", focusPropertyListener);
     }
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return em;
+        return explorerManager;
     }
 
     /**
@@ -413,6 +487,52 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                     .withZone(TimeLineController.getJodaTimeZone())
                     .toString(zonedFormatter);
             return Bundle.TimeLineResultView_startDateToEndDate_text(start, end);
+
+        }
+    }
+
+    /**
+     * Panel that wraps a DataContentPanel and implements
+     * ExplorerManager.Provider. This allows the explorer manager found by the
+     * DataContentPanel to be controlled easily.
+     *
+     * @see org.sleuthkit.autopsy.communications.MessageDataContent for another
+     * solution to a very similar problem.
+     */
+    final private static class DataContentExplorerPanel extends JPanel implements ExplorerManager.Provider, DataContent {
+
+        private final ExplorerManager explorerManager = new ExplorerManager();
+        private final DataContentPanel wrapped;
+
+        private DataContentExplorerPanel() {
+            super(new BorderLayout());
+            wrapped = DataContentPanel.createInstance();
+        }
+
+        @Override
+        public ExplorerManager getExplorerManager() {
+            return explorerManager;
+        }
+
+        @Override
+        public void setNode(Node selectedNode) {
+            wrapped.setNode(selectedNode);
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            wrapped.propertyChange(evt);
+        }
+
+        /**
+         * Initialize the contents of this panel for use. Specifically add the
+         * wrapped DataContentPanel to the AWT/Swing containment hierarchy. This
+         * will trigger the addNotify() method of the embeded Message
+         * MessageContentViewer causing it to look for a ExplorerManager; it
+         * should find the one provided by this DataContentExplorerPanel.
+         */
+        private void initialize() {
+            add(wrapped, BorderLayout.CENTER);
         }
     }
 }

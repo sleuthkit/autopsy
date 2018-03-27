@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -87,7 +87,26 @@ public class FileManager implements Closeable {
         }
         return caseDb.findAllFilesWhere(createFileTypeInCondition(mimeTypes));
     }
-
+   
+    /**
+     * Finds all parent_paths that match the specified parentPath and are in the specified data source.
+     * 
+     * @param dataSourceObjectID - the id of the data source to get files from
+     * @param parentPath - the parent path that all files should be like
+     * 
+     * @return The list of files
+     * 
+     * @throws TskCoreException  If there is a problem querying the case
+     *                          database.
+     */
+    public synchronized List<AbstractFile> findFilesByParentPath(long dataSourceObjectID, String parentPath) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("File manager has been closed");
+        }
+        List<AbstractFile> files = caseDb.findAllFilesWhere(createParentPathCondition(dataSourceObjectID,parentPath));
+        return files;
+    }
+  
     /**
      * Finds all files in a given data source (image, local/logical files set,
      * etc.) with types that match one of a collection of MIME types.
@@ -120,11 +139,24 @@ public class FileManager implements Closeable {
     }
 
     /**
+     * Converts a data source object id and a parent path into SQL 
+     * data_source_obj_id = ? AND parent_path LIKE ?%
+     * 
+     * @param dataSourceObjectID
+     * @param parentPath
+     * @return 
+     */
+    private static String createParentPathCondition(long dataSourceObjectID, String parentPath){
+        return "data_source_obj_id = " + dataSourceObjectID +" AND parent_path LIKE '" + parentPath +"%'";
+    }
+    
+    
+    /**
      * Finds all files and directories with a given file name. The name search
      * is for full or partial matches and is case insensitive (a case
      * insensitive SQL LIKE clause is used to query the case database).
      *
-     * @param fileName The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      *
      * @return The matching files and directories.
      *
@@ -149,22 +181,22 @@ public class FileManager implements Closeable {
      * case insensitive (a case insensitive SQL LIKE clause is used to query the
      * case database).
      *
-     * @param fileName   The full or partial file name.
-     * @param parentName The full or partial parent file or directory name.
+     * @param fileName The full name or a pattern to match on part of the name
+     * @param parentSubString Substring that must exist in parent path.  Will be surrounded by % in LIKE query. 
      *
      * @return The matching files and directories.
      *
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(String fileName, String parentName) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(String fileName, String parentSubString) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
         List<AbstractFile> result = new ArrayList<>();
         List<Content> dataSources = caseDb.getRootObjects();
         for (Content dataSource : dataSources) {
-            result.addAll(findFiles(dataSource, fileName, parentName));
+            result.addAll(findFiles(dataSource, fileName, parentSubString));
         }
         return result;
     }
@@ -175,7 +207,7 @@ public class FileManager implements Closeable {
      * insensitive (a case insensitive SQL LIKE clause is used to query the case
      * database).
      *
-     * @param fileName The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      * @param parent   The parent file or directory.
      *
      * @return The matching files and directories.
@@ -202,7 +234,7 @@ public class FileManager implements Closeable {
      * LIKE clause is used to query the case database).
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      *
      * @return The matching files and directories.
      *
@@ -224,19 +256,19 @@ public class FileManager implements Closeable {
      * database).
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
-     * @param parentName The full or partial parent file or directory name.
+     * @param fileName The full name or a pattern to match on part of the name
+     * @param parentSubString Substring that must exist in parent path.  Will be surrounded by % in LIKE query. 
      *
      * @return The matching files and directories.
      *
      * @throws TskCoreException if there is a problem querying the case
      *                          database.
      */
-    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String parentName) throws TskCoreException {
+    public synchronized List<AbstractFile> findFiles(Content dataSource, String fileName, String parentSubString) throws TskCoreException {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
-        return caseDb.findFiles(dataSource, fileName, parentName);
+        return caseDb.findFiles(dataSource, fileName, parentSubString);
     }
 
     /**
@@ -247,7 +279,7 @@ public class FileManager implements Closeable {
      * database).
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
+     * @param fileName The full name or a pattern to match on part of the name
      * @param parent     The parent file or directory.
      *
      * @return The matching files and directories.
@@ -297,7 +329,7 @@ public class FileManager implements Closeable {
      * @param atime           The accessed time of the file.
      * @param mtime           The modified time of the file.
      * @param isFile          True if a file, false if a directory.
-     * @param parentObj       The parent object from which the file was derived.     
+     * @param parentObj       The parent object from which the file was derived.
      * @param rederiveDetails The details needed to re-derive file (will be
      *                        specific to the derivation method), currently
      *                        unused.
@@ -328,6 +360,49 @@ public class FileManager implements Closeable {
         return caseDb.addDerivedFile(fileName, localPath, size,
                 ctime, crtime, atime, mtime,
                 isFile, parentObj, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
+    }
+    /**
+     * Update a derived file which already exists in the the case.
+     *
+     * @param derivedFile     The derived file you wish to update
+     * @param localPath       The local path of the file, relative to the case
+     *                        folder and including the file name.
+     * @param size            The size of the file in bytes.
+     * @param ctime           The change time of the file.
+     * @param crtime          The create time of the file
+     * @param atime           The accessed time of the file.
+     * @param mimeType	      The MIME type the updated file should have, null
+     *                        to unset it
+     * @param mtime           The modified time of the file.
+     * @param isFile          True if a file, false if a directory.
+     * @param rederiveDetails The details needed to re-derive file (will be
+     *                        specific to the derivation method), currently
+     *                        unused.
+     * @param toolName        The name of the derivation method or tool,
+     *                        currently unused.
+     * @param toolVersion     The version of the derivation method or tool,
+     *                        currently unused.
+     * @param otherDetails    Other details of the derivation method or tool,
+     *                        currently unused.
+     * @param encodingType    Type of encoding used on the file
+     *
+     * @return A DerivedFile object representing the derived file.
+     *
+     * @throws TskCoreException if there is a problem adding the file to the
+     *                          case database.
+     */
+    public synchronized DerivedFile updateDerivedFile(DerivedFile derivedFile, String localPath,
+            long size,
+            long ctime, long crtime, long atime, long mtime,
+            boolean isFile, String mimeType,
+            String rederiveDetails, String toolName, String toolVersion, String otherDetails,
+            TskData.EncodingType encodingType) throws TskCoreException {
+        if (null == caseDb) {
+            throw new TskCoreException("File manager has been closed");
+        }
+        return caseDb.updateDerivedFile(derivedFile, localPath, size,
+                ctime, crtime, atime, mtime,
+                isFile, mimeType, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
     }
 
     /**
@@ -496,12 +571,13 @@ public class FileManager implements Closeable {
      * Adds a file or directory of logical/local files data source to the case
      * database, recursively adding the contents of directories.
      *
-     * @param trans              A case database transaction.
-     * @param parentDirectory    The root virtual directory of the data source or the parent local directory.
-     * @param localFile          The local/logical file or directory.
-     * @param encodingType       Type of encoding used when storing the file
-     * @param progressUpdater    Called after each file/directory is added to
-     *                           the case database.
+     * @param trans           A case database transaction.
+     * @param parentDirectory The root virtual directory of the data source or
+     *                        the parent local directory.
+     * @param localFile       The local/logical file or directory.
+     * @param encodingType    Type of encoding used when storing the file
+     * @param progressUpdater Called after each file/directory is added to the
+     *                        case database.
      *
      * @return An AbstractFile representation of the local/logical file.
      *
@@ -674,13 +750,14 @@ public class FileManager implements Closeable {
      * Adds a file or directory of logical/local files data source to the case
      * database, recursively adding the contents of directories.
      *
-     * @param trans              A case database transaction.
-     * @param parentDirectory    The root virtual directory of the data source or the parent local directory.
-     * @param localFile          The local/logical file or directory.
+     * @param trans           A case database transaction.
+     * @param parentDirectory The root virtual directory of the data source or
+     *                        the parent local directory.
+     * @param localFile       The local/logical file or directory.
      * @param progressUpdater notifier to receive progress notifications on
-     *                           folders added, or null if not used
-     * @param progressUpdater    Called after each file/directory is added to
-     *                           the case database.
+     *                        folders added, or null if not used
+     * @param progressUpdater Called after each file/directory is added to the
+     *                        case database.
      *
      * @return An AbstractFile representation of the local/logical file.
      *
