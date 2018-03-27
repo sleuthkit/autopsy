@@ -524,7 +524,7 @@ final class DataSourceIngestJob {
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
             logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
-            DataSourceIngestJob.taskScheduler.fastTrackFileIngestTasks(this, this.files);
+            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
 
             /**
              * No data source ingest task has been scheduled for this stage, and
