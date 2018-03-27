@@ -76,19 +76,14 @@ public class CommonFileChildNode extends FileNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, CommonFileChildNode node) {
-        map.put(CommonFilePropertyType.File.toString(), node.getContent().getName());
-        map.put(CommonFilePropertyType.InstanceCount.toString(), "");
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
     }
     
     @NbBundle.Messages({
-        "CommonFilePropertyType.fileColLbl=File",
-        "CommonFilePropertyType.instanceColLbl1=Instance Count",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source"})
+        "CommonFilePropertyType.dataSourceColLbl=Data Source"
+        })
     public enum CommonFilePropertyType {
         
-        File(Bundle.CommonFilePropertyType_fileColLbl()),
-        InstanceCount(Bundle.CommonFilePropertyType_instanceColLbl1()),
         DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl());
         
         final private String displayString;
