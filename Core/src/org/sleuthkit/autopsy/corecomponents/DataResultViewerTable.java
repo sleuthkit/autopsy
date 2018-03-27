@@ -172,6 +172,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outlineView.expandNode(n);
     }
 
+    //DataResultViewerTable.FIRST_COLUMN_LABEL
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
