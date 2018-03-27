@@ -5,7 +5,7 @@ os:
  - linux
 env:
  global:
-  - TSK_HOME=/sleuthkit/sleuthkit
+  - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/autopsy/sleuthkit/sleuthkit
 jdk:
  - oraclejdk8
 before_install:
@@ -13,10 +13,8 @@ before_install:
 install:
  - cd sleuthkit/sleuthkit 
  - sh install-sleuthkit.sh
- - sudo make install
-script:
- - $PWD	
- - cd sleuthkit/autopsy
+script:	
+ - cd $TRAVIS_BUILD_DIR/sleuthkit/autopsy
  - ant build	
 
 
