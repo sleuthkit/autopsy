@@ -861,9 +861,9 @@ public class IngestManager {
     private final class ExecuteIngestJobTasksTask implements Runnable {
 
         private final long threadId;
-        private final IngestTaskQueue tasks;
+        private final BlockingIngestTaskQueue tasks;
 
-        ExecuteIngestJobTasksTask(long threadId, IngestTaskQueue tasks) {
+        ExecuteIngestJobTasksTask(long threadId, BlockingIngestTaskQueue tasks) {
             this.threadId = threadId;
             this.tasks = tasks;
         }

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import static junit.framework.Assert.assertFalse;
 import junit.framework.TestCase;
@@ -37,8 +38,11 @@ import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
+import org.sleuthkit.autopsy.testutils.IngestJobRunner;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -80,19 +84,18 @@ public class IngestFileFiltersTest extends TestCase {
             Assert.fail(ex);
         }        
         assertTrue(CASE_DIR.exists());
-        ProcessorCallback callBack = null;
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         try {
-            callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
+            ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
+            List<Content> dataSourceContent = callBack.getDataSourceContent();
+            assertEquals(1, dataSourceContent.size());
+            List<String> errorMessages = callBack.getErrorMessages();
+            assertEquals(0, errorMessages.size());
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
             
         }
-        List<Content> dataSourceContent = callBack.getDataSourceContent();
-        assertEquals(1, dataSourceContent.size());
-        List<String> errorMessages = callBack.getErrorMessages();
-        assertEquals(0, errorMessages.size());
     }
 
     @Override
@@ -113,27 +116,34 @@ public class IngestFileFiltersTest extends TestCase {
         assertFalse(CASE_DIR.exists());
     }
     
-    public void testFileNotFound() {
+    public void testFileType() {
         try {
-            FileManager filemanager = Case.getOpenCase().getServices().getFileManager();
-            List<AbstractFile> results = filemanager.findFiles("noFound");
-            assertEquals(0, results.size());
-            
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+            Case openCase = Case.getOpenCase();
+            runIngestJob(openCase.getDataSources());
+            FileManager fileManager = openCase.getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
+            String mimeType = results.get(0).getMIMEType();
+            assertEquals("image/jpeg", mimeType);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
     }
-
-    public void testFileFound() {
+    
+    private void runIngestJob(List<Content> datasources) {
+        FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
+        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
+        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
+        template.setEnabled(true);
+        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+        templates.add(template);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
         try {
-            FileManager filemanager = Case.getOpenCase().getServices().getFileManager();
-            List<AbstractFile> results = filemanager.findFiles("file.jpg", "dir1");
-            assertEquals(1, results.size());
-            assertEquals("file.jpg", results.get(0).getName());
-        } catch (TskCoreException | NoCurrentCaseException ex) {
+            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
+            assertEquals(0, errs.size());
+        } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }
+        }        
     }
 }
