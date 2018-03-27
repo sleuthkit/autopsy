@@ -1,0 +1,18 @@
+language: java
+sudo: required
+dist: trusty
+os:
+ - linux
+env:
+ global:
+  - TSK_HOME=TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
+jdk:
+ - oraclejdk8
+before_install:
+ - git clone https://github.com/sleuthkit/sleuthkit.git sleuthkit/sleuthkit 	
+install:
+ - sh sleuthkit/sleuthkit/install-sleuthkit.sh
+script:
+ - ant build	
+
+
