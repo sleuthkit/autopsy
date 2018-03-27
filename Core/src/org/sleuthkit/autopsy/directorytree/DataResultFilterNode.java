@@ -328,15 +328,16 @@ public class DataResultFilterNode extends FilterNode {
 
             // filter out all non-message artifacts, if displaying the results from the Data Source tree
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
-            if (art != null && filterArtifacts) {
-                if ((art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
-                        && (art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())) {
-                    return new Node[]{};
-                }
+            if (art != null
+                    && filterArtifacts
+                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+                return new Node[]{};
             }
 
             return new Node[]{new DataResultFilterNode(key, sourceEm, filterKnown, filterSlack)};
         }
+
     }
 
     @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
@@ -405,10 +406,10 @@ public class DataResultFilterNode extends FilterNode {
             } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
                     || (c = ban.getLookup().lookup(DerivedFile.class)) != null) {
                 n = new LocalFileNode((AbstractFile) c);
-                if (FileTypeExtensions.getArchiveExtensions().contains("." + ((AbstractFile)c).getNameExtension().toLowerCase())) {
+                if (FileTypeExtensions.getArchiveExtensions().contains("." + ((AbstractFile) c).getNameExtension().toLowerCase())) {
                     try {
                         if (c.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
-                            actionsList.add(new ExtractArchiveWithPasswordAction((AbstractFile)c));
+                            actionsList.add(new ExtractArchiveWithPasswordAction((AbstractFile) c));
                         }
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);

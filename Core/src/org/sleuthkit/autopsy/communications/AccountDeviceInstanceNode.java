@@ -102,8 +102,8 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     @Override
     public Action[] getActions(boolean context) {
         ArrayList<Action> actions = new ArrayList<>(Arrays.asList(super.getActions(context)));
-        actions.add(PinAccountsAction.getInstance());
-        actions.add(ResetAndPinAccountsAction.getInstance());
+//        actions.add(PinAccountsAction.getInstance());
+//        actions.add(ResetAndPinAccountsAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
     }
 

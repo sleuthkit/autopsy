@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-18 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -31,8 +32,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Key for AccountDeviceInstance node.
  *
- * Encapsulates a AccountDeviceInstanc,some meta data about it, and
- * CommunicationsFilter.
+ * Encapsulates an AccountDeviceInstance, a CommunicationsFilter, and some
+ * additional data about the account deveice instance.
  */
 final class AccountDeviceInstanceKey {
 
@@ -43,18 +44,11 @@ final class AccountDeviceInstanceKey {
     private final long messageCount;
     private final String dataSourceName;
 
-    AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount, String dataSourceName) {
-        this.accountDeviceInstance = accountDeviceInstance;
-        this.filter = filter;
-        this.messageCount = msgCount;
-        this.dataSourceName = dataSourceName;
-    }
-
     AccountDeviceInstanceKey(AccountDeviceInstance accountDeviceInstance, CommunicationsFilter filter, long msgCount) {
         this.accountDeviceInstance = accountDeviceInstance;
         this.filter = filter;
         this.messageCount = msgCount;
-        this.dataSourceName = getDataSourceName(accountDeviceInstance, Case.getCurrentCase().getSleuthkitCase());
+        this.dataSourceName = getDataSourceName(accountDeviceInstance);
     }
 
     AccountDeviceInstance getAccountDeviceInstance() {
@@ -99,25 +93,27 @@ final class AccountDeviceInstanceKey {
             return false;
         }
         final AccountDeviceInstanceKey other = (AccountDeviceInstanceKey) obj;
-        if (this.messageCount != other.messageCount) {
+        if (this.getMessageCount() != other.getMessageCount()) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceName, other.dataSourceName)) {
+        if (!Objects.equals(this.getDataSourceName(), other.getDataSourceName())) {
             return false;
         }
-        return Objects.equals(this.accountDeviceInstance, other.accountDeviceInstance);
+        return Objects.equals(this.getAccountDeviceInstance(), other.getAccountDeviceInstance());
     }
 
-    private static String getDataSourceName(AccountDeviceInstance accountDeviceInstance, SleuthkitCase db) {
+    private static String getDataSourceName(AccountDeviceInstance accountDeviceInstance) {
         try {
+            SleuthkitCase db = Case.getOpenCase().getSleuthkitCase();
             for (DataSource dataSource : db.getDataSources()) {
                 if (dataSource.getDeviceId().equals(accountDeviceInstance.getDeviceId())) {
                     return db.getContentById(dataSource.getId()).getName();
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting datasource name, falling back on device ID.", ex);
         }
         return accountDeviceInstance.getDeviceId();
     }
+
 }
