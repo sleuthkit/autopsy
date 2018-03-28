@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -41,6 +40,8 @@ public class CommonFileParentNode extends DisplayableItemNode {
         this.commonFileCount = commonFileCount;
         this.dataSources = dataSources;
         this.md5Hash = md5Hash;
+        
+        this.setDisplayName(md5Hash);
     }
 
     int getCommonFileCount() {
@@ -63,7 +64,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
+      
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
@@ -84,8 +85,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, CommonFileParentNode node) {
-        map.put(CommonFileParentPropertyType.File.toString(), String.format("Match: %s", new String[]{node.getMd5()}));
-        map.put(CommonFileParentPropertyType.MD5.toString(), StringUtils.defaultString(node.getMd5()));
+        map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
         map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
     }
@@ -107,13 +107,11 @@ public class CommonFileParentNode extends DisplayableItemNode {
 
     @NbBundle.Messages({
         "CommonFileParentPropertyType.fileColLbl=File",
-        "CommonFileParentPropertyType.md5ColLbl=MD5 Hash",
         "CommonFileParentPropertyType.instanceColLbl=Instance Count",
         "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {
 
         File(Bundle.CommonFileParentPropertyType_fileColLbl()),
-        MD5(Bundle.CommonFileParentPropertyType_md5ColLbl()),
         InstanceCount(Bundle.CommonFileParentPropertyType_instanceColLbl()),
         DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
 
