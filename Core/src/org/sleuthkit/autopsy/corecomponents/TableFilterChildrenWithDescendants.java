@@ -27,7 +27,7 @@ import org.openide.nodes.Node;
  * of rows (plus/minus buttons for each row with children).
  */
 class TableFilterChildrenWithDescendants extends TableFilterChildren {
-    
+        
     private TableFilterChildrenWithDescendants(Node wrappedNode) {
         super(wrappedNode);
     }
@@ -42,6 +42,6 @@ class TableFilterChildrenWithDescendants extends TableFilterChildren {
     
     @Override
     protected Node copyNode(Node nodeToCopy){
-        return new TableFilterNode(nodeToCopy, true);
+        return new TableFilterNode(nodeToCopy, true, true);
     }    
 }
