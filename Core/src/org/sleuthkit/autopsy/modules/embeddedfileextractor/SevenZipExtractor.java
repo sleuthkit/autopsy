@@ -137,20 +137,21 @@ class SevenZipExtractor {
     /**
      * Checks whether extraction is supported for a file, based on MIME type.
      *
-     * @param abstractFile The AbstractFilw whose mimetype is to be determined.
+     * @param file The file.
      *
      * @return This method returns true if the file format is currently
      *         supported. Else it returns false.
      */
-    boolean isSevenZipExtractionSupported(String abstractFileMimeType) {
-        for (SupportedArchiveExtractionFormats s : SupportedArchiveExtractionFormats.values()) {
-            if (s.toString().equals(abstractFileMimeType)) {
+    boolean isSevenZipExtractionSupported(AbstractFile file) {
+        String fileMimeType = fileTypeDetector.getMIMEType(file);
+        for (SupportedArchiveExtractionFormats mimeType : SupportedArchiveExtractionFormats.values()) {
+            if (mimeType.toString().equals(fileMimeType)) {
                 return true;
             }
         }
         return false;
-    }
-
+    }    
+    
     /**
      * Check if the item inside archive is a potential zipbomb
      *
@@ -664,7 +665,7 @@ class SevenZipExtractor {
                     if (unpackedFile == null) {
                         continue;
                     }
-                    if (isSevenZipExtractionSupported(unpackedFile.getMIMEType())) {
+                    if (isSevenZipExtractionSupported(unpackedFile)) {
                         archiveDepthCountTree.addArchive(parentAr, unpackedFile.getId());
                     }
                 }
