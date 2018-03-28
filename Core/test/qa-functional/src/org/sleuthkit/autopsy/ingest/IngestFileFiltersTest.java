@@ -154,7 +154,6 @@ public class IngestFileFiltersTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        System.out.println("Test case testBasicDir has been successfully done.");
     }
     
     private void runIngestJob(List<Content> datasources, FilesSet filter) {
