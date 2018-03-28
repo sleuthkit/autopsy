@@ -150,7 +150,7 @@ public class IngestFileFiltersTest extends TestCase {
                 if (file.getParentPath().equalsIgnoreCase("/dir1/")) {
                     if (!(file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
-                        assertTrue(errMsg, file.getMIMEType() != null);
+                        assertTrue(errMsg, !(file.getMIMEType() == null || file.getMIMEType().isEmpty()));
                     }
                 } else { //All files not in dir1 shouldn't have MIME type
                     String errMsg = String.format("File %s (objId=%d) unexpectedly caught by the file filter.", file.getName(), file.getId());
