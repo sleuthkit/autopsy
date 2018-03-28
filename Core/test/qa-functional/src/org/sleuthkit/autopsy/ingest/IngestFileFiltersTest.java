@@ -25,7 +25,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 import junit.framework.TestCase;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -156,6 +158,34 @@ public class IngestFileFiltersTest extends TestCase {
         }
     }
     
+    public void testExtAndDirWithOneRule() {
+        HashMap<String, Rule> rule = new HashMap<>();
+        rule.put("Rule", new Rule("testFileType", new Rule.ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+        //Build the filter that ignore unallocated space and with one rule
+        FilesSet Files_Ext_Dirs_Filter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, false, rule);
+        
+        try {
+            Case openCase = Case.getOpenCase();
+            runIngestJob(openCase.getDataSources(), Files_Ext_Dirs_Filter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();            
+            List<AbstractFile> results = fileManager.findFiles("%.jpg%");
+            assertEquals(12, results.size());
+            for (AbstractFile file : results) {
+                //Files with jpg extension in dir1 should have MIME Type
+                if (file.getParentPath().equalsIgnoreCase("/dir1/") && file.getNameExtension().equalsIgnoreCase("jpg")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null);
+                } else { //All others shouldn't have MIME Type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly caught by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
     private void runIngestJob(List<Content> datasources, FilesSet filter) {
         FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
