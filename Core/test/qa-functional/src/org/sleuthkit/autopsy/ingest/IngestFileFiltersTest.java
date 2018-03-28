@@ -146,7 +146,7 @@ public class IngestFileFiltersTest extends TestCase {
             results = fileManager.findFiles("%%");
           
             for (AbstractFile file : results) {
-                //All files in dir1 should have MIME type, except '.'. '..' and slack files
+                //All files in dir1 should have MIME type, except '.' '..' and slack files
                 if (file.getParentPath().equalsIgnoreCase("/dir1/")) {
                     if (!(file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
