@@ -43,8 +43,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ExtensionCondition;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.FullNameCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
@@ -125,15 +123,10 @@ public class IngestFileFiltersTest extends TestCase {
     }
     
     public void testBasicDir() {
+        HashMap<String, Rule> rule = new HashMap<>();
+        rule.put("Rule", new Rule("testFileType", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Filter for dir1 and no unallocated space
-        FilesSet Files_Dirs_Unalloc_Ingest_Filter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, 
-            new HashMap<String, Rule>() {
-            {
-                put("Rule", new Rule("testFileType", null,
-                            new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
-            }
-            }
-        );        
+        FilesSet Files_Dirs_Unalloc_Ingest_Filter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);        
 
         try {
             Case openCase = Case.getOpenCase();
