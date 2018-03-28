@@ -90,14 +90,26 @@ public interface DataContentViewer {
      * relevant tab. The more generic the viewer, the lower the return value
      * should be. This will only be called on viewers that support the given
      * node.
+     * 
+     * Level 0: Not supported/should never be the default viewer
+     *
+     * Level 1: Always work, not very specific
+     *
+     * Level 2: Unused
+     *
+     * Level 3: Artifact-based that flag files
+     *
+     * Level 4: File-based that are not always enabled, but also not really specific
+     *
+     * Level 5: File-based that are specific:
+     *
+     * Level 6: Artifact-based that is not really specific
+     *
+     * Level 7: Artifact-based and specific
      *
      * @param node Node to check for preference
      *
      * @return an int (0-10) higher return means the viewer has higher priority
-     *         0 means not supported 1 to 2 means the module will display all
-     *         file types (such as the hex viewer) 3-10 are prioritized by
-     *         Content viewer developer. Modules that operate on very few file
-     *         types should be towards 10.
      */
     public int isPreferred(Node node);
 }
