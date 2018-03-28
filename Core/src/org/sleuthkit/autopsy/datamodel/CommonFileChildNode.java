@@ -35,7 +35,11 @@ public class CommonFileChildNode extends FileNode {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
-        this.setDisplayName(fsContent.getName());
+    }
+    
+    @Override 
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor){
+        return visitor.visit(this);
     }
     
     @Override
@@ -76,14 +80,17 @@ public class CommonFileChildNode extends FileNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, CommonFileChildNode node) {
+        map.put(CommonFilePropertyType.File.toString(), node.getName());
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
     }
     
     @NbBundle.Messages({
+        "CommonFilePropertyType.fileColLbl=File",
         "CommonFilePropertyType.dataSourceColLbl=Data Source"
         })
     public enum CommonFilePropertyType {
         
+        File(Bundle.CommonFilePropertyType_fileColLbl()),
         DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl());
         
         final private String displayString;
