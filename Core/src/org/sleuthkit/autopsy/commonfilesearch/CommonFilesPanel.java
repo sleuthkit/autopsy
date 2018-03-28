@@ -31,7 +31,6 @@ import javax.swing.ComboBoxModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
