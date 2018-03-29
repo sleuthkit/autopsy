@@ -51,7 +51,7 @@ public class IngestFileFiltersTest extends TestCase {
 
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
-    private static final Path IMAGE_PATH = Paths.get(System.getenv("TRAVIS_BUILD_DIR") , "Core/test/filter_test1.img");
+    private static final Path IMAGE_PATH = Paths.get("." , "autopsy/Core/test/filter_test1.img");
     
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
