@@ -55,6 +55,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     // the content panel holding tabs with content viewers
     private final DataContentPanel dataContentPanel;
     private final ExplorerManager explorerManager = new ExplorerManager();
+    
+    private Node selectedNode;
 
     // contains a list of the undocked TCs
     private static final ArrayList<DataContentTopComponent> newWindowList = new ArrayList<>();
@@ -170,6 +172,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     @Override
     public void setNode(Node selectedNode) {
         dataContentPanel.setNode(selectedNode);
+        this.selectedNode = selectedNode;
     }
 
     @Override
@@ -191,6 +194,15 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+    }
+    
+    /**
+     * Get the current selected node.
+     * 
+     * @return The selected node.
+     */
+    Node getNode() {
+        return selectedNode;
     }
 
     /**

@@ -103,8 +103,7 @@ public class FileManager implements Closeable {
         if (null == caseDb) {
             throw new TskCoreException("File manager has been closed");
         }
-        List<AbstractFile> files = caseDb.findAllFilesWhere(createParentPathCondition(dataSourceObjectID,parentPath));
-        return files;
+        return caseDb.findAllFilesWhere(createParentPathCondition(dataSourceObjectID,parentPath));
     }
   
     /**

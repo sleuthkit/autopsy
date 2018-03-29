@@ -546,7 +546,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     @Override
     public int isPreferred(Node node) {
         if (isSupported(node)) {
-            return 6;
+            return 7;
         }
         return 0;
     }
