@@ -26,18 +26,17 @@ import java.util.List;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /*
  * A runnable that adds a raw data source to a case database. 
  */
 final class AddMemoryImageTask implements Runnable {
 
-    private static final Logger logger = Logger.getLogger(AddMemoryImageTask.class.getName());
     private final String deviceId;
     private final String imageFilePath;
     private final String timeZone;
@@ -87,8 +86,9 @@ final class AddMemoryImageTask implements Runnable {
         }
         /* call Volatility to process the image */
         else {
-            if (isCancelled)
+            if (isCancelled) {
                 return;
+            }
             
             volatilityProcessor = new VolatilityProcessor(imageFilePath, dataSource, pluginsToRun, progressMonitor);
             if (volatilityProcessor.run()) {
@@ -130,8 +130,15 @@ final class AddMemoryImageTask implements Runnable {
     private Image addImageToCase(List<String> errorMessages) {
         progressMonitor.setProgressText(Bundle.AddMemoryImageTask_progress_add_text() + imageFilePath);
         
-        SleuthkitCase caseDatabase = Case.getCurrentCase().getSleuthkitCase();
-        caseDatabase.acquireExclusiveLock();
+        SleuthkitCase caseDatabase;
+        try {
+            caseDatabase = Case.getOpenCase().getSleuthkitCase();
+        } catch (NoCurrentCaseException ex) {
+            errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());            
+            return null;
+        }
+
+        caseDatabase.acquireSingleUserCaseWriteLock();
 
         // verify it exists
         File imageFile = Paths.get(imageFilePath).toFile();
@@ -151,7 +158,7 @@ final class AddMemoryImageTask implements Runnable {
             errorMessages.add(Bundle.AddMemoryImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddMemoryImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
             return null;
         } finally {
-            caseDatabase.releaseExclusiveLock();
+            caseDatabase.releaseSingleUserCaseWriteLock();
         }        
     }
 
