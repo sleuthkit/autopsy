@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import junit.framework.Test;
 import org.apache.commons.io.FileUtils;
+import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
@@ -47,17 +48,22 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class IngestFileFiltersTest extends TestCase {
+public class IngestFileFiltersTest extends NbTestCase {
 
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
-    private static final Path IMAGE_PATH = Paths.get("test/filter_test1.img");
+    //private final String
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
     
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
+    }
+
+    public IngestFileFiltersTest(String name) {
+        super(name);
     }
 
     @Override
@@ -82,7 +88,7 @@ public class IngestFileFiltersTest extends TestCase {
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }        
+        }
         assertTrue(CASE_DIR.exists());
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         try {
