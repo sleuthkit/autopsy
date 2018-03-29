@@ -41,6 +41,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -56,6 +57,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -142,8 +144,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final PinnedAccountModel pinnedAccountModel;
     private final LockedVertexModel lockedVertexModel;
 
+    private final List<JButton> layoutButtons;
+
     public VisualizationPanel() {
         initComponents();
+        this.layoutButtons = Arrays.asList(circleLayoutButton, fastOrganicLayoutButton, organicLayoutButton, hierarchyLayoutButton);
+
         graph = new CommunicationsGraph();
         pinnedAccountModel = graph.getPinnedAccountModel();
         lockedVertexModel = graph.getLockedVertexModel();
@@ -173,83 +179,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getView().addListener(mxEvent.SCALE, scaleListener);
         graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, scaleListener);
 
-        graphComponent.getGraphControl().addMouseWheelListener(new MouseAdapter() {
-            /**
-             * Translate mouse wheel events into zooming.
-             *
-             * @param event The MouseWheelEvent
-             */
-            @Override
-            public void mouseWheelMoved(final MouseWheelEvent event) {
-                super.mouseWheelMoved(event);
-                if (event.getPreciseWheelRotation() > 0) {
-                    graphComponent.zoomIn();
-                } else if (event.getPreciseWheelRotation() < 0) {
-                    graphComponent.zoomOut();
-                }
-            }
-        });
+        final GraphMouseListener graphMouseListener = new GraphMouseListener();
 
-        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
-            /**
-             * Right click handler: show context menu.
-             *
-             * @param event The MouseEvent
-             */
-            @Override
-            public void mouseClicked(final MouseEvent event) {
-                super.mouseClicked(event);
-                if (SwingUtilities.isRightMouseButton(event)) {
-                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
-                    if (cellAt != null && cellAt.isVertex()) {
-                        final JPopupMenu jPopupMenu = new JPopupMenu();
-                        final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+        graphComponent.getGraphControl().addMouseWheelListener(graphMouseListener);
+        graphComponent.getGraphControl().addMouseListener(graphMouseListener);
 
-                        if (lockedVertexModel.isVertexLocked(cellAt)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.unlockVertex(cellAt);
-                                }
-                            }));
-                        } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.lockVertex(cellAt);
-                                }
-                            }));
-                        }
-                        if (pinnedAccountModel.isAccountPinned(adiKey)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
-                                }
-                            }));
-                        } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
-                                }
-                            }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
-                                }
-                            }));
-                        }
-                        jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
-                    }
-                }
-            }
-        });
         final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
-
         splitPane.setRightComponent(messageBrowser);
-
         proxyLookup = new ProxyLookup(
                 messageBrowser.getLookup(),
                 ExplorerUtils.createLookup(vizEM, getActionMap()));
@@ -261,6 +197,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
+
     }
 
     @Override
@@ -621,18 +558,35 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
+        makeButtonBold(circleLayoutButton);
         morph(circleLayout);
     }//GEN-LAST:event_circleLayoutButtonActionPerformed
 
     private void organicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_organicLayoutButtonActionPerformed
+        makeButtonBold(organicLayoutButton);
         applyOrganicLayout(10);
     }//GEN-LAST:event_organicLayoutButtonActionPerformed
 
     private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
+        makeButtonBold(fastOrganicLayoutButton);
         morph(fastOrganicLayout);
     }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
+    /**
+     * Sets only the given button to have bold text.
+     *
+     * @param layoutButton The button to make bold.
+     */
+    private void makeButtonBold(JButton layoutButton) {
+        layoutButtons.forEach((JButton t) -> {
+            t.setFont(t.getFont().deriveFont(Font.PLAIN));
+        });
+
+        layoutButton.setFont(layoutButton.getFont().deriveFont(Font.BOLD));
+    }
+
     private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
+        makeButtonBold(hierarchyLayoutButton);
         morph(hierarchicalLayout);
     }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
@@ -900,5 +854,78 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             progress.finish();
         }
 
+    }
+
+    private class GraphMouseListener extends MouseAdapter {
+
+        /**
+         * Translate mouse wheel events into zooming.
+         *
+         * @param event The MouseWheelEvent
+         */
+        @Override
+        public void mouseWheelMoved(final MouseWheelEvent event) {
+            super.mouseWheelMoved(event);
+            if (event.getPreciseWheelRotation() > 0) {
+                graphComponent.zoomIn();
+            } else if (event.getPreciseWheelRotation() < 0) {
+                graphComponent.zoomOut();
+            }
+        }
+
+        /**
+         * Right click handler: show context menu.
+         *
+         * @param event The MouseEvent
+         */
+        @Override
+        public void mouseClicked(final MouseEvent event) {
+            super.mouseClicked(event);
+            if (SwingUtilities.isRightMouseButton(event)) {
+                final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
+                if (cellAt != null && cellAt.isVertex()) {
+                    final JPopupMenu jPopupMenu = new JPopupMenu();
+                    final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+
+                    if (lockedVertexModel.isVertexLocked(cellAt)) {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                lockedVertexModel.unlockVertex(cellAt);
+                            }
+                        }));
+                    } else {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                lockedVertexModel.lockVertex(cellAt);
+                            }
+                        }));
+                    }
+                    if (pinnedAccountModel.isAccountPinned(adiKey)) {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
+                            }
+                        }));
+                    } else {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
+                            }
+                        }));
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
+                            }
+                        }));
+                    }
+                    jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
+                }
+            }
+        }
     }
 }
