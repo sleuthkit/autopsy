@@ -395,9 +395,10 @@ class VolatilityProcessor {
         
         // strip C: 
         if (filePath.contains(":")) {
-            int index = filePath.indexOf(":");
-            if (index+1 < filePath.length())
+            int index = filePath.indexOf(':');
+            if (index+1 < filePath.length()) {
                 filePath = filePath.substring(index + 1);
+            }
         }
         
         
@@ -410,8 +411,9 @@ class VolatilityProcessor {
         if (filePath.contains("/harddiskvolume")) {
             // 16 advances beyond harddiskvolume and the number
             int index = filePath.indexOf("/harddiskvolume");
-            if (index+16 < filePath.length())
+            if (index+16 < filePath.length()) {
                 filePath = filePath.substring(index + 16);
+            }
         }
         
         // no point returning these. We won't map to them
@@ -439,7 +441,7 @@ class VolatilityProcessor {
                  if ((line.contains(TAG)) && (line.length() > 57)) {
                     file_path = line.substring(57);
                     if (file_path.contains("\"")) {
-                         file_path = file_path.substring(0, file_path.indexOf("\""));
+                         file_path = file_path.substring(0, file_path.indexOf('\"'));
                     }
                     // this file has a lot of device entries that are not files
                     if (file_path.startsWith("\\Device\\")) {
@@ -493,8 +495,9 @@ class VolatilityProcessor {
              // read the first line from the text file
              while ((line = br.readLine()) != null) {
                 try {
-                    if (line.length() < 41)
+                    if (line.length() < 41) {
                         continue;
+                    }
                     String file_path = line.substring(41);
                     fileSet.add(normalizePath(file_path));
                 } catch (StringIndexOutOfBoundsException ex) {
@@ -526,7 +529,7 @@ class VolatilityProcessor {
                         if (line.charAt(TAG.length()) == '\"') {
                             file_path = line.substring(TAG.length() + 1);
                             if (file_path.contains("\"")) {
-                                file_path = file_path.substring(0, file_path.indexOf("\""));
+                                file_path = file_path.substring(0, file_path.indexOf('\"'));
                             } 
                         } 
                         // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
@@ -534,7 +537,7 @@ class VolatilityProcessor {
                         else {
                             file_path = line.substring(TAG.length());
                             if (file_path.contains(" ")) {
-                                file_path = file_path.substring(0, file_path.indexOf(" "));
+                                file_path = file_path.substring(0, file_path.indexOf(' '));
                             }
                         }
                         fileSet.add(normalizePath(file_path));
@@ -565,7 +568,7 @@ class VolatilityProcessor {
                 if (line.length() > 62) {
                     file_path = line.substring(62);
                     if (file_path.contains("\"")) {
-                        file_path = file_path.substring(0, file_path.indexOf("\""));
+                        file_path = file_path.substring(0, file_path.indexOf('\"'));
                     }                   
                     fileSet.add(normalizePath(file_path));
                 } 
@@ -591,8 +594,9 @@ class VolatilityProcessor {
                 // 0x000000000969a020 notepad.exe        3604   3300 0x16d40340 2018-01-12 14:41:16 UTC+0000  
                 if (line.startsWith("0x") == false)
                     continue;
-                if (line.length() < 37)
+                if (line.length() < 37) {
                     continue;
+                }
                 String file_path = line.substring(19, 37);
                 file_path = normalizePath(file_path);
                
@@ -617,18 +621,22 @@ class VolatilityProcessor {
              BufferedReader br = new BufferedReader(new FileReader(PluginFile));
              // read the first line from the text file
              while ((line = br.readLine()) != null) {
-                 if (line.startsWith("0x") == false)
+                 if (line.startsWith("0x") == false) {
                      continue;
+                 }
                  
                 // 0x89cfb998 csrss.exe               704    640     14      532      0      0 2017-12-07 14:05:34 UTC+0000
-                if (line.length() < 34)
+                else if (line.length() < 34) {
                     continue;
+                }
+                
                 String file_path = line.substring(10, 34);
                 file_path = normalizePath(file_path);
                
                 // ignore system, it's not really a path
-                if (file_path.equals("system"))
+                if (file_path.equals("system")) {
                     continue;
+                }
                 fileSet.add(file_path);
              }    
              br.close();
@@ -658,8 +666,9 @@ class VolatilityProcessor {
                 file_path = normalizePath(file_path);
                
                 // ignore system, it's not really a path
-                if (file_path.equals("system"))
+                if (file_path.equals("system")) {
                     continue;
+                }
                 fileSet.add(file_path);
              }    
              br.close();
@@ -682,14 +691,16 @@ class VolatilityProcessor {
                 String TAG = ":";
                 if (line.contains(TAG)) {
                     int index = line.indexOf(TAG);
-                    if (line.length() < 52 || index + 1 >= 52)
+                    if (line.length() < 52 || index + 1 >= 52) {
                         continue;
+                    }
                     String file_path = line.substring(line.indexOf(TAG) + 1, 52);
                     file_path = normalizePath(file_path);
                
                     // ignore system, it's not really a path
-                    if (file_path.equals("system"))
+                    if (file_path.equals("system")) {
                         continue;
+                    }
                     fileSet.add(file_path);
                 }
              }    
@@ -715,7 +726,7 @@ class VolatilityProcessor {
                     if (line.charAt(TAG.length()) == '\"') {
                         file_path = line.substring(TAG.length()+1);
                         if (file_path.contains("\"")) {
-                            file_path = file_path.substring(0, file_path.indexOf("\""));
+                            file_path = file_path.substring(0, file_path.indexOf('\"'));
                         }
                     }
                     // Binary Path: -
@@ -726,7 +737,7 @@ class VolatilityProcessor {
                     else {
                         file_path = line.substring(TAG.length());
                         if (file_path.contains(" ")) {
-                            file_path = file_path.substring(0, file_path.indexOf(" "));
+                            file_path = file_path.substring(0, file_path.indexOf(' '));
                         }
                         // We can't do anything with driver entries
                         if (file_path.startsWith("\\Driver\\")) {
