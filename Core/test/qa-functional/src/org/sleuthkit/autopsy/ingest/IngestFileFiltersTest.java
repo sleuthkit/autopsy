@@ -52,6 +52,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
+    //private final String
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
     
     public static Test suite() {
