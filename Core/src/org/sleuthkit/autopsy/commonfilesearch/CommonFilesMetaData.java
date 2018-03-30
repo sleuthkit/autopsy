@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Utility and wrapper around data required for Common Files Search results.
  * Subclass this to implement different selections of files from the case.
  */
-public abstract class CommonFilesMetaData {
+public class CommonFilesMetaData {
         
     private final String parentMd5;
     private final List<AbstractFile> children;
@@ -97,14 +97,5 @@ public abstract class CommonFilesMetaData {
         return String.join(", ", dataSourceStrings);
     }
 
-    /**
-     * Implement this in order to specify which files are selected into this 
-     * CommonFilesMetaData and passed along to the view.
-     * 
-     * No SQL-side de-duping should be performed.  Results should be ordered by MD5.
-     * 
-     * @return a SQL WHERE clause to be used in common files selection
-     */
-    protected abstract String getSqlWhereClause();
 
 }
