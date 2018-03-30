@@ -24,6 +24,10 @@ import java.util.Map;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesChildren;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesDescendants;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetaData;
 
 /**
  * Represents a common files match - two or more files which appear to be the
@@ -35,11 +39,14 @@ public class CommonFileParentNode extends DisplayableItemNode {
     private final int commonFileCount;
     private final String dataSources;
 
-    public CommonFileParentNode(Children children, String md5Hash, int commonFileCount, String dataSources) {
-        super(children);
-        this.commonFileCount = commonFileCount;
-        this.dataSources = dataSources;
-        this.md5Hash = md5Hash;
+    public CommonFileParentNode(CommonFilesMetaData metaData) {
+        super(Children.create(
+                new CommonFilesDescendants(metaData.getChildren(),
+                metaData.getDataSourceIdToNameMap()), true),
+                Lookups.singleton(metaData));
+        this.commonFileCount = metaData.getChildren().size();
+        this.dataSources = metaData.selectDataSources();
+        this.md5Hash = metaData.getMd5();
         
         this.setDisplayName(md5Hash);
     }

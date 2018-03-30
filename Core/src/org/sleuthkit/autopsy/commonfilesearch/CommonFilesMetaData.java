@@ -24,8 +24,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -36,15 +38,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Utility and wrapper around data required for Common Files Search results.
  * Subclass this to implement different selections of files from the case.
  */
-abstract class CommonFilesMetaData {
+public abstract class CommonFilesMetaData {
         
-    private final Map<String, List<AbstractFile>> parentNodes;
+    private final String parentMd5;
+    private final List<AbstractFile> children;
     private final Map<Long, String> dataSourceIdToNameMap;
 
     private final SleuthkitCase sleuthkitCase;
 
-    CommonFilesMetaData() throws TskCoreException, SQLException, NoCurrentCaseException {
-        parentNodes = new HashMap<>();
+    CommonFilesMetaData(String md5, List<AbstractFile> childNodes) throws TskCoreException, SQLException, NoCurrentCaseException {
+        parentMd5 = md5;
+        children = childNodes;
         dataSourceIdToNameMap = new HashMap<>();
 
         this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
@@ -66,40 +70,31 @@ abstract class CommonFilesMetaData {
             }
         }
     }
-
-    Map<String, List<AbstractFile>> getFilesMap() {
-        return Collections.unmodifiableMap(this.parentNodes);
+    public String getMd5() {
+        return parentMd5;
+    }
+    public List<AbstractFile> getChildren() {
+        return Collections.unmodifiableList(this.children);
     }
 
-    Map<Long, String> getDataSourceIdToNameMap() {
+    public Map<Long, String> getDataSourceIdToNameMap() {
         return Collections.unmodifiableMap(dataSourceIdToNameMap);
     }
 
-    /**
-     * Sorts files in selection into a parent/child hierarchy where actual files
-     * are nested beneath a parent node which represents the common match.
-     * 
-     * @return returns a reference to itself for ease of use.
-     * @throws TskCoreException 
-     */
-    CommonFilesMetaData collateFiles() throws TskCoreException {
+    public String selectDataSources() {
 
-        List<AbstractFile> files = this.sleuthkitCase.findAllFilesWhere(getSqlWhereClause());
+        Map<Long, String> dataSources = this.getDataSourceIdToNameMap();
 
-        for (AbstractFile file : files) {
+        Set<String> dataSourceStrings = new HashSet<>();
 
-            String currentMd5 = file.getMd5Hash();
-            
-            if(parentNodes.containsKey(currentMd5)){
-                parentNodes.get(currentMd5).add(file);
-            } else {
-                List<AbstractFile> children = new ArrayList<>();
-                children.add(file);
-                parentNodes.put(currentMd5, children);
-            }
+        for (AbstractFile child : getChildren()) {
+
+            String dataSource = dataSources.get(child.getDataSourceObjectId());
+
+            dataSourceStrings.add(dataSource);
         }
-        
-        return this;
+
+        return String.join(", ", dataSourceStrings);
     }
 
     /**
@@ -112,12 +107,4 @@ abstract class CommonFilesMetaData {
      */
     protected abstract String getSqlWhereClause();
 
-    /**
-     * 
-     * @param t
-     * @return 
-     */
-    List<AbstractFile> getChildrenForFile(String md5) {
-        return this.parentNodes.get(md5);
-    }
 }

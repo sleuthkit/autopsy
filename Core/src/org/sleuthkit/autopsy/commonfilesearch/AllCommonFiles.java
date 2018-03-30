@@ -20,7 +20,9 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
+import java.util.List;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -28,8 +30,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class AllCommonFiles extends CommonFilesMetaData {
     
-    AllCommonFiles() throws TskCoreException, SQLException, NoCurrentCaseException{
-        super();
+    AllCommonFiles(String md5, List<AbstractFile> childNodes) throws TskCoreException, SQLException, NoCurrentCaseException{
+        super(md5, childNodes);
     }
 
     private final String whereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";

@@ -32,51 +32,30 @@ import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
 /**
  * Makes nodes for common files search results.
  */
-final class CommonFilesChildren extends ChildFactory<String> {
+public final class CommonFilesChildren extends ChildFactory<CommonFilesMetaData> {
 
-    private CommonFilesMetaData metaData;
+    private List<CommonFilesMetaData> metaDataList;
 
-    CommonFilesChildren(CommonFilesMetaData theMetaData) {
+    public CommonFilesChildren(List<CommonFilesMetaData> theMetaDataList) {
         super();
-        this.metaData = theMetaData;
+        this.metaDataList = theMetaDataList;
     }
 
     protected void removeNotify() {
-        metaData = null;
+        metaDataList = null;
     }
 
     @Override
-    protected Node createNodeForKey(String md5) {
+    protected Node createNodeForKey(CommonFilesMetaData metaData) {
 
-        List<AbstractFile> children = this.metaData.getChildrenForFile(md5);
-
-        int instanceCount = children.size();
-        String dataSources = selectDataSources(children);
-
-        return new CommonFileParentNode(Children.create(new CommonFilesDescendants(children, this.metaData.getDataSourceIdToNameMap()), true), md5, instanceCount, dataSources);
+        return new CommonFileParentNode(metaData);
     }
 
     @Override
-    protected boolean createKeys(List<String> toPopulate) {
-        final Map<String, List<org.sleuthkit.datamodel.AbstractFile>> filesMap = this.metaData.getFilesMap();
-        Collection<String> files = filesMap.keySet();
-        toPopulate.addAll(files);
+    protected boolean createKeys(List<CommonFilesMetaData> toPopulate) {
+        toPopulate.addAll(metaDataList);
         return true;
     }
 
-    private String selectDataSources(List<AbstractFile> children) {
 
-        Map<Long, String> dataSources = this.metaData.getDataSourceIdToNameMap();
-
-        Set<String> dataSourceStrings = new HashSet<>();
-
-        for (AbstractFile child : children) {
-
-            String dataSource = dataSources.get(child.getDataSourceObjectId());
-
-            dataSourceStrings.add(dataSource);
-        }
-
-        return String.join(", ", dataSourceStrings);
-    }
 }
