@@ -411,15 +411,17 @@ final class IngestTasksScheduler {
 
         /*
          * Ensures that all directories, files which are members of the ingest
-         * file filter, and when processUnallocated is enabled Unallocated
-         * blocks all get continue to be processed. AbstractFiles which do not
+         * file filter, and unallocated blocks (when processUnallocated is
+         * enabled) all continue to be processed. AbstractFiles which do not
          * meet one of these criteria will be skipped.
          *
          * An additional check to see if unallocated space should be processed
          * is part of the FilesSet.fileIsMemberOf() method.
+         *
+         * This code may need to be updated when
+         * TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS come into use by Autopsy.
          */
-        if (!file.isDir() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null
-                && !(task.getIngestJob().shouldProcessUnallocatedSpace() && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS))) {
+        if (!file.isDir() && !shouldBeCarved(task) && !fileAcceptedByFilter(task)) {
             return false;
         }
 
@@ -465,6 +467,27 @@ final class IngestTasksScheduler {
         }
 
         return true;
+    }
+
+    /**
+     * Check if the task's file should is an unallocated space file which should be carved.
+     * 
+     * @param task the FileIngestTask which represents the file
+     * 
+     * @return true if the file should be processed, false if it should not be
+     */
+    private static boolean shouldBeCarved(final FileIngestTask task) {
+        return task.getIngestJob().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+    }
+
+    /**
+     * Check if the task's file is Accepted by the ingest file filter currently being used
+     *
+     * @param task the FileIngestTask which represents the file
+     * @return true if the file should be processed, false if the file should not be processed 
+     */
+    private static boolean fileAcceptedByFilter(final FileIngestTask task) {
+        return !(task.getIngestJob().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
     }
 
     /**
