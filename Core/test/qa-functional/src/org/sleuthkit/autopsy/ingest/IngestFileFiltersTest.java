@@ -160,7 +160,7 @@ public class IngestFileFiltersTest extends TestCase {
     
     public void testExtAndDirWithOneRule() {
         HashMap<String, Rule> rules = new HashMap<>();
-        rules.put("Rule", new Rule("testFileType", new Rule.ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+        rules.put("Rule", new Rule("testExtAndDirWithOneRule", new Rule.ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Build the filter that ignore unallocated space and with one rule
         FilesSet Files_Ext_Dirs_Filter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, true, rules);
         
@@ -173,10 +173,10 @@ public class IngestFileFiltersTest extends TestCase {
             for (AbstractFile file : results) {
                 //Files with jpg extension in dir1 should have MIME Type
                 if (file.getParentPath().equalsIgnoreCase("/dir1/") && file.getNameExtension().equalsIgnoreCase("jpg")) {
-                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
-                    assertTrue(errMsg, file.getMIMEType() != null);
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, !(file.getMIMEType() == null || file.getMIMEType().isEmpty()));
                 } else { //All others shouldn't have MIME Type
-                    String errMsg = String.format("File %s (objId=%d) unexpectedly caught by the file filter.", file.getName(), file.getId());
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
                     assertTrue(errMsg, file.getMIMEType() == null);
                 }
             }
