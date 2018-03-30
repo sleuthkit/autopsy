@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.List;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
@@ -30,8 +31,8 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  */
 final public class CommonFilesSearchNode extends DisplayableItemNode {
 
-    CommonFilesSearchNode(CommonFilesMetaData metaData) {
-        super(Children.create(new CommonFilesChildren(metaData), true), Lookups.singleton(metaData));
+    CommonFilesSearchNode(List<CommonFilesMetaData> metaDataList) {
+        super(Children.create(new CommonFilesChildren(metaDataList), true), Lookups.singleton(metaDataList));
     }
 
     @NbBundle.Messages({

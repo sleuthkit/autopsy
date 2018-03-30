@@ -20,7 +20,9 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
+import java.util.List;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -30,8 +32,8 @@ public class SingleDataSourceCommonFiles extends CommonFilesMetaData {
 
     private final String whereClause;
     
-    SingleDataSourceCommonFiles(long dataSourceId) throws TskCoreException, SQLException, NoCurrentCaseException{
-        super();
+    SingleDataSourceCommonFiles(String md5, List<AbstractFile> childNodes, long dataSourceId) throws TskCoreException, SQLException, NoCurrentCaseException{
+        super(md5, childNodes);
         
         Object[] args = new String[] {Long.toString(dataSourceId), Long.toString(dataSourceId)};
         this.whereClause = String.format(
