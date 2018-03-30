@@ -530,7 +530,6 @@ final class IngestTasksScheduler {
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
         return new IngestJobTasksSnapshot(jobId);
-
     }
 
     /**
