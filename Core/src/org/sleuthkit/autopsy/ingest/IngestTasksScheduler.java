@@ -410,11 +410,16 @@ final class IngestTasksScheduler {
         }
 
         /*
-         * Check if the file is a member of the file ingest filter that is being
-         * applied to the current run of ingest, checks if unallocated space
-         * should be processed inside call to fileIsMemberOf
+         * Ensures that all directories, files which are members of the ingest
+         * file filter, and when processUnallocated is enabled Unallocated
+         * blocks all get continue to be processed. AbstractFiles which do not
+         * meet one of these criteria will be skipped.
+         *
+         * An additional check to see if unallocated space should be processed
+         * is part of the FilesSet.fileIsMemberOf() method.
          */
-        if (!file.isDir() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
+        if (!file.isDir() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null
+                && !(task.getIngestJob().shouldProcessUnallocatedSpace() && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS))) {
             return false;
         }
 
@@ -525,6 +530,7 @@ final class IngestTasksScheduler {
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
         return new IngestJobTasksSnapshot(jobId);
+
     }
 
     /**
