@@ -177,7 +177,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public synchronized CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
-        Connection conn = connect();
         
         // check if there is already an existing CorrelationCase for this Case
         CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
@@ -185,6 +184,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             return cRCase;
         }
 
+        Connection conn = connect();
         PreparedStatement preparedStatement = null;
 
         String sql = "INSERT INTO cases(case_uid, org_id, case_name, creation_date, case_number, "
