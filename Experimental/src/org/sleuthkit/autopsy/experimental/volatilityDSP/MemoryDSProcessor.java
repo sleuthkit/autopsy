@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,21 +28,21 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * A MEmory data source processor that implements the DataSourceProcessor service
- * provider interface to allow integration with the add data source wizard. It
- * also provides a run method overload to allow it to be used independently of
- * the wizard.
+ * A memory image data source processor that implements the DataSourceProcessor
+ * service provider interface to allow integration with the Add Data Source
+ * wizard. It also provides a run method overload to allow it to be used
+ * independently of the wizard.
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class MemoryDSProcessor implements DataSourceProcessor {
 
     private final MemoryDSInputPanel configPanel;
-    private AddMemoryImageTask addImageTask = null;
+    private AddMemoryImageTask addImageTask;
 
     /*
-     * Constructs a Memory data source processor that implements the
+     * Constructs a memory data source processor that implements the
      * DataSourceProcessor service provider interface to allow integration with
-     * the add data source wizard. It also provides a run method overload to
+     * the Add Data source wizard. It also provides a run method overload to
      * allow it to be used independently of the wizard.
      */
     public MemoryDSProcessor() {
@@ -117,37 +117,40 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), 0, progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), progressMonitor, callback);
     }
 
     /**
-     * Adds a "memory" data source to the case database using a background task in
-     * a separate thread and the given settings instead of those provided by the
-     * selection and configuration panel. Returns as soon as the background task
-     * is started and uses the callback object to signal task completion and
-     * return results.
+     * Adds a memory image data source to the case database using a background
+     * task in a separate thread and the given settings instead of those
+     * provided by the selection and configuration panel. Returns as soon as the
+     * background task is started and uses the callback object to signal task
+     * completion and return results.
      *
-     * @param deviceId             An ASCII-printable identifier for the device
-     *                             associated with the data source that is
-     *                             intended to be unique across multiple cases
-     *                             (e.g., a UUID).
-     * @param imageFilePath        Path to the image file.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param chunkSize            The maximum size of each chunk of the raw
-     *                             data source as it is divided up into virtual
-     *                             unallocated space files.
-     * @param progressMonitor      Progress monitor for reporting progress
-     *                             during processing.
-     * @param callback             Callback to call when processing is done.
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param memoryImagePath Path to the memory image file.
+     * @param pluginsToRun    The Volatility plugins to run.
+     * @param timeZone        The time zone to use when processing dates and
+     *                        times for the image, obtained from
+     *                        java.util.TimeZone.getID.
+     * @param progressMonitor Progress monitor for reporting progress during
+     *                        processing.
+     * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, String imageFilePath, List<String> pluginsToRun, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddMemoryImageTask(deviceId, imageFilePath, pluginsToRun, timeZone, 0, progressMonitor, callback);
+    private void run(String deviceId, String memoryImagePath, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, pluginsToRun, timeZone, progressMonitor, callback);
         new Thread(addImageTask).start();
-       //new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, progressMonitor, callback)).start();
     }
 
+    /**
+     * Requests cancellation of the background task that adds a data source to
+     * the case database, after the task is started using the run method. This
+     * is a "best effort" cancellation, with no guarantees that the case
+     * database will be unchanged. If cancellation succeeded, the list of new
+     * data sources returned by the background task will be empty.
+     */
     @Override
     public void cancel() {
         if (addImageTask != null) {
@@ -165,4 +168,3 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     }
 
 }
-
