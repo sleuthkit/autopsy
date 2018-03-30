@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,21 +19,31 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import java.text.ParseException;
+import java.util.Locale;
 import javax.swing.JComboBox;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.python.icu.text.NumberFormat;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
- *
- * @author pmartel
+ * Filter search size input.
  */
 class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
 
+    /**
+     * Instantiate a SizeSearchFilter object for a new SizeSearchPanel.
+     */
     SizeSearchFilter() {
         this(new SizeSearchPanel());
     }
 
+    /**
+     * Instantiate a SizeSearchFilter object for an existing SizeSearchPanel.
+     *
+     * @param component The SizeSearchPanel instance.
+     */
     SizeSearchFilter(SizeSearchPanel component) {
         super(component);
     }
@@ -53,6 +63,14 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
         return "size " + operator + " " + size; //NON-NLS
     }
 
+    /**
+     * Get the comparison operator associated with the size comparison
+     * drop-down selection.
+     *
+     * @param compare The drop-down component.
+     *
+     * @return The operator.
+     */
     private String compareComboBoxToOperator(JComboBox<String> compare) {
         String compareSize = compare.getSelectedItem().toString();
 
@@ -75,20 +93,20 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
     }
 
     @Override
-    @Messages ({
+    @Messages({
         "SizeSearchFilter.errorMessage.nonNegativeNumber=Input size data is a negative number.",
         "SizeSearchFilter.errorMessage.notANumber=Input size data is not a number."
     })
     public boolean isValid() {
         String input = this.getComponent().getSizeTextField().getText();
-        
+
         try {
-            int inputInt = Integer.parseInt(input);
+            int inputInt = NumberFormat.getNumberInstance(Locale.US).parse(input).intValue();
             if (inputInt < 0) {
                 setLastError(Bundle.SizeSearchFilter_errorMessage_nonNegativeNumber());
                 return false;
             }
-        } catch (NumberFormatException | NullPointerException e) {
+        } catch (ParseException ex) {
             setLastError(Bundle.SizeSearchFilter_errorMessage_notANumber());
             return false;
         }
