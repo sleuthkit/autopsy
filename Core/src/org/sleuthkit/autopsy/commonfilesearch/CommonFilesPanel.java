@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.awt.event.ActionListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +32,7 @@ import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListDataListener;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -39,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -114,6 +118,47 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     void addListenerToAll(ActionListener l) {       //TODO double click the button
         this.searchButton.addActionListener(l);
     }
+    
+        /**
+     * Sorts files in selection into a parent/child hierarchy where actual files
+     * are nested beneath a parent node which represents the common match.
+     * 
+     * @return returns a reference to itself for ease of use.
+     * @throws TskCoreException 
+     */
+    private List<CommonFilesMetaData> collateFiles() throws TskCoreException, SQLException {
+
+        SleuthkitCase sleuthkitCase;
+        List<CommonFilesMetaData> metaDataModels = new ArrayList<>();
+        try {
+            sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+            String whereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+            
+            List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
+            Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
+            for (AbstractFile file : files) {
+
+                String currentMd5 = file.getMd5Hash();
+
+                if (parentNodes.containsKey(currentMd5)) {
+                    parentNodes.get(currentMd5).add(file);
+                } else {
+                    List<AbstractFile> children = new ArrayList<>();
+                    children.add(file);
+                    parentNodes.put(currentMd5, children);
+                }
+            }
+            for (String key : parentNodes.keySet()) {
+                metaDataModels.add(new AllCommonFiles(key, parentNodes.get(key)));
+            }
+        } catch (NoCurrentCaseException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
+
+        
+        return metaDataModels;
+    }
 
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.title=Common Files",
@@ -128,11 +173,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         String title = Bundle.CommonFilesPanel_search_results_title();
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<CommonFilesMetaData, Void>() {
+        new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
             @Override
             @SuppressWarnings("FinallyDiscardsException")
-            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+            protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
 
                 //TODO cleanup - encapsulate business logic
                 if(singleDataSource) {
@@ -143,9 +188,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                            break;
                        }
                    }
-                   return new SingleDataSourceCommonFiles(selectedObjId).collateFiles();
+                   //return new SingleDataSourceCommonFiles(selectedObjId).collateFiles();
+                   return collateFiles();
                 } else {
-                   return new AllCommonFiles().collateFiles();
+                   //return new AllCommonFiles().collateFiles();
+                   return collateFiles();
                 }
             }
 
@@ -154,7 +201,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    CommonFilesMetaData metadata = get();
+                    List<CommonFilesMetaData> metadata = get();
 
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
 
@@ -165,8 +212,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     DataResultTopComponent component = DataResultTopComponent.createInstance(title);
                     
                     //component.enableTreeMode();
-                    
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, metadata.getFilesMap().size(), component);                    
+                    int totalNodes = 0;
+                    for(CommonFilesMetaData meta : metadata) {
+                        totalNodes += meta.getChildren().size();
+                    }
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, totalNodes, component);                    
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);

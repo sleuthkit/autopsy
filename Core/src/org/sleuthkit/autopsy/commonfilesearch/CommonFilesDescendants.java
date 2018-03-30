@@ -34,7 +34,7 @@ public class CommonFilesDescendants extends ChildFactory<AbstractFile> {
     private final List<AbstractFile> descendants;
     private Map<Long, String> dataSourceMap;    
     
-    CommonFilesDescendants(List<AbstractFile> descendants, Map<Long, String> dataSourceMap){
+    public CommonFilesDescendants(List<AbstractFile> descendants, Map<Long, String> dataSourceMap){
         super();
         this.descendants = descendants;
         this.dataSourceMap = dataSourceMap;
