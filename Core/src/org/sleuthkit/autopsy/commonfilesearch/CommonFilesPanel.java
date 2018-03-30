@@ -126,13 +126,20 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
      * @return returns a reference to itself for ease of use.
      * @throws TskCoreException 
      */
-    private List<CommonFilesMetaData> collateFiles() throws TskCoreException, SQLException {
+    private List<CommonFilesMetaData> collateFiles(Long selectedObjId) throws TskCoreException, SQLException {
 
         SleuthkitCase sleuthkitCase;
         List<CommonFilesMetaData> metaDataModels = new ArrayList<>();
         try {
             sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
             String whereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+            if(selectedObjId != 0L) {
+                Object[] args = new String[] {Long.toString(selectedObjId), Long.toString(selectedObjId)};
+                whereClause = String.format(
+                "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5",
+                args);
+            }
+
             
             List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
             Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
@@ -149,7 +156,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 }
             }
             for (String key : parentNodes.keySet()) {
-                metaDataModels.add(new AllCommonFiles(key, parentNodes.get(key)));
+                metaDataModels.add(new CommonFilesMetaData(key, parentNodes.get(key)));
             }
         } catch (NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
@@ -188,11 +195,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                            break;
                        }
                    }
-                   //return new SingleDataSourceCommonFiles(selectedObjId).collateFiles();
-                   return collateFiles();
+                   return collateFiles(selectedObjId);
                 } else {
-                   //return new AllCommonFiles().collateFiles();
-                   return collateFiles();
+                   return collateFiles(0L);
                 }
             }
 
