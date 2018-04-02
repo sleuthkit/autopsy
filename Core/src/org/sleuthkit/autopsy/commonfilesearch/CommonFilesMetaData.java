@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Utility and wrapper around data required for Common Files Search results.
+ * Utility and wrapper model around data required for Common Files Search results.
  * Subclass this to implement different selections of files from the case.
  */
 public class CommonFilesMetaData {

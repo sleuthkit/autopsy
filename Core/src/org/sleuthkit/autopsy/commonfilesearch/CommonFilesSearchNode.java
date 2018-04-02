@@ -19,20 +19,23 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- * Encapsulates data used to display common files search results in the top
- * right pane.
+ * Wrapper node for CommonFilesParentNode used to display common files search results in the top
+ * right pane. Calls CommonFilesParentFactory.
  */
 final public class CommonFilesSearchNode extends DisplayableItemNode {
 
     CommonFilesSearchNode(List<CommonFilesMetaData> metaDataList) {
-        super(Children.create(new CommonFilesChildren(metaDataList), true), Lookups.singleton(metaDataList));
+        super(Children.create(new CommonFilesParentFactory(metaDataList), true), Lookups.singleton(metaDataList));
     }
 
     @NbBundle.Messages({
@@ -56,4 +59,39 @@ final public class CommonFilesSearchNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
+    
+/**
+ * ChildFactory which builds CommonFileParentNodes from the CommonFilesMetaaData models. 
+ */
+static class CommonFilesParentFactory extends ChildFactory<CommonFilesMetaData> {
+
+    /**
+     * List of models, each of which is a parent node matching a single md5, containing children FileNodes.
+     */
+    private List<CommonFilesMetaData> metaDataList;
+
+    CommonFilesParentFactory(List<CommonFilesMetaData> theMetaDataList) {
+        this.metaDataList = theMetaDataList;
+    }
+
+    protected void removeNotify() {
+        metaDataList = null;
+    }
+
+    @Override
+    protected Node createNodeForKey(CommonFilesMetaData metaData) {
+
+        return new CommonFileParentNode(metaData);
+    }
+
+    @Override
+    protected boolean createKeys(List<CommonFilesMetaData> toPopulate) {
+        toPopulate.addAll(metaDataList);
+        return true;
+    }
+
+
 }
+    
+}
+
