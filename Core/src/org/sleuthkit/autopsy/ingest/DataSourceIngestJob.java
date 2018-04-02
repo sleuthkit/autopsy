@@ -524,11 +524,7 @@ final class DataSourceIngestJob {
             DataSourceIngestJob.taskScheduler.scheduleDataSourceIngestTask(this);
         } else {
             logger.log(Level.INFO, "Scheduling file level analysis tasks for {0} (jobId={1}), no first stage data source level analysis configured", new Object[]{dataSource.getName(), this.id}); //NON-NLS
-            if (this.files.isEmpty()) {
-                DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this);
-            } else {
-                DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
-            }
+            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, this.files);
 
             /**
              * No data source ingest task has been scheduled for this stage, and
@@ -840,7 +836,7 @@ final class DataSourceIngestJob {
      */
     void addFiles(List<AbstractFile> files) {
         if (DataSourceIngestJob.Stages.FIRST == this.stage) {
-            DataSourceIngestJob.taskScheduler.scheduleFileIngestTasks(this, files);
+            DataSourceIngestJob.taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             DataSourceIngestJob.logger.log(Level.SEVERE, "Adding files during second stage not supported"); //NON-NLS
         }

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2016 Basis Technology Corp.
+ *
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,11 +37,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 final class MemoryDSInputPanel extends JPanel implements DocumentListener {
+
     private static final long serialVersionUID = 1L;    //default
     private final String PROP_LASTINPUT_PATH = "LBL_LastInputFile_PATH";
     private final JFileChooser fc = new JFileChooser();
@@ -52,14 +54,14 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private final List<String> PluginListNames = new ArrayList<>();
     private final Map<String, Boolean> pluginListStates = new HashMap<>(); // is set by listeners when users select and deselect items
     private final Boolean isEnabled = true;
-    
+
     /**
-     * Creates new  MemoryDSInputPanel panel for user input
+     * Creates new MemoryDSInputPanel panel for user input
      */
     private MemoryDSInputPanel(String context) {
-        this.pluginList = new String[]{"amcache","cmdline","cmdscan","consoles","malfind","netscan","notepad","pslist","psxview","shellbags","shimcache","shutdown","userassist", "apihooks","connscan","devicetree","dlllist","envars","filescan","gahti","getservicesids","getsids","handles","hashdump","hivelist","hivescan","impscan","ldrmodules","lsadump","modules","mutantscan","privs","psscan","pstree","sockets","svcscan","shimcache","timeliner","unloadedmodules","userhandles","vadinfo","verinfo"};
+        this.pluginList = new String[]{"amcache", "cmdline", "cmdscan", "consoles", "malfind", "netscan", "notepad", "pslist", "psxview", "shellbags", "shimcache", "shutdown", "userassist", "apihooks", "connscan", "devicetree", "dlllist", "envars", "filescan", "gahti", "getservicesids", "getsids", "handles", "hashdump", "hivelist", "hivescan", "impscan", "ldrmodules", "lsadump", "modules", "mutantscan", "privs", "psscan", "pstree", "sockets", "svcscan", "shimcache", "timeliner", "unloadedmodules", "userhandles", "vadinfo", "verinfo"};
         Arrays.sort(this.pluginList);
-        
+
         initComponents();
 
         errorLabel.setVisible(false);
@@ -91,7 +93,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private void postInit() {
         pathTextField.getDocument().addDocumentListener(this);
     }
-    
+
     private void customizePluginListTable() {
         PluginList.setModel(tableModel);
         PluginList.setTableHeader(null);
@@ -135,14 +137,14 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
     }
-    
+
     private void createVolatilityVersionList() {
-        
+
         volExecutableComboBox.addItem("2.6");
         volExecutableComboBox.addItem("2.5");
-        
+
     }
-    
+
     private void createPluginList() {
         PluginListNames.clear();
         pluginListStates.clear();
@@ -150,19 +152,19 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         // if the config file doesn't exist, then set them all to enabled
         boolean allEnabled = !ModuleSettings.configExists(this.contextName);
         Map<String, String> pluginMap = ModuleSettings.getConfigSettings(this.contextName);
-        
+
         for (String plugin : pluginList) {
             PluginListNames.add(plugin);
-            if (allEnabled)
+            if (allEnabled) {
                 pluginListStates.put(plugin, true);
-            else
+            } else {
                 pluginListStates.put(plugin, pluginMap.containsKey(plugin));
+            }
         }
         tableModel.fireTableDataChanged();
         //this.tableModel = pluginsToRun.getModel();
     }
 
-   
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -282,18 +284,18 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     }// </editor-fold>//GEN-END:initComponents
     @SuppressWarnings("deprecation")
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-      String oldText = pathTextField.getText();
-      // set the current directory of the FileChooser if the ImagePath Field is valid
-      File currentDir = new File(oldText);
-      if (currentDir.exists()) {
-          fc.setCurrentDirectory(currentDir);
-      }
+        String oldText = pathTextField.getText();
+        // set the current directory of the FileChooser if the ImagePath Field is valid
+        File currentDir = new File(oldText);
+        if (currentDir.exists()) {
+            fc.setCurrentDirectory(currentDir);
+        }
 
-      int retval = fc.showOpenDialog(this);
-      if (retval == JFileChooser.APPROVE_OPTION) {
-          String path = fc.getSelectedFile().getPath();
-          pathTextField.setText(path);
-      }
+        int retval = fc.showOpenDialog(this);
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            pathTextField.setText(path);
+        }
     }//GEN-LAST:event_browseButtonActionPerformed
 
     private void volExecutableComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_volExecutableComboBoxActionPerformed
@@ -322,7 +324,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     String getImageFilePath() {
         return pathTextField.getText();
     }
-    
+
     List<String> getPluginsToRun() {
         List<String> enabledPlugins = new ArrayList<>();
         Map<String, String> pluginMap = new HashMap<>();
@@ -332,7 +334,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                 pluginMap.put(plugin, "");
             }
         }
-       
+
         ModuleSettings.setConfigSettings(this.contextName, pluginMap);
         // @@ Could return keys of set
         return enabledPlugins;
@@ -363,9 +365,9 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(path);
 
-        boolean isExist = new File(path).exists();
+        boolean isFile = new File(path).isFile();
 
-        return (isExist);
+        return (isFile);
     }
 
     /**
@@ -374,11 +376,19 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
      *
      * @param path Absolute path to the selected data source
      */
-    @Messages({"MemoryDSInputPanel.error.text=Path to multi-user data source is on \"C:\" drive"})
+    @Messages({
+        "MemoryDSInputPanel_errorMsg_noOpenCase=No open case",
+        "MemoryDSInputPanel_errorMsg_dataSourcePathOnCdrive=Path to multi-user data source is on \"C:\" drive"
+    })
     private void warnIfPathIsInvalid(String path) {
-        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        try {
+            if (!PathValidator.isValid(path, Case.getOpenCase().getCaseType())) {
+                errorLabel.setVisible(true);
+                errorLabel.setText(Bundle.MemoryDSInputPanel_errorMsg_dataSourcePathOnCdrive());
+            }
+        } catch (NoCurrentCaseException unused) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.MemoryDSInputPanel_error_text());
+            errorLabel.setText(Bundle.MemoryDSInputPanel_errorMsg_dataSourcePathOnCdrive());
         }
     }
 
@@ -470,5 +480,4 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         }
     }
 
-    
 }

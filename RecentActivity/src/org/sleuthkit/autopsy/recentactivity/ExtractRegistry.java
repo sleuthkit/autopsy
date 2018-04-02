@@ -175,24 +175,24 @@ class ExtractRegistry extends Extract {
             logger.log(Level.SEVERE, null, ex);
         }
 
-        int j = 0;
         for (AbstractFile regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
+            long regFileId = regFile.getId();
             String regFileNameLocal = RAImageIngestModule.getRATempPath(currentCase, "reg") + File.separator + regFileName;
-            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++); //NON-NLS
+            String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Long.toString(regFileId); //NON-NLS
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
                 ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading registry file '%s' (id=%d).",
-                        regFile.getName(), regFile.getId()), ex); //NON-NLS
+                        regFile.getName(), regFileId), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                 this.getName(), regFileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
-                        regFileNameLocal, regFile.getName(), regFile.getId()), ex); //NON-NLS
+                        regFileNameLocal, regFile.getName(), regFileId), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
                                 this.getName(), regFileName));
@@ -205,7 +205,7 @@ class ExtractRegistry extends Extract {
 
             try {
                 if (logFile != null) {
-                    logFile.write(Integer.toString(j - 1) + "\t" + regFile.getUniquePath() + "\n");
+                    logFile.write(Long.toString(regFileId) + "\t" + regFile.getUniquePath() + "\n");
                 }
             } catch (TskCoreException | IOException ex) {
                 logger.log(Level.SEVERE, null, ex);

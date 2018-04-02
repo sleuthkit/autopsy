@@ -503,7 +503,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         rtfbodyTextPane.setText("");
         htmlbodyTextPane.setText("");
         textbodyTextArea.setText("");
-        drp.setNode(null);
         showImagesToggleButton.setEnabled(false);
         msgbodyTabbedPane.setEnabled(false);
     }
@@ -546,7 +545,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     @Override
     public int isPreferred(Node node) {
         if (isSupported(node)) {
-            return 6;
+            return 7;
         }
         return 0;
     }

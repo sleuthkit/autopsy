@@ -376,12 +376,12 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (artifact == null) {
             return 4;
         } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            return 6;
+            return 7;
         } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(TSK_ACCOUNT_TYPE);
                 if (attribute != null && Account.Type.CREDIT_CARD.getTypeName().equals(attribute.getValueString())) {
-                    return 6;
+                    return 7;
                 } else {
                     return 4;
                 }
