@@ -503,7 +503,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         rtfbodyTextPane.setText("");
         htmlbodyTextPane.setText("");
         textbodyTextArea.setText("");
-        drp.setNode(null);
         showImagesToggleButton.setEnabled(false);
         msgbodyTabbedPane.setEnabled(false);
     }
