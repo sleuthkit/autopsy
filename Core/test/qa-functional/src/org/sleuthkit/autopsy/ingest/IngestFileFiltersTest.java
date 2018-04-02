@@ -166,8 +166,8 @@ public class IngestFileFiltersTest extends TestCase {
             Case openCase = Case.getOpenCase();
             runIngestJob(openCase.getDataSources(), Files_Ext_Dirs_Filter); 
             FileManager fileManager = Case.getOpenCase().getServices().getFileManager();            
-            List<AbstractFile> results = fileManager.findFiles("%.jpg%");
-            assertEquals(12, results.size());
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(62, results.size());
             for (AbstractFile file : results) {
                 //Files with jpg extension in dir1 should have MIME Type
                 if (file.getParentPath().equalsIgnoreCase("/dir1/") && file.getNameExtension().equalsIgnoreCase("jpg")) {
