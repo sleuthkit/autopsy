@@ -56,9 +56,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    
+
     private final ComboBoxModel<String> dataSourcesList;
-    private final  Map<Long, String>  dataSourceMap;
+    private final Map<Long, String> dataSourceMap;
 
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
     private boolean singleDataSource;
@@ -67,7 +67,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     /**
      * Creates new form CommonFilesPanel
      */
-     @NbBundle.Messages({
+    @NbBundle.Messages({
         "CommonFilesPanel.title=Common Files Panel",
         "CommonFilesPanel.exception=Unexpected Exception loading DataSources."})
     public CommonFilesPanel() {
@@ -75,130 +75,50 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         String[] dataSourcesNames = new String[1];
         this.dataSourceMap = new HashMap<>();
         selectedDataSource = "";
-        
+
         try {
             buildDataSourceMap(dataSourceMap);
             dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
         } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
-             
-             LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files Panel Data Sources", ex);
-             MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_exception());
+
+            LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files Panel Data Sources", ex);
+            MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_exception());
         }
         this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
         initComponents();
         updateUIButtons();
     }
-    
+
     private void updateUIButtons() {
         boolean multipleDataSources = this.caseHasMultipleSources();
         allDataSourcesRadioButton.setEnabled(multipleDataSources);
         allDataSourcesRadioButton.setSelected(multipleDataSources);
-        if(!multipleDataSources) {
-           withinDataSourceRadioButton.setSelected(true);
-           withinDataSourceSelected(true);
+        if (!multipleDataSources) {
+            withinDataSourceRadioButton.setSelected(true);
+            withinDataSourceSelected(true);
         }
     }
-    
-    private boolean caseHasMultipleSources(){
+
+    private boolean caseHasMultipleSources() {
         return dataSourceMap.size() >= 2;
     }
-    
-    private void buildDataSourceMap(Map<Long, String> dataSourceMap) throws TskCoreException, NoCurrentCaseException, SQLException  {
-                Case currentCase = Case.getOpenCase();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                CaseDbQuery query = tskDb.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
 
-                ResultSet resultSet = query.getResultSet();
-                while(resultSet.next()){
-                    Long objectId = resultSet.getLong(1);
-                    String dataSourceName = resultSet.getString(2);
-                    dataSourceMap.put(objectId, dataSourceName);
-                }
-             
+    private void buildDataSourceMap(Map<Long, String> dataSourceMap) throws TskCoreException, NoCurrentCaseException, SQLException {
+        Case currentCase = Case.getOpenCase();
+        SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+        CaseDbQuery query = tskDb.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
+
+        ResultSet resultSet = query.getResultSet();
+        while (resultSet.next()) {
+            Long objectId = resultSet.getLong(1);
+            String dataSourceName = resultSet.getString(2);
+            dataSourceMap.put(objectId, dataSourceName);
+        }
+
     }
 
-    
     void addListenerToAll(ActionListener l) {       //TODO double click the button
         this.searchButton.addActionListener(l);
-    }
-    
-    private Map<Long, String> loadDataSourcesMap(SleuthkitCase sleuthkitCase) throws SQLException, TskCoreException {
-        Map<Long, String> dataSourceIdToNameMap  = new HashMap<>();
-        try (
-                SleuthkitCase.CaseDbQuery query = sleuthkitCase.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
-                ResultSet resultSet = query.getResultSet()) {
-
-            while (resultSet.next()) {
-                Long objectId = resultSet.getLong(1);
-                String dataSourceName = resultSet.getString(2);
-                dataSourceIdToNameMap.put(objectId, dataSourceName);
-            }
-        }
-        return dataSourceIdToNameMap;
-    }
-    private void addDataSource(Set<String> dataSources, AbstractFile file, Map<Long,String> dataSourceIdToNameMap) {
-        long datasourceId = file.getDataSourceObjectId();
-        String dataSourceName = dataSourceIdToNameMap.get(datasourceId);
-        dataSources.add(dataSourceName);
-    }
-        /**
-     * Sorts files in selection into a parent/child hierarchy where actual files
-     * are nested beneath a parent node which represents the common match.
-     * 
-     * @return returns a reference to itself for ease of use.
-     * @throws TskCoreException 
-     */
-    private List<CommonFilesMetaData> collateFiles(Long selectedObjId) throws TskCoreException, SQLException {
-
-        SleuthkitCase sleuthkitCase;
-        List<CommonFilesMetaData> metaDataModels = new ArrayList<>();
-        Map<String, Set<String>> md5ToDataSourcesStringMap = new HashMap<>();       
-        
-        try {
-            sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
-            Map<Long, String> dataSourceIdToNameMap = loadDataSourcesMap(sleuthkitCase);
-            String whereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
-            if(selectedObjId != 0L) {
-                Object[] args = new String[] {Long.toString(selectedObjId), Long.toString(selectedObjId)};
-                whereClause = String.format(
-                "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5",
-                args);
-            }
-            
-            List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
-            
-            Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
-         
-            for (AbstractFile file : files) {
-                
-                String currentMd5 = file.getMd5Hash();
-
-                if (parentNodes.containsKey(currentMd5)) {
-                    parentNodes.get(currentMd5).add(file);
-                    Set<String> currenDataSources = md5ToDataSourcesStringMap.get(currentMd5);
-                    addDataSource(currenDataSources, file, dataSourceIdToNameMap);
-                     md5ToDataSourcesStringMap.put(currentMd5, currenDataSources);
-                    
-                } else {
-                    List<AbstractFile> children = new ArrayList<>();
-                    Set<String> dataSources = new HashSet<>();
-                    children.add(file);
-                    parentNodes.put(currentMd5, children);
-                    addDataSource(dataSources, file, dataSourceIdToNameMap);
-                    md5ToDataSourcesStringMap.put(currentMd5, dataSources);
-                }
-
-            }
-            for (String key : parentNodes.keySet()) {
-                metaDataModels.add(new CommonFilesMetaData(key, parentNodes.get(key), String.join(", ", md5ToDataSourcesStringMap.get(key)), dataSourceIdToNameMap));
-            }
-        } catch (NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        
-
-        
-        return metaDataModels;
     }
 
     @NbBundle.Messages({
@@ -216,22 +136,25 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
+            private Long determineDataSourceId() {
+                Long selectedObjId = 0L;
+                if (singleDataSource) {
+                    for (Entry<Long, String> dataSource : dataSourceMap.entrySet()) {
+                        if (dataSource.getValue().equals(selectedDataSource)) {
+                            selectedObjId = dataSource.getKey();
+                            break;
+                        }
+                    }
+                }
+                return selectedObjId;
+            }
+
             @Override
             @SuppressWarnings("FinallyDiscardsException")
             protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+                Long selectedObjId = determineDataSourceId();
+                return new CommonFilesMetaDataBuilder(selectedObjId, dataSourceMap).collateFiles();
 
-                //TODO cleanup - encapsulate business logic
-                Long selectedObjId = 0L;
-                if(singleDataSource) {
-                   for (Entry<Long, String> dataSource : dataSourceMap.entrySet()) {
-                       if (dataSource.getValue().equals(selectedDataSource)) {
-                           selectedObjId = dataSource.getKey();
-                           break;
-                       }
-                   }
-                }
-                return collateFiles(selectedObjId);
-                
             }
 
             @Override
@@ -248,14 +171,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
                     DataResultTopComponent component = DataResultTopComponent.createInstance(title);
-                    
+
                     //component.enableTreeMode();
-                    
                     int totalNodes = 0;
-                    for(CommonFilesMetaData meta : metadata) {
+                    for (CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();
                     }
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, totalNodes, component);                    
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, totalNodes, component);
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
@@ -281,16 +203,17 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
-    
+
     private class DataSourceComboBoxModel extends AbstractListModel<String> implements ComboBoxModel<String> {
 
         private static final long serialVersionUID = 1L;
         private final String[] dataSourceList;
         String selection = null;
-        
+
         DataSourceComboBoxModel(String[] theDataSoureList) {
             dataSourceList = theDataSoureList;
         }
+
         @Override
         public void setSelectedItem(Object anItem) {
             selection = (String) anItem;
@@ -303,26 +226,25 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         @Override
         public int getSize() {
-            return dataSourceList.length; 
+            return dataSourceList.length;
         }
 
         @Override
         public String getElementAt(int index) {
-           return dataSourceList[index];
+            return dataSourceList[index];
         }
 
         @Override
         public void addListDataListener(ListDataListener l) {
-           this.listenerList.add(ListDataListener.class, l);
+            this.listenerList.add(ListDataListener.class, l);
         }
 
         @Override
         public void removeListDataListener(ListDataListener l) {
-           this.listenerList.remove(ListDataListener.class, l);
+            this.listenerList.remove(ListDataListener.class, l);
 
         }
-        
-        
+
     }
 
     /**
@@ -409,9 +331,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
-         selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
-         singleDataSource = false;
-        
+        selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
+        singleDataSource = false;
+
     }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
 
     private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
@@ -424,7 +346,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private void withinDataSourceSelected(boolean selected) {
         selectDataSourceComboBox.setEnabled(selected);
-        if(selectDataSourceComboBox.isEnabled()) {
+        if (selectDataSourceComboBox.isEnabled()) {
             selectDataSourceComboBox.setSelectedIndex(0);
             singleDataSource = true;
         }
