@@ -20,13 +20,16 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesDescendants;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetaData;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Represents a common files match - two or more files which appear to be the
@@ -40,7 +43,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
 
     public CommonFileParentNode(CommonFilesMetaData metaData) {
         super(Children.create(
-                new CommonFilesDescendants(metaData.getChildren(),
+                new CommonFilesChildFactory(metaData.getChildren(),
                 metaData.getDataSourceIdToNameMap()), true),
                 Lookups.singleton(metaData));
         this.commonFileCount = metaData.getChildren().size();
@@ -110,7 +113,36 @@ public class CommonFileParentNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
+    
 
+    /**
+     * Child generator for FileNodes of CommonFileParentNodes
+     */
+    static class CommonFilesChildFactory extends ChildFactory<AbstractFile> {
+
+        private final List<AbstractFile> descendants;
+        private final Map<Long, String> dataSourceMap;    
+
+        CommonFilesChildFactory(List<AbstractFile> descendants, Map<Long, String> dataSourceMap){
+            this.descendants = descendants;
+            this.dataSourceMap = dataSourceMap;
+        }
+
+        @Override
+        protected Node createNodeForKey(AbstractFile file){
+
+            final String dataSource = this.dataSourceMap.get(file.getDataSourceObjectId());
+
+            return new CommonFileChildNode(file, dataSource);
+        }
+
+        @Override
+        protected boolean createKeys(List<AbstractFile> list) {
+            list.addAll(this.descendants);
+            return true;
+        }
+
+    }
     @NbBundle.Messages({
         "CommonFileParentPropertyType.fileColLbl=File",
         "CommonFileParentPropertyType.instanceColLbl=Instance Count",
