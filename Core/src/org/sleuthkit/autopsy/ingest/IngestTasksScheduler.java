@@ -419,7 +419,7 @@ final class IngestTasksScheduler {
          * is part of the FilesSet.fileIsMemberOf() method.
          *
          * This code may need to be updated when
-         * TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS come into use by Autopsy.
+         * TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS comes into use by Autopsy.
          */
         if (!file.isDir() && !shouldBeCarved(task) && !fileAcceptedByFilter(task)) {
             return false;
