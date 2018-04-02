@@ -441,16 +441,16 @@ class VolatilityProcessor {
         String path = filePath.trim();
 
         // change slash direction
-        path = path.replaceAll("\\\\", "/");
+        path = path.replaceAll("\\\\", "/"); //NON-NLS
         path = path.toLowerCase();
         
         // \??\c:\windows ...
-        if ((path.length() > 4) && (path.startsWith("/??/"))) {
+        if ((path.length() > 4) && (path.startsWith("/??/"))) { //NON-NLS
             path = path.substring(4);
         }
         
         // strip C: 
-        if (path.contains(":")) {
+        if (path.contains(":")) { //NON-NLS
             int index = path.indexOf(":");
             if (index+1 < path.length())
                 path = path.substring(index + 1);
@@ -559,7 +559,6 @@ class VolatilityProcessor {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.length() > 16) {
-
                     String TAG = "Command line : "; //NON-NLS
                     if ((line.startsWith(TAG)) && line.length() > TAG.length() + 1) {
                         String file_path;
@@ -706,7 +705,8 @@ class VolatilityProcessor {
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
                 }
-                else if (line.length() < 34) {
+              
+                if (line.length() < 34) {
                     continue;
                 }
 
@@ -733,7 +733,6 @@ class VolatilityProcessor {
     private Set<String> parsePstreeOutput(File outputFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
-
         try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
             // read the first line from the text file
             while ((line = br.readLine()) != null) {

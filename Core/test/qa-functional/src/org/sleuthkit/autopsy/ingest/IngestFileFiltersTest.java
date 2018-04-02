@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import static junit.framework.Assert.assertFalse;
 import junit.framework.TestCase;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import junit.framework.Test;
 import org.apache.commons.io.FileUtils;
+import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
@@ -40,24 +42,33 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
 import org.sleuthkit.autopsy.testutils.IngestJobRunner;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
-public class IngestFileFiltersTest extends TestCase {
+public class IngestFileFiltersTest extends NbTestCase {
 
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
-    private static final Path IMAGE_PATH = Paths.get("test/filter_test1.img");
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
     
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
+    }
+
+    public IngestFileFiltersTest(String name) {
+        super(name);
     }
 
     @Override
@@ -82,7 +93,7 @@ public class IngestFileFiltersTest extends TestCase {
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }        
+        }
         assertTrue(CASE_DIR.exists());
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         try {
@@ -116,28 +127,48 @@ public class IngestFileFiltersTest extends TestCase {
         assertFalse(CASE_DIR.exists());
     }
     
-    public void testFileType() {
+    public void testBasicDir() {
+        HashMap<String, Rule> rule = new HashMap<>();
+        rule.put("Rule", new Rule("testFileType", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+        //Filter for dir1 and no unallocated space
+        FilesSet Files_Dirs_Unalloc_Ingest_Filter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);        
+
         try {
             Case openCase = Case.getOpenCase();
-            runIngestJob(openCase.getDataSources());
+            runIngestJob(openCase.getDataSources(), Files_Dirs_Unalloc_Ingest_Filter);
             FileManager fileManager = openCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
             String mimeType = results.get(0).getMIMEType();
             assertEquals("image/jpeg", mimeType);
+            
+            results = fileManager.findFiles("%%");
+          
+            for (AbstractFile file : results) {
+                //All files in dir1 should have MIME type, except '.' '..' and slack files
+                if (file.getParentPath().equalsIgnoreCase("/dir1/")) {
+                    if (!(file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                        String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                        assertTrue(errMsg, !(file.getMIMEType() == null || file.getMIMEType().isEmpty()));
+                    }
+                } else { //All files not in dir1 shouldn't have MIME type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
     }
     
-    private void runIngestJob(List<Content> datasources) {
+    private void runIngestJob(List<Content> datasources, FilesSet filter) {
         FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
         IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
         template.setEnabled(true);
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(template);
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filter);
         try {
             List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
             assertEquals(0, errs.size());
@@ -146,4 +177,5 @@ public class IngestFileFiltersTest extends TestCase {
             Assert.fail(ex);
         }        
     }
-}
+        
+ }
