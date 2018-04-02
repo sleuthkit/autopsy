@@ -19,19 +19,12 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -42,37 +35,20 @@ public class CommonFilesMetaData {
         
     private final String parentMd5;
     private final List<AbstractFile> children;
+    private final String dataSources;
     private final Map<Long, String> dataSourceIdToNameMap;
 
-    private final SleuthkitCase sleuthkitCase;
-
-    CommonFilesMetaData(String md5, List<AbstractFile> childNodes) throws TskCoreException, SQLException, NoCurrentCaseException {
+    CommonFilesMetaData(String md5, List<AbstractFile> childNodes, String dataSourcesString, Map<Long,String> dataSourcesMap) throws TskCoreException, SQLException, NoCurrentCaseException {
         parentMd5 = md5;
         children = childNodes;
-        dataSourceIdToNameMap = new HashMap<>();
-
-        this.sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
-
-        this.loadDataSourcesMap();        
+        dataSources = dataSourcesString;
+        dataSourceIdToNameMap = dataSourcesMap;
     }
 
-    //TODO chopping block - this will be passed in through the constructor eventually
-    private void loadDataSourcesMap() throws SQLException, TskCoreException {
-
-        try (
-                SleuthkitCase.CaseDbQuery query = this.sleuthkitCase.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
-                ResultSet resultSet = query.getResultSet()) {
-
-            while (resultSet.next()) {
-                Long objectId = resultSet.getLong(1);
-                String dataSourceName = resultSet.getString(2);
-                this.dataSourceIdToNameMap.put(objectId, dataSourceName);
-            }
-        }
-    }
     public String getMd5() {
         return parentMd5;
     }
+    
     public List<AbstractFile> getChildren() {
         return Collections.unmodifiableList(this.children);
     }
@@ -81,21 +57,8 @@ public class CommonFilesMetaData {
         return Collections.unmodifiableMap(dataSourceIdToNameMap);
     }
 
-    public String selectDataSources() {
-
-        Map<Long, String> dataSources = this.getDataSourceIdToNameMap();
-
-        Set<String> dataSourceStrings = new HashSet<>();
-
-        for (AbstractFile child : getChildren()) {
-
-            String dataSource = dataSources.get(child.getDataSourceObjectId());
-
-            dataSourceStrings.add(dataSource);
-        }
-
-        return String.join(", ", dataSourceStrings);
+    public String getDataSources() {
+        return dataSources;
     }
-
 
 }

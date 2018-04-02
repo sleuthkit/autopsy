@@ -23,9 +23,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractListModel;
@@ -115,10 +117,30 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
              
     }
 
+    
     void addListenerToAll(ActionListener l) {       //TODO double click the button
         this.searchButton.addActionListener(l);
     }
     
+    private Map<Long, String> loadDataSourcesMap(SleuthkitCase sleuthkitCase) throws SQLException, TskCoreException {
+        Map<Long, String> dataSourceIdToNameMap  = new HashMap<>();
+        try (
+                SleuthkitCase.CaseDbQuery query = sleuthkitCase.executeQuery("select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))");
+                ResultSet resultSet = query.getResultSet()) {
+
+            while (resultSet.next()) {
+                Long objectId = resultSet.getLong(1);
+                String dataSourceName = resultSet.getString(2);
+                dataSourceIdToNameMap.put(objectId, dataSourceName);
+            }
+        }
+        return dataSourceIdToNameMap;
+    }
+    private void addDataSource(Set<String> dataSources, AbstractFile file, Map<Long,String> dataSourceIdToNameMap) {
+        long datasourceId = file.getDataSourceObjectId();
+        String dataSourceName = dataSourceIdToNameMap.get(datasourceId);
+        dataSources.add(dataSourceName);
+    }
         /**
      * Sorts files in selection into a parent/child hierarchy where actual files
      * are nested beneath a parent node which represents the common match.
@@ -130,8 +152,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         SleuthkitCase sleuthkitCase;
         List<CommonFilesMetaData> metaDataModels = new ArrayList<>();
+        Map<String, Set<String>> md5ToDataSourcesStringMap = new HashMap<>();       
+        
         try {
             sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+            Map<Long, String> dataSourceIdToNameMap = loadDataSourcesMap(sleuthkitCase);
             String whereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
             if(selectedObjId != 0L) {
                 Object[] args = new String[] {Long.toString(selectedObjId), Long.toString(selectedObjId)};
@@ -139,24 +164,33 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5",
                 args);
             }
-
             
             List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
+            
             Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
+         
             for (AbstractFile file : files) {
-
+                
                 String currentMd5 = file.getMd5Hash();
 
                 if (parentNodes.containsKey(currentMd5)) {
                     parentNodes.get(currentMd5).add(file);
+                    Set<String> currenDataSources = md5ToDataSourcesStringMap.get(currentMd5);
+                    addDataSource(currenDataSources, file, dataSourceIdToNameMap);
+                     md5ToDataSourcesStringMap.put(currentMd5, currenDataSources);
+                    
                 } else {
                     List<AbstractFile> children = new ArrayList<>();
+                    Set<String> dataSources = new HashSet<>();
                     children.add(file);
                     parentNodes.put(currentMd5, children);
+                    addDataSource(dataSources, file, dataSourceIdToNameMap);
+                    md5ToDataSourcesStringMap.put(currentMd5, dataSources);
                 }
+
             }
             for (String key : parentNodes.keySet()) {
-                metaDataModels.add(new CommonFilesMetaData(key, parentNodes.get(key)));
+                metaDataModels.add(new CommonFilesMetaData(key, parentNodes.get(key), String.join(", ", md5ToDataSourcesStringMap.get(key)), dataSourceIdToNameMap));
             }
         } catch (NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
@@ -187,18 +221,17 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
 
                 //TODO cleanup - encapsulate business logic
+                Long selectedObjId = 0L;
                 if(singleDataSource) {
-                   Long selectedObjId = 0L;
                    for (Entry<Long, String> dataSource : dataSourceMap.entrySet()) {
                        if (dataSource.getValue().equals(selectedDataSource)) {
                            selectedObjId = dataSource.getKey();
                            break;
                        }
                    }
-                   return collateFiles(selectedObjId);
-                } else {
-                   return collateFiles(0L);
                 }
+                return collateFiles(selectedObjId);
+                
             }
 
             @Override
@@ -217,6 +250,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     DataResultTopComponent component = DataResultTopComponent.createInstance(title);
                     
                     //component.enableTreeMode();
+                    
                     int totalNodes = 0;
                     for(CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();

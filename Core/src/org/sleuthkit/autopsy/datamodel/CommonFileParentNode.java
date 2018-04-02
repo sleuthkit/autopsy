@@ -25,7 +25,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesChildren;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesDescendants;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetaData;
 
@@ -45,7 +44,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
                 metaData.getDataSourceIdToNameMap()), true),
                 Lookups.singleton(metaData));
         this.commonFileCount = metaData.getChildren().size();
-        this.dataSources = metaData.selectDataSources();
+        this.dataSources = metaData.getDataSources();
         this.md5Hash = metaData.getMd5();
         
         this.setDisplayName(md5Hash);
