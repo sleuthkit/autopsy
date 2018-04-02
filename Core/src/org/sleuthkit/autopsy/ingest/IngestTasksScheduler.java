@@ -470,21 +470,24 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Check if the task's file should is an unallocated space file which should be carved.
+     * Check whether or not a file should be carved for a data source ingest  
+     * ingest job.
      * 
-     * @param task the FileIngestTask which represents the file
+     * @param task The file ingest task for the file.
      * 
-     * @return true if the file should be processed, false if it should not be
+     * @return True or false.
      */
     private static boolean shouldBeCarved(final FileIngestTask task) {
         return task.getIngestJob().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
     }
 
     /**
-     * Check if the task's file is Accepted by the ingest file filter currently being used
+     * Checks whether or not a file is accepted (passes) the file filter for a data  
+     * source ingest job.
      *
-     * @param task the FileIngestTask which represents the file
-     * @return true if the file should be processed, false if the file should not be processed 
+     * @param task The file ingest task for the file.
+     * 
+     * @return True or false. 
      */
     private static boolean fileAcceptedByFilter(final FileIngestTask task) {
         return !(task.getIngestJob().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
