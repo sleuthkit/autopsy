@@ -434,22 +434,30 @@ class VolatilityProcessor {
      * @return The normalized path or the empty string if the path cannot be
      *         normalized or should be ignored.
      */
-    private static String normalizePath(String filePath) {
+    private String normalizePath(String filePath) {
         if (filePath == null) {
             return ""; //NON-NLS
         }
         String path = filePath.trim();
 
-        // strip C: and \??\C:
-        if (path.contains(":")) { //NON-NLS
-            path = path.substring(filePath.indexOf(':') + 1); //NON-NLS
-        }
-
         // change slash direction
-        path = path.replaceAll("\\\\", "/"); //NON-NLS
+        path = path.replaceAll("\\\\", "/");
         path = path.toLowerCase();
+        
+        // \??\c:\windows ...
+        if ((path.length() > 4) && (path.startsWith("/??/"))) {
+            path = path.substring(4);
+        }
+        
+        // strip C: 
+        if (path.contains(":")) {
+            int index = path.indexOf(":");
+            if (index+1 < path.length())
+                path = path.substring(index + 1);
+        }
+                
+        path = path.replaceAll("/systemroot/", "/windows/");
 
-        path = path.replaceAll("/systemroot/", "/windows/"); //NON-NLS
         // catches 1 type of file in cmdline
         path = path.replaceAll("%systemroot%", "/windows/"); //NON-NLS
         path = path.replaceAll("/device/", ""); //NON-NLS
@@ -457,7 +465,10 @@ class VolatilityProcessor {
         // example: \Device\clfs\Device\HarddiskVolume2\Users\joe\AppData\Local\Microsoft\Windows\UsrClass.dat{e15d4b01-1598-11e8-93e6-080027b5e733}.TM
         if (path.contains("/harddiskvolume")) { //NON-NLS
             // 16 advances beyond harddiskvolume and the number
-            path = path.substring(path.indexOf("/harddiskvolume") + 16); //NON-NLS
+            int index = path.indexOf("/harddiskvolume"); //NON-NLS
+            if (index+16 < path.length()) {
+                path = path.substring(index + 16);
+            }
         }
 
         // no point returning these. We won't map to them
@@ -518,34 +529,13 @@ class VolatilityProcessor {
         // read the first line from the text file
         try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
             String line;
-            while ((line = br.readLine()) != null) {
-
-                String TAG = "Command line : "; //NON-NLS
-                if (line.startsWith(TAG)) {
-
-                    if (line.length() > TAG.length()) {
-                        String file_path;
-
-                        // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
-                        // grab whats inbetween the quotes
-                        if (line.charAt(TAG.length()) == '\"') { //NON-NLS
-                            file_path = line.substring(TAG.length() + 1);
-                            if (file_path.contains("\"")) { //NON-NLS
-                                file_path = file_path.substring(0, file_path.indexOf('\"')); //NON-NLS
-                            }
-                        } // Command line : C:\WINDOWS\system32\csrss.exe ObjectDirectory=\Windows SharedSection=1024,3072,512
-                        // grab everything before the next space - we don't want arguments
-                        else {
-                            file_path = line.substring(TAG.length());
-                            if (file_path.contains(" ")) { //NON-NLS
-                                file_path = file_path.substring(0, file_path.indexOf(' ')); //NON-NLS
-                            }
-                        }
-                        fileSet.add(normalizePath(file_path));
-                    }
-                } // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
+            while ((line = br.readLine()) != null) {                 
+                // we skip the Command Line entries because that data
+                // is also in the 0x lines (and is more likely to have a full path there.
+                
+                // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
                 // 0x7c900000    0xb2000     0xffff C:\WINDOWS\system32\ntdll.dll
-                else if (line.startsWith("0x") && line.length() > 33) { //NON-NLS
+                if (line.startsWith("0x") && line.length() > 33) {
                     // These lines do not have arguments
                     String file_path = line.substring(33);
                     fileSet.add(normalizePath(file_path));
@@ -569,8 +559,9 @@ class VolatilityProcessor {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.length() > 16) {
+
                     String TAG = "Command line : "; //NON-NLS
-                    if (line.startsWith(TAG)) {
+                    if ((line.startsWith(TAG)) && line.length() > TAG.length() + 1) {
                         String file_path;
 
                         // Command line : "C:\Program Files\VMware\VMware Tools\vmacthlp.exe"
@@ -646,6 +637,10 @@ class VolatilityProcessor {
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
                 }
+                else if (line.length() < 37) {
+                    continue;
+                }
+
                 String file_path = line.substring(19, 37);
                 file_path = normalizePath(file_path);
 
@@ -677,8 +672,9 @@ class VolatilityProcessor {
                 }
 
                 // 0x89cfb998 csrss.exe               704    640     14      532      0      0 2017-12-07 14:05:34 UTC+0000
-                String file_path;
-                file_path = line.substring(10, 34);
+                if (line.length() < 34)
+                    continue;
+                String file_path = line.substring(10, 34);
                 file_path = normalizePath(file_path);
 
                 // ignore system, it's not really a path
@@ -710,6 +706,10 @@ class VolatilityProcessor {
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
                 }
+                else if (line.length() < 34) {
+                    continue;
+                }
+
                 String file_path = line.substring(11, 34);
                 file_path = normalizePath(file_path);
 
@@ -733,14 +733,18 @@ class VolatilityProcessor {
     private Set<String> parsePstreeOutput(File outputFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
+
         try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
             // read the first line from the text file
             while ((line = br.readLine()) != null) {
                 //  ... 0x897e5020:services.exe                           772    728     15    287 2017-12-07 14:05:35 UTC+000
-                String file_path;
                 String TAG = ":";
                 if (line.contains(TAG)) {
-                    file_path = line.substring(line.indexOf(':') + 1, 52); //NON-NLS
+                    int index = line.indexOf(TAG);
+                    if (line.length() < 52 || index + 1 >= 52) {
+                        continue;
+                    }
+                    String file_path = line.substring(line.indexOf(':') + 1, 52); //NON-NLS
                     file_path = normalizePath(file_path);
 
                     // ignore system, it's not really a path
@@ -761,50 +765,50 @@ class VolatilityProcessor {
         return fileSet;
     }
 
-    private Set<String> parseSvcscanOutput(File outputFile) {
+    private Set<String> parseSvcscanOutput(File PluginFile) {
         String line;
         Set<String> fileSet = new HashSet<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
-            // read the first line from the text file
-            while ((line = br.readLine()) != null) {
+        try {
+             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
+             // read the first line from the text file
+             while ((line = br.readLine()) != null) {
                 String file_path;
-                String TAG = "Binary Path: "; //NON-NLS
-                if (line.startsWith(TAG)) {
-                    switch (line.charAt(TAG.length())) {
-                        // Binary Path: -
-                        case '\"': //NON-NLS
-                            file_path = line.substring(TAG.length() + 1);
-                            if (file_path.contains("\"")) { //NON-NLS
-                                file_path = file_path.substring(0, file_path.indexOf('\"')); //NON-NLS
-                            }
-                            break;
-                        // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
-                        case '-':
+                String TAG = "Binary Path: ";
+                if (line.startsWith(TAG) && line.length() > TAG.length()+1) {
+                    if (line.charAt(TAG.length()) == '\"') {
+                        file_path = line.substring(TAG.length()+1);
+                        if (file_path.contains("\"")) {
+                            file_path = file_path.substring(0, file_path.indexOf('\"'));
+                        }
+                    }
+                    // Binary Path: -
+                    else if (line.charAt(TAG.length()) == '-') {
+                        continue;
+                    }
+                    // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
+                    else {
+                        file_path = line.substring(TAG.length());
+                        if (file_path.contains(" ")) {
+                            file_path = file_path.substring(0, file_path.indexOf(' '));
+                        }
+                        // We can't do anything with driver entries
+                        if (file_path.startsWith("\\Driver\\")) {
                             continue;
-                        default:
-                            file_path = line.substring(TAG.length());
-                            if (file_path.contains(" ")) { //NON-NLS
-                                file_path = file_path.substring(0, file_path.indexOf(' '));
-                            }   // We can't do anything with driver entries
-                            if (file_path.startsWith("\\Driver\\")) { //NON-NLS
-                                continue;
-                            } else if (file_path.startsWith("\\FileSystem\\")) { //NON-NLS
-                                continue;
-                            }
-                            break;
+                        }
+                        else if (file_path.startsWith("\\FileSystem\\")) {
+                            continue;
+                        }
                     }
                     fileSet.add(normalizePath(file_path));
                 }
-            }
-        } catch (IOException ex) {
-            errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_outputParsingError("svcscan"));
-            /*
-             * Log the exception as well as add it to the error messages, to
-             * ensure that the stack trace is not lost.
-             */
-            logger.log(Level.SEVERE, Bundle.VolatilityProcessor_errorMessage_outputParsingError("svcscan"), ex);
-        }
-        return fileSet;
+             }    
+             br.close();
+        } catch (IOException ex) { 
+            String msg = "Error parsing svcscan output";
+            logger.log(Level.SEVERE, msg, ex);
+            errorMsgs.add(msg);
+        } 
+        return fileSet;     
     }
 
     /**
