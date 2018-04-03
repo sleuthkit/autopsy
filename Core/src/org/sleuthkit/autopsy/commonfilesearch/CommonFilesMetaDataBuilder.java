@@ -42,6 +42,7 @@ class CommonFilesMetaDataBuilder {
 
     private final Long selectedDataSourceId;
     private final Map<Long, String> dataSourceIdToNameMap;
+    //TODO subclass this class to specify where clause and/or additional algorithms.
     private final String singleDataSourceWhereClause = "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5";
     private final String allDataSourcesWhereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
@@ -68,7 +69,7 @@ class CommonFilesMetaDataBuilder {
         Map<String, Set<String>> md5ToDataSourcesStringMap = new HashMap<>();
 
         try {
-            List<AbstractFile> files = FindCommonFiles();
+            List<AbstractFile> files = findCommonFiles();
 
             Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
 
@@ -90,9 +91,9 @@ class CommonFilesMetaDataBuilder {
             
             if (parentNodes.containsKey(currentMd5)) {
                 parentNodes.get(currentMd5).add(file);
-                Set<String> currenDataSources = md5ToDataSourcesStringMap.get(currentMd5);
-                addDataSource(currenDataSources, file, dataSourceIdToNameMap);
-                md5ToDataSourcesStringMap.put(currentMd5, currenDataSources);
+                Set<String> currentDataSources = md5ToDataSourcesStringMap.get(currentMd5);
+                addDataSource(currentDataSources, file, dataSourceIdToNameMap);
+                md5ToDataSourcesStringMap.put(currentMd5, currentDataSources);
                 
             } else {
                 List<AbstractFile> children = new ArrayList<>();
@@ -106,7 +107,7 @@ class CommonFilesMetaDataBuilder {
         }
     }
 
-    private List<AbstractFile> FindCommonFiles() throws TskCoreException, NoCurrentCaseException {
+    private List<AbstractFile> findCommonFiles() throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase sleuthkitCase;
         sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String whereClause = allDataSourcesWhereClause;
