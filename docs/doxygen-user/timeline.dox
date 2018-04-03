@@ -105,7 +105,7 @@ Filters / Events
 This area allows the user to apply filters to limit what events are shown in the visualization.  When the Details View is active, a tab in this area also enables navigating the visualization by event descriptions ( see the Details View section for more on this) 
 
 
-When the __Hide Known Files__ filter is active, files with known hashes will not be included in any way in the rest of the timeline tool (except for the Histogram which shows all events).  In order for this filter to work, the Hash Lookup ingest module must have been run with a Known hash database enabled.
+When the __Hide Known Files__ filter is active, files with known hashes will not be included in any way in the rest of the timeline tool (except for the Histogram which shows all events).  In order for this filter to work, the Hash Lookup ingest module must have been run with a Known hash set enabled.
 
 When the __Text Filter__ is active, only events with descriptions containing the supplied string as a substring will be shown.  Note: this filter users the full description in its search even if not displayed.
 

@@ -37,8 +37,8 @@ final class ModifiableProxyLookup extends ProxyLookup {
      *
      * @param lookups The new Lookups to delegate to.
      */
-    void setNewLookups(final Lookup... lookups) {
-        /* default */
+    public void setNewLookups(final Lookup... lookups) {
+
         setLookups(lookups);
     }
 }

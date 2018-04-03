@@ -282,17 +282,30 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         super.componentActivated();
 
         /*
-         * Syncronize the data content viewer to show the currently selected
-         * item in the data results if only one is selected, or show nothing
-         * otherwise.
+         * Determine which node the content viewer should be using. If multiple
+         * results are selected, the node used by the content viewer should be
+         * null so no content gets displayed.
          */
         final DataContentTopComponent dataContentTopComponent = DataContentTopComponent.findInstance();
         final Node[] nodeList = explorerManager.getSelectedNodes();
 
+        Node selectedNode;
         if (nodeList.length == 1) {
-            dataContentTopComponent.setNode(nodeList[0]);
+            selectedNode = nodeList[0];
         } else {
-            dataContentTopComponent.setNode(null);
+            selectedNode = null;
+        }
+        
+        /*
+         * If the selected node of the content viewer is different than that of
+         * the result viewer, the content viewer needs to be updated. Otherwise,
+         * don't perform the update. This check will ensure that clicking the
+         * column headers and scroll bars of the DataResultTopComponent will not
+         * needlessly refresh the content view and cause the tab selection to
+         * change to the default.
+         */
+        if (selectedNode != dataContentTopComponent.getNode()) {
+            dataContentTopComponent.setNode(selectedNode);
         }
     }
 

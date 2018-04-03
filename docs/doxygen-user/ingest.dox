@@ -39,7 +39,7 @@ There are two places to configure ingest modules. When you select the module nam
 
 There may also be an "Advanced" button that is enabled in the lower corner.  Pressing this button allows you to change global settings that are not specific to a single image.  This advanced configuration panel can often be found in the "Tools", "Options" menu too. 
 
-As an example, the hash lookup module will allow you to enable or disable hash databases in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash databases from the Autopsy configuration. 
+As an example, the hash lookup module will allow you to enable or disable hash sets in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash sets from the Autopsy configuration. 
 
 \section file_filters Custom File Filters
 
@@ -47,7 +47,7 @@ The file filters panel can be opened from the ingest module selection panel or t
 
 \image html ingest-file-filters.PNG
 
-Each filter contains one or more rules for selecting files based on file name and/or path. All files will still be displayed in the tree view, but the ingest modules will only run on a subset. If we use the previous example and run the hash module, only files ending in .png will have their hash computed.
+Each filter contains one or more rules for selecting files based on a combination of file name, path, and how recently the file was modified. All files will still be displayed in the tree view, but the ingest modules will only run on a subset. If we use the previous example and run the hash module, only files ending in .png will have their hash computed.
 
 \section ingest_profiles Using Ingest Profiles
 

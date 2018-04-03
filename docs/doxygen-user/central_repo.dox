@@ -13,7 +13,7 @@ The following are some use cases for the Central Repository:
 - <b>Alerting When Previously Notable Properties Occur</b>
  - You can use the Central Repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
 - <b>Storing Hash Sets</b>
- - You can create and import hash sets into the central repository instead of using local copies in the \ref hash_db_page "Hash Database module". These hash sets are functionally equivalent to local hash sets but can be shared among multiple analysts (when using a PostgreSQL central repository).
+ - You can create and import hash sets into the central repository instead of using local copies in the \ref hash_db_page "Hash Lookup module". These hash sets are functionally equivalent to local hash sets but can be shared among multiple analysts (when using a PostgreSQL central repository).
 
 \section cr_terms Terms and Concepts
 
@@ -70,7 +70,7 @@ are saved to the database, so in a multi-user setting any changes will affect al
 
 Descriptions of the property types:
 - <b>Files</b>
- - Files are correlated based on MD5 hash and file path and name. The Hash Database ingest module must be enabled.
+ - Files are correlated based on MD5 hash and file path and name. The Hash Lookup ingest module must be enabled.
 - <b>Domains</b>
  - Domains are extracted from the various web artifacts, which primarily come from the Recent Activity module
 - <b>Email Addresses</b>
@@ -82,7 +82,7 @@ Descriptions of the property types:
 
 \subsection cr_manage_orgs Manage Organizations
 
-Organizations are stored in the central repository and contain contact information for the given organization. Organizations are used for Hash Databases saved in the central repository, and can also be associated with Autopsy cases. 
+Organizations are stored in the central repository and contain contact information for the given organization. Organizations are used for Hash Sets saved in the central repository, and can also be associated with Autopsy cases. 
 
 \image html central_repo_orgs.png
 
@@ -112,6 +112,10 @@ ingest to be added to the Interesting Artifacts list in that currently open case
 
 If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its
 notable status in the Central Repository.
+
+If you would like to prevent the Interesting Items from being created in a particular case, you can disable the flagging through the run time ingest properties. Note that this only disables the Interesting Item results - all files and artifacts are still added to the central repository.
+
+\image html central_repo_disable_flagging.png
 
 \section cr_viewing_results Viewing Results
 

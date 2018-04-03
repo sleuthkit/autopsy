@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -36,12 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -71,7 +68,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private Connection connection;
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
-    private SwingWorker<? extends Object, ? extends Object> worker;
 
     /**
      * Constructs a file content viewer for SQLite database files.
@@ -213,6 +209,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         currPage++;
         if (currPage * ROWS_PER_PAGE > numRows) {
             nextPageButton.setEnabled(false);
@@ -223,9 +220,12 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         // read and display a page of rows
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
+
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         currPage--;
         if (currPage == 1) {
             prevPageButton.setEnabled(false);
@@ -236,6 +236,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         // read and display a page of rows
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_prevPageButtonActionPerformed
 
     private void tablesDropdownListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tablesDropdownListActionPerformed
@@ -244,7 +245,9 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         if (null == tableName) {
             return;
         }
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         selectTable(tableName);
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_tablesDropdownListActionPerformed
 
 
@@ -269,8 +272,10 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void setFile(AbstractFile file) {
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         sqliteDbFile = file;
         processSQLiteFile();
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
     @Override
@@ -293,12 +298,6 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 logger.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
             }
         }
-
-        // delete last temp file
-        if (null != tmpDbFile) {
-            tmpDbFile.delete();
-            tmpDbFile = null;
-        }
         
         sqliteDbFile = null;
     }
@@ -315,68 +314,55 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         "SQLiteViewer.errorMessage.failedToinitJDBCDriver=The JDBC driver for SQLite could not be loaded.",
         "# {0} - exception message", "SQLiteViewer.errorMessage.unexpectedError=An unexpected error occurred:\n{0).",})
     private void processSQLiteFile() {
-        SwingUtilities.invokeLater(() -> {
-            tablesDropdownList.removeAllItems();
-        });
-        new SwingWorker<Map<String, String>, Void>() {
-            @Override
-            protected Map<String, String> doInBackground() throws NoCurrentCaseException, TskCoreException, IOException, SQLException, ClassNotFoundException {
-                // Copy the file to temp folder
-                String tmpDBPathName = Case.getOpenCase().getTempDirectory() + File.separator + sqliteDbFile.getName();
-                tmpDbFile = new File(tmpDBPathName);
+                
+        tablesDropdownList.removeAllItems();
+
+        // Copy the file to temp folder
+        String tmpDBPathName;
+        try {
+            tmpDBPathName = Case.getOpenCase().getTempDirectory() + File.separator + sqliteDbFile.getName();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
+            return;
+        }
+
+        tmpDbFile = new File(tmpDBPathName);
+        if (! tmpDbFile.exists()) {
+            try {
                 ContentUtils.writeToFile(sqliteDbFile, tmpDbFile);
 
                 // Look for any meta files associated with this DB - WAL, SHM, etc. 
                 findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
                 findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
-
-                // Load the SQLite JDBC driver, if necessary.
-                Class.forName("org.sqlite.JDBC"); //NON-NLS  
-                connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
-
-                // Query the file for the table names and schemas.
-                return getTables();
+            } catch (IOException | NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create temp copy of DB file '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+                MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_failedToExtractFile());
+                return;
             }
+        }
+                
+        try {
+            // Load the SQLite JDBC driver, if necessary.
+            Class.forName("org.sqlite.JDBC"); //NON-NLS  
+            connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
 
-            @Override
-            protected void done() {
-                super.done();
-                try {
-                    Map<String, String> dbTablesMap = get();
-                    if (dbTablesMap.isEmpty()) {
-                        tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
-                        tablesDropdownList.setEnabled(false);
-                    } else {
-                        dbTablesMap.keySet().forEach((tableName) -> {
-                            tablesDropdownList.addItem(tableName);
-                        });
-                    }
-                } catch (InterruptedException ex) {
-                    logger.log(Level.SEVERE, String.format("Interrupted while opening SQLite database file '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-                    MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_interrupted());
-                } catch (ExecutionException ex) {
-                    String errorMessage;
-                    Throwable cause = ex.getCause();
-                    if (cause instanceof NoCurrentCaseException) {
-                        logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
-                        errorMessage = Bundle.SQLiteViewer_errorMessage_noCurrentCase();
-                    } else if (cause instanceof TskCoreException || cause instanceof IOException) {
-                        logger.log(Level.SEVERE, String.format("Failed to create temp copy of DB file '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-                        errorMessage = Bundle.SQLiteViewer_errorMessage_failedToExtractFile();
-                    } else if (cause instanceof SQLException) {
-                        logger.log(Level.SEVERE, String.format("Failed to get tables from DB file  '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-                        errorMessage = Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase();
-                    } else if (cause instanceof ClassNotFoundException) {
-                        logger.log(Level.SEVERE, String.format("Failed to initialize JDBC SQLite '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-                        errorMessage = Bundle.SQLiteViewer_errorMessage_failedToinitJDBCDriver();
-                    } else {
-                        logger.log(Level.SEVERE, String.format("Unexpected exception while processing DB file  '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-                        errorMessage = Bundle.SQLiteViewer_errorMessage_unexpectedError(cause.getLocalizedMessage());
-                    }
-                    MessageNotifyUtil.Message.error(errorMessage);
-                }
+            Map<String, String> dbTablesMap = getTables();
+            if (dbTablesMap.isEmpty()) {
+                tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
+                tablesDropdownList.setEnabled(false);
+            } else {
+                dbTablesMap.keySet().forEach((tableName) -> {
+                    tablesDropdownList.addItem(tableName);
+                });
             }
-        }.execute();
+        } catch (ClassNotFoundException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to initialize JDBC SQLite '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_failedToinitJDBCDriver());
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to get tables from DB file  '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase());
+        }
     }
 
     /**
@@ -436,143 +422,55 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         "SQLiteViewer.selectTable.errorText=Error getting row count for table: {0}"
     })
     private void selectTable(String tableName) {
-        if (worker != null && !worker.isDone()) {
-            worker.cancel(false);
-            worker = null;
+
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(
+                    "SELECT count (*) as count FROM " + tableName)) { //NON-NLS{
+
+            numRows = resultSet.getInt("count");
+            numEntriesField.setText(numRows + " entries");
+
+            currPage = 1;
+            currPageLabel.setText(Integer.toString(currPage));
+            numPagesLabel.setText(Integer.toString((numRows / ROWS_PER_PAGE) + 1));
+
+            prevPageButton.setEnabled(false);
+
+            if (numRows > 0) {
+                nextPageButton.setEnabled(((numRows > ROWS_PER_PAGE)));
+                readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
+            } else {
+                nextPageButton.setEnabled(false);
+                selectedTableView.setupTable(Collections.emptyList());
+            }
+            
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to load table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_selectTable_errorText(tableName));
         }
-
-        worker = new SwingWorker<Integer, Void>() {
-            @Override
-            protected Integer doInBackground() throws Exception {
-
-                Statement statement = null;
-                ResultSet resultSet = null;
-                try {
-                    statement = connection.createStatement();
-                    resultSet = statement.executeQuery(
-                            "SELECT count (*) as count FROM " + tableName); //NON-NLS
-
-                    return resultSet.getInt("count");
-                } catch (SQLException ex) {
-                    throw ex;
-                } finally {
-                    if (null != resultSet) {
-                        resultSet.close();
-                    }
-                    if (null != statement) {
-                        statement.close();
-                    }
-                }
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                try {
-
-                    numRows = get();
-                    numEntriesField.setText(numRows + " entries");
-
-                    currPage = 1;
-                    currPageLabel.setText(Integer.toString(currPage));
-                    numPagesLabel.setText(Integer.toString((numRows / ROWS_PER_PAGE) + 1));
-
-                    prevPageButton.setEnabled(false);
-
-                    if (numRows > 0) {
-                        nextPageButton.setEnabled(((numRows > ROWS_PER_PAGE)));
-                        readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
-                    } else {
-                        nextPageButton.setEnabled(false);
-                        selectedTableView.setupTable(Collections.emptyList());
-                    }
-
-                } catch (InterruptedException ex) {
-                    logger.log(Level.SEVERE, "Interrupted while getting row count from table " + tableName, ex); //NON-NLS
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            ex.getMessage(),
-                            Bundle.SQLiteViewer_selectTable_errorText(tableName),
-                            JOptionPane.ERROR_MESSAGE);
-                } catch (ExecutionException ex) {
-                    logger.log(Level.SEVERE, "Unexpected exception while getting row count from table " + tableName, ex); //NON-NLS  
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            ex.getCause().getMessage(),
-                            Bundle.SQLiteViewer_selectTable_errorText(tableName),
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        };
-        worker.execute();
     }
 
     @NbBundle.Messages({"# {0} - tableName",
         "SQLiteViewer.readTable.errorText=Error getting rows for table: {0}"})
     private void readTable(String tableName, int startRow, int numRowsToRead) {
 
-        if (worker != null && !worker.isDone()) {
-            worker.cancel(false);
-            worker = null;
+        try (
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(
+                    "SELECT * FROM " + tableName
+                    + " LIMIT " + Integer.toString(numRowsToRead)
+                    + " OFFSET " + Integer.toString(startRow - 1))) {
+
+            ArrayList<Map<String, Object>> rows = resultSetToArrayList(resultSet);
+            if (Objects.nonNull(rows)) {
+                selectedTableView.setupTable(rows);
+            } else {
+                selectedTableView.setupTable(Collections.emptyList());
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to read table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
         }
-
-        worker = new SwingWorker<ArrayList<Map<String, Object>>, Void>() {
-            @Override
-            protected ArrayList<Map<String, Object>> doInBackground() throws Exception {
-
-                Statement statement = null;
-                ResultSet resultSet = null;
-                try {
-                    statement = connection.createStatement();
-                    resultSet = statement.executeQuery(
-                            "SELECT * FROM " + tableName
-                            + " LIMIT " + Integer.toString(numRowsToRead)
-                            + " OFFSET " + Integer.toString(startRow - 1)
-                    ); //NON-NLS
-
-                    return resultSetToArrayList(resultSet);
-                } catch (SQLException ex) {
-                    throw ex;
-                } finally {
-                    if (null != resultSet) {
-                        resultSet.close();
-                    }
-                    if (null != statement) {
-                        statement.close();
-                    }
-                }
-            }
-
-            @Override
-            protected void done() {
-
-                if (isCancelled()) {
-                    return;
-                }
-
-                super.done();
-                try {
-                    ArrayList<Map<String, Object>> rows = get();
-                    if (Objects.nonNull(rows)) {
-                        selectedTableView.setupTable(rows);
-                    } else {
-                        selectedTableView.setupTable(Collections.emptyList());
-                    }
-                } catch (InterruptedException ex) {
-                    logger.log(Level.SEVERE, "Interrupted while reading table " + tableName, ex); //NON-NLS
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            ex.getMessage(),
-                            Bundle.SQLiteViewer_readTable_errorText(tableName),
-                            JOptionPane.ERROR_MESSAGE);
-                } catch (ExecutionException ex) {
-                    logger.log(Level.SEVERE, "Unexpected exception while reading table " + tableName, ex); //NON-NLS
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            ex.getCause().getMessage(),
-                            Bundle.SQLiteViewer_readTable_errorText(tableName),
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        };
-
-        worker.execute();
     }
 
     @NbBundle.Messages("SQLiteViewer.BlobNotShown.message=BLOB Data not shown")

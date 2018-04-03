@@ -6,20 +6,20 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core</description>
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
-    
+    <import file="../TSKVersion.xml"/>
+     
      
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
-    
+    <property name="test-input" location="test/qa-functional/data"/>
+
     <target name="get-InternalPythonModules" description="get internal python modules"> 
         <copy todir="release/InternalPythonModules" >
             <fileset dir="{basedir}/../../InternalPythonModules"/>
         </copy>
     </target>
-	
-	<property name="VERSION" value="4.6.0"/>
-    
+
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
         <!--Copy openCV dependencies to release-->
         <copy todir="${modules.dir}" >
@@ -30,10 +30,16 @@
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
         </copy>
-               <!--Copy ewfexport to release-->
+        <!--Copy ewfexport to release-->
         <copy todir="${basedir}/release/ewfexport_exec" >
             <fileset dir="${thirdparty.dir}/ewfexport_exec"/>
         </copy>
+
+        <!--Copy Volatility to release-->
+        <copy todir="${basedir}/release/Volatility" >
+            <fileset dir="${thirdparty.dir}/Volatility"/>
+        </copy>
+            
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
@@ -57,8 +63,8 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${VERSION}.jar" 
-              tofile="${ext.dir}/sleuthkit-postgresql-${VERSION}.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${TSK_VERSION}.jar" 
+              tofile="${ext.dir}/sleuthkit-postgresql-${TSK_VERSION}.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.8.11.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
@@ -76,8 +82,11 @@
              verbose="true"/>
     </target>
 
-    
-    <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
+    <target name="getImageFile">
+            <mkdir dir="${basedir}/test/qa-functional/data"/>
+	    <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/filter_test1.img" skipexisting="true"/>
+    </target> 
+    <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist, getImageFile">
         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
         

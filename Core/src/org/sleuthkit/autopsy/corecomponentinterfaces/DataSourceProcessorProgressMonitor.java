@@ -25,9 +25,28 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
  */
 public interface DataSourceProcessorProgressMonitor {
 
+    /**
+     * Identify if progress will be indeterminate or not
+     * 
+     * @param indeterminate true if progress bar should not show steps
+     */
     void setIndeterminate(boolean indeterminate);
 
+    /**
+     * Increment the progress bar if it is determinate
+     * @param progress How much progress has happened. Must be smaller than value passed to setProgressMax()
+     */
     void setProgress(int progress);
+    
+    /**
+     * Maximum value for a determinate progress bar. 
+     * @param max Max value that will be used 
+     */
+    default void setProgressMax(final int max) { }
 
+    /**
+     * Set the text to be displayed to the user.
+     * @param text Text to display
+     */
     void setProgressText(String text);
 }

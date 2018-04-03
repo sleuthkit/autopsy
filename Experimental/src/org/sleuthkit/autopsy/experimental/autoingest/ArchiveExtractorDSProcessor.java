@@ -77,7 +77,7 @@ public class ArchiveExtractorDSProcessor implements AutoIngestDataSourceProcesso
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         run(deviceId, dataSourcePath.toString(), progressMonitor, callBack);
     }
 
