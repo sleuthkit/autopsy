@@ -45,7 +45,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
         super(Children.create(
                 new CommonFilesChildFactory(metaData.getChildren(),
                 metaData.getDataSourceIdToNameMap()), true),
-                Lookups.singleton(metaData));
+                Lookups.singleton(metaData.getMd5()));
         this.commonFileCount = metaData.getChildren().size();
         this.dataSources = metaData.getDataSources();
         this.md5Hash = metaData.getMd5();
