@@ -161,8 +161,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Assert.fail(ex);
         }
     }
-
-   public void testExtAndDirWithOneRule() {
+    
+    public void testExtAndDirWithOneRule() {
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("Rule", new Rule("testExtAndDirWithOneRule", new Rule.ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Build the filter that ignore unallocated space and with one rule
@@ -189,7 +189,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Assert.fail(ex);
         }
     }
-   public void testExtAndDirWithTwoRules() {
+
+    public void testExtAndDirWithTwoRules() {
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
         rules.put("rule2", new Rule("FindDir1Directory", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
