@@ -194,6 +194,9 @@ public class IngestFileFiltersTest extends TestCase {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filter);
         try {
             List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
+            for (IngestModuleError err : errs) {
+                System.out.println(String.format("Error: %s: %s.", err.getModuleDisplayName(), err.toString()));
+            }
             assertEquals(0, errs.size());
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
