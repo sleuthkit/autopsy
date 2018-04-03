@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 final public class CommonFilesSearchNode extends DisplayableItemNode {
 
     CommonFilesSearchNode(List<CommonFilesMetaData> metaDataList) {
-        super(Children.create(new CommonFilesParentFactory(metaDataList), true), Lookups.singleton(metaDataList));
+        super(Children.create(new CommonFilesParentFactory(metaDataList), true), Lookups.singleton(CommonFilesSearchNode.class));
     }
 
     @NbBundle.Messages({

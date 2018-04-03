@@ -164,15 +164,18 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     super.done();
 
                     List<CommonFilesMetaData> metadata = get();
-
+                    
+                    //TODO maybe use components Explorer manager
+                    DataResultTopComponent component = DataResultTopComponent.createInstance(title);
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
-
+                    
+                    //TODO may not need this wapper node
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
-
+                    
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    DataResultTopComponent component = DataResultTopComponent.createInstance(title);
-
+                    
+                      
                     //component.enableTreeMode();
                     int totalNodes = 0;
                     for (CommonFilesMetaData meta : metadata) {
