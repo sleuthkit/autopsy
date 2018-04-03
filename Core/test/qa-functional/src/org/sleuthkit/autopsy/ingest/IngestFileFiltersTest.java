@@ -181,7 +181,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                     String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
                     assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty()); 
                 } else if (file.getParentPath().equalsIgnoreCase("/dir1/")) { 
-                    //All files in dir1 should have MIME type except '.' '..' slack files should have MIME type
+                    //All files in dir1 should have MIME type except '.' '..' slack files
                     if (file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) {
                         String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
                         assertTrue(errMsg, file.getMIMEType() == null);
