@@ -143,7 +143,7 @@ public class IngestFileFiltersTest extends TestCase {
                 if (file.getParentPath().equalsIgnoreCase("/dir1/")) {
                     if (!(file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
-                        assertTrue(errMsg, !(file.getMIMEType() == null || file.getMIMEType().isEmpty()));
+                        assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
                     }
                 } else { //All files not in dir1 shouldn't have MIME type
                     String errMsg = String.format("File %s (objId=%d) unexpectedly caught by the file filter.", file.getName(), file.getId());
@@ -160,11 +160,11 @@ public class IngestFileFiltersTest extends TestCase {
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("Rule", new Rule("testExtAndDirWithOneRule", new Rule.ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Build the filter that ignore unallocated space and with one rule
-        FilesSet Files_Ext_Dirs_Filter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, true, rules);
+        FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, true, rules);
         
         try {
             Case openCase = Case.getOpenCase();
-            runIngestJob(openCase.getDataSources(), Files_Ext_Dirs_Filter); 
+            runIngestJob(openCase.getDataSources(), filesExtDirsFilter); 
             FileManager fileManager = Case.getOpenCase().getServices().getFileManager();            
             List<AbstractFile> results = fileManager.findFiles("%%");
             assertEquals(62, results.size());
@@ -172,7 +172,7 @@ public class IngestFileFiltersTest extends TestCase {
                 //Files with jpg extension in dir1 should have MIME Type
                 if (file.getParentPath().equalsIgnoreCase("/dir1/") && file.getNameExtension().equalsIgnoreCase("jpg")) {
                     String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
-                    assertTrue(errMsg, !(file.getMIMEType() == null || file.getMIMEType().isEmpty()));
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
                 } else { //All others shouldn't have MIME Type
                     String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
                     assertTrue(errMsg, file.getMIMEType() == null);
