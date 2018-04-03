@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ExtensionCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
@@ -160,7 +161,45 @@ public class IngestFileFiltersTest extends NbTestCase {
             Assert.fail(ex);
         }
     }
-    
+
+   public void testExtAndDirWithTwoRules() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        rules.put("rule2", new Rule("FindDir1Directory", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+        //Build the filter that ingnore unallocated space and with 2 rules
+        FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all files in dir1 and all files with jpg extention.", false, true, rules);
+        
+          
+        try {
+            Case openCase = Case.getOpenCase();
+            runIngestJob(openCase.getDataSources(), filesExtDirsFilter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();           
+            List<AbstractFile> results = fileManager.findFiles("%%");  
+            assertEquals(62, results.size());
+            for (AbstractFile file : results) {               
+                if (file.getNameExtension().equalsIgnoreCase("jpg")) { //All files with .jpg extension should have MIME type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty()); 
+                } else if (file.getParentPath().equalsIgnoreCase("/dir1/")) { 
+                    //All files in dir1 should have MIME type except '.' '..' slack files should have MIME type
+                    if (file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) {
+                        String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                        assertTrue(errMsg, file.getMIMEType() == null);
+                    } else {
+                        String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                        assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                    }
+                } else { //All files that are not in dir1 or not with .jpg extension should not have MIME type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);                     
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+   
     private void runIngestJob(List<Content> datasources, FilesSet filter) {
         FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
