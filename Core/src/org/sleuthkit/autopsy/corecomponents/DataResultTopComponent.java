@@ -118,11 +118,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
         activeComponentIds.add(title);
     }
-
-    //TODO do we need this???
-    public void enableTreeMode(){
-        this.dataResultPanel.enableTreeMode();
-    }
     
     /**
      * Initialize previously created tc instance with additional data
