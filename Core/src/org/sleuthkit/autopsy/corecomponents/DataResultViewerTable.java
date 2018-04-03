@@ -139,7 +139,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initComponents();
         
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        
         outline = outlineView.getOutline();
+        outline.setRowSelectionAllowed(true);
+        outline.setColumnSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);    // don't show the root node
         outline.setDragEnabled(false);
@@ -171,8 +174,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         outlineView.expandNode(n);
     }
-
-    //DataResultViewerTable.FIRST_COLUMN_LABEL
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -609,27 +610,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         super.clearComponent();
 
-    }
-
-    //TODO do we need this???
-    void enableTreeMode() {
-        this.outlineView.addPropertyColumn(title, title);   //TODO
-        
-        this.outlineView.addTreeExpansionListener(new TreeExpansionListener(){
-            @Override
-            public void treeExpanded(TreeExpansionEvent event) {
-                System.out.println(event.toString());
-            }
-
-            @Override
-            public void treeCollapsed(TreeExpansionEvent event) {
-                System.out.println(event.toString());
-            }
-        });
-        
-        for(Node node : this.currentRoot.getChildren().getNodes()){
-            this.outlineView.expandNode(node);
-        }
     }
 
     /**
