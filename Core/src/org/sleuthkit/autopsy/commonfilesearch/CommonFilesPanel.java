@@ -103,6 +103,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         return dataSourceMap.size() >= 2;
     }
 
+    //Make this a SwingWorker
     private void buildDataSourceMap(Map<Long, String> dataSourceMap) throws TskCoreException, NoCurrentCaseException, SQLException {
         Case currentCase = Case.getOpenCase();
         SleuthkitCase tskDb = currentCase.getSleuthkitCase();
