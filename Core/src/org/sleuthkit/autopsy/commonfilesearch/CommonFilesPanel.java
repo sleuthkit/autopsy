@@ -167,13 +167,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
 
-                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.findInstance().getExplorerManager());
+                    DataResultTopComponent component = DataResultTopComponent.createInstance(title);
+                    
+                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.getDefault().getExplorerManager());
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    DataResultTopComponent component = DataResultTopComponent.createInstance(title);
-
-                    //component.enableTreeMode();
                     int totalNodes = 0;
                     for (CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();
