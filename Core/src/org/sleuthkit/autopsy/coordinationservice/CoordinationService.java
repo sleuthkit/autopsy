@@ -457,7 +457,8 @@ public final class CoordinationService {
         CASES("cases"),
         MANIFESTS("manifests"),
         CONFIG("config"),
-        CENTRAL_REPO("centralRepository");
+        CENTRAL_REPO("centralRepository"),
+        HEALTH_MONITOR("healthMonitor");
 
         private final String displayName;
 
