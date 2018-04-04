@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.layout.mxEdgeLabelLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.layout.mxOrganicLayout;
+import com.mxgraph.layout.mxParallelEdgeLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxRubberband;
@@ -61,8 +63,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -139,10 +139,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private final mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband;
-    private final mxFastOrganicLayout fastOrganicLayout;
-    private final mxCircleLayout circleLayout;
-    private final mxOrganicLayout organicLayout;
-    private final mxHierarchicalLayout hierarchyLayout;
+    
+    private final mxGraphLayout fastOrganicLayout;
+    private final mxGraphLayout circleLayout;
+    private final mxGraphLayout organicLayout;
+    private final mxGraphLayout hierarchyLayout;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
@@ -158,7 +159,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         pinnedAccountModel = graph.getPinnedAccountModel();
         lockedVertexModel = graph.getLockedVertexModel();
-   
 
         graphComponent = new mxGraphComponent(graph);
         graphComponent.setAutoExtend(true);
@@ -198,12 +198,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
-        
-            fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
-        circleLayout = new mxCircleLayoutImpl(graph);
-        organicLayout = new mxOrganicLayoutImpl(graph);
-        organicLayout.setMaxIterations(10);
-        hierarchyLayout = new mxHierarchicalLayoutImpl(graph);
+
+        fastOrganicLayout = lockedVertexModel.createLockedVertexWrapper(new mxFastOrganicLayout(graph));
+        hierarchyLayout = lockedVertexModel.createLockedVertexWrapper(new mxHierarchicalLayout(graph));
+        circleLayout = lockedVertexModel.createLockedVertexWrapper(new mxCircleLayout(graph) {
+            {
+                setResetEdges(true);
+            }
+        });
+        organicLayout = lockedVertexModel.createLockedVertexWrapper(new mxOrganicLayout(graph) {
+            {
+                setResetEdges(true);
+                setMaxIterations(10);
+            }
+        });
 
         //local method to configure layout buttons
         BiConsumer<JButton, mxGraphLayout> configure = (layoutButton, layout) -> {
@@ -502,7 +510,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(hierarchyLayoutButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(circleLayoutButton)
-                .addPreferredGap(LayoutStyle.RELATED)
+                .addPreferredGap(LayoutStyle.UNRELATED)
                 .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(jLabel2)
@@ -516,7 +524,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
@@ -570,7 +578,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private void applyLayout(mxGraphLayout layout) {
         currentLayout = layout;
         layoutButtons.forEach((layoutKey, button)
-                -> button.setFont(button.getFont().deriveFont(layoutKey == layout ? Font.BOLD : Font.PLAIN))        );
+                -> button.setFont(button.getFont().deriveFont(layoutKey == layout ? Font.BOLD : Font.PLAIN)));
         morph(layout);
     }
 
@@ -727,96 +735,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
-    final private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
-
-        mxFastOrganicLayoutImpl(mxGraph graph) {
-            super(graph);
-        }
-
-        @Override
-        public boolean isVertexIgnored(Object vertex) {
-            return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
-        }
-
-        @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-            if (isVertexIgnored(vertex)) {
-                return getVertexBounds(vertex);
-            } else {
-                return super.setVertexLocation(vertex, x, y);
-            }
-        }
-    }
-
-    final private class mxCircleLayoutImpl extends mxCircleLayout {
-
-        mxCircleLayoutImpl(mxGraph graph) {
-            super(graph);
-            setResetEdges(true);
-        }
-
-        @Override
-        public boolean isVertexIgnored(Object vertex) {
-            return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
-        }
-
-        @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-            if (isVertexIgnored(vertex)) {
-                return getVertexBounds(vertex);
-            } else {
-                return super.setVertexLocation(vertex, x, y);
-            }
-        }
-    }
-
-    final private class mxOrganicLayoutImpl extends mxOrganicLayout {
-
-        mxOrganicLayoutImpl(mxGraph graph) {
-            super(graph);
-            setResetEdges(true);
-        }
-
-        @Override
-        public boolean isVertexIgnored(Object vertex) {
-            return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
-        }
-
-        @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-            if (isVertexIgnored(vertex)) {
-                return getVertexBounds(vertex);
-            } else {
-                return super.setVertexLocation(vertex, x, y);
-            }
-        }
-    }
-
-    final private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
-
-        mxHierarchicalLayoutImpl(mxGraph graph) {
-            super(graph);
-        }
-
-        @Override
-        public boolean isVertexIgnored(Object vertex) {
-            return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
-        }
-
-        @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
-            if (isVertexIgnored(vertex)) {
-                return getVertexBounds(vertex);
-            } else {
-                return super.setVertexLocation(vertex, x, y);
-            }
-        }
-    }
-
     private class CancelationListener implements ActionListener {
 
         private Future<?> cancellable;
@@ -908,4 +826,5 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         }
     }
+
 }
