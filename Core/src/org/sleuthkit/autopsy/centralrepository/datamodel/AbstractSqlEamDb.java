@@ -90,7 +90,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
+        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?) "
+                + getConflictClause();
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, name);
@@ -183,7 +184,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String sql = "INSERT INTO cases(case_uid, org_id, case_name, creation_date, case_number, "
                 + "examiner_name, examiner_email, examiner_phone, notes) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(sql);
@@ -419,7 +421,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO data_sources(device_id, case_id, name) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO data_sources(device_id, case_id, name) VALUES (?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(sql);
@@ -543,7 +546,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append(tableName);
         sql.append("(case_id, data_source_id, value, file_path, known_status, comment) ");
         sql.append("VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), ");
-        sql.append("(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?)");
+        sql.append("(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?) ");
+        sql.append(getConflictClause());
        
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
@@ -1529,7 +1533,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
         ResultSet generatedKeys = null;
         PreparedStatement preparedStatement = null;
-        String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -1735,7 +1740,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, type, import_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, type, import_date) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                + getConflictClause();
         String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
@@ -1867,7 +1873,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(correlationType)));
@@ -2038,9 +2045,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
         String querySql;
         // if we have a known ID, use it, if not (is -1) let the db assign it.
         if (-1 == newType.getId()) {
-            insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?)";
+            insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?) " + getConflictClause();
         } else {
-            insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
+            insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();
         }
         querySql = "SELECT * FROM correlation_types WHERE display_name=? AND db_table_name=?";
 
