@@ -410,11 +410,18 @@ final class IngestTasksScheduler {
         }
 
         /*
-         * Check if the file is a member of the file ingest filter that is being
-         * applied to the current run of ingest, checks if unallocated space
-         * should be processed inside call to fileIsMemberOf
+         * Ensures that all directories, files which are members of the ingest
+         * file filter, and unallocated blocks (when processUnallocated is
+         * enabled) all continue to be processed. AbstractFiles which do not
+         * meet one of these criteria will be skipped.
+         *
+         * An additional check to see if unallocated space should be processed
+         * is part of the FilesSet.fileIsMemberOf() method.
+         *
+         * This code may need to be updated when
+         * TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS comes into use by Autopsy.
          */
-        if (!file.isDir() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
+        if (!file.isDir() && !shouldBeCarved(task) && !fileAcceptedByFilter(task)) {
             return false;
         }
 
@@ -460,6 +467,30 @@ final class IngestTasksScheduler {
         }
 
         return true;
+    }
+
+    /**
+     * Check whether or not a file should be carved for a data source ingest  
+     * ingest job.
+     * 
+     * @param task The file ingest task for the file.
+     * 
+     * @return True or false.
+     */
+    private static boolean shouldBeCarved(final FileIngestTask task) {
+        return task.getIngestJob().shouldProcessUnallocatedSpace() && task.getFile().getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS);
+    }
+
+    /**
+     * Checks whether or not a file is accepted (passes) the file filter for a data  
+     * source ingest job.
+     *
+     * @param task The file ingest task for the file.
+     * 
+     * @return True or false. 
+     */
+    private static boolean fileAcceptedByFilter(final FileIngestTask task) {
+        return !(task.getIngestJob().getFileIngestFilter().fileIsMemberOf(task.getFile()) == null);
     }
 
     /**
