@@ -82,8 +82,11 @@ public class ServicesHealthMonitor {
             if (! databaseExists()) {
                 
                 // If not, create a new one
+                System.out.println("  No database exists - setting up new one");
                 createDatabase();
                 initializeDatabaseSchema();
+            } else {
+                System.out.println("  Database already exists");
             }
             
             // Any database upgrades would happen here
@@ -194,7 +197,7 @@ public class ServicesHealthMonitor {
     }
     
     // Make private once testing is done
-    void writeCurrentStateToDatabase() {
+    void writeCurrentStateToDatabase() throws HealthMonitorException {
         System.out.println("\nwriteCurrentStateToDatabase");
         
         Map<String, TimingInfo> timingMapCopy;
@@ -208,12 +211,64 @@ public class ServicesHealthMonitor {
             timingMapCopy = new HashMap<>(timingInfoMap);
             timingInfoMap.clear();
         }
-           
+        
+        // Check if there's anything to report
+        if(timingMapCopy.keySet().isEmpty()) {
+            System.out.println("No timing data to save");
+            return;
+        }
+        
+        // Debug
         for(String name:timingMapCopy.keySet()){
             TimingInfo info = timingMapCopy.get(name);
             long timestamp = System.currentTimeMillis();
             System.out.println("  Name: " + name + "\tTimestamp: " + timestamp + "\tAverage: " + info.getAverage() +
                     "\tMax: " + info.getMax() + "\tMin: " + info.getMin());
+        }
+        
+        CoordinationService.Lock lock = getSharedDbLock();
+        if(lock == null) {
+            throw new HealthMonitorException("Error getting database lock");
+        }
+        
+        try {
+            Connection conn = connect();
+            if(conn == null) {
+                throw new HealthMonitorException("Error getting database connection");
+            }
+
+            //"INSERT INTO db_info (name, value) VALUES (?, ?)"
+            String addTimingInfoSql = "INSERT INTO timing_data (name, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
+
+                for(String name:timingMapCopy.keySet()) {
+                    TimingInfo info = timingMapCopy.get(name);
+
+                    statement.setString(1, name);
+                    statement.setLong(2, System.currentTimeMillis());
+                    statement.setLong(3, info.getCount());
+                    statement.setLong(4, info.getAverage());
+                    statement.setLong(5, info.getMax());
+                    statement.setLong(6, info.getMin());
+
+                    statement.execute();
+                }
+
+            } catch (SQLException ex) {
+                throw new HealthMonitorException("Error saving metric data to database", ex);
+            } finally {
+                try {
+                    conn.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing Connection.", ex);
+                }
+            }
+        } finally {
+            try {
+                lock.release();
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                throw new HealthMonitorException("Error releasing database lock", ex);
+            }
         }
     }
     
@@ -386,14 +441,14 @@ public class ServicesHealthMonitor {
 
         try (Statement statement = conn.createStatement()) {
             StringBuilder createTimingTable = new StringBuilder();
-            createTimingTable.append("CREATE TABLE IF NOT EXISTS timingData (");
+            createTimingTable.append("CREATE TABLE IF NOT EXISTS timing_data (");
             createTimingTable.append("id SERIAL PRIMARY KEY,");
             createTimingTable.append("name text NOT NULL,");
             createTimingTable.append("timestamp bigint NOT NULL,");
             createTimingTable.append("count bigint NOT NULL,");
-            createTimingTable.append("average int NOT NULL,");
-            createTimingTable.append("max int NOT NULL,");
-            createTimingTable.append("min int NOT NULL");
+            createTimingTable.append("average bigint NOT NULL,");
+            createTimingTable.append("max bigint NOT NULL,");
+            createTimingTable.append("min bigint NOT NULL");
             createTimingTable.append(")");
             statement.execute(createTimingTable.toString());
             
@@ -499,6 +554,10 @@ public class ServicesHealthMonitor {
         
         long getMin() {
             return min;
+        }
+        
+        long getCount() {
+            return count;
         }
         
         void print() {
