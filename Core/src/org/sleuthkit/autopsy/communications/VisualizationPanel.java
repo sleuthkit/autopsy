@@ -62,7 +62,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -328,13 +327,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     if (worker.isCancelled()) {
                         graph.resetGraph();
                         rebuildGraph();
-                    } else if (graph.getModel().getChildCount(graph.getDefaultParent()) < 64) {
-                        applyOrganicLayout(10);
                     } else {
-                        JOptionPane.showMessageDialog(this,
-                                "Too many accounts, layout aborted.",
-                                "Autopsy",
-                                JOptionPane.WARNING_MESSAGE);
+                 morph(fastOrganicLayout);
                     }
                 }
             });
@@ -651,7 +645,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         // Updates the display
         graph.getModel().endUpdate();
         setCursor(Cursor.getDefaultCursor());
-        
+
     }//GEN-LAST:event_clearVizButtonActionPerformed
 
     private void applyOrganicLayout(int iterations) {

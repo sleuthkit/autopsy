@@ -279,8 +279,8 @@ final class CommunicationsGraph extends mxGraph {
                     if (isCancelled()) {
                         break;
                     }
-                    final List<AccountDeviceInstance> relatedAccountDeviceInstances =
-                            commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
+                    final List<AccountDeviceInstance> relatedAccountDeviceInstances
+                            = commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
                     relatedAccounts.put(adiKey.getAccountDeviceInstance(), adiKey);
                     getOrCreateVertex(adiKey);
 
@@ -299,14 +299,20 @@ final class CommunicationsGraph extends mxGraph {
 
                 int total = relationshipCounts.size();
                 int k = 0;
+                   String progressText = "";
                 progress.switchToDeterminate("", 0, total);
                 for (Map.Entry<AccountPair, Long> entry : relationshipCounts.entrySet()) {
                     Long count = entry.getValue();
                     AccountPair relationshipKey = entry.getKey();
                     AccountDeviceInstanceKey account1 = relatedAccounts.get(relationshipKey.getFirst());
                     AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getSecond());
-                    mxCell addEdge = addOrUpdateEdge(count, account1, account2);
-                    progress.progress(addEdge.getId(), k++);
+
+                    if (pinnedAccountModel.isAccountPinned(account1)
+                            || pinnedAccountModel.isAccountPinned(account2))  {
+                        mxCell addEdge = addOrUpdateEdge(count, account1, account2);
+                        progressText = addEdge.getId();
+                    }
+                    progress.progress(progressText, k++);
                 }
             } catch (TskCoreException tskCoreException) {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
