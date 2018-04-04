@@ -62,7 +62,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -329,7 +328,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         graph.resetGraph();
                         rebuildGraph();
                     } else {
-                        applyOrganicLayout(10);
+                 morph(fastOrganicLayout);
                     }
                 }
             });
