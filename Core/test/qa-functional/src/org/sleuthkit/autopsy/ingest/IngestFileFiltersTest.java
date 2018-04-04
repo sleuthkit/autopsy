@@ -241,10 +241,10 @@ public class IngestFileFiltersTest extends NbTestCase {
             List<AbstractFile> results = fileManager.findFiles("%%");
             assertEquals(62, results.size());
             for (AbstractFile file : results) {
-                //Only file.docx have MIME Type
+                //Only file.docx has MIME Type
                 if (file.getName().equalsIgnoreCase("file.docx")) {
                     String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
-                    assertTrue(errMsg, file.getMIMEType() != null);
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
                 } else {
                     String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
                     assertTrue(errMsg, file.getMIMEType() == null);
