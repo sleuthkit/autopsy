@@ -65,7 +65,9 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A tabular viewer for the results view.
@@ -82,7 +84,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     private static final Color TAGGED_COLOR = new Color(255, 255, 195);
-
+    private Node selectedChild;
     private final String title;
 
     /**
@@ -141,9 +143,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
         
         outline = outlineView.getOutline();
-        outline.setRowSelectionAllowed(true);
-        outline.setColumnSelectionAllowed(true);
-        outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        outline.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            getSelectedChildNode();
+        });
         outline.setRootVisible(false);    // don't show the root node
         outline.setDragEnabled(false);
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
@@ -206,10 +209,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return true;
     }
 
+    private void getSelectedChildNode() {
+        selectedChild = currentRoot.getChildren().getNodeAt(outline.convertRowIndexToModel(outline.getSelectedRow()));
+        //TODO tell explorermanager this is actual child node
+    }
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node selectedNode) {
-
+        if (selectedChild != null) {
+            selectedNode = selectedChild;
+        }
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -258,7 +267,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * added/removed events as un-hide/hide, until the table setup is done.
          */
         tableListener.listenToVisibilityChanges(false);
-
         /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -326,7 +334,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                             break;
                         }
                     }
-                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
+                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(new ContentNodeSelectionInfo(currentRoot.getLookup().lookup(AbstractFile.class)));
                 }
             }
         });
