@@ -177,9 +177,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @returns New Case class with populated database ID
      */
     @Override
-    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
-        Connection conn = connect();
+    public synchronized CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
+        
+        // check if there is already an existing CorrelationCase for this Case
+        CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
+        if (cRCase != null) {
+            return cRCase;
+        }
 
+        Connection conn = connect();
         PreparedStatement preparedStatement = null;
 
         String sql = "INSERT INTO cases(case_uid, org_id, case_name, creation_date, case_number, "

@@ -645,18 +645,18 @@ final class RegexQuery implements KeywordSearchQuery {
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
-        attributeMap.computeIfAbsent(type, t -> {
+
+        if( ! attributeMap.containsKey(type)) {
             String value = matcher.group(groupName);
             if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
                 attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD),
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
+            
             if (StringUtils.isNotBlank(value)) {
-                return new BlackboardAttribute(attrType, MODULE_NAME, value);
-            } else {
-                return null;
+                attributeMap.put(type, new BlackboardAttribute(attrType, MODULE_NAME, value));
             }
-        });
+        }
     }
 }
