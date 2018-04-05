@@ -355,35 +355,6 @@ public class ServicesHealthMonitor {
     }
     
     /**
-     * Call during application closing - attempts to log any remaining entries.
-     */
-    static synchronized void close() {
-        if(isEnabled.get()) {
-            
-            // Stop the timer
-            try {
-                getInstance().stopTimer();
-            } catch (HealthMonitorException ex) {
-                logger.log(Level.SEVERE, "Error shutting down timer", ex);
-            }
-            
-            // Write current data
-            try {
-                getInstance().writeCurrentStateToDatabase();
-            } catch (HealthMonitorException ex) {
-                logger.log(Level.SEVERE, "Error writing final metric data to database", ex);
-            }
-            
-            // Shutdown connection pool
-            try {
-                getInstance().shutdownConnections();
-            } catch (HealthMonitorException ex) {
-                logger.log(Level.SEVERE, "Error shutting down connection pool", ex);
-            }
-        }
-    }
-    
-    /**
      * Check whether the health monitor database exists.
      * Does not check the schema.
      * @return true if the database exists, false otherwise
