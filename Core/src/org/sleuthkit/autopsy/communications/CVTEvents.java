@@ -79,7 +79,7 @@ final class CVTEvents {
             return accountDeviceInstances;
         }
 
-        public UnpinAccountsEvent(Set<AccountDeviceInstanceKey> accountDeviceInstances) {
+         UnpinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances) {
             this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
         }
     }

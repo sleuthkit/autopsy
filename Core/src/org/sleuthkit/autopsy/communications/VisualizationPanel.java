@@ -51,7 +51,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
-import static java.util.Collections.singleton;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -106,12 +105,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
     private static final String BASE_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images";
-    static final private ImageIcon pinIcon
-            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--pin.png"));
-    static final private ImageIcon addPinIcon
-            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--plus.png"));
-    static final private ImageIcon unpinIcon
-            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--minus.png"));
     static final private ImageIcon unlockIcon
             = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
     static final private ImageIcon lockIcon
@@ -132,6 +125,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private final mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband;
+
     private final mxFastOrganicLayout fastOrganicLayout;
     private final mxCircleLayout circleLayout;
     private final mxOrganicLayout organicLayout;
@@ -199,52 +193,40 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             @Override
             public void mouseClicked(final MouseEvent event) {
                 super.mouseClicked(event);
-                if (SwingUtilities.isRightMouseButton(event)) {
-                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
-                    if (cellAt != null && cellAt.isVertex()) {
-                        final JPopupMenu jPopupMenu = new JPopupMenu();
-                        final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+                SwingUtilities.invokeLater(() -> {
+                    if (SwingUtilities.isRightMouseButton(event)) {
+                        final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
+                        if (cellAt != null && cellAt.isVertex()) {
+                            final JPopupMenu jPopupMenu = new JPopupMenu();
+                            final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
 
-                        if (lockedVertexModel.isVertexLocked(cellAt)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.unlockVertex(cellAt);
-                                }
-                            }));
-                        } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.lockVertex(cellAt);
-                                }
-                            }));
+                            if (lockedVertexModel.isVertexLocked(cellAt)) {
+                                jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock", unlockIcon) {
+                                    @Override
+                                    public void actionPerformed(final ActionEvent event) {
+                                        lockedVertexModel.unlockVertex(cellAt);
+                                    }
+                                }));
+                            } else {
+                                jPopupMenu.add(new JMenuItem(new AbstractAction("Lock", lockIcon) {
+                                    @Override
+                                    public void actionPerformed(final ActionEvent event) {
+                                        lockedVertexModel.lockVertex(cellAt);
+                                    }
+                                }));
+                            }
+                            if (pinnedAccountModel.isAccountPinned(adiKey)) {
+                                jPopupMenu.add(UnpinAccountsAction.getInstance().getPopupPresenter());
+                            } else {
+                                jPopupMenu.add(PinAccountsAction.getInstance().getPopupPresenter());
+                                jPopupMenu.add(ResetAndPinAccountsAction.getInstance().getPopupPresenter());
+                            }
+                            jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
                         }
-                        if (pinnedAccountModel.isAccountPinned(adiKey)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
-                                }
-                            }));
-                        } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
-                                }
-                            }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
-                                }
-                            }));
-                        }
-                        jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
                     }
-                }
+                });
             }
+
         });
         final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
 
@@ -255,7 +237,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 ExplorerUtils.createLookup(vizEM, getActionMap()));
 
         //feed selection to explorermanager
-        graph.getSelectionModel().addListener(null, new SelectionListener());
+        graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
         final mxEventSource.mxIEventListener undoListener = (Object sender, mxEventObject evt)
                 -> undoManager.undoableEditHappened((mxUndoableEdit) evt.getProperty("edit"));
 
@@ -277,7 +259,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-
     }
 
     @Subscribe
@@ -290,7 +271,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-
     }
 
     @Subscribe
@@ -302,7 +282,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -328,13 +307,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         graph.resetGraph();
                         rebuildGraph();
                     } else {
-                 morph(fastOrganicLayout);
+                        morph(fastOrganicLayout);
                     }
                 }
             });
 
             worker.execute();
-
         }
     }
 
@@ -370,11 +348,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
 
         });
-    }
-
-    @Override
-    public void removeNotify() {
-        super.removeNotify();
     }
 
     /**
@@ -901,4 +874,5 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
     }
+
 }

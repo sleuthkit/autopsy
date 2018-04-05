@@ -18,17 +18,13 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
@@ -105,55 +101,5 @@ final class AccountDeviceInstanceNode extends AbstractNode {
         actions.add(PinAccountsAction.getInstance());
         actions.add(ResetAndPinAccountsAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
-    }
-
-    /**
-     * Action that pins the selected AccountDeviceInstances to the
-     * visualization.
-     */
-    static private class PinAccountsAction extends AbstractAction {
-
-        private static final long serialVersionUID = 1L;
-        private final static PinAccountsAction instance = new PinAccountsAction();
-
-        private static PinAccountsAction getInstance() {
-            return instance;
-        }
-
-        private PinAccountsAction() {
-            super("Add Account(s) to Visualization");
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Collection<? extends AccountDeviceInstanceKey> lookupAll =
-                    Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class);
-            CVTEvents.getCVTEventBus().post(new CVTEvents.PinAccountsEvent(lookupAll, false));
-        }
-    }
-
-    /**
-     * Action that pins the selected AccountDeviceInstances to the
-     * visualization.
-     */
-    static private class ResetAndPinAccountsAction extends AbstractAction {
-
-        private static final long serialVersionUID = 1L;
-        private final static ResetAndPinAccountsAction instance = new ResetAndPinAccountsAction();
-
-        private static ResetAndPinAccountsAction getInstance() {
-            return instance;
-        }
-
-        private ResetAndPinAccountsAction() {
-            super("Visualize Account(s)");
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Collection<? extends AccountDeviceInstanceKey> lookupAll =
-                    Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class);
-            CVTEvents.getCVTEventBus().post(new CVTEvents.PinAccountsEvent(lookupAll, true));
-        }
     }
 }
