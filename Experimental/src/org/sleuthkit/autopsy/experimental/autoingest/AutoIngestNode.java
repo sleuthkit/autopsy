@@ -28,6 +28,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 final class AutoIngestNode extends AbstractNode {
@@ -41,7 +42,7 @@ final class AutoIngestNode extends AbstractNode {
         "AutoIngestNode.jobCreated.text=Job Created",
         "AutoIngestNode.jobCompleted.text=Job Completed",
         "AutoIngestNode.priority.text=Priority",
-        "AutoIngestNode.status.text=Status"            
+        "AutoIngestNode.status.text=Status"
     })
 
     AutoIngestNode(List<AutoIngestJob> jobs, AutoIngestJobType type) {
@@ -89,8 +90,8 @@ final class AutoIngestNode extends AbstractNode {
             setName(autoIngestJob.getManifest().getCaseName());
             setDisplayName(autoIngestJob.getManifest().getCaseName());
         }
-        
-        AutoIngestJob getAutoIngestJob(){
+
+        AutoIngestJob getAutoIngestJob() {
             return autoIngestJob;
         }
 
@@ -102,23 +103,33 @@ final class AutoIngestNode extends AbstractNode {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_caseName_text(), Bundle.AutoIngestNode_caseName_text(), Bundle.AutoIngestNode_caseName_text(), autoIngestJob.getManifest().getCaseName()));
-            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(), autoIngestJob.getManifest().getDataSourcePath().getFileName().toString()));
+            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_caseName_text(), Bundle.AutoIngestNode_caseName_text(), Bundle.AutoIngestNode_caseName_text(),
+                    autoIngestJob.getManifest().getCaseName()));
+            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
+                    autoIngestJob.getManifest().getDataSourcePath().getFileName().toString()));
             switch (jobType) {
-                case PENDING_JOB: 
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),  autoIngestJob.getManifest().getDateFileCreated()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), autoIngestJob.getPriority()));
+                case PENDING_JOB:
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
+                            autoIngestJob.getManifest().getDateFileCreated()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(),
+                            autoIngestJob.getPriority()));
                     break;
                 case RUNNING_JOB:
                     AutoIngestJob.StageDetails status = autoIngestJob.getProcessingStageDetails();
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(),  Bundle.AutoIngestNode_hostName_text(),autoIngestJob.getProcessingHostName()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(), status.getDescription()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text(), (Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(),
+                            autoIngestJob.getProcessingHostName()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(),
+                            status.getDescription()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text(),
+                            DurationCellRenderer.longToDurationString((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime()))));
                     break;
                 case COMPLETED_JOB:
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),  autoIngestJob.getManifest().getDateFileCreated()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(), autoIngestJob.getCompletedDate()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text(), autoIngestJob.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
+                            autoIngestJob.getManifest().getDateFileCreated()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(),
+                            autoIngestJob.getCompletedDate()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text(),
+                            autoIngestJob.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
                     break;
                 default:
             }
