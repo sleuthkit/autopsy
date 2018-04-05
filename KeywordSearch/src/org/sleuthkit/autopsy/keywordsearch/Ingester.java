@@ -237,7 +237,7 @@ class Ingester {
 
         try {
             //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
-            TimingMetric metric = ServicesHealthMonitor.getTimingMetric("solr index chunk");
+            TimingMetric metric = ServicesHealthMonitor.getTimingMetric("Solr: Index chunk");
             solrServer.addDocument(updateDoc);
             ServicesHealthMonitor.submitTimingMetric(metric);
             uncommitedIngests = true;

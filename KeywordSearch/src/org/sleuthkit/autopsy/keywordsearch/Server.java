@@ -775,7 +775,7 @@ public class Server {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrServer("http://" + properties.getHost() + ":" + properties.getPort() + "/solr"); //NON-NLS
             }
-            TimingMetric metric = ServicesHealthMonitor.getTimingMetric("solr connectivity check");
+            TimingMetric metric = ServicesHealthMonitor.getTimingMetric("Solr: Connectivity check");
             connectToSolrServer(currentSolrServer);
             ServicesHealthMonitor.submitTimingMetric(metric);
 
