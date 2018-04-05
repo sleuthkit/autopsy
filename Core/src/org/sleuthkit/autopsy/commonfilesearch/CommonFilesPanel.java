@@ -115,7 +115,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             String dataSourceName = resultSet.getString(2);
             dataSourceMap.put(objectId, dataSourceName);
         }
-
+        query.close();
     }
 
     void addListenerToAll(ActionListener l) {       //TODO double click the button
