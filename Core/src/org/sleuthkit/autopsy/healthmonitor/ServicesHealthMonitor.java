@@ -53,7 +53,7 @@ public class ServicesHealthMonitor {
     private final static String DATABASE_NAME = "ServicesHealthMonitor";
     private final static String MODULE_NAME = "ServicesHealthMonitor";
     private final static String IS_ENABLED_KEY = "is_enabled";
-    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
     
@@ -75,7 +75,14 @@ public class ServicesHealthMonitor {
         if (ModuleSettings.settingExists(MODULE_NAME, IS_ENABLED_KEY)) {
             if(ModuleSettings.getConfigSetting(MODULE_NAME, IS_ENABLED_KEY).equals("true")){
                 isEnabled.set(true);
-                activateMonitor();
+                try {
+                    activateMonitor();
+                } catch (HealthMonitorException ex) {
+                    // If we failed to activate it, then disable the monitor
+                    logger.log(Level.SEVERE, "Health monitor activation failed - disabling health monitor");
+                    setEnabled(false);
+                    throw ex;
+                }
                 return;
             }
         }
@@ -118,12 +125,12 @@ public class ServicesHealthMonitor {
             if (! databaseExists()) {
                 
                 // If not, create a new one
-                System.out.println("  No database exists - setting up new one");
                 createDatabase();
-                initializeDatabaseSchema();
             }
             
-            // Any database upgrades would happen here
+            if( ! databaseIsInitialized()) {
+                initializeDatabaseSchema();
+            }
             
         } finally {
             try {
@@ -202,9 +209,11 @@ public class ServicesHealthMonitor {
         }
         
         if(enabled) {
+            getInstance().activateMonitor();
+            
+            // If activateMonitor fails, we won't update either of these
             ModuleSettings.setConfigSetting(MODULE_NAME, IS_ENABLED_KEY, "true");
             isEnabled.set(true);
-            getInstance().activateMonitor();
         } else {
             ModuleSettings.setConfigSetting(MODULE_NAME, IS_ENABLED_KEY, "false");
             isEnabled.set(false);
@@ -271,14 +280,12 @@ public class ServicesHealthMonitor {
         }
     }
     
-    // TODO: Make private once testing is done
     /**
      * Write the collected metrics to the database.
      * @throws HealthMonitorException 
      */
-    void writeCurrentStateToDatabase() throws HealthMonitorException {
-        logger.log(Level.INFO, "Writing health monitor metrics to database");
-        
+    private void writeCurrentStateToDatabase() throws HealthMonitorException {
+                
         Map<String, TimingInfo> timingMapCopy;
         
         // Do as little as possible within the synchronized block since it will
@@ -293,18 +300,11 @@ public class ServicesHealthMonitor {
             timingMapCopy = new HashMap<>(timingInfoMap);
             timingInfoMap.clear();
         }
+        logger.log(Level.INFO, "Writing health monitor metrics to database");
         
         // Check if there's anything to report (right now we only have the timing map)
         if(timingMapCopy.keySet().isEmpty()) {
             return;
-        }
-        
-        // TODO: Debug
-        for(String name:timingMapCopy.keySet()){
-            TimingInfo info = timingMapCopy.get(name);
-            long timestamp = System.currentTimeMillis();
-            System.out.println("  Name: " + name + "\tTimestamp: " + timestamp + "\tAverage: " + info.getAverage() +
-                    "\tMax: " + info.getMax() + "\tMin: " + info.getMin());
         }
         
         // Write to the database
@@ -354,11 +354,6 @@ public class ServicesHealthMonitor {
         }
     }
     
-    // TODO: debug
-    synchronized void clearCurrentState() {
-        timingInfoMap.clear();
-    }
-    
     /**
      * Call during application closing - attempts to log any remaining entries.
      */
@@ -388,23 +383,13 @@ public class ServicesHealthMonitor {
         }
     }
     
-    // TODO: debug
-    synchronized void printCurrentState() {
-        System.out.println("\nTiming Info Map:");
-        for(String name:timingInfoMap.keySet()) {
-            System.out.print(name + "\t");
-            timingInfoMap.get(name).print();
-        }
-    }
-    
-    // TODO: Change to private after testing
     /**
      * Check whether the health monitor database exists.
      * Does not check the schema.
      * @return true if the database exists, false otherwise
      * @throws HealthMonitorException 
      */
-    boolean databaseExists() throws HealthMonitorException {       
+    private boolean databaseExists() throws HealthMonitorException {       
         try {
             // Use the same database settings as the case
             CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
@@ -449,26 +434,6 @@ public class ServicesHealthMonitor {
             throw new HealthMonitorException("Failed to delete health monitor database", ex);
         }
     }
-    
-    // TODO: At least make private
-    /**
-     * Delete the current health monitor database (for testing only)
-     * Make private after test
-     */
-    void deleteDatabase() {
-        try {
-            // Use the same database settings as the case
-            CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
-            Class.forName("org.postgresql.Driver"); //NON-NLS
-            try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
-                    Statement statement = connection.createStatement();) {
-                String deleteCommand = "DROP DATABASE \"" + DATABASE_NAME + "\""; //NON-NLS
-                statement.execute(deleteCommand);
-            }
-        } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to delete health monitor database", ex);
-        }
-    }
 
     /**
      * Setup a connection pool for db connections.
@@ -494,7 +459,7 @@ public class ServicesHealthMonitor {
             connectionPool.setPassword(db.getPassword());
 
             // tweak pool configuration
-            connectionPool.setInitialSize(2); // start with 2 connections
+            connectionPool.setInitialSize(3); // start with 3 connections
             connectionPool.setMaxIdle(CONN_POOL_SIZE); // max of 10 idle connections
             connectionPool.setValidationQuery("SELECT version()");
         } catch (UserPreferencesException ex) {
@@ -540,6 +505,95 @@ public class ServicesHealthMonitor {
     }
     
     /**
+     * Test whether the database schema has been initialized.
+     * We do this by looking for the version number.
+     * @return True if it has been initialized, false otherwise.
+     * @throws HealthMonitorException 
+     */
+    private boolean databaseIsInitialized() throws HealthMonitorException {
+        Connection conn = connect();
+        if(conn == null) {
+            throw new HealthMonitorException("Error getting database connection");
+        }    
+        ResultSet resultSet = null;
+        
+        try (Statement statement = conn.createStatement()) {
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
+            return resultSet.next();
+        } catch (SQLException ex) {
+            // This likely just means that the db_info table does not exist
+            return false;
+        } finally {
+            if(resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing result set", ex);
+                }
+            }
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error closing Connection.", ex);
+            }
+        }        
+    }
+    
+    /**
+     * Get the current schema version
+     * @return the current schema version
+     * @throws HealthMonitorException 
+     */
+    private CaseDbSchemaVersionNumber getVersion() throws HealthMonitorException {
+        Connection conn = connect();
+        if(conn == null) {
+            throw new HealthMonitorException("Error getting database connection");
+        }    
+        ResultSet resultSet = null;
+        
+        try (Statement statement = conn.createStatement()) {
+                        int minorVersion = 0;
+            int majorVersion = 0;
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
+            if (resultSet.next()) {
+                String minorVersionStr = resultSet.getString("value");
+                try {
+                    minorVersion = Integer.parseInt(minorVersionStr);
+                } catch (NumberFormatException ex) {
+                    throw new HealthMonitorException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt");
+                }
+            }
+
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
+            if (resultSet.next()) {
+                String majorVersionStr = resultSet.getString("value");
+                try {
+                    majorVersion = Integer.parseInt(majorVersionStr);
+                } catch (NumberFormatException ex) {
+                    throw new HealthMonitorException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt");
+                }
+            }
+
+            return new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
+        } catch (SQLException ex) {
+            throw new HealthMonitorException("Error initializing database", ex);
+        } finally {
+            if(resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing result set", ex);
+                }
+            }
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error closing Connection.", ex);
+            }
+        }
+    }
+    
+    /**
      * Initialize the database.
      * @throws HealthMonitorException 
      */
@@ -549,8 +603,9 @@ public class ServicesHealthMonitor {
             throw new HealthMonitorException("Error getting database connection");
         }
 
-        // TODO: transaction
         try (Statement statement = conn.createStatement()) {
+            conn.setAutoCommit(false);
+            
             StringBuilder createTimingTable = new StringBuilder();
             createTimingTable.append("CREATE TABLE IF NOT EXISTS timing_data (");
             createTimingTable.append("id SERIAL PRIMARY KEY,");
@@ -574,13 +629,19 @@ public class ServicesHealthMonitor {
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
             
+            conn.commit();
         } catch (SQLException ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex2) {
+                logger.log(Level.SEVERE, "Rollback error");
+            }
             throw new HealthMonitorException("Error initializing database", ex);
         } finally {
             try {
                 conn.close();
             } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error closing Connection.", ex);
+                logger.log(Level.SEVERE, "Error closing connection.", ex);
             }
         }
     }
@@ -589,7 +650,7 @@ public class ServicesHealthMonitor {
      * The task called by the ScheduledThreadPoolExecutor to handle
      * the database writes.
      */
-    private final class DatabaseWriteTask implements Runnable {
+    static final class DatabaseWriteTask implements Runnable {
 
         /**
          * Write current metric data to the database
@@ -719,11 +780,6 @@ public class ServicesHealthMonitor {
          */
         long getCount() {
             return count;
-        }
-        
-        // TODO: debug
-        void print() {
-            System.out.println("count: " + count + "\tsum: " + sum + "\tmax: " + max + "\tmin: " + min);
         }
     }
 }

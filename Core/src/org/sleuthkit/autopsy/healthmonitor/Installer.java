@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.healthmonitor;
 
 import java.util.logging.Level;
 import org.openide.modules.ModuleInstall;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 public class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private final HealthMonitorCaseEventListener pcl = new HealthMonitorCaseEventListener();
     private static final long serialVersionUID = 1L;
 
     private static Installer instance;
@@ -42,25 +44,13 @@ public class Installer extends ModuleInstall {
     
     @Override
     public void restored() {
+        
+        Case.addPropertyChangeListener(pcl);
+        
         try {
             ServicesHealthMonitor.startUp();
         } catch (HealthMonitorException ex) {
             logger.log(Level.SEVERE, "Error starting health services monitor", ex);
         }
-    }
-
-    @Override
-    public boolean closing() {
-        //platform about to close
-        ServicesHealthMonitor.close();
-
-        return true;
-    }
-
-    @Override
-    public void uninstalled() {
-        //module is being unloaded
-        ServicesHealthMonitor.close();
-
     }
 }
