@@ -1,12 +1,24 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
@@ -21,10 +33,15 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 final class AutoIngestNode extends AbstractNode {
 
     @Messages({
-        "AutoIngestNode.col1.text=Case Name",
-        "AutoIngestNode.col2.text=File Name",
-        "AutoIngestNode.col3.text=Date Created",
-        "AutoIngestNode.col4.text=Priority"
+        "AutoIngestNode.caseName.text=Case Name",
+        "AutoIngestNode.dataSource.text=Data Source",
+        "AutoIngestNode.hostName.text=Host Name",
+        "AutoIngestNode.stage.text=Stage",
+        "AutoIngestNode.stageTime.text=Time in Stage",
+        "AutoIngestNode.jobCreated.text=Job Created",
+        "AutoIngestNode.jobCompleted.text=Job Completed",
+        "AutoIngestNode.priority.text=Priority",
+        "AutoIngestNode.status.text=Status"            
     })
 
     AutoIngestNode(List<AutoIngestJob> jobs, AutoIngestJobType type) {
@@ -33,7 +50,7 @@ final class AutoIngestNode extends AbstractNode {
 
     static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
-        AutoIngestJobType autoIngestJobType;
+        private final AutoIngestJobType autoIngestJobType;
         private final List<AutoIngestJob> jobs;
 
         AutoIngestNodeChildren(List<AutoIngestJob> jobList, AutoIngestJobType type) {
@@ -51,7 +68,7 @@ final class AutoIngestNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(AutoIngestJob key) {
-            return new PendingJobNode(key, autoIngestJobType);
+            return new JobNode(key, autoIngestJobType);
         }
 
     }
@@ -59,26 +76,22 @@ final class AutoIngestNode extends AbstractNode {
     /**
      * A node which represents a single multi user case.
      */
-    static final class PendingJobNode extends AbstractNode {
+    static final class JobNode extends AbstractNode {
 
         private final AutoIngestJob autoIngestJob;
-        private final String caseName;
-        private final Path fileName;
-        private final Date dateCreated;
-        private final int priority;
         private final AutoIngestJobType jobType;
 
-        PendingJobNode(AutoIngestJob job, AutoIngestJobType type) {
+        JobNode(AutoIngestJob job, AutoIngestJobType type) {
             super(Children.LEAF);
             jobType = type;
             autoIngestJob = job;
-            caseName = autoIngestJob.getManifest().getCaseName();
-            fileName = autoIngestJob.getManifest().getDataSourcePath().getFileName();
-            dateCreated = autoIngestJob.getManifest().getDateFileCreated();
-            priority = autoIngestJob.getPriority();
-            super.setName(caseName);
-            setName(caseName);
-            setDisplayName(caseName);
+            super.setName(autoIngestJob.getManifest().getCaseName());
+            setName(autoIngestJob.getManifest().getCaseName());
+            setDisplayName(autoIngestJob.getManifest().getCaseName());
+        }
+        
+        AutoIngestJob getAutoIngestJob(){
+            return autoIngestJob;
         }
 
         @Override
@@ -89,41 +102,28 @@ final class AutoIngestNode extends AbstractNode {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col1_text(), Bundle.AutoIngestNode_col1_text(), Bundle.AutoIngestNode_col1_text(), caseName));
+            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_caseName_text(), Bundle.AutoIngestNode_caseName_text(), Bundle.AutoIngestNode_caseName_text(), autoIngestJob.getManifest().getCaseName()));
+            ss.put(new NodeProperty<>(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(), autoIngestJob.getManifest().getDataSourcePath().getFileName().toString()));
             switch (jobType) {
-                case PENDING_JOB:
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col2_text(), Bundle.AutoIngestNode_col2_text(), Bundle.AutoIngestNode_col2_text(), fileName.toString()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(), dateCreated.toString()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col4_text(), Bundle.AutoIngestNode_col4_text(), Bundle.AutoIngestNode_col4_text(), Integer.toString(priority)));
+                case PENDING_JOB: 
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),  autoIngestJob.getManifest().getDateFileCreated()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), autoIngestJob.getPriority()));
                     break;
                 case RUNNING_JOB:
                     AutoIngestJob.StageDetails status = autoIngestJob.getProcessingStageDetails();
-                    ss.put(new NodeProperty<>("Stage", "Stage", "Stage", status.getDescription()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(),  Bundle.AutoIngestNode_hostName_text(),autoIngestJob.getProcessingHostName()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(), status.getDescription()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text(), (Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())));
                     break;
                 case COMPLETED_JOB:
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(), dateCreated.toString()));
-                    ss.put(new NodeProperty<>("Date Started", "Date Started", "Date Started", autoIngestJob.getProcessingStageStartDate()));
-                    ss.put(new NodeProperty<>("Date Completed - Prop6", "Date Completed", "Date Completed - Prop6", autoIngestJob.getCompletedDate()));
-                    ss.put(new NodeProperty<>("Status", "Status", "Status", autoIngestJob.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),  autoIngestJob.getManifest().getDateFileCreated()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(), autoIngestJob.getCompletedDate()));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text(), autoIngestJob.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
                     break;
                 default:
             }
-//            AutoIngestJob.StageDetails status = autoIngestJob.getProcessingStageDetails();
-            //                   ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col1_text(), Bundle.AutoIngestNode_col1_text(), Bundle.AutoIngestNode_col1_text(), caseName));
-//                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col2_text(), Bundle.AutoIngestNode_col2_text(), Bundle.AutoIngestNode_col2_text(), fileName.toString()));
-//            ss.put(new NodeProperty<>("Host Name - Prop3", "Host Name - Prop3", "Host Name - Prop3", autoIngestJob.getProcessingHostName()));
-//                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(), dateCreated.toString()));
-//            ss.put(new NodeProperty<>("Date Started - Prop5", "Date Started - Prop5", "Date Started - Prop5", autoIngestJob.getProcessingStageStartDate()));
-//            ss.put(new NodeProperty<>("Date Completed - Prop6", "Date Completed - Prop6", "Date Completed - Prop6", autoIngestJob.getCompletedDate()));
-//            ss.put(new NodeProperty<>("Stage - Prop7", "Stage - Prop7", "Stage - Prop7", status.getDescription()));
-//            ss.put(new NodeProperty<>("Status - Prop8", "Status - Prop8", "Status - Prop8", autoIngestJob.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
-//            ss.put(new NodeProperty<>("Stage Time - Prop9", "Stage Time - Prop9", "Stage Time - Prop9", (Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())));
-//            ss.put(new NodeProperty<>("Case Directory - Prop10", "Case Directory - Prop10", "Case Directory - Prop10", autoIngestJob.getCaseDirectoryPath()));
-//            ss.put(new NodeProperty<>("Manifest Path - Prop11", "Manifest Path - Prop11", "Manifest Path - Prop11", autoIngestJob.getManifest().getFilePath()));
-//                    ss.put(new NodeProperty<>(Bundle.AutoIngestNode_col4_text(), Bundle.AutoIngestNode_col4_text(), Bundle.AutoIngestNode_col4_text(), Integer.toString(priority)));
             return s;
         }
-
     }
 
     enum AutoIngestJobType {

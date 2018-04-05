@@ -1,11 +1,23 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.util.ArrayList;
@@ -17,9 +29,11 @@ import javax.swing.SwingWorker;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.AutoIngestJobType;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.JobNode;
 
 /**
  *
@@ -49,22 +63,25 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
 
         switch (type) {
             case PENDING_JOB:
-                outlineView.setPropertyColumns(Bundle.AutoIngestNode_col2_text(), Bundle.AutoIngestNode_col2_text(),
-                        Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(),
-                        Bundle.AutoIngestNode_col4_text(), Bundle.AutoIngestNode_col4_text());
+                outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
+                        Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
+                        Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text());
                 break;
             case RUNNING_JOB:
-                outlineView.setPropertyColumns("Stage", "Stage");
+                outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
+                        Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(),
+                        Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(),
+                        Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text());
                 break;
             case COMPLETED_JOB:
-                outlineView.setPropertyColumns(Bundle.AutoIngestNode_col3_text(), Bundle.AutoIngestNode_col3_text(),
-                        "Date Started", "Date Started",
-                        "Date Completed", "Date Completed",
-                        "Status", "Status");
+                outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
+                        Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
+                        Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(),
+                        Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text());
                 break;
             default:
         }
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestNode_col1_text());
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestNode_caseName_text());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
         outline.setColumnSorted(0, false, 1);
@@ -73,8 +90,6 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
 
         }
         outline.setRowSelectionAllowed(false);
-
-        //    outlineView.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         add(outlineView, java.awt.BorderLayout.CENTER);
 
     }
@@ -117,7 +132,13 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
-
+    AutoIngestJob getSelectedAutoIngestJob() {
+        Node[] selectedRows = explorerManager.getSelectedNodes();
+        if (selectedRows.length == 1) {
+            return ((JobNode) selectedRows[0]).getAutoIngestJob();
+        }
+        return null;
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
     /**
