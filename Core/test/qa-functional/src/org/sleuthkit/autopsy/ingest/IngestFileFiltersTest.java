@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ExtensionCondition;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.FullNameCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
@@ -227,6 +228,33 @@ public class IngestFileFiltersTest extends NbTestCase {
         }
    }
    
+    public void testFullFileNameRule() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule", new Rule("FindFileWithFullName", new FullNameCondition("file.docx"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        //Build the filter to find file: file.docx
+        FilesSet fullNameFilter = new FilesSet("Filter", "Filter to find file.docx.", false, true, rules);
+                 
+        try {
+            Case openCase = Case.getOpenCase();
+            runIngestJob(openCase.getDataSources(), fullNameFilter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();           
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(62, results.size());
+            for (AbstractFile file : results) {
+                //Only file.docx has MIME Type
+                if (file.getName().equalsIgnoreCase("file.docx")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                } else {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
     private void runIngestJob(List<Content> datasources, FilesSet filter) {
         FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
