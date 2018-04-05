@@ -73,7 +73,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lbPending" min="-2" pref="23" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-              <Component id="pendingScrollPane" min="-2" pref="215" max="-2" attributes="0"/>
+              <Component id="pendingScrollPane" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="lbRunning" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
@@ -98,27 +98,19 @@
   </Layout>
   <SubComponents>
     <Container class="javax.swing.JScrollPane" name="pendingScrollPane">
+      <Properties>
+        <Property name="horizontalScrollBarPolicy" type="int" value="31"/>
+        <Property name="verticalScrollBarPolicy" type="int" value="21"/>
+        <Property name="opaque" type="boolean" value="false"/>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[2, 215]"/>
+        </Property>
+      </Properties>
       <AuxValues>
         <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
       </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-      <SubComponents>
-        <Component class="javax.swing.JTable" name="pendingTable">
-          <Properties>
-            <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="pendingTableModel" type="code"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.pendingTable.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-            <Property name="rowHeight" type="int" value="20" postCode="pendingTable.setSelectionModel(new DefaultListSelectionModel() {&#xa;    private static final long serialVersionUID = 1L;&#xa;    @Override&#xa;    public void setSelectionInterval(int index0, int index1) {&#xa;        if (index0 == pendingTable.getSelectedRow()) {&#xa;            pendingTable.clearSelection();&#xa;        } else {&#xa;            super.setSelectionInterval(index0, index1);&#xa;        }&#xa;    }&#xa;});"/>
-            <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
-              <JTableSelectionModel selectionMode="0"/>
-            </Property>
-          </Properties>
-        </Component>
-      </SubComponents>
     </Container>
     <Container class="javax.swing.JScrollPane" name="runningScrollPane">
       <AuxValues>
@@ -126,22 +118,6 @@
       </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-      <SubComponents>
-        <Component class="javax.swing.JTable" name="runningTable">
-          <Properties>
-            <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="runningTableModel" type="code"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.runningTable.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-            <Property name="rowHeight" type="int" value="20" postCode="runningTable.setSelectionModel(new DefaultListSelectionModel() {&#xa;    private static final long serialVersionUID = 1L;&#xa;    @Override&#xa;    public void setSelectionInterval(int index0, int index1) {&#xa;        if (index0 == runningTable.getSelectedRow()) {&#xa;            runningTable.clearSelection();&#xa;        } else {&#xa;            super.setSelectionInterval(index0, index1);&#xa;        }&#xa;    }&#xa;});"/>
-            <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
-              <JTableSelectionModel selectionMode="0"/>
-            </Property>
-          </Properties>
-        </Component>
-      </SubComponents>
     </Container>
     <Container class="javax.swing.JScrollPane" name="completedScrollPane">
       <AuxValues>
@@ -149,22 +125,6 @@
       </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-      <SubComponents>
-        <Component class="javax.swing.JTable" name="completedTable">
-          <Properties>
-            <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="completedTableModel" type="code"/>
-            </Property>
-            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="AutoIngestDashboard.completedTable.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-            <Property name="rowHeight" type="int" value="20" postCode="completedTable.setSelectionModel(new DefaultListSelectionModel() {&#xa;    private static final long serialVersionUID = 1L;&#xa;    @Override&#xa;    public void setSelectionInterval(int index0, int index1) {&#xa;        if (index0 == completedTable.getSelectedRow()) {&#xa;            completedTable.clearSelection();&#xa;        } else {&#xa;            super.setSelectionInterval(index0, index1);&#xa;        }&#xa;    }&#xa;});"/>
-            <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
-              <JTableSelectionModel selectionMode="0"/>
-            </Property>
-          </Properties>
-        </Component>
-      </SubComponents>
     </Container>
     <Component class="javax.swing.JLabel" name="lbPending">
       <Properties>

@@ -35,18 +35,25 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import org.netbeans.swing.outline.Outline;
+import org.openide.explorer.ExplorerManager;
 import javax.swing.table.TableColumn;
+import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.LongDateCellRenderer;
@@ -82,11 +89,14 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
-    private final DefaultTableModel pendingTableModel;
-    private final DefaultTableModel runningTableModel;
-    private final DefaultTableModel completedTableModel;
+    // private final DefaultTableModel pendingTableModel;
+//    private final DefaultTableModel runningTableModel;
+//    private final DefaultTableModel completedTableModel;
     private AutoIngestMonitor autoIngestMonitor;
-    
+    private AutoIngestJobsPanel pendingJobsPanel;
+    private AutoIngestJobsPanel runningJobsPanel;
+    private AutoIngestJobsPanel finishedJobsPanel;
+
     /**
      * Maintain a mapping of each service to it's last status update.
      */
@@ -115,36 +125,53 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private AutoIngestDashboard() {
         this.statusByService = new ConcurrentHashMap<>();
-        
-        pendingTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
 
-        runningTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
-
-        completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
-
+//        pendingTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
+//        runningTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
+//        completedTableModel = new AutoIngestTableModel(JobsTableModelColumns.headers, 0);
         initComponents();
         statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
-        initPendingJobsTable();
-        initRunningJobsTable();
-        initCompletedJobsTable();
-
+        //   initPendingJobsTable();
+//        initRunningJobsTable();
+//        initCompletedJobsTable();
+        pendingJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.PENDING_JOB);
+        pendingJobsPanel.setSize(pendingScrollPane.getSize());
+        pendingScrollPane.add(pendingJobsPanel);
+        pendingScrollPane.setViewportView(pendingJobsPanel);
+        pendingJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
+            System.out.println("SELECTION HAPPENED PENDING WJS-TODO");
+        });
+        runningJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.RUNNING_JOB);
+        runningJobsPanel.setSize(runningScrollPane.getSize());
+        runningScrollPane.add(runningJobsPanel);
+        runningScrollPane.setViewportView(runningJobsPanel);
+        runningJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
+            System.out.println("SELECTION HAPPENED RUNNING WJS-TODO");
+        });
+        finishedJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.COMPLETED_JOB);
+        finishedJobsPanel.setSize(completedScrollPane.getSize());
+        completedScrollPane.add(finishedJobsPanel);
+        completedScrollPane.setViewportView(finishedJobsPanel);
+        finishedJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
+            System.out.println("SELECTION HAPPENED COMPLETED WJS-TODO");
+        });
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */
         UIManager.put("PopupMenu.consumeEventOnClose", false);
     }
-    
+
     /**
      * Update status of the services on the dashboard
      */
     private void displayServicesStatus() {
-        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message", 
-                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()), 
-                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
-                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
+        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message",
+                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()),
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()),
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()),
                 statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
         String upStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
         if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
@@ -162,7 +189,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void setServicesStatusMessage() {
         new SwingWorker<Void, Void>() {
-            
+
             @Override
             protected Void doInBackground() throws Exception {
                 statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE));
@@ -202,233 +229,231 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         }.execute();
     }
 
-    /**
-     * Sets up the JTable that presents a view of the pending jobs queue for an
-     * auto ingest cluster.
-     */
-    private void initPendingJobsTable() {
-        /*
-         * Remove some of the jobs table model columns from the JTable. This
-         * does not remove the columns from the model, just from this table.
-         */
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.COMPLETED_TIME.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
-        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
-
-        /*
-         * Set up a column to display the cases associated with the jobs.
-         */
-        TableColumn column;
-        column = pendingTable.getColumn(JobsTableModelColumns.CASE.getColumnHeader());
-        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
-        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
-        column.setPreferredWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
-        column.setWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the data sources associated with the jobs.
-         */
-        column = pendingTable.getColumn(JobsTableModelColumns.DATA_SOURCE.getColumnHeader());
-        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
-        column.setPreferredWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
-        column.setWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the create times of the jobs.
-         */
-        column = pendingTable.getColumn(JobsTableModelColumns.CREATED_TIME.getColumnHeader());
-        column.setCellRenderer(new LongDateCellRenderer());
-        column.setMinWidth(TIME_COL_MIN_WIDTH);
-        column.setMaxWidth(TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
-        column.setWidth(TIME_COL_PREFERRED_WIDTH);
-
-        column = pendingTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader());
-        column.setCellRenderer(new PrioritizedIconCellRenderer());
-        column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
-        column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
-        column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
-        /*
-         * Allow sorting when a column header is clicked.
-         */
-        pendingTable.setRowSorter(new AutoIngestRowSorter<>(pendingTableModel));
-
-        /*
-         * Create a row selection listener to enable/disable the Prioritize
-         * button.
-         */
-        pendingTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            if (e.getValueIsAdjusting()) {
-                return;
-            }
-            int row = pendingTable.getSelectedRow();
-
-            boolean enablePrioritizeButtons = false;
-            boolean enableDeprioritizeButtons = false;
-            if (row >= 0 && row < pendingTable.getRowCount()) {
-                enablePrioritizeButtons = true;
-                enableDeprioritizeButtons = (Integer) pendingTableModel.getValueAt(row, JobsTableModelColumns.PRIORITY.ordinal()) > 0;
-            }
-            this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
-            this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
-            this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
-            this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
-        });
-    }
-
-    /**
-     * Sets up the JTable that presents a view of the running jobs list for an
-     * auto ingest cluster.
-     */
-    private void initRunningJobsTable() {
-        /*
-         * Remove some of the jobs table model columns from the JTable. This
-         * does not remove the columns from the model, just from this table.
-         */
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CREATED_TIME.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.COMPLETED_TIME.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
-        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
-        /*
-         * Set up a column to display the cases associated with the jobs.
-         */
-        TableColumn column;
-        column = runningTable.getColumn(JobsTableModelColumns.CASE.getColumnHeader());
-        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
-        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
-        column.setPreferredWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
-        column.setWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the image folders associated with the
-         * jobs.
-         */
-        column = runningTable.getColumn(JobsTableModelColumns.DATA_SOURCE.getColumnHeader());
-        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
-        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
-        column.setPreferredWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
-        column.setWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the host names of the cluster nodes
-         * processing the jobs.
-         */
-        column = runningTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader());
-        column.setMinWidth(NAME_COL_MIN_WIDTH);
-        column.setMaxWidth(NAME_COL_MAX_WIDTH);
-        column.setPreferredWidth(NAME_COL_PREFERRED_WIDTH);
-        column.setWidth(NAME_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the ingest activities associated with the
-         * jobs.
-         */
-        column = runningTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader());
-        column.setMinWidth(STAGE_COL_MIN_WIDTH);
-        column.setMaxWidth(STAGE_COL_MAX_WIDTH);
-        column.setPreferredWidth(STAGE_COL_PREFERRED_WIDTH);
-        column.setWidth(STAGE_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the ingest activity times associated with
-         * the jobs.
-         */
-        column = runningTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader());
-        column.setCellRenderer(new DurationCellRenderer());
-        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
-        column.setMaxWidth(STAGE_TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(STAGE_TIME_COL_MIN_WIDTH);
-        column.setWidth(STAGE_TIME_COL_MIN_WIDTH);
-
-        /*
-         * Prevent sorting when a column header is clicked.
-         */
-        runningTable.setAutoCreateRowSorter(false);
-    }
-
-    /**
-     * Sets up the JTable that presents a view of the completed jobs list for an
-     * auto ingest cluster.
-     */
-    private void initCompletedJobsTable() {
-        /*
-         * Remove some of the jobs table model columns from the JTable. This
-         * does not remove the columns from the model, just from this table.
-         */
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
-        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
-        /*
-         * Set up a column to display the cases associated with the jobs.
-         */
-        TableColumn column;
-        column = completedTable.getColumn(JobsTableModelColumns.CASE.getColumnHeader());
-        column.setMinWidth(COMPLETED_TIME_COL_MIN_WIDTH);
-        column.setMaxWidth(COMPLETED_TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
-        column.setWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the image folders associated with the
-         * jobs.
-         */
-        column = completedTable.getColumn(JobsTableModelColumns.DATA_SOURCE.getColumnHeader());
-        column.setMinWidth(COMPLETED_TIME_COL_MIN_WIDTH);
-        column.setMaxWidth(COMPLETED_TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
-        column.setWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the create times of the jobs.
-         */
-        column = completedTable.getColumn(JobsTableModelColumns.CREATED_TIME.getColumnHeader());
-        column.setCellRenderer(new LongDateCellRenderer());
-        column.setMinWidth(TIME_COL_MIN_WIDTH);
-        column.setMaxWidth(TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
-        column.setWidth(TIME_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the completed times of the jobs.
-         */
-        column = completedTable.getColumn(JobsTableModelColumns.COMPLETED_TIME.getColumnHeader());
-        column.setCellRenderer(new LongDateCellRenderer());
-        column.setMinWidth(TIME_COL_MIN_WIDTH);
-        column.setMaxWidth(TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
-        column.setWidth(TIME_COL_PREFERRED_WIDTH);
-
-        /*
-         * Set up a column to display the statuses of the jobs, with a cell
-         * renderer that will choose an icon to represent the job status.
-         */
-        column = completedTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader());
-        column.setCellRenderer(new StatusIconCellRenderer());
-        column.setMinWidth(STATUS_COL_MIN_WIDTH);
-        column.setMaxWidth(STATUS_COL_MAX_WIDTH);
-        column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
-        column.setWidth(STATUS_COL_PREFERRED_WIDTH);
-        /*
-         * Allow sorting when a column header is clicked.
-         */
-        completedTable.setRowSorter(new AutoIngestRowSorter<>(completedTableModel));
-    }
-
+//    /**
+//     * Sets up the JTable that presents a view of the pending jobs queue for an
+//     * auto ingest cluster.
+//     */
+//    private void initPendingJobsTable() {
+//        /*
+//         * Remove some of the jobs table model columns from the JTable. This
+//         * does not remove the columns from the model, just from this table.
+//         */
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.COMPLETED_TIME.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
+//        pendingTable.removeColumn(pendingTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
+//
+//        /*
+//         * Set up a column to display the cases associated with the jobs.
+//         */
+//        TableColumn column;
+//        column = pendingTable.getColumn(JobsTableModelColumns.CASE.getColumnHeader());
+//        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
+//        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
+//        column.setPreferredWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
+//        column.setWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the data sources associated with the jobs.
+//         */
+//        column = pendingTable.getColumn(JobsTableModelColumns.DATA_SOURCE.getColumnHeader());
+//        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
+//        column.setPreferredWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
+//        column.setWidth(PENDING_TABLE_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the create times of the jobs.
+//         */
+//        column = pendingTable.getColumn(JobsTableModelColumns.CREATED_TIME.getColumnHeader());
+//        column.setCellRenderer(new LongDateCellRenderer());
+//        column.setMinWidth(TIME_COL_MIN_WIDTH);
+//        column.setMaxWidth(TIME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
+//        column.setWidth(TIME_COL_PREFERRED_WIDTH);
+//
+//        column = pendingTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader());
+//        column.setCellRenderer(new PrioritizedIconCellRenderer());
+//        column.setMaxWidth(PRIORITY_COLUMN_MAX_WIDTH);
+//        column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+//        column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
+//        /*
+//         * Allow sorting when a column header is clicked.
+//         */
+//        pendingTable.setRowSorter(new AutoIngestRowSorter<>(pendingTableModel));
+//
+//        /*
+//         * Create a row selection listener to enable/disable the Prioritize
+//         * button.
+//         */
+//        pendingTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+//            if (e.getValueIsAdjusting()) {
+//                return;
+//            }
+//            int row = pendingTable.getSelectedRow();
+//
+//            boolean enablePrioritizeButtons = false;
+//            boolean enableDeprioritizeButtons = false;
+//            if (row >= 0 && row < pendingTable.getRowCount()) {
+//                enablePrioritizeButtons = true;
+//                enableDeprioritizeButtons = (Integer) pendingTableModel.getValueAt(row, JobsTableModelColumns.PRIORITY.ordinal()) > 0;
+//            }
+//            this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
+//            this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
+//            this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
+//            this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
+//        });
+//    }
+//    /**
+//     * Sets up the JTable that presents a view of the running jobs list for an
+//     * auto ingest cluster.
+//     */
+//    private void initRunningJobsTable() {
+//        /*
+//         * Remove some of the jobs table model columns from the JTable. This
+//         * does not remove the columns from the model, just from this table.
+//         */
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CREATED_TIME.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.COMPLETED_TIME.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
+//        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
+//        /*
+//         * Set up a column to display the cases associated with the jobs.
+//         */
+//        TableColumn column;
+//        column = runningTable.getColumn(JobsTableModelColumns.CASE.getColumnHeader());
+//        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
+//        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
+//        column.setPreferredWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
+//        column.setWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the image folders associated with the
+//         * jobs.
+//         */
+//        column = runningTable.getColumn(JobsTableModelColumns.DATA_SOURCE.getColumnHeader());
+//        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
+//        column.setMaxWidth(GENERIC_COL_MAX_WIDTH);
+//        column.setPreferredWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
+//        column.setWidth(RUNNING_TABLE_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the host names of the cluster nodes
+//         * processing the jobs.
+//         */
+//        column = runningTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader());
+//        column.setMinWidth(NAME_COL_MIN_WIDTH);
+//        column.setMaxWidth(NAME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(NAME_COL_PREFERRED_WIDTH);
+//        column.setWidth(NAME_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the ingest activities associated with the
+//         * jobs.
+//         */
+//        column = runningTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader());
+//        column.setMinWidth(STAGE_COL_MIN_WIDTH);
+//        column.setMaxWidth(STAGE_COL_MAX_WIDTH);
+//        column.setPreferredWidth(STAGE_COL_PREFERRED_WIDTH);
+//        column.setWidth(STAGE_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the ingest activity times associated with
+//         * the jobs.
+//         */
+//        column = runningTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader());
+//        column.setCellRenderer(new DurationCellRenderer());
+//        column.setMinWidth(GENERIC_COL_MIN_WIDTH);
+//        column.setMaxWidth(STAGE_TIME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(STAGE_TIME_COL_MIN_WIDTH);
+//        column.setWidth(STAGE_TIME_COL_MIN_WIDTH);
+//
+//        /*
+//         * Prevent sorting when a column header is clicked.
+//         */
+//        runningTable.setAutoCreateRowSorter(false);
+//    }
+//    /**
+//     * Sets up the JTable that presents a view of the completed jobs list for an
+//     * auto ingest cluster.
+//     */
+//    private void initCompletedJobsTable() {
+//        /*
+//         * Remove some of the jobs table model columns from the JTable. This
+//         * does not remove the columns from the model, just from this table.
+//         */
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STARTED_TIME.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.HOST_NAME.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.JOB.getColumnHeader()));
+//        completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
+//        /*
+//         * Set up a column to display the cases associated with the jobs.
+//         */
+//        TableColumn column;
+//        column = completedTable.getColumn(JobsTableModelColumns.CASE.getColumnHeader());
+//        column.setMinWidth(COMPLETED_TIME_COL_MIN_WIDTH);
+//        column.setMaxWidth(COMPLETED_TIME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
+//        column.setWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the image folders associated with the
+//         * jobs.
+//         */
+//        column = completedTable.getColumn(JobsTableModelColumns.DATA_SOURCE.getColumnHeader());
+//        column.setMinWidth(COMPLETED_TIME_COL_MIN_WIDTH);
+//        column.setMaxWidth(COMPLETED_TIME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
+//        column.setWidth(COMPLETED_TIME_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the create times of the jobs.
+//         */
+//        column = completedTable.getColumn(JobsTableModelColumns.CREATED_TIME.getColumnHeader());
+//        column.setCellRenderer(new LongDateCellRenderer());
+//        column.setMinWidth(TIME_COL_MIN_WIDTH);
+//        column.setMaxWidth(TIME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
+//        column.setWidth(TIME_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the completed times of the jobs.
+//         */
+//        column = completedTable.getColumn(JobsTableModelColumns.COMPLETED_TIME.getColumnHeader());
+//        column.setCellRenderer(new LongDateCellRenderer());
+//        column.setMinWidth(TIME_COL_MIN_WIDTH);
+//        column.setMaxWidth(TIME_COL_MAX_WIDTH);
+//        column.setPreferredWidth(TIME_COL_PREFERRED_WIDTH);
+//        column.setWidth(TIME_COL_PREFERRED_WIDTH);
+//
+//        /*
+//         * Set up a column to display the statuses of the jobs, with a cell
+//         * renderer that will choose an icon to represent the job status.
+//         */
+//        column = completedTable.getColumn(JobsTableModelColumns.STATUS.getColumnHeader());
+//        column.setCellRenderer(new StatusIconCellRenderer());
+//        column.setMinWidth(STATUS_COL_MIN_WIDTH);
+//        column.setMaxWidth(STATUS_COL_MAX_WIDTH);
+//        column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
+//        column.setWidth(STATUS_COL_PREFERRED_WIDTH);
+//        /*
+//         * Allow sorting when a column header is clicked.
+//         */
+//        completedTable.setRowSorter(new AutoIngestRowSorter<>(completedTableModel));
+//    }
+//
     /**
      * Starts up the auto ingest monitor and adds this panel as an observer,
      * subscribes to services monitor events and starts a task to populate the
@@ -437,10 +462,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private void startUp() throws AutoIngestMonitor.AutoIngestMonitorException {
 
         PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
-            
+
             String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
-            
+
             if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
                 status = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
                 LOGGER.log(Level.INFO, "Connection to {0} is up", serviceDisplayName); //NON-NLS
@@ -450,23 +475,23 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             } else {
                 LOGGER.log(Level.INFO, "Status for {0} is {1}", new Object[]{serviceDisplayName, status}); //NON-NLS
             }
-            
+
             // if the status update is for an existing service who's status hasn't changed - do nothing.       
             if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
                 return;
             }
-            
+
             statusByService.put(serviceDisplayName, status);
             displayServicesStatus();
         };
-        
+
         // Subscribe to all multi-user services in order to display their status
         Set<String> servicesList = new HashSet<>();
         servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
-        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()); 
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
         servicesList.add(ServicesMonitor.Service.MESSAGING.toString());
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
-        
+
         autoIngestMonitor = new AutoIngestMonitor();
         autoIngestMonitor.addObserver(this);
         autoIngestMonitor.startUp();
@@ -474,7 +499,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
+    //    EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
     }
 
     /**
@@ -484,53 +509,53 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * @param jobsSnapshot The jobs snapshot.
      */
     private void refreshTables(JobsSnapshot jobsSnapshot) {
-        List<AutoIngestJob> pendingJobs = jobsSnapshot.getPendingJobs();
-        List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
-        List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
-        pendingJobs.sort(new AutoIngestJob.PriorityComparator());
-        runningJobs.sort(new AutoIngestJob.DataSourceFileNameComparator());
-        completedJobs.sort(new AutoIngestJob.CompletedDateDescendingComparator());
-        refreshTable(pendingJobs, pendingTable, pendingTableModel);
-        refreshTable(runningJobs, runningTable, runningTableModel);
-        refreshTable(completedJobs, completedTable, completedTableModel);
+        pendingJobsPanel.refresh(jobsSnapshot);
+        runningJobsPanel.refresh(jobsSnapshot);
+        finishedJobsPanel.refresh(jobsSnapshot);
+        //  List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
+        //  List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
+        //    runningJobs.sort(new AutoIngestJob.DataSourceFileNameComparator());
+        // completedJobs.sort(new AutoIngestJob.CompletedDateDescendingComparator());
+        //  refreshTable(pendingJobs, pendingTable, pendingTableModel);
+//        refreshTable(runningJobs, runningTable, runningTableModel);
+        //   refreshTable(completedJobs, completedTable, completedTableModel);
     }
 
-    /**
-     * Reloads the table model for an auto ingest jobs table and refreshes the
-     * JTable that uses the model.
-     *
-     * @param jobs       The list of auto ingest jobs.
-     * @param tableModel The table model.
-     * @param comparator An optional comparator (may be null) for sorting the
-     *                   table model.
-     */
-    private void refreshTable(List<AutoIngestJob> jobs, JTable table, DefaultTableModel tableModel) {
-        try {
-            Path currentRow = getSelectedEntry(table, tableModel);
-            tableModel.setRowCount(0);
-            for (AutoIngestJob job : jobs) {
-                AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
-                tableModel.addRow(new Object[]{
-                    job.getManifest().getCaseName(), // CASE
-                    job.getManifest().getDataSourcePath().getFileName(), job.getProcessingHostName(), // HOST_NAME
-                    job.getManifest().getDateFileCreated(), // CREATED_TIME
-                    job.getProcessingStageStartDate(), // STARTED_TIME 
-                    job.getCompletedDate(), // COMPLETED_TIME
-                    status.getDescription(), // STAGE
-                    job.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK, // STATUS 
-                    ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
-                    job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
-                    job.getPriority(), // PRIORITY 
-                    job
-                });
-            }
-            setSelectedEntry(table, tableModel, currentRow);
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Error refreshing table " + table.toString(), ex);
-        }
-    }
-
+//    /**
+//     * Reloads the table model for an auto ingest jobs table and refreshes the
+//     * JTable that uses the model.
+//     *
+//     * @param jobs       The list of auto ingest jobs.
+//     * @param tableModel The table model.
+//     * @param comparator An optional comparator (may be null) for sorting the
+//     *                   table model.
+//     */
+//    private void refreshTable(List<AutoIngestJob> jobs, JTable table, DefaultTableModel tableModel) {
+//        try {
+//            Path currentRow = getSelectedEntry(table, tableModel);
+//            tableModel.setRowCount(0);
+//            for (AutoIngestJob job : jobs) {
+//                AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
+//                tableModel.addRow(new Object[]{
+//                    job.getManifest().getCaseName(), // CASE
+//                    job.getManifest().getDataSourcePath().getFileName(), job.getProcessingHostName(), // HOST_NAME
+//                    job.getManifest().getDateFileCreated(), // CREATED_TIME
+//                    job.getProcessingStageStartDate(), // STARTED_TIME 
+//                    job.getCompletedDate(), // COMPLETED_TIME
+//                    status.getDescription(), // STAGE
+//                    job.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK, // STATUS 
+//                    ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
+//                    job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
+//                    job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
+//                    job.getPriority(), // PRIORITY 
+//                    job
+//                });
+//            }
+//            setSelectedEntry(table, tableModel, currentRow);
+//        } catch (Exception ex) {
+//            LOGGER.log(Level.SEVERE, "Error refreshing table " + table.toString(), ex);
+//        }
+//    }
     /**
      * Gets a path representing the current selection in a table.
      *
@@ -629,7 +654,6 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             JOB.getColumnHeader()
         };
     };
-
     /**
      * A task that refreshes the UI components on this panel to reflect a
      * snapshot of the pending, running and completed auto ingest jobs lists of
@@ -698,11 +722,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
         jButton1 = new javax.swing.JButton();
         pendingScrollPane = new javax.swing.JScrollPane();
-        pendingTable = new javax.swing.JTable();
         runningScrollPane = new javax.swing.JScrollPane();
-        runningTable = new javax.swing.JTable();
         completedScrollPane = new javax.swing.JScrollPane();
-        completedTable = new javax.swing.JTable();
         lbPending = new javax.swing.JLabel();
         lbRunning = new javax.swing.JLabel();
         lbCompleted = new javax.swing.JLabel();
@@ -717,56 +738,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
-        pendingTable.setModel(pendingTableModel);
-        pendingTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.pendingTable.toolTipText")); // NOI18N
-        pendingTable.setRowHeight(20);
-        pendingTable.setSelectionModel(new DefaultListSelectionModel() {
-            private static final long serialVersionUID = 1L;
-            @Override
-            public void setSelectionInterval(int index0, int index1) {
-                if (index0 == pendingTable.getSelectedRow()) {
-                    pendingTable.clearSelection();
-                } else {
-                    super.setSelectionInterval(index0, index1);
-                }
-            }
-        });
-        pendingTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        pendingScrollPane.setViewportView(pendingTable);
-
-        runningTable.setModel(runningTableModel);
-        runningTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.runningTable.toolTipText")); // NOI18N
-        runningTable.setRowHeight(20);
-        runningTable.setSelectionModel(new DefaultListSelectionModel() {
-            private static final long serialVersionUID = 1L;
-            @Override
-            public void setSelectionInterval(int index0, int index1) {
-                if (index0 == runningTable.getSelectedRow()) {
-                    runningTable.clearSelection();
-                } else {
-                    super.setSelectionInterval(index0, index1);
-                }
-            }
-        });
-        runningTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        runningScrollPane.setViewportView(runningTable);
-
-        completedTable.setModel(completedTableModel);
-        completedTable.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.completedTable.toolTipText")); // NOI18N
-        completedTable.setRowHeight(20);
-        completedTable.setSelectionModel(new DefaultListSelectionModel() {
-            private static final long serialVersionUID = 1L;
-            @Override
-            public void setSelectionInterval(int index0, int index1) {
-                if (index0 == completedTable.getSelectedRow()) {
-                    completedTable.clearSelection();
-                } else {
-                    super.setSelectionInterval(index0, index1);
-                }
-            }
-        });
-        completedTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        completedScrollPane.setViewportView(completedTable);
+        pendingScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        pendingScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        pendingScrollPane.setOpaque(false);
+        pendingScrollPane.setPreferredSize(new java.awt.Dimension(2, 215));
 
         lbPending.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbPending, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.lbPending.text")); // NOI18N
@@ -843,7 +818,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pendingScrollPane)
+                    .addComponent(pendingScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -883,7 +858,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbPending, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(1, 1, 1)
-                .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lbRunning)
                 .addGap(1, 1, 1)
@@ -920,38 +895,38 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Messages({"AutoIngestDashboard.errorMessage.jobPrioritization=Failed to prioritize job \"%s\"."})
     private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobPrioritization(), job.getManifest().getFilePath());
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+//        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+//            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+//            AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
+//            JobsSnapshot jobsSnapshot;
+//            try {
+//                jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
+//                refreshTables(jobsSnapshot);
+//            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+//                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobPrioritization(), job.getManifest().getFilePath());
+//                LOGGER.log(Level.SEVERE, errorMessage, ex);
+//                MessageNotifyUtil.Message.error(errorMessage);
+//            }
+//            setCursor(Cursor.getDefaultCursor());
+//        }
     }//GEN-LAST:event_prioritizeJobButtonActionPerformed
 
     @Messages({"AutoIngestDashboard.errorMessage.casePrioritization=Failed to prioritize case \"%s\"."})
     private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_casePrioritization(), caseName);
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+//        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+//            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+//            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+//            JobsSnapshot jobsSnapshot;
+//            try {
+//                jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
+//                refreshTables(jobsSnapshot);
+//            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+//                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_casePrioritization(), caseName);
+//                LOGGER.log(Level.SEVERE, errorMessage, ex);
+//                MessageNotifyUtil.Message.error(errorMessage);
+//            }
+//            setCursor(Cursor.getDefaultCursor());
+//        }
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
@@ -960,44 +935,43 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Messages({"AutoIngestDashboard.errorMessage.jobDeprioritization=Failed to deprioritize job \"%s\"."})
     private void deprioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeJobButtonActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.deprioritizeJob(job);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobDeprioritization(), job.getManifest().getFilePath());
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+//        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+//            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+//            AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
+//            JobsSnapshot jobsSnapshot;
+//            try {
+//                jobsSnapshot = autoIngestMonitor.deprioritizeJob(job);
+//                refreshTables(jobsSnapshot);
+//            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+//                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobDeprioritization(), job.getManifest().getFilePath());
+//                LOGGER.log(Level.SEVERE, errorMessage, ex);
+//                MessageNotifyUtil.Message.error(errorMessage);
+//            }
+//            setCursor(Cursor.getDefaultCursor());
+//        }
     }//GEN-LAST:event_deprioritizeJobButtonActionPerformed
 
     @Messages({"AutoIngestDashboard.errorMessage.caseDeprioritization=Failed to deprioritize case \"%s\"."})
     private void deprioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeCaseButtonActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.deprioritizeCase(caseName);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_caseDeprioritization(), caseName);
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+//        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+//            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+//            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+//            JobsSnapshot jobsSnapshot;
+//            try {
+//                jobsSnapshot = autoIngestMonitor.deprioritizeCase(caseName);
+//                refreshTables(jobsSnapshot);
+//            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+//                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_caseDeprioritization(), caseName);
+//                LOGGER.log(Level.SEVERE, errorMessage, ex);
+//                MessageNotifyUtil.Message.error(errorMessage);
+//            }
+//            setCursor(Cursor.getDefaultCursor());
+//        }
     }//GEN-LAST:event_deprioritizeCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
     private javax.swing.JScrollPane completedScrollPane;
-    private javax.swing.JTable completedTable;
     private javax.swing.JButton deprioritizeCaseButton;
     private javax.swing.JButton deprioritizeJobButton;
     private javax.swing.JButton jButton1;
@@ -1006,42 +980,40 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JLabel lbRunning;
     private javax.swing.JLabel lbServicesStatus;
     private javax.swing.JScrollPane pendingScrollPane;
-    private javax.swing.JTable pendingTable;
     private javax.swing.JButton prioritizeCaseButton;
     private javax.swing.JButton prioritizeJobButton;
     private javax.swing.JButton refreshButton;
     private javax.swing.JScrollPane runningScrollPane;
-    private javax.swing.JTable runningTable;
     private javax.swing.JTextField tbServicesStatusMessage;
     // End of variables declaration//GEN-END:variables
 
-    private class AutoIngestTableModel extends DefaultTableModel {
-
-        private static final long serialVersionUID = 1L;
-
-        private AutoIngestTableModel(String[] headers, int i) {
-            super(headers, i);
-        }
-
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            if (columnIndex == JobsTableModelColumns.PRIORITY.ordinal()) {
-                return Integer.class;
-            } else if (columnIndex == JobsTableModelColumns.CREATED_TIME.ordinal()
-                    || columnIndex == JobsTableModelColumns.COMPLETED_TIME.ordinal()
-                    || columnIndex == JobsTableModelColumns.STARTED_TIME.ordinal()
-                    || columnIndex == JobsTableModelColumns.STAGE_TIME.ordinal()) {
-                return Date.class;
-            } else if (columnIndex == JobsTableModelColumns.STATUS.ordinal()) {
-                return Boolean.class;
-            } else {
-                return super.getColumnClass(columnIndex);
-            }
-        }
-    }
+//    private class AutoIngestTableModel extends DefaultTableModel {
+//
+//        private static final long serialVersionUID = 1L;
+//
+//        private AutoIngestTableModel(String[] headers, int i) {
+//            super(headers, i);
+//        }
+//
+//        @Override
+//        public boolean isCellEditable(int row, int column) {
+//            return false;
+//        }
+//
+//        @Override
+//        public Class<?> getColumnClass(int columnIndex) {
+//            if (columnIndex == JobsTableModelColumns.PRIORITY.ordinal()) {
+//                return Integer.class;
+//            } else if (columnIndex == JobsTableModelColumns.CREATED_TIME.ordinal()
+//                    || columnIndex == JobsTableModelColumns.COMPLETED_TIME.ordinal()
+//                    || columnIndex == JobsTableModelColumns.STARTED_TIME.ordinal()
+//                    || columnIndex == JobsTableModelColumns.STAGE_TIME.ordinal()) {
+//                return Date.class;
+//            } else if (columnIndex == JobsTableModelColumns.STATUS.ordinal()) {
+//                return Boolean.class;
+//            } else {
+//                return super.getColumnClass(columnIndex);
+//            }
+//        }
+//    }
 }
