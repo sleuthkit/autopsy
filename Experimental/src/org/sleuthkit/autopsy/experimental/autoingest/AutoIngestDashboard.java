@@ -268,7 +268,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-            EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
+         EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
     }
 
     /**
@@ -282,7 +282,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         runningJobsPanel.refresh(jobsSnapshot);
         finishedJobsPanel.refresh(jobsSnapshot);
     }
-
+    
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * dashboard operation.

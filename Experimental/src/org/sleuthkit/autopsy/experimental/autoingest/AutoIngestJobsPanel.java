@@ -20,17 +20,12 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.SwingWorker;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.AutoIngestJobType;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.JobNode;
@@ -45,7 +40,6 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
-    private JobListWorker jobListWorker;
     private final AutoIngestJobType type;
 
     /**
@@ -65,7 +59,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             case PENDING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
                         Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
-                        Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text());
+                        Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(),
+                        "Time Since Created", "Time Since Created");
                 break;
             case RUNNING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
@@ -91,7 +86,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         }
         outline.setRowSelectionAllowed(false);
         add(outlineView, java.awt.BorderLayout.CENTER);
-
+        EmptyNode emptyNode = new EmptyNode("Please wait...");
+        explorerManager.setRootContext(emptyNode);
     }
 
     @Override
@@ -111,12 +107,13 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     }
 
     void refresh(AutoIngestMonitor.JobsSnapshot jobsSnapshot) {
-        if (jobListWorker == null || jobListWorker.isDone()) {
+        synchronized (this) {
             outline.setRowSelectionAllowed(false);
-//            EmptyNode emptyNode = new EmptyNode("Refreshing...");
-//            explorerManager.setRootContext(emptyNode);
-            jobListWorker = new JobListWorker(jobsSnapshot, type);
-            jobListWorker.execute();
+            EventQueue.invokeLater(() -> {
+                AutoIngestNode autoIngestNode = new AutoIngestNode(jobsSnapshot, type);
+                explorerManager.setRootContext(autoIngestNode);
+                outline.setRowSelectionAllowed(true);
+            });       
         }
     }
 
@@ -141,54 +138,5 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-    /**
-     * Swingworker to fetch the updated List of cases in a background thread
-     */
-    private class JobListWorker extends SwingWorker<List<AutoIngestJob>, Void> {
-
-        private final AutoIngestMonitor.JobsSnapshot jobsSnapshot;
-        private final AutoIngestJobType jobType;
-
-        JobListWorker(AutoIngestMonitor.JobsSnapshot snapshot, AutoIngestJobType type) {
-            jobsSnapshot = snapshot;
-            jobType = type;
-        }
-
-        @Override
-        protected List<AutoIngestJob> doInBackground() throws Exception {
-            List<AutoIngestJob> jobs;
-            switch (jobType) {
-                case PENDING_JOB:
-                    jobs = jobsSnapshot.getPendingJobs();
-                    break;
-                case RUNNING_JOB:
-                    jobs = jobsSnapshot.getRunningJobs();
-                    break;
-                case COMPLETED_JOB:
-                    jobs = jobsSnapshot.getCompletedJobs();
-                    break;
-                default:
-                    jobs = new ArrayList<>();
-
-            }
-            jobs.sort(new AutoIngestJob.PriorityComparator());
-            return jobs;
-        }
-
-        @Override
-        protected void done() {
-            try {
-                List<AutoIngestJob> jobs = get();
-                EventQueue.invokeLater(() -> {
-                    AutoIngestNode autoIngestNode = new AutoIngestNode(jobs, jobType);
-                    explorerManager.setRootContext(autoIngestNode);
-                    outline.setRowSelectionAllowed(true);
-                });
-            } catch (InterruptedException | ExecutionException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-
-        }
-    }
 
 }

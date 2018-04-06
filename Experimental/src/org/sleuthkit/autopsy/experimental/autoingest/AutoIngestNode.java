@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
@@ -28,6 +29,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
@@ -45,22 +47,36 @@ final class AutoIngestNode extends AbstractNode {
         "AutoIngestNode.status.text=Status"
     })
 
-    AutoIngestNode(List<AutoIngestJob> jobs, AutoIngestJobType type) {
-        super(Children.create(new AutoIngestNodeChildren(jobs, type), true));
+    AutoIngestNode(JobsSnapshot snapshot, AutoIngestJobType type) {
+        super(Children.create(new AutoIngestNodeChildren(snapshot, type), false));
     }
 
     static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobType autoIngestJobType;
-        private final List<AutoIngestJob> jobs;
+        private final JobsSnapshot jobsSnapshot;
 
-        AutoIngestNodeChildren(List<AutoIngestJob> jobList, AutoIngestJobType type) {
-            this.jobs = jobList;
+        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobType type) {
+            jobsSnapshot = snapshot;
             autoIngestJobType = type;
         }
 
         @Override
         protected boolean createKeys(List<AutoIngestJob> list) {
+            List<AutoIngestJob> jobs;
+            switch (autoIngestJobType) {
+                case PENDING_JOB:
+                    jobs = jobsSnapshot.getPendingJobs();
+                    break;
+                case RUNNING_JOB:
+                    jobs = jobsSnapshot.getRunningJobs();
+                    break;
+                case COMPLETED_JOB:
+                    jobs = jobsSnapshot.getCompletedJobs();
+                    break;
+                default:
+                    jobs = new ArrayList<>();
+            }
             if (jobs != null && jobs.size() > 0) {
                 list.addAll(jobs);
             }
@@ -113,6 +129,8 @@ final class AutoIngestNode extends AbstractNode {
                             autoIngestJob.getManifest().getDateFileCreated()));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(),
                             autoIngestJob.getPriority()));
+                    ss.put(new NodeProperty<>("Time Since Created", "Time Since Created", "Time Since Created",
+                            DurationCellRenderer.longToDurationString((Date.from(Instant.now()).getTime()) - (autoIngestJob.getManifest().getDateFileCreated().getTime()))));
                     break;
                 case RUNNING_JOB:
                     AutoIngestJob.StageDetails status = autoIngestJob.getProcessingStageDetails();
