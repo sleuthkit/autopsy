@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListDataListener;
 import org.openide.util.NbBundle;
@@ -381,6 +382,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         search();
+        SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
