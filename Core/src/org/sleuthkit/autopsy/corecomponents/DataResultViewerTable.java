@@ -84,7 +84,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     private static final Color TAGGED_COLOR = new Color(255, 255, 195);
-    private Node selectedChild;
     private final String title;
 
     /**
@@ -327,7 +326,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                             break;
                         }
                     }
-                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(new ContentNodeSelectionInfo(currentRoot.getLookup().lookup(AbstractFile.class)));
+                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
                 }
             }
         });

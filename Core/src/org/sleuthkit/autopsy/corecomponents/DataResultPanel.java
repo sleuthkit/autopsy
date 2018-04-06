@@ -343,10 +343,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (this.rootNode != null) {
             rootNodeListener.reset();
             this.rootNode.addNodeListener(rootNodeListener);
-            //while (this.rootNode.getChildren().nodes().hasMoreElements()) {
-            //    this.rootNode.getChildren().nodes().nextElement().addNodeListener(rootNodeListener);
-           //     
-           // }
         }
 
         resetTabs(this.rootNode);
@@ -627,13 +623,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 waitingForData = false;
                 Node childNode = nme.getNode();
                 new SetupTabsChildrenWorker(childNode).execute();
-//                if (SwingUtilities.isEventDispatchThread()) {
-//                    setupTabs(nme.getNode());
-//                } else {
-//                    SwingUtilities.invokeLater(() -> {
-//                        setupTabs(nme.getNode());
-//                    });
-//                }
             }
         }
 
