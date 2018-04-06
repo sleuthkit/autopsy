@@ -171,6 +171,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
                                         
+                    //TODO consider getting em from ExplorerManager.find(this) rather the this wonky stuff seen here...
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.getDefault().getExplorerManager());
                     
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
