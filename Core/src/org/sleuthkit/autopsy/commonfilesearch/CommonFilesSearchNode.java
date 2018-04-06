@@ -29,8 +29,8 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- * Wrapper node for CommonFilesParentNode used to display common files search results in the top
- * right pane. Calls CommonFilesParentFactory.
+ * Wrapper node for CommonFilesParentNode used to display common files search
+ * results in the top right pane. Calls CommonFilesParentFactory.
  */
 final public class CommonFilesSearchNode extends DisplayableItemNode {
 
@@ -59,39 +59,37 @@ final public class CommonFilesSearchNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
-    
-/**
- * ChildFactory which builds CommonFileParentNodes from the CommonFilesMetaaData models. 
- */
-static class CommonFilesParentFactory extends ChildFactory<CommonFilesMetaData> {
 
     /**
-     * List of models, each of which is a parent node matching a single md5, containing children FileNodes.
+     * ChildFactory which builds CommonFileParentNodes from the
+     * CommonFilesMetaaData models.
      */
-    private List<CommonFilesMetaData> metaDataList;
+    static class CommonFilesParentFactory extends ChildFactory<CommonFilesMetaData> {
 
-    CommonFilesParentFactory(List<CommonFilesMetaData> theMetaDataList) {
-        this.metaDataList = theMetaDataList;
+        /**
+         * List of models, each of which is a parent node matching a single md5,
+         * containing children FileNodes.
+         */
+        private List<CommonFilesMetaData> metaDataList;
+
+        CommonFilesParentFactory(List<CommonFilesMetaData> theMetaDataList) {
+            this.metaDataList = theMetaDataList;
+        }
+
+        protected void removeNotify() {
+            metaDataList = null;
+        }
+
+        @Override
+        protected Node createNodeForKey(CommonFilesMetaData metaData) {
+
+            return new CommonFileParentNode(metaData);
+        }
+
+        @Override
+        protected boolean createKeys(List<CommonFilesMetaData> toPopulate) {
+            toPopulate.addAll(metaDataList);
+            return true;
+        }
     }
-
-    protected void removeNotify() {
-        metaDataList = null;
-    }
-
-    @Override
-    protected Node createNodeForKey(CommonFilesMetaData metaData) {
-
-        return new CommonFileParentNode(metaData);
-    }
-
-    @Override
-    protected boolean createKeys(List<CommonFilesMetaData> toPopulate) {
-        toPopulate.addAll(metaDataList);
-        return true;
-    }
-
-
 }
-    
-}
-
