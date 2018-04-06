@@ -20,14 +20,18 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -44,15 +48,19 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class SelectionNode extends AbstractNode {
 
-    private SelectionNode(Children children) {
-        super(children);
+    SelectionNode(Children children, Lookup lookup) {
+        super(children, lookup);
     }
 
     static SelectionNode createFromAccountsAndRelationships(
             Set<Content> edgeRelationshipArtifacts,
-            Set<AccountDeviceInstance> accountDeviceInstances,
+            Set<AccountDeviceInstanceKey> accountDeviceInstanceKeys,
             CommunicationsFilter filter,
             CommunicationsManager commsManager) {
+
+        Set<AccountDeviceInstance> accountDeviceInstances = accountDeviceInstanceKeys.stream()
+                .map(AccountDeviceInstanceKey::getAccountDeviceInstance)
+                .collect(Collectors.toSet());
 
         SelectionNode node = new SelectionNode(Children.create(
                 new RelationshipChildren(
@@ -60,7 +68,7 @@ final class SelectionNode extends AbstractNode {
                         accountDeviceInstances,
                         commsManager,
                         filter),
-                true));
+                true), Lookups.fixed(accountDeviceInstanceKeys.toArray()));
 
         //This is not good for internationalization!!!
         String name = "";
@@ -82,7 +90,7 @@ final class SelectionNode extends AbstractNode {
     }
 
     static SelectionNode createFromAccounts(
-            Set<AccountDeviceInstance> accountDeviceInstances,
+            Set<AccountDeviceInstanceKey> accountDeviceInstances,
             CommunicationsFilter filter,
             CommunicationsManager commsManager) {
 

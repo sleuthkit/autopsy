@@ -193,48 +193,47 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             @Override
             public void mouseClicked(final MouseEvent event) {
                 super.mouseClicked(event);
-                SwingUtilities.invokeLater(() -> {
-                    if (SwingUtilities.isRightMouseButton(event)) {
-                        final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
-                        if (cellAt != null && cellAt.isVertex()) {
-                            final JPopupMenu jPopupMenu = new JPopupMenu();
-                            final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+                if (SwingUtilities.isRightMouseButton(event)) {
+                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
+                    if (cellAt != null && cellAt.isVertex()) {
+                        final JPopupMenu jPopupMenu = new JPopupMenu();
+                        final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
 
-                            if (lockedVertexModel.isVertexLocked(cellAt)) {
-                                jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock", unlockIcon) {
-                                    @Override
-                                    public void actionPerformed(final ActionEvent event) {
-                                        lockedVertexModel.unlockVertex(cellAt);
-                                    }
-                                }));
-                            } else {
-                                jPopupMenu.add(new JMenuItem(new AbstractAction("Lock", lockIcon) {
-                                    @Override
-                                    public void actionPerformed(final ActionEvent event) {
-                                        lockedVertexModel.lockVertex(cellAt);
-                                    }
-                                }));
-                            }
-                            if (pinnedAccountModel.isAccountPinned(adiKey)) {
-                                jPopupMenu.add(UnpinAccountsAction.getInstance().getPopupPresenter());
-                            } else {
-                                jPopupMenu.add(PinAccountsAction.getInstance().getPopupPresenter());
-                                jPopupMenu.add(ResetAndPinAccountsAction.getInstance().getPopupPresenter());
-                            }
-                            jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
+                        if (lockedVertexModel.isVertexLocked(cellAt)) {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock", unlockIcon) {
+                                @Override
+                                public void actionPerformed(final ActionEvent event) {
+                                    lockedVertexModel.unlockVertex(cellAt);
+                                }
+                            }));
+                        } else {
+                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock", lockIcon) {
+                                @Override
+                                public void actionPerformed(final ActionEvent event) {
+                                    lockedVertexModel.lockVertex(cellAt);
+                                }
+                            }));
                         }
+                        if (pinnedAccountModel.isAccountPinned(adiKey)) {
+                            jPopupMenu.add(UnpinAccountsAction.getInstance().getPopupPresenter());
+                        } else {
+                            jPopupMenu.add(PinAccountsAction.getInstance().getPopupPresenter());
+                            jPopupMenu.add(ResetAndPinAccountsAction.getInstance().getPopupPresenter());
+                        }
+                        jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
                     }
-                });
+                }
             }
-
         });
+
         final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
 
         splitPane.setRightComponent(messageBrowser);
 
         proxyLookup = new ProxyLookup(
-                messageBrowser.getLookup(),
-                ExplorerUtils.createLookup(vizEM, getActionMap()));
+                ExplorerUtils.createLookup(vizEM, getActionMap()),
+                messageBrowser.getLookup()
+        );
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
@@ -246,7 +245,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Override
-
     public Lookup getLookup() {
         return proxyLookup;
     }
@@ -275,7 +273,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @Subscribe
     void handleFilterEvent(final CVTEvents.FilterChangeEvent filterChangeEvent) {
-
         graph.getModel().beginUpdate();
         graph.clear();
         currentFilter = filterChangeEvent.getNewFilter();
@@ -733,7 +730,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             if (selectionCells.length > 0) {
                 mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
                 HashSet<Content> relationshipSources = new HashSet<>();
-                HashSet<AccountDeviceInstance> adis = new HashSet<>();
+                HashSet<AccountDeviceInstanceKey> adis = new HashSet<>();
                 for (mxICell cell : selectedCells) {
                     if (cell.isEdge()) {
                         mxICell source = (mxICell) graph.getModel().getTerminal(cell, true);
@@ -750,7 +747,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             logger.log(Level.SEVERE, " Error getting relationsips....", tskCoreException);
                         }
                     } else if (cell.isVertex()) {
-                        adis.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
+                        adis.add((AccountDeviceInstanceKey) cell.getValue());
                     }
                 }
 
@@ -872,7 +869,5 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             cancellable.cancel(true);
             progress.finish();
         }
-
     }
-
 }
