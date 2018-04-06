@@ -27,6 +27,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,7 +55,7 @@ public class ServicesHealthMonitor {
     private final static String DATABASE_NAME = "ServicesHealthMonitor";
     private final static String MODULE_NAME = "ServicesHealthMonitor";
     private final static String IS_ENABLED_KEY = "is_enabled";
-    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes  TODO - put back to an hour
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
     
@@ -110,6 +112,9 @@ public class ServicesHealthMonitor {
     private synchronized void activateMonitor() throws HealthMonitorException {
         
         logger.log(Level.INFO, "Activating Servies Health Monitor");
+        
+        // Make sure there are no left over connections to an old database
+        shutdownConnections();
         
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             throw new HealthMonitorException("Multi user mode is not enabled - can not activate services health monitor");
@@ -523,7 +528,7 @@ public class ServicesHealthMonitor {
         ResultSet resultSet = null;
         
         try (Statement statement = conn.createStatement()) {
-                        int minorVersion = 0;
+            int minorVersion = 0;
             int majorVersion = 0;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
             if (resultSet.next()) {
@@ -632,6 +637,76 @@ public class ServicesHealthMonitor {
                 getInstance().writeCurrentStateToDatabase();
             } catch (HealthMonitorException ex) {
                 logger.log(Level.SEVERE, "Error writing current metrics to database", ex); //NON-NLS
+            }
+        }
+    }
+    
+    /**
+     * Get all timing metrics currently stored in the database. This also converts
+     * the times to milliseconds (from nanoseconds).
+     * @return A map with metric name mapped to a list of data
+     * @throws HealthMonitorException 
+     */
+    Map<String, List<DatabaseTimingResult>> getTimingMetricsFromDatabase() throws HealthMonitorException {
+        
+        // Make sure the monitor is enabled. It could theoretically get disabled after this
+        // check but it doesn't seem worth holding a lock to ensure that it doesn't since that
+        // may slow down ingest.
+        if(! isEnabled.get()) {
+            throw new HealthMonitorException("Health Monitor is not enabled");
+        }
+
+        CoordinationService.Lock lock = getSharedDbLock();
+        if(lock == null) {
+            throw new HealthMonitorException("Error getting database lock");
+        }
+        
+        try{
+            Connection conn = connect();
+            if(conn == null) {
+                throw new HealthMonitorException("Error getting database connection");
+            }    
+            ResultSet resultSet = null;
+
+            Map<String, List<DatabaseTimingResult>> resultMap = new HashMap<>();
+
+            try (Statement statement = conn.createStatement()) {
+
+                resultSet = statement.executeQuery("SELECT * FROM timing_data");
+                while (resultSet.next()) {
+                    String name = resultSet.getString("name");
+                    DatabaseTimingResult timingResult = new DatabaseTimingResult(resultSet);
+
+                    if(resultMap.containsKey(name)) {
+                        resultMap.get(name).add(timingResult);
+                    } else {
+                        List<DatabaseTimingResult> resultList = new ArrayList<>();
+                        resultList.add(timingResult);
+                        resultMap.put(name, resultList);
+                    }
+                }
+                return resultMap;
+            } catch (SQLException ex) {
+                throw new HealthMonitorException("Error reading timing metrics from database", ex);
+            } finally {
+                if(resultSet != null) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException ex) {
+                        logger.log(Level.SEVERE, "Error closing result set", ex);
+                    }
+                }
+                try {
+                    conn.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing Connection.", ex);
+                }
+            }
+        } finally {
+            try {
+                lock.release();
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                throw new HealthMonitorException("Error releasing database lock", ex);
             }
         }
     }
@@ -752,5 +827,74 @@ public class ServicesHealthMonitor {
         long getCount() {
             return count;
         }
+    }
+    
+    /**
+     * Class for retrieving timing metrics from the database to display to the user.
+     * All times will be in milliseconds.
+     */
+    static class DatabaseTimingResult {
+        private long timestamp; // Time the metric was recorded
+        private long count; // Number of metrics collected
+        private double average;   // Average of the durations collected (milliseconds)
+        private double max;   // Maximum value found (milliseconds)
+        private double min;   // Minimum value found (milliseconds)
+
+        // TODO - maybe delete this
+        DatabaseTimingResult(long timestamp, long count, double average, double max, double min) {
+            this.timestamp = timestamp;
+            this.count = count;
+            this.average = average;
+            this.max = max;
+            this.min = min;
+        }
+        
+        DatabaseTimingResult(ResultSet resultSet) throws SQLException {
+            this.timestamp = resultSet.getLong("timestamp");
+            this.count = resultSet.getLong("count");
+            this.average = resultSet.getLong("average") / 1000000;
+            this.max = resultSet.getLong("max") / 1000000;
+            this.min = resultSet.getLong("min") / 1000000;
+        }
+ 
+        /**
+         * Get the timestamp for when the metric was recorded
+         * @return 
+         */
+        long getTimestamp() {
+            return timestamp;
+        }
+        
+        /**
+         * Get the average duration
+         * @return average duration (milliseconds)
+         */
+        double getAverage() {
+            return average;
+        }
+        
+        /**
+         * Get the maximum duration
+         * @return maximum duration (milliseconds)
+         */
+        double getMax() {
+            return max;
+        }
+        
+        /**
+         * Get the minimum duration
+         * @return minimum duration (milliseconds)
+         */
+        double getMin() {
+            return min;
+        }
+        
+        /**
+         * Get the total number of metrics collected
+         * @return number of metrics collected
+         */
+        long getCount() {
+            return count;
+        }        
     }
 }
