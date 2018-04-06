@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,7 @@ public class KeywordSearch {
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
-    private static final Logger TIKA_LOGGER = Logger.getLogger("Tika"); //NON-NLS
+    private static final Logger tikaLogger = Logger.getLogger("Tika"); //NON-NLS
     private static final org.sleuthkit.autopsy.coreutils.Logger logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(Case.class.getName());
 
     // @@@ We should move this into TskData (or somewhere) because we are using
@@ -70,9 +70,9 @@ public class KeywordSearch {
                     0, MAX_TIKA_LOG_FILES);
             tikaLogHandler.setFormatter(new SimpleFormatter());
             tikaLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
-            TIKA_LOGGER.addHandler(tikaLogHandler);
+            tikaLogger.addHandler(tikaLogHandler);
             //do not forward to the parent autopsy logger
-            TIKA_LOGGER.setUseParentHandlers(false);
+            tikaLogger.setUseParentHandlers(false);
         } catch (IOException | SecurityException ex) {
             logger.log(Level.SEVERE, "Error setting up tika logging", ex); //NON-NLS
         }
@@ -84,7 +84,7 @@ public class KeywordSearch {
     }
 
     static Logger getTikaLogger() {
-        return TIKA_LOGGER;
+        return tikaLogger;
     }
 
     public static void addNumIndexedFilesChangeListener(PropertyChangeListener l) {

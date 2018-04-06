@@ -46,7 +46,7 @@ public final class IngestMonitor {
     public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private static final int MAX_LOG_FILES = 3;
-    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
+    private static final java.util.logging.Logger monitorLogger = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
     private MonitorTimerAction timerAction;
@@ -63,8 +63,8 @@ public final class IngestMonitor {
             FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log", 0, MAX_LOG_FILES); //NON-NLS
             monitorLogHandler.setFormatter(new SimpleFormatter());
             monitorLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
-            MONITOR_LOGGER.setUseParentHandlers(false);
-            MONITOR_LOGGER.addHandler(monitorLogHandler);
+            monitorLogger.setUseParentHandlers(false);
+            monitorLogger.addHandler(monitorLogHandler);
         } catch (IOException | SecurityException ex) {
             logger.log(Level.SEVERE, "Failed to create memory usage logger", ex); //NON-NLS
         }
@@ -202,7 +202,7 @@ public final class IngestMonitor {
                 IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
-                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
+                monitorLogger.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
             }
         }
@@ -211,7 +211,7 @@ public final class IngestMonitor {
          * Writes current message usage to the memory usage log.
          */
         private void logMemoryUsage() {
-            MONITOR_LOGGER.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+            monitorLogger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
         
         /**
