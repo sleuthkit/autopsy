@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,14 +38,19 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 /**
  * Monitors disk space and memory and cancels ingest if disk space runs low.
  * <p>
- * Note: This should be a singleton and currently is used as such, with the
- * only instance residing in the IngestManager class.
+ * Note: This should be a singleton and currently is used as such, with the only
+ * instance residing in the IngestManager class.
  */
 public final class IngestMonitor {
 
     public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private static final int MAX_LOG_FILES = 3;
+    
+    /*
+     * The monitorLogger used the standard Java Logger type for compact logs
+     * without the stack trace.
+     */
     private static final java.util.logging.Logger monitorLogger = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
@@ -213,10 +218,11 @@ public final class IngestMonitor {
         private void logMemoryUsage() {
             monitorLogger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
-        
+
         /**
-         * Writes current disk space usage of the drive where case dir resides to log.
-         */        
+         * Writes current disk space usage of the drive where case dir resides
+         * to log.
+         */
         private void logDiskSpaceUsage() {
             final long freeSpace = root.getFreeSpace();
             logger.log(Level.INFO, "Available disk space on drive where case dir resides is {0} (bytes)", freeSpace);  //NON-NLS
@@ -253,18 +259,17 @@ public final class IngestMonitor {
         private long getFreeSpace() throws SecurityException {
             // always return "UNKNOWN", see note below
             return DISK_FREE_SPACE_UNKNOWN;
-            
-            /* NOTE: use and accuracy of this code for network drives needs to be investigated and validated
-            final long freeSpace = root.getFreeSpace();
-            if (0 == freeSpace) {
-                // Check for a network drive, some network filesystems always
-                // return zero.
-                final String monitoredPath = root.getAbsolutePath();
-                if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
-                    return DISK_FREE_SPACE_UNKNOWN;
-                }
-            }
-            return freeSpace;*/
+
+            /*
+             * NOTE: use and accuracy of this code for network drives needs to
+             * be investigated and validated final long freeSpace =
+             * root.getFreeSpace(); if (0 == freeSpace) { // Check for a network
+             * drive, some network filesystems always // return zero. final
+             * String monitoredPath = root.getAbsolutePath(); if
+             * (monitoredPath.startsWith("\\\\") ||
+             * monitoredPath.startsWith("//")) { return DISK_FREE_SPACE_UNKNOWN;
+             * } } return freeSpace;
+             */
         }
     }
 
