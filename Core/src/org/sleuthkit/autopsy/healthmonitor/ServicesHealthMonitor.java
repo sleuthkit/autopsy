@@ -301,6 +301,15 @@ public class ServicesHealthMonitor {
             timingInfoMap.clear();
         }
         logger.log(Level.INFO, "Writing health monitor metrics to database");
+
+        String hostName;
+        try {
+            hostName = java.net.InetAddress.getLocalHost().getHostName();
+        } catch (java.net.UnknownHostException ex) {
+            // Write it to the database but log a warning
+            logger.log(Level.WARNING, "Unable to look up host name");
+            hostName = "unknown";
+        }
         
         // Check if there's anything to report (right now we only have the timing map)
         if(timingMapCopy.keySet().isEmpty()) {
@@ -320,18 +329,19 @@ public class ServicesHealthMonitor {
             }
 
             // Add timing metrics to the database
-            String addTimingInfoSql = "INSERT INTO timing_data (name, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?)";
+            String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
 
                 for(String name:timingMapCopy.keySet()) {
                     TimingInfo info = timingMapCopy.get(name);
 
                     statement.setString(1, name);
-                    statement.setLong(2, System.currentTimeMillis());
-                    statement.setLong(3, info.getCount());
-                    statement.setLong(4, info.getAverage());
-                    statement.setLong(5, info.getMax());
-                    statement.setLong(6, info.getMin());
+                    statement.setString(2, hostName);
+                    statement.setLong(3, System.currentTimeMillis());
+                    statement.setLong(4, info.getCount());
+                    statement.setLong(5, info.getAverage());
+                    statement.setLong(6, info.getMax());
+                    statement.setLong(7, info.getMin());
 
                     statement.execute();
                 }
@@ -581,6 +591,7 @@ public class ServicesHealthMonitor {
             createTimingTable.append("CREATE TABLE IF NOT EXISTS timing_data (");
             createTimingTable.append("id SERIAL PRIMARY KEY,");
             createTimingTable.append("name text NOT NULL,");
+            createTimingTable.append("host text NOT NULL,");
             createTimingTable.append("timestamp bigint NOT NULL,");
             createTimingTable.append("count bigint NOT NULL,");
             createTimingTable.append("average bigint NOT NULL,");
