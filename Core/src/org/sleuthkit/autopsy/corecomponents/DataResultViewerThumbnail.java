@@ -513,6 +513,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
                 } // catch and ignore if we were cancelled
                 catch (java.util.concurrent.CancellationException ex) {
+                    logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage());
                 }
             }
         }.execute();
@@ -670,5 +671,4 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         }
     }
-
 }
