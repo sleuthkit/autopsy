@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.awt.event.ActionListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +55,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private Map<Long, String> dataSourceMap;
 
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
-    private boolean singleDataSource;
-    private String selectedDataSource;
+    private boolean singleDataSource = false;
+    private String selectedDataSource = "";
 
     /**
      * Creates new form CommonFilesPanel
@@ -68,29 +66,14 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.exception=Unexpected Exception loading DataSources."})
     public CommonFilesPanel() {
         initComponents();
-        this.singleDataSource = false;
-        selectedDataSource = "";
 
         setupDataSources();
     }
 
-    private void updateUIButtons() {
-        boolean multipleDataSources = this.caseHasMultipleSources();
-        allDataSourcesRadioButton.setEnabled(multipleDataSources);
-        allDataSourcesRadioButton.setSelected(multipleDataSources);
-        if (!multipleDataSources) {
-            withinDataSourceRadioButton.setSelected(true);
-            withinDataSourceSelected(true);
-        }
-        this.searchButton.setEnabled(true);
-    }
-
-    private boolean caseHasMultipleSources() {
-        return dataSourceMap.size() >= 2;
-    }
-
     /**
-     * Sets up the data sources dropdown and returns the data sources map for future usage.
+     * Sets up the data sources dropdown and returns the data sources map for
+     * future usage.
+     *
      * @return a mapping of data source ids to data source names
      */
     @NbBundle.Messages({
@@ -101,18 +84,41 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.buildDataSourceMap.done.sqlException=Unable to query db for data sources."})
     private void setupDataSources() {
 
-        new SwingWorker<Map<Long, String>, Void> () {
-            
+        new SwingWorker<Map<Long, String>, Void>() {
+
             private static final String SELECT_DATA_SOURCES = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-                       
+
+            private void updateUi() {
+
+                String[] dataSourcesNames = new String[CommonFilesPanel.this.dataSourceMap.size()];
+                dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
+                CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
+                CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
+
+                boolean multipleDataSources = this.caseHasMultipleSources();
+                CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
+                CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
+
+                if (!multipleDataSources) {
+                    CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
+                    withinDataSourceSelected(true);
+                }
+
+                CommonFilesPanel.this.searchButton.setEnabled(true);
+            }
+
+            private boolean caseHasMultipleSources() {
+                return CommonFilesPanel.this.dataSourceMap.size() >= 2;
+            }
+
             @Override
             protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-                
+
                 Map<Long, String> dataSouceMap = new HashMap<>();
-                
+
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                
+
                 //try block releases resources - exceptions are handled in done()
                 try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES)) {
                     ResultSet resultSet = query.getResultSet();
@@ -122,7 +128,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         dataSouceMap.put(objectId, dataSourceName);
                     }
                 }
-                
+
                 return dataSouceMap;
             }
 
@@ -131,13 +137,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 try {
                     CommonFilesPanel.this.dataSourceMap = this.get();
-                    String[] dataSourcesNames = new String[1];
-                    dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
-                    CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
-                    CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
-                    
-                    updateUIButtons();
-                    
+
+                    updateUi();
+
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
                     MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_buildDataSourceMap_done_interupted());
@@ -162,10 +164,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
-    
-    void addListenerToAll(ActionListener l) {       //TODO double click the button
-        this.searchButton.addActionListener(l);
-    }
 
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.title=Common Files",
@@ -184,9 +182,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             private Long determineDataSourceId() {
                 Long selectedObjId = 0L;
-                if (singleDataSource) {
-                    for (Entry<Long, String> dataSource : dataSourceMap.entrySet()) {
-                        if (dataSource.getValue().equals(selectedDataSource)) {
+                if (CommonFilesPanel.this.singleDataSource) {
+                    for (Entry<Long, String> dataSource : CommonFilesPanel.this.dataSourceMap.entrySet()) {
+                        if (dataSource.getValue().equals(CommonFilesPanel.this.selectedDataSource)) {
                             selectedObjId = dataSource.getKey();
                             break;
                         }
@@ -198,8 +196,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @Override
             protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
                 Long selectedObjId = determineDataSourceId();
-                return new CommonFilesMetaDataBuilder(selectedObjId, dataSourceMap).collateFiles();
-
+                return new CommonFilesMetaDataBuilder(selectedObjId, CommonFilesPanel.this.dataSourceMap).collateFiles();
             }
 
             @Override
@@ -254,16 +251,17 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         private static final long serialVersionUID = 1L;
         private final String[] dataSourceList;
         String selection = null;
-        
+
         /**
          * Use this to initialize the panel
          */
-        DataSourceComboBoxModel(){
+        DataSourceComboBoxModel() {
             this.dataSourceList = new String[0];
         }
-        
+
         /**
          * Use this when we have data to display.
+         *
          * @param theDataSoureList names of data sources for user to pick from
          */
         DataSourceComboBoxModel(String[] theDataSoureList) {
@@ -298,9 +296,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         @Override
         public void removeListDataListener(ListDataListener l) {
             this.listenerList.remove(ListDataListener.class, l);
-
         }
-
     }
 
     /**
@@ -390,12 +386,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
         selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
         singleDataSource = false;
-
     }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
 
     private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
         final Object selectedItem = selectDataSourceComboBox.getSelectedItem();
-        if(selectedItem != null){
+        if (selectedItem != null) {
             selectedDataSource = selectedItem.toString();
         } else {
             selectedDataSource = "";
