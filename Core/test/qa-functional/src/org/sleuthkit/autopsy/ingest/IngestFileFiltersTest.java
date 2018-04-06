@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import static junit.framework.Assert.assertFalse;
-import junit.framework.TestCase;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
@@ -309,6 +308,35 @@ public class IngestFileFiltersTest extends NbTestCase {
         }
     }
   
+    public void testCarvingNoUnallocatedSpace() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        
+        //Build the filter to find files with .jpg and .gif extension
+        FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, true, rules);        
+          
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            templates.add(getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, extensionFilter);
+            try {
+                List<IngestModuleError> errs = IngestJobRunner.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+                //Ingest fails because Carving wants unallocated space
+                assertEquals(1, errs.size());
+                assertEquals("PhotoRec Carver", errs.get(0).getModuleDisplayName());
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }        
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
     private void runIngestJob(List<Content> datasources, ArrayList<IngestModuleTemplate> templates, FilesSet filter) {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filter);
         try {
