@@ -44,8 +44,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -65,9 +63,7 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A tabular viewer for the results view.
@@ -80,7 +76,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     private static final Color TAGGED_COLOR = new Color(255, 255, 195);
@@ -323,7 +319,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                             try {
                                 em.setSelectedNodes(new Node[]{childNode});
                             } catch (PropertyVetoException ex) {
-                                logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                                LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
                             }
                             break;
                         }
