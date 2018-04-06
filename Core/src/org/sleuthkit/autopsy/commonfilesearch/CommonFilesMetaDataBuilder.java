@@ -37,6 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * Generates a List<CommonFilesMetaData> when collateFiles() is called, which organizes
  * AbstractFiles by md5 to prepare to display in viewer.
+ * 
+ * This entire thing runs on a background thread where exceptions are handled.
  */
 class CommonFilesMetaDataBuilder {
 
