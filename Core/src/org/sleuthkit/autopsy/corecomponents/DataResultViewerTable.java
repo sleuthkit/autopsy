@@ -149,9 +149,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.setRootVisible(false);    // don't show the root node
         outline.setDragEnabled(false);
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+        
         // add a listener so that when columns are moved, the new order is stored
         tableListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(tableListener);
+        
         // the listener also moves columns back if user tries to move the first column out of place
         outline.getTableHeader().addMouseListener(tableListener);
     }
@@ -208,16 +210,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return true;
     }
 
-    private void getSelectedChildNode() {
-        selectedChild = currentRoot.getChildren().getNodeAt(outline.convertRowIndexToModel(outline.getSelectedRow()));
-        //TODO tell explorermanager this is actual child node
-    }
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node selectedNode) {
-        if (selectedChild != null) {
-            selectedNode = selectedChild;
-        }
+
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
