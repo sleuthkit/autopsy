@@ -26,7 +26,6 @@ import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 
 /**
- *
  * Base class for actions that act on the selected AccountDeviceInstanceKeys.
  * getPopupPresenter() provides a JMenuItem that works (i.e., has an icon) in
  * custom context menus and also in the Netbeans Explorer views.
@@ -39,8 +38,7 @@ abstract class AbstractCVTAction extends AbstractAction implements Presenter.Pop
      * @return The selected accounts
      */
     Collection<? extends AccountDeviceInstanceKey> getSelectedAccounts() {
-        final Collection<? extends AccountDeviceInstanceKey> lookupAll = Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class);
-        return lookupAll;
+        return  Utilities.actionsGlobalContext().lookupAll(AccountDeviceInstanceKey.class);
     }
 
     @Override
@@ -64,5 +62,4 @@ abstract class AbstractCVTAction extends AbstractAction implements Presenter.Pop
      * @return An ImageIcon used to represent this action.
      */
     abstract ImageIcon getIcon();
-
 }

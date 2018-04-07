@@ -19,9 +19,13 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.eventbus.EventBus;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Model of what accounts are pinned to a visualization.
+ */
 class PinnedAccountModel {
 
     /**
@@ -31,6 +35,16 @@ class PinnedAccountModel {
      * primary way to populate the graph.
      */
     private final Set<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
+
+    private final EventBus eventBus = new EventBus();
+
+    void registerhandler(Object handler) {
+        eventBus.register(handler);
+    }
+
+    void unregisterhandler(Object handler) {
+        eventBus.unregister(handler);
+    }
 
     boolean isAccountPinned(AccountDeviceInstanceKey account) {
         return pinnedAccountDevices.contains(account);

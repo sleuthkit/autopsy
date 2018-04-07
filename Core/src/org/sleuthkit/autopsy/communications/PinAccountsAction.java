@@ -23,6 +23,10 @@ import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 
+/**
+ * Action that pins the AccountDevicesIntanceKeys in the ActionsGlobalContext to
+ * the visualizaion
+ */
 @NbBundle.Messages({"PinAccountsAction.pluralText=Add Selected Accounts to Visualization",
     "PinAccountsAction.singularText=Add Selected Account to Visualization"})
 final class PinAccountsAction extends AbstractCVTAction {
@@ -31,7 +35,7 @@ final class PinAccountsAction extends AbstractCVTAction {
             "/org/sleuthkit/autopsy/communications/images/marker--plus.png", false);
     private static final String SINGULAR_TEXT = Bundle.PinAccountsAction_singularText();
     private static final String PLURAL_TEXT = Bundle.PinAccountsAction_pluralText();
-    
+
     private static final PinAccountsAction instance = new PinAccountsAction();
 
     static PinAccountsAction getInstance() {
@@ -39,7 +43,7 @@ final class PinAccountsAction extends AbstractCVTAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         CVTEvents.getCVTEventBus().post(new CVTEvents.PinAccountsEvent(getSelectedAccounts(), false));
     }
 

@@ -25,7 +25,6 @@ import com.google.common.collect.MultimapBuilder;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.util.mxConstants;
-import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
 import java.io.InputStream;
@@ -38,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -96,7 +94,7 @@ final class CommunicationsGraph extends mxGraph {
 
     CommunicationsGraph(PinnedAccountModel pinnedAccountModel, LockedVertexModel lockedVertexModel) {
         super(mxStylesheet);
-        this.pinnedAccountModel =pinnedAccountModel;
+        this.pinnedAccountModel = pinnedAccountModel;
         this.lockedVertexModel = lockedVertexModel;
         //set fixed properties of graph.
         setAutoSizeCells(true);
@@ -243,20 +241,20 @@ final class CommunicationsGraph extends mxGraph {
      */
     private class RebuildWorker extends SwingWorker<Void, Void> {
 
-        private final ProgressIndicator progress;
+        private final ProgressIndicator progressIndicator;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
 
         RebuildWorker(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
-            this.progress = progress;
+            this.progressIndicator = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
 
         }
 
         @Override
-        protected Void doInBackground() throws Exception {
-            progress.start("Loading accounts");
+        protected Void doInBackground() {
+            progressIndicator.start("Loading accounts");
             int progressCounter = 0;
             try {
                 /**
@@ -278,7 +276,7 @@ final class CommunicationsGraph extends mxGraph {
                         final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
                         relatedAccounts.put(relatedADI, relatedADIKey); //store related accounts
                     }
-                    progress.progress(++progressCounter);
+                    progressIndicator.progress(++progressCounter);
                 }
 
                 Set<AccountDeviceInstance> accounts = relatedAccounts.keySet();
@@ -286,9 +284,9 @@ final class CommunicationsGraph extends mxGraph {
                 Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(accounts, currentFilter);
 
                 int total = relationshipCounts.size();
-                int k = 0;
+                int progress = 0;
                 String progressText = "";
-                progress.switchToDeterminate("", 0, total);
+                progressIndicator.switchToDeterminate("", 0, total);
                 for (Map.Entry<AccountPair, Long> entry : relationshipCounts.entrySet()) {
                     Long count = entry.getValue();
                     AccountPair relationshipKey = entry.getKey();
@@ -300,11 +298,10 @@ final class CommunicationsGraph extends mxGraph {
                         mxCell addEdge = addOrUpdateEdge(count, account1, account2);
                         progressText = addEdge.getId();
                     }
-                    progress.progress(progressText, k++);
+                    progressIndicator.progress(progressText, progress++);
                 }
             } catch (TskCoreException tskCoreException) {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
-            } finally {
             }
 
             return null;
@@ -320,7 +317,7 @@ final class CommunicationsGraph extends mxGraph {
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Graph visualization cancelled");
             } finally {
-                progress.finish();
+                progressIndicator.finish();
             }
         }
     }

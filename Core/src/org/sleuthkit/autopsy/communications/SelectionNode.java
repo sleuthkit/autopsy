@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class SelectionNode extends AbstractNode {
 
-    SelectionNode(Children children, Lookup lookup) {
+    private SelectionNode(Children children, Lookup lookup) {
         super(children, lookup);
     }
 
@@ -130,9 +129,9 @@ final class SelectionNode extends AbstractNode {
         }
 
         @Override
-        protected Node createNodeForKey(Content t) {
-            if (t instanceof BlackboardArtifact) {
-                return new RelationshipNode((BlackboardArtifact) t);
+        protected Node createNodeForKey(Content content) {
+            if (content instanceof BlackboardArtifact) {
+                return new RelationshipNode((BlackboardArtifact) content);
             } else {
                 throw new UnsupportedOperationException("Cannot create a RelationshipNode for non BlackboardArtifact content.");
             }

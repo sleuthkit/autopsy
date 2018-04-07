@@ -24,7 +24,8 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 
 /**
- *
+ * Action that clears any pinned accounts and pins the AcountDevicesInstanceKeys
+ * in the ActionsGlobalContext to the visualization.
  */
 @NbBundle.Messages(value = {"ResetAndPinAccountsAction.singularText=Visualize Only Selected Account",
     "ResetAndPinAccountsAction.pluralText=Visualize Only Selected Accounts"})
@@ -42,7 +43,7 @@ final class ResetAndPinAccountsAction extends AbstractCVTAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         CVTEvents.getCVTEventBus().post(new CVTEvents.PinAccountsEvent(getSelectedAccounts(), true));
     }
 
@@ -55,5 +56,4 @@ final class ResetAndPinAccountsAction extends AbstractCVTAction {
     ImageIcon getIcon() {
         return ICON;
     }
-
 }

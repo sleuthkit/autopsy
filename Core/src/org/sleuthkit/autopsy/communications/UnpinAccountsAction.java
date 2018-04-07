@@ -23,6 +23,10 @@ import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 
+/**
+ * Action that unpins the AcccountDeviceInstanceKeys in the ActionsGlobalContext
+ * form the visualization.
+ */
 @NbBundle.Messages({"UnpinAccountsAction.pluralText=Remove Selected Accounts",
     "UnpinAccountsAction.singularText=Remove Selected Account"})
 final class UnpinAccountsAction extends AbstractCVTAction {

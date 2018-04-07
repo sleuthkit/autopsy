@@ -32,14 +32,6 @@ import java.util.Set;
  */
 final class LockedVertexModel {
 
-    void registerhandler(Object handler) {
-        eventBus.register(handler);
-    }
-
-    void unregisterhandler(Object handler) {
-        eventBus.unregister(handler);
-    }
-
     private final EventBus eventBus = new EventBus();
 
     /**
@@ -49,6 +41,16 @@ final class LockedVertexModel {
      */
     private final Set<mxCell> lockedVertices = new HashSet<>();
 
+    
+    void registerhandler(Object handler) {
+        eventBus.register(handler);
+    }
+
+    void unregisterhandler(Object handler) {
+        eventBus.unregister(handler);
+    }
+
+    
     /**
      * Lock the given vertices so that applying a layout algorithm doesn't move
      * them. The user can still manually position the vertices.

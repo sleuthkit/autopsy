@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
-import java.util.Set;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 
 /**

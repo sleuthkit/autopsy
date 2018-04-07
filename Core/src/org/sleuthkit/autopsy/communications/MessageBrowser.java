@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 
 /**
  * The right hand side of the CVT. Has a DataResultPanel to show a listing of

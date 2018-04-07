@@ -873,7 +873,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
-    private class CancelationListener implements ActionListener {
+    /**
+     * Listener that closes a ModalDialogProgreessIndicator when invoked.
+     */
+    final private class CancelationListener implements ActionListener {
 
         private Future<?> cancellable;
         private ModalDialogProgressIndicator progress;
@@ -891,6 +894,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
+    /**
+     * Action that un-locks the selected vertices.
+     */
     @NbBundle.Messages({
         "VisualizationPanel.unlockAction.singularText=Unlock Selected Account",
         "VisualizationPanel.unlockAction.pluralText=Unlock Selected Accounts",})
@@ -911,6 +917,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
+    /**
+     * Action that locks the selected vertices.
+     */
     @NbBundle.Messages({
         "VisualizationPanel.lockAction.singularText=Lock Selected Account",
         "VisualizationPanel.lockAction.pluralText=Lock Selected Accounts"})
