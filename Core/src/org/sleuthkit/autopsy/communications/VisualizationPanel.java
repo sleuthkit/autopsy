@@ -165,22 +165,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         //install rubber band other handlers
         rubberband = new mxRubberband(graphComponent);
 
-        lockedVertexModel.registerhandler((LockedVertexModel.VertexLockEvent event) -> {
-            final Set<mxCell> vertices = event.getVertices();
-            mxGraphView view = graph.getView();
-            if (event.isVertexLocked()) {
-                vertices.forEach(vertex -> view.clear(vertex, true, true));
-                view.validate();
-            } else {
-                vertices.forEach(vertex -> {
-                    final mxCellState state = view.getState(vertex, true);
-                    view.updateLabel(state);
-                    view.updateLabelBounds(state);
-                    view.updateBoundingBox(state);
-                });
-            }
-            graphComponent.getGraphControl().repaint();
-        });
+        lockedVertexModel.registerhandler(this);
 
         final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt)
                 -> zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getView().getScale()));
@@ -267,7 +252,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    void handleUnPinEvent(final CVTEvents.UnpinAccountsEvent pinEvent) {
+    void handle(LockedVertexModel.VertexLockEvent event) {
+        final Set<mxCell> vertices = event.getVertices();
+        mxGraphView view = graph.getView();
+        vertices.forEach(vertex -> {
+            final mxCellState state = view.getState(vertex, true);
+            view.updateLabel(state);
+            view.updateLabelBounds(state);
+            view.updateBoundingBox(state);
+            graphComponent.redraw(state);
+        });
+    }
+
+    @Subscribe
+    void handle(final CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         pinnedAccountModel.unpinAccount(pinEvent.getAccountDeviceInstances());
         graph.clear();
@@ -277,7 +275,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    void handlePinEvent(final CVTEvents.PinAccountsEvent pinEvent) {
+    void handle(final CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         if (pinEvent.isReplace()) {
             graph.resetGraph();
@@ -289,7 +287,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Subscribe
-    void handleFilterEvent(final CVTEvents.FilterChangeEvent filterChangeEvent) {
+    void handle(final CVTEvents.FilterChangeEvent filterChangeEvent) {
         graph.getModel().beginUpdate();
         graph.clear();
         currentFilter = filterChangeEvent.getNewFilter();
@@ -360,7 +358,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
                 }
             }
-
         });
     }
 

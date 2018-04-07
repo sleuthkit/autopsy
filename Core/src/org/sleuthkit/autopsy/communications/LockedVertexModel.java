@@ -21,11 +21,8 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import com.mxgraph.model.mxCell;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -35,11 +32,11 @@ import java.util.Set;
  */
 final class LockedVertexModel {
 
-    void registerhandler(EventHandler<VertexLockEvent> handler) {
+    void registerhandler(Object handler) {
         eventBus.register(handler);
     }
 
-    void unregisterhandler(EventHandler<VertexLockEvent> handler) {
+    void unregisterhandler(Object handler) {
         eventBus.unregister(handler);
     }
 
@@ -83,18 +80,29 @@ final class LockedVertexModel {
         lockedVertices.clear();
     }
 
-    static class VertexLockEvent {
+    /**
+     * Event that represents a change in the locked state of one or more
+     * vertices.
+     */
+    final static class VertexLockEvent {
 
+        private final boolean locked;
         private final Set<mxCell> vertices;
 
+        /**
+         * @return The vertices whose locked state has changed.
+         */
         public Set<mxCell> getVertices() {
             return vertices;
         }
 
-        public boolean isVertexLocked() {
+        /**
+         * @return True if the vertices are locked, False if the vertices are
+         *         unlocked.
+         */
+        public boolean isLocked() {
             return locked;
         }
-        private final boolean locked;
 
         VertexLockEvent(boolean locked, Collection< mxCell> vertices) {
             this.vertices = ImmutableSet.copyOf(vertices);
