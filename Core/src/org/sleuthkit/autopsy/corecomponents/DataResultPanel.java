@@ -294,7 +294,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              * providers.
              */
             addResultViewer(new DataResultViewerTable(this.explorerManager));
-            addResultViewer(new DataResultViewerThumbnail(this.explorerManager));
+            //addResultViewer(new DataResultViewerThumbnail(this.explorerManager));
             for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
                 DataResultViewer resultViewer;
                 if (isMain) {
