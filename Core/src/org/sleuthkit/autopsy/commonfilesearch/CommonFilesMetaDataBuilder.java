@@ -80,10 +80,12 @@ abstract class CommonFilesMetaDataBuilder {
 
         return metaDataModels;
     }
-    
+
     /**
-     * Should build a SQL WHERE clause to be passed to SleuthkitCase.findAllFilesWhere(sql) 
-     * which will select the desired common files ordered by  MD5.
+     * Should build a SQL WHERE clause to be passed to
+     * SleuthkitCase.findAllFilesWhere(sql) which will select the desired common
+     * files ordered by MD5.
+     *
      * @return sql string where clause
      */
     protected abstract String buildSqlWhereClause();
@@ -107,7 +109,6 @@ abstract class CommonFilesMetaDataBuilder {
                 addDataSource(dataSources, file, dataSourceIdToNameMap);
                 md5ToDataSourcesStringMap.put(currentMd5, dataSources);
             }
-
         }
     }
 

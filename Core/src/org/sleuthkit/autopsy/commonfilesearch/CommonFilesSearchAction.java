@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class CommonFilesSearchAction extends CallableSystemAction {
 
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
-    
+
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
 

@@ -44,12 +44,12 @@ public class CommonFileParentNode extends DisplayableItemNode {
     public CommonFileParentNode(CommonFilesMetaData metaData) {
         super(Children.create(
                 new CommonFilesChildFactory(metaData.getChildren(),
-                metaData.getDataSourceIdToNameMap()), true),
+                        metaData.getDataSourceIdToNameMap()), true),
                 Lookups.singleton(metaData.getMd5()));
         this.commonFileCount = metaData.getChildren().size();
         this.dataSources = metaData.getDataSources();
         this.md5Hash = metaData.getMd5();
-        
+
         this.setDisplayName(md5Hash);
     }
 
@@ -60,8 +60,8 @@ public class CommonFileParentNode extends DisplayableItemNode {
     String getDataSources() {
         return this.dataSources;
     }
-    
-    public String getMd5(){
+
+    public String getMd5() {
         return this.md5Hash;
     }
 
@@ -73,7 +73,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-      
+
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
@@ -113,7 +113,6 @@ public class CommonFileParentNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
-    
 
     /**
      * Child generator for FileNodes of CommonFileParentNodes
@@ -121,15 +120,15 @@ public class CommonFileParentNode extends DisplayableItemNode {
     static class CommonFilesChildFactory extends ChildFactory<AbstractFile> {
 
         private final List<AbstractFile> descendants;
-        private final Map<Long, String> dataSourceMap;    
+        private final Map<Long, String> dataSourceMap;
 
-        CommonFilesChildFactory(List<AbstractFile> descendants, Map<Long, String> dataSourceMap){
+        CommonFilesChildFactory(List<AbstractFile> descendants, Map<Long, String> dataSourceMap) {
             this.descendants = descendants;
             this.dataSourceMap = dataSourceMap;
         }
 
         @Override
-        protected Node createNodeForKey(AbstractFile file){
+        protected Node createNodeForKey(AbstractFile file) {
 
             final String dataSource = this.dataSourceMap.get(file.getDataSourceObjectId());
 
@@ -141,8 +140,8 @@ public class CommonFileParentNode extends DisplayableItemNode {
             list.addAll(this.descendants);
             return true;
         }
-
     }
+
     @NbBundle.Messages({
         "CommonFileParentPropertyType.fileColLbl=File",
         "CommonFileParentPropertyType.instanceColLbl=Instance Count",
