@@ -60,16 +60,26 @@ public class ServicesHealthMonitor {
     private static final AtomicBoolean isEnabled = new AtomicBoolean(false);
     private static ServicesHealthMonitor instance;
     
-    private ScheduledThreadPoolExecutor periodicTasksExecutor;
+    private ScheduledThreadPoolExecutor healthMonitorOutputTimer;
     private final Map<String, TimingInfo> timingInfoMap;
     private static final int CONN_POOL_SIZE = 10;
     private BasicDataSource connectionPool = null;
+    private String hostName;
     
     private ServicesHealthMonitor() throws HealthMonitorException {
         
         // Create the map to collect timing metrics. The map will exist regardless
         // of whether the monitor is enabled.
         timingInfoMap = new HashMap<>();
+        
+        // Get the host name
+        try {
+            hostName = java.net.InetAddress.getLocalHost().getHostName();
+        } catch (java.net.UnknownHostException ex) {
+            // Continue on but log a warning
+            logger.log(Level.WARNING, "Unable to look up host name");
+            hostName = "unknown";
+        }
         
         // Read from module settings to determine if the module is enabled
         if (ModuleSettings.settingExists(MODULE_NAME, IS_ENABLED_KEY)) {
@@ -172,20 +182,20 @@ public class ServicesHealthMonitor {
      * Start the ScheduledThreadPoolExecutor that will handle the database writes.
      */
     private synchronized void startTimer() {
-        if(periodicTasksExecutor != null) {
+        if(healthMonitorOutputTimer != null) {
             // Make sure the previous executor (if it exists) has been stopped
-            periodicTasksExecutor.shutdown();
+            healthMonitorOutputTimer.shutdown();
         }
-        periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("health_monitor_timer").build());
-        periodicTasksExecutor.scheduleWithFixedDelay(new DatabaseWriteTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
+        healthMonitorOutputTimer = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("health_monitor_timer").build());
+        healthMonitorOutputTimer.scheduleWithFixedDelay(new DatabaseWriteTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
     }
     
     /**
      * Stop the ScheduledThreadPoolExecutor to prevent further database writes.
      */
     private synchronized void stopTimer() {
-        if(periodicTasksExecutor != null) {
-            periodicTasksExecutor.shutdown();
+        if(healthMonitorOutputTimer != null) {
+            healthMonitorOutputTimer.shutdown();
         }
     }
 
@@ -301,15 +311,6 @@ public class ServicesHealthMonitor {
             timingInfoMap.clear();
         }
         logger.log(Level.INFO, "Writing health monitor metrics to database");
-
-        String hostName;
-        try {
-            hostName = java.net.InetAddress.getLocalHost().getHostName();
-        } catch (java.net.UnknownHostException ex) {
-            // Write it to the database but log a warning
-            logger.log(Level.WARNING, "Unable to look up host name");
-            hostName = "unknown";
-        }
         
         // Check if there's anything to report (right now we only have the timing map)
         if(timingMapCopy.keySet().isEmpty()) {
@@ -587,26 +588,26 @@ public class ServicesHealthMonitor {
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
             
-            StringBuilder createTimingTable = new StringBuilder();
-            createTimingTable.append("CREATE TABLE IF NOT EXISTS timing_data (");
-            createTimingTable.append("id SERIAL PRIMARY KEY,");
-            createTimingTable.append("name text NOT NULL,");
-            createTimingTable.append("host text NOT NULL,");
-            createTimingTable.append("timestamp bigint NOT NULL,");
-            createTimingTable.append("count bigint NOT NULL,");
-            createTimingTable.append("average bigint NOT NULL,");
-            createTimingTable.append("max bigint NOT NULL,");
-            createTimingTable.append("min bigint NOT NULL");
-            createTimingTable.append(")");
-            statement.execute(createTimingTable.toString());
+            String createTimingTable = 
+                "CREATE TABLE IF NOT EXISTS timing_data (" + 
+                "id SERIAL PRIMARY KEY," + 
+                "name text NOT NULL," + 
+                "host text NOT NULL," + 
+                "timestamp bigint NOT NULL," + 
+                "count bigint NOT NULL," + 
+                "average bigint NOT NULL," + 
+                "max bigint NOT NULL," + 
+                "min bigint NOT NULL" + 
+                ")";
+            statement.execute(createTimingTable);
             
-            StringBuilder createDbInfoTable = new StringBuilder();
-            createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
-            createDbInfoTable.append("id SERIAL PRIMARY KEY NOT NULL,");
-            createDbInfoTable.append("name text NOT NULL,");
-            createDbInfoTable.append("value text NOT NULL");
-            createDbInfoTable.append(")");
-            statement.execute(createDbInfoTable.toString());
+            String createDbInfoTable = 
+                "CREATE TABLE IF NOT EXISTS db_info (" + 
+                "id SERIAL PRIMARY KEY NOT NULL," + 
+                "name text NOT NULL," + 
+                "value text NOT NULL" + 
+                ")";
+            statement.execute(createDbInfoTable);
             
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
@@ -655,8 +656,7 @@ public class ServicesHealthMonitor {
      */
     private CoordinationService.Lock getExclusiveDbLock() throws HealthMonitorException{
         try {
-            String databaseNodeName = DATABASE_NAME;
-            CoordinationService.Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.HEALTH_MONITOR, databaseNodeName, 5, TimeUnit.MINUTES);
+            CoordinationService.Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.HEALTH_MONITOR, DATABASE_NAME, 5, TimeUnit.MINUTES);
 
             if(lock != null){
                 return lock;

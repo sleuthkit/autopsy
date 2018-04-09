@@ -30,11 +30,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
  */
 final class HealthMonitorCaseEventListener implements PropertyChangeListener {
 
-    private final ExecutorService jobProcessingExecutor;
-    private static final String CASE_EVENT_THREAD_NAME = "Health-Monitor-Event-Listener-%d";
+    private final ExecutorService healthMonitorExecutor;
+    private static final String HEALTH_MONITOR_EVENT_THREAD_NAME = "Health-Monitor-Event-Listener-%d";
 
     HealthMonitorCaseEventListener() {
-        jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CASE_EVENT_THREAD_NAME).build());
+        healthMonitorExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(HEALTH_MONITOR_EVENT_THREAD_NAME).build());
     }
 
     @Override
@@ -45,7 +45,7 @@ final class HealthMonitorCaseEventListener implements PropertyChangeListener {
             case CURRENT_CASE:
                 if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
                     // When a case is closed, write the current metrics to the database
-                    jobProcessingExecutor.submit(new ServicesHealthMonitor.DatabaseWriteTask());
+                    healthMonitorExecutor.submit(new ServicesHealthMonitor.DatabaseWriteTask());
                 }
                 break;
         }
