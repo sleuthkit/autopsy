@@ -36,10 +36,12 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
+import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
@@ -61,6 +63,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
+    private final Path ZIPFILE_PATH = Paths.get(this.getDataDir().toString(), "local_files_test.zip");
     
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
@@ -75,58 +78,14 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        // Delete the test directory, if it exists
-        if (CASE_DIRECTORY_PATH.toFile().exists()) {
-            try {
-                FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
-            }
-        }
-        assertFalse("Unable to delete existing test directory", CASE_DIRECTORY_PATH.toFile().exists());
- 
-        // Create the test directory
-        CASE_DIRECTORY_PATH.toFile().mkdirs();
-        assertTrue("Unable to create test directory", CASE_DIRECTORY_PATH.toFile().exists());
-
-        try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, CASE_DIRECTORY_PATH.toString(), new CaseDetails("IngestFiltersTest"));
-        } catch (CaseActionException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-        assertTrue(CASE_DIR.exists());
+        createCase();
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        try {
-            ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
-            List<Content> dataSourceContent = callBack.getDataSourceContent();
-            assertEquals(1, dataSourceContent.size());
-            List<String> errorMessages = callBack.getErrorMessages();
-            assertEquals(0, errorMessages.size());
-        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-            
-        }
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
     }
 
     @Override
     public void tearDown() {
-        try {
-            Case.closeCurrentCase();
-            //Seems like we need some time to close the case.
-            try {
-                Thread.sleep(2000);
-            } catch (Exception ex) {
-
-            }
-
-            FileUtils.deleteDirectory(CASE_DIR);
-        } catch (CaseActionException | IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        assertFalse(CASE_DIR.exists());
+        closeCase();
     }
     
     public void testBasicDir() {
@@ -337,6 +296,41 @@ public class IngestFileFiltersTest extends NbTestCase {
         }
     }
 
+    public void testEmbeddedModule() {
+        //Close the current case
+        closeCase();
+        createCase();
+        LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, ZIPFILE_PATH);
+        
+        //Build the filter to find jpg files
+        HashMap<String, Rule> rules = new HashMap<>();
+        //Extension condition for jpg files
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        //Extension condition for zip files, because we want test jpg extension filter for extracted files from a zip file 
+        rules.put("rule2", new Rule("ZipExtention", new ExtensionCondition("zip"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        FilesSet embeddedFilter = new FilesSet("Filter", "Filter to files with .jpg extension.", false, false, rules);
+                  
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            templates.add(getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory()));
+            runIngestJob(openCase.getDataSources(), templates, embeddedFilter);
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            //get all .jpg files in zip file
+            List<AbstractFile> results = fileManager.findFiles("%.jpg%", ZIPFILE_PATH.getFileName().toString());
+            assertEquals(10, results.size());
+            for (AbstractFile file : results) {
+                String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty()); 
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
     private void runIngestJob(List<Content> datasources, ArrayList<IngestModuleTemplate> templates, FilesSet filter) {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filter);
         try {
@@ -357,4 +351,60 @@ public class IngestFileFiltersTest extends NbTestCase {
         template.setEnabled(true);
         return template;
     }
- }
+
+    private void createCase() {
+        // Delete the test directory, if it exists
+        if (CASE_DIRECTORY_PATH.toFile().exists()) {
+            try {
+                FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+        }
+        assertFalse("Unable to delete existing test directory", CASE_DIRECTORY_PATH.toFile().exists());
+ 
+        // Create the test directory
+        CASE_DIRECTORY_PATH.toFile().mkdirs();
+        assertTrue("Unable to create test directory", CASE_DIRECTORY_PATH.toFile().exists());
+
+        try {
+            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, CASE_DIRECTORY_PATH.toString(), new CaseDetails("IngestFiltersTest"));
+        } catch (CaseActionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }        
+        assertTrue(CASE_DIR.exists());
+    }
+    
+    private void closeCase() {
+        try {
+            Case.closeCurrentCase();
+            //Seems like we need some time to close the case.
+            try {
+                Thread.sleep(2000);
+            } catch (Exception ex) {
+
+            }
+
+            FileUtils.deleteDirectory(CASE_DIR);
+        } catch (CaseActionException | IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        assertFalse(CASE_DIR.exists());        
+    }
+    
+    private void addDataSourceToCase(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
+        try {
+            ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
+            List<Content> dataSourceContent = callBack.getDataSourceContent();
+            assertEquals(1, dataSourceContent.size());
+            List<String> errorMessages = callBack.getErrorMessages();
+            assertEquals(0, errorMessages.size());
+        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            
+        }        
+    }
+}
