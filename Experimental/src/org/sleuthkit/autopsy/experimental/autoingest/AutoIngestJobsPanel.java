@@ -20,12 +20,16 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.beans.PropertyVetoException;
+import java.util.Enumeration;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumn;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.AutoIngestJobType;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.JobNode;
@@ -59,27 +63,32 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             case PENDING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
                         Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
-                        Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(),
-                        "Time Since Created", "Time Since Created");
+                        Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text());
+                outline.setColumnSorted(3, false, 1);
+                outline.setColumnSorted(0, true, 2);
                 break;
             case RUNNING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
                         Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(),
                         Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(),
                         Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text());
+                outline.setColumnSorted(0, true, 1);
                 break;
             case COMPLETED_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
                         Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
                         Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(),
                         Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text());
+                outline.setColumnSorted(3, false, 1);
                 break;
             default:
         }
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestNode_caseName_text());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
-        outline.setColumnSorted(0, false, 1);
+
+        outline.getColumnModel().getColumn(0).setPreferredWidth(160);
+        outline.getColumnModel().getColumn(1).setPreferredWidth(260);
         if (null == explorerManager) {
             explorerManager = new ExplorerManager();
 
@@ -108,12 +117,29 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
 
     void refresh(AutoIngestMonitor.JobsSnapshot jobsSnapshot) {
         synchronized (this) {
-            outline.setRowSelectionAllowed(false);
+            //   outline.setRowSelectionAllowed(false);
+            Node[] selectedNodes = explorerManager.getSelectedNodes();
+            AutoIngestNode autoIngestNode = new AutoIngestNode(jobsSnapshot, type);
+            explorerManager.setRootContext(autoIngestNode);
+            outline.setRowSelectionAllowed(true);
             EventQueue.invokeLater(() -> {
-                AutoIngestNode autoIngestNode = new AutoIngestNode(jobsSnapshot, type);
-                explorerManager.setRootContext(autoIngestNode);
-                outline.setRowSelectionAllowed(true);
-            });       
+                setSelectedNodes(selectedNodes);
+                System.out.println("SUCESS:  " + selectedNodes.length);
+
+            });
+        }
+    }
+
+    Node[] getSelectedNodes() {
+        return explorerManager.getSelectedNodes();
+    }
+
+    void setSelectedNodes(Node[] selectedRows) {
+        try {
+            explorerManager.setSelectedNodes(selectedRows);
+        } catch (PropertyVetoException ignore) {
+            System.out.println("Unable to set selected Rows: " + ignore.toString());
+            //Unable to select previously selected node
         }
     }
 
@@ -130,7 +156,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     }// </editor-fold>//GEN-END:initComponents
 
     AutoIngestJob getSelectedAutoIngestJob() {
-        Node[] selectedRows = explorerManager.getSelectedNodes();
+        Node[] selectedRows = getSelectedNodes();
         if (selectedRows.length == 1) {
             return ((JobNode) selectedRows[0]).getAutoIngestJob();
         }

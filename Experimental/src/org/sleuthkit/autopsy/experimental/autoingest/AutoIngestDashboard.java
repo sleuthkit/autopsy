@@ -33,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -46,29 +47,6 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnaps
 final class AutoIngestDashboard extends JPanel implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private static final int GENERIC_COL_MIN_WIDTH = 30;
-    private static final int GENERIC_COL_MAX_WIDTH = 2000;
-    private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
-    private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
-    private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
-    private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
-    private static final int STAGE_TIME_COL_MIN_WIDTH = 250;
-    private static final int STAGE_TIME_COL_MAX_WIDTH = 450;
-    private static final int TIME_COL_MIN_WIDTH = 30;
-    private static final int TIME_COL_MAX_WIDTH = 250;
-    private static final int TIME_COL_PREFERRED_WIDTH = 140;
-    private static final int NAME_COL_MIN_WIDTH = 100;
-    private static final int NAME_COL_MAX_WIDTH = 250;
-    private static final int NAME_COL_PREFERRED_WIDTH = 140;
-    private static final int STAGE_COL_MIN_WIDTH = 70;
-    private static final int STAGE_COL_MAX_WIDTH = 2000;
-    private static final int STAGE_COL_PREFERRED_WIDTH = 300;
-    private static final int STATUS_COL_MIN_WIDTH = 55;
-    private static final int STATUS_COL_MAX_WIDTH = 250;
-    private static final int STATUS_COL_PREFERRED_WIDTH = 55;
-    private static final int COMPLETED_TIME_COL_MIN_WIDTH = 30;
-    private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
-    private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
     private AutoIngestJobsPanel pendingJobsPanel;
@@ -155,6 +133,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */
+        
         UIManager.put("PopupMenu.consumeEventOnClose", false);
     }
 
@@ -278,9 +257,11 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * @param jobsSnapshot The jobs snapshot.
      */
     private void refreshTables(JobsSnapshot jobsSnapshot) {
+//        Node[] selectedPending  = pendingJobsPanel.getSelectedNodes();
         pendingJobsPanel.refresh(jobsSnapshot);
-        runningJobsPanel.refresh(jobsSnapshot);
-        finishedJobsPanel.refresh(jobsSnapshot);
+//        pendingJobsPanel.setSelectedNodes(selectedPending);
+//        runningJobsPanel.refresh(jobsSnapshot);
+//        finishedJobsPanel.refresh(jobsSnapshot);
     }
     
     /**
@@ -425,27 +406,24 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                     .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deprioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deprioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(clusterMetricsButton))
-                            .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbCompleted, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbRunning, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(lbServicesStatus)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 861, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deprioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deprioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(clusterMetricsButton))
+                    .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbCompleted, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbRunning, javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(lbServicesStatus)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.DEFAULT_SIZE, 861, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -461,15 +439,15 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbPending, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(1, 1, 1)
-                .addComponent(pendingScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pendingScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lbRunning)
                 .addGap(1, 1, 1)
-                .addComponent(runningScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(runningScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 133, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lbCompleted)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(completedScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(completedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)

@@ -129,8 +129,6 @@ final class AutoIngestNode extends AbstractNode {
                             autoIngestJob.getManifest().getDateFileCreated()));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text(),
                             autoIngestJob.getPriority()));
-                    ss.put(new NodeProperty<>("Time Since Created", "Time Since Created", "Time Since Created",
-                            DurationCellRenderer.longToDurationString((Date.from(Instant.now()).getTime()) - (autoIngestJob.getManifest().getDateFileCreated().getTime()))));
                     break;
                 case RUNNING_JOB:
                     AutoIngestJob.StageDetails status = autoIngestJob.getProcessingStageDetails();
