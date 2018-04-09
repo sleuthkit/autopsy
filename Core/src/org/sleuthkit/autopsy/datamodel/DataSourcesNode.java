@@ -77,7 +77,6 @@ public class DataSourcesNode extends DisplayableItemNode {
         private static final Logger LOGGER = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
         List<Content> currentKeys;
-        
         private String parentDeviceId = null;
 
         /**
@@ -124,7 +123,6 @@ public class DataSourcesNode extends DisplayableItemNode {
                 } else {
                     List<Content> dataSources = Case.getOpenCase().getDataSources();
                     for (Content content: dataSources) {
-                        
                         if ( parentDeviceId.equalsIgnoreCase(((DataSource)content).getDeviceId())) {
                             currentKeys.add(content);
                         }
@@ -132,7 +130,6 @@ public class DataSourcesNode extends DisplayableItemNode {
                 }
                 
                 setKeys(currentKeys);
-                
             } catch (TskCoreException | IllegalStateException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
                 setKeys(Collections.<Content>emptySet());

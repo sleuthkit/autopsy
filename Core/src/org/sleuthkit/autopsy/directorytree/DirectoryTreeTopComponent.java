@@ -317,8 +317,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // Store the checkbox state in User preferences.
         UserPreferences.setShowDeviceNodesInDataSourcesTree(showDeviceIDCheckBox.isSelected());
         
-        // RAMAN TBD: test if refreshDataSourceTree does the trick
-        //this.refreshDataSourceTree();
+        // Redraw the tree
         contentChildren.refreshContentKeys();
     }//GEN-LAST:event_showDeviceIDCheckBoxActionPerformed
 
@@ -404,7 +403,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             // if there's at least one image, load the image and open the top component
             final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
             contentChildren = new RootContentChildren(Arrays.asList(
-                    //new Devices(tskCase),
                     new DataSources(),
                     new Views(tskCase),
                     new Results(tskCase),
