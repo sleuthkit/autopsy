@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
