@@ -36,7 +36,7 @@ public class ReportProgressPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(ReportProgressPanel.class.getName());
     private static final Color GREEN = new Color(50, 205, 50);
     private static final Color RED = new Color(178, 34, 34);
-    private ReportStatus status;
+    private volatile ReportStatus status;
 
     /**
      * Used by a report generation module to communicate report generation

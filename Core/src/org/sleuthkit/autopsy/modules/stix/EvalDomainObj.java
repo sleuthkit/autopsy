@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -52,7 +53,14 @@ class EvalDomainObj extends EvaluatableObject {
                     spacing, ObservableResult.ObservableState.INDETERMINATE, null);
         }
 
-        // Since we have single URL artifacts, ALL and NONE conditions probably don't make sense to test
+        Case case1;
+        try {
+            case1 = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return new ObservableResult(id, "Exception while getting open case.", //NON-NLS
+                    spacing, ObservableResult.ObservableState.FALSE, null);
+        }
+         // Since we have single URL artifacts, ALL and NONE conditions probably don't make sense to test
         if (!((obj.getValue().getApplyCondition() == null)
                 || (obj.getValue().getApplyCondition() == ConditionApplicationEnum.ANY))) {
             return new ObservableResult(id, "DomainObject: Can not process apply condition " + obj.getValue().getApplyCondition().toString() //NON-NLS
@@ -66,7 +74,6 @@ class EvalDomainObj extends EvaluatableObject {
                     + " on DomainName - using substring comparison"); //NON-NLS
         }
 
-        Case case1 = Case.getCurrentCase();
         SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
         try {

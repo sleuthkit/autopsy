@@ -83,7 +83,7 @@ AUTOPSY_TEST_CASE = "AutopsyTestCase"
 Day = 0
 
 # HTML file name for links of output directories
-OUTPUT_DIR_LINK_FILE="output_dir_link.html"
+OUTPUT_DIR_LINK_FILE="output_dir_link.txt"
 
 def usage():
     print ("-f PATH single file")
@@ -108,9 +108,6 @@ def main():
     if not parse_result:
         Errors.print_error("The arguments were given wrong")
         exit(1)
-    # Remove the output_link_file
-    if file_exists(OUTPUT_DIR_LINK_FILE):
-        os.remove(OUTPUT_DIR_LINK_FILE)
 
     test_config = TestConfiguration(args)
     case_type = test_config.userCaseType.lower()
@@ -881,20 +878,20 @@ class TestConfiguration(object):
 
         os.makedirs(self.output_dir)
 
-        #write the output_dir to a html file
+        #write the output_dir to a text file
 
-        linkFile = open(OUTPUT_DIR_LINK_FILE, "a")
+        linkFile = open(os.path.join(self.args.diff_files_output_folder, OUTPUT_DIR_LINK_FILE), "a")
         index = self.output_dir.find("\\")
-        linkStr = "<a href=\"file://"
+        linkStr = "file://"
         linkOutputDir =  self.output_dir[index+2:].replace("//", "/").replace("\\\\", "\\")
         if index == 0:
             linkStr = linkStr + linkOutputDir
         else:
             linkStr = linkStr + socket.gethostname() + "\\" + linkOutputDir
         if self.testUserCase == "multi":
-            linkStr = linkStr + "\">Multi test output</a>"
+            linkStr = "Enterprise Tests: " + linkStr
         else:
-            linkStr = linkStr + "\">Single test output</a>"
+            linkStr = "Standalone Tests: " + linkStr
         linkFile.write(linkStr + "\n")
         linkFile.close()
  

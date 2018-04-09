@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,8 @@ import java.sql.Timestamp;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 import javax.annotation.concurrent.GuardedBy;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -37,7 +37,7 @@ final class AutoIngestSystemLogger {
 
     private static final int LOG_SIZE = 50000000; // In bytes, zero is unlimited, set to roughly 10mb currently
     private static final int LOG_FILE_COUNT = 10;
-    private static final Logger LOGGER = Logger.getLogger("AutoIngest"); //NON-NLS
+    private static final Logger logger = Logger.getLogger("AutoIngest"); //NON-NLS
     private static final String NEWLINE = System.lineSeparator();
     @GuardedBy("AutoIngestSystemLogger")
     private static boolean configured;
@@ -74,14 +74,14 @@ final class AutoIngestSystemLogger {
                                 + stackTrace;
                     }
                 });
-                LOGGER.addHandler(fileHandler);
-                LOGGER.setUseParentHandlers(false);
+                logger.addHandler(fileHandler);
+                logger.setUseParentHandlers(false);
             } catch (SecurityException | IOException ex) {
                 throw new RuntimeException(String.format("Error initializing file handler for %s", logFilePath), ex); //NON-NLS
             }
             configured = true;
         }
-        return LOGGER;
+        return logger;
     }
 
     /**

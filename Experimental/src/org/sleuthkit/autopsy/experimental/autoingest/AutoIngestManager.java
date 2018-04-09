@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -73,7 +74,9 @@ import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
+import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
@@ -135,7 +138,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
     private static final int DEFAULT_PRIORITY = 0;
-    private static final java.util.logging.Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
+    private static final Logger sysLogger = AutoIngestSystemLogger.getLogger();
     private static AutoIngestManager instance;
     private final AutopsyEventPublisher eventPublisher;
     private final Object scanMonitor;
@@ -182,7 +185,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * designated input directory tree.
      */
     private AutoIngestManager() {
-        SYS_LOGGER.log(Level.INFO, "Initializing auto ingest");
+        sysLogger.log(Level.INFO, "Initializing auto ingest");
         state = State.IDLE;
         eventPublisher = new AutopsyEventPublisher();
         scanMonitor = new Object();
@@ -198,9 +201,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         completedJobs = new ArrayList<>();
         try {
             RuntimeProperties.setRunningWithGUI(false);
-            SYS_LOGGER.log(Level.INFO, "Set running with desktop GUI runtime property to false");
+            sysLogger.log(Level.INFO, "Set running with desktop GUI runtime property to false");
         } catch (RuntimeProperties.RuntimePropertiesException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
+            sysLogger.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
         }
     }
 
@@ -211,7 +214,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      *                                    ingest.
      */
     void startUp() throws AutoIngestManagerException {
-        SYS_LOGGER.log(Level.INFO, "Auto ingest starting");
+        sysLogger.log(Level.INFO, "Auto ingest starting");
         try {
             coordinationService = CoordinationService.getInstance();
         } catch (CoordinationServiceException ex) {
@@ -219,17 +222,17 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         try {
             eventPublisher.openRemoteEventChannel(EVENT_CHANNEL_NAME);
-            SYS_LOGGER.log(Level.INFO, "Opened auto ingest event channel");
+            sysLogger.log(Level.INFO, "Opened auto ingest event channel");
         } catch (AutopsyEventException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Failed to open auto ingest event channel", ex);
+            sysLogger.log(Level.SEVERE, "Failed to open auto ingest event channel", ex);
             throw new AutoIngestManagerException("Failed to open auto ingest event channel", ex);
         }
         rootInputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeImageFolder());
         rootOutputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder());
-        inputScanSchedulingExecutor.scheduleAtFixedRate(new InputDirScanSchedulingTask(), 0, AutoIngestUserPreferences.getMinutesOfInputScanInterval(), TimeUnit.MINUTES);
+        inputScanSchedulingExecutor.scheduleWithFixedDelay(new InputDirScanSchedulingTask(), 0, AutoIngestUserPreferences.getMinutesOfInputScanInterval(), TimeUnit.MINUTES);
         jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
-        jobStatusPublishingExecutor.scheduleAtFixedRate(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        jobStatusPublishingExecutor.scheduleWithFixedDelay(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         state = State.RUNNING;
         errorState = ErrorState.NONE;
@@ -394,7 +397,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (State.RUNNING != state) {
             return;
         }
-        SYS_LOGGER.log(Level.INFO, "Auto ingest shutting down");
+        sysLogger.log(Level.INFO, "Auto ingest shutting down");
         state = State.SHUTTING_DOWN;
         try {
             eventPublisher.removeSubscriber(EVENT_LIST, instance);
@@ -404,9 +407,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             cleanupJobs();
 
         } catch (InterruptedException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Auto ingest interrupted during shut down", ex);
+            sysLogger.log(Level.SEVERE, "Auto ingest interrupted during shut down", ex);
         }
-        SYS_LOGGER.log(Level.INFO, "Auto ingest shut down");
+        sysLogger.log(Level.INFO, "Auto ingest shut down");
         state = State.IDLE;
     }
 
@@ -418,10 +421,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         inputScanSchedulingExecutor.shutdownNow();
         inputScanExecutor.shutdownNow();
         while (!inputScanSchedulingExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
-            SYS_LOGGER.log(Level.WARNING, "Auto ingest waited at least thirty seconds for input scan scheduling executor to shut down, continuing to wait"); //NON-NLS
+            sysLogger.log(Level.WARNING, "Auto ingest waited at least thirty seconds for input scan scheduling executor to shut down, continuing to wait"); //NON-NLS
         }
         while (!inputScanExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
-            SYS_LOGGER.log(Level.WARNING, "Auto ingest waited at least thirty seconds for input scan executor to shut down, continuing to wait"); //NON-NLS
+            sysLogger.log(Level.WARNING, "Auto ingest waited at least thirty seconds for input scan executor to shut down, continuing to wait"); //NON-NLS
         }
     }
 
@@ -437,7 +440,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             jobProcessingExecutor.shutdown();
         }
         while (!jobProcessingExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
-            SYS_LOGGER.log(Level.WARNING, "Auto ingest waited at least thirty seconds for job processing executor to shut down, continuing to wait"); //NON-NLS
+            sysLogger.log(Level.WARNING, "Auto ingest waited at least thirty seconds for job processing executor to shut down, continuing to wait"); //NON-NLS
         }
     }
 
@@ -504,11 +507,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (State.RUNNING != state) {
             return;
         }
-        SYS_LOGGER.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
+        sysLogger.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
         InputDirScanner scanner = new InputDirScanner();
 
         scanner.scan();
-        SYS_LOGGER.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
+        sysLogger.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
     }
 
     /**
@@ -770,10 +773,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     updateCoordinationServiceManifestNode(completedJob);
                     pendingJobs.add(completedJob);
                 } catch (CoordinationServiceException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Coordination service error while reprocessing %s", manifestPath), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Coordination service error while reprocessing %s", manifestPath), ex);
                     completedJobs.add(completedJob);
                 } catch (InterruptedException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, "Unexpected interrupt while updating coordination service node data for {0}", manifestPath);
+                    sysLogger.log(Level.SEVERE, "Unexpected interrupt while updating coordination service node data for {0}", manifestPath);
                     completedJobs.add(completedJob);
                 }
             }
@@ -809,7 +812,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 try {
                     metaData = new CaseMetadata(caseMetaDataFilePath);
                 } catch (CaseMetadata.CaseMetadataException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Failed to get case metadata file %s for case %s at %s", caseMetaDataFilePath, caseName, caseDirectoryPath), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Failed to get case metadata file %s for case %s at %s", caseMetaDataFilePath, caseName, caseDirectoryPath), ex);
                     return CaseDeletionResult.FAILED;
                 }
 
@@ -820,7 +823,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 scanner.scan();
                 Set<Path> manifestPaths = casesToManifests.get(caseName);
                 if (null == manifestPaths) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("No manifest paths found for case %s at %s", caseName, caseDirectoryPath));
+                    sysLogger.log(Level.SEVERE, String.format("No manifest paths found for case %s at %s", caseName, caseDirectoryPath));
                     return CaseDeletionResult.FAILED;
                 }
 
@@ -838,7 +841,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             return CaseDeletionResult.FAILED;
                         }
                     } catch (CoordinationServiceException ex) {
-                        SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to acquire manifest lock for %s for case %s at %s", manifestPath, caseName, caseDirectoryPath), ex);
+                        sysLogger.log(Level.SEVERE, String.format("Error attempting to acquire manifest lock for %s for case %s at %s", manifestPath, caseName, caseDirectoryPath), ex);
                         return CaseDeletionResult.FAILED;
                     }
                 }
@@ -849,7 +852,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     Case.deleteCase(metaData);
                 } catch (CaseActionException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Failed to physically delete case %s at %s", caseName, caseDirectoryPath), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Failed to physically delete case %s at %s", caseName, caseDirectoryPath), ex);
                     return CaseDeletionResult.FAILED;
                 }
 
@@ -863,10 +866,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         deletedJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.DELETED);
                         this.updateCoordinationServiceManifestNode(deletedJob);
                     } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
-                        SYS_LOGGER.log(Level.WARNING, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
+                        sysLogger.log(Level.WARNING, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
                         return CaseDeletionResult.PARTIALLY_DELETED;
                     } catch (InterruptedException | CoordinationServiceException ex) {
-                        SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set delete flag on manifest data for %s for case %s at %s", manifestPath, caseName, caseDirectoryPath), ex);
+                        sysLogger.log(Level.SEVERE, String.format("Error attempting to set delete flag on manifest data for %s for case %s at %s", manifestPath, caseName, caseDirectoryPath), ex);
                         return CaseDeletionResult.PARTIALLY_DELETED;
                     }
                 }
@@ -893,7 +896,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 try {
                     lock.release();
                 } catch (CoordinationServiceException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Failed to release manifest file lock when deleting case %s at %s", caseName, caseDirectoryPath), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Failed to release manifest file lock when deleting case %s at %s", caseName, caseDirectoryPath), ex);
                 }
             }
         }
@@ -942,7 +945,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         synchronized (jobsLock) {
             if (null != currentJob) {
                 currentJob.cancel();
-                SYS_LOGGER.log(Level.INFO, "Cancelling automated ingest for manifest {0}", currentJob.getManifest().getFilePath());
+                sysLogger.log(Level.INFO, "Cancelling automated ingest for manifest {0}", currentJob.getManifest().getFilePath());
             }
         }
     }
@@ -963,7 +966,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     if (null != moduleHandle) {
                         currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING_MODULE, Date.from(Instant.now()));
                         moduleHandle.cancel();
-                        SYS_LOGGER.log(Level.INFO, "Cancelling {0} module for manifest {1}", new Object[]{moduleHandle.displayName(), currentJob.getManifest().getFilePath()});
+                        sysLogger.log(Level.INFO, "Cancelling {0} module for manifest {1}", new Object[]{moduleHandle.displayName(), currentJob.getManifest().getFilePath()});
                     }
                 }
             }
@@ -1013,7 +1016,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * input directory scan task executor.
          */
         private InputDirScanSchedulingTask() {
-            SYS_LOGGER.log(Level.INFO, "Periodic input scan scheduling task started");
+            sysLogger.log(Level.INFO, "Periodic input scan scheduling task started");
         }
 
         /**
@@ -1043,10 +1046,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (Thread.currentThread().isInterrupted()) {
                 return null;
             }
-            SYS_LOGGER.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
+            sysLogger.log(Level.INFO, "Starting input scan of {0}", rootInputDirectory);
             InputDirScanner scanner = new InputDirScanner();
             scanner.scan();
-            SYS_LOGGER.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
+            sysLogger.log(Level.INFO, "Completed input scan of {0}", rootInputDirectory);
             setChanged();
             notifyObservers(Event.INPUT_SCAN_COMPLETED);
             return null;
@@ -1088,7 +1091,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      * uncaught exceptions will propagate up to the calling
                      * thread and may stop it from running.
                      */
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
                 }
             }
             synchronized (scanMonitor) {
@@ -1149,7 +1152,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             manifest = parser.parse(filePath);
                             break;
                         } catch (ManifestFileParserException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to parse %s with parser %s", filePath, parser.getClass().getCanonicalName()), ex);
+                            sysLogger.log(Level.SEVERE, String.format("Error attempting to parse %s with parser %s", filePath, parser.getClass().getCanonicalName()), ex);
                         }
                     }
                     if (Thread.currentThread().isInterrupted()) {
@@ -1203,21 +1206,21 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                          */
                                         break;
                                     default:
-                                        SYS_LOGGER.log(Level.SEVERE, "Unknown ManifestNodeData.ProcessingStatus");
+                                        sysLogger.log(Level.SEVERE, "Unknown ManifestNodeData.ProcessingStatus");
                                         break;
                                 }
                             } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
-                                SYS_LOGGER.log(Level.SEVERE, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
+                                sysLogger.log(Level.SEVERE, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
                             }
                         } else {
                             try {
                                 addNewPendingJob(manifest);
                             } catch (AutoIngestJobException ex) {
-                                SYS_LOGGER.log(Level.SEVERE, String.format("Invalid manifest data for %s", manifestPath), ex);
+                                sysLogger.log(Level.SEVERE, String.format("Invalid manifest data for %s", manifestPath), ex);
                             }
                         }
                     } catch (CoordinationServiceException ex) {
-                        SYS_LOGGER.log(Level.SEVERE, String.format("Error transmitting node data for %s", manifestPath), ex);
+                        sysLogger.log(Level.SEVERE, String.format("Error transmitting node data for %s", manifestPath), ex);
                         return CONTINUE;
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
@@ -1229,7 +1232,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 // Catch all unhandled and unexpected exceptions. Otherwise one bad file 
                 // can stop the entire input folder scanning. Given that the exception is unexpected,
                 // I'm hesitant to add logging which requires accessing or de-referencing data.
-                SYS_LOGGER.log(Level.SEVERE, "Unexpected exception in file visitor", ex);
+                sysLogger.log(Level.SEVERE, "Unexpected exception in file visitor", ex);
                 return CONTINUE;
             }
 
@@ -1286,7 +1289,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         updateCoordinationServiceManifestNode(job);
                     }
                 } catch (CoordinationServiceException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
                 }
             }
             Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
@@ -1328,7 +1331,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     newPendingJobsList.add(job);
                 }
             } catch (CoordinationServiceException ex) {
-                SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
+                sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
             }
         }
 
@@ -1359,7 +1362,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             String manifestPath = manifest.getFilePath().toString();
             try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath)) {
                 if (null != manifestLock) {
-                    SYS_LOGGER.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
+                    sysLogger.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
                     try {
                         Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
 
@@ -1384,7 +1387,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             try {
                                 setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             } catch (CaseNodeData.InvalidDataException ex) {
-                                SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
+                                sysLogger.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
                             }
                         } else {
                             job.setErrorsOccurred(false);
@@ -1396,7 +1399,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 try {
                                     new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
                                 } catch (AutoIngestJobLoggerException ex) {
-                                    SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                                    sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
                                 }
                             }
                         } else {
@@ -1405,7 +1408,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 try {
                                     new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
                                 } catch (AutoIngestJobLoggerException ex) {
-                                    SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                                    sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
                                 }
                             }
                         }
@@ -1417,7 +1420,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         try {
                             updateCoordinationServiceManifestNode(job);
                         } catch (CoordinationServiceException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
+                            sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
                             return;
                         }
 
@@ -1433,12 +1436,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         try {
                             manifestLock.release();
                         } catch (CoordinationServiceException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to release exclusive lock for %s", manifestPath), ex);
+                            sysLogger.log(Level.SEVERE, String.format("Error attempting to release exclusive lock for %s", manifestPath), ex);
                         }
                     }
                 }
             } catch (CoordinationServiceException ex) {
-                SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to get exclusive lock for %s", manifestPath), ex);
+                sysLogger.log(Level.SEVERE, String.format("Error attempting to get exclusive lock for %s", manifestPath), ex);
             }
         }
 
@@ -1493,13 +1496,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             updateCoordinationServiceManifestNode(job);
                         }
                     } catch (CoordinationServiceException ex) {
-                        SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
+                        sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
                     }
                 }
                 newCompletedJobsList.add(job);
 
             } else {
-                SYS_LOGGER.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory, ignoring job", nodeData.getManifestFilePath()));
+                sysLogger.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory, ignoring job", nodeData.getManifestFilePath()));
             }
         }
 
@@ -1520,7 +1523,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         @Override
         public FileVisitResult visitFileFailed(Path file, IOException ex) throws IOException {
-            SYS_LOGGER.log(Level.SEVERE, String.format("Error while visiting %s during input directories scan", file.toString()), ex);
+            sysLogger.log(Level.SEVERE, String.format("Error while visiting %s during input directories scan", file.toString()), ex);
             if (Thread.currentThread().isInterrupted()) {
                 return TERMINATE;
             }
@@ -1605,7 +1608,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         @Override
         public void run() {
-            SYS_LOGGER.log(Level.INFO, "Job processing task started");
+            sysLogger.log(Level.INFO, "Job processing task started");
             while (true) {
                 try {
                     if (jobProcessingTaskFuture.isCancelled()) {
@@ -1648,14 +1651,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         } else {
                             errorState = ErrorState.UNEXPECTED_EXCEPTION;
                         }
-                        SYS_LOGGER.log(Level.SEVERE, "Auto ingest system error", ex);
+                        sysLogger.log(Level.SEVERE, "Auto ingest system error", ex);
                         pauseForSystemError();
                     }
                 } catch (InterruptedException ex) {
                     break;
                 }
             }
-            SYS_LOGGER.log(Level.INFO, "Job processing task stopped");
+            sysLogger.log(Level.INFO, "Job processing task stopped");
         }
 
         /**
@@ -1664,7 +1667,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         private void requestPause() {
             synchronized (pauseLock) {
-                SYS_LOGGER.log(Level.INFO, "Job processing pause requested");
+                sysLogger.log(Level.INFO, "Job processing pause requested");
                 pauseRequested = true;
                 if (waitingForInputScan) {
                     /*
@@ -1687,7 +1690,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         private void requestResume() {
             synchronized (pauseLock) {
-                SYS_LOGGER.log(Level.INFO, "Job processing resume requested");
+                sysLogger.log(Level.INFO, "Job processing resume requested");
                 pauseRequested = false;
                 if (waitingForInputScan) {
                     /*
@@ -1717,12 +1720,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void pauseIfRequested() throws InterruptedException {
             synchronized (pauseLock) {
                 if (pauseRequested) {
-                    SYS_LOGGER.log(Level.INFO, "Job processing paused by request");
+                    sysLogger.log(Level.INFO, "Job processing paused by request");
                     pauseRequested = false;
                     setChanged();
                     notifyObservers(Event.PAUSED_BY_REQUEST);
                     pauseLock.wait();
-                    SYS_LOGGER.log(Level.INFO, "Job processing resumed after pause request");
+                    sysLogger.log(Level.INFO, "Job processing resumed after pause request");
                     setChanged();
                     notifyObservers(Event.RESUMED);
                 }
@@ -1738,12 +1741,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         private void pauseForSystemError() throws InterruptedException {
             synchronized (pauseLock) {
-                SYS_LOGGER.log(Level.SEVERE, "Job processing paused for system error");
+                sysLogger.log(Level.SEVERE, "Job processing paused for system error");
                 setChanged();
                 notifyObservers(Event.PAUSED_FOR_SYSTEM_ERROR);
                 pauseLock.wait();
                 errorState = ErrorState.NONE;
-                SYS_LOGGER.log(Level.INFO, "Job processing resumed after system error");
+                sysLogger.log(Level.INFO, "Job processing resumed after system error");
                 setChanged();
                 notifyObservers(Event.RESUMED);
             }
@@ -1773,11 +1776,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  */
                 waitingForInputScan = true;
             }
-            SYS_LOGGER.log(Level.INFO, "Job processing waiting for input scan completion");
+            sysLogger.log(Level.INFO, "Job processing waiting for input scan completion");
             synchronized (scanMonitor) {
                 scanMonitor.wait();
             }
-            SYS_LOGGER.log(Level.INFO, "Job processing finished wait for input scan completion");
+            sysLogger.log(Level.INFO, "Job processing finished wait for input scan completion");
             synchronized (pauseLock) {
                 waitingForInputScan = false;
                 pauseIfRequested();
@@ -1843,7 +1846,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                                    job.
          */
         private void processJobs() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, AutoIngestJobNodeData.InvalidDataException, CaseNodeData.InvalidDataException, JobMetricsCollectionException {
-            SYS_LOGGER.log(Level.INFO, "Started processing pending jobs queue");
+            sysLogger.log(Level.INFO, "Started processing pending jobs queue");
             Lock manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
             while (null != manifestLock) {
                 try {
@@ -1893,20 +1896,20 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while reading the lock data
          */
         private Lock dequeueAndLockNextJob() throws CoordinationServiceException, InterruptedException {
-            SYS_LOGGER.log(Level.INFO, "Checking pending jobs queue for ready job, enforcing max jobs per case");
+            sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job, enforcing max jobs per case");
             Lock manifestLock;
             synchronized (jobsLock) {
                 manifestLock = dequeueAndLockNextJob(true);
                 if (null != manifestLock) {
-                    SYS_LOGGER.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
+                    sysLogger.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
                 } else {
-                    SYS_LOGGER.log(Level.INFO, "No ready job");
-                    SYS_LOGGER.log(Level.INFO, "Checking pending jobs queue for ready job, not enforcing max jobs per case");
+                    sysLogger.log(Level.INFO, "No ready job");
+                    sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job, not enforcing max jobs per case");
                     manifestLock = dequeueAndLockNextJob(false);
                     if (null != manifestLock) {
-                        SYS_LOGGER.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
+                        sysLogger.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
                     } else {
-                        SYS_LOGGER.log(Level.INFO, "No ready job");
+                        sysLogger.log(Level.INFO, "No ready job");
                     }
                 }
             }
@@ -1978,7 +1981,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         currentJob = job;
                         break;
                     } catch (AutoIngestJobNodeData.InvalidDataException ex) {
-                        SYS_LOGGER.log(Level.WARNING, String.format("Unable to use node data for %s", manifestPath), ex); // JCTODO: Is this right?
+                        sysLogger.log(Level.WARNING, String.format("Unable to use node data for %s", manifestPath), ex); // JCTODO: Is this right?
                     }
                 }
             }
@@ -2045,7 +2048,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, JobMetricsCollectionException {
             Path manifestPath = currentJob.getManifest().getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Started processing of {0}", manifestPath);
+            sysLogger.log(Level.INFO, "Started processing of {0}", manifestPath);
             currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
             currentJob.setProcessingStage(AutoIngestJob.Stage.STARTING, Date.from(Instant.now()));
             currentJob.setProcessingHostName(AutoIngestManager.LOCAL_HOST_NAME);
@@ -2076,7 +2079,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 updateCoordinationServiceManifestNode(currentJob);
 
                 boolean retry = (!currentJob.isCanceled() && !currentJob.isCompleted());
-                SYS_LOGGER.log(Level.INFO, "Completed processing of {0}, retry = {1}", new Object[]{manifestPath, retry});
+                sysLogger.log(Level.INFO, "Completed processing of {0}, retry = {1}", new Object[]{manifestPath, retry});
                 if (currentJob.isCanceled()) {
                     Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
                     if (null != caseDirectoryPath) {
@@ -2171,7 +2174,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void updateConfiguration() throws SharedConfigurationException, InterruptedException {
             if (AutoIngestUserPreferences.getSharedConfigEnabled()) {
                 Path manifestPath = currentJob.getManifest().getFilePath();
-                SYS_LOGGER.log(Level.INFO, "Downloading shared configuration for {0}", manifestPath);
+                sysLogger.log(Level.INFO, "Downloading shared configuration for {0}", manifestPath);
                 currentJob.setProcessingStage(AutoIngestJob.Stage.UPDATING_SHARED_CONFIG, Date.from(Instant.now()));
                 new SharedConfiguration().downloadConfiguration();
             }
@@ -2189,7 +2192,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          */
         private void verifyRequiredSevicesAreRunning() throws ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException {
             Path manifestPath = currentJob.getManifest().getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Checking services availability for {0}", manifestPath);
+            sysLogger.log(Level.INFO, "Checking services availability for {0}", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.CHECKING_SERVICES, Date.from(Instant.now()));
             if (!isServiceUp(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
                 throw new DatabaseServerDownException("Case database server is down");
@@ -2236,7 +2239,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private Case openCase() throws CoordinationServiceException, CaseManagementException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
             String caseName = manifest.getCaseName();
-            SYS_LOGGER.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
+            sysLogger.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
             currentJob.setProcessingStage(AutoIngestJob.Stage.OPENING_CASE, Date.from(Instant.now()));
             /*
              * Acquire and hold a case name lock so that only one node at as
@@ -2269,18 +2272,18 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
                         }
                         currentJob.setCaseDirectoryPath(caseDirectoryPath);
-                        Case caseForJob = Case.getCurrentCase();
-                        SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
+                        Case caseForJob = Case.getOpenCase();
+                        sysLogger.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
                         return caseForJob;
 
                     } catch (KeywordSearchModuleException ex) {
                         throw new CaseManagementException(String.format("Error creating solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
-                    } catch (IllegalStateException ex) {
+                    } catch (NoCurrentCaseException ex) {
                         /*
                          * Deal with the unfortunate fact that
-                         * Case.getCurrentCase throws IllegalStateException.
+                         * Case.getOpenCase throws NoCurrentCaseException.
                          */
                         throw new CaseManagementException(String.format("Error getting current case %s for %s", caseName, manifest.getFilePath()), ex);
                     }
@@ -2415,14 +2418,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private AutoIngestDataSource identifyDataSource() throws AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
+            sysLogger.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.IDENTIFYING_DATA_SOURCE, Date.from(Instant.now()));
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             Path dataSourcePath = manifest.getDataSourcePath();
             File dataSource = dataSourcePath.toFile();
             if (!dataSource.exists()) {
-                SYS_LOGGER.log(Level.SEVERE, "Missing data source for {0}", manifestPath);
+                sysLogger.log(Level.SEVERE, "Missing data source for {0}", manifestPath);
                 currentJob.setErrorsOccurred(true);
                 setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logMissingDataSource();
@@ -2449,7 +2452,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestJobLoggerException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
+            sysLogger.log(Level.INFO, "Adding data source for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE, Date.from(Instant.now()));
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
@@ -2461,7 +2464,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 try {
                     validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath());
                 } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
+                    sysLogger.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
                     // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
                     throw ex;
                 }
@@ -2472,7 +2475,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                     currentJob.setErrorsOccurred(true);
                     jobLogger.logFailedToIdentifyDataSource();
-                    SYS_LOGGER.log(Level.WARNING, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
+                    sysLogger.log(Level.WARNING, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                     return;
                 }
 
@@ -2484,30 +2487,33 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
                         caseForJob.notifyAddingDataSource(taskId);
                         jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
-                        SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                        try {
-                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                            ingestLock.wait();
-                            return;
-                        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                            // Log that the current DSP failed and set the error flag. We consider it an error
-                            // if a DSP fails even if a later one succeeds since we expected to be able to process
-                            // the data source which each DSP on the list.
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                            currentJob.setErrorsOccurred(true);
+                        sysLogger.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                        ingestLock.wait();
+                       
+                        // at this point we got the content object(s) from the current DSP.
+                        // check whether the data source was processed successfully
+                        if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                || dataSource.getContent().isEmpty()) {
+                            // move onto the the next DSP that can process this data source
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
-                            SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                            logDataSourceProcessorResult(dataSource);
+                            continue;
                         }
+                        
+                        logDataSourceProcessorResult(dataSource);
+                        return;
                     }
                     // If we get to this point, none of the processors were successful
-                    SYS_LOGGER.log(Level.SEVERE, "All data source processors failed to process {0}", dataSource.getPath());
+                    sysLogger.log(Level.SEVERE, "All data source processors failed to process {0}", dataSource.getPath());
                     jobLogger.logFailedToAddDataSource();
+                    setCaseNodeDataErrorsOccurred(caseDirectoryPath);
+                    currentJob.setErrorsOccurred(true);
                     // Throw an exception. It will get caught & handled upstream and will result in AIM auto-pause.
                     throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Failed to process " + dataSource.getPath() + " with all data source processors");
                 }
             } finally {
                 currentJob.setDataSourceProcessor(null);
-                logDataSourceProcessorResult(dataSource);
             }
         }
 
@@ -2536,30 +2542,24 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     case NO_ERRORS:
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
-                            currentJob.setErrorsOccurred(true);
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
 
                     case NONCRITICAL_ERRORS:
                         for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                            SYS_LOGGER.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
+                            sysLogger.log(Level.WARNING, "Non-critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                         }
                         jobLogger.logDataSourceAdded();
                         if (dataSource.getContent().isEmpty()) {
-                            currentJob.setErrorsOccurred(true);
-                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logNoDataSourceContent();
                         }
                         break;
 
                     case CRITICAL_ERRORS:
                         for (String errorMessage : dataSource.getDataSourceProcessorErrorMessages()) {
-                            SYS_LOGGER.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
+                            sysLogger.log(Level.SEVERE, "Critical error running data source processor for {0}: {1}", new Object[]{manifestPath, errorMessage});
                         }
-                        currentJob.setErrorsOccurred(true);
-                        setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                         jobLogger.logFailedToAddDataSource();
                         break;
                 }
@@ -2571,9 +2571,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  * AutoIngestJob and calling cancel on the DSP, if not null, in
                  * cancelCurrentJob.
                  */
-                SYS_LOGGER.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
-                currentJob.setErrorsOccurred(true);
-                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
+                sysLogger.log(Level.WARNING, "Cancellation while waiting for data source processor for {0}", manifestPath);
                 jobLogger.logDataSourceProcessorCancelled();
             }
         }
@@ -2598,7 +2596,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", manifestPath);
+            sysLogger.log(Level.INFO, "Starting ingest modules analysis for {0} ", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.ANALYZING_DATA_SOURCE, Date.from(Instant.now()));
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
@@ -2619,17 +2617,17 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                              * is shutting down.
                              */
                             ingestLock.wait();
-                            SYS_LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
+                            sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
                                 if (!snapshot.isCancelled()) {
                                     List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
                                     if (!cancelledModules.isEmpty()) {
-                                        SYS_LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
+                                        sysLogger.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
                                         currentJob.setErrorsOccurred(true);
                                         setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                                         for (String module : snapshot.getCancelledDataSourceIngestModules()) {
-                                            SYS_LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
+                                            sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
                                             jobLogger.logIngestModuleCancelled(module);
                                         }
                                     }
@@ -2647,14 +2645,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             }
                         } else if (!ingestJobStartResult.getModuleErrors().isEmpty()) {
                             for (IngestModuleError error : ingestJobStartResult.getModuleErrors()) {
-                                SYS_LOGGER.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), manifestPath), error.getThrowable());
+                                sysLogger.log(Level.SEVERE, String.format("%s ingest module startup error for %s", error.getModuleDisplayName(), manifestPath), error.getThrowable());
                             }
                             currentJob.setErrorsOccurred(true);
                             setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logIngestModuleStartupErrors();
                             throw new AnalysisStartupException(String.format("Error(s) during ingest module startup for %s", manifestPath));
                         } else {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", manifestPath), ingestJobStartResult.getStartupException());
+                            sysLogger.log(Level.SEVERE, String.format("Ingest manager ingest job start error for %s", manifestPath), ingestJobStartResult.getStartupException());
                             currentJob.setErrorsOccurred(true);
                             setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                             jobLogger.logAnalysisStartupError();
@@ -2662,7 +2660,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
                     } else {
                         for (String warning : settingsWarnings) {
-                            SYS_LOGGER.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
+                            sysLogger.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
                         }
                         currentJob.setErrorsOccurred(true);
                         setCaseNodeDataErrorsOccurred(caseDirectoryPath);
@@ -2735,7 +2733,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void exportFiles(AutoIngestDataSource dataSource) throws FileExportException, AutoIngestJobLoggerException, InterruptedException, CaseNodeData.InvalidDataException, CoordinationServiceException {
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
-            SYS_LOGGER.log(Level.INFO, "Exporting files for {0}", manifestPath);
+            sysLogger.log(Level.INFO, "Exporting files for {0}", manifestPath);
             currentJob.setProcessingStage(AutoIngestJob.Stage.EXPORTING_FILES, Date.from(Instant.now()));
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
@@ -2746,7 +2744,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     jobLogger.logFileExportCompleted();
                 }
             } catch (FileExportException ex) {
-                SYS_LOGGER.log(Level.SEVERE, String.format("Error doing file export for %s", manifestPath), ex);
+                sysLogger.log(Level.SEVERE, String.format("Error doing file export for %s", manifestPath), ex);
                 currentJob.setErrorsOccurred(true);
                 setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                 jobLogger.logFileExportError();
@@ -2919,7 +2917,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private final long MAX_SECONDS_WITHOUT_UPDATE = JOB_STATUS_EVENT_INTERVAL_SECONDS * MAX_MISSED_JOB_STATUS_UPDATES;
 
         private PeriodicJobStatusEventTask() {
-            SYS_LOGGER.log(Level.INFO, "Periodic status publishing task started");
+            sysLogger.log(Level.INFO, "Periodic status publishing task started");
         }
 
         @Override
@@ -2952,7 +2950,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         try {
                             StatusDatabaseLogger.logToStatusDatabase(message, isError);
                         } catch (SQLException | UserPreferencesException ex) {
-                            SYS_LOGGER.log(Level.WARNING, "Failed to update status database", ex);
+                            sysLogger.log(Level.WARNING, "Failed to update status database", ex);
                         }
                     }
                 }
@@ -2978,7 +2976,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
 
             } catch (Exception ex) {
-                SYS_LOGGER.log(Level.SEVERE, "Unexpected exception in PeriodicJobStatusEventTask", ex); //NON-NLS
+                sysLogger.log(Level.SEVERE, "Unexpected exception in PeriodicJobStatusEventTask", ex); //NON-NLS
             }
         }
 

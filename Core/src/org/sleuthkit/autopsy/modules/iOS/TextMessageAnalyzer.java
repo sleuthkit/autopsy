@@ -82,7 +82,7 @@ class TextMessageAnalyzer {
             }
             for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(Case.getOpenCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
                     fileId = file.getId();
                     ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
@@ -110,6 +110,13 @@ class TextMessageAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
+        Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
@@ -118,7 +125,6 @@ class TextMessageAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
-        Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile file = skCase.getAbstractFileById(fileId);

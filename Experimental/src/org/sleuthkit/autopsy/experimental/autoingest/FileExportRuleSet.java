@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.apache.commons.codec.binary.Hex;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  * Uniquely named file export rules organized into uniquely named rule sets.
@@ -374,7 +375,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
          */
         List<Long> evaluate(long dataSourceId) throws ExportRulesException {
             try {
-                SleuthkitCase db = Case.getCurrentCase().getSleuthkitCase();
+                SleuthkitCase db = Case.getOpenCase().getSleuthkitCase();
                 try (SleuthkitCase.CaseDbQuery queryResult = db.executeQuery(getQuery(dataSourceId))) {
                     ResultSet resultSet = queryResult.getResultSet();
                     List<Long> fileIds = new ArrayList<>();
@@ -383,7 +384,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
                     }
                     return fileIds;
                 }
-            } catch (IllegalStateException ex) {
+            } catch (NoCurrentCaseException ex) {
                 throw new ExportRulesException("No current case", ex);
             } catch (TskCoreException ex) {
                 throw new ExportRulesException("Error querying case database", ex);
@@ -1060,7 +1061,12 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
              *                              exist.
              */
             private String getConditionClause(int index) throws ExportRulesException {
-                Case currentCase = Case.getCurrentCase();
+                Case currentCase;
+                try {
+                    currentCase = Case.getOpenCase();
+                } catch (NoCurrentCaseException ex) {
+                    throw new ExportRulesException("Exception while getting open case.", ex);
+                }
                 SleuthkitCase caseDb = currentCase.getSleuthkitCase();
                 BlackboardArtifact.Type artifactType;
                 BlackboardAttribute.Type attributeType;

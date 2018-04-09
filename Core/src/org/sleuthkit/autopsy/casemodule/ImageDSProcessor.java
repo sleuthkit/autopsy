@@ -278,7 +278,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     }
 
     @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;

@@ -85,19 +85,49 @@ public interface DataContentViewer {
     public boolean isSupported(Node node);
 
     /**
-     * Checks whether the given viewer is preferred for the Node. This is a bit
-     * subjective, but the idea is that Autopsy wants to display the most
-     * relevant tab. The more generic the viewer, the lower the return value
-     * should be. This will only be called on viewers that support the given
-     * node.
-     *
-     * @param node Node to check for preference
-     *
-     * @return an int (0-10) higher return means the viewer has higher priority
-     *         0 means not supported 1 to 2 means the module will display all
-     *         file types (such as the hex viewer) 3-10 are prioritized by
-     *         Content viewer developer. Modules that operate on very few file
-     *         types should be towards 10.
-     */
+      * Checks whether the given viewer is preferred for the Node. This is a bit
+      * subjective, but the idea is that Autopsy wants to display the most
+      * relevant tab. The more generic the viewer, the lower the return value
+      * should be. This will only be called on viewers that support the given
+      * node (i.e., isSupported() has already returned true).
+      *
+      * The following are some examples of the current levels in use. If the selected
+      * node is an artifact, the level may be determined by both the artifact and its
+      * associated file.
+      *
+      * Level 7 - Based on the artifact, if any, in the selected node and specific 
+      * to an artifact type or types. Current content viewers that can return level 7 are
+      * the Messages tab (only supported for email and SMS) and the Indexed Text tab
+      * when the selected node is a Keyword Search hit.
+      *
+      * Level 6 - Based on the artifact, if any, in the selected node but not
+      * restricted to particular types. The current content viewer that can return level 6
+      * is the Results tab. It returns this level for most artifact types,
+      * unless the associated file is assumed to be of greater interest (for example,
+      * a Hash Set Hit will not be level 6 because the file itself is of greater interest).
+      * 
+      * Level 5 - Based on the file in the selected node and very specific to the file type. The current 
+      * content viewer that will return level 5 is 
+      * the Application tab, which supports media files (such as images) and 
+      * certain types of databases.
+      *
+      * Level 4 - Based on the file in the selected node but fairly general. 
+      * Currently this is the level returned by the Indexed Text tab if Keyword Search 
+      * has been run (unless the node is a Keyword Search hit or a Credit Card account).
+      * This is the default tab for most files.
+      *
+      * Level 3 - Based on the artifact, if any, in the selected node where the 
+      * artifact is thought to be of less interest than the associated file. This 
+      * level is returned by the Results tab for artifacts like Hash Set Hits.
+      *
+      * Level 1 - Very general and should always be available. The Hex, Strings, and Metadata tabs
+      * are all this level
+      *
+      * Level 0 - For cases where the content viewer should never be displayed by default.
+      *
+      * @param node Node to check for preference
+      *
+      * @return an int (0-10) higher return means the viewer has higher priority
+      */
     public int isPreferred(Node node);
 }

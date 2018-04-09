@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,21 +31,27 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Timer;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
  * Monitors disk space and memory and cancels ingest if disk space runs low.
  * <p>
- * Note: This should be a singleton and currently is used as such, with the
- * only instance residing in the IngestManager class.
+ * Note: This should be a singleton and currently is used as such, with the only
+ * instance residing in the IngestManager class.
  */
 public final class IngestMonitor {
 
     public static final int DISK_FREE_SPACE_UNKNOWN = -1;
     private static final int INITIAL_INTERVAL_MS = 60000; //1 min.
     private static final int MAX_LOG_FILES = 3;
-    private static final java.util.logging.Logger MONITOR_LOGGER = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
+    
+    /*
+     * The monitorLogger used the standard Java Logger type for compact logs
+     * without the stack trace.
+     */
+    private static final java.util.logging.Logger monitorLogger = java.util.logging.Logger.getLogger("monitor"); //NON-NLS
     private final Logger logger = Logger.getLogger(IngestMonitor.class.getName());
     private Timer timer;
     private MonitorTimerAction timerAction;
@@ -62,8 +68,8 @@ public final class IngestMonitor {
             FileHandler monitorLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/monitor.log", 0, MAX_LOG_FILES); //NON-NLS
             monitorLogHandler.setFormatter(new SimpleFormatter());
             monitorLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
-            MONITOR_LOGGER.setUseParentHandlers(false);
-            MONITOR_LOGGER.addHandler(monitorLogHandler);
+            monitorLogger.setUseParentHandlers(false);
+            monitorLogger.addHandler(monitorLogHandler);
         } catch (IOException | SecurityException ex) {
             logger.log(Level.SEVERE, "Failed to create memory usage logger", ex); //NON-NLS
         }
@@ -144,11 +150,11 @@ public final class IngestMonitor {
          */
         private void findRootDirectoryForCurrentCase() {
             try {
-                Case currentCase = Case.getCurrentCase();
+                Case currentCase = Case.getOpenCase();
                 findRootDirectoryForCurrentCase(currentCase);
-            } catch (IllegalStateException unused) {
+            } catch (NoCurrentCaseException unused) {
                 /*
-                 * Case.getCurrentCase() throws IllegalStateException when there
+                 * Case.getOpenCase() throws NoCurrentCaseException when there
                  * is no case.
                  */
                 root = new File(File.separator);
@@ -201,7 +207,7 @@ public final class IngestMonitor {
                 IngestServices.getInstance().postMessage(IngestMessage.createManagerErrorMessage(
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.title", diskPath),
                         NbBundle.getMessage(this.getClass(), "IngestMonitor.mgrErrMsg.lowDiskSpace.msg", diskPath)));
-                MONITOR_LOGGER.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
+                monitorLogger.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
                 logger.log(Level.SEVERE, "Stopping ingest due to low disk space on {0}", diskPath); //NON-NLS
             }
         }
@@ -210,12 +216,13 @@ public final class IngestMonitor {
          * Writes current message usage to the memory usage log.
          */
         private void logMemoryUsage() {
-            MONITOR_LOGGER.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+            monitorLogger.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
         }
-        
+
         /**
-         * Writes current disk space usage of the drive where case dir resides to log.
-         */        
+         * Writes current disk space usage of the drive where case dir resides
+         * to log.
+         */
         private void logDiskSpaceUsage() {
             final long freeSpace = root.getFreeSpace();
             logger.log(Level.INFO, "Available disk space on drive where case dir resides is {0} (bytes)", freeSpace);  //NON-NLS
@@ -252,18 +259,17 @@ public final class IngestMonitor {
         private long getFreeSpace() throws SecurityException {
             // always return "UNKNOWN", see note below
             return DISK_FREE_SPACE_UNKNOWN;
-            
-            /* NOTE: use and accuracy of this code for network drives needs to be investigated and validated
-            final long freeSpace = root.getFreeSpace();
-            if (0 == freeSpace) {
-                // Check for a network drive, some network filesystems always
-                // return zero.
-                final String monitoredPath = root.getAbsolutePath();
-                if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
-                    return DISK_FREE_SPACE_UNKNOWN;
-                }
-            }
-            return freeSpace;*/
+
+            /*
+             * NOTE: use and accuracy of this code for network drives needs to
+             * be investigated and validated final long freeSpace =
+             * root.getFreeSpace(); if (0 == freeSpace) { // Check for a network
+             * drive, some network filesystems always // return zero. final
+             * String monitoredPath = root.getAbsolutePath(); if
+             * (monitoredPath.startsWith("\\\\") ||
+             * monitoredPath.startsWith("//")) { return DISK_FREE_SPACE_UNKNOWN;
+             * } } return freeSpace;
+             */
         }
     }
 

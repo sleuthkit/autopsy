@@ -25,6 +25,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.python.google.common.collect.Iterables;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -38,12 +39,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * relationships of all the accounts in this node.
  *
  */
-class AccountDetailsNode extends AbstractNode {
+final class AccountDetailsNode extends AbstractNode {
 
     private final static Logger logger = Logger.getLogger(AccountDetailsNode.class.getName());
 
     AccountDetailsNode(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter filter, CommunicationsManager commsManager) {
         super(Children.create(new AccountRelationshipChildren(accountDeviceInstances, commsManager, filter), true));
+        String displayName = (accountDeviceInstances.size() == 1)
+                ? Iterables.getOnlyElement(accountDeviceInstances).getAccount().getTypeSpecificID()
+                : accountDeviceInstances.size() + " accounts";
+        setDisplayName(displayName);
     }
 
     /**

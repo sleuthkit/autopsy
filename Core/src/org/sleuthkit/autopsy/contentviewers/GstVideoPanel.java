@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.FrameCapture;
 import org.sleuthkit.autopsy.corecomponents.VideoFrame;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -181,6 +182,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     }
 
     @Override
+    @NbBundle.Messages ({"GstVideoPanel.noOpenCase.errMsg=No open case available."})
     void setupVideo(final AbstractFile file, final Dimension dims) {
         reset();
         infoLabel.setText("");
@@ -191,6 +193,18 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             videoPanel.removeAll();
             pauseButton.setEnabled(false);
             progressSlider.setEnabled(false);
+            return;
+        }
+
+        java.io.File ioFile;
+        try {
+            ioFile = VideoUtils.getTempVideoFile(file);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
+            pauseButton.setEnabled(false);
+            progressSlider.setEnabled(false);
+
             return;
         }
 
@@ -205,7 +219,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         pauseButton.setEnabled(true);
         progressSlider.setEnabled(true);
 
-        java.io.File ioFile = VideoUtils.getTempVideoFile(file);
 
         gstVideoComponent = new VideoComponent();
         synchronized (playbinLock) {
@@ -537,7 +550,14 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                     return;
                 }
             } else if (state.equals(State.READY)) {
-                final File tempVideoFile = VideoUtils.getTempVideoFile(currentFile);
+                final File tempVideoFile;
+                try {
+                    tempVideoFile = VideoUtils.getTempVideoFile(currentFile);
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.WARNING, "Exception while getting open case."); //NON-NLS
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
 
                 new ExtractMedia(currentFile, tempVideoFile).execute();
 

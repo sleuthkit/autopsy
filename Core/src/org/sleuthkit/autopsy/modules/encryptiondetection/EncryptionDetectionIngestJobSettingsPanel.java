@@ -174,7 +174,7 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
                         .addComponent(minimumEntropyLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(minimumEntropyTextbox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(33, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -194,7 +194,7 @@ final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngest
                 .addComponent(fileSizeMultiplesEnforcedCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(slackFilesAllowedCheckbox)
-                .addContainerGap(160, Short.MAX_VALUE))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

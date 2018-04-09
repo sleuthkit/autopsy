@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-17 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -106,7 +107,13 @@ public final class OpenAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited() && Case.getCurrentCase().hasData();
+        Case openCase;
+        try {
+            openCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            return false;
+        }
+        return super.isEnabled() && Installer.isJavaFxInited() && openCase.hasData();
     }
 
     /**
@@ -145,10 +152,13 @@ public final class OpenAction extends CallableSystemAction {
     public void performAction() {
 
         //check case
-        if (!Case.isCaseOpen()) {
+        final Case currentCase;
+        try {
+            currentCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
         }
-        final Case currentCase = Case.getCurrentCase();
 
         if (tooManyFiles()) {
             Platform.runLater(OpenAction::showTooManyFiles);
@@ -178,8 +188,8 @@ public final class OpenAction extends CallableSystemAction {
 
     private boolean tooManyFiles() {
         try {
-            return FILE_LIMIT < Case.getCurrentCase().getSleuthkitCase().countFilesWhere("1 = 1");
-        } catch (IllegalStateException ex) {
+            return FILE_LIMIT < Case.getOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can not open image gallery with no case open.", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error counting files in the DB.", ex);

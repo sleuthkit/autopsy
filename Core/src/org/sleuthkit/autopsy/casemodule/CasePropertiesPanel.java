@@ -49,7 +49,12 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
     }
 
     void updateCaseInfo() {
-        theCase = Case.getCurrentCase();
+        try {
+            theCase = Case.getOpenCase();
+        } catch (NoCurrentCaseException ex) { 
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            return;
+        }
         lbCaseNameText.setText(theCase.getDisplayName());
         lbCaseNumberText.setText(theCase.getNumber());
         lbExaminerNameText.setText(theCase.getExaminer());
@@ -78,9 +83,9 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
             try {
                 EamDb dbManager = EamDb.getInstance();
                 if (dbManager != null) {
-                    CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCase());
+                    CorrelationCase correlationCase = dbManager.getCase(theCase);
                     if (null == correlationCase) {
-                        correlationCase = dbManager.newCase(Case.getCurrentCase());
+                        correlationCase = dbManager.newCase(theCase);
                     }
                     currentOrg = correlationCase.getOrg();
                 }

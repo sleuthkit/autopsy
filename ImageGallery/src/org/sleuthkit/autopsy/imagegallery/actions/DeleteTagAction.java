@@ -35,6 +35,7 @@ import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -122,7 +123,7 @@ public class DeleteTagAction extends Action {
 
             try {
                 List<ContentTag> existingTagsList
-                        = Case.getCurrentCase().getServices().getTagsManager()
+                        = Case.getOpenCase().getServices().getTagsManager()
                         .getContentTagsByContent(file);
 
                 Collection<TagName> tagNamesList
@@ -138,7 +139,7 @@ public class DeleteTagAction extends Action {
                         }
                     }
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagMenu.class.getName())
                         .log(Level.SEVERE, "Error retrieving tags for TagMenu", ex); //NON-NLS
             }
