@@ -43,7 +43,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 abstract class CommonFilesMetaDataBuilder {
 
     private final Map<Long, String> dataSourceIdToNameMap;
-    //TODO subclass this class to specify where clause and/or additional algorithms.
 
     CommonFilesMetaDataBuilder(Map<Long, String> dataSourceIdMap) {
         dataSourceIdToNameMap = dataSourceIdMap;
@@ -118,37 +117,5 @@ abstract class CommonFilesMetaDataBuilder {
         String whereClause = this.buildSqlWhereClause();
         List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
         return files;
-    }
-}
-
-class SingleDataSource extends CommonFilesMetaDataBuilder {
-
-    private static final String allDataSourcesWhereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
-
-    private final Long selectedDataSourceId;
-
-    public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap) {
-        super(dataSourceIdMap);
-        this.selectedDataSourceId = dataSourceId;
-    }
-
-    @Override
-    protected String buildSqlWhereClause() {
-        Object[] args = new String[]{Long.toString(this.selectedDataSourceId), Long.toString(this.selectedDataSourceId)};
-        return String.format(SingleDataSource.allDataSourcesWhereClause, args);        
-    }
-}
-
-class AllDataSources extends CommonFilesMetaDataBuilder {
-
-    private static final String singleDataSourceWhereClause = "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5";
-
-    public AllDataSources(Map<Long, String> dataSourceIdMap) {
-        super(dataSourceIdMap);
-    }
-
-    @Override
-    protected String buildSqlWhereClause() {
-        return AllDataSources.singleDataSourceWhereClause;
     }
 }
