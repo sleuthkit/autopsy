@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 
@@ -33,72 +34,79 @@ import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreference
  * Write auto-ingest status updates to a database.
  */
 public class StatusDatabaseLogger {
+
     /**
-     * Log the current status to the database using the database
-     * parameters saved in AutoIngestUserPreferences.
-     * @param message  Current status message
-     * @param isError  true if we're in an error state, false otherwise
-     * @throws SQLException
+     * Log the current status to the database using the database parameters
+     * saved in AutoIngestUserPreferences.
+     *
+     * @param message Current status message
+     * @param isError true if we're in an error state, false otherwise
+     *
+     * @throws SQLException             If a SQL data access error occurs.
+     * @throws UserPreferencesException If there's an issue reading the user
+     *                                  preferences.
      */
-    public static void logToStatusDatabase(String message, boolean isError) throws SQLException, UserPreferencesException{
-        
-        try{
+    public static void logToStatusDatabase(String message, boolean isError) throws SQLException, UserPreferencesException {
+
+        try {
             Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException ex){
-            java.util.logging.Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
-            SYS_LOGGER.log(Level.WARNING, "Error loading postgresql driver", ex);
+        } catch (ClassNotFoundException ex) {
+            Logger sysLogger = AutoIngestSystemLogger.getLogger();
+            sysLogger.log(Level.WARNING, "Error loading postgresql driver", ex);
         }
-        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" 
+        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://"
                 + AutoIngestUserPreferences.getLoggingDatabaseHostnameOrIP()
                 + ":" + AutoIngestUserPreferences.getLoggingPort()
                 + "/" + AutoIngestUserPreferences.getLoggingDatabaseName(),
-                AutoIngestUserPreferences.getLoggingUsername(), 
+                AutoIngestUserPreferences.getLoggingUsername(),
                 AutoIngestUserPreferences.getLoggingPassword());
                 Statement statement = connection.createStatement();) {
 
             logToStatusDatabase(statement, message, isError);
         }
     }
-    
+
     /**
-     * Log the current status to the database using an already 
-     * configured Statement.
+     * Log the current status to the database using an already configured
+     * Statement.
+     *
      * @param statement SQL statement (must have already been created)
      * @param message   Current status message
      * @param isError   true if we're in an error state, false otherwise
-     * @throws SQLException 
+     *
+     * @throws SQLException
      */
-    public static void logToStatusDatabase(Statement statement, String message, boolean isError) throws SQLException{
-        if((statement == null) || statement.isClosed()){
+    public static void logToStatusDatabase(Statement statement, String message, boolean isError) throws SQLException {
+        if ((statement == null) || statement.isClosed()) {
             throw new SQLException("SQL Statement is null/closed");
         }
-        
+
         int status;
-        if(isError){
+        if (isError) {
             status = 1;
         } else {
             status = 0;
         }
-        String timestamp = new java.text.SimpleDate‌​Format("yyyy-MM-dd HH:mm:ss").format(ne‌​w java.util.Date());
+        String timestamp = new java.text.SimpleDate‌​Format("yyyy-MM-dd HH:mm:ss").format( ne‌​w java.util.Date());
 
-        String checkForPreviousEntry = "SELECT * FROM statusUpdates WHERE tool='" + UserPreferences.getAppName() + "' AND " +
-                "node='" + NetworkUtils.getLocalHostName() + "'";
+        String checkForPreviousEntry = "SELECT * FROM statusUpdates WHERE tool='" + UserPreferences.getAppName() + "' AND "
+                + "node='" + NetworkUtils.getLocalHostName() + "'";
 
         ResultSet resultSet = statement.executeQuery(checkForPreviousEntry);
         String logMessage;
-        if(resultSet.next()){
-            logMessage = "UPDATE statusUpdates SET reportTime='" + timestamp + 
-                    "', message='" + message + "', status=" + status 
+        if (resultSet.next()) {
+            logMessage = "UPDATE statusUpdates SET reportTime='" + timestamp
+                    + "', message='" + message + "', status=" + status
                     + " WHERE tool='" + UserPreferences.getAppName() + "' AND node='" + NetworkUtils.getLocalHostName() + "'";
         } else {
-            logMessage = "INSERT INTO statusUpdates (tool, node, reportTime, message, status) " + 
-                "VALUES ('" + UserPreferences.getAppName()
-                + "', '" + NetworkUtils.getLocalHostName() + 
-                "', '" + 
-                timestamp + "', '" + message + "', '" + status + "')";
+            logMessage = "INSERT INTO statusUpdates (tool, node, reportTime, message, status) "
+                    + "VALUES ('" + UserPreferences.getAppName()
+                    + "', '" + NetworkUtils.getLocalHostName()
+                    + "', '"
+                    + timestamp + "', '" + message + "', '" + status + "')";
 
         }
-        statement.execute(logMessage);        
+        statement.execute(logMessage);
     }
 
 }

@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import static junit.framework.Assert.assertFalse;
-import junit.framework.TestCase;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
@@ -44,8 +43,11 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ExtensionCondition;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.FullNameCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.ParentPathCondition;
+import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
 import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
 import org.sleuthkit.autopsy.testutils.IngestJobRunner;
@@ -131,11 +133,13 @@ public class IngestFileFiltersTest extends NbTestCase {
         HashMap<String, Rule> rule = new HashMap<>();
         rule.put("Rule", new Rule("testFileType", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Filter for dir1 and no unallocated space
-        FilesSet Files_Dirs_Unalloc_Ingest_Filter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);        
+        FilesSet dirFilter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);        
 
         try {
             Case openCase = Case.getOpenCase();
-            runIngestJob(openCase.getDataSources(), Files_Dirs_Unalloc_Ingest_Filter);
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            runIngestJob(openCase.getDataSources(), templates, dirFilter);
             FileManager fileManager = openCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
             String mimeType = results.get(0).getMIMEType();
@@ -147,8 +151,8 @@ public class IngestFileFiltersTest extends NbTestCase {
                 //All files in dir1 should have MIME type, except '.' '..' and slack files
                 if (file.getParentPath().equalsIgnoreCase("/dir1/")) {
                     if (!(file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
-                        String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
-                        assertTrue(errMsg, !(file.getMIMEType() == null || file.getMIMEType().isEmpty()));
+                        String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                        assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
                     }
                 } else { //All files not in dir1 shouldn't have MIME type
                     String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
@@ -161,16 +165,185 @@ public class IngestFileFiltersTest extends NbTestCase {
         }
     }
     
-    private void runIngestJob(List<Content> datasources, FilesSet filter) {
-        FileTypeIdModuleFactory factory = new FileTypeIdModuleFactory();
-        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
-        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
-        template.setEnabled(true);
-        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
-        templates.add(template);
+    public void testExtAndDirWithOneRule() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("Rule", new Rule("testExtAndDirWithOneRule", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+        //Build the filter that ignore unallocated space and with one rule
+        FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, true, rules);
+        
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            runIngestJob(openCase.getDataSources(), templates, filesExtDirsFilter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();            
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(62, results.size());
+            for (AbstractFile file : results) {
+                //Files with jpg extension in dir1 should have MIME Type
+                if (file.getParentPath().equalsIgnoreCase("/dir1/") && file.getNameExtension().equalsIgnoreCase("jpg")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                } else { //All others shouldn't have MIME Type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
+    public void testExtAndDirWithTwoRules() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        rules.put("rule2", new Rule("FindDir1Directory", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+        //Build the filter that ingnore unallocated space and with 2 rules
+        FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all files in dir1 and all files with jpg extention.", false, true, rules);        
+          
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            runIngestJob(openCase.getDataSources(), templates, filesExtDirsFilter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();           
+            List<AbstractFile> results = fileManager.findFiles("%%");  
+            assertEquals(62, results.size());
+            for (AbstractFile file : results) {               
+                if (file.getNameExtension().equalsIgnoreCase("jpg")) { //All files with .jpg extension should have MIME type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty()); 
+                } else if (file.getParentPath().equalsIgnoreCase("/dir1/")) { 
+                    //All files in dir1 should have MIME type except '.' '..' slack files
+                    if (file.getName().equals(".") || file.getName().equals("..") || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) {
+                        String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                        assertTrue(errMsg, file.getMIMEType() == null);
+                    } else {
+                        String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                        assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                    }
+                } else { //All files that are not in dir1 or not with .jpg extension should not have MIME type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);                     
+                }
+            }
+         } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+   }
+   
+    public void testFullFileNameRule() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule", new Rule("FindFileWithFullName", new FullNameCondition("file.docx"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        //Build the filter to find file: file.docx
+        FilesSet fullNameFilter = new FilesSet("Filter", "Filter to find file.docx.", false, true, rules);
+                 
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+
+            runIngestJob(openCase.getDataSources(), templates, fullNameFilter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();           
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(62, results.size());
+            for (AbstractFile file : results) {
+                //Only file.docx has MIME Type
+                if (file.getName().equalsIgnoreCase("file.docx")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                } else {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
+    public void testCarvingWithExtRuleAndUnallocSpace() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        
+        //Build the filter to find files with .jpg and .gif extension and unallocated space
+        FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, false, rules);
+                  
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            templates.add(getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory()));
+            runIngestJob(openCase.getDataSources(), templates, extensionFilter); 
+            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(70, results.size()); 
+            int carvedJpgGifFiles = 0;
+            for (AbstractFile file : results) {
+                if (file.getNameExtension().equalsIgnoreCase("jpg") || file.getNameExtension().equalsIgnoreCase("gif")) { //Unalloc file and .jpg files in dir1, dir2, $CarvedFiles, root directory should have MIME type
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                    
+                    if (file.getParentPath().equalsIgnoreCase("/$CarvedFiles/")) {
+                        carvedJpgGifFiles++;
+                    }
+                } else if (file.getName().startsWith("Unalloc_")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                } else { //All other files should not have MIME type. 
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
+            //Make sure we have carved jpg/gif files
+            assertEquals(2, carvedJpgGifFiles);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+  
+    public void testCarvingNoUnallocatedSpace() {
+        HashMap<String, Rule> rules = new HashMap<>();
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        
+        //Build the filter to find files with .jpg and .gif extension
+        FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, true, rules);        
+          
+        try {
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            templates.add(getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, extensionFilter);
+            try {
+                List<IngestModuleError> errs = IngestJobRunner.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+                //Ingest fails because Carving wants unallocated space
+                assertEquals(1, errs.size());
+                assertEquals("PhotoRec Carver", errs.get(0).getModuleDisplayName());
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }        
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
+    private void runIngestJob(List<Content> datasources, ArrayList<IngestModuleTemplate> templates, FilesSet filter) {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, filter);
         try {
             List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
+            for (IngestModuleError err : errs) {
+                System.out.println(String.format("Error: %s: %s.", err.getModuleDisplayName(), err.toString()));
+            }
             assertEquals(0, errs.size());
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
@@ -178,4 +351,10 @@ public class IngestFileFiltersTest extends NbTestCase {
         }        
     }
         
+    private IngestModuleTemplate getIngestModuleTemplate(IngestModuleFactoryAdapter factory) {
+        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
+        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
+        template.setEnabled(true);
+        return template;
+    }
  }
