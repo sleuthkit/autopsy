@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
+import java.util.Random;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -648,6 +649,129 @@ public class ServicesHealthMonitor {
                 getInstance().writeCurrentStateToDatabase();
             } catch (HealthMonitorException ex) {
                 logger.log(Level.SEVERE, "Error writing current metrics to database", ex); //NON-NLS
+            }
+        }
+    }
+    
+    /**
+     * TODO: remove this - testing only
+     * Will put a bunch of sample data into the database
+     */
+    final void populateDatabase(int nDays, int nNodes) throws HealthMonitorException {
+        
+        if(! isEnabled.get()) {
+            throw new HealthMonitorException("Can't populate database - monitor not enabled");
+        }
+        
+        // Write to the database
+        CoordinationService.Lock lock = getSharedDbLock();
+        if(lock == null) {
+            throw new HealthMonitorException("Error getting database lock");
+        }
+        
+        int minIndexTime = 9000000;
+        int maxIndexTimeOverMin = 50000000;
+        
+        int minConnTime = 15000000;
+        int maxConnTimeOverMin = 18000000;
+        
+        Random rand = new Random();
+        
+        long maxTimestamp = System.currentTimeMillis();
+        long millisPerHour = 1000 * 60 * 60;
+        long minTimestamp = maxTimestamp - (nDays * (millisPerHour * 24));
+        
+        
+        try {
+            Connection conn = connect();
+            if(conn == null) {
+                throw new HealthMonitorException("Error getting database connection");
+            }
+            
+            try (Statement statement = conn.createStatement()) {
+
+                statement.execute("DELETE FROM timing_data");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            
+            for(int node = 0;node < nNodes; node++) {
+                
+                String host = "testHost" + node;
+
+                // Add timing metrics to the database
+                String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
+
+                    // Record index chunk every hour
+                    for(long timestamp = minTimestamp;timestamp < maxTimestamp;timestamp += millisPerHour) {
+
+                        long aveTime;
+                        
+                        // Make different cases
+                        int outlierVal = rand.nextInt(30);
+                        if(outlierVal < 2){
+                            aveTime = minIndexTime + maxIndexTimeOverMin + rand.nextInt(maxIndexTimeOverMin);
+                        } else if(outlierVal == 2){
+                            aveTime = (minIndexTime / 2) + rand.nextInt(minIndexTime / 2);
+                        } else if(outlierVal < 17) {
+                            aveTime = minIndexTime + (rand.nextInt(maxIndexTimeOverMin) / 2);
+                        } else {
+                            aveTime = minIndexTime + rand.nextInt(maxIndexTimeOverMin);
+                        }
+                        
+                        
+                        statement.setString(1, "Solr: Index chunk");
+                        statement.setString(2, host);
+                        statement.setLong(3, timestamp);
+                        statement.setLong(4, 0);
+                        statement.setLong(5, aveTime);
+                        statement.setLong(6, 0);
+                        statement.setLong(7, 0);
+
+                        statement.execute();
+                    }
+                    
+                    // Make some case opening ones
+                    // Record index chunk every hour
+                    for(long timestamp = minTimestamp;timestamp < maxTimestamp;timestamp += (1 + rand.nextInt(10)) * millisPerHour) {
+
+                        long aveTime = minConnTime + rand.nextInt(maxConnTimeOverMin);
+                        
+                        // Check if we should make an outlier
+                        int outlierVal = rand.nextInt(30);
+                        if(outlierVal < 2){
+                            aveTime = minConnTime + maxConnTimeOverMin + rand.nextInt(maxConnTimeOverMin);
+                        } else if(outlierVal == 8){
+                            aveTime = (minConnTime / 2) + rand.nextInt(minConnTime / 2);
+                        }
+                        
+                        statement.setString(1, "Solr: Connectivity check");
+                        statement.setString(2, host);
+                        statement.setLong(3, timestamp);
+                        statement.setLong(4, 0);
+                        statement.setLong(5, aveTime);
+                        statement.setLong(6, 0);
+                        statement.setLong(7, 0);
+
+                        statement.execute();
+                    }
+
+                } catch (SQLException ex) {
+                    throw new HealthMonitorException("Error saving metric data to database", ex);
+                } finally {
+                    try {
+                        conn.close();
+                    } catch (SQLException ex) {
+                        logger.log(Level.SEVERE, "Error closing Connection.", ex);
+                    }
+                }
+            }
+        } finally {
+            try {
+                lock.release();
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                throw new HealthMonitorException("Error releasing database lock", ex);
             }
         }
     }
