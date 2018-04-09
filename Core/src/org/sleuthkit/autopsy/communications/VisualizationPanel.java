@@ -575,6 +575,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 graph.getModel().beginUpdate();
                 try {
                     layout.execute(graph.getDefaultParent());
+                    fitGraph();
                 } finally {
                     graph.getModel().endUpdate();
                     progressIndicator.finish();
@@ -586,7 +587,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             protected void done() {
                 try {
                     get();
-                    fitGraph();
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.WARNING, "CVT graph layout failed.", ex);
                     if (lockedVertexModel.isEmpty()) {
