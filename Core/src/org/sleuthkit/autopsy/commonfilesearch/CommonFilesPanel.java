@@ -52,6 +52,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
+    public static final Long NO_DATA_SOURCE_SELECTED = -1L; 
+    
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
 
@@ -182,7 +184,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
             private Long determineDataSourceId() {
-                Long selectedObjId = 0L;
+                Long selectedObjId = CommonFilesPanel.NO_DATA_SOURCE_SELECTED;
                 if (CommonFilesPanel.this.singleDataSource) {
                     for (Entry<Long, String> dataSource : CommonFilesPanel.this.dataSourceMap.entrySet()) {
                         if (dataSource.getValue().equals(CommonFilesPanel.this.selectedDataSource)) {
@@ -196,8 +198,17 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
-                Long selectedObjId = determineDataSourceId();
-                return new CommonFilesMetaDataBuilder(selectedObjId, CommonFilesPanel.this.dataSourceMap).collateFiles();
+                Long dataSourceId = determineDataSourceId();
+                
+                CommonFilesMetaDataBuilder builder;
+                
+                if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
+                    builder = new AllDataSources(dataSourceMap);
+                } else {
+                    builder = new SingleDataSource(dataSourceId, dataSourceMap);
+                }
+                
+                return builder.collateFiles();
             }
 
             @Override
