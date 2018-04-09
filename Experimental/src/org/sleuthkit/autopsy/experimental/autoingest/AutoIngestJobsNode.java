@@ -33,7 +33,11 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnaps
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
-final class AutoIngestNode extends AbstractNode {
+/**
+ * A node which represents all AutoIngestJobs of a given AutoIngestJobStatus.
+ * Each job with the specified status will have a child node representing it.
+ */
+final class AutoIngestJobsNode extends AbstractNode {
 
     @Messages({
         "AutoIngestNode.caseName.text=Case Name",
@@ -47,24 +51,37 @@ final class AutoIngestNode extends AbstractNode {
         "AutoIngestNode.status.text=Status"
     })
 
-    AutoIngestNode(JobsSnapshot snapshot, AutoIngestJobType type) {
-        super(Children.create(new AutoIngestNodeChildren(snapshot, type), false));
+    /**
+     * Construct a new AutoIngestJobsNode.
+     */
+    AutoIngestJobsNode(JobsSnapshot snapshot, AutoIngestJobStatus status) {
+        super(Children.create(new AutoIngestNodeChildren(snapshot, status), false));
     }
 
+    /**
+     * A ChildFactory for generating JobNodes.
+     */
     static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
-        private final AutoIngestJobType autoIngestJobType;
+        private final AutoIngestJobStatus autoIngestJobStatus;
         private final JobsSnapshot jobsSnapshot;
 
-        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobType type) {
+        /**
+         * Create children nodes for the AutoIngestJobsNode which will each
+         * represent a single AutoIngestJob
+         *
+         * @param snapshot the snapshot which contains the AutoIngestJobs
+         * @param status   the status of the jobs being displayed
+         */
+        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status) {
             jobsSnapshot = snapshot;
-            autoIngestJobType = type;
+            autoIngestJobStatus = status;
         }
 
         @Override
         protected boolean createKeys(List<AutoIngestJob> list) {
             List<AutoIngestJob> jobs;
-            switch (autoIngestJobType) {
+            switch (autoIngestJobStatus) {
                 case PENDING_JOB:
                     jobs = jobsSnapshot.getPendingJobs();
                     break;
@@ -85,28 +102,40 @@ final class AutoIngestNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(AutoIngestJob key) {
-            return new JobNode(key, autoIngestJobType);
+            return new JobNode(key, autoIngestJobStatus);
         }
 
     }
 
     /**
-     * A node which represents a single multi user case.
+     * A node which represents a single auto ingest job.
      */
     static final class JobNode extends AbstractNode {
 
         private final AutoIngestJob autoIngestJob;
-        private final AutoIngestJobType jobType;
+        private final AutoIngestJobStatus jobStatus;
 
-        JobNode(AutoIngestJob job, AutoIngestJobType type) {
+        /**
+         * Construct a new JobNode to represent an AutoIngestJob and its status.
+         *
+         * @param job    - the AutoIngestJob being represented by this node
+         * @param status - the current status of the AutoIngestJob being
+         *               represented
+         */
+        JobNode(AutoIngestJob job, AutoIngestJobStatus status) {
             super(Children.LEAF);
-            jobType = type;
+            jobStatus = status;
             autoIngestJob = job;
             super.setName(autoIngestJob.getManifest().getCaseName());
             setName(autoIngestJob.getManifest().getCaseName());
             setDisplayName(autoIngestJob.getManifest().getCaseName());
         }
 
+        /**
+         * Get the AutoIngestJob which this node represents.
+         *
+         * @return autoIngestJob
+         */
         AutoIngestJob getAutoIngestJob() {
             return autoIngestJob;
         }
@@ -123,7 +152,7 @@ final class AutoIngestNode extends AbstractNode {
                     autoIngestJob.getManifest().getCaseName()));
             ss.put(new NodeProperty<>(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
                     autoIngestJob.getManifest().getDataSourcePath().getFileName().toString()));
-            switch (jobType) {
+            switch (jobStatus) {
                 case PENDING_JOB:
                     ss.put(new NodeProperty<>(Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
                             autoIngestJob.getManifest().getDateFileCreated()));
@@ -153,7 +182,11 @@ final class AutoIngestNode extends AbstractNode {
         }
     }
 
-    enum AutoIngestJobType {
+    /**
+     * An enumeration used to indicate the current status of an auto ingest job
+     * node.
+     */
+    enum AutoIngestJobStatus {
         PENDING_JOB, //NON-NLS
         RUNNING_JOB, //NON-NLS
         COMPLETED_JOB //NON-NLS

@@ -27,12 +27,11 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.AutoIngestJobType;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.JobNode;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 
 /**
- *
- * @author wschaefer
+ * A panel which displays an outline view with all jobs for a specified status.
  */
 final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -40,22 +39,28 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
-    private final AutoIngestJobType type;
+    private final AutoIngestJobStatus status;
 
     /**
-     * Creates new form PendingJobsPanel
+     * Creates a new AutoIngestJobsPanel of the specified jobStatus
+     *
+     * @param jobStatus the status of the jbos to be displayed on this panel
      */
-    AutoIngestJobsPanel(AutoIngestJobType jobType) {
+    AutoIngestJobsPanel(AutoIngestJobStatus jobStatus) {
         initComponents();
-        type = jobType;
+        status = jobStatus;
         outlineView = new org.openide.explorer.view.OutlineView();
         outline = outlineView.getOutline();
         customize();
     }
 
+    /**
+     * Set up the AutoIngestJobsPanel's so that its outlineView is displaying
+     * the correct columns for the specified AutoIngestJobStatus
+     */
     void customize() {
 
-        switch (type) {
+        switch (status) {
             case PENDING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
                         Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
@@ -102,6 +107,12 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         outline.setPreferredScrollableViewportSize(new Dimension(400, 100));
     }
 
+    /**
+     * Add a list selection listener to the selection model of the outline being
+     * used in this panel.
+     *
+     * @param listener the ListSelectionListener to add
+     */
     void addListSelectionListener(ListSelectionListener listener) {
         outline.getSelectionModel().addListSelectionListener(listener);
     }
@@ -111,20 +122,26 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         return explorerManager;
     }
 
+    /**
+     * Update the contents of this AutoIngestJobsPanel while retaining currently
+     * selected node.
+     *
+     * @param jobsSnapshot - the JobsSnapshot which will provide the new
+     *                     contents
+     */
     void refresh(AutoIngestMonitor.JobsSnapshot jobsSnapshot) {
         synchronized (this) {
             outline.setRowSelectionAllowed(false);
             Node[] selectedNodes = explorerManager.getSelectedNodes();
-            AutoIngestNode autoIngestNode = new AutoIngestNode(jobsSnapshot, type);
+            AutoIngestJobsNode autoIngestNode = new AutoIngestJobsNode(jobsSnapshot, status);
             explorerManager.setRootContext(autoIngestNode);
             outline.setRowSelectionAllowed(true);
             if (selectedNodes.length > 0) {
                 try {
-                     explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
-                } catch (PropertyVetoException ignore) {        
+                    explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
+                } catch (PropertyVetoException ignore) {
                     //Unable to select previously selected node
                 }
-
             }
         }
     }
@@ -141,8 +158,13 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Get the AutoIngestJob for the currently selected node of this panel.
+     *
+     * @return AutoIngestJob which is currently selected in this panel
+     */
     AutoIngestJob getSelectedAutoIngestJob() {
-        Node[] selectedRows = getSelectedNodes();
+        Node[] selectedRows = explorerManager.getSelectedNodes();
         if (selectedRows.length == 1) {
             return ((JobNode) selectedRows[0]).getAutoIngestJob();
         }

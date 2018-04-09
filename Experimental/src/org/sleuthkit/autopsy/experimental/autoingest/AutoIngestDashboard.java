@@ -90,7 +90,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
-        pendingJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.PENDING_JOB);
+        pendingJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobType.PENDING_JOB);
         pendingJobsPanel.setSize(pendingScrollPane.getSize());
         pendingScrollPane.add(pendingJobsPanel);
         pendingScrollPane.setViewportView(pendingJobsPanel);
@@ -112,7 +112,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
         });
         pendingJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_pendingTable.toolTipText());
-        runningJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.RUNNING_JOB);
+        runningJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobType.RUNNING_JOB);
         runningJobsPanel.setSize(runningScrollPane.getSize());
         runningScrollPane.add(runningJobsPanel);
         runningScrollPane.setViewportView(runningJobsPanel);
@@ -124,7 +124,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeCaseButton.setEnabled(enabled);
         });
         runningJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_runningTable.toolTipText());
-        completedJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.COMPLETED_JOB);
+        completedJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobType.COMPLETED_JOB);
         completedJobsPanel.setSize(completedScrollPane.getSize());
         completedScrollPane.add(completedJobsPanel);
         completedScrollPane.setViewportView(completedJobsPanel);
