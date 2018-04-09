@@ -33,6 +33,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -109,6 +110,7 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -1380,9 +1382,12 @@ public class Case {
      *                                                  database.
      */
     public List<Content> getDataSources() throws TskCoreException {
-        List<Content> list = caseDb.getRootObjects();
-        hasDataSources = (list.size() > 0);
-        return list;
+        
+        List<DataSource> dsList = caseDb.getDataSources();
+        hasDataSources = (dsList.size() > 0);
+        
+        List<Content> contentList = new ArrayList<>(dsList);
+        return contentList;
     }
 
     /**

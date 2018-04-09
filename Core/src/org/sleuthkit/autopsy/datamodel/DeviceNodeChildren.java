@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -76,18 +77,17 @@ final class DeviceNodeChildren extends Children.Keys<String> {
     private void reloadKeys() {
         try {
             currentKeys.clear();
-            List<Content> dataSources = Case.getCurrentCase().getDataSources();
+            List<Content> dataSources = Case.getOpenCase().getDataSources();
             Set<String> deviceIds = new HashSet<>();
+            
             for (Content content : dataSources) {
-                if (content instanceof DataSource) {
                     DataSource ds = (DataSource) content;
                     deviceIds.add(ds.getDeviceId());
-                }
             }
 
             currentKeys.addAll(deviceIds);
             setKeys(currentKeys);
-        } catch (TskCoreException | IllegalStateException ex) {
+        } catch (TskCoreException | IllegalStateException| NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
             setKeys(Collections.<String>emptySet());
         }

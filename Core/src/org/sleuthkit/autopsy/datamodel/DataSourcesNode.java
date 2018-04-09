@@ -29,6 +29,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -82,7 +83,7 @@ public class DataSourcesNode extends DisplayableItemNode {
         /**
          * Class constructor
          * 
-         * @param parentDeviceId - parent device id
+         * @param parentDeviceId - parent device id, used to filter children nodes
          */
         public DataSourcesNodeChildren(String parentDeviceId) {
             super();
@@ -118,22 +119,21 @@ public class DataSourcesNode extends DisplayableItemNode {
 
                 currentKeys.clear();
                 // if parentDeviceId is specified, use it to filter child nodes 
-                if (null == parentDeviceId) {
+                if (null == parentDeviceId || parentDeviceId.isEmpty()) {
                     currentKeys = Case.getOpenCase().getDataSources();
                 } else {
-                    List<Content> dataSources = Case.getCurrentCase().getDataSources();
+                    List<Content> dataSources = Case.getOpenCase().getDataSources();
                     for (Content content: dataSources) {
-                        if ( content instanceof DataSource) {
-                            DataSource ds = (DataSource)content;
-                            if ( parentDeviceId.equalsIgnoreCase(ds.getDeviceId())) {
-                                currentKeys.add(content);
-                            }
+                        
+                        if ( parentDeviceId.equalsIgnoreCase(((DataSource)content).getDeviceId())) {
+                            currentKeys.add(content);
                         }
                     } 
                 }
                 
                 setKeys(currentKeys);
-            } catch (TskCoreException | NoCurrentCaseException ex) {
+                
+            } catch (TskCoreException | IllegalStateException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
                 setKeys(Collections.<Content>emptySet());
             }
