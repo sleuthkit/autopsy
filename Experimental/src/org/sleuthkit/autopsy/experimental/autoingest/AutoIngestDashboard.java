@@ -33,7 +33,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
-import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -51,7 +50,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private AutoIngestMonitor autoIngestMonitor;
     private AutoIngestJobsPanel pendingJobsPanel;
     private AutoIngestJobsPanel runningJobsPanel;
-    private AutoIngestJobsPanel finishedJobsPanel;
+    private AutoIngestJobsPanel completedJobsPanel;
 
     /**
      * Maintain a mapping of each service to it's last status update.
@@ -79,6 +78,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     /**
      * Constructs a panel for monitoring an automated ingest cluster.
      */
+    @Messages({"AutoIngestDashboard.pendingTable.toolTipText=The Pending table displays the order upcoming Jobs will be processed with the top of the list first",
+        "AutoIngestDashboard.runningTable.toolTipText=The Running table displays the currently running Job and information about it",
+        "AutoIngestDashboard.completedTable.toolTipText=The Completed table shows all Jobs that have been processed already"})
+
     private AutoIngestDashboard() {
         this.statusByService = new ConcurrentHashMap<>();
 
@@ -108,6 +111,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
             this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
         });
+        pendingJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_pendingTable.toolTipText());
         runningJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.RUNNING_JOB);
         runningJobsPanel.setSize(runningScrollPane.getSize());
         runningScrollPane.add(runningJobsPanel);
@@ -119,21 +123,23 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeJobButton.setEnabled(enabled);
             this.deprioritizeCaseButton.setEnabled(enabled);
         });
-        finishedJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.COMPLETED_JOB);
-        finishedJobsPanel.setSize(completedScrollPane.getSize());
-        completedScrollPane.add(finishedJobsPanel);
-        completedScrollPane.setViewportView(finishedJobsPanel);
-        finishedJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
+        runningJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_runningTable.toolTipText());
+        completedJobsPanel = new AutoIngestJobsPanel(AutoIngestNode.AutoIngestJobType.COMPLETED_JOB);
+        completedJobsPanel.setSize(completedScrollPane.getSize());
+        completedScrollPane.add(completedJobsPanel);
+        completedScrollPane.setViewportView(completedJobsPanel);
+        completedJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
             boolean enabled = false;
             this.prioritizeJobButton.setEnabled(enabled);
             this.prioritizeCaseButton.setEnabled(enabled);
             this.deprioritizeJobButton.setEnabled(enabled);
             this.deprioritizeCaseButton.setEnabled(enabled);
         });
+        completedJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_completedTable.toolTipText());
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */
-        
+
         UIManager.put("PopupMenu.consumeEventOnClose", false);
     }
 
@@ -247,7 +253,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-         EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
+        EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
     }
 
     /**
@@ -259,9 +265,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private void refreshTables(JobsSnapshot jobsSnapshot) {
         pendingJobsPanel.refresh(jobsSnapshot);
         runningJobsPanel.refresh(jobsSnapshot);
-        finishedJobsPanel.refresh(jobsSnapshot);
+        completedJobsPanel.refresh(jobsSnapshot);
     }
-    
+
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * dashboard operation.

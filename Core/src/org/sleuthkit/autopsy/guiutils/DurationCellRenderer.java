@@ -40,13 +40,21 @@ public class DurationCellRenderer extends GrayableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (value instanceof Long) {
             {
-                setText(DurationCellRenderer.longToDurationString((long)value));
+                setText(DurationCellRenderer.longToDurationString((long) value));
             }
         }
         grayCellIfTableNotEnabled(table, isSelected);
         return this;
     }
 
+    /**
+     * Convert a duration represented by a long to a human readable string with
+     * with days, hours, minutes, and seconds components.
+     *
+     * @param duration - the representation of the duration in long form
+     *
+     * @return - the representation of the duration in String form.
+     */
     public static String longToDurationString(long duration) {
         Duration d = Duration.ofMillis(duration);
         if (d.isNegative()) {
@@ -58,7 +66,7 @@ public class DurationCellRenderer extends GrayableCellRenderer {
         long hours = d.minusDays(days).toHours();
         long minutes = d.minusDays(days).minusHours(hours).toMinutes();
         long seconds = d.minusDays(days).minusHours(hours).minusMinutes(minutes).getSeconds();
-         
+
         if (minutes > 0) {
             if (hours > 0) {
                 if (days > 0) {
