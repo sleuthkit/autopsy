@@ -23,7 +23,6 @@ import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxGraphLayout;
-import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
@@ -38,6 +37,7 @@ import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUndoManager;
 import com.mxgraph.util.mxUndoableEdit;
 import com.mxgraph.view.mxCellState;
+import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -133,11 +133,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private final mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband; //NOPMD  We keep a referenec as insurance to prevent garbage collection
-
-    private final mxGraphLayout fastOrganicLayout;
-    private final mxGraphLayout circleLayout;
-    private final mxGraphLayout organicLayout;
-    private final mxGraphLayout hierarchyLayout;
+    private final mxFastOrganicLayout fastOrganicLayout;
+    private final mxCircleLayout circleLayout;
+    private final mxOrganicLayout organicLayout;
+    private final mxHierarchicalLayout hierarchyLayout;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
@@ -193,19 +192,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
 
-        fastOrganicLayout = lockedVertexModel.createLockedVertexWrapper(new mxFastOrganicLayout(graph));
-        hierarchyLayout = lockedVertexModel.createLockedVertexWrapper(new mxHierarchicalLayout(graph));
-        circleLayout = lockedVertexModel.createLockedVertexWrapper(new mxCircleLayout(graph) {
-            {
-                setResetEdges(true);
-            }
-        });
-        organicLayout = lockedVertexModel.createLockedVertexWrapper(new mxOrganicLayout(graph) {
-            {
-                setResetEdges(true);
-                setMaxIterations(10);
-            }
-        });
+        fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
+        circleLayout = new mxCircleLayoutImpl(graph);
+        organicLayout = new mxOrganicLayoutImpl(graph);
+        organicLayout.setMaxIterations(10);
+        hierarchyLayout = new mxHierarchicalLayoutImpl(graph);
+
         //local method to configure layout buttons
         BiConsumer<JButton, mxGraphLayout> configure = (layoutButton, layout) -> {
             layoutButtons.put(layout, layoutButton);
@@ -502,7 +494,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(hierarchyLayoutButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(circleLayoutButton)
-                .addPreferredGap(LayoutStyle.UNRELATED)
+                .addPreferredGap(LayoutStyle.RELATED)
                 .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(jLabel2)
@@ -516,7 +508,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
         toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
@@ -577,18 +569,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getModel().beginUpdate();
 
         CancelationListener cancelationListener = new CancelationListener();
-        ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor,
+        ModalDialogProgressIndicator progressIndicator = new ModalDialogProgressIndicator(windowAncestor,
                 Bundle.Visualization_computingLayout(), new String[]{CANCEL}, CANCEL, cancelationListener);
         SwingWorker<Void, Void> morphWorker = new SwingWorker<Void, Void>() {
-            int i = 0;
+            int progress = 0;
             int max = 100;
 
             @Override
             protected Void doInBackground() {
-                progress.start(Bundle.Visualization_computingLayout());
+                progressIndicator.start(Bundle.Visualization_computingLayout());
                 layout.execute(graph.getDefaultParent());
                 if (isCancelled()) {
-                    progress.finish();
+                    progressIndicator.finish();
                     return null;
                 }
 
@@ -600,10 +592,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         if (isCancelled()) {
                             stopAnimation();
                         } else {
-                            i++;
-                            progress.switchToDeterminate(Bundle.Visualization_computingLayout(), i, max);
-                            if ( i >= max *3.0/4.0){
-                                max *=2;
+                            progress++;
+                            progressIndicator.switchToDeterminate(Bundle.Visualization_computingLayout(), progress, max);
+                            if (progress >= max * 3.0 / 4.0) {
+                                max *= 2;
                             }
                         }
                     }
@@ -616,7 +608,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     } else {
                         fitGraph();
                     }
-                    progress.finish();
+                    progressIndicator.finish();
                 });
 
                 morph.startAnimation();
@@ -633,7 +625,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 }
             }
         };
-        cancelationListener.configure(morphWorker, progress);
+        cancelationListener.configure(morphWorker, progressIndicator);
         morphWorker.execute();
     }
 
@@ -742,6 +734,96 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 vizEM.setSelectedNodes(selectedNodes);
             } catch (PropertyVetoException ex) {
                 logger.log(Level.SEVERE, "Selection vetoed.", ex);
+            }
+        }
+    }
+
+    final private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
+
+        mxFastOrganicLayoutImpl(mxGraph graph) {
+            super(graph);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x, y are standard coordinate names
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
+        }
+    }
+
+    final private class mxCircleLayoutImpl extends mxCircleLayout {
+
+        mxCircleLayoutImpl(mxGraph graph) {
+            super(graph);
+            setResetEdges(true);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x, y are standard coordinate names
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
+        }
+    }
+
+    final private class mxOrganicLayoutImpl extends mxOrganicLayout {
+
+        mxOrganicLayoutImpl(mxGraph graph) {
+            super(graph);
+            setResetEdges(true);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x, y are standard coordinate names
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
+            }
+        }
+    }
+
+    final private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
+
+        mxHierarchicalLayoutImpl(mxGraph graph) {
+            super(graph);
+        }
+
+        @Override
+        public boolean isVertexIgnored(Object vertex) {
+            return super.isVertexIgnored(vertex)
+                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+        }
+
+        @Override
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x, y are standard coordinate names
+            if (isVertexIgnored(vertex)) {
+                return getVertexBounds(vertex);
+            } else {
+                return super.setVertexLocation(vertex, x, y);
             }
         }
     }
