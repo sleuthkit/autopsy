@@ -738,6 +738,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
+    /**
+     * Extension of mxFastOrganicLayout that ignores locked vertices.
+     */
     final private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
 
         mxFastOrganicLayoutImpl(mxGraph graph) {
@@ -760,6 +763,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
+    /**
+     * Extension of mxCircleLayout that ignores locked vertices.
+     */
     final private class mxCircleLayoutImpl extends mxCircleLayout {
 
         mxCircleLayoutImpl(mxGraph graph) {
@@ -783,6 +789,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
+    /**
+     * Extension of mxOrganicLayout that ignores locked vertices.
+     */
     final private class mxOrganicLayoutImpl extends mxOrganicLayout {
 
         mxOrganicLayoutImpl(mxGraph graph) {
@@ -806,6 +815,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
+    /**
+     * Extension of mxHierarchicalLayout that ignores locked vertices.
+     */
     final private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
 
         mxHierarchicalLayoutImpl(mxGraph graph) {
