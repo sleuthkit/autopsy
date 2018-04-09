@@ -264,7 +264,7 @@ final class CommunicationsGraph extends mxGraph {
                 for (final AccountDeviceInstanceKey adiKey : pinnedAccountModel.getPinnedAccounts()) {
                     if (isCancelled()) {
                         break;
-                    }     
+                    }
                     //get accounts related to pinned account
                     final List<AccountDeviceInstance> relatedAccountDeviceInstances
                             = commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);

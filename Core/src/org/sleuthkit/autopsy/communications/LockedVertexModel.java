@@ -83,6 +83,10 @@ final class LockedVertexModel {
         lockedVertices.clear();
     }
 
+    boolean isEmpty() {
+        return lockedVertices.isEmpty();
+    }
+
     /**
      * Event that represents a change in the locked state of one or more
      * vertices.

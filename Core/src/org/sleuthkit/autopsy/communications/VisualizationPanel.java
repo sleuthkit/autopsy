@@ -22,13 +22,12 @@ import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
-import com.mxgraph.layout.mxGraphLayout;
+import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
-import com.mxgraph.swing.util.mxMorphing;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
@@ -90,6 +89,7 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -133,18 +133,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private final mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband; //NOPMD  We keep a referenec as insurance to prevent garbage collection
-    private final mxFastOrganicLayout fastOrganicLayout;
-    private final mxCircleLayout circleLayout;
-    private final mxOrganicLayout organicLayout;
-    private final mxHierarchicalLayout hierarchyLayout;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
     private final PinnedAccountModel pinnedAccountModel = new PinnedAccountModel();
     private final LockedVertexModel lockedVertexModel = new LockedVertexModel();
 
-    private final Map<mxGraphLayout, JButton> layoutButtons = new HashMap<>();
-    private mxGraphLayout currentLayout;
+    private final Map<NamedGraphLayout, JButton> layoutButtons = new HashMap<>();
+    private NamedGraphLayout currentLayout;
 
     public VisualizationPanel() {
         initComponents();
@@ -192,14 +188,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
 
-        fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
-        circleLayout = new mxCircleLayoutImpl(graph);
-        organicLayout = new mxOrganicLayoutImpl(graph);
+        FastOrganicLayoutImpl fastOrganicLayout = new FastOrganicLayoutImpl(graph);
+        CircleLayoutImpl circleLayout = new CircleLayoutImpl(graph);
+        OrganicLayoutImpl organicLayout = new OrganicLayoutImpl(graph);
         organicLayout.setMaxIterations(10);
-        hierarchyLayout = new mxHierarchicalLayoutImpl(graph);
+        HierarchicalLayoutImpl hierarchyLayout = new HierarchicalLayoutImpl(graph);
 
         //local method to configure layout buttons
-        BiConsumer<JButton, mxGraphLayout> configure = (layoutButton, layout) -> {
+        BiConsumer<JButton, NamedGraphLayout> configure = (layoutButton, layout) -> {
             layoutButtons.put(layout, layoutButton);
             layoutButton.addActionListener(event -> applyLayout(layout));
         };
@@ -556,77 +552,52 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     /**
      * Apply the given layout. The given layout becomes the current layout. The
-     * layout is computed in the background and applied via mxMorphing.
+     * layout is computed in the background.
      *
      * @param layout The layout to apply.
      */
-    @NbBundle.Messages({"Visualization.computingLayout=Computing Layout"})
-    private void applyLayout(mxGraphLayout layout) {
+    @NbBundle.Messages({"VisualizationPanel.computingLayout=Computing Layout",
+        "# {0} - layout name",
+        "VisualizationPanel.layoutFailWithLockedVertices.text={0} layout failed with locked vertices. Unlock some vertices or try a different layout.",
+        "# {0} -  layout name",
+        "VisualizationPanel.layoutFail.text={0} layout failed. Try a different layout."})
+    private void applyLayout(NamedGraphLayout layout) {
         currentLayout = layout;
         layoutButtons.forEach((layoutKey, button)
                 -> button.setFont(button.getFont().deriveFont(layoutKey == layout ? Font.BOLD : Font.PLAIN)));
-        // layout using morphing
-        graph.getModel().beginUpdate();
 
-        CancelationListener cancelationListener = new CancelationListener();
-        ModalDialogProgressIndicator progressIndicator = new ModalDialogProgressIndicator(windowAncestor,
-                Bundle.Visualization_computingLayout(), new String[]{CANCEL}, CANCEL, cancelationListener);
-        SwingWorker<Void, Void> morphWorker = new SwingWorker<Void, Void>() {
-            int progress = 0;
-            int max = 100;
+        ModalDialogProgressIndicator progressIndicator = new ModalDialogProgressIndicator(windowAncestor, Bundle.VisualizationPanel_computingLayout());
+        progressIndicator.start(Bundle.VisualizationPanel_computingLayout());
 
+        new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                progressIndicator.start(Bundle.Visualization_computingLayout());
-                layout.execute(graph.getDefaultParent());
-                if (isCancelled()) {
-                    progressIndicator.finish();
-                    return null;
-                }
-
-                mxMorphing morph = new mxMorphing(graphComponent, 20, 1.2, 20) {
-                    @Override
-                    public void updateAnimation() {
-                        fireEvent(new mxEventObject(mxEvent.EXECUTE));
-                        super.updateAnimation();
-                        if (isCancelled()) {
-                            stopAnimation();
-                        } else {
-                            progress++;
-                            progressIndicator.switchToDeterminate(Bundle.Visualization_computingLayout(), progress, max);
-                            if (progress >= max * 3.0 / 4.0) {
-                                max *= 2;
-                            }
-                        }
-                    }
-                };
-
-                morph.addListener(mxEvent.DONE, (Object sender, mxEventObject event) -> {
+                graph.getModel().beginUpdate();
+                try {
+                    layout.execute(graph.getDefaultParent());
+                } finally {
                     graph.getModel().endUpdate();
-                    if (isCancelled()) {
-                        undoManager.undo();
-                    } else {
-                        fitGraph();
-                    }
                     progressIndicator.finish();
-                });
-
-                morph.startAnimation();
+                }
                 return null;
             }
 
             @Override
             protected void done() {
-                super.done();
                 try {
                     get();
+                    fitGraph();
                 } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.SEVERE, "Layout interupted", ex);
+                    logger.log(Level.WARNING, "CVT graph layout failed.", ex);
+                    if (lockedVertexModel.isEmpty()) {
+                        MessageNotifyUtil.Message.error(Bundle.VisualizationPanel_layoutFail_text(layout.getDisplayName()));
+                    } else {
+                        MessageNotifyUtil.Message.error(Bundle.VisualizationPanel_layoutFailWithLockedVertices_text(layout.getDisplayName()));
+                    }
+                    undoManager.undo();
                 }
             }
-        };
-        cancelationListener.configure(morphWorker, progressIndicator);
-        morphWorker.execute();
+        }.execute();
     }
 
     private void clearVizButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearVizButtonActionPerformed
@@ -662,9 +633,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         final Dimension size = graphComponent.getSize();
         final double widthFactor = size.getWidth() / boundsForCells.getWidth();
+        final double heightFactor = size.getHeight() / boundsForCells.getHeight();
 
-        graphComponent.zoom(widthFactor);
-
+        graphComponent.zoom((heightFactor + widthFactor) / 2.0);
     }
 
 
@@ -739,11 +710,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     /**
+     * Extend mxIGraphLayout with a getDisplayName method,
+     */
+    private interface NamedGraphLayout extends mxIGraphLayout {
+
+        String getDisplayName();
+    }
+
+    /**
      * Extension of mxFastOrganicLayout that ignores locked vertices.
      */
-    final private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
+    final private class FastOrganicLayoutImpl extends mxFastOrganicLayout implements NamedGraphLayout {
 
-        mxFastOrganicLayoutImpl(mxGraph graph) {
+        FastOrganicLayoutImpl(mxGraph graph) {
             super(graph);
         }
 
@@ -760,15 +739,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else {
                 return super.setVertexLocation(vertex, x, y);
             }
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Fast Organic";
         }
     }
 
     /**
      * Extension of mxCircleLayout that ignores locked vertices.
      */
-    final private class mxCircleLayoutImpl extends mxCircleLayout {
+    final private class CircleLayoutImpl extends mxCircleLayout implements NamedGraphLayout {
 
-        mxCircleLayoutImpl(mxGraph graph) {
+        CircleLayoutImpl(mxGraph graph) {
             super(graph);
             setResetEdges(true);
         }
@@ -786,15 +770,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else {
                 return super.setVertexLocation(vertex, x, y);
             }
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Circle";
         }
     }
 
     /**
      * Extension of mxOrganicLayout that ignores locked vertices.
      */
-    final private class mxOrganicLayoutImpl extends mxOrganicLayout {
+    final private class OrganicLayoutImpl extends mxOrganicLayout implements NamedGraphLayout {
 
-        mxOrganicLayoutImpl(mxGraph graph) {
+        OrganicLayoutImpl(mxGraph graph) {
             super(graph);
             setResetEdges(true);
         }
@@ -813,14 +802,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 return super.setVertexLocation(vertex, x, y);
             }
         }
+
+        @Override
+        public String getDisplayName() {
+            return "Organic";
+        }
     }
 
     /**
      * Extension of mxHierarchicalLayout that ignores locked vertices.
      */
-    final private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
+    final private class HierarchicalLayoutImpl extends mxHierarchicalLayout implements NamedGraphLayout {
 
-        mxHierarchicalLayoutImpl(mxGraph graph) {
+        HierarchicalLayoutImpl(mxGraph graph) {
             super(graph);
         }
 
@@ -837,6 +831,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else {
                 return super.setVertexLocation(vertex, x, y);
             }
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Hierarchical";
         }
     }
 
