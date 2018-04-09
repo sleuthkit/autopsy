@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class DeviceNodeChildren extends Children.Keys<String> {
 
     private static final Logger LOGGER = Logger.getLogger(DeviceNodeChildren.class.getName());
-    private List<String> currentKeys;
+    private final List<String> currentKeys;
 
     public DeviceNodeChildren() {
         super();
@@ -81,8 +81,8 @@ final class DeviceNodeChildren extends Children.Keys<String> {
             Set<String> deviceIds = new HashSet<>();
             
             for (Content content : dataSources) {
-                    DataSource ds = (DataSource) content;
-                    deviceIds.add(ds.getDeviceId());
+                    DataSource dataSource = (DataSource) content;
+                    deviceIds.add(dataSource.getDeviceId());
             }
 
             currentKeys.addAll(deviceIds);

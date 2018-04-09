@@ -29,7 +29,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -77,7 +76,7 @@ public class DataSourcesNode extends DisplayableItemNode {
         private static final Logger LOGGER = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
         List<Content> currentKeys;
-        private String parentDeviceId = null;
+        private final String parentDeviceId;
 
         /**
          * Class constructor
