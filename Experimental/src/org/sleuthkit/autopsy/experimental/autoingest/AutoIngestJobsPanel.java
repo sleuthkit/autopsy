@@ -19,17 +19,13 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.beans.PropertyVetoException;
-import java.util.Enumeration;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumn;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.AutoIngestJobType;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNode.JobNode;
@@ -117,16 +113,14 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
 
     void refresh(AutoIngestMonitor.JobsSnapshot jobsSnapshot) {
         synchronized (this) {
-            //   outline.setRowSelectionAllowed(false);
+            outline.setRowSelectionAllowed(false);
             Node[] selectedNodes = explorerManager.getSelectedNodes();
             AutoIngestNode autoIngestNode = new AutoIngestNode(jobsSnapshot, type);
             explorerManager.setRootContext(autoIngestNode);
             outline.setRowSelectionAllowed(true);
-            EventQueue.invokeLater(() -> {
-                setSelectedNodes(selectedNodes);
-                System.out.println("SUCESS:  " + selectedNodes.length);
-
-            });
+            if (selectedNodes.length > 0) {
+                setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
+            }
         }
     }
 
