@@ -18,20 +18,19 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import com.mxgraph.model.mxCell;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-class LockedVertexModel {
-
-    void registerhandler(EventHandler<VertexLockEvent> handler) {
-        eventBus.register(handler);
-    }
-
-    void unregisterhandler(EventHandler<VertexLockEvent> handler) {
-        eventBus.unregister(handler);
-    }
+/**
+ * Model of which vertices in a graph are locked ( not moveable by layout
+ * algorithms).
+ *
+ */
+final class LockedVertexModel {
 
     private final EventBus eventBus = new EventBus();
 
@@ -42,30 +41,36 @@ class LockedVertexModel {
      */
     private final Set<mxCell> lockedVertices = new HashSet<>();
 
-    LockedVertexModel() {
+    
+    void registerhandler(Object handler) {
+        eventBus.register(handler);
     }
 
+    void unregisterhandler(Object handler) {
+        eventBus.unregister(handler);
+    }
+
+    
     /**
-     * Lock the given vertex so that applying a layout algorithm doesn't move
-     * it. The user can still manually position the vertex.
+     * Lock the given vertices so that applying a layout algorithm doesn't move
+     * them. The user can still manually position the vertices.
      *
      * @param vertex The vertex to lock.
      */
-    void lockVertex(mxCell vertex) {
-        lockedVertices.add(vertex);
-        eventBus.post(new VertexLockEvent(vertex, true));
-
+    void lock(Collection<mxCell> vertices) {
+        lockedVertices.addAll(vertices);
+        eventBus.post(new VertexLockEvent(true, vertices));
     }
 
     /**
-     * Lock the given vertex so that applying a layout algorithm can move it.
+     * Unlock the given vertices so that applying a layout algorithm can move
+     * them.
      *
      * @param vertex The vertex to unlock.
      */
-    void unlockVertex(mxCell vertex) {
-        lockedVertices.remove(vertex);
-        eventBus.post(new VertexLockEvent(vertex, false));
-
+    void unlock(Collection<mxCell> vertices) {
+        lockedVertices.removeAll(vertices);
+        eventBus.post(new VertexLockEvent(false, vertices));
     }
 
     boolean isVertexLocked(mxCell vertex) {
@@ -77,21 +82,32 @@ class LockedVertexModel {
         lockedVertices.clear();
     }
 
-    static class VertexLockEvent {
+    /**
+     * Event that represents a change in the locked state of one or more
+     * vertices.
+     */
+    final static class VertexLockEvent {
 
-        private final mxCell vertex;
+        private final boolean locked;
+        private final Set<mxCell> vertices;
 
-        public mxCell getVertex() {
-            return vertex;
+        /**
+         * @return The vertices whose locked state has changed.
+         */
+        public Set<mxCell> getVertices() {
+            return vertices;
         }
 
-        public boolean isVertexLocked() {
+        /**
+         * @return True if the vertices are locked, False if the vertices are
+         *         unlocked.
+         */
+        public boolean isLocked() {
             return locked;
         }
-        private final boolean locked;
 
-        VertexLockEvent(mxCell vertex, boolean locked) {
-            this.vertex = vertex;
+        VertexLockEvent(boolean locked, Collection< mxCell> vertices) {
+            this.vertices = ImmutableSet.copyOf(vertices);
             this.locked = locked;
         }
     }

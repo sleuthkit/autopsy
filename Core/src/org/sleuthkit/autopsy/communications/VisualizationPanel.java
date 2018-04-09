@@ -36,7 +36,9 @@ import com.mxgraph.util.mxPoint;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUndoManager;
 import com.mxgraph.util.mxUndoableEdit;
+import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxGraphView;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -51,12 +53,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
-import static java.util.Collections.singleton;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -84,7 +88,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
@@ -100,23 +103,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  * CVTTopComponent when this tab is active allowing for context sensitive
  * actions to work correctly.
  */
-@NbBundle.Messages("VisualizationPanel.cancelButton.text=Cancel")
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
     private static final String BASE_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images";
-    static final private ImageIcon pinIcon
-            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--pin.png"));
-    static final private ImageIcon addPinIcon
-            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--plus.png"));
-    static final private ImageIcon unpinIcon
-            = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/marker--minus.png"));
     static final private ImageIcon unlockIcon
             = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
     static final private ImageIcon lockIcon
             = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
 
+    @NbBundle.Messages("VisualizationPanel.cancelButton.text=Cancel")
     private static final String CANCEL = Bundle.VisualizationPanel_cancelButton_text();
 
     private final ExplorerManager vizEM = new ExplorerManager();
@@ -131,7 +128,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final CommunicationsGraph graph;
 
     private final mxUndoManager undoManager = new mxUndoManager();
-    private final mxRubberband rubberband;
+    private final mxRubberband rubberband; //NOPMD  We keep a referenec as insurance to prevent garbage collection
+
     private final mxFastOrganicLayout fastOrganicLayout;
     private final mxCircleLayout circleLayout;
     private final mxOrganicLayout organicLayout;
@@ -139,14 +137,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
-    private final PinnedAccountModel pinnedAccountModel;
-    private final LockedVertexModel lockedVertexModel;
+    private final PinnedAccountModel pinnedAccountModel = new PinnedAccountModel();
+    private final LockedVertexModel lockedVertexModel = new LockedVertexModel();
 
     public VisualizationPanel() {
         initComponents();
-        graph = new CommunicationsGraph();
-        pinnedAccountModel = graph.getPinnedAccountModel();
-        lockedVertexModel = graph.getLockedVertexModel();
+
+        graph = new CommunicationsGraph(pinnedAccountModel, lockedVertexModel);
 
         fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
         circleLayout = new mxCircleLayoutImpl(graph);
@@ -165,8 +162,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.setBackground(Color.WHITE);
         borderLayoutPanel.add(graphComponent, BorderLayout.CENTER);
 
-        //install rubber band selection handler
+        //install rubber band other handlers
         rubberband = new mxRubberband(graphComponent);
+
+        lockedVertexModel.registerhandler(this);
 
         final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt)
                 -> zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getView().getScale()));
@@ -205,57 +204,41 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         final JPopupMenu jPopupMenu = new JPopupMenu();
                         final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
 
+                        Set<mxCell> selectedVertices
+                                = Stream.of(graph.getSelectionModel().getCells())
+                                        .map(mxCell.class::cast)
+                                        .filter(mxCell::isVertex)
+                                        .collect(Collectors.toSet());
+
                         if (lockedVertexModel.isVertexLocked(cellAt)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.unlockVertex(cellAt);
-                                }
-                            }));
+                            jPopupMenu.add(new JMenuItem(new UnlockAction(selectedVertices)));
                         } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.lockVertex(cellAt);
-                                }
-                            }));
+                            jPopupMenu.add(new JMenuItem(new LockAction(selectedVertices)));
                         }
                         if (pinnedAccountModel.isAccountPinned(adiKey)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
-                                }
-                            }));
+                            jPopupMenu.add(UnpinAccountsAction.getInstance().getPopupPresenter());
                         } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
-                                }
-                            }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
-                                }
-                            }));
+                            jPopupMenu.add(PinAccountsAction.getInstance().getPopupPresenter());
+                            jPopupMenu.add(ResetAndPinAccountsAction.getInstance().getPopupPresenter());
                         }
                         jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
                     }
                 }
             }
+
         });
+
         final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
 
         splitPane.setRightComponent(messageBrowser);
 
         proxyLookup = new ProxyLookup(
-                messageBrowser.getLookup(),
-                ExplorerUtils.createLookup(vizEM, getActionMap()));
+                ExplorerUtils.createLookup(vizEM, getActionMap()),
+                messageBrowser.getLookup()
+        );
 
         //feed selection to explorermanager
-        graph.getSelectionModel().addListener(null, new SelectionListener());
+        graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
         final mxEventSource.mxIEventListener undoListener = (Object sender, mxEventObject evt)
                 -> undoManager.undoableEditHappened((mxUndoableEdit) evt.getProperty("edit"));
 
@@ -264,24 +247,35 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     @Override
-
     public Lookup getLookup() {
         return proxyLookup;
     }
 
     @Subscribe
-    void handleUnPinEvent(final CVTEvents.UnpinAccountsEvent pinEvent) {
+    void handle(LockedVertexModel.VertexLockEvent event) {
+        final Set<mxCell> vertices = event.getVertices();
+        mxGraphView view = graph.getView();
+        vertices.forEach(vertex -> {
+            final mxCellState state = view.getState(vertex, true);
+            view.updateLabel(state);
+            view.updateLabelBounds(state);
+            view.updateBoundingBox(state);
+            graphComponent.redraw(state);
+        });
+    }
+
+    @Subscribe
+    void handle(final CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         pinnedAccountModel.unpinAccount(pinEvent.getAccountDeviceInstances());
         graph.clear();
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-
     }
 
     @Subscribe
-    void handlePinEvent(final CVTEvents.PinAccountsEvent pinEvent) {
+    void handle(final CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
         if (pinEvent.isReplace()) {
             graph.resetGraph();
@@ -290,19 +284,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-
     }
 
     @Subscribe
-    void handleFilterEvent(final CVTEvents.FilterChangeEvent filterChangeEvent) {
-
+    void handle(final CVTEvents.FilterChangeEvent filterChangeEvent) {
         graph.getModel().beginUpdate();
         graph.clear();
         currentFilter = filterChangeEvent.getNewFilter();
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -328,13 +319,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         graph.resetGraph();
                         rebuildGraph();
                     } else {
-                 morph(fastOrganicLayout);
+                        morph(fastOrganicLayout);
                     }
                 }
             });
 
             worker.execute();
-
         }
     }
 
@@ -368,13 +358,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
                 }
             }
-
         });
-    }
-
-    @Override
-    public void removeNotify() {
-        super.removeNotify();
     }
 
     /**
@@ -680,16 +664,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     }
 
+    @NbBundle.Messages({"Visualization.computingLayout=Computing Layout"})
     private void morph(mxIGraphLayout layout) {
         // layout using morphing
         graph.getModel().beginUpdate();
 
         CancelationListener cancelationListener = new CancelationListener();
-        ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Computing layout", new String[]{CANCEL}, CANCEL, cancelationListener);
+        ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor,
+                Bundle.Visualization_computingLayout(), new String[]{CANCEL}, CANCEL, cancelationListener);
         SwingWorker<Void, Void> morphWorker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                progress.start("Computing layout");
+                progress.start(Bundle.Visualization_computingLayout());
                 layout.execute(graph.getDefaultParent());
                 if (isCancelled()) {
                     progress.finish();
@@ -749,6 +735,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Listens to graph selection model and updates ExplorerManager to reflect
+     * changes in selection.
+     */
     final private class SelectionListener implements mxEventSource.mxIEventListener {
 
         @SuppressWarnings("unchecked")
@@ -760,7 +750,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             if (selectionCells.length > 0) {
                 mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
                 HashSet<Content> relationshipSources = new HashSet<>();
-                HashSet<AccountDeviceInstance> adis = new HashSet<>();
+                HashSet<AccountDeviceInstanceKey> adis = new HashSet<>();
                 for (mxICell cell : selectedCells) {
                     if (cell.isEdge()) {
                         mxICell source = (mxICell) graph.getModel().getTerminal(cell, true);
@@ -777,7 +767,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                             logger.log(Level.SEVERE, " Error getting relationsips....", tskCoreException);
                         }
                     } else if (cell.isVertex()) {
-                        adis.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
+                        adis.add((AccountDeviceInstanceKey) cell.getValue());
                     }
                 }
 
@@ -806,7 +796,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
                 return getVertexBounds(vertex);
             } else {
@@ -829,7 +819,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
                 return getVertexBounds(vertex);
             } else {
@@ -852,7 +842,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
                 return getVertexBounds(vertex);
             } else {
@@ -874,7 +864,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         @Override
-        public mxRectangle setVertexLocation(Object vertex, double x, double y) {
+        public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
                 return getVertexBounds(vertex);
             } else {
@@ -883,7 +873,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
     }
 
-    private class CancelationListener implements ActionListener {
+    /**
+     * Listener that closes a ModalDialogProgreessIndicator when invoked.
+     */
+    final private class CancelationListener implements ActionListener {
 
         private Future<?> cancellable;
         private ModalDialogProgressIndicator progress;
@@ -899,6 +892,50 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             cancellable.cancel(true);
             progress.finish();
         }
+    }
 
+    /**
+     * Action that un-locks the selected vertices.
+     */
+    @NbBundle.Messages({
+        "VisualizationPanel.unlockAction.singularText=Unlock Selected Account",
+        "VisualizationPanel.unlockAction.pluralText=Unlock Selected Accounts",})
+    private final class UnlockAction extends AbstractAction {
+
+        private final Set<mxCell> selectedVertices;
+
+        UnlockAction(Set<mxCell> selectedVertices) {
+            super(selectedVertices.size() > 1 ? Bundle.VisualizationPanel_unlockAction_pluralText() : Bundle.VisualizationPanel_unlockAction_singularText(),
+                    unlockIcon);
+            this.selectedVertices = selectedVertices;
+        }
+
+        @Override
+
+        public void actionPerformed(final ActionEvent event) {
+            lockedVertexModel.unlock(selectedVertices);
+        }
+    }
+
+    /**
+     * Action that locks the selected vertices.
+     */
+    @NbBundle.Messages({
+        "VisualizationPanel.lockAction.singularText=Lock Selected Account",
+        "VisualizationPanel.lockAction.pluralText=Lock Selected Accounts"})
+    private final class LockAction extends AbstractAction {
+
+        private final Set<mxCell> selectedVertices;
+
+        LockAction(Set<mxCell> selectedVertices) {
+            super(selectedVertices.size() > 1 ? Bundle.VisualizationPanel_lockAction_pluralText() : Bundle.VisualizationPanel_lockAction_singularText(),
+                    lockIcon);
+            this.selectedVertices = selectedVertices;
+        }
+
+        @Override
+        public void actionPerformed(final ActionEvent event) {
+            lockedVertexModel.lock(selectedVertices);
+        }
     }
 }
