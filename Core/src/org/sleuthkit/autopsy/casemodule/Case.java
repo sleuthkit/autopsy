@@ -1384,7 +1384,7 @@ public class Case {
     public List<Content> getDataSources() throws TskCoreException {
         
         List<DataSource> dsList = caseDb.getDataSources();
-        hasDataSources = (false == dsList.isEmpty());
+        hasDataSources = !dsList.isEmpty();
         
         return new ArrayList<>(dsList);
     }
