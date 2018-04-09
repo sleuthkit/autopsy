@@ -60,5 +60,4 @@ public class CommonFilesMetaData {
     public String getDataSources() {
         return dataSources;
     }
-
 }
