@@ -35,21 +35,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * Generates a List<CommonFilesMetaData> when collateFiles() is called, which organizes
- * AbstractFiles by md5 to prepare to display in viewer.
- * 
+ * Generates a List<CommonFilesMetaData> when collateFiles() is called, which
+ * organizes AbstractFiles by md5 to prepare to display in viewer.
+ *
  * This entire thing runs on a background thread where exceptions are handled.
  */
-class CommonFilesMetaDataBuilder {
+abstract class CommonFilesMetaDataBuilder {
 
-    private final Long selectedDataSourceId;
     private final Map<Long, String> dataSourceIdToNameMap;
     //TODO subclass this class to specify where clause and/or additional algorithms.
-    private final String singleDataSourceWhereClause = "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5";
-    private final String allDataSourcesWhereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
-    CommonFilesMetaDataBuilder(Long dataSourceId, Map<Long, String> dataSourceIdMap) {
-        selectedDataSourceId = dataSourceId;
+    CommonFilesMetaDataBuilder(Map<Long, String> dataSourceIdMap) {
         dataSourceIdToNameMap = dataSourceIdMap;
     }
 
@@ -85,18 +81,25 @@ class CommonFilesMetaDataBuilder {
 
         return metaDataModels;
     }
+    
+    /**
+     * Should build a SQL WHERE clause to be passed to SleuthkitCase.findAllFilesWhere(sql) 
+     * which will select the desired common files ordered by  MD5.
+     * @return sql string where clause
+     */
+    protected abstract String buildSqlWhereClause();
 
     private void collateParentChildRelationships(List<AbstractFile> files, Map<String, List<AbstractFile>> parentNodes, Map<String, Set<String>> md5ToDataSourcesStringMap) {
         for (AbstractFile file : files) {
-            
+
             String currentMd5 = file.getMd5Hash();
-            
+
             if (parentNodes.containsKey(currentMd5)) {
                 parentNodes.get(currentMd5).add(file);
                 Set<String> currentDataSources = md5ToDataSourcesStringMap.get(currentMd5);
                 addDataSource(currentDataSources, file, dataSourceIdToNameMap);
                 md5ToDataSourcesStringMap.put(currentMd5, currentDataSources);
-                
+
             } else {
                 List<AbstractFile> children = new ArrayList<>();
                 Set<String> dataSources = new HashSet<>();
@@ -105,20 +108,47 @@ class CommonFilesMetaDataBuilder {
                 addDataSource(dataSources, file, dataSourceIdToNameMap);
                 md5ToDataSourcesStringMap.put(currentMd5, dataSources);
             }
-            
+
         }
     }
 
     private List<AbstractFile> findCommonFiles() throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase sleuthkitCase;
         sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
-        String whereClause = allDataSourcesWhereClause;
-        if (selectedDataSourceId != 0L) {
-            Object[] args = new String[]{Long.toString(selectedDataSourceId), Long.toString(selectedDataSourceId)};
-            whereClause = String.format(singleDataSourceWhereClause, args);
-        }
+        String whereClause = this.buildSqlWhereClause();
         List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
         return files;
     }
+}
 
+class SingleDataSource extends CommonFilesMetaDataBuilder {
+
+    private static final String allDataSourcesWhereClause = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+
+    private final Long selectedDataSourceId;
+
+    public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap) {
+        super(dataSourceIdMap);
+        this.selectedDataSourceId = dataSourceId;
+    }
+
+    @Override
+    protected String buildSqlWhereClause() {
+        Object[] args = new String[]{Long.toString(this.selectedDataSourceId), Long.toString(this.selectedDataSourceId)};
+        return String.format(SingleDataSource.allDataSourcesWhereClause, args);        
+    }
+}
+
+class AllDataSources extends CommonFilesMetaDataBuilder {
+
+    private static final String singleDataSourceWhereClause = "md5 in (select md5 from tsk_files where data_source_obj_id=%s and (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) AND data_source_obj_id=%s order by md5";
+
+    public AllDataSources(Map<Long, String> dataSourceIdMap) {
+        super(dataSourceIdMap);
+    }
+
+    @Override
+    protected String buildSqlWhereClause() {
+        return AllDataSources.singleDataSourceWhereClause;
+    }
 }
