@@ -57,6 +57,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -104,7 +105,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * actions to work correctly.
  */
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
-
+    
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
     private static final String BASE_IMAGE_PATH = "/org/sleuthkit/autopsy/communications/images";
@@ -112,21 +113,21 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_unlocked.png"));
     static final private ImageIcon lockIcon
             = new ImageIcon(VisualizationPanel.class.getResource(BASE_IMAGE_PATH + "/lock_large_locked.png"));
-
+    
     @NbBundle.Messages("VisualizationPanel.cancelButton.text=Cancel")
     private static final String CANCEL = Bundle.VisualizationPanel_cancelButton_text();
-
+    
     private final ExplorerManager vizEM = new ExplorerManager();
     private final ExplorerManager gacEM = new ExplorerManager();
     private final ProxyLookup proxyLookup;
     private Frame windowAncestor;
-
+    
     private CommunicationsManager commsManager;
     private CommunicationsFilter currentFilter;
-
+    
     private final mxGraphComponent graphComponent;
     private final CommunicationsGraph graph;
-
+    
     private final mxUndoManager undoManager = new mxUndoManager();
     private final mxRubberband rubberband; //NOPMD  We keep a referenec as insurance to prevent garbage collection
 
@@ -134,22 +135,22 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxCircleLayout circleLayout;
     private final mxOrganicLayout organicLayout;
     private final mxHierarchicalLayout hierarchicalLayout;
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
     private final PinnedAccountModel pinnedAccountModel = new PinnedAccountModel();
     private final LockedVertexModel lockedVertexModel = new LockedVertexModel();
-
+    
     public VisualizationPanel() {
         initComponents();
-
+        
         graph = new CommunicationsGraph(pinnedAccountModel, lockedVertexModel);
-
+        
         fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
         circleLayout = new mxCircleLayoutImpl(graph);
         organicLayout = new mxOrganicLayoutImpl(graph);
         hierarchicalLayout = new mxHierarchicalLayoutImpl(graph);
-
+        
         graphComponent = new mxGraphComponent(graph);
         graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
@@ -164,14 +165,14 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         //install rubber band other handlers
         rubberband = new mxRubberband(graphComponent);
-
+        
         lockedVertexModel.registerhandler(this);
-
+        
         final mxEventSource.mxIEventListener scaleListener = (Object sender, mxEventObject evt)
                 -> zoomLabel.setText(DecimalFormat.getPercentInstance().format(graph.getView().getScale()));
         graph.getView().addListener(mxEvent.SCALE, scaleListener);
         graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, scaleListener);
-
+        
         graphComponent.getGraphControl().addMouseWheelListener(new MouseAdapter() {
             /**
              * Translate mouse wheel events into zooming.
@@ -188,7 +189,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 }
             }
         });
-
+        
         graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
             /**
              * Right click handler: show context menu.
@@ -203,13 +204,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     if (cellAt != null && cellAt.isVertex()) {
                         final JPopupMenu jPopupMenu = new JPopupMenu();
                         final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
-
+                        
                         Set<mxCell> selectedVertices
                                 = Stream.of(graph.getSelectionModel().getCells())
                                         .map(mxCell.class::cast)
                                         .filter(mxCell::isVertex)
                                         .collect(Collectors.toSet());
-
+                        
                         if (lockedVertexModel.isVertexLocked(cellAt)) {
                             jPopupMenu.add(new JMenuItem(new UnlockAction(selectedVertices)));
                         } else {
@@ -225,13 +226,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     }
                 }
             }
-
+            
         });
-
+        
         final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
-
+        
         splitPane.setRightComponent(messageBrowser);
-
+        
         proxyLookup = new ProxyLookup(
                 ExplorerUtils.createLookup(vizEM, getActionMap()),
                 messageBrowser.getLookup()
@@ -241,16 +242,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
         final mxEventSource.mxIEventListener undoListener = (Object sender, mxEventObject evt)
                 -> undoManager.undoableEditHappened((mxUndoableEdit) evt.getProperty("edit"));
-
+        
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
     }
-
+    
     @Override
     public Lookup getLookup() {
         return proxyLookup;
     }
-
+    
     @Subscribe
     void handle(LockedVertexModel.VertexLockEvent event) {
         final Set<mxCell> vertices = event.getVertices();
@@ -263,7 +264,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             graphComponent.redraw(state);
         });
     }
-
+    
     @Subscribe
     void handle(final CVTEvents.UnpinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
@@ -273,7 +274,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         // Updates the display
         graph.getModel().endUpdate();
     }
-
+    
     @Subscribe
     void handle(final CVTEvents.PinAccountsEvent pinEvent) {
         graph.getModel().beginUpdate();
@@ -285,7 +286,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         // Updates the display
         graph.getModel().endUpdate();
     }
-
+    
     @Subscribe
     void handle(final CVTEvents.FilterChangeEvent filterChangeEvent) {
         graph.getModel().beginUpdate();
@@ -295,7 +296,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         // Updates the display
         graph.getModel().endUpdate();
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private void rebuildGraph() {
         if (pinnedAccountModel.isEmpty()) {
@@ -308,7 +309,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             if (worker != null) {
                 worker.cancel(true);
             }
-
+            
             final CancelationListener cancelationListener = new CancelationListener();
             final ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor, "Loading Visualization", new String[]{CANCEL}, CANCEL, cancelationListener);
             worker = graph.rebuild(progress, commsManager, currentFilter);
@@ -319,20 +320,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         graph.resetGraph();
                         rebuildGraph();
                     } else {
-                        morph(fastOrganicLayout);
+                        animateLayout(fastOrganicLayout);
                     }
                 }
             });
-
+            
             worker.execute();
         }
     }
-
+    
     @Override
     public void addNotify() {
         super.addNotify();
         windowAncestor = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this);
-
+        
         try {
             commsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
         } catch (TskCoreException ex) {
@@ -340,7 +341,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
         }
-
+        
         Case.addEventTypeSubscriber(EnumSet.of(CURRENT_CASE), evt -> {
             graph.getModel().beginUpdate();
             try {
@@ -605,7 +606,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
-        morph(circleLayout);
+        animateLayout(circleLayout);
     }//GEN-LAST:event_circleLayoutButtonActionPerformed
 
     private void organicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_organicLayoutButtonActionPerformed
@@ -613,11 +614,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }//GEN-LAST:event_organicLayoutButtonActionPerformed
 
     private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
-        morph(fastOrganicLayout);
+        animateLayout(fastOrganicLayout);
     }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
 
     private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
-        morph(hierarchicalLayout);
+        animateLayout(hierarchicalLayout);
     }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
     private void clearVizButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearVizButtonActionPerformed
@@ -631,44 +632,44 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         setCursor(Cursor.getDefaultCursor());
 
     }//GEN-LAST:event_clearVizButtonActionPerformed
-
+    
     private void applyOrganicLayout(int iterations) {
         organicLayout.setMaxIterations(iterations);
-        morph(organicLayout);
+        animateLayout(organicLayout);
     }
-
+    
     private void fitGraph() {
         graphComponent.zoomTo(1, true);
         mxPoint translate = graph.getView().getTranslate();
         if (translate == null || Double.isNaN(translate.getX()) || Double.isNaN(translate.getY())) {
             translate = new mxPoint();
         }
-
+        
         mxRectangle boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
         if (boundsForCells == null || Double.isNaN(boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
             boundsForCells = new mxRectangle(0, 0, 1, 1);
         }
         final mxPoint mxPoint = new mxPoint(translate.getX() - boundsForCells.getX(), translate.getY() - boundsForCells.getY());
-
+        
         graph.cellsMoved(graph.getChildCells(graph.getDefaultParent()), mxPoint.getX(), mxPoint.getY(), false, false);
-
+        
         boundsForCells = graph.getCellBounds(graph.getDefaultParent(), true, true, true);
         if (boundsForCells == null || Double.isNaN(boundsForCells.getWidth()) || Double.isNaN(boundsForCells.getHeight())) {
             boundsForCells = new mxRectangle(0, 0, 1, 1);
         }
-
+        
         final Dimension size = graphComponent.getSize();
         final double widthFactor = size.getWidth() / boundsForCells.getWidth();
-
+        
         graphComponent.zoom(widthFactor);
-
+        
     }
-
+    
     @NbBundle.Messages({"Visualization.computingLayout=Computing Layout"})
-    private void morph(mxIGraphLayout layout) {
+    private void animateLayout(mxIGraphLayout layout) {
         // layout using morphing
         graph.getModel().beginUpdate();
-
+        
         CancelationListener cancelationListener = new CancelationListener();
         ModalDialogProgressIndicator progress = new ModalDialogProgressIndicator(windowAncestor,
                 Bundle.Visualization_computingLayout(), new String[]{CANCEL}, CANCEL, cancelationListener);
@@ -685,10 +686,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     @Override
                     public void updateAnimation() {
                         fireEvent(new mxEventObject(mxEvent.EXECUTE));
-                        super.updateAnimation(); //To change body of generated methods, choose Tools | Templates.
+                        super.updateAnimation();                        
                     }
-
                 };
+                
                 morph.addListener(mxEvent.EXECUTE, (Object sender, mxEventObject evt) -> {
                     if (isCancelled()) {
                         morph.stopAnimation();
@@ -703,10 +704,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     }
                     progress.finish();
                 });
-
+                
                 morph.startAnimation();
                 return null;
-
+            }
+            
+            @Override
+            protected void done() {
+                super.done();                
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Layout interupted", ex);
+                }
             }
         };
         cancelationListener.configure(morphWorker, progress);
@@ -740,7 +750,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
      * changes in selection.
      */
     final private class SelectionListener implements mxEventSource.mxIEventListener {
-
+        
         @SuppressWarnings("unchecked")
         @Override
         public void invoke(Object sender, mxEventObject evt) {
@@ -770,7 +780,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         adis.add((AccountDeviceInstanceKey) cell.getValue());
                     }
                 }
-
+                
                 rootNode = SelectionNode.createFromAccountsAndRelationships(relationshipSources, adis, currentFilter, commsManager);
                 selectedNodes = new Node[]{rootNode};
             }
@@ -782,19 +792,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         }
     }
-
+    
     final private class mxFastOrganicLayoutImpl extends mxFastOrganicLayout {
-
+        
         mxFastOrganicLayoutImpl(mxGraph graph) {
             super(graph);
         }
-
+        
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
                     || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
-
+        
         @Override
         public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
@@ -804,20 +814,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         }
     }
-
+    
     final private class mxCircleLayoutImpl extends mxCircleLayout {
-
+        
         mxCircleLayoutImpl(mxGraph graph) {
             super(graph);
             setResetEdges(true);
         }
-
+        
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
                     || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
-
+        
         @Override
         public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
@@ -827,20 +837,20 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         }
     }
-
+    
     final private class mxOrganicLayoutImpl extends mxOrganicLayout {
-
+        
         mxOrganicLayoutImpl(mxGraph graph) {
             super(graph);
             setResetEdges(true);
         }
-
+        
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
                     || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
-
+        
         @Override
         public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
@@ -850,19 +860,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         }
     }
-
+    
     final private class mxHierarchicalLayoutImpl extends mxHierarchicalLayout {
-
+        
         mxHierarchicalLayoutImpl(mxGraph graph) {
             super(graph);
         }
-
+        
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
                     || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
-
+        
         @Override
         public mxRectangle setVertexLocation(Object vertex, double x, double y) { //NOPMD x,y variable names are standard
             if (isVertexIgnored(vertex)) {
@@ -877,15 +887,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
      * Listener that closes a ModalDialogProgreessIndicator when invoked.
      */
     final private class CancelationListener implements ActionListener {
-
+        
         private Future<?> cancellable;
         private ModalDialogProgressIndicator progress;
-
+        
         void configure(Future<?> cancellable, ModalDialogProgressIndicator progress) {
             this.cancellable = cancellable;
             this.progress = progress;
         }
-
+        
         @Override
         public void actionPerformed(ActionEvent event) {
             progress.setCancelling("Cancelling...");
@@ -901,17 +911,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         "VisualizationPanel.unlockAction.singularText=Unlock Selected Account",
         "VisualizationPanel.unlockAction.pluralText=Unlock Selected Accounts",})
     private final class UnlockAction extends AbstractAction {
-
+        
         private final Set<mxCell> selectedVertices;
-
+        
         UnlockAction(Set<mxCell> selectedVertices) {
             super(selectedVertices.size() > 1 ? Bundle.VisualizationPanel_unlockAction_pluralText() : Bundle.VisualizationPanel_unlockAction_singularText(),
                     unlockIcon);
             this.selectedVertices = selectedVertices;
         }
-
+        
         @Override
-
+        
         public void actionPerformed(final ActionEvent event) {
             lockedVertexModel.unlock(selectedVertices);
         }
@@ -924,15 +934,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         "VisualizationPanel.lockAction.singularText=Lock Selected Account",
         "VisualizationPanel.lockAction.pluralText=Lock Selected Accounts"})
     private final class LockAction extends AbstractAction {
-
+        
         private final Set<mxCell> selectedVertices;
-
+        
         LockAction(Set<mxCell> selectedVertices) {
             super(selectedVertices.size() > 1 ? Bundle.VisualizationPanel_lockAction_pluralText() : Bundle.VisualizationPanel_lockAction_singularText(),
                     lockIcon);
             this.selectedVertices = selectedVertices;
         }
-
+        
         @Override
         public void actionPerformed(final ActionEvent event) {
             lockedVertexModel.lock(selectedVertices);
