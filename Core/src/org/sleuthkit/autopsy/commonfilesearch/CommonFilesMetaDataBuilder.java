@@ -30,6 +30,7 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -94,7 +95,9 @@ abstract class CommonFilesMetaDataBuilder {
         for (AbstractFile file : files) {
 
             String currentMd5 = file.getMd5Hash();
-
+            if((currentMd5 == null) || (HashUtility.isNoDataMd5(currentMd5))) {
+               continue; 
+            }
             if (parentNodes.containsKey(currentMd5)) {
                 parentNodes.get(currentMd5).add(file);
                 Set<String> currentDataSources = md5ToDataSourcesStringMap.get(currentMd5);
