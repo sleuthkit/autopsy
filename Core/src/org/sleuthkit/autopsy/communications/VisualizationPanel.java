@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
+import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.layout.mxOrganicLayout;
 import com.mxgraph.model.mxCell;
@@ -41,6 +42,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,9 +55,14 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import static java.util.Collections.singleton;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -135,23 +142,23 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final mxFastOrganicLayout fastOrganicLayout;
     private final mxCircleLayout circleLayout;
     private final mxOrganicLayout organicLayout;
-    private final mxHierarchicalLayout hierarchicalLayout;
+    private final mxHierarchicalLayout hierarchyLayout;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private SwingWorker<?, ?> worker;
     private final PinnedAccountModel pinnedAccountModel;
     private final LockedVertexModel lockedVertexModel;
 
+    private final Map<mxGraphLayout, JButton> layoutButtons = new HashMap<>();
+    private mxGraphLayout currentLayout;
+
     public VisualizationPanel() {
         initComponents();
         graph = new CommunicationsGraph();
+
         pinnedAccountModel = graph.getPinnedAccountModel();
         lockedVertexModel = graph.getLockedVertexModel();
-
-        fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
-        circleLayout = new mxCircleLayoutImpl(graph);
-        organicLayout = new mxOrganicLayoutImpl(graph);
-        hierarchicalLayout = new mxHierarchicalLayoutImpl(graph);
+   
 
         graphComponent = new mxGraphComponent(graph);
         graphComponent.setAutoExtend(true);
@@ -173,83 +180,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getView().addListener(mxEvent.SCALE, scaleListener);
         graph.getView().addListener(mxEvent.SCALE_AND_TRANSLATE, scaleListener);
 
-        graphComponent.getGraphControl().addMouseWheelListener(new MouseAdapter() {
-            /**
-             * Translate mouse wheel events into zooming.
-             *
-             * @param event The MouseWheelEvent
-             */
-            @Override
-            public void mouseWheelMoved(final MouseWheelEvent event) {
-                super.mouseWheelMoved(event);
-                if (event.getPreciseWheelRotation() > 0) {
-                    graphComponent.zoomIn();
-                } else if (event.getPreciseWheelRotation() < 0) {
-                    graphComponent.zoomOut();
-                }
-            }
-        });
+        final GraphMouseListener graphMouseListener = new GraphMouseListener();
 
-        graphComponent.getGraphControl().addMouseListener(new MouseAdapter() {
-            /**
-             * Right click handler: show context menu.
-             *
-             * @param event The MouseEvent
-             */
-            @Override
-            public void mouseClicked(final MouseEvent event) {
-                super.mouseClicked(event);
-                if (SwingUtilities.isRightMouseButton(event)) {
-                    final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
-                    if (cellAt != null && cellAt.isVertex()) {
-                        final JPopupMenu jPopupMenu = new JPopupMenu();
-                        final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+        graphComponent.getGraphControl().addMouseWheelListener(graphMouseListener);
+        graphComponent.getGraphControl().addMouseListener(graphMouseListener);
 
-                        if (lockedVertexModel.isVertexLocked(cellAt)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.unlockVertex(cellAt);
-                                }
-                            }));
-                        } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    lockedVertexModel.lockVertex(cellAt);
-                                }
-                            }));
-                        }
-                        if (pinnedAccountModel.isAccountPinned(adiKey)) {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
-                                }
-                            }));
-                        } else {
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
-                                }
-                            }));
-                            jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
-                                @Override
-                                public void actionPerformed(final ActionEvent event) {
-                                    handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
-                                }
-                            }));
-                        }
-                        jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
-                    }
-                }
-            }
-        });
         final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
-
         splitPane.setRightComponent(messageBrowser);
-
         proxyLookup = new ProxyLookup(
                 messageBrowser.getLookup(),
                 ExplorerUtils.createLookup(vizEM, getActionMap()));
@@ -261,8 +198,32 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         graph.getModel().addListener(mxEvent.UNDO, undoListener);
         graph.getView().addListener(mxEvent.UNDO, undoListener);
+        
+            fastOrganicLayout = new mxFastOrganicLayoutImpl(graph);
+        circleLayout = new mxCircleLayoutImpl(graph);
+        organicLayout = new mxOrganicLayoutImpl(graph);
+        organicLayout.setMaxIterations(10);
+        hierarchyLayout = new mxHierarchicalLayoutImpl(graph);
+
+        //local method to configure layout buttons
+        BiConsumer<JButton, mxGraphLayout> configure = (layoutButton, layout) -> {
+            layoutButtons.put(layout, layoutButton);
+            layoutButton.addActionListener(event -> applyLayout(layout));
+        };
+        //configure layout buttons.
+        configure.accept(circleLayoutButton, circleLayout);
+        configure.accept(organicLayoutButton, organicLayout);
+        configure.accept(fastOrganicLayoutButton, fastOrganicLayout);
+        configure.accept(hierarchyLayoutButton, hierarchyLayout);
+
+        applyLayout(circleLayout);
     }
 
+    /**
+     *
+     * @param layoutButton the value of layoutButton
+     * @param layout       the value of layout
+     */
     @Override
 
     public Lookup getLookup() {
@@ -327,6 +288,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     if (worker.isCancelled()) {
                         graph.resetGraph();
                         rebuildGraph();
+                        morph(organicLayout);
                     } else {
                  morph(fastOrganicLayout);
                     }
@@ -413,11 +375,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         borderLayoutPanel.setLayout(new BorderLayout());
 
+        jTextArea1.setBackground(new Color(240, 240, 240));
         jTextArea1.setColumns(20);
         jTextArea1.setLineWrap(true);
         jTextArea1.setRows(5);
         jTextArea1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jTextArea1.text")); // NOI18N
-        jTextArea1.setBackground(new Color(240, 240, 240));
 
         GroupLayout placeHolderPanelLayout = new GroupLayout(placeHolderPanel);
         placeHolderPanel.setLayout(placeHolderPanelLayout);
@@ -442,49 +404,29 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         hierarchyLayoutButton.setFocusable(false);
         hierarchyLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         hierarchyLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        hierarchyLayoutButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                hierarchyLayoutButtonActionPerformed(evt);
-            }
-        });
 
         fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
         fastOrganicLayoutButton.setFocusable(false);
         fastOrganicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         fastOrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        fastOrganicLayoutButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                fastOrganicLayoutButtonActionPerformed(evt);
-            }
-        });
 
         organicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.organicLayoutButton.text")); // NOI18N
         organicLayoutButton.setFocusable(false);
         organicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         organicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        organicLayoutButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                organicLayoutButtonActionPerformed(evt);
-            }
-        });
 
         circleLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.circleLayoutButton.text")); // NOI18N
         circleLayoutButton.setFocusable(false);
         circleLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         circleLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-        circleLayoutButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                circleLayoutButtonActionPerformed(evt);
-            }
-        });
 
         jSeparator1.setOrientation(SwingConstants.VERTICAL);
 
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
         zoomOutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.text")); // NOI18N
+        zoomOutButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.toolTipText")); // NOI18N
         zoomOutButton.setFocusable(false);
         zoomOutButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        zoomOutButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.toolTipText")); // NOI18N
         zoomOutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         zoomOutButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -494,9 +436,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         zoomInButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-in-green.png"))); // NOI18N
         zoomInButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.text")); // NOI18N
+        zoomInButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.toolTipText")); // NOI18N
         zoomInButton.setFocusable(false);
         zoomInButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        zoomInButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomInButton.toolTipText")); // NOI18N
         zoomInButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         zoomInButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -506,9 +448,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         zoomActualButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-actual.png"))); // NOI18N
         zoomActualButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.text")); // NOI18N
+        zoomActualButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.toolTipText")); // NOI18N
         zoomActualButton.setFocusable(false);
         zoomActualButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        zoomActualButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomActualButton.toolTipText")); // NOI18N
         zoomActualButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         zoomActualButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -518,9 +460,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         fitZoomButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-fit.png"))); // NOI18N
         fitZoomButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.text")); // NOI18N
+        fitZoomButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.toolTipText")); // NOI18N
         fitZoomButton.setFocusable(false);
         fitZoomButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        fitZoomButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fitZoomButton.toolTipText")); // NOI18N
         fitZoomButton.setVerticalTextPosition(SwingConstants.BOTTOM);
         fitZoomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -620,21 +562,18 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.zoomOut();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
-    private void circleLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_circleLayoutButtonActionPerformed
-        morph(circleLayout);
-    }//GEN-LAST:event_circleLayoutButtonActionPerformed
+    /**
+     *
+     * @param layoutButton the value of layoutButton
+     * @param layout       the value of layout
+     */
+    private void applyLayout(mxGraphLayout layout) {
+        currentLayout = layout;
+        layoutButtons.forEach((layoutKey, button)
+                -> button.setFont(button.getFont().deriveFont(layoutKey == layout ? Font.BOLD : Font.PLAIN))        );
+        morph(layout);
+    }
 
-    private void organicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_organicLayoutButtonActionPerformed
-        applyOrganicLayout(10);
-    }//GEN-LAST:event_organicLayoutButtonActionPerformed
-
-    private void fastOrganicLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fastOrganicLayoutButtonActionPerformed
-        morph(fastOrganicLayout);
-    }//GEN-LAST:event_fastOrganicLayoutButtonActionPerformed
-
-    private void hierarchyLayoutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_hierarchyLayoutButtonActionPerformed
-        morph(hierarchicalLayout);
-    }//GEN-LAST:event_hierarchyLayoutButtonActionPerformed
 
     private void clearVizButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearVizButtonActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -647,11 +586,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         setCursor(Cursor.getDefaultCursor());
 
     }//GEN-LAST:event_clearVizButtonActionPerformed
-
-    private void applyOrganicLayout(int iterations) {
-        organicLayout.setMaxIterations(iterations);
-        morph(organicLayout);
-    }
 
     private void fitGraph() {
         graphComponent.zoomTo(1, true);
@@ -900,5 +834,78 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             progress.finish();
         }
 
+    }
+
+    private class GraphMouseListener extends MouseAdapter {
+
+        /**
+         * Translate mouse wheel events into zooming.
+         *
+         * @param event The MouseWheelEvent
+         */
+        @Override
+        public void mouseWheelMoved(final MouseWheelEvent event) {
+            super.mouseWheelMoved(event);
+            if (event.getPreciseWheelRotation() > 0) {
+                graphComponent.zoomIn();
+            } else if (event.getPreciseWheelRotation() < 0) {
+                graphComponent.zoomOut();
+            }
+        }
+
+        /**
+         * Right click handler: show context menu.
+         *
+         * @param event The MouseEvent
+         */
+        @Override
+        public void mouseClicked(final MouseEvent event) {
+            super.mouseClicked(event);
+            if (SwingUtilities.isRightMouseButton(event)) {
+                final mxCell cellAt = (mxCell) graphComponent.getCellAt(event.getX(), event.getY());
+                if (cellAt != null && cellAt.isVertex()) {
+                    final JPopupMenu jPopupMenu = new JPopupMenu();
+                    final AccountDeviceInstanceKey adiKey = (AccountDeviceInstanceKey) cellAt.getValue();
+
+                    if (lockedVertexModel.isVertexLocked(cellAt)) {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("UnLock " + cellAt.getId(), unlockIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                lockedVertexModel.unlockVertex(cellAt);
+                            }
+                        }));
+                    } else {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Lock " + cellAt.getId(), lockIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                lockedVertexModel.lockVertex(cellAt);
+                            }
+                        }));
+                    }
+                    if (pinnedAccountModel.isAccountPinned(adiKey)) {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Unpin " + cellAt.getId(), unpinIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                handleUnPinEvent(new CVTEvents.UnpinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue())));
+                            }
+                        }));
+                    } else {
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Pin " + cellAt.getId(), addPinIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), false));
+                            }
+                        }));
+                        jPopupMenu.add(new JMenuItem(new AbstractAction("Pin only " + cellAt.getId(), pinIcon) {
+                            @Override
+                            public void actionPerformed(final ActionEvent event) {
+                                handlePinEvent(new CVTEvents.PinAccountsEvent(singleton((AccountDeviceInstanceKey) cellAt.getValue()), true));
+                            }
+                        }));
+                    }
+                    jPopupMenu.show(graphComponent.getGraphControl(), event.getX(), event.getY());
+                }
+            }
+        }
     }
 }
