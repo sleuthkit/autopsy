@@ -18,6 +18,11 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Cursor;
+import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,8 +33,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
@@ -54,8 +60,8 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(JobsSnapshot snapshot, AutoIngestJobStatus status) {
-        super(Children.create(new AutoIngestNodeChildren(snapshot, status), false));
+    AutoIngestJobsNode(AutoIngestMonitor autoIngestMonitor, AutoIngestJobStatus status) {
+        super(Children.create(new AutoIngestNodeChildren(autoIngestMonitor, status), false));
     }
 
     /**
@@ -64,7 +70,7 @@ final class AutoIngestJobsNode extends AbstractNode {
     static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private final JobsSnapshot jobsSnapshot;
+        private final AutoIngestMonitor autoIngestMonitor;
 
         /**
          * Create children nodes for the AutoIngestJobsNode which will each
@@ -73,8 +79,8 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status) {
-            jobsSnapshot = snapshot;
+        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status) {
+            autoIngestMonitor = monitor;
             autoIngestJobStatus = status;
         }
 
@@ -83,13 +89,13 @@ final class AutoIngestJobsNode extends AbstractNode {
             List<AutoIngestJob> jobs;
             switch (autoIngestJobStatus) {
                 case PENDING_JOB:
-                    jobs = jobsSnapshot.getPendingJobs();
+                    jobs = autoIngestMonitor.refreshJobsSnapshot().getPendingJobs();
                     break;
                 case RUNNING_JOB:
-                    jobs = jobsSnapshot.getRunningJobs();
+                    jobs = autoIngestMonitor.refreshJobsSnapshot().getRunningJobs();
                     break;
                 case COMPLETED_JOB:
-                    jobs = jobsSnapshot.getCompletedJobs();
+                    jobs = autoIngestMonitor.refreshJobsSnapshot().getCompletedJobs();
                     break;
                 default:
                     jobs = new ArrayList<>();
@@ -179,6 +185,29 @@ final class AutoIngestJobsNode extends AbstractNode {
                 default:
             }
             return s;
+        }
+
+        @Override
+        public Action[] getActions(boolean context) {
+            List<Action> actions = new ArrayList<>();
+            switch (jobStatus) {
+                case PENDING_JOB:
+                    actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));
+                    actions.add(new PrioritizationAction.PrioritizeCaseAction(autoIngestJob));
+                    PrioritizationAction.DeprioritizeJobAction deprioritizeJobAction = new PrioritizationAction.DeprioritizeJobAction(autoIngestJob);
+                    deprioritizeJobAction.setEnabled(autoIngestJob.getPriority() > 0);
+                    actions.add(deprioritizeJobAction);
+                    PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(autoIngestJob);
+                    deprioritizeCaseAction.setEnabled(autoIngestJob.getPriority() > 0);
+                    actions.add(deprioritizeCaseAction);
+                    break;
+                case RUNNING_JOB:
+                    break;
+                case COMPLETED_JOB:
+                    break;
+                default:
+            }
+            return actions.toArray(new Action[actions.size()]);
         }
     }
 

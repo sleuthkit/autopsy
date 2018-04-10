@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Component;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -74,7 +75,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                     AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
                     tc.add(dashboard);
                     dashboard.setSize(dashboard.getPreferredSize());
-                    
+
                     tc.open();
                 }
                 tc.toFront();
@@ -102,6 +103,24 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
     public AutoIngestDashboardTopComponent() {
         initComponents();
         setName(Bundle.CTL_AutoIngestDashboardTopComponent());
+    }
+
+    AutoIngestMonitor getAutoIngestMonitor() {
+        for (Component comp : getComponents()) {
+            if (comp instanceof AutoIngestDashboard) {
+                return ((AutoIngestDashboard) comp).getMonitor();
+            }
+        }
+        return null;
+    }
+
+    AutoIngestJobsPanel getPendingJobsPanel() {
+        for (Component comp : getComponents()) {
+            if (comp instanceof AutoIngestDashboard) {
+                return ((AutoIngestDashboard) comp).getPendingJobsPanel();
+            }
+        }
+        return null;
     }
 
     @Override

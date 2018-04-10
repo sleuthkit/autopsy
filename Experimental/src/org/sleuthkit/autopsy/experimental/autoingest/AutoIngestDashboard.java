@@ -37,8 +37,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -90,7 +88,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.MESSAGING.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         setServicesStatusMessage();
-        pendingJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobType.PENDING_JOB);
+        pendingJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobStatus.PENDING_JOB);
         pendingJobsPanel.setSize(pendingScrollPane.getSize());
         pendingScrollPane.add(pendingJobsPanel);
         pendingScrollPane.setViewportView(pendingJobsPanel);
@@ -111,8 +109,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
             this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
         });
-        pendingJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_pendingTable.toolTipText());
-        runningJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobType.RUNNING_JOB);
+        pendingJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_pendingTable_toolTipText());
+        runningJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobStatus.RUNNING_JOB);
         runningJobsPanel.setSize(runningScrollPane.getSize());
         runningScrollPane.add(runningJobsPanel);
         runningScrollPane.setViewportView(runningJobsPanel);
@@ -123,8 +121,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeJobButton.setEnabled(enabled);
             this.deprioritizeCaseButton.setEnabled(enabled);
         });
-        runningJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_runningTable.toolTipText());
-        completedJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobType.COMPLETED_JOB);
+        runningJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_runningTable_toolTipText());
+        completedJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobStatus.COMPLETED_JOB);
         completedJobsPanel.setSize(completedScrollPane.getSize());
         completedScrollPane.add(completedJobsPanel);
         completedScrollPane.setViewportView(completedJobsPanel);
@@ -135,12 +133,20 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             this.deprioritizeJobButton.setEnabled(enabled);
             this.deprioritizeCaseButton.setEnabled(enabled);
         });
-        completedJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_completedTable.toolTipText());
+        completedJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_completedTable_toolTipText());
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */
 
         UIManager.put("PopupMenu.consumeEventOnClose", false);
+    }
+
+    AutoIngestMonitor getMonitor() {
+        return autoIngestMonitor;
+    }
+
+    AutoIngestJobsPanel getPendingJobsPanel() {
+        return pendingJobsPanel;
     }
 
     /**
@@ -253,7 +259,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
+        EventQueue.invokeLater(() -> {
+            refreshTables();
+        });
     }
 
     /**
@@ -262,10 +270,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      *
      * @param jobsSnapshot The jobs snapshot.
      */
-    private void refreshTables(JobsSnapshot jobsSnapshot) {
-        pendingJobsPanel.refresh(jobsSnapshot);
-        runningJobsPanel.refresh(jobsSnapshot);
-        completedJobsPanel.refresh(jobsSnapshot);
+    private void refreshTables() {
+        pendingJobsPanel.refresh(autoIngestMonitor);
+        runningJobsPanel.refresh(autoIngestMonitor);
+        completedJobsPanel.refresh(autoIngestMonitor);
     }
 
     /**
@@ -473,46 +481,13 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        JobsSnapshot jobsSnapshot = autoIngestMonitor.refreshJobsSnapshot();
-        refreshTables(jobsSnapshot);
+        refreshTables();
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_refreshButtonActionPerformed
 
-    @Messages({"AutoIngestDashboard.errorMessage.jobPrioritization=Failed to prioritize job \"%s\"."})
-    private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
-        AutoIngestJob job = pendingJobsPanel.getSelectedAutoIngestJob();
-        if (job != null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobPrioritization(), job.getManifest().getFilePath());
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
-    }//GEN-LAST:event_prioritizeJobButtonActionPerformed
-
     @Messages({"AutoIngestDashboard.errorMessage.casePrioritization=Failed to prioritize case \"%s\"."})
     private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
-        AutoIngestJob job = pendingJobsPanel.getSelectedAutoIngestJob();
-        if (job != null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = job.getManifest().getCaseName();
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_casePrioritization(), caseName);
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+        new PrioritizationAction.PrioritizeCaseAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
@@ -521,40 +496,18 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Messages({"AutoIngestDashboard.errorMessage.jobDeprioritization=Failed to deprioritize job \"%s\"."})
     private void deprioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeJobButtonActionPerformed
-        AutoIngestJob job = pendingJobsPanel.getSelectedAutoIngestJob();
-        if (job != null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.deprioritizeJob(job);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_jobDeprioritization(), job.getManifest().getFilePath());
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+        new PrioritizationAction.DeprioritizeJobAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_deprioritizeJobButtonActionPerformed
 
     @Messages({"AutoIngestDashboard.errorMessage.caseDeprioritization=Failed to deprioritize case \"%s\"."})
     private void deprioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeCaseButtonActionPerformed
-        AutoIngestJob job = pendingJobsPanel.getSelectedAutoIngestJob();
-        if (job != null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = job.getManifest().getCaseName();
-            JobsSnapshot jobsSnapshot;
-            try {
-                jobsSnapshot = autoIngestMonitor.deprioritizeCase(caseName);
-                refreshTables(jobsSnapshot);
-            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(Bundle.AutoIngestDashboard_errorMessage_caseDeprioritization(), caseName);
-                LOGGER.log(Level.SEVERE, errorMessage, ex);
-                MessageNotifyUtil.Message.error(errorMessage);
-            }
-            setCursor(Cursor.getDefaultCursor());
-        }
+        new PrioritizationAction.DeprioritizeCaseAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_deprioritizeCaseButtonActionPerformed
+
+    @Messages({"AutoIngestDashboard.errorMessage.jobPrioritization=Failed to prioritize job \"%s\"."})
+    private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
+        new PrioritizationAction.PrioritizeJobAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
+    }//GEN-LAST:event_prioritizeJobButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
@@ -573,29 +526,4 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JScrollPane runningScrollPane;
     private javax.swing.JTextField tbServicesStatusMessage;
     // End of variables declaration//GEN-END:variables
-    /**
-     * A task that refreshes the UI components on this panel to reflect a
-     * snapshot of the pending, running and completed auto ingest jobs lists of
-     * an auto ingest cluster.
-     */
-    private class RefreshComponentsTask implements Runnable {
-
-        private final JobsSnapshot jobsSnapshot;
-
-        /**
-         * Constructs a task that refreshes the UI components on this panel to
-         * reflect a snapshot of the pending, running and completed auto ingest
-         * jobs lists of an auto ingest cluster.
-         *
-         * @param jobsSnapshot The jobs snapshot.
-         */
-        RefreshComponentsTask(JobsSnapshot jobsSnapshot) {
-            this.jobsSnapshot = jobsSnapshot;
-        }
-
-        @Override
-        public void run() {
-            refreshTables(jobsSnapshot);
-        }
-    }
 }
