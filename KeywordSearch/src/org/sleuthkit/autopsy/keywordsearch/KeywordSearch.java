@@ -83,7 +83,7 @@ public class KeywordSearch {
         throw new AssertionError();
     }
 
-    static Logger getTikaLogger() {
+    static java.util.logging.Logger getTikaLogger() {
         return tikaLogger;
     }
 
