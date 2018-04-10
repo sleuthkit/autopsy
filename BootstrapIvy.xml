@@ -8,7 +8,7 @@
     <property name="ivy.jar.dir" value="${ivy.home}/lib" />
     <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
     
-    <target name="download-ivy" unless="offline">
+    <target name="download-ivy" unless="offline"
         <available file="${ivy.jar.file}" property="ivy.available"/>
         <antcall target="-download-ivy" />
     </target>
