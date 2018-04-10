@@ -134,8 +134,10 @@ class TimingMetricGraphPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
         // Get the max and min timestamps and convert to days to create the x-axis
-        long maxTimestamp = getMaxTimestamp();
-        long minTimestamp = getMinTimestamp();
+        long originalMaxTimestamp = getMaxTimestamp();
+        double maxTimestamp = (double) originalMaxTimestamp + 1000 * 60 *60 * 4; // Four hour buffer
+        double minTimestamp = getMinTimestamp() - 1000 * 60 * 60 * 4; // Four hour buffer
+        System.out.println("originalMax: " + originalMaxTimestamp + "  new max: " + maxTimestamp + "  new min: " + minTimestamp);
         //minTimestamp = minTimestamp * 0.995; // This is to get a small gap before the first data points
         //double maxDaysAgo = convertToDaysAgo(getMinTimestamp(), maxTimestamp);
         //maxDaysAgo = maxDaysAgo * 1.005;
@@ -150,7 +152,7 @@ class TimingMetricGraphPanel extends JPanel {
         
         //System.out.println("maxDaysAgo: " + minDaysAgo + ", minDaysAgo: " + maxDaysAgo);
         double xScale = ((double) getWidth() - (2 * padding) - labelPadding) / (maxTimestamp - minTimestamp);
-        double yScale = ((double) getHeight() - 2 * padding - labelPadding) / (maxMetricTime - minMetricTime);
+        double yScale = ((double) getHeight() - (2 * padding) - labelPadding) / (maxMetricTime - minMetricTime);
         
         System.out.println("xScale: " + xScale + ", yScale: " + yScale);
 
@@ -185,14 +187,14 @@ class TimingMetricGraphPanel extends JPanel {
         
         // What we want is midnight preceding the last recorded value
         Calendar maxDate = new GregorianCalendar();
-        maxDate.setTimeInMillis(maxTimestamp);
+        maxDate.setTimeInMillis(originalMaxTimestamp);
         maxDate.set(Calendar.HOUR_OF_DAY, 0);
         maxDate.set(Calendar.MINUTE, 0);
         maxDate.set(Calendar.SECOND, 0);
         maxDate.set(Calendar.MILLISECOND, 0);
         
         long lastMidnightInMillis = maxDate.getTimeInMillis();
-        System.out.println("Last timestamp: " + maxTimestamp + ", last midnight: " + lastMidnightInMillis);
+        System.out.println("Last timestamp: " + originalMaxTimestamp + ", last midnight: " + lastMidnightInMillis);
         
         // We don't want to display more than 20 lines
         long totalMidnights = (lastMidnightInMillis - getMinTimestamp()) / MILLISECONDS_PER_DAY;
@@ -209,11 +211,13 @@ class TimingMetricGraphPanel extends JPanel {
 
         for (long currentDivision = lastMidnightInMillis;currentDivision > 0;currentDivision -= MILLISECONDS_PER_DAY * daysPerDivision) {
 
-            /*
-                int x0 = i * (getWidth() - padding * 2 - labelPadding) / numberOfXDivisions + padding + labelPadding;
+
+                //int x0 = i * (getWidth() - padding * 2 - labelPadding) / numberOfXDivisions + padding + labelPadding;
+                int x0 = (int) ((double)(currentDivision) * xScale + padding + labelPadding);
                 int x1 = x0;
                 int y0 = getHeight() - padding - labelPadding;
                 int y1 = y0 - pointWidth;
+                /*
                 if ((i % ((int) ((numberOfXDivisions / 20.0)) + 1)) == 0) {
                     g2.setColor(gridColor);
                     g2.drawLine(x0, getHeight() - padding - labelPadding - 1 - pointWidth, x1, padding);
@@ -222,9 +226,9 @@ class TimingMetricGraphPanel extends JPanel {
                     FontMetrics metrics = g2.getFontMetrics();
                     int labelWidth = metrics.stringWidth(xLabel);
                     g2.drawString(xLabel, x0 - labelWidth / 2, y0 + metrics.getHeight() + 3);
-                }
+                }*/
                 g2.drawLine(x0, y0, x1, y1);
-            */
+            
         }
 
         // create x and y axes 
@@ -242,7 +246,7 @@ class TimingMetricGraphPanel extends JPanel {
                 int x1 = (int) ((double)(maxTimestamp - timingResults.get(i).getTimestamp()) * xScale + padding + labelPadding);
                 //int x1 = (int) ((maxDaysAgo - convertToDaysAgo(timingResults.get(i).getTimestamp(), maxTimestamp)) * xScale + padding + labelPadding);
                 int yAve = (int) ((maxMetricTime - timingResults.get(i).getAverage()) * yScale + padding);
-                System.out.println("Adding point " + x1 + ", " + yAve);
+                //System.out.println("Adding point " + x1 + ", " + yAve);
                 averageGraphPoints.add(new Point(x1, yAve));
             }            
             
