@@ -485,7 +485,6 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_refreshButtonActionPerformed
 
-    @Messages({"AutoIngestDashboard.errorMessage.casePrioritization=Failed to prioritize case \"%s\"."})
     private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
         new PrioritizationAction.PrioritizeCaseAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
@@ -493,18 +492,14 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
-
-    @Messages({"AutoIngestDashboard.errorMessage.jobDeprioritization=Failed to deprioritize job \"%s\"."})
     private void deprioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeJobButtonActionPerformed
         new PrioritizationAction.DeprioritizeJobAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_deprioritizeJobButtonActionPerformed
 
-    @Messages({"AutoIngestDashboard.errorMessage.caseDeprioritization=Failed to deprioritize case \"%s\"."})
     private void deprioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeCaseButtonActionPerformed
         new PrioritizationAction.DeprioritizeCaseAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_deprioritizeCaseButtonActionPerformed
 
-    @Messages({"AutoIngestDashboard.errorMessage.jobPrioritization=Failed to prioritize job \"%s\"."})
     private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
         new PrioritizationAction.PrioritizeJobAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
     }//GEN-LAST:event_prioritizeJobButtonActionPerformed

@@ -105,6 +105,13 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         setName(Bundle.CTL_AutoIngestDashboardTopComponent());
     }
 
+    /**
+     * Get the AutoIngestMonitor from the current AutoIngestDashboard if there
+     * is one.
+     *
+     * @return the current AutoIngestMonitor or null if there is no
+     *         AutoIngestDashboard
+     */
     AutoIngestMonitor getAutoIngestMonitor() {
         for (Component comp : getComponents()) {
             if (comp instanceof AutoIngestDashboard) {
@@ -114,6 +121,13 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         return null;
     }
 
+    /**
+     * Get the pending jobs panel from the current AutoIngestDashboard if there
+     * is one.
+     *
+     * @return the AutoIngestJobsPanel which contains the pending AutoIngestJobs
+     *         or null if there is no AutoIngestDashboard
+     */
     AutoIngestJobsPanel getPendingJobsPanel() {
         for (Component comp : getComponents()) {
             if (comp instanceof AutoIngestDashboard) {

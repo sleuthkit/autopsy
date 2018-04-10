@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
@@ -9,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -95,6 +109,8 @@ abstract class PrioritizationAction extends AbstractAction {
     /**
      * Action to prioritize the specified AutoIngestJob
      */
+    @Messages({"PrioritizationAction.prioritizeJobAction.title=Prioritize Job",
+        "PrioritizationAction.prioritizeJobAction.error=Failed to prioritize job \"%s\"."})
     static final class PrioritizeJobAction extends PrioritizationAction {
 
         private static final long serialVersionUID = 1L;
@@ -105,7 +121,7 @@ abstract class PrioritizationAction extends AbstractAction {
          * @param selectedJob - the AutoIngestJob to be prioritized
          */
         PrioritizeJobAction(AutoIngestJob selectedJob) {
-            super(selectedJob, "Prioritize Job");
+            super(selectedJob, Bundle.PrioritizationAction_prioritizeJobAction_title());
         }
 
         @Override
@@ -116,7 +132,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         protected String getErrorMessage() {
-            return String.format(Bundle.AutoIngestDashboard_errorMessage_jobPrioritization(), getJob().getManifest().getFilePath());
+            return String.format(Bundle.PrioritizationAction_prioritizeJobAction_error(), getJob().getManifest().getFilePath());
         }
 
         @Override
@@ -128,6 +144,8 @@ abstract class PrioritizationAction extends AbstractAction {
     /**
      * Action to deprioritize the specified AutoIngestJob
      */
+    @Messages({"PrioritizationAction.deprioritizeJobAction.title=Deprioritize Job",
+        "PrioritizationAction.deprioritizeJobAction.error=Failed to deprioritize job \"%s\"."})
     static final class DeprioritizeJobAction extends PrioritizationAction {
 
         private static final long serialVersionUID = 1L;
@@ -138,7 +156,7 @@ abstract class PrioritizationAction extends AbstractAction {
          * @param selectedJob - the AutoIngestJob to be deprioritized
          */
         DeprioritizeJobAction(AutoIngestJob selectedJob) {
-            super(selectedJob, "Deprioritize Job");
+            super(selectedJob, Bundle.PrioritizationAction_deprioritizeJobAction_title());
         }
 
         @Override
@@ -149,7 +167,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         protected String getErrorMessage() {
-            return String.format(Bundle.AutoIngestDashboard_errorMessage_jobDeprioritization(), getJob().getManifest().getFilePath());
+            return String.format(Bundle.PrioritizationAction_deprioritizeJobAction_error(), getJob().getManifest().getFilePath());
         }
 
         @Override
@@ -162,6 +180,8 @@ abstract class PrioritizationAction extends AbstractAction {
      * Action to prioritize all jobs for the case which the specified
      * AutoIngestJob is a part of.
      */
+    @Messages({"PrioritizationAction.prioritizeCaseAction.title=Prioritize Case",
+        "PrioritizationAction.prioritizeCaseAction.error==Failed to prioritize case \"%s\"."})
     static final class PrioritizeCaseAction extends PrioritizationAction {
 
         private static final long serialVersionUID = 1L;
@@ -173,7 +193,7 @@ abstract class PrioritizationAction extends AbstractAction {
          *                    prioritized
          */
         PrioritizeCaseAction(AutoIngestJob selectedJob) {
-            super(selectedJob, "Prioritize Case");
+            super(selectedJob, Bundle.PrioritizationAction_prioritizeCaseAction_title());
         }
 
         @Override
@@ -184,7 +204,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         protected String getErrorMessage() {
-            return String.format(Bundle.AutoIngestDashboard_errorMessage_casePrioritization(), getJob().getManifest().getCaseName());
+            return String.format(Bundle.PrioritizationAction_prioritizeCaseAction_error(), getJob().getManifest().getCaseName());
         }
 
         @Override
@@ -197,6 +217,8 @@ abstract class PrioritizationAction extends AbstractAction {
      * Action to deprioritize all jobs for the case which the specified
      * AutoIngestJob is a part of.
      */
+    @Messages({"PrioritizationAction.deprioritizeCaseAction.title=Deprioritize Case",
+        "PrioritizationAction.deprioritizeCaseAction.error=Failed to deprioritize case \"%s\"."})
     static final class DeprioritizeCaseAction extends PrioritizationAction {
 
         private static final long serialVersionUID = 1L;
@@ -208,7 +230,7 @@ abstract class PrioritizationAction extends AbstractAction {
          *                    deprioritized
          */
         DeprioritizeCaseAction(AutoIngestJob selectedJob) {
-            super(selectedJob, "Deprioritize Case");
+            super(selectedJob, Bundle.PrioritizationAction_deprioritizeCaseAction_title());
         }
 
         @Override
@@ -219,7 +241,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         protected String getErrorMessage() {
-            return String.format(Bundle.AutoIngestDashboard_errorMessage_caseDeprioritization(), getJob().getManifest().getCaseName());
+            return String.format(Bundle.PrioritizationAction_deprioritizeCaseAction_error(), getJob().getManifest().getCaseName());
         }
 
         @Override
