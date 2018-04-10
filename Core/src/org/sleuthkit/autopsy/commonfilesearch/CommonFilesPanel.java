@@ -184,6 +184,17 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
             private String tabTitle;
+                        
+            private void setTitleForAllDataSources() {
+                this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
+            }
+
+            private void setTitleForSingleSource(Long dataSourceId) {
+                final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
+                final Object[] dataSourceName = new Object[]{dataSourceMap.get(dataSourceId)};
+                
+                this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
+            }
             
             private Long determineDataSourceId() {
                 Long selectedObjId = CommonFilesPanel.NO_DATA_SOURCE_SELECTED;
@@ -208,14 +219,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
                     builder = new AllDataSources(dataSourceMap);
                     
-                    this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
+                    setTitleForAllDataSources();
                 } else {
                     builder = new SingleDataSource(dataSourceId, dataSourceMap);
                     
-                    final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
-                    final Object[] dataSourceName = new Object[]{dataSourceMap.get(dataSourceId)};
-                    
-                    this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
+                    setTitleForSingleSource(dataSourceId);
                 }
                 
                 return builder.collateFiles();
