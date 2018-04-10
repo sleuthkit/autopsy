@@ -343,6 +343,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         allDataSourcesRadioButton = new javax.swing.JRadioButton();
         withinDataSourceRadioButton = new javax.swing.JRadioButton();
         selectDataSourceComboBox = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
+        cancelButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(300, 300));
 
@@ -382,6 +384,18 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.jLabel1.text")); // NOI18N
+        jLabel1.setFocusable(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.cancelButton.text")); // NOI18N
+        cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.cancelButton.actionCommand")); // NOI18N
+        cancelButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -389,22 +403,36 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(searchButton)
-                    .addComponent(withinDataSourceRadioButton)
-                    .addComponent(allDataSourcesRadioButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cancelButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(searchButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(withinDataSourceRadioButton)
+                            .addComponent(allDataSourcesRadioButton)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 3, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(allDataSourcesRadioButton)
-                .addGap(2, 2, 2)
-                .addComponent(withinDataSourceRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(withinDataSourceRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
-                .addComponent(searchButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 122, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelButton)
+                    .addComponent(searchButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -432,6 +460,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+       SwingUtilities.windowForComponent(this).dispose();
+    }//GEN-LAST:event_cancelButtonActionPerformed
+
     private void withinDataSourceSelected(boolean selected) {
         selectDataSourceComboBox.setEnabled(selected);
         if (selectDataSourceComboBox.isEnabled()) {
@@ -442,7 +474,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allDataSourcesRadioButton;
+    private javax.swing.JButton cancelButton;
     private javax.swing.ButtonGroup dataSourcesButtonGroup;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JButton searchButton;
     private javax.swing.JComboBox<String> selectDataSourceComboBox;
     private javax.swing.JRadioButton withinDataSourceRadioButton;
