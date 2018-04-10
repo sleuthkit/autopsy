@@ -310,12 +310,13 @@ public class ServicesHealthMonitor {
             timingMapCopy = new HashMap<>(timingInfoMap);
             timingInfoMap.clear();
         }
-        logger.log(Level.INFO, "Writing health monitor metrics to database");
         
         // Check if there's anything to report (right now we only have the timing map)
         if(timingMapCopy.keySet().isEmpty()) {
             return;
         }
+        
+        logger.log(Level.INFO, "Writing health monitor metrics to database");
         
         // Write to the database
         CoordinationService.Lock lock = getSharedDbLock();
@@ -380,7 +381,6 @@ public class ServicesHealthMonitor {
             try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
                     Statement statement = connection.createStatement();) {
                 String createCommand = "SELECT 1 AS result FROM pg_database WHERE datname='" + DATABASE_NAME + "'"; 
-                System.out.println("  query: " + createCommand);
                 rs = statement.executeQuery(createCommand);
                 if(rs.next()) {
                     logger.log(Level.INFO, "Existing Services Health Monitor database found");
