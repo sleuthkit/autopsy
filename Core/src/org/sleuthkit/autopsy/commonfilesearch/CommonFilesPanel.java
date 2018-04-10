@@ -167,9 +167,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
-
+    
     @NbBundle.Messages({
-        "CommonFilesPanel.search.results.title=Common Files",
+        "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
+        "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
         "CommonFilesPanel.search.results.pathText=Common Files Search Results",
         "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
@@ -178,11 +179,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.search.done.sqlException=Unable to query db for files or data sources."})
     private void search() {
 
-        String title = Bundle.CommonFilesPanel_search_results_title();
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
+            private String tabTitle;
+            
             private Long determineDataSourceId() {
                 Long selectedObjId = CommonFilesPanel.NO_DATA_SOURCE_SELECTED;
                 if (CommonFilesPanel.this.singleDataSource) {
@@ -205,8 +207,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
                     builder = new AllDataSources(dataSourceMap);
+                    
+                    this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
                 } else {
                     builder = new SingleDataSource(dataSourceId, dataSourceMap);
+                    
+                    final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
+                    final Object[] dataSourceName = new Object[]{dataSourceMap.get(dataSourceId)};
+                    
+                    this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
                 }
                 
                 return builder.collateFiles();
@@ -219,7 +228,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     List<CommonFilesMetaData> metadata = get();
 
-                    DataResultTopComponent component = DataResultTopComponent.createInstance(title);
+                    DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
 
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
 
