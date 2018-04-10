@@ -18,10 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.awt.Cursor;
-import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,9 +29,8 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
-import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
@@ -60,8 +55,8 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(AutoIngestMonitor autoIngestMonitor, AutoIngestJobStatus status) {
-        super(Children.create(new AutoIngestNodeChildren(autoIngestMonitor, status), false));
+    AutoIngestJobsNode(JobsSnapshot jobsSnapshot, AutoIngestJobStatus status) {
+        super(Children.create(new AutoIngestNodeChildren(jobsSnapshot, status), false));
     }
 
     /**
@@ -70,7 +65,7 @@ final class AutoIngestJobsNode extends AbstractNode {
     static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private final AutoIngestMonitor autoIngestMonitor;
+        private final JobsSnapshot jobsSnapshot;
 
         /**
          * Create children nodes for the AutoIngestJobsNode which will each
@@ -79,8 +74,8 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status) {
-            autoIngestMonitor = monitor;
+        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status) {
+            jobsSnapshot = snapshot;
             autoIngestJobStatus = status;
         }
 
@@ -89,13 +84,13 @@ final class AutoIngestJobsNode extends AbstractNode {
             List<AutoIngestJob> jobs;
             switch (autoIngestJobStatus) {
                 case PENDING_JOB:
-                    jobs = autoIngestMonitor.refreshJobsSnapshot().getPendingJobs();
+                    jobs = jobsSnapshot.getPendingJobs();
                     break;
                 case RUNNING_JOB:
-                    jobs = autoIngestMonitor.refreshJobsSnapshot().getRunningJobs();
+                    jobs = jobsSnapshot.getRunningJobs();
                     break;
                 case COMPLETED_JOB:
-                    jobs = autoIngestMonitor.refreshJobsSnapshot().getCompletedJobs();
+                    jobs = jobsSnapshot.getCompletedJobs();
                     break;
                 default:
                     jobs = new ArrayList<>();

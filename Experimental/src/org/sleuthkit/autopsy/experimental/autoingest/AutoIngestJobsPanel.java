@@ -29,6 +29,7 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
@@ -129,11 +130,11 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * @param jobsSnapshot - the JobsSnapshot which will provide the new
      *                     contents
      */
-    void refresh(AutoIngestMonitor autoIngestMonitor) {
+    void refresh(JobsSnapshot jobsSnapshot) {
         synchronized (this) {
             outline.setRowSelectionAllowed(false);
             Node[] selectedNodes = explorerManager.getSelectedNodes();
-            AutoIngestJobsNode autoIngestNode = new AutoIngestJobsNode(autoIngestMonitor, status);
+            AutoIngestJobsNode autoIngestNode = new AutoIngestJobsNode(jobsSnapshot, status);
             explorerManager.setRootContext(autoIngestNode);
             outline.setRowSelectionAllowed(true);
             if (selectedNodes.length > 0) {

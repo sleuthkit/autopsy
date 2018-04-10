@@ -71,7 +71,7 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.prioritizeJob(getJob());
-            panel.refresh(monitor);
+            panel.refresh(monitor.getJobsSnapshot());
         }
 
         @Override
@@ -96,7 +96,7 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.deprioritizeJob(getJob());
-            panel.refresh(monitor);
+            panel.refresh(monitor.getJobsSnapshot());
         }
 
         @Override
@@ -121,7 +121,7 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.prioritizeCase(getJob().getManifest().getCaseName());
-            panel.refresh(monitor);
+            panel.refresh(monitor.getJobsSnapshot());
         }
 
         @Override
@@ -146,7 +146,7 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.deprioritizeCase(getJob().getManifest().getCaseName());
-            panel.refresh(monitor);
+            panel.refresh(monitor.getJobsSnapshot());
         }
 
         @Override
