@@ -14,7 +14,8 @@ install:
  - sudo apt-get install testdisk
  - cd sleuthkit/sleuthkit 
  - sh install-sleuthkit.sh
-script:	
+script:
+ - set -e	
  - cd $TRAVIS_BUILD_DIR/
  - ant build
  - cd Core/
