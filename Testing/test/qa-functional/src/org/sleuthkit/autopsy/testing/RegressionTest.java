@@ -20,11 +20,11 @@ package org.sleuthkit.autopsy.testing;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import org.netbeans.jemmy.Timeouts;
 import org.netbeans.junit.NbModuleSuite;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * This test expects the following system properties to be set: img_path: The
