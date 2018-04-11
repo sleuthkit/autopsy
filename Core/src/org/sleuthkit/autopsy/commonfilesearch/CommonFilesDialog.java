@@ -65,7 +65,7 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(commonFilesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+            .addComponent(commonFilesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, Short.MAX_VALUE)
         );
 
         pack();
