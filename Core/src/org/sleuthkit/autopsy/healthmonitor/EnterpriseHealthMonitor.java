@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.healthmonitor;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -27,16 +29,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
@@ -47,18 +54,21 @@ import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
  * Modules will call getTimingMetric() before the code to be timed to get a TimingMetric object
  * Modules will call submitTimingMetric() with the obtained TimingMetric object to log it
  */
-public class ServicesHealthMonitor {
+public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
-    private final static Logger logger = Logger.getLogger(ServicesHealthMonitor.class.getName());
-    private final static String DATABASE_NAME = "ServicesHealthMonitor";
-    private final static String MODULE_NAME = "ServicesHealthMonitor";
+    private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
+    private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
+    private final static String MODULE_NAME = "EnterpriseHealthMonitor";
     private final static String IS_ENABLED_KEY = "is_enabled";
     private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
     
     private static final AtomicBoolean isEnabled = new AtomicBoolean(false);
-    private static ServicesHealthMonitor instance;
+    private static EnterpriseHealthMonitor instance;
+    
+    private final ExecutorService healthMonitorExecutor;
+    private static final String HEALTH_MONITOR_EVENT_THREAD_NAME = "Health-Monitor-Event-Listener-%d";
     
     private ScheduledThreadPoolExecutor healthMonitorOutputTimer;
     private final Map<String, TimingInfo> timingInfoMap;
@@ -66,19 +76,22 @@ public class ServicesHealthMonitor {
     private BasicDataSource connectionPool = null;
     private String hostName;
     
-    private ServicesHealthMonitor() throws HealthMonitorException {
+    private EnterpriseHealthMonitor() throws HealthMonitorException {
         
         // Create the map to collect timing metrics. The map will exist regardless
         // of whether the monitor is enabled.
         timingInfoMap = new HashMap<>();
         
+        // Set up the executor to handle case events
+        healthMonitorExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(HEALTH_MONITOR_EVENT_THREAD_NAME).build());
+        
         // Get the host name
         try {
             hostName = java.net.InetAddress.getLocalHost().getHostName();
         } catch (java.net.UnknownHostException ex) {
-            // Continue on but log a warning
-            logger.log(Level.WARNING, "Unable to look up host name");
-            hostName = "unknown";
+            // Continue on, but log the error and generate a UUID to use for this session
+            hostName = UUID.randomUUID().toString();
+            logger.log(Level.SEVERE, "Unable to look up host name - falling back to UUID " + hostName, ex);
         }
         
         // Read from module settings to determine if the module is enabled
@@ -100,13 +113,14 @@ public class ServicesHealthMonitor {
     }
     
     /**
-     * Get the instance of the ServicesHealthMonitor
+     * Get the instance of the EnterpriseHealthMonitor
      * @return the instance
      * @throws HealthMonitorException 
      */
-    synchronized static ServicesHealthMonitor getInstance() throws HealthMonitorException {
+    synchronized static EnterpriseHealthMonitor getInstance() throws HealthMonitorException {
         if (instance == null) {
-            instance = new ServicesHealthMonitor();
+            instance = new EnterpriseHealthMonitor();
+            Case.addPropertyChangeListener(instance);
         }
         return instance;
     }
@@ -122,15 +136,15 @@ public class ServicesHealthMonitor {
         logger.log(Level.INFO, "Activating Servies Health Monitor");
         
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
-            throw new HealthMonitorException("Multi user mode is not enabled - can not activate services health monitor");
-        }
-        // Set up database (if needed)
-        CoordinationService.Lock lock = getExclusiveDbLock();
-        if(lock == null) {
-            throw new HealthMonitorException("Error getting database lock");
+            throw new HealthMonitorException("Multi user mode is not enabled - can not activate health monitor");
         }
         
-        try {
+        // Set up database (if needed)
+        try (CoordinationService.Lock lock = getExclusiveDbLock()) {
+            if(lock == null) {
+                throw new HealthMonitorException("Error getting database lock");
+            }
+            
             // Check if the database exists
             if (! databaseExists()) {
                 
@@ -142,12 +156,8 @@ public class ServicesHealthMonitor {
                 initializeDatabaseSchema();
             }
             
-        } finally {
-            try {
-                lock.release();
-            } catch (CoordinationService.CoordinationServiceException ex) {
-                throw new HealthMonitorException("Error releasing database lock", ex);
-            }
+        } catch (CoordinationService.CoordinationServiceException ex) {
+            throw new HealthMonitorException("Error releasing database lock", ex);
         }
         
         // Clear out any old data
@@ -182,10 +192,9 @@ public class ServicesHealthMonitor {
      * Start the ScheduledThreadPoolExecutor that will handle the database writes.
      */
     private synchronized void startTimer() {
-        if(healthMonitorOutputTimer != null) {
-            // Make sure the previous executor (if it exists) has been stopped
-            healthMonitorOutputTimer.shutdown();
-        }
+        // Make sure the previous executor (if it exists) has been stopped
+        stopTimer();
+        
         healthMonitorOutputTimer = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("health_monitor_timer").build());
         healthMonitorOutputTimer.scheduleWithFixedDelay(new DatabaseWriteTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
     }
@@ -195,7 +204,7 @@ public class ServicesHealthMonitor {
      */
     private synchronized void stopTimer() {
         if(healthMonitorOutputTimer != null) {
-            healthMonitorOutputTimer.shutdown();
+            ThreadUtils.shutDownTaskExecutor(healthMonitorOutputTimer);
         }
     }
 
@@ -203,7 +212,7 @@ public class ServicesHealthMonitor {
      * Called from the installer to set up the Health Monitor instance at startup.
      * @throws HealthMonitorException 
      */
-    static synchronized void startUp() throws HealthMonitorException {
+    static synchronized void startUpIfEnabled() throws HealthMonitorException {
         getInstance();
     }
     
@@ -235,7 +244,7 @@ public class ServicesHealthMonitor {
      * Get a metric that will measure the time to execute a section of code.
      * Call this before the section of code to be timed and then
      * submit it afterward using submitTimingMetric().
-     * This method is safe to call regardless of whether the Services Health
+     * This method is safe to call regardless of whether the Enterprise Health
      * Monitor is enabled.
      * @param name A short but descriptive name describing the code being timed.
      *             This name will appear in the UI.
@@ -251,7 +260,7 @@ public class ServicesHealthMonitor {
     /**
      * Submit the metric that was previously obtained through getTimingMetric().
      * Call this immediately after the section of code being timed.
-     * This method is safe to call regardless of whether the Services Health
+     * This method is safe to call regardless of whether the Enterprise Health
      * Monitor is enabled.
      * @param metric The TimingMetric object obtained from getTimingMetric()
      */
@@ -318,13 +327,12 @@ public class ServicesHealthMonitor {
         
         logger.log(Level.INFO, "Writing health monitor metrics to database");
         
-        // Write to the database
-        CoordinationService.Lock lock = getSharedDbLock();
-        if(lock == null) {
-            throw new HealthMonitorException("Error getting database lock");
-        }
-        
-        try {
+        // Write to the database        
+        try (CoordinationService.Lock lock = getSharedDbLock()) {
+            if(lock == null) {
+                throw new HealthMonitorException("Error getting database lock");
+            }
+            
             Connection conn = connect();
             if(conn == null) {
                 throw new HealthMonitorException("Error getting database connection");
@@ -357,12 +365,8 @@ public class ServicesHealthMonitor {
                     logger.log(Level.SEVERE, "Error closing Connection.", ex);
                 }
             }
-        } finally {
-            try {
-                lock.release();
-            } catch (CoordinationService.CoordinationServiceException ex) {
-                throw new HealthMonitorException("Error releasing database lock", ex);
-            }
+        } catch (CoordinationService.CoordinationServiceException ex) {
+            throw new HealthMonitorException("Error releasing database lock", ex);
         }
     }
     
@@ -383,7 +387,7 @@ public class ServicesHealthMonitor {
                 String createCommand = "SELECT 1 AS result FROM pg_database WHERE datname='" + DATABASE_NAME + "'"; 
                 rs = statement.executeQuery(createCommand);
                 if(rs.next()) {
-                    logger.log(Level.INFO, "Existing Services Health Monitor database found");
+                    logger.log(Level.INFO, "Existing Enterprise Health Monitor database found");
                     return true;
                 }
             } finally {
@@ -648,6 +652,20 @@ public class ServicesHealthMonitor {
         }
     }
     
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+
+        switch (Case.Events.valueOf(evt.getPropertyName())) {
+
+            case CURRENT_CASE:
+                if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
+                    // When a case is closed, write the current metrics to the database
+                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.DatabaseWriteTask());
+                }
+                break;
+        }
+    }
+    
     /**
      * Get an exclusive lock for the health monitor database.
      * Acquire this before creating, initializing, or updating the database schema.
@@ -663,7 +681,7 @@ public class ServicesHealthMonitor {
             }
             throw new HealthMonitorException("Error acquiring database lock");
         } catch (InterruptedException | CoordinationService.CoordinationServiceException ex){
-            throw new HealthMonitorException("Error acquiring database lock");
+            throw new HealthMonitorException("Error acquiring database lock", ex);
         }
     } 
     

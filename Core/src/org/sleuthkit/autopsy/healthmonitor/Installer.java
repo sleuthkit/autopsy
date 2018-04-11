@@ -26,7 +26,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
-    private final HealthMonitorCaseEventListener pcl = new HealthMonitorCaseEventListener();
     private static final long serialVersionUID = 1L;
 
     private static Installer instance;
@@ -45,10 +44,8 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
         
-        Case.addPropertyChangeListener(pcl);
-        
         try {
-            ServicesHealthMonitor.startUp();
+            EnterpriseHealthMonitor.startUpIfEnabled();
         } catch (HealthMonitorException ex) {
             logger.log(Level.SEVERE, "Error starting health services monitor", ex);
         }

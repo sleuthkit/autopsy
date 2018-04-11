@@ -70,7 +70,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.healthmonitor.ServicesHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.Content;
@@ -775,9 +775,9 @@ public class Server {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrServer("http://" + properties.getHost() + ":" + properties.getPort() + "/solr"); //NON-NLS
             }
-            TimingMetric metric = ServicesHealthMonitor.getTimingMetric("Solr: Connectivity check");
+            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Connectivity check");
             connectToSolrServer(currentSolrServer);
-            ServicesHealthMonitor.submitTimingMetric(metric);
+            EnterpriseHealthMonitor.submitTimingMetric(metric);
 
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
