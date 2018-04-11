@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
