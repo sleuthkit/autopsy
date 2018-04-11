@@ -76,11 +76,10 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     private static final Color TAGGED_COLOR = new Color(255, 255, 195);
-
     private final String title;
 
     /**
@@ -137,14 +136,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         initComponents();
         
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        
         outline = outlineView.getOutline();
+        outline.setRowSelectionAllowed(true);
+        outline.setColumnSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);    // don't show the root node
         outline.setDragEnabled(false);
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+        
         // add a listener so that when columns are moved, the new order is stored
         tableListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(tableListener);
+        
         // the listener also moves columns back if user tries to move the first column out of place
         outline.getTableHeader().addMouseListener(tableListener);
     }
@@ -169,7 +173,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         outlineView.expandNode(n);
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -253,7 +257,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * added/removed events as un-hide/hide, until the table setup is done.
          */
         tableListener.listenToVisibilityChanges(false);
-
         /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -316,7 +319,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                             try {
                                 em.setSelectedNodes(new Node[]{childNode});
                             } catch (PropertyVetoException ex) {
-                                logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                                LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
                             }
                             break;
                         }

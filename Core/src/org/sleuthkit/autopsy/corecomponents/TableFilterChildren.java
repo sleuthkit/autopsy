@@ -45,6 +45,7 @@ class TableFilterChildren extends FilterNode.Children {
      *         TableFilterNode.
      */
     public static Children createInstance(Node wrappedNode, boolean createChildren) {
+        
         if (createChildren) {
             return new TableFilterChildren(wrappedNode);
         } else {
@@ -63,7 +64,7 @@ class TableFilterChildren extends FilterNode.Children {
     TableFilterChildren(Node wrappedNode) {
         super(wrappedNode);
     }
-
+    
     /**
      * Copies a TableFilterNode, with the create children (child factory) flag
      * set to false.
