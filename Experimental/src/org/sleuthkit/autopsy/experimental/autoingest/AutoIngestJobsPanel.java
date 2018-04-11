@@ -26,6 +26,7 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
@@ -37,6 +38,10 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnaps
 final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+    private static final int INITIAL_CASENAME_WIDTH = 170;
+    private static final int INITIAL_DATASOURCE_WIDTH = 270;
+    private static final int INITIAL_PRIORITIZED_WIDTH = 20;
+    private static final int INITIAL_STATUS_WIDTH = 20;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
@@ -59,44 +64,74 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * Set up the AutoIngestJobsPanel's so that its outlineView is displaying
      * the correct columns for the specified AutoIngestJobStatus
      */
+    @Messages({"AutoIngestJobsPanel.waitNode.text=Please wait..."})
     void customize() {
-
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestJobsNode_caseName_text());
+        int indexOfColumn;
         switch (status) {
             case PENDING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
                         Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text());
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_priority_text());
+                if (indexOfColumn != -1) {
+                    outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
+                }
                 break;
             case RUNNING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_hostName_text(), Bundle.AutoIngestJobsNode_hostName_text(),
                         Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(),
                         Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text());
-                outline.setColumnSorted(0, true, 1);
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_caseName_text());
+                if (indexOfColumn != -1) {
+                    outline.setColumnSorted(indexOfColumn, true, 1);
+                }
                 break;
             case COMPLETED_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
                         Bundle.AutoIngestJobsNode_jobCompleted_text(), Bundle.AutoIngestJobsNode_jobCompleted_text(),
                         Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text());
-                outline.setColumnSorted(3, false, 1);
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_jobCompleted_text());
+                if (indexOfColumn != -1) {
+                    outline.setColumnSorted(indexOfColumn, false, 1);
+                }
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_status_text());
+                if (indexOfColumn != -1) {
+                    outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_STATUS_WIDTH);
+                }
                 break;
             default:
         }
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestJobsNode_caseName_text());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
 
-        outline.getColumnModel().getColumn(0).setPreferredWidth(160);
-        outline.getColumnModel().getColumn(1).setPreferredWidth(260);
+        indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_caseName_text());
+        if (indexOfColumn != -1) {
+            outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_CASENAME_WIDTH);
+        }
+        indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_dataSource_text());
+        if (indexOfColumn != -1) {
+            outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_DATASOURCE_WIDTH);
+        }
         if (null == explorerManager) {
             explorerManager = new ExplorerManager();
 
         }
         outline.setRowSelectionAllowed(false);
         add(outlineView, java.awt.BorderLayout.CENTER);
-        EmptyNode emptyNode = new EmptyNode("Please wait...");
+        EmptyNode emptyNode = new EmptyNode(Bundle.AutoIngestJobsPanel_waitNode_text());
         explorerManager.setRootContext(emptyNode);
+    }
+
+    private int getColumnIndexByName(String columnName) {
+        for (int index = 0; index < outline.getColumnModel().getColumnCount(); index++) {
+            if (outline.getColumnModel().getColumn(index).getHeaderValue().toString().equals(columnName)) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     @Override
