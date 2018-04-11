@@ -115,6 +115,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit (CommonFilesSearchNode cfsn);
     
     T visit (CommonFileChildNode cfcn);
+    
+    T visit (CommonFileChildNodeLoading cfcnl);
 
     /*
      * Tags
@@ -197,6 +199,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(CommonFilesSearchNode cfsn){
             return defaultVisit(cfsn);
+        }
+        
+        @Override
+        public T visit(CommonFileChildNodeLoading cfcnl){
+            return defaultVisit(cfcnl);
         }
         
         @Override

@@ -112,5 +112,6 @@ public class CommonFileChildNode extends FileNode {
         public String toString() {
             return displayString;
         }
-    }
+    }   
+    
 }
