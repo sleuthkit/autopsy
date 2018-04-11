@@ -140,6 +140,11 @@ public class CommonFileParentNode extends DisplayableItemNode {
             list.addAll(this.descendants);
             return true;
         }
+        
+        @Override 
+        protected Node createWaitNode(){
+            return new CommonFileChildNodeLoading(Children.LEAF);
+        }
     }
 
     @NbBundle.Messages({
