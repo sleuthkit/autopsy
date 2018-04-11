@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
 public class CommonFileChildNode extends FileNode {
-    
+
     private final String dataSource;
 
     public CommonFileChildNode(AbstractFile fsContent, String dataSource) {
@@ -68,7 +68,7 @@ public class CommonFileChildNode extends FileNode {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }
-        
+
         this.addTagProperty(sheetSet);
 
         return sheet;
