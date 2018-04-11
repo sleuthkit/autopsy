@@ -681,9 +681,9 @@ public class ServicesHealthMonitor {
         long millisPerHour = 1000 * 60 * 60;
         long minTimestamp = maxTimestamp - (nDays * (millisPerHour * 24));
         
-        
+        Connection conn = null;
         try {
-            Connection conn = connect();
+            conn = connect();
             if(conn == null) {
                 throw new HealthMonitorException("Error getting database connection");
             }
@@ -704,7 +704,7 @@ public class ServicesHealthMonitor {
                 try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
 
                     // Record index chunk every hour
-                    for(long timestamp = minTimestamp;timestamp < maxTimestamp;timestamp += millisPerHour) {
+                    for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += millisPerHour) {
 
                         long aveTime;
                         
@@ -734,7 +734,7 @@ public class ServicesHealthMonitor {
                     
                     // Make some case opening ones
                     // Record index chunk every hour
-                    for(long timestamp = minTimestamp;timestamp < maxTimestamp;timestamp += (1 + rand.nextInt(10)) * millisPerHour) {
+                    for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += (1 + rand.nextInt(10)) * millisPerHour) {
 
                         long aveTime = minConnTime + rand.nextInt(maxConnTimeOverMin);
                         
@@ -760,14 +760,17 @@ public class ServicesHealthMonitor {
                 } catch (SQLException ex) {
                     throw new HealthMonitorException("Error saving metric data to database", ex);
                 } finally {
-                    try {
-                        conn.close();
-                    } catch (SQLException ex) {
-                        logger.log(Level.SEVERE, "Error closing Connection.", ex);
-                    }
+                    
                 }
             }
         } finally {
+            try {
+                if(conn != null) {
+                        conn.close();
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error closing Connection.", ex);
+            }
             try {
                 lock.release();
             } catch (CoordinationService.CoordinationServiceException ex) {
