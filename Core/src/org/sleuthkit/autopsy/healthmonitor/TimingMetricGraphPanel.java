@@ -57,9 +57,9 @@ class TimingMetricGraphPanel extends JPanel {
     private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
     private int pointWidth = 4;
     private int numberYDivisions = 10;
-    private final List<DatabaseTimingResult> timingResults;
-    private final TimingMetricType timingMetricType;
-    private final boolean doLineGraph;
+    private List<DatabaseTimingResult> timingResults;
+    private TimingMetricType timingMetricType;
+    private boolean doLineGraph;
     private TrendLine trendLine;
     private final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -75,6 +75,21 @@ class TimingMetricGraphPanel extends JPanel {
             trendLine = null;
         }
     }
+    
+    /*void loadNewData(List<DatabaseTimingResult> timingResults, TimingMetricType timingMetricType, boolean doLineGraph) {
+                this.timingResults = timingResults;
+        this.timingMetricType = timingMetricType;
+        this.doLineGraph = doLineGraph;
+        try {
+            trendLine = new TrendLine(timingResults, timingMetricType);
+        } catch (HealthMonitorException ex) {
+            // Log it, set trendLine to null and continue on
+            logger.log(Level.WARNING, "Can not generate a trend line on empty data set");
+            trendLine = null;
+        }
+        this.revalidate();
+        this.repaint();
+    }*/
     
     private double getMaxMetricTime() {
         // Find the highest of the values being graphed
@@ -134,6 +149,10 @@ class TimingMetricGraphPanel extends JPanel {
         return minTimestamp;
     }
 
+    /**
+     * Origin (0,0) is at the top left corner
+     * @param g 
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -302,6 +321,9 @@ class TimingMetricGraphPanel extends JPanel {
         int y1 = (int) ((double)(maxMetricTime - trendLine.getExpectedValueAt(maxTimestamp)) * yScale + padding);
         g2.setColor(trendLineColor);
         g2.drawLine(x0, y0, x1, y1);
+        
+        // TODO - temp testing where origin is
+        g2.fillOval(0, 0, 20, 20);
     }
     
     enum TimingMetricType {

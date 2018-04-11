@@ -61,6 +61,7 @@ public class TestPanel extends javax.swing.JDialog {
         jLabel5 = new javax.swing.JLabel();
         nNodesTextField = new javax.swing.JTextField();
         jButton2 = new javax.swing.JButton();
+        newGraphButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -167,6 +168,13 @@ public class TestPanel extends javax.swing.JDialog {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(newGraphButton, org.openide.util.NbBundle.getMessage(TestPanel.class, "TestPanel.newGraphButton.text")); // NOI18N
+        newGraphButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newGraphButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -201,7 +209,9 @@ public class TestPanel extends javax.swing.JDialog {
                                         .addGap(18, 18, 18)
                                         .addComponent(updateUIButton))
                                     .addComponent(textExistButton))
-                                .addGap(0, 225, Short.MAX_VALUE)))
+                                .addGap(28, 28, 28)
+                                .addComponent(newGraphButton)
+                                .addGap(0, 108, Short.MAX_VALUE)))
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel3)
@@ -243,7 +253,8 @@ public class TestPanel extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(enabledCheckBox)
-                    .addComponent(updateUIButton))
+                    .addComponent(updateUIButton)
+                    .addComponent(newGraphButton))
                 .addGap(31, 31, 31)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
@@ -418,6 +429,15 @@ public class TestPanel extends javax.swing.JDialog {
         
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void newGraphButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newGraphButtonActionPerformed
+        HealthMonitorDashboard dashboard = new HealthMonitorDashboard();
+        try {
+            dashboard.display();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }//GEN-LAST:event_newGraphButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JButton deleteButton;
@@ -434,6 +454,7 @@ public class TestPanel extends javax.swing.JDialog {
     private javax.swing.JTextField nDaysTextField;
     private javax.swing.JTextField nNodesTextField;
     private javax.swing.JTextField nameTextField;
+    private javax.swing.JButton newGraphButton;
     private javax.swing.JButton printMapButton;
     private javax.swing.JButton submitMetricButton;
     private javax.swing.JButton textExistButton;
