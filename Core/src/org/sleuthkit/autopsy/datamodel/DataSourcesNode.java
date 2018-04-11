@@ -29,9 +29,11 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -44,12 +46,14 @@ public class DataSourcesNode extends DisplayableItemNode {
     // NOTE: The images passed in via argument will be ignored.
     @Deprecated
     public DataSourcesNode(List<Content> images) {
-        super(new DataSourcesNodeChildren(), Lookups.singleton(NAME));
+        super(UserPreferences.showDeviceNodesInDataSourcesTree() ?  new DeviceNodeChildren() : new DataSourcesNodeChildren(null), 
+                Lookups.singleton(NAME));
         init();
     }
 
     public DataSourcesNode() {
-        super(new DataSourcesNodeChildren(), Lookups.singleton(NAME));
+        super(UserPreferences.showDeviceNodesInDataSourcesTree() ?  new DeviceNodeChildren() : new DataSourcesNodeChildren(null), 
+                Lookups.singleton(NAME));
         init();
     }
 
@@ -69,15 +73,22 @@ public class DataSourcesNode extends DisplayableItemNode {
      */
     public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
-        private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
         List<Content> currentKeys;
+        private final String parentDeviceId;
 
-        public DataSourcesNodeChildren() {
+        /**
+         * Class constructor
+         * 
+         * @param parentDeviceId - parent device id, used to filter children nodes
+         */
+        public DataSourcesNodeChildren(String parentDeviceId) {
             super();
             this.currentKeys = new ArrayList<>();
+            this.parentDeviceId = parentDeviceId;
         }
-
+         
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -103,10 +114,23 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         private void reloadKeys() {
             try {
-                currentKeys = Case.getOpenCase().getDataSources();
+
+                currentKeys.clear();
+                // if parentDeviceId is specified, use it to filter child nodes 
+                if (null == parentDeviceId || parentDeviceId.isEmpty()) {
+                    currentKeys = Case.getOpenCase().getDataSources();
+                } else {
+                    List<Content> dataSources = Case.getOpenCase().getDataSources();
+                    for (Content content: dataSources) {
+                        if ( parentDeviceId.equalsIgnoreCase(((DataSource)content).getDeviceId())) {
+                            currentKeys.add(content);
+                        }
+                    } 
+                }
+                
                 setKeys(currentKeys);
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
+            } catch (TskCoreException | IllegalStateException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
                 setKeys(Collections.<Content>emptySet());
             }
         }
