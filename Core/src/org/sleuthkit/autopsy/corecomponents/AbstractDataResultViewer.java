@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
-    protected transient ExplorerManager em;
+    protected transient ExplorerManager explorerManager;
 
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
@@ -51,7 +51,7 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
      * @param explorerManager
      */
     AbstractDataResultViewer(ExplorerManager explorerManager) {
-        this.em = explorerManager;
+        this.explorerManager = explorerManager;
     }
 
     /**
@@ -91,13 +91,13 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
 
     @Override
     public ExplorerManager getExplorerManager() {
-        return this.em;
+        return this.explorerManager;
     }
 
     @Override
     public void setSelectedNodes(Node[] selected) {
         try {
-            this.em.setSelectedNodes(selected);
+            this.explorerManager.setSelectedNodes(selected);
         } catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Couldn't set selected nodes.", ex); //NON-NLS
         }

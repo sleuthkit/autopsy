@@ -74,7 +74,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private final List<DataResultViewer> resultViewers = new ArrayList<>();
     private boolean isMain;
     private ExplorerManager explorerManager;
-    private ExplorerManagerNodeSelectionListener emNodeSelectionListener;
+    private ExplorerManagerListener emNodeSelectionListener;
     private Node rootNode;
     private final RootNodeListener rootNodeListener = new RootNodeListener();
     private boolean listeningToTabbedPane;
@@ -172,12 +172,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         setTitle(title);
     }
 
-    private DataResultPanel(boolean isMain, DataContent contentView) {
-        this.isMain = isMain;
-        this.contentView = contentView;
-        initComponents();
-    }
-
     /**
      * Constructs a DataResultPanel with the a custom DataContent.
      *
@@ -187,6 +181,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     DataResultPanel(String title, DataContent customContentView) {
         this(false, customContentView);
+    }
+
+    /**
+     * Constructs a DataResultPanel with a given content view.
+     *
+     * @param isMain
+     * @param contentView
+     */
+    private DataResultPanel(boolean isMain, DataContent contentView) {
+        this.isMain = isMain;
+        this.contentView = contentView;
+        initComponents();
     }
 
     /**
@@ -279,7 +285,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              * selections to be made in all of the result viewers.
              */
             explorerManager = ExplorerManager.find(this);
-            emNodeSelectionListener = new ExplorerManagerNodeSelectionListener();
+            emNodeSelectionListener = new ExplorerManagerListener();
             explorerManager.addPropertyChangeListener(emNodeSelectionListener);
         }
 
@@ -528,47 +534,33 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Responds to node selection change events from the explorer manager.
+     * Responds to node selection change events from the explorer manager of
+     * this panel's parent top component. The selected nodes are passed to the
+     * content view. This is how the results view and the content view are kept
+     * in sync. It is therefore required that all of the result viewers in this
+     * panel use the explorer manager of the parent top component. This supports
+     * this way of passing the selection to the content view, plus the exposure
+     * of the selection to through the actions global context, which is needed
+     * for multiple selection.
      */
-    private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+    private class ExplorerManagerListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            try {
-                Case.getOpenCase();
-            } catch (NoCurrentCaseException ex) {
-                return;
-            }
-
-            /*
-             * Only interested in node selection events.
-             */
-            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    if (contentView != null) {
-                        Node[] selectedNodes = explorerManager.getSelectedNodes();
-
-                        /*
-                         * Pass the selected nodes to all of the result viewers
-                         * sharing this explorer manager.
-                         */
-                        resultViewers.forEach((viewer) -> viewer.setSelectedNodes(selectedNodes));
-
-                        /*
-                         * Passing null signals that either multiple nodes are
-                         * selected, or no nodes are selected. This is important
-                         * to the content view, since content views only work
-                         * for a single node..
-                         */
-                        if (1 == selectedNodes.length) {
-                            contentView.setNode(selectedNodes[0]);
-                        } else {
-                            contentView.setNode(null);
-                        }
-                    }
-                } finally {
-                    setCursor(null);
+            if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES) && contentView != null) {
+                /*
+                 * Pass a single node selection in a result viewer to the
+                 * content view. Note that passing null to the content view
+                 * signals that either multiple nodes are selected, or a
+                 * previous selection has been cleared. This is important to the
+                 * content view, since its child content viewers only work for a
+                 * single node.
+                 */
+                Node[] selectedNodes = explorerManager.getSelectedNodes();
+                if (1 == selectedNodes.length) {
+                    contentView.setNode(selectedNodes[0]);
+                } else {
+                    contentView.setNode(null);
                 }
             }
         }
