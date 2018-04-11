@@ -55,13 +55,11 @@ abstract class PrioritizationAction extends AbstractAction {
      *
      * @param monitor - the AutoIngestMonitor which can be accessed to change
      *                the job or case priority
-     * @param panel   - the AutoIngestJobsPanel which will need to be updated
-     *                after the priority is modified
      *
      * @throws
      * org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestMonitorException
      */
-    protected abstract void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException;
+    protected abstract void modifyPriority(AutoIngestMonitor monitor) throws AutoIngestMonitor.AutoIngestMonitorException;
 
     /**
      * Get the implementation specific error message for if modifyPriority fails
@@ -84,23 +82,22 @@ abstract class PrioritizationAction extends AbstractAction {
         if (job != null) {
             final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
             if (tc != null) {
-                tc.getPendingJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                EventQueue.invokeLater(() -> {
-                    try {
-                        AutoIngestMonitor monitor = tc.getAutoIngestMonitor();
-                        AutoIngestJobsPanel pendingPanel = tc.getPendingJobsPanel();
-                        if (monitor != null && pendingPanel != null) {
-                            modifyPriority(monitor, pendingPanel);
-                            pendingPanel.refresh(monitor.getJobsSnapshot());
+                AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+                if (dashboard != null) {
+                    dashboard.getPendingJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    EventQueue.invokeLater(() -> {
+                        try {
+                            modifyPriority(dashboard.getMonitor());
+                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                        } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                            String errorMessage = getErrorMessage();
+                            logger.log(Level.SEVERE, errorMessage, ex);
+                            MessageNotifyUtil.Message.error(errorMessage);
+                        } finally {
+                            dashboard.getPendingJobsPanel().setCursor(Cursor.getDefaultCursor());
                         }
-                    } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                        String errorMessage = getErrorMessage();
-                        logger.log(Level.SEVERE, errorMessage, ex);
-                        MessageNotifyUtil.Message.error(errorMessage);
-                    } finally {
-                        tc.getPendingJobsPanel().setCursor(Cursor.getDefaultCursor());
-                    }
-                });
+                    });
+                }
             }
         }
     }
@@ -129,7 +126,7 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
+        protected void modifyPriority(AutoIngestMonitor monitor) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.prioritizeJob(getJob());
         }
 
@@ -163,7 +160,7 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
+        protected void modifyPriority(AutoIngestMonitor monitor) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.deprioritizeJob(getJob());
         }
 
@@ -199,7 +196,7 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
+        protected void modifyPriority(AutoIngestMonitor monitor) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.prioritizeCase(getJob().getManifest().getCaseName());
         }
 
@@ -235,7 +232,7 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        protected void modifyPriority(AutoIngestMonitor monitor, AutoIngestJobsPanel panel) throws AutoIngestMonitor.AutoIngestMonitorException {
+        protected void modifyPriority(AutoIngestMonitor monitor) throws AutoIngestMonitor.AutoIngestMonitorException {
             monitor.deprioritizeCase(getJob().getManifest().getCaseName());
         }
 

@@ -63,29 +63,27 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
 
         switch (status) {
             case PENDING_JOB:
-                outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
-                        Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
-                        Bundle.AutoIngestNode_priority_text(), Bundle.AutoIngestNode_priority_text());
-                outline.setColumnSorted(3, false, 1);
-                outline.setColumnSorted(0, true, 2);
+                outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
+                        Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
+                        Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text());
                 break;
             case RUNNING_JOB:
-                outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
-                        Bundle.AutoIngestNode_hostName_text(), Bundle.AutoIngestNode_hostName_text(),
-                        Bundle.AutoIngestNode_stage_text(), Bundle.AutoIngestNode_stage_text(),
-                        Bundle.AutoIngestNode_stageTime_text(), Bundle.AutoIngestNode_stageTime_text());
+                outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
+                        Bundle.AutoIngestJobsNode_hostName_text(), Bundle.AutoIngestJobsNode_hostName_text(),
+                        Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(),
+                        Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text());
                 outline.setColumnSorted(0, true, 1);
                 break;
             case COMPLETED_JOB:
-                outlineView.setPropertyColumns(Bundle.AutoIngestNode_dataSource_text(), Bundle.AutoIngestNode_dataSource_text(),
-                        Bundle.AutoIngestNode_jobCreated_text(), Bundle.AutoIngestNode_jobCreated_text(),
-                        Bundle.AutoIngestNode_jobCompleted_text(), Bundle.AutoIngestNode_jobCompleted_text(),
-                        Bundle.AutoIngestNode_status_text(), Bundle.AutoIngestNode_status_text());
+                outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
+                        Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
+                        Bundle.AutoIngestJobsNode_jobCompleted_text(), Bundle.AutoIngestJobsNode_jobCompleted_text(),
+                        Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text());
                 outline.setColumnSorted(3, false, 1);
                 break;
             default:
         }
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestNode_caseName_text());
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestJobsNode_caseName_text());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
 

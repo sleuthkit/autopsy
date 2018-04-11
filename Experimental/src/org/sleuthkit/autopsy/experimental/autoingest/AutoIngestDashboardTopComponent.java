@@ -106,32 +106,14 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
     }
 
     /**
-     * Get the AutoIngestMonitor from the current AutoIngestDashboard if there
-     * is one.
+     * Get the current AutoIngestDashboard if there is one.
      *
-     * @return the current AutoIngestMonitor or null if there is no
-     *         AutoIngestDashboard
+     * @return the current AutoIngestDashboard or null if there is not one
      */
-    AutoIngestMonitor getAutoIngestMonitor() {
+    AutoIngestDashboard getAutoIngestDashboard() {
         for (Component comp : getComponents()) {
             if (comp instanceof AutoIngestDashboard) {
-                return ((AutoIngestDashboard) comp).getMonitor();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Get the pending jobs panel from the current AutoIngestDashboard if there
-     * is one.
-     *
-     * @return the AutoIngestJobsPanel which contains the pending AutoIngestJobs
-     *         or null if there is no AutoIngestDashboard
-     */
-    AutoIngestJobsPanel getPendingJobsPanel() {
-        for (Component comp : getComponents()) {
-            if (comp instanceof AutoIngestDashboard) {
-                return ((AutoIngestDashboard) comp).getPendingJobsPanel();
+                return (AutoIngestDashboard) comp;
             }
         }
         return null;
