@@ -25,7 +25,6 @@ import com.google.common.collect.MultimapBuilder;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.util.mxConstants;
-import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
 import java.io.InputStream;
@@ -84,17 +83,19 @@ final class CommunicationsGraph extends mxGraph {
         mxStylesheet.getDefaultEdgeStyle().put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
     }
 
-    /* Map from type specific account identifier to mxCell(vertex). */
+    /** Map from type specific account identifier to mxCell(vertex). */
     private final Map<String, mxCell> nodeMap = new HashMap<>();
 
-    /* Map from relationship source (Content) to mxCell (edge). */
+    /** Map from relationship source (Content) to mxCell (edge). */
     private final Multimap<Content, mxCell> edgeMap = MultimapBuilder.hashKeys().hashSetValues().build();
     private final LockedVertexModel lockedVertexModel;
 
     private final PinnedAccountModel pinnedAccountModel;
 
-    CommunicationsGraph() {
+    CommunicationsGraph(PinnedAccountModel pinnedAccountModel, LockedVertexModel lockedVertexModel) {
         super(mxStylesheet);
+        this.pinnedAccountModel = pinnedAccountModel;
+        this.lockedVertexModel = lockedVertexModel;
         //set fixed properties of graph.
         setAutoSizeCells(true);
         setCellsCloneable(false);
@@ -113,21 +114,6 @@ final class CommunicationsGraph extends mxGraph {
         setKeepEdgesInBackground(true);
         setResetEdgesOnMove(true);
         setHtmlLabels(true);
-
-        lockedVertexModel = new LockedVertexModel();
-        lockedVertexModel.registerhandler((LockedVertexModel.VertexLockEvent event) -> {
-            if (event.isVertexLocked()) {
-                getView().clear(event.getVertex(), true, true);
-                getView().validate();
-            } else {
-                final mxCellState state = getView().getState(event.getVertex(), true);
-                getView().updateLabel(state);
-                getView().updateLabelBounds(state);
-                getView().updateBoundingBox(state);
-            }
-        });
-
-        pinnedAccountModel = new PinnedAccountModel(this);
     }
 
     /**
@@ -255,20 +241,20 @@ final class CommunicationsGraph extends mxGraph {
      */
     private class RebuildWorker extends SwingWorker<Void, Void> {
 
-        private final ProgressIndicator progress;
+        private final ProgressIndicator progressIndicator;
         private final CommunicationsManager commsManager;
         private final CommunicationsFilter currentFilter;
 
         RebuildWorker(ProgressIndicator progress, CommunicationsManager commsManager, CommunicationsFilter currentFilter) {
-            this.progress = progress;
+            this.progressIndicator = progress;
             this.currentFilter = currentFilter;
             this.commsManager = commsManager;
 
         }
 
         @Override
-        protected Void doInBackground() throws Exception {
-            progress.start("Loading accounts");
+        protected Void doInBackground() {
+            progressIndicator.start("Loading accounts");
             int progressCounter = 0;
             try {
                 /**
@@ -279,18 +265,18 @@ final class CommunicationsGraph extends mxGraph {
                     if (isCancelled()) {
                         break;
                     }
+                    //get accounts related to pinned account
                     final List<AccountDeviceInstance> relatedAccountDeviceInstances
                             = commsManager.getRelatedAccountDeviceInstances(adiKey.getAccountDeviceInstance(), currentFilter);
                     relatedAccounts.put(adiKey.getAccountDeviceInstance(), adiKey);
                     getOrCreateVertex(adiKey);
 
-                    //get accounts related to pinned account
                     for (final AccountDeviceInstance relatedADI : relatedAccountDeviceInstances) {
                         final long adiRelationshipsCount = commsManager.getRelationshipSourcesCount(relatedADI, currentFilter);
                         final AccountDeviceInstanceKey relatedADIKey = new AccountDeviceInstanceKey(relatedADI, currentFilter, adiRelationshipsCount);
                         relatedAccounts.put(relatedADI, relatedADIKey); //store related accounts
                     }
-                    progress.progress(++progressCounter);
+                    progressIndicator.progress(++progressCounter);
                 }
 
                 Set<AccountDeviceInstance> accounts = relatedAccounts.keySet();
@@ -298,9 +284,9 @@ final class CommunicationsGraph extends mxGraph {
                 Map<AccountPair, Long> relationshipCounts = commsManager.getRelationshipCountsPairwise(accounts, currentFilter);
 
                 int total = relationshipCounts.size();
-                int k = 0;
-                   String progressText = "";
-                progress.switchToDeterminate("", 0, total);
+                int progress = 0;
+                String progressText = "";
+                progressIndicator.switchToDeterminate("", 0, total);
                 for (Map.Entry<AccountPair, Long> entry : relationshipCounts.entrySet()) {
                     Long count = entry.getValue();
                     AccountPair relationshipKey = entry.getKey();
@@ -308,15 +294,14 @@ final class CommunicationsGraph extends mxGraph {
                     AccountDeviceInstanceKey account2 = relatedAccounts.get(relationshipKey.getSecond());
 
                     if (pinnedAccountModel.isAccountPinned(account1)
-                            || pinnedAccountModel.isAccountPinned(account2))  {
+                            || pinnedAccountModel.isAccountPinned(account2)) {
                         mxCell addEdge = addOrUpdateEdge(count, account1, account2);
                         progressText = addEdge.getId();
                     }
-                    progress.progress(progressText, k++);
+                    progressIndicator.progress(progressText, progress++);
                 }
             } catch (TskCoreException tskCoreException) {
                 logger.log(Level.SEVERE, "Error", tskCoreException);
-            } finally {
             }
 
             return null;
@@ -332,7 +317,7 @@ final class CommunicationsGraph extends mxGraph {
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Graph visualization cancelled");
             } finally {
-                progress.finish();
+                progressIndicator.finish();
             }
         }
     }

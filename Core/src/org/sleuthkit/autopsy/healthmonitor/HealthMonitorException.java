@@ -16,13 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.healthmonitor;
 
 /**
- *
+ * Exception used internally by the Services Health Monitor
  */
-public interface EventHandler<T> {
+class HealthMonitorException extends Exception {
+    private static final long serialVersionUID = 1L;
 
-    void handle(T event);
+    HealthMonitorException(String message) {
+        super(message);
+    }
+
+    HealthMonitorException(String message, Throwable cause) {
+        super(message, cause);
+    }   
 }

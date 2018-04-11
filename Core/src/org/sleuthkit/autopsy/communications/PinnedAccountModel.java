@@ -19,22 +19,31 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.eventbus.EventBus;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Model of what accounts are pinned to a visualization.
+ */
 class PinnedAccountModel {
 
     /**
-     * Set of AccountDeviceInstanceKeys that are 'Pinned' to this graph. Pinned
+     * Set of AccountDeviceInstanceKeys that are 'Pinned' to the graph. Pinned
      * accounts are shown regardless of filters, and accounts that are related
      * to pinned accounts and pass the filters are show. Pinning accounts is the
      * primary way to populate the graph.
      */
     private final Set<AccountDeviceInstanceKey> pinnedAccountDevices = new HashSet<>();
-    private final CommunicationsGraph graph;
 
-    PinnedAccountModel(CommunicationsGraph graph) {
-        this.graph = graph;
+    private final EventBus eventBus = new EventBus();
+
+    void registerhandler(Object handler) {
+        eventBus.register(handler);
+    }
+
+    void unregisterhandler(Object handler) {
+        eventBus.unregister(handler);
     }
 
     boolean isAccountPinned(AccountDeviceInstanceKey account) {
