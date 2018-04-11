@@ -29,8 +29,6 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
 public class CommonFileChildNode extends FileNode {
-
-    private static final Logger LOGGER = Logger.getLogger(CommonFileChildNode.class.getName());
     
     private final String dataSource;
 
