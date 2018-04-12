@@ -28,8 +28,18 @@ else
 fi
 
 # Verify Sleuth Kit Java was installed
-sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar;
-sleuthkit_osx_jar_filepath=/usr/local/share/java/sleuthkit-$TSK_VERSION.jar;
+
+
+if [ -f "/usr/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
+    sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar
+elif [ -f "/usr/local/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
+    sleuthkit_jar_filepath=/usr/local/share/java/sleuthkit-$TSK_VERSION.jar
+else
+    echo "sleuthkit.jar file not found"
+    echo "exiting .."
+    exit 1
+fi
+
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar;
 if [ -f "$sleuthkit_jar_filepath" ]; then
 	echo "$sleuthkit_jar_filepath found"
