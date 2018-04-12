@@ -70,6 +70,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public CommonFilesPanel() {
         initComponents();
 
+        //TODO: should refresh data sources periodically ***if*** we figure out how to not recreate the panel every time the user tries to open the dialog
         setupDataSources();
     }
 
@@ -178,7 +179,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.search.done.interupted=Something went wrong finding common files.",
         "CommonFilesPanel.search.done.sqlException=Unable to query db for files or data sources."})
     private void search() {
-
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
@@ -339,12 +339,16 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         dataSourcesButtonGroup = new javax.swing.ButtonGroup();
+        fileTypeFilterButtonGroup = new javax.swing.ButtonGroup();
         searchButton = new javax.swing.JButton();
         allDataSourcesRadioButton = new javax.swing.JRadioButton();
         withinDataSourceRadioButton = new javax.swing.JRadioButton();
         selectDataSourceComboBox = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
+        allRadioButton = new javax.swing.JRadioButton();
+        selectedFileCategoriesButton = new javax.swing.JRadioButton();
+        selectedMimeTypesButton = new javax.swing.JRadioButton();
 
         setPreferredSize(new java.awt.Dimension(300, 200));
 
@@ -396,6 +400,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(allRadioButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allRadioButton.text")); // NOI18N
+        allRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allRadioButton.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(selectedMimeTypesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedMimeTypesButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -405,16 +416,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(withinDataSourceRadioButton)
-                            .addComponent(allDataSourcesRadioButton)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 3, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton)))
+                        .addComponent(cancelButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(withinDataSourceRadioButton)
+                            .addComponent(allDataSourcesRadioButton)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(allRadioButton)
+                            .addComponent(selectedFileCategoriesButton)
+                            .addComponent(selectedMimeTypesButton))
+                        .addGap(0, 69, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -430,7 +444,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         .addComponent(withinDataSourceRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 50, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addComponent(allRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(selectedFileCategoriesButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(selectedMimeTypesButton)
+                        .addGap(0, 203, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -477,11 +497,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allDataSourcesRadioButton;
+    private javax.swing.JRadioButton allRadioButton;
     private javax.swing.JButton cancelButton;
     private javax.swing.ButtonGroup dataSourcesButtonGroup;
+    private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JButton searchButton;
     private javax.swing.JComboBox<String> selectDataSourceComboBox;
+    private javax.swing.JRadioButton selectedFileCategoriesButton;
+    private javax.swing.JRadioButton selectedMimeTypesButton;
     private javax.swing.JRadioButton withinDataSourceRadioButton;
     // End of variables declaration//GEN-END:variables
 }
