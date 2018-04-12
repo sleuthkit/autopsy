@@ -130,6 +130,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
         @Override
         protected Node createNodeForKey(AbstractFile file) {
 
+            //TODO minimize work here - this is the UI thread
             final String dataSource = this.dataSourceMap.get(file.getDataSourceObjectId());
 
             return new CommonFileChildNode(file, dataSource);
@@ -137,6 +138,10 @@ public class CommonFileParentNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<AbstractFile> list) {
+            
+            //TODO change param to Long rather than AbstractFile
+            //TODO load children from db here
+            
             list.addAll(this.descendants);
             return true;
         }
