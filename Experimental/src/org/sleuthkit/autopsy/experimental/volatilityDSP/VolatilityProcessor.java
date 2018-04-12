@@ -136,7 +136,6 @@ class VolatilityProcessor {
                 break;
             }
             String pluginToRun = pluginsToRun.get(i);
-            progressMonitor.setProgressText(Bundle.VolatilityProcessor_progressMessage_runningImageInfo(pluginToRun));
             runVolatilityPlugin(pluginToRun);
             progressMonitor.setProgress(i);
         }
@@ -172,6 +171,8 @@ class VolatilityProcessor {
         "VolatilityProcessor_exceptionMessage_errorIndexingOutput=Error indexing output for {0} plugin"
     })
     private void runVolatilityPlugin(String pluginToRun) throws VolatilityProcessorException {
+        progressMonitor.setProgressText("Running module " + pluginToRun);
+        
         List<String> commandLine = new ArrayList<>();
         commandLine.add("\"" + executableFile + "\""); //NON-NLS
         File memoryImage = new File(memoryImagePath);
@@ -314,6 +315,8 @@ class VolatilityProcessor {
 
             String filePath = volfile.getParent();
 
+            logger.log(Level.INFO, "Looking up file " + fileName + " at path " + filePath);
+            
             try {
                 List<AbstractFile> resolvedFiles;
                 if (filePath == null) {
@@ -333,12 +336,13 @@ class VolatilityProcessor {
                     }
 
                     fileName += ".%"; //NON-NLS
+                    logger.log(Level.INFO, "Looking up file (extension wildcard) " + fileName + " at path " + filePath);
+            
                     if (filePath == null) {
                         resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
                     } else {
                         resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
                     }
-
                 }
 
                 if (resolvedFiles.isEmpty()) {
@@ -387,6 +391,7 @@ class VolatilityProcessor {
      * @param pluginOutputFile File that contains the output to parse.
      */
     private void createArtifactsFromPluginOutput(String pluginName, File pluginOutputFile) throws VolatilityProcessorException {
+        progressMonitor.setProgressText("Parsing module " + pluginName);
         Set<String> fileSet = null;
         switch (pluginName) {
             case "dlllist": //NON-NLS
@@ -421,6 +426,7 @@ class VolatilityProcessor {
         }
 
         if (fileSet != null && !fileSet.isEmpty()) {
+            progressMonitor.setProgressText("Flagging files from module " + pluginName);
             flagFiles(fileSet, pluginName);
         }
     }

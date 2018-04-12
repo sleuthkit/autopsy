@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.datamodel.AccountDeviceInstance;
 
 /**
  * The right hand side of the CVT. Has a DataResultPanel to show a listing of
@@ -151,10 +150,10 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                 //Use lookup here? 
                 final AccountDeviceInstanceNode adiNode = (AccountDeviceInstanceNode) selectedNodes[0];
 
-                final Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
+                final Set<AccountDeviceInstanceKey> accountDeviceInstances = new HashSet<>();
                 for (final Node n : selectedNodes) {
                     //Use lookup here?
-                    accountDeviceInstances.add(((AccountDeviceInstanceNode) n).getAccountDeviceInstance());
+                    accountDeviceInstances.add(((AccountDeviceInstanceNode) n).getAccountDeviceInstanceKey());
                 }
                 return SelectionNode.createFromAccounts(accountDeviceInstances, adiNode.getFilter(), adiNode.getCommsManager());
             }

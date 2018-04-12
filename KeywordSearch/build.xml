@@ -29,7 +29,7 @@
     
     <target name="get-deps" depends="init-ivy, get-solr-deployment">
          <!-- fetch all the dependencies from Ivy and stick them in the right places -->
-        <ivy:resolve/>
+        <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="autopsy"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-war"  pattern="${basedir}/release/solr/webapps/solr.war" />
         <ivy:retrieve conf="start-solr"  pattern="${basedir}/release/solr/start.jar" />
