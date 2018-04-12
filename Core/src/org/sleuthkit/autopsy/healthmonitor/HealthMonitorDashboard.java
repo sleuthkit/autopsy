@@ -19,17 +19,25 @@
 package org.sleuthkit.autopsy.healthmonitor;
 
 import com.mchange.v2.cfg.DelayedLogItem;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Font;
+import javax.swing.Box;
 import javax.swing.JDialog;
 import javax.swing.JComboBox;
+import javax.swing.JSeparator;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -48,51 +56,96 @@ public class HealthMonitorDashboard {
     
     private final static Logger logger = Logger.getLogger(HealthMonitorDashboard.class.getName());
     
-    //Map<String, List<ServicesHealthMonitor.DatabaseTimingResult>> timingData;
+    Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
     
     private JPanel timingMetricPanel = null;
     private JPanel timingButtonPanel = null;
     private JComboBox dateComboBox = null;
+    private JComboBox hostComboBox = null;
+    private JCheckBox hostCheckBox = null;
     
     HealthMonitorDashboard() {
-        
+        timingData = new HashMap<>();
     }
     
     void display() throws HealthMonitorException {
         
-        // Initialize and populate the timing metric panel 
-        populateTimingMetricPanel();
+        // Get a copy of the timing data from the database
+        timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase();       
+        
+        // Set up the buttons
+        setupTimingButtonPanel();
         addActionListeners();
         
-        System.out.println("Creating dialog");
+        // Initialize and populate the timing metric panel 
+        populateTimingMetricPanel();
+        
         JScrollPane scrollPane = new JScrollPane(timingMetricPanel);
         JDialog dialog = new JDialog();
-        dialog.setPreferredSize(new Dimension(1500, 800));
-        dialog.setTitle("Services Health Monitor");
+        //dialog.setPreferredSize(new Dimension(1500, 800));
+        dialog.setTitle("Enterprise Health Monitor");
         //dialog.add(graphPanel);
         dialog.add(scrollPane);
         dialog.pack();
         dialog.setVisible(true);
-        System.out.println("Done displaying dialog");
     }
     
     /**
-     * Initialize the panel holding the timing metric controls,
-     * if it has not already been initialized.
+     * Initialize the panel holding the timing metric controls and
+     * update components
      */
-    private void initializeTimingButtonPanel() throws HealthMonitorException {
+    private void setupTimingButtonPanel() throws HealthMonitorException {
         if(timingButtonPanel == null) {
+            timingButtonPanel = new JPanel();
+            timingButtonPanel.setBorder(BorderFactory.createEtchedBorder());
+            //timingButtonPanel.setPreferredSize(new Dimension(1500, 100));
+        } else {
+            timingButtonPanel.removeAll();
+        }
+        
+        // The contents of the date combo box will never change, so we only need to
+        // do this once
+        if(dateComboBox == null) {
             // Create the combo box for selecting how much data to display
             String[] dateOptionStrings = Arrays.stream(DateRange.values()).map(e -> e.getLabel()).toArray(String[]::new);
             dateComboBox = new JComboBox(dateOptionStrings);
             dateComboBox.setSelectedItem(DateRange.TWO_WEEKS.getLabel());
-
-            // Add the date range button and label to the panel
-            timingButtonPanel = new JPanel();
-            timingButtonPanel.setBorder(BorderFactory.createEtchedBorder()); 
-            timingButtonPanel.add(new JLabel("Max days to display"));
-            timingButtonPanel.add(dateComboBox);
         }
+        
+        // Create an array of host names
+        Set<String> hostNameSet = new HashSet<>();
+        for(String metricType:timingData.keySet()) {
+            for(EnterpriseHealthMonitor.DatabaseTimingResult result: timingData.get(metricType)) {
+                hostNameSet.add(result.getHostName());
+            }
+        }
+        
+        // Load the host names into the combo box
+        hostComboBox = new JComboBox(hostNameSet.toArray(new String[hostNameSet.size()]));
+        
+        // Create the checkbox (if needed)
+        if(hostCheckBox == null) {
+            hostCheckBox = new JCheckBox("Filter by host");
+            hostCheckBox.setSelected(false);
+            hostComboBox.setEnabled(false);
+        }
+        
+        // Create the panel
+        timingButtonPanel = new JPanel();
+        timingButtonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        //timingButtonPanel.setBorder(BorderFactory.createEtchedBorder());
+        
+        // Add the date range combo box and label to the panel
+        timingButtonPanel.add(new JLabel("Max days to display"));
+        timingButtonPanel.add(dateComboBox);
+        
+        // Put some space between the elements
+        timingButtonPanel.add(Box.createHorizontalStrut(100));
+        
+        // Add the host combo box and checkbox to the panel
+        timingButtonPanel.add(hostCheckBox);
+        //timingButtonPanel.add(new JLabel("Host to display"));
+        timingButtonPanel.add(hostComboBox);
     }
     
     /**
@@ -100,18 +153,52 @@ public class HealthMonitorDashboard {
      * Call this after all components are initialized.
      */
     private void addActionListeners() {
+        
         // Set up a listener on the combo box that will update the timing
         // metric graphs
-        dateComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                try {
-                    populateTimingMetricPanel();
-                } catch (HealthMonitorException ex) {
-                    logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
+        if((dateComboBox != null) && (dateComboBox.getActionListeners().length == 0)) {
+            dateComboBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    try {
+                        populateTimingMetricPanel();
+                    } catch (HealthMonitorException ex) {
+                        logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
+                    }
                 }
-            }
-        });
+            });
+        }
+        
+        // Set up a listener on the host name combo box
+        if((hostComboBox != null) && (hostComboBox.getActionListeners().length == 0)) {
+            hostComboBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    try {
+                        if((hostCheckBox != null) && hostCheckBox.isSelected()) {
+                            populateTimingMetricPanel();
+                        }
+                    } catch (HealthMonitorException ex) {
+                        logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
+                    }
+                }
+            });
+        }   
+        
+        // Set up a listener on the host name check box
+        if((hostCheckBox != null) && (hostCheckBox.getActionListeners().length == 0)) {
+            hostCheckBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    try {
+                        hostComboBox.setEnabled(hostCheckBox.isSelected()); // Why isn't this working?
+                        populateTimingMetricPanel();
+                    } catch (HealthMonitorException ex) {
+                        logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
+                    }
+                }
+            });
+        }  
     }
     
     /**
@@ -131,38 +218,52 @@ public class HealthMonitorDashboard {
     }
     
     private void populateTimingMetricPanel() throws HealthMonitorException {
-        initializeTimingButtonPanel();
+
         initializeTimingMetricPanel();
-        
-        // Get a fresh copy of the timing data from the database
-        Map<String, List<ServicesHealthMonitor.DatabaseTimingResult>> timingData =  ServicesHealthMonitor.getInstance().getTimingMetricsFromDatabase();       
+              
+        // Add title
+        JLabel timingMetricTitle = new JLabel("Timing Metrics");
+        timingMetricTitle.setFont(new Font("Serif", Font.BOLD, 20));
+        timingMetricPanel.add(timingMetricTitle);
         
         // Add the button controls
         timingMetricPanel.add(timingButtonPanel);
+        timingMetricPanel.add(new JSeparator());
         
         for(String name:timingData.keySet()) {
             // Add the metric name
-            JLabel label = new JLabel(name);
-            timingMetricPanel.add(label);
+            JLabel metricNameLabel = new JLabel(name);
+            metricNameLabel.setFont(new Font("Serif", Font.BOLD, 12));
+            timingMetricPanel.add(metricNameLabel);
             
             // If necessary, trim down the list of results to fit the selected time range
-            List<ServicesHealthMonitor.DatabaseTimingResult> timingDataForDisplay;
+            List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
             if(dateComboBox.getSelectedItem() != null) {
                 DateRange selectedDateRange = DateRange.fromLabel(dateComboBox.getSelectedItem().toString());
                 if(selectedDateRange != DateRange.ALL) {
                     long threshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
-                    timingDataForDisplay = timingData.get(name).stream()
+                    intermediateTimingDataForDisplay = timingData.get(name).stream()
                             .filter(t -> t.getTimestamp() > threshold)
                             .collect(Collectors.toList());
                 } else {
-                    timingDataForDisplay = timingData.get(name);
+                    intermediateTimingDataForDisplay = timingData.get(name);
                 }
             } else {
-                timingDataForDisplay = timingData.get(name);
+                intermediateTimingDataForDisplay = timingData.get(name);
+            }
+            
+            // If necessary, trim down the resulting list to only one host name
+            List<EnterpriseHealthMonitor.DatabaseTimingResult> timingDataForDisplay;
+            if(hostCheckBox.isSelected() && (hostComboBox.getSelectedItem() != null)) {
+                timingDataForDisplay = intermediateTimingDataForDisplay.stream()
+                            .filter(t -> t.getHostName().equals(hostComboBox.getSelectedItem().toString()))
+                            .collect(Collectors.toList());
+            } else {
+                timingDataForDisplay = intermediateTimingDataForDisplay;
             }
             
             TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(timingDataForDisplay, TimingMetricGraphPanel.TimingMetricType.AVERAGE, true);
-            singleTimingGraphPanel.setPreferredSize(new Dimension(800,200));
+            singleTimingGraphPanel.setPreferredSize(new Dimension(900,250));
             timingMetricPanel.add(singleTimingGraphPanel);
         }
 

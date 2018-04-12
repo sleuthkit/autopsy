@@ -18,7 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
 import java.util.Map;
 import javax.swing.BoxLayout;
-import org.sleuthkit.autopsy.healthmonitor.ServicesHealthMonitor.DatabaseTimingResult; // TEMP TEMP
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.DatabaseTimingResult; // TEMP TEMP
 
 /**
  * This is for testing the Health Monitor code
@@ -62,6 +62,7 @@ public class TestPanel extends javax.swing.JDialog {
         nNodesTextField = new javax.swing.JTextField();
         jButton2 = new javax.swing.JButton();
         newGraphButton = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -175,6 +176,13 @@ public class TestPanel extends javax.swing.JDialog {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(TestPanel.class, "TestPanel.jButton3.text")); // NOI18N
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -227,7 +235,9 @@ public class TestPanel extends javax.swing.JDialog {
                             .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(nNodesTextField))
                         .addGap(18, 18, 18)
-                        .addComponent(jButton2)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton3)
+                            .addComponent(jButton2))
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -264,7 +274,9 @@ public class TestPanel extends javax.swing.JDialog {
                     .addComponent(nDaysTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(nNodesTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 37, Short.MAX_VALUE)
                 .addComponent(textExistButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -300,18 +312,18 @@ public class TestPanel extends javax.swing.JDialog {
         if(nameTextField.getText().isEmpty() || durationTextField.getText().isEmpty()) {
             return;
         }
-        TimingMetric m = ServicesHealthMonitor.getTimingMetric(nameTextField.getText());
+        TimingMetric m = EnterpriseHealthMonitor.getTimingMetric(nameTextField.getText());
         try {
             Thread.sleep(Long.parseLong(durationTextField.getText()));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        ServicesHealthMonitor.submitTimingMetric(m);
+        EnterpriseHealthMonitor.submitTimingMetric(m);
     }//GEN-LAST:event_submitMetricButtonActionPerformed
 
     private void enabledCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledCheckBoxActionPerformed
         try {
-            ServicesHealthMonitor.setEnabled(enabledCheckBox.isSelected());
+            EnterpriseHealthMonitor.setEnabled(enabledCheckBox.isSelected());
         } catch (HealthMonitorException ex) {
             ex.printStackTrace();
         }
@@ -357,7 +369,7 @@ public class TestPanel extends javax.swing.JDialog {
         // TEMP TEMP
 
         try {
-            Map<String, List<DatabaseTimingResult>> timingData =  ServicesHealthMonitor.getInstance().getTimingMetricsFromDatabase();
+            Map<String, List<DatabaseTimingResult>> timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase();
             
             String[] dateOptionStrings = {"All", "Two weeks", "One week"};
             JComboBox dateComboBox = new JComboBox(dateOptionStrings);
@@ -422,7 +434,7 @@ public class TestPanel extends javax.swing.JDialog {
         try {
             int nDays = Integer.valueOf(nDaysTextField.getText());
             int nNodes = Integer.valueOf(nNodesTextField.getText());
-            ServicesHealthMonitor.getInstance().populateDatabase(nDays, nNodes); // TEMP TEMP
+            EnterpriseHealthMonitor.getInstance().populateDatabase(nDays, nNodes, false); // TEMP TEMP
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -438,6 +450,21 @@ public class TestPanel extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_newGraphButtonActionPerformed
 
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        if(nDaysTextField.getText().isEmpty() || nNodesTextField.getText().isEmpty()) {
+            System.out.println("Missing fields");
+            return;
+        }
+
+        try {
+            int nDays = Integer.valueOf(nDaysTextField.getText());
+            int nNodes = Integer.valueOf(nNodesTextField.getText());
+            EnterpriseHealthMonitor.getInstance().populateDatabase(nDays, nNodes, true); // TEMP TEMP
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JButton deleteButton;
@@ -446,6 +473,7 @@ public class TestPanel extends javax.swing.JDialog {
     private javax.swing.JButton graphButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
