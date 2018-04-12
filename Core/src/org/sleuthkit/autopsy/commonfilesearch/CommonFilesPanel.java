@@ -237,8 +237,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     List<CommonFilesMetaData> metadata = get();
 
-                    DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
-
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
 
                     //TODO consider getting em from ExplorerManager.find(this) rather the this wonky stuff seen here...
@@ -246,11 +244,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
+                    TODO get this information from CommonFilesMetaData rather than enumerating the children as below
                     int totalNodes = 0;
                     for (CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();
                     }
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, totalNodes, component);
+                    
+                    DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
+                    
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, 0/*totalNodes*/, component);
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
