@@ -302,6 +302,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
+        groupDatasourcesByDeviceIDCB.setSelected(UserPreferences.showDeviceNodesInDataSourcesTree());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -357,6 +358,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
         UserPreferences.setLogFileCount(Integer.parseInt(logFileCount.getText()));
+        UserPreferences.setShowDeviceNodesInDataSourcesTree(groupDatasourcesByDeviceIDCB.isSelected());
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
@@ -548,6 +550,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         jLabelTimeDisplay = new javax.swing.JLabel();
         useLocalTimeRB = new javax.swing.JRadioButton();
         useGMTTimeRB = new javax.swing.JRadioButton();
+        jLabelGroupTreeItems = new javax.swing.JLabel();
+        groupDatasourcesByDeviceIDCB = new javax.swing.JCheckBox();
         runtimePanel = new javax.swing.JPanel();
         maxMemoryLabel = new javax.swing.JLabel();
         maxMemoryUnitsLabel = new javax.swing.JLabel();
@@ -638,9 +642,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(specifyLogoRB)
                     .addComponent(agencyLogoPathField)
                     .addComponent(browseLogosButton)))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, logoPanelLayout.createSequentialGroup()
-                .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         viewPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.viewPanel.border.title"))); // NOI18N
@@ -715,11 +717,20 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelGroupTreeItems, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelGroupTreeItems.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(groupDatasourcesByDeviceIDCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.groupDatasourcesByDeviceIDCB.text")); // NOI18N
+        groupDatasourcesByDeviceIDCB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                groupDatasourcesByDeviceIDCBActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout viewPanelLayout = new javax.swing.GroupLayout(viewPanel);
         viewPanel.setLayout(viewPanelLayout);
         viewPanelLayout.setHorizontalGroup(
             viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, viewPanelLayout.createSequentialGroup()
+            .addGroup(viewPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(viewPanelLayout.createSequentialGroup()
@@ -745,7 +756,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                             .addComponent(jLabelTimeDisplay)
                             .addComponent(jLabelHideKnownFiles)
                             .addComponent(jLabelSelectFile))
-                        .addGap(30, 30, 30))))
+                        .addGap(30, 151, Short.MAX_VALUE))
+                    .addGroup(viewPanelLayout.createSequentialGroup()
+                        .addGroup(viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(viewPanelLayout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(groupDatasourcesByDeviceIDCB))
+                            .addComponent(jLabelGroupTreeItems))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         viewPanelLayout.setVerticalGroup(
             viewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -773,7 +791,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useLocalTimeRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(useGMTTimeRB))
+                .addComponent(useGMTTimeRB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabelGroupTreeItems)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(groupDatasourcesByDeviceIDCB)
+                .addContainerGap(33, Short.MAX_VALUE))
         );
 
         runtimePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.runtimePanel.border.title"))); // NOI18N
@@ -898,10 +921,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(viewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -1023,6 +1046,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
+    private void groupDatasourcesByDeviceIDCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupDatasourcesByDeviceIDCBActionPerformed
+       firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_groupDatasourcesByDeviceIDCBActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -1033,6 +1060,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton defaultLogoRB;
     private javax.swing.ButtonGroup displayTimesButtonGroup;
     private javax.swing.ButtonGroup fileSelectionButtonGroup;
+    private javax.swing.JCheckBox groupDatasourcesByDeviceIDCB;
+    private javax.swing.JLabel jLabelGroupTreeItems;
     private javax.swing.JLabel jLabelHideKnownFiles;
     private javax.swing.JLabel jLabelHideSlackFiles;
     private javax.swing.JLabel jLabelSelectFile;

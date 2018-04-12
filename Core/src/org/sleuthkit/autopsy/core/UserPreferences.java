@@ -69,7 +69,7 @@ public final class UserPreferences {
     private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
     private static final int LOG_FILE_NUM_INT = 10;
-    private static final String SHOW_DEVICE_NODES_IN_DATA_SRCS_TREE = "ShowDeviceNodesInDataSourcesTree"; //NON-NLS 
+    public static final String SHOW_DEVICE_NODES_IN_DATA_SRCS_TREE = "ShowDeviceNodesInDataSourcesTree"; //NON-NLS 
     
     // Prevent instantiation.
     private UserPreferences() {

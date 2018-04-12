@@ -129,7 +129,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
-        showDeviceIDCheckBox.setSelected(UserPreferences.showDeviceNodesInDataSourcesTree());
     }
 
     /**
@@ -142,6 +141,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 switch (evt.getKey()) {
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
+                    case UserPreferences.SHOW_DEVICE_NODES_IN_DATA_SRCS_TREE:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
@@ -182,7 +182,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         backButton = new javax.swing.JButton();
         forwardButton = new javax.swing.JButton();
         showRejectedCheckBox = new javax.swing.JCheckBox();
-        showDeviceIDCheckBox = new javax.swing.JCheckBox();
 
         treeView.setBorder(null);
 
@@ -220,13 +219,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         org.openide.awt.Mnemonics.setLocalizedText(showRejectedCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showRejectedCheckBox.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(showDeviceIDCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showDeviceIDCheckBox.text")); // NOI18N
-        showDeviceIDCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showDeviceIDCheckBoxActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -238,24 +230,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addGap(0, 0, 0)
                 .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(showDeviceIDCheckBox)
-                    .addComponent(showRejectedCheckBox))
+                .addComponent(showRejectedCheckBox)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(5, 5, 5)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(showRejectedCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(showDeviceIDCheckBox)))
+                    .addComponent(showRejectedCheckBox)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(treeView, javax.swing.GroupLayout.PREFERRED_SIZE, 814, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
@@ -311,19 +297,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setCursor(null);
     }//GEN-LAST:event_forwardButtonActionPerformed
 
-    private void showDeviceIDCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showDeviceIDCheckBoxActionPerformed
-        
-        // Store the checkbox state in User preferences.
-        UserPreferences.setShowDeviceNodesInDataSourcesTree(showDeviceIDCheckBox.isSelected());
-        
-        // Redraw the tree
-        contentChildren.refreshContentKeys();
-    }//GEN-LAST:event_showDeviceIDCheckBoxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
-    private javax.swing.JCheckBox showDeviceIDCheckBox;
     private javax.swing.JCheckBox showRejectedCheckBox;
     private javax.swing.JScrollPane treeView;
     // End of variables declaration//GEN-END:variables
@@ -798,24 +774,19 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refresh the content node part of the dir tree safely in the EDT thread
      */
     public void refreshContentTreeSafe() {
-        SwingUtilities.invokeLater(this::refreshDataSourceTree);
+        SwingUtilities.invokeLater(this::refreshTree);
     }
 
     /**
-     * Refreshes changed content nodes
+     * Refreshes the tree
      */
-    private void refreshDataSourceTree() {
+    private void refreshTree() {
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-        Children rootChildren = em.getRootContext().getChildren();
-        Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
-        if (dataSourcesFilterNode == null) {
-            LOGGER.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
-            return;
-        }
-        Node dataSourcesNode = ((DirectoryTreeFilterNode) dataSourcesFilterNode).getOriginal();
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) dataSourcesNode.getChildren();
-        contentRootChildren.refreshContentKeys();
+        
+        // Redraw the tree
+        contentChildren.refreshContentKeys();
+        
         setSelectedNode(selectedPath, DataSourcesNode.NAME);
     }
 
