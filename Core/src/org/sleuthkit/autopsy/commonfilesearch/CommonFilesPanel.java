@@ -70,6 +70,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public CommonFilesPanel() {
         initComponents();
 
+        //TODO: should refresh data sources periodically ***if*** we figure out how to not recreate the panel every time the user tries to open the dialog
         setupDataSources();
     }
 
