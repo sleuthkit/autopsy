@@ -57,6 +57,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 public class IngestFileFiltersTest extends NbTestCase {
 
@@ -79,16 +80,31 @@ public class IngestFileFiltersTest extends NbTestCase {
     @Override
     public void setUp() {
         createCase();
-        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
     }
 
     @Override
     public void tearDown() {
-        closeCase();
+        try {
+            Case.closeCurrentCase();
+            //Seems like we need some time to close the case.
+            try {
+                Thread.sleep(2000);
+            } catch (Exception ex) {
+
+            }
+            assertFalse(Case.isCaseOpen());
+            FileUtils.deleteDirectory(CASE_DIR);
+        } catch (CaseActionException | IOException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        assertFalse(CASE_DIR.exists());        
     }
     
     public void testBasicDir() {
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+
         HashMap<String, Rule> rule = new HashMap<>();
         rule.put("Rule", new Rule("testFileType", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Filter for dir1 and no unallocated space
@@ -122,9 +138,13 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
     }
     
     public void testExtAndDirWithOneRule() {
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("Rule", new Rule("testExtAndDirWithOneRule", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
         //Build the filter that ignore unallocated space and with one rule
@@ -155,6 +175,9 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testExtAndDirWithTwoRules() {
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
         rules.put("rule2", new Rule("FindDir1Directory", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
@@ -194,6 +217,9 @@ public class IngestFileFiltersTest extends NbTestCase {
    }
    
     public void testFullFileNameRule() {
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("rule", new Rule("FindFileWithFullName", new FullNameCondition("file.docx"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
         //Build the filter to find file: file.docx
@@ -225,6 +251,9 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testCarvingWithExtRuleAndUnallocSpace() {
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
         rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
@@ -268,6 +297,9 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
   
     public void testCarvingNoUnallocatedSpace() {
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+
         HashMap<String, Rule> rules = new HashMap<>();
         rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
         rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
@@ -296,9 +328,8 @@ public class IngestFileFiltersTest extends NbTestCase {
         }
     }
 
-    public void testEmbeddedModule() {
-        //Close the current case
-        closeCase();
+    //This test is disabled. (Refer to JIRA-3743)
+    public void willTestEmbeddedModule() {
         createCase();
         LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
         addDataSourceToCase(dataSourceProcessor, ZIPFILE_PATH);
@@ -319,12 +350,24 @@ public class IngestFileFiltersTest extends NbTestCase {
             runIngestJob(openCase.getDataSources(), templates, embeddedFilter);
             FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
             //get all .jpg files in zip file
-            List<AbstractFile> results = fileManager.findFiles("%.jpg%", ZIPFILE_PATH.getFileName().toString());
-            assertEquals(10, results.size());
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(39, results.size());
+            int numTypeJpgFiles = 0;
             for (AbstractFile file : results) {
-                String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
-                assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty()); 
+                if (file.getNameExtension().equalsIgnoreCase("jpg") || file.getNameExtension().equalsIgnoreCase("zip")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                    numTypeJpgFiles++;
+                } else if (file.isDir() && (file.getType() == TSK_DB_FILES_TYPE_ENUM.DERIVED || file.getType() == TSK_DB_FILES_TYPE_ENUM.LOCAL)) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                } else {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
             }
+            //Make sure 10 jpg files and 1 zip file have been typed
+            assertEquals(11, numTypeJpgFiles);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -376,24 +419,7 @@ public class IngestFileFiltersTest extends NbTestCase {
         }        
         assertTrue(CASE_DIR.exists());
     }
-    
-    private void closeCase() {
-        try {
-            Case.closeCurrentCase();
-            //Seems like we need some time to close the case.
-            try {
-                Thread.sleep(2000);
-            } catch (Exception ex) {
-
-            }
-
-            FileUtils.deleteDirectory(CASE_DIR);
-        } catch (CaseActionException | IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        assertFalse(CASE_DIR.exists());        
-    }
-    
+        
     private void addDataSourceToCase(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
         try {
             ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
