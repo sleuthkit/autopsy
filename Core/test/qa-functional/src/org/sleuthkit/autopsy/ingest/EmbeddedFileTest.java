@@ -54,9 +54,7 @@ public class EmbeddedFileTest extends NbTestCase {
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "EmbeddedFileTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"embedded.vhd");
-    private static final int DEEP_FOLDER_COUNT = 25;
-    private static int deepFolderTested = 0;
-    
+  
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EmbeddedFileTest.class).
                 clusters(".*").
@@ -152,7 +150,7 @@ public class EmbeddedFileTest extends NbTestCase {
             //Make sure 2 password prected zip files has been tested
             assertEquals(2, passwdProtectedZips);
             //No other files has artifact TSK_ENCRYPTION_DETECTED
-            assertEquals(numOfFiles - 2, nonPasswdProcted);
+            assertEquals(numOfFiles - passwdProtectedZips, nonPasswdProcted);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
