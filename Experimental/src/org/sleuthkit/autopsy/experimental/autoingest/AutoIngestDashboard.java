@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
-import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -92,47 +91,16 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         pendingJobsPanel.setSize(pendingScrollPane.getSize());
         pendingScrollPane.add(pendingJobsPanel);
         pendingScrollPane.setViewportView(pendingJobsPanel);
-        pendingJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
-            if (e.getValueIsAdjusting()) {
-                return;
-            }
-            AutoIngestJob job = this.pendingJobsPanel.getSelectedAutoIngestJob();
-
-            boolean enablePrioritizeButtons = false;
-            boolean enableDeprioritizeButtons = false;
-            if (job != null) {
-                enablePrioritizeButtons = true;
-                enableDeprioritizeButtons = job.getPriority() > 0;
-            }
-            this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
-            this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
-            this.deprioritizeJobButton.setEnabled(enableDeprioritizeButtons);
-            this.deprioritizeCaseButton.setEnabled(enableDeprioritizeButtons);
-        });
         pendingJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_pendingTable_toolTipText());
         runningJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobStatus.RUNNING_JOB);
         runningJobsPanel.setSize(runningScrollPane.getSize());
         runningScrollPane.add(runningJobsPanel);
         runningScrollPane.setViewportView(runningJobsPanel);
-        runningJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
-            boolean enabled = false;
-            this.prioritizeJobButton.setEnabled(enabled);
-            this.prioritizeCaseButton.setEnabled(enabled);
-            this.deprioritizeJobButton.setEnabled(enabled);
-            this.deprioritizeCaseButton.setEnabled(enabled);
-        });
         runningJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_runningTable_toolTipText());
         completedJobsPanel = new AutoIngestJobsPanel(AutoIngestJobsNode.AutoIngestJobStatus.COMPLETED_JOB);
         completedJobsPanel.setSize(completedScrollPane.getSize());
         completedScrollPane.add(completedJobsPanel);
         completedScrollPane.setViewportView(completedJobsPanel);
-        completedJobsPanel.addListSelectionListener((ListSelectionEvent e) -> {
-            boolean enabled = false;
-            this.prioritizeJobButton.setEnabled(enabled);
-            this.prioritizeCaseButton.setEnabled(enabled);
-            this.deprioritizeJobButton.setEnabled(enabled);
-            this.deprioritizeCaseButton.setEnabled(enabled);
-        });
         completedJobsPanel.setToolTipText(Bundle.AutoIngestDashboard_completedTable_toolTipText());
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
@@ -326,11 +294,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         refreshButton = new javax.swing.JButton();
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
-        prioritizeJobButton = new javax.swing.JButton();
-        prioritizeCaseButton = new javax.swing.JButton();
         clusterMetricsButton = new javax.swing.JButton();
-        deprioritizeJobButton = new javax.swing.JButton();
-        deprioritizeCaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -364,46 +328,10 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         tbServicesStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.text")); // NOI18N
         tbServicesStatusMessage.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(prioritizeJobButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeJobButton.text")); // NOI18N
-        prioritizeJobButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeJobButton.toolTipText")); // NOI18N
-        prioritizeJobButton.setEnabled(false);
-        prioritizeJobButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prioritizeJobButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(prioritizeCaseButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeCaseButton.text")); // NOI18N
-        prioritizeCaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeCaseButton.toolTipText")); // NOI18N
-        prioritizeCaseButton.setEnabled(false);
-        prioritizeCaseButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prioritizeCaseButtonActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(clusterMetricsButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.clusterMetricsButton.text")); // NOI18N
         clusterMetricsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 clusterMetricsButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(deprioritizeJobButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeJobButton.text")); // NOI18N
-        deprioritizeJobButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeJobButton.toolTipText")); // NOI18N
-        deprioritizeJobButton.setEnabled(false);
-        deprioritizeJobButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deprioritizeJobButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(deprioritizeCaseButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeCaseButton.text")); // NOI18N
-        deprioritizeCaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.deprioritizeCaseButton.toolTipText")); // NOI18N
-        deprioritizeCaseButton.setEnabled(false);
-        deprioritizeCaseButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deprioritizeCaseButtonActionPerformed(evt);
             }
         });
 
@@ -418,28 +346,23 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                     .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deprioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deprioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(clusterMetricsButton))
-                    .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbCompleted, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbRunning, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(lbServicesStatus)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.DEFAULT_SIZE, 861, Short.MAX_VALUE)))
+                        .addComponent(tbServicesStatusMessage, javax.swing.GroupLayout.DEFAULT_SIZE, 861, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lbPending, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbCompleted, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbRunning, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(clusterMetricsButton)))
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clusterMetricsButton, prioritizeCaseButton, prioritizeJobButton, refreshButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clusterMetricsButton, refreshButton});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -463,11 +386,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
-                    .addComponent(prioritizeJobButton)
-                    .addComponent(prioritizeCaseButton)
-                    .addComponent(clusterMetricsButton)
-                    .addComponent(deprioritizeJobButton)
-                    .addComponent(deprioritizeCaseButton))
+                    .addComponent(clusterMetricsButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -485,38 +404,19 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_refreshButtonActionPerformed
 
-    private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
-        new PrioritizationAction.PrioritizeCaseAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
-    }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
-
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
-    private void deprioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeJobButtonActionPerformed
-        new PrioritizationAction.DeprioritizeJobAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
-    }//GEN-LAST:event_deprioritizeJobButtonActionPerformed
-
-    private void deprioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deprioritizeCaseButtonActionPerformed
-        new PrioritizationAction.DeprioritizeCaseAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
-    }//GEN-LAST:event_deprioritizeCaseButtonActionPerformed
-
-    private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
-        new PrioritizationAction.PrioritizeJobAction(pendingJobsPanel.getSelectedAutoIngestJob()).actionPerformed(evt);
-    }//GEN-LAST:event_prioritizeJobButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
     private javax.swing.JScrollPane completedScrollPane;
-    private javax.swing.JButton deprioritizeCaseButton;
-    private javax.swing.JButton deprioritizeJobButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel lbCompleted;
     private javax.swing.JLabel lbPending;
     private javax.swing.JLabel lbRunning;
     private javax.swing.JLabel lbServicesStatus;
     private javax.swing.JScrollPane pendingScrollPane;
-    private javax.swing.JButton prioritizeCaseButton;
-    private javax.swing.JButton prioritizeJobButton;
     private javax.swing.JButton refreshButton;
     private javax.swing.JScrollPane runningScrollPane;
     private javax.swing.JTextField tbServicesStatusMessage;
