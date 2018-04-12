@@ -324,7 +324,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                 }
 
                 @Override
-                protected void succeeded() {
+                protected void done() {
                     super.succeeded();
                     try {
                         tooltip.setText(get());
