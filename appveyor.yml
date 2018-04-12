@@ -1,0 +1,46 @@
+version: 4.6.0.{build}
+
+cache:
+  - C:\Users\appveyor\.ant -> appveyor.yml
+  - C:\Users\appveyor\.ivy2 -> appveyor.yml
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+
+branches:
+    only:
+      - develop
+
+image: Visual Studio 2015
+
+init:
+  - ps: choco install ant --ignore-dependencies
+  - ps: $env:Path="C:\Program Files\Java\jdk1.8.0\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
+  - set PATH=C:\Python36-x64\';%PATH%
+environment:
+    global:
+      TSK_HOME: "C:\\sleuthkit"
+      LIBVHDI_HOME: "C:\\libvhdi_64bit"
+      LIBVMDK_HOME: "C:\\libvmdk_64bit\\libvmdk"
+      LIBEWF_HOME: "C:\\libewf_64bit"
+      POSTGRESQL_HOME_64: "C:\\Program Files\\PostgreSQL\\9.5"
+      PYTHON: "C:\\Python36-x64"
+install:
+  - ps: pushd C:\
+  - git clone https://github.com/sleuthkit/sleuthkit.github
+  - ps: popd
+services:
+      - postgresql95
+
+build_script:
+  - ps: pushd $env:TSK_HOME
+  - python setupLibs.py
+  - python win32\updateBuildLibs.py -m
+  - ps: ant -version
+  - ps: pushd bindings/java
+  - cmd: ant dist-PostgreSQL
+  - ps: popd
+  - ps: popd
+  - ps: pushd Core
+  - cmd: ant build > nul
+  - cmd: ant test > nul
+  - ps: popd
