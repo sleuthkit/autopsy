@@ -35,15 +35,14 @@ services:
 
 
 build_script:
-  - ps: pushd $env:TSK_HOME
-  - cmd: python setupLibs.py
-  - cmd: python win32\updateBuildLibs.py -m
-  - ps: ant -version
+  - cd %TSK_HOME%
+  - python setupLibs.py
+  - python win32\updateBuildLibs.py -m
   - ps: pushd bindings/java
+  - ps: ant -version
   - cmd: ant dist-PostgreSQL
   - ps: popd
-  - ps: popd
-  - ps: pushd Core
+  - cd %APPVEYOR_BUILD_FOLDER%
   - cmd: ant build > nul
+  - cd Core
   - cmd: ant test > nul
-  - ps: popd
