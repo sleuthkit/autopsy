@@ -330,7 +330,6 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     //This test is disabled. (Refer to JIRA-3743)
     public void willTestEmbeddedModule() {
-        createCase();
         LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
         addDataSourceToCase(dataSourceProcessor, ZIPFILE_PATH);
         
