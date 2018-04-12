@@ -46,3 +46,6 @@ build_script:
   - cmd: ant build > nul
   - cd Core
   - cmd: ant test > nul
+  - cd ..
+
+test: off
