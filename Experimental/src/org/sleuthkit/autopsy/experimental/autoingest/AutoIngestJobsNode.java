@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.io.File;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.openide.modules.Places;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -189,22 +191,27 @@ final class AutoIngestJobsNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            switch (jobStatus) {
-                case PENDING_JOB:
-                    actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));
-                    actions.add(new PrioritizationAction.PrioritizeCaseAction(autoIngestJob));
-                    PrioritizationAction.DeprioritizeJobAction deprioritizeJobAction = new PrioritizationAction.DeprioritizeJobAction(autoIngestJob);
-                    deprioritizeJobAction.setEnabled(autoIngestJob.getPriority() > 0);
-                    actions.add(deprioritizeJobAction);
-                    PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(autoIngestJob);
-                    deprioritizeCaseAction.setEnabled(autoIngestJob.getPriority() > 0);
-                    actions.add(deprioritizeCaseAction);
-                    break;
-                case RUNNING_JOB:
-                    break;
-                case COMPLETED_JOB:
-                    break;
-                default:
+            //WJS-TODO make this a publically accessible setting like isAdminModeEnabled
+            //Or at minimum make the file name a static variable 
+            File f = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "adminAccess");
+            if (f.exists()) {
+                switch (jobStatus) {
+                    case PENDING_JOB:
+                        actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));
+                        actions.add(new PrioritizationAction.PrioritizeCaseAction(autoIngestJob));
+                        PrioritizationAction.DeprioritizeJobAction deprioritizeJobAction = new PrioritizationAction.DeprioritizeJobAction(autoIngestJob);
+                        deprioritizeJobAction.setEnabled(autoIngestJob.getPriority() > 0);
+                        actions.add(deprioritizeJobAction);
+                        PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(autoIngestJob);
+                        deprioritizeCaseAction.setEnabled(autoIngestJob.getPriority() > 0);
+                        actions.add(deprioritizeCaseAction);
+                        break;
+                    case RUNNING_JOB:
+                        break;
+                    case COMPLETED_JOB:
+                        break;
+                    default:
+                }
             }
             return actions.toArray(new Action[actions.size()]);
         }
