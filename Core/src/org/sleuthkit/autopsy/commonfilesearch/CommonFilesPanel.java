@@ -243,7 +243,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    TODO get this information from CommonFilesMetaData rather than enumerating the children as below
+                    //TODO get this information from CommonFilesMetaData rather than enumerating the children as below
                     int totalNodes = 0;
                     for (CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();
