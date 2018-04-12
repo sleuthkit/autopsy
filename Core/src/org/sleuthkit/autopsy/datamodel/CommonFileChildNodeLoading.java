@@ -19,7 +19,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 
 /**
  * A dummy node used by the child factory to display while children are being
@@ -44,5 +48,45 @@ public class CommonFileChildNodeLoading extends DisplayableItemNode {
     @Override
     public String getItemType() {
         return getClass().getName();
+    }
+
+    @Override
+    protected Sheet createSheet() {
+        Sheet sheet = new Sheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
+        }
+
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put(CommonFileChildLoadingPropertyType.File.toString(), "Loading...");
+
+        final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
+        for (CommonFileChildLoadingPropertyType propType : CommonFileChildLoadingPropertyType.values()) {
+            final String propString = propType.toString();
+            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
+        }
+
+        return sheet;
+    }
+
+    @NbBundle.Messages({
+        "CommonFileChildLoadingPropertyType.fileColLbl=File"
+    })
+    public enum CommonFileChildLoadingPropertyType {
+
+        File(Bundle.CommonFileChildLoadingPropertyType_fileColLbl());
+
+        final private String displayString;
+
+        private CommonFileChildLoadingPropertyType(String displayString) {
+            this.displayString = displayString;
+        }
+
+        @Override
+        public String toString() {
+            return displayString;
+        }
     }
 }
