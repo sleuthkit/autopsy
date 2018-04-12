@@ -6,8 +6,9 @@ TSK_VERSION=4.6.0
 
 # Verify PhotoRec was installed
 photorec_filepath=/usr/bin/photorec
-if [ -f "$photorec_filepath"  ]; then
-	echo "$photorec_filepath found"
+photorec_osx_filepath=/usr/local/bin/photorec
+if [ -f "$photorec_filepath"  ] || [ -f "$photorec_osx_filepath" ]; then
+	echo "photorec found"
 else
 	echo "ERROR: Photorec not found, please install the testdisk package"
 	exit 1
@@ -28,6 +29,7 @@ fi
 
 # Verify Sleuth Kit Java was installed
 sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar;
+sleuthkit_osx_jar_filepath=/usr/local/share/java/sleuthkit-$TSK_VERSION.jar;
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar;
 if [ -f "$sleuthkit_jar_filepath" ]; then
 	echo "$sleuthkit_jar_filepath found"
