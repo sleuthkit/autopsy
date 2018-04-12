@@ -108,7 +108,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        explorerManager.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
+        this.getExplorerManager().addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
                 new String[]{Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
                     Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
@@ -297,7 +297,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         if (thumbSize != newIconSize) {
             thumbSize = newIconSize;
-            Node root = explorerManager.getRootContext();
+            Node root = this.getExplorerManager().getRootContext();
             ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(thumbSize);
 
            
@@ -307,13 +307,13 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             // update even though the new and old Node values are identical. This in turn
             // will cause the entire view to update completely. After this we 
             // immediately set the node back to the current child by calling switchPage().        
-            explorerManager.setExploredContext(root);
+            this.getExplorerManager().setExploredContext(root);
             switchPage();
         }
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
     private void sortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortButtonActionPerformed
-        List<Node.Property<?>> childProperties = ResultViewerPersistence.getAllChildProperties(explorerManager.getRootContext(), 100);
+        List<Node.Property<?>> childProperties = ResultViewerPersistence.getAllChildProperties(this.getExplorerManager().getRootContext(), 100);
         SortChooser sortChooser = new SortChooser(childProperties, ResultViewerPersistence.loadSortCriteria(tfn));
         DialogDescriptor dialogDescriptor = new DialogDescriptor(sortChooser, sortChooser.getDialogTitle());
         Dialog createDialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
@@ -395,12 +395,12 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
-                explorerManager.setRootContext(root);
+                this.getExplorerManager().setRootContext(root);
             } else {
                 tfn = null;
                 tvc = null;
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                explorerManager.setRootContext(emptyNode);
+                this.getExplorerManager().setRootContext(emptyNode);
                 iconView.setBackground(Color.BLACK);
             }
         } finally {
@@ -488,6 +488,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
+                ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
                 Node root = explorerManager.getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(curPage - 1);
                 explorerManager.setExploredContext(pageNode);
@@ -618,7 +619,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     }
                 });
 
-                explorerManager.setExploredContext(pageNode);
+                DataResultViewerThumbnail.this.getExplorerManager().setExploredContext(pageNode);
             }
 
             updateControls();
@@ -647,7 +648,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
-                    Node[] selectedNodes = explorerManager.getSelectedNodes();
+                    Node[] selectedNodes = DataResultViewerThumbnail.this.getExplorerManager().getSelectedNodes();
                     if (selectedNodes.length == 1) {
                         AbstractFile af = selectedNodes[0].getLookup().lookup(AbstractFile.class);
                         if (af == null) {

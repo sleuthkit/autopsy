@@ -224,11 +224,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             if (hasChildren) {
                 currentRoot = selectedNode;
-                explorerManager.setRootContext(currentRoot);
+                this.getExplorerManager().setRootContext(currentRoot);
                 setupTable();
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                explorerManager.setRootContext(emptyNode); // make empty node
+                this.getExplorerManager().setRootContext(emptyNode); // make empty node
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
                 /*
@@ -314,7 +314,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         Node childNode = childNodes[i];
                         if (selectedChildInfo.matches(childNode)) {
                             try {
-                                explorerManager.setSelectedNodes(new Node[]{childNode});
+                                this.getExplorerManager().setSelectedNodes(new Node[]{childNode});
                             } catch (PropertyVetoException ex) {
                                 logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
                             }

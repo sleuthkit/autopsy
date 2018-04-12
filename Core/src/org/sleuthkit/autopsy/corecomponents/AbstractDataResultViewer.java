@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
-    protected transient ExplorerManager explorerManager;
+    private transient ExplorerManager explorerManager;
 
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
@@ -91,13 +91,16 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
 
     @Override
     public ExplorerManager getExplorerManager() {
+        if (this.explorerManager == null) {
+            this.explorerManager = ExplorerManager.find(this);
+        }
         return this.explorerManager;
     }
 
     @Override
     public void setSelectedNodes(Node[] selected) {
         try {
-            this.explorerManager.setSelectedNodes(selected);
+            this.getExplorerManager().setSelectedNodes(selected);
         } catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Couldn't set selected nodes.", ex); //NON-NLS
         }
