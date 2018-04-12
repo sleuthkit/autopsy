@@ -26,7 +26,7 @@ environment:
       PYTHON: "C:\\Python36-x64"
 install:
   - ps: pushd C:\
-  - git clone https://github.com/sleuthkit/sleuthkit.github
+  - git clone https://github.com/sleuthkit/sleuthkit.git
   - ps: popd
 services:
       - postgresql95
