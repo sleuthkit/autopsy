@@ -33,14 +33,14 @@ services:
 
 build_script:
   - ps: pushd $env:TSK_HOME
-  - python setupLibs.py "C:\\"
-  - python win32\updateBuildLibs.py
+  - python setupLibs.py
+  - python win32\updateBuildLibs.py -m
   - ps: ant -version
   - ps: pushd bindings/java
   - cmd: ant dist-PostgreSQL
   - ps: popd
   - ps: popd
   - ps: pushd Core
-  - cmd: ant build
-  - cmd: ant test
+  - cmd: ant build > nul
+  - cmd: ant test > nul
   - ps: popd
