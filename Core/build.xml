@@ -85,7 +85,7 @@
     <target name="getImageFile">
             <mkdir dir="${basedir}/test/qa-functional/data"/>
 	    <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/filter_test1.img" skipexisting="true"/>
-	    <get src="https://drive.google.com/uc?id=1YOVAhRe3Ho3Ls5pbhg5M12o3EGf3zXb2" dest="${test-input}/embedded.vhd" skipexisting="true"/>
+	    <get src="https://drive.google.com/uc?id=1dLYGctuvRQMmnzfXPppTM_9gB49eLc_g" dest="${test-input}/embedded.vhd" skipexisting="true"/>
     </target> 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist, getImageFile">
         <mkdir dir="${ext.dir}"/>

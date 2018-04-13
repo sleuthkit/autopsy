@@ -54,6 +54,9 @@ public class EmbeddedFileTest extends NbTestCase {
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "EmbeddedFileTest");
     private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"embedded.vhd");
+    public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
+    private static final int DEEP_FOLDER_COUNT = 25;
+    private Case openCase;
   
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EmbeddedFileTest.class).
@@ -102,6 +105,14 @@ public class EmbeddedFileTest extends NbTestCase {
             Assert.fail(ex);
             
         }
+        
+        try {
+            openCase = Case.getOpenCase();
+            runIngestJob(openCase.getDataSources());
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        } 
     }
 
     @Override
@@ -123,35 +134,31 @@ public class EmbeddedFileTest extends NbTestCase {
     }
     
     public void testEncription() {
-        final int numOfFiles = 11;
         try {
-            Case openCase = Case.getOpenCase();
-            runIngestJob(openCase.getDataSources());
-            
-            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%password%'");            
-            assertEquals(numOfFiles, results.size());
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");            
+            String protectedName1 = "password_protected.zip";
+            String protectedName2 = "level1_protected.zip";
+            String protectedName3 =  "42.zip";
+            assertEquals(2207, results.size());
             int passwdProtectedZips = 0;
-            int nonPasswdProcted = 0;
             for (AbstractFile file : results) {
                 //.zip file has artifact TSK_ENCRYPTION_DETECTED
-                if (file.getNameExtension().equalsIgnoreCase("zip")) {
+                if (file.getName().equalsIgnoreCase(protectedName1) || file.getName().equalsIgnoreCase(protectedName2) || file.getName().equalsIgnoreCase(protectedName3)){
                     ArrayList<BlackboardArtifact> artifacts = file.getAllArtifacts();
+                    assertEquals(1, artifacts.size());
                     for (BlackboardArtifact artifact : artifacts) {
-                        assertEquals(1, artifacts.size());
                         assertEquals(artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID());
                         passwdProtectedZips++;
                     }
-                } else {
-                    assertTrue(file.getAllArtifacts().size() == 0);
-                    nonPasswdProcted++;
+                } else {//No other files has artifact defined
+                    assertEquals(0, file.getAllArtifacts().size());
                 }
-
+                
+                
             }
-            //Make sure 2 password prected zip files has been tested
-            assertEquals(2, passwdProtectedZips);
-            //No other files has artifact TSK_ENCRYPTION_DETECTED
-            assertEquals(numOfFiles - passwdProtectedZips, nonPasswdProcted);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+            //Make sure 3 password protected zip files has been tested: password_protected.zip, level1_protected.zip and 42.zip that we download for bomb testing.
+            assertEquals(3, passwdProtectedZips);
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
