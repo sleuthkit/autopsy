@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -52,8 +53,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    public static final Long NO_DATA_SOURCE_SELECTED = -1L; 
-    
+    public static final Long NO_DATA_SOURCE_SELECTED = -1L;
+
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
 
@@ -85,34 +86,70 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.buildDataSourceMap.done.noCurrentCaseException=Unable to open case file.",
         "CommonFilesPanel.buildDataSourceMap.done.exception=Unexpected exception building data sources map.",
         "CommonFilesPanel.buildDataSourceMap.done.interupted=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.buildDataSourceMap.done.sqlException=Unable to query db for data sources."})
+        "CommonFilesPanel.buildDataSourceMap.done.sqlException=Unable to query db for data sources.",
+        "CommonFilesPanel.buildDataSourcesMap.updateUi.noDataSources=No data sources were found."})
     private void setupDataSources() {
 
         new SwingWorker<Map<Long, String>, Void>() {
 
-            private static final String SELECT_DATA_SOURCES = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
+            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
+
+            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
 
             private void updateUi() {
 
                 String[] dataSourcesNames = new String[CommonFilesPanel.this.dataSourceMap.size()];
-                dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
-                CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
-                CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
 
-                boolean multipleDataSources = this.caseHasMultipleSources();
-                CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
-                CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
+                //only enable all this stuff if we actually have datasources
+                if (dataSourcesNames.length > 0) {
+                    dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
+                    CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
+                    CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
 
-                if (!multipleDataSources) {
-                    CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
-                    withinDataSourceSelected(true);
+                    boolean multipleDataSources = this.caseHasMultipleSources();
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
+
+                    if (!multipleDataSources) {
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
+                        withinDataSourceSelected(true);
+                    }
+
+                    CommonFilesPanel.this.searchButton.setEnabled(true);
+                } else {
+                    MessageNotifyUtil.Message.info(Bundle.CommonFilesPanel_buildDataSourcesMap_updateUi_noDataSources());
+                    CommonFilesPanel.this.cancelButtonActionPerformed(null);
                 }
-
-                CommonFilesPanel.this.searchButton.setEnabled(true);
             }
 
             private boolean caseHasMultipleSources() {
                 return CommonFilesPanel.this.dataSourceMap.size() >= 2;
+            }
+
+            private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
+                //try block releases resources - exceptions are handled in done()
+                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL)) {
+                    ResultSet resultSet = query.getResultSet();
+                    while (resultSet.next()) {
+                        Long objectId = resultSet.getLong(1);
+                        String dataSourceName = resultSet.getString(2);
+                        dataSouceMap.put(objectId, dataSourceName);
+                    }
+                }
+            }
+
+            private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
+                //try block releases resources - exceptions are handled in done()
+                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE)) {
+                    ResultSet resultSet = query.getResultSet();
+                    while (resultSet.next()) {
+                        Long objectId = resultSet.getLong(1);
+                        String dataSourceName = resultSet.getString(2);
+                        File image = new File(dataSourceName);
+                        String dataSourceNameTrimmed = image.getName();
+                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
+                    }
+                }
             }
 
             @Override
@@ -123,15 +160,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-                //try block releases resources - exceptions are handled in done()
-                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES)) {
-                    ResultSet resultSet = query.getResultSet();
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        dataSouceMap.put(objectId, dataSourceName);
-                    }
-                }
+                loadLogicalSources(tskDb, dataSouceMap);
+
+                loadImageSources(tskDb, dataSouceMap);
 
                 return dataSouceMap;
             }
@@ -168,7 +199,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
-    
+
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
         "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
@@ -184,7 +215,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
             private String tabTitle;
-                        
+
             private void setTitleForAllDataSources() {
                 this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
             }
@@ -192,10 +223,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             private void setTitleForSingleSource(Long dataSourceId) {
                 final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
                 final Object[] dataSourceName = new Object[]{dataSourceMap.get(dataSourceId)};
-                
+
                 this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
             }
-            
+
             private Long determineDataSourceId() {
                 Long selectedObjId = CommonFilesPanel.NO_DATA_SOURCE_SELECTED;
                 if (CommonFilesPanel.this.singleDataSource) {
@@ -213,19 +244,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
             protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
                 Long dataSourceId = determineDataSourceId();
-                
+
                 CommonFilesMetaDataBuilder builder;
-                
+
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
                     builder = new AllDataSources(dataSourceMap);
-                    
+
                     setTitleForAllDataSources();
                 } else {
                     builder = new SingleDataSource(dataSourceId, dataSourceMap);
-                    
+
                     setTitleForSingleSource(dataSourceId);
                 }
-                
+
                 return builder.collateFiles();
             }
 
@@ -236,8 +267,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     List<CommonFilesMetaData> metadata = get();
 
-                    DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
-
                     CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
 
                     //TODO consider getting em from ExplorerManager.find(this) rather the this wonky stuff seen here...
@@ -245,11 +274,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
+                    //TODO get this information from CommonFilesMetaData rather than enumerating the children as below
                     int totalNodes = 0;
                     for (CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();
                     }
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, totalNodes, component);
+
+                    DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
+
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, 0/*totalNodes*/, component);
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
@@ -494,7 +527,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-       SwingUtilities.windowForComponent(this).dispose();
+        SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void withinDataSourceSelected(boolean selected) {

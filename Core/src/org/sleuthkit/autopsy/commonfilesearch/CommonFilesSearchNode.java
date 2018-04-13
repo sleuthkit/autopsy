@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  * results in the top right pane. Calls CommonFilesParentFactory.
  */
 final public class CommonFilesSearchNode extends DisplayableItemNode {
-
+    //TODO rename this to something good
+    
     CommonFilesSearchNode(List<CommonFilesMetaData> metaDataList) {
         super(Children.create(new CommonFilesParentFactory(metaDataList), true), Lookups.singleton(CommonFilesSearchNode.class));
     }

@@ -28,7 +28,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Encapsulates data being pushed to Common Files component in top right pane.
  */
 public class CommonFileChildNode extends FileNode {
-
+//TODO rename this to something good
+    
     private final String dataSource;
 
     public CommonFileChildNode(AbstractFile fsContent, String dataSource) {

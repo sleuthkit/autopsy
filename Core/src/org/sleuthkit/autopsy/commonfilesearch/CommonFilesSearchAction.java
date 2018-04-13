@@ -49,11 +49,13 @@ final class CommonFilesSearchAction extends CallableSystemAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        //TODO maybe we want to reuse a cached version of htis???
         new CommonFilesDialog().setVisible(true);
     }
 
     @Override
     public void performAction() {
+        //TODO maybe we want to reuse a cached version of htis???
         new CommonFilesDialog().setVisible(true);
     }
 

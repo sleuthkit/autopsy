@@ -36,7 +36,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * same file and appear as children of this node.
  */
 public class CommonFileParentNode extends DisplayableItemNode {
-
+//TODO rename this to something good
+    
     private final String md5Hash;
     private final int commonFileCount;
     private final String dataSources;
@@ -130,6 +131,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
         @Override
         protected Node createNodeForKey(AbstractFile file) {
 
+            //TODO minimize work here - this is the UI thread
             final String dataSource = this.dataSourceMap.get(file.getDataSourceObjectId());
 
             return new CommonFileChildNode(file, dataSource);
@@ -137,12 +139,17 @@ public class CommonFileParentNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<AbstractFile> list) {
+            
+            //TODO change param to Long rather than AbstractFile
+            //TODO load children from db here
+            
             list.addAll(this.descendants);
             return true;
         }
 
         @Override
         protected Node createWaitNode() {
+            //TODO could skip this...maybe???
             return new CommonFileChildNodeLoading(Children.LEAF);
         }
     }

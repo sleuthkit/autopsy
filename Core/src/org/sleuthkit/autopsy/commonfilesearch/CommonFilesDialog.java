@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
@@ -56,6 +57,11 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
         commonFilesPanel = new org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+        });
 
         commonFilesPanel.setMaximumSize(new java.awt.Dimension(362, 312));
         commonFilesPanel.setMinimumSize(new java.awt.Dimension(362, 312));
@@ -73,6 +79,10 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        SwingUtilities.windowForComponent(this).dispose();
+    }//GEN-LAST:event_formWindowClosed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel commonFilesPanel;
