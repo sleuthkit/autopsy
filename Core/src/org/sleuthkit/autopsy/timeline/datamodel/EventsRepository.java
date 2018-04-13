@@ -555,7 +555,7 @@ public class EventsRepository {
             if (dbPopulationMode == DBPopulationMode.TAGS_ONLY) {
                 trans = eventManager.beginTransaction();
                 logger.log(Level.INFO, "dropping old tags"); // NON-NLS
-                eventManager.reInitializeTags();
+//                eventManager.reInitializeTags();
             }
 
             logger.log(Level.INFO, "updating content tags"); // NON-NLS
