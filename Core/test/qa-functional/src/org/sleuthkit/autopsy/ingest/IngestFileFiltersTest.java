@@ -61,8 +61,6 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 public class IngestFileFiltersTest extends NbTestCase {
 
-    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "IngestFileFiltersTest");
-    private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
     private final Path ZIPFILE_PATH = Paths.get(this.getDataDir().toString(), "local_files_test.zip");
     
@@ -78,11 +76,6 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     @Override
-    public void setUp() {
-        createCase();
-    }
-
-    @Override
     public void tearDown() {
         try {
             Case.closeCurrentCase();
@@ -93,15 +86,15 @@ public class IngestFileFiltersTest extends NbTestCase {
 
             }
             assertFalse(Case.isCaseOpen());
-            FileUtils.deleteDirectory(CASE_DIR);
-        } catch (CaseActionException | IOException ex) {
+        } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        assertFalse(CASE_DIR.exists());        
     }
     
     public void testBasicDir() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
+        createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
 
@@ -142,6 +135,8 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
     
     public void testExtAndDirWithOneRule() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
+        createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
 
@@ -175,6 +170,8 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testExtAndDirWithTwoRules() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
+        createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
 
@@ -217,6 +214,8 @@ public class IngestFileFiltersTest extends NbTestCase {
    }
    
     public void testFullFileNameRule() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testFullFileNameRule");
+        createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
 
@@ -251,6 +250,8 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testCarvingWithExtRuleAndUnallocSpace() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testCarvingWithExtRuleAndUnallocSpace");
+        createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
 
@@ -297,6 +298,8 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
   
     public void testCarvingNoUnallocatedSpace() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testCarvingNoUnallocatedSpace");
+        createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
 
@@ -328,8 +331,9 @@ public class IngestFileFiltersTest extends NbTestCase {
         }
     }
 
-    //This test is disabled. (Refer to JIRA-3743)
-    public void disabled_TestEmbeddedModule() {
+    public void testEmbeddedModule() {
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testEmbeddedModule");
+        createCase(casePath);
         LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
         addDataSourceToCase(dataSourceProcessor, ZIPFILE_PATH);
         
@@ -394,29 +398,29 @@ public class IngestFileFiltersTest extends NbTestCase {
         return template;
     }
 
-    private void createCase() {
+    private void createCase(Path casePath) {
         // Delete the test directory, if it exists
-        if (CASE_DIRECTORY_PATH.toFile().exists()) {
+        if (casePath.toFile().exists()) {
             try {
-                FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
+                FileUtils.deleteDirectory(casePath.toFile());
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex);
             }
         }
-        assertFalse("Unable to delete existing test directory", CASE_DIRECTORY_PATH.toFile().exists());
+        assertFalse("Unable to delete existing test directory", casePath.toFile().exists());
  
         // Create the test directory
-        CASE_DIRECTORY_PATH.toFile().mkdirs();
-        assertTrue("Unable to create test directory", CASE_DIRECTORY_PATH.toFile().exists());
+        casePath.toFile().mkdirs();
+        assertTrue("Unable to create test directory", casePath.toFile().exists());
 
         try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, CASE_DIRECTORY_PATH.toString(), new CaseDetails("IngestFiltersTest"));
+            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, casePath.toString(), new CaseDetails("IngestFiltersTest"));
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }        
-        assertTrue(CASE_DIR.exists());
+        assertTrue(casePath.toFile().exists());
     }
         
     private void addDataSourceToCase(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
