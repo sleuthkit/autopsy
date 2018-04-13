@@ -53,7 +53,6 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private final PluginListTableModel tableModel = new PluginListTableModel();
     private final List<String> PluginListNames = new ArrayList<>();
     private final Map<String, Boolean> pluginListStates = new HashMap<>(); // is set by listeners when users select and deselect items
-    private final Boolean isEnabled = true;
 
     /**
      * Creates new MemoryDSInputPanel panel for user input
@@ -157,8 +156,10 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
             PluginListNames.add(plugin);
             if (allEnabled) {
                 pluginListStates.put(plugin, true);
+            } else if ((pluginMap.containsKey(plugin) && pluginMap.get(plugin).equals("false"))) {
+                pluginListStates.put(plugin, false);
             } else {
-                pluginListStates.put(plugin, pluginMap.containsKey(plugin));
+                pluginListStates.put(plugin, true);
             }
         }
         tableModel.fireTableDataChanged();
@@ -327,15 +328,14 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
 
     List<String> getPluginsToRun() {
         List<String> enabledPlugins = new ArrayList<>();
-        Map<String, String> pluginMap = new HashMap<>();
+        Map<String, String> pluginSettingsToSave = new HashMap<>();
         for (String plugin : PluginListNames) {
             if (pluginListStates.get(plugin)) {
                 enabledPlugins.add(plugin);
-                pluginMap.put(plugin, "");
             }
+            pluginSettingsToSave.put(plugin, pluginListStates.get(plugin).toString());
         }
-
-        ModuleSettings.setConfigSettings(this.contextName, pluginMap);
+        ModuleSettings.setConfigSettings(this.contextName, pluginSettingsToSave);
         // @@ Could return keys of set
         return enabledPlugins;
     }

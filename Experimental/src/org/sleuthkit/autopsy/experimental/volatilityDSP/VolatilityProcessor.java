@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Lookup;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -41,13 +41,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.EncodingType;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
@@ -70,6 +70,7 @@ class VolatilityProcessor {
     private String moduleOutputPath;
     private FileManager fileManager;
     private volatile boolean isCancelled;
+    private Content outputVirtDir;
 
     /**
      * Constructs a processor that runs Volatility on a given memory image file
@@ -117,6 +118,13 @@ class VolatilityProcessor {
 
         fileManager = currentCase.getServices().getFileManager();
 
+        try {
+            // make a virtual directory to store the reports
+            outputVirtDir = currentCase.getSleuthkitCase().addVirtualDirectory(dataSource.getId(), "ModuleOutput");
+        } catch (TskCoreException ex) {
+           throw new VolatilityProcessorException("Error creating virtual directory", ex);
+        }
+        
         /*
          * Make an output folder unique to this data source.
          */
@@ -129,6 +137,7 @@ class VolatilityProcessor {
             runVolatilityPlugin("imageinfo"); //NON-NLS
         }
 
+        
         progressMonitor.setIndeterminate(false);
         progressMonitor.setProgressMax(pluginsToRun.size());
         for (int i = 0; i < pluginsToRun.size(); i++) {
@@ -186,14 +195,15 @@ class VolatilityProcessor {
 
         commandLine.add(pluginToRun);
 
-        String outputFile = moduleOutputPath + "\\" + pluginToRun + ".txt"; //NON-NLS
+        String outputFileAsString = moduleOutputPath + "\\" + pluginToRun + ".txt"; //NON-NLS
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
          * Add an environment variable to force Volatility to run with the same
          * permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-        processBuilder.redirectOutput(new File(outputFile));
+        File outputFile = new File(outputFileAsString);
+        processBuilder.redirectOutput(outputFile);
         processBuilder.redirectError(new File(moduleOutputPath + "\\Volatility_Run.err"));  //NON-NLS
         processBuilder.directory(new File(memoryImage.getParent()));
 
@@ -210,32 +220,16 @@ class VolatilityProcessor {
         if (isCancelled) {
             return;
         }
-
-        /*
-         * Add the plugin output file to the case as a report.
-         */
+        
         try {
-            Report report = currentCase.getSleuthkitCase().addReport(outputFile, VOLATILITY, VOLATILITY + " " + pluginToRun + " Plugin"); //NON-NLS
-            try {
-                KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-                if (searchService != null) {
-                    searchService.index(report);
-                } else {
-                    errorMsgs.add(Bundle.VolatilityProcessor_exceptionMessage_searchServiceNotFound(pluginToRun));
-                    /*
-                     * Log the exception as well as add it to the error
-                     * messages, to ensure that the stack trace is not lost.
-                     */
-                    logger.log(Level.WARNING, Bundle.VolatilityProcessor_exceptionMessage_errorIndexingOutput(pluginToRun));
-                }
-            } catch (TskCoreException ex) {
-                throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorIndexingOutput(pluginToRun), ex);
-            }
+            String relativePath = new File(currentCase.getCaseDirectory()).toURI().relativize(new File(outputFileAsString).toURI()).getPath();
+            fileManager.addDerivedFile(pluginToRun, relativePath, outputFile.length(), 0, 0, 0, 0, true, outputVirtDir, null, null, null, null, EncodingType.NONE);
         } catch (TskCoreException ex) {
-            throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorAddingOutput(pluginToRun), ex);
+            errorMsgs.add("Error adding " + pluginToRun + " volatility report as a file");        
+            logger.log(Level.WARNING, "Error adding report as derived file", ex);
         }
-
-        createArtifactsFromPluginOutput(pluginToRun, new File(outputFile));
+        
+        createArtifactsFromPluginOutput(pluginToRun, new File(outputFileAsString));
     }
 
     /**
