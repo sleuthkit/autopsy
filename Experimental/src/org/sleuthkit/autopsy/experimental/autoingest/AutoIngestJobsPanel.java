@@ -42,6 +42,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     private static final int INITIAL_DATASOURCE_WIDTH = 270;
     private static final int INITIAL_PRIORITIZED_WIDTH = 20;
     private static final int INITIAL_STATUS_WIDTH = 20;
+    private static final int INVALID_INDEX = -1;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
@@ -74,7 +75,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
                         Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_priority_text());
-                if (indexOfColumn != -1) {
+                if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
                 }
                 break;
@@ -84,7 +85,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                         Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(),
                         Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_caseName_text());
-                if (indexOfColumn != -1) {
+                if (indexOfColumn != INVALID_INDEX) {
                     outline.setColumnSorted(indexOfColumn, true, 1);
                 }
                 break;
@@ -94,11 +95,11 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                         Bundle.AutoIngestJobsNode_jobCompleted_text(), Bundle.AutoIngestJobsNode_jobCompleted_text(),
                         Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_jobCompleted_text());
-                if (indexOfColumn != -1) {
+                if (indexOfColumn != INVALID_INDEX) {
                     outline.setColumnSorted(indexOfColumn, false, 1);
                 }
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_status_text());
-                if (indexOfColumn != -1) {
+                if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_STATUS_WIDTH);
                 }
                 break;
@@ -108,11 +109,11 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         outline.setRootVisible(false);
 
         indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_caseName_text());
-        if (indexOfColumn != -1) {
+        if (indexOfColumn != INVALID_INDEX) {
             outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_CASENAME_WIDTH);
         }
         indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_dataSource_text());
-        if (indexOfColumn != -1) {
+        if (indexOfColumn != INVALID_INDEX) {
             outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_DATASOURCE_WIDTH);
         }
         if (null == explorerManager) {
@@ -131,7 +132,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 return index;
             }
         }
-        return -1;
+        return INVALID_INDEX;
     }
 
     @Override
