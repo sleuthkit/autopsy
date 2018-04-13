@@ -52,8 +52,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    public static final Long NO_DATA_SOURCE_SELECTED = -1L; 
-    
+    public static final Long NO_DATA_SOURCE_SELECTED = -1L;
+
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
 
@@ -85,7 +85,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.buildDataSourceMap.done.noCurrentCaseException=Unable to open case file.",
         "CommonFilesPanel.buildDataSourceMap.done.exception=Unexpected exception building data sources map.",
         "CommonFilesPanel.buildDataSourceMap.done.interupted=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.buildDataSourceMap.done.sqlException=Unable to query db for data sources."})
+        "CommonFilesPanel.buildDataSourceMap.done.sqlException=Unable to query db for data sources.",
+        "CommonFilesPanel.buildDataSourcesMap.updateUi.noDataSources=No data sources were found."})
     private void setupDataSources() {
 
         new SwingWorker<Map<Long, String>, Void>() {
@@ -95,20 +96,27 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             private void updateUi() {
 
                 String[] dataSourcesNames = new String[CommonFilesPanel.this.dataSourceMap.size()];
-                dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
-                CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
-                CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
+                
+                //only enable all this stuff if we actually have datasources
+                if (dataSourcesNames.length > 0) {
+                    dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
+                    CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
+                    CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
 
-                boolean multipleDataSources = this.caseHasMultipleSources();
-                CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
-                CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
+                    boolean multipleDataSources = this.caseHasMultipleSources();
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
 
-                if (!multipleDataSources) {
-                    CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
-                    withinDataSourceSelected(true);
+                    if (!multipleDataSources) {
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
+                        withinDataSourceSelected(true);
+                    }
+
+                    CommonFilesPanel.this.searchButton.setEnabled(true);
+                } else {
+                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_buildDataSourcesMap_updateUi_noDataSources());
+                    CommonFilesPanel.this.cancelButtonActionPerformed(null);
                 }
-
-                CommonFilesPanel.this.searchButton.setEnabled(true);
             }
 
             private boolean caseHasMultipleSources() {
@@ -168,7 +176,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
-    
+
     @NbBundle.Messages({
         "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
         "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
@@ -184,7 +192,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         new SwingWorker<List<CommonFilesMetaData>, Void>() {
 
             private String tabTitle;
-                        
+
             private void setTitleForAllDataSources() {
                 this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
             }
@@ -192,10 +200,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             private void setTitleForSingleSource(Long dataSourceId) {
                 final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
                 final Object[] dataSourceName = new Object[]{dataSourceMap.get(dataSourceId)};
-                
+
                 this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
             }
-            
+
             private Long determineDataSourceId() {
                 Long selectedObjId = CommonFilesPanel.NO_DATA_SOURCE_SELECTED;
                 if (CommonFilesPanel.this.singleDataSource) {
@@ -213,19 +221,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
             protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
                 Long dataSourceId = determineDataSourceId();
-                
+
                 CommonFilesMetaDataBuilder builder;
-                
+
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
                     builder = new AllDataSources(dataSourceMap);
-                    
+
                     setTitleForAllDataSources();
                 } else {
                     builder = new SingleDataSource(dataSourceId, dataSourceMap);
-                    
+
                     setTitleForSingleSource(dataSourceId);
                 }
-                
+
                 return builder.collateFiles();
             }
 
@@ -248,9 +256,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     for (CommonFilesMetaData meta : metadata) {
                         totalNodes += meta.getChildren().size();
                     }
-                    
+
                     DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
-                    
+
                     DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, 0/*totalNodes*/, component);
 
                 } catch (InterruptedException ex) {
@@ -496,7 +504,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-       SwingUtilities.windowForComponent(this).dispose();
+        SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void withinDataSourceSelected(boolean selected) {
