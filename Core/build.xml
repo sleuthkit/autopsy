@@ -91,7 +91,7 @@
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
         
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
-        <ivy:resolve/>
+        <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
            </target>
 
