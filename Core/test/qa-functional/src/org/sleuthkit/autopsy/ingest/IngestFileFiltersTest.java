@@ -84,7 +84,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                 Assert.fail(ex);
             }
         }
-        assertFalse("Unable to delete existing test directory" CASE_DIRECTORY_PATH.toFile().exists());
+        assertFalse("Unable to delete existing test directory",CASE_DIRECTORY_PATH.toFile().exists());
  
         // Create the test directory
         CASE_DIRECTORY_PATH.toFile().mkdirs();
