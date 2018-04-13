@@ -348,7 +348,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         cancelButton = new javax.swing.JButton();
         allRadioButton = new javax.swing.JRadioButton();
         selectedFileCategoriesButton = new javax.swing.JRadioButton();
-        selectedMimeTypesButton = new javax.swing.JRadioButton();
+        jCheckBox1 = new javax.swing.JCheckBox();
+        jCheckBox2 = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(300, 200));
 
@@ -403,9 +404,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(allRadioButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allRadioButton.text")); // NOI18N
         allRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allRadioButton.toolTipText")); // NOI18N
 
+        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.text")); // NOI18N
+        selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(selectedMimeTypesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedMimeTypesButton.text")); // NOI18N
+        jCheckBox1.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.jCheckBox1.text")); // NOI18N
+
+        jCheckBox2.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox2, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.jCheckBox2.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -427,8 +434,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(allRadioButton)
                             .addComponent(selectedFileCategoriesButton)
-                            .addComponent(selectedMimeTypesButton))
-                        .addGap(0, 69, Short.MAX_VALUE)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jCheckBox2)
+                                    .addComponent(jCheckBox1))))
+                        .addGap(0, 65, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -436,27 +447,24 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(allDataSourcesRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(withinDataSourceRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(allRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(selectedFileCategoriesButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(selectedMimeTypesButton)
-                        .addGap(0, 203, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(cancelButton)
-                            .addComponent(searchButton))
-                        .addContainerGap())))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(allDataSourcesRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(withinDataSourceRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(selectedFileCategoriesButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCheckBox1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCheckBox2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(allRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelButton)
+                    .addComponent(searchButton)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -501,11 +509,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private javax.swing.JButton cancelButton;
     private javax.swing.ButtonGroup dataSourcesButtonGroup;
     private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
+    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JButton searchButton;
     private javax.swing.JComboBox<String> selectDataSourceComboBox;
     private javax.swing.JRadioButton selectedFileCategoriesButton;
-    private javax.swing.JRadioButton selectedMimeTypesButton;
     private javax.swing.JRadioButton withinDataSourceRadioButton;
     // End of variables declaration//GEN-END:variables
 }

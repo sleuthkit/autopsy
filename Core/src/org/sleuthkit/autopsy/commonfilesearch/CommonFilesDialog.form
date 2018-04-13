@@ -23,17 +23,25 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="commonFilesPanel" alignment="1" pref="266" max="32767" attributes="0"/>
+          <Component id="commonFilesPanel" alignment="1" pref="362" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="commonFilesPanel" alignment="0" pref="148" max="32767" attributes="0"/>
+          <Component id="commonFilesPanel" alignment="0" pref="315" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
     <Component class="org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel" name="commonFilesPanel">
+      <Properties>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[362, 312]"/>
+        </Property>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[362, 312]"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>
