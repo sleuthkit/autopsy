@@ -43,9 +43,9 @@ build_script:
   - cmd: ant dist-PostgreSQL
   - ps: popd
   - cd %APPVEYOR_BUILD_FOLDER%
-  - cmd: ant build > nul
+  - cmd: ant -q build
   - cd Core
-  - cmd: ant test > nul
+  - cmd: ant -q test
   - cd ..
 
 test: off
