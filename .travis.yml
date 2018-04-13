@@ -17,7 +17,7 @@ install:
 script:
  - set -e	
  - cd $TRAVIS_BUILD_DIR/
- - ant -q build > /dev/null
+ - ant -q build
  - cd Core/
- - xvfb-run ant -q test	> /dev/null
+ - xvfb-run ant -q test
 
