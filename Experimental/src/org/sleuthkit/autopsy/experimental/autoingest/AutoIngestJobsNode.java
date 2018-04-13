@@ -41,6 +41,8 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
+    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
+    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
 
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
@@ -191,9 +193,7 @@ final class AutoIngestJobsNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            //WJS-TODO make this a publically accessible setting like isAdminModeEnabled
-            //Or at minimum make the file name a static variable 
-            File f = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "adminAccess");
+            File f = new File(ADMIN_ACCESS_FILE_PATH);
             if (f.exists()) {
                 switch (jobStatus) {
                     case PENDING_JOB:
@@ -207,8 +207,14 @@ final class AutoIngestJobsNode extends AbstractNode {
                         actions.add(deprioritizeCaseAction);
                         break;
                     case RUNNING_JOB:
+                        actions.add(new AutoIngestAdminActions.ProgressDialogAction());
+                        actions.add(new AutoIngestAdminActions.CancelJobAction());
+                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
                         break;
                     case COMPLETED_JOB:
+                        actions.add(new AutoIngestAdminActions.ReprocessJobAction());
+                        actions.add(new AutoIngestAdminActions.DeleteCaseAction());
+                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction());
                         break;
                     default:
                 }
