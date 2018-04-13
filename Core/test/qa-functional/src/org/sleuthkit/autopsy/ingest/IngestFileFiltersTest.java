@@ -135,7 +135,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
     
     public void testExtAndDirWithOneRule() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testExtAndDirWithOneRule");
         createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
@@ -170,7 +170,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testExtAndDirWithTwoRules() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
+        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testExtAndDirWithTwoRules");
         createCase(casePath);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
