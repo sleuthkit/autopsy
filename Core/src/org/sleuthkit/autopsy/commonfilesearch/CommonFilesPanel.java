@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -91,8 +92,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         new SwingWorker<Map<Long, String>, Void>() {
 
-            private static final String SELECT_DATA_SOURCES = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
+            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
 
+            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
+            
             private void updateUi() {
 
                 String[] dataSourcesNames = new String[CommonFilesPanel.this.dataSourceMap.size()];
@@ -132,12 +135,23 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
                 //try block releases resources - exceptions are handled in done()
-                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES)) {
+                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL)) {
                     ResultSet resultSet = query.getResultSet();
                     while (resultSet.next()) {
                         Long objectId = resultSet.getLong(1);
                         String dataSourceName = resultSet.getString(2);
                         dataSouceMap.put(objectId, dataSourceName);
+                    }
+                }
+                
+                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE)){
+                    ResultSet resultSet = query.getResultSet();
+                    while(resultSet.next()){
+                        Long objectId = resultSet.getLong(1);
+                        String dataSourceName = resultSet.getString(2);
+                        File image = new File(dataSourceName);
+                        String dataSourceNameTrimmed = image.getName();
+                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
                     }
                 }
 
