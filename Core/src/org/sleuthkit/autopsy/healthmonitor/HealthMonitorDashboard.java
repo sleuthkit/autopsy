@@ -235,6 +235,8 @@ public class HealthMonitorDashboard {
             JLabel metricNameLabel = new JLabel(name);
             metricNameLabel.setFont(new Font("Serif", Font.BOLD, 12));
             timingMetricPanel.add(metricNameLabel);
+            JLabel timingLabel = new JLabel("Displaying time in milliseconds");
+            timingMetricPanel.add(timingLabel);
             
             // If necessary, trim down the list of results to fit the selected time range
             List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;

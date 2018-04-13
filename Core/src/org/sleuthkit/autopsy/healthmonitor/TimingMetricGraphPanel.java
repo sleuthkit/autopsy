@@ -257,8 +257,7 @@ class TimingMetricGraphPanel extends JPanel {
         // At present we use GMT because of some complications with daylight savings time.
         for (long currentDivision = maxMidnightInMillis; currentDivision >= minValueOnXAxis; currentDivision -= MILLISECONDS_PER_DAY * daysPerDivision) {
 
-            //long currentDivision = 
-            int x0 = (int) ((double)(currentDivision - minValueOnXAxis) * xScale + leftGraphPadding);
+            int x0 = (int) ((currentDivision - minValueOnXAxis) * xScale + leftGraphPadding);
             int x1 = x0;
             int y0 = getHeight() - bottomGraphPadding;
             int y1 = y0 - pointWidth;
@@ -350,10 +349,10 @@ class TimingMetricGraphPanel extends JPanel {
         // Draw the trend line
         // Don't draw anything if there's only one data point
         if(trendLine != null && (timingResults.size() > 1)) {
-            int x0 = (int) ((double)(0) * xScale + padding + labelPadding);
-            int y0 = (int) ((double)(maxValueOnYAxis - trendLine.getExpectedValueAt(minValueOnXAxis)) * yScale + padding);
-            int x1 = (int) ((double)(maxValueOnXAxis - minValueOnXAxis) * xScale + padding + labelPadding);
-            int y1 = (int) ((double)(maxValueOnYAxis - trendLine.getExpectedValueAt(maxValueOnXAxis)) * yScale + padding);
+            int x0 = (int) (padding + labelPadding);
+            int y0 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(minValueOnXAxis)) * yScale + padding);
+            int x1 = (int) ((maxValueOnXAxis - minValueOnXAxis) * xScale + padding + labelPadding);
+            int y1 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(maxValueOnXAxis)) * yScale + padding);
             g2.setStroke(GRAPH_STROKE);
             g2.setColor(trendLineColor);
             g2.drawLine(x0, y0, x1, y1);
