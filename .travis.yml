@@ -23,4 +23,4 @@ script:
  - echo "testing autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
  - cd Core/
  - xvfb-run ant -q test
- - echo -en 'travis_fold:end:script.tests\\r' 
+ - echo -en 'travis_fold:end:script.tests\\r'
