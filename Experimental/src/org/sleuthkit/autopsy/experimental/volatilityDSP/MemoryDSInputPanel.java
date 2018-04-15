@@ -26,7 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SimpleTimeZone;
+import java.util.SortedSet;
 import java.util.TimeZone;
+import java.util.TreeSet;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -54,6 +56,20 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private final List<String> PluginListNames = new ArrayList<>();
     private final Map<String, Boolean> pluginListStates = new HashMap<>(); // is set by listeners when users select and deselect items
 
+    private final SortedSet<String> profileList = new TreeSet<>(Arrays.asList(
+            "VistaSP0x64", "VistaSP0x86", "VistaSP1x64", "VistaSP1x86",
+            "VistaSP2x64", "VistaSP2x86", "Win10x64", "Win10x64_10586",
+            "Win10x64_14393", "Win10x86", "Win10x86_10586", "Win10x86_14393",
+            "Win2003SP0x86", "Win2003SP1x64", "Win2003SP1x86", "Win2003SP2x64",
+            "Win2003SP2x86", "Win2008R2SP0x64", "Win2008R2SP1x64", "Win2008R2SP1x64_23418",
+            "Win2008SP1x64", "Win2008SP1x86", "Win2008SP2x64", "Win2008SP2x86",
+            "Win2012R2x64", "Win2012R2x64_18340", "Win2012x64", "Win2016x64_14393",
+            "Win7SP0x64", "Win7SP0x86", "Win7SP1x64", "Win7SP1x64_23418", "Win7SP1x86_23418",
+            "Win81U1x64", "Win81U1x86", "Win8SP0x64", "Win8SP0x86", "Win8SP1x64",
+            "Win8SP1x64_18340", "Win8SP1x86", "WinXPSP1x64", "WinXPSP2x64", "WinXPSP2x86",
+            "WinXPSP3x86"));
+    private final String AUTODETECT_PROFILE = "Auto Detect";
+    
     /**
      * Creates new MemoryDSInputPanel panel for user input
      */
@@ -81,7 +97,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         instance.postInit();
         instance.customizePluginListTable();
         instance.createTimeZoneList();
-        instance.createVolatilityVersionList();
+        instance.populateProfileCombobox();
         instance.createPluginList();
 
         return instance;
@@ -94,14 +110,14 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     }
 
     private void customizePluginListTable() {
-        PluginList.setModel(tableModel);
-        PluginList.setTableHeader(null);
-        PluginList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        pluginTable.setModel(tableModel);
+        pluginTable.setTableHeader(null);
+        pluginTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         final int width = listsScrollPane.getPreferredSize().width;
-        PluginList.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+        pluginTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         TableColumn column;
-        for (int i = 0; i < PluginList.getColumnCount(); i++) {
-            column = PluginList.getColumnModel().getColumn(i);
+        for (int i = 0; i < pluginTable.getColumnCount(); i++) {
+            column = pluginTable.getColumnModel().getColumn(i);
             if (i == 0) {
                 column.setPreferredWidth(((int) (width * 0.07)));
             } else {
@@ -137,11 +153,12 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         timeZoneComboBox.setSelectedItem(formatted);
     }
 
-    private void createVolatilityVersionList() {
-
-        volExecutableComboBox.addItem("2.6");
-        volExecutableComboBox.addItem("2.5");
-
+    
+    private void populateProfileCombobox() {
+        profileComboBox.addItem(AUTODETECT_PROFILE);
+        profileList.forEach((profile) -> {
+            profileComboBox.addItem(profile);
+        });
     }
 
     private void createPluginList() {
@@ -182,17 +199,17 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         errorLabel = new javax.swing.JLabel();
         timeZoneLabel = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox<>();
-        volExecutableLabel = new javax.swing.JLabel();
-        volExecutableComboBox = new javax.swing.JComboBox<>();
         PluginsToRunLabel = new javax.swing.JLabel();
         listsScrollPane = new javax.swing.JScrollPane();
-        PluginList = new javax.swing.JTable();
+        pluginTable = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
+        profileComboBox = new javax.swing.JComboBox<>();
 
-        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.pathLabel.text")); // NOI18N
 
-        pathTextField.setText(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathTextField.text")); // NOI18N
+        pathTextField.setText(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.pathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.browseButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
@@ -200,24 +217,15 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         });
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.errorLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.timeZoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.timeZoneLabel.text")); // NOI18N
 
         timeZoneComboBox.setMaximumRowCount(30);
 
-        org.openide.awt.Mnemonics.setLocalizedText(volExecutableLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.volExecutableLabel.text")); // NOI18N
-
-        volExecutableComboBox.setEnabled(false);
-        volExecutableComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                volExecutableComboBoxActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(PluginsToRunLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.PluginsToRunLabel.text")); // NOI18N
 
-        PluginList.setModel(new javax.swing.table.DefaultTableModel(
+        pluginTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {},
                 {},
@@ -228,7 +236,16 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
 
             }
         ));
-        listsScrollPane.setViewportView(PluginList);
+        listsScrollPane.setViewportView(pluginTable);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.jLabel1.text")); // NOI18N
+
+        profileComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        profileComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                profileComboBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -245,15 +262,15 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                         .addComponent(timeZoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(volExecutableComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(profileComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGap(0, 163, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(errorLabel)
-                    .addComponent(volExecutableLabel)
-                    .addComponent(PluginsToRunLabel))
+                    .addComponent(PluginsToRunLabel)
+                    .addComponent(jLabel1))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -270,15 +287,15 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(errorLabel)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(volExecutableLabel)
-                    .addComponent(volExecutableComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel1)
+                    .addComponent(profileComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(PluginsToRunLabel)
-                    .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(30, Short.MAX_VALUE))
+                    .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(59, Short.MAX_VALUE))
         );
 
         pathLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.AccessibleContext.accessibleName")); // NOI18N
@@ -299,23 +316,23 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
-    private void volExecutableComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_volExecutableComboBoxActionPerformed
+    private void profileComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_profileComboBoxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_volExecutableComboBoxActionPerformed
+    }//GEN-LAST:event_profileComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTable PluginList;
     private javax.swing.JLabel PluginsToRunLabel;
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.ButtonGroup infileTypeButtonGroup;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane listsScrollPane;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
+    private javax.swing.JTable pluginTable;
+    private javax.swing.JComboBox<String> profileComboBox;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
-    private javax.swing.JComboBox<String> volExecutableComboBox;
-    private javax.swing.JLabel volExecutableLabel;
     // End of variables declaration//GEN-END:variables
     /**
      * Get the path of the user selected image.
@@ -326,6 +343,18 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         return pathTextField.getText();
     }
 
+    /**
+     * 
+     * @return Profile or empty string if auto detect
+     */
+    String getProfile() {
+        String profile = (String)profileComboBox.getSelectedItem();
+        if (profile.equals(AUTODETECT_PROFILE)) {
+            return "";
+        }
+        return profile;
+    }
+    
     List<String> getPluginsToRun() {
         List<String> enabledPlugins = new ArrayList<>();
         Map<String, String> pluginSettingsToSave = new HashMap<>();

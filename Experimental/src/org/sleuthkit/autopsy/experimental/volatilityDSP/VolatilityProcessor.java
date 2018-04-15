@@ -71,6 +71,7 @@ class VolatilityProcessor {
     private FileManager fileManager;
     private volatile boolean isCancelled;
     private Content outputVirtDir;
+    private String profile;
 
     /**
      * Constructs a processor that runs Volatility on a given memory image file
@@ -78,11 +79,13 @@ class VolatilityProcessor {
      *
      * @param memoryImagePath Path to memory image file.
      * @param dataSource      The memory image data source.
+     * @param profile         Volatility profile to run or empty string to autodetect
      * @param plugInToRuns    Volatility plugins to run.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      */
-    VolatilityProcessor(String memoryImagePath, Image dataSource, List<String> plugInToRun, DataSourceProcessorProgressMonitor progressMonitor) {
+    VolatilityProcessor(String memoryImagePath, Image dataSource, String profile, List<String> plugInToRun, DataSourceProcessorProgressMonitor progressMonitor) {
+        this.profile = profile;
         this.memoryImagePath = memoryImagePath;
         this.pluginsToRun = plugInToRun;
         this.dataSource = dataSource;
@@ -133,11 +136,16 @@ class VolatilityProcessor {
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
             directory.mkdirs();
+            
+        }
+        
+        // if they did not specify a profile, then run imageinfo to get one
+        if (profile.isEmpty() ) {
             progressMonitor.setProgressText(Bundle.VolatilityProcessor_progressMessage_runningImageInfo("imageinfo")); //NON-NLS
             runVolatilityPlugin("imageinfo"); //NON-NLS
+            profile = getProfileFromImageInfoOutput();
         }
 
-        
         progressMonitor.setIndeterminate(false);
         progressMonitor.setProgressMax(pluginsToRun.size());
         for (int i = 0; i < pluginsToRun.size(); i++) {
@@ -186,13 +194,9 @@ class VolatilityProcessor {
         commandLine.add("\"" + executableFile + "\""); //NON-NLS
         File memoryImage = new File(memoryImagePath);
         commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
-
-        File imageInfoOutputFile = new File(moduleOutputPath + "\\imageinfo.txt"); //NON-NLS
-        if (imageInfoOutputFile.exists()) {
-            String memoryProfile = parseImageInfoOutput(imageInfoOutputFile);
-            commandLine.add("--profile=" + memoryProfile); //NON-NLS
+        if (profile.isEmpty() == false) {
+            commandLine.add("--profile=" + profile); //NON-NLS
         }
-
         commandLine.add(pluginToRun);
 
         String outputFileAsString = moduleOutputPath + "\\" + pluginToRun + ".txt"; //NON-NLS
@@ -258,12 +262,18 @@ class VolatilityProcessor {
     @NbBundle.Messages({
         "VolatilityProcessor_exceptionMessage_failedToParseImageInfo=Could not parse image info"
     })
-    private String parseImageInfoOutput(File imageOutputFile) throws VolatilityProcessorException {
+    private String getProfileFromImageInfoOutput() throws VolatilityProcessorException {
+        File imageOutputFile = new File(moduleOutputPath + "\\imageinfo.txt"); //NON-NLS  
         try (BufferedReader br = new BufferedReader(new FileReader(imageOutputFile))) {
             String fileRead = br.readLine();
-            String[] profileLine = fileRead.split(":");  //NON-NLS
-            String[] memProfile = profileLine[1].split(",|\\("); //NON-NLS
-            return memProfile[0].replaceAll("\\s+", ""); //NON-NLS
+            if (fileRead != null) {
+                String[] profileLine = fileRead.split(":");  //NON-NLS
+                String[] memProfile = profileLine[1].split(",|\\("); //NON-NLS
+                return memProfile[0].replaceAll("\\s+", ""); //NON-NLS
+            }
+            else {
+                throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_failedToParseImageInfo());
+            }
         } catch (IOException ex) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_failedToParseImageInfo(), ex);
         }
