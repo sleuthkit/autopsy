@@ -240,7 +240,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.jLabel1.text")); // NOI18N
 
-        profileComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        profileComboBox.setModel(new javax.swing.DefaultComboBoxModel<>());
         profileComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 profileComboBoxActionPerformed(evt);
