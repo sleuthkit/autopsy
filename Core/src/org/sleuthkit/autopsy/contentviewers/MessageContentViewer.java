@@ -716,20 +716,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = new Sheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = new Sheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
             AbstractFile file = getContent();
-            ss.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
-            ss.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
-            ss.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
-            ss.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
+            sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
+            sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
+            sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
+            sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
 
-            addTagProperty(ss);
-            return s;
+            addTagProperty(sheetSet);
+            return sheet;
         }
     }
 }

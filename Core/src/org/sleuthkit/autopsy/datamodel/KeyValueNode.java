@@ -73,16 +73,16 @@ public class KeyValueNode extends AbstractNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
+        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.desc"),
                 data.getName()));
@@ -90,13 +90,13 @@ public class KeyValueNode extends AbstractNode {
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            ss.put(new NodeProperty<>(key,
+            sheetSet.put(new NodeProperty<>(key,
                     key,
                     NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.map.desc"),
                     value));
         }
 
-        return s;
+        return sheet;
     }
 
     /**
