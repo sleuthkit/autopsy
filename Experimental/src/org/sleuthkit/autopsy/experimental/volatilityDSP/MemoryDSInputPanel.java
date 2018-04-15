@@ -205,11 +205,11 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         jLabel1 = new javax.swing.JLabel();
         profileComboBox = new javax.swing.JComboBox<>();
 
-        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.pathLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.text")); // NOI18N
 
-        pathTextField.setText(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.pathTextField.text")); // NOI18N
+        pathTextField.setText(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.browseButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 browseButtonActionPerformed(evt);
@@ -217,9 +217,9 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         });
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.errorLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "RawDSInputPanel.timeZoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.timeZoneLabel.text")); // NOI18N
 
         timeZoneComboBox.setMaximumRowCount(30);
 
