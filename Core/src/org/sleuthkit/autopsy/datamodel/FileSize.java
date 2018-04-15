@@ -91,8 +91,8 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
         }
     }
 
@@ -101,8 +101,8 @@ public class FileSize implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     public SleuthkitCase getSleuthkitCase() {
@@ -129,8 +129,8 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -314,8 +314,8 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             @Override
-            public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-                return v.visit(this);
+            public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+                return visitor.visit(this);
             }
 
             @Override
