@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -34,11 +33,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CommonFilesMetaData {
         
     private final String parentMd5;
-    private final List<AbstractFile> children;
+    private final List<Long> children;
     private final String dataSources;
     private final Map<Long, String> dataSourceIdToNameMap;
 
-    CommonFilesMetaData(String md5, List<AbstractFile> childNodes, String dataSourcesString, Map<Long,String> dataSourcesMap) throws TskCoreException, SQLException, NoCurrentCaseException {
+    CommonFilesMetaData(String md5, List<Long> childNodes, String dataSourcesString, Map<Long,String> dataSourcesMap) throws TskCoreException, SQLException, NoCurrentCaseException {
         parentMd5 = md5;
         children = childNodes;
         dataSources = dataSourcesString;
@@ -49,7 +48,7 @@ public class CommonFilesMetaData {
         return parentMd5;
     }
     
-    public List<AbstractFile> getChildren() {
+    public List<Long> getChildren() {
         return Collections.unmodifiableList(this.children);
     }
 

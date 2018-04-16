@@ -33,9 +33,8 @@ class AllDataSources extends CommonFilesMetaDataBuilder {
     }
 
     @Override
-    protected String buildSqlWhereClause() {
-        
-        Object[] args = new String[]{determineMimeTypeFilter()};
-        return String.format(AllDataSources.WHERE_CLAUSE, args);
+    protected String buildSqlSelectStatement() {
+        Object[] args = new String[] {CommonFilesMetaDataBuilder.SELECT_PREFIX};
+        return String.format(WHERE_CLAUSE, args);
     }
 }
