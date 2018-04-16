@@ -29,14 +29,13 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- * Wrapper node for CommonFilesParentNode used to display common files search
- * results in the top right pane. Calls CommonFilesParentFactory.
+ * Wrapper node for <code>Md5Node</code> used to display common files search
+ * results in the top right pane. Calls <code>Md5NodeFactory</code>.
  */
-final public class CommonFilesSearchNode extends DisplayableItemNode {
-    //TODO rename this to something good
+final public class CommonFilesNode extends DisplayableItemNode {
     
-    CommonFilesSearchNode(List<CommonFilesMetaData> metaDataList) {
-        super(Children.create(new CommonFilesParentFactory(metaDataList), true), Lookups.singleton(CommonFilesSearchNode.class));
+    CommonFilesNode(List<CommonFilesMetaData> metaDataList) {
+        super(Children.create(new Md5NodeFactory(metaDataList), true), Lookups.singleton(CommonFilesNode.class));
     }
 
     @NbBundle.Messages({
@@ -65,7 +64,7 @@ final public class CommonFilesSearchNode extends DisplayableItemNode {
      * ChildFactory which builds CommonFileParentNodes from the
      * CommonFilesMetaaData models.
      */
-    static class CommonFilesParentFactory extends ChildFactory<CommonFilesMetaData> {
+    static class Md5NodeFactory extends ChildFactory<CommonFilesMetaData> {
 
         /**
          * List of models, each of which is a parent node matching a single md5,
@@ -73,7 +72,7 @@ final public class CommonFilesSearchNode extends DisplayableItemNode {
          */
         private List<CommonFilesMetaData> metaDataList;
 
-        CommonFilesParentFactory(List<CommonFilesMetaData> theMetaDataList) {
+        Md5NodeFactory(List<CommonFilesMetaData> theMetaDataList) {
             this.metaDataList = theMetaDataList;
         }
 
