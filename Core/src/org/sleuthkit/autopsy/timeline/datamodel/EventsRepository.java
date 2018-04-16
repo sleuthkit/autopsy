@@ -82,18 +82,18 @@ import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 
 /**
- * Provides higher-level public API (over TimelineManager) to access events. In theory
- * this insulates the rest of the timeline module form the details of the db
- * implementation. Since there are no other implementations of the database or
- * clients of this class, and no Java Interface defined yet, in practice this
+ * Provides higher-level public API (over TimelineManager) to access events. In
+ * theory this insulates the rest of the timeline module from the details of the
+ * db implementation. Since there are no other implementations of the database
+ * or clients of this class, and no Java Interface defined yet, in practice this
  * just delegates everything to the eventDB. Some results are also cached by
  * this layer.
  *
  * Concurrency Policy:
  *
- * Since almost everything just delegates to the TimelineManager, which is internally
- * synchronized, we only have to worry about rebuildRepository() which we
- * synchronize on our intrinsic lock.
+ * Since almost everything just delegates to the TimelineManager, which is
+ * internally synchronized, we only have to worry about rebuildRepository()
+ * which we synchronize on our intrinsic lock.
  *
  */
 public class EventsRepository {
@@ -342,7 +342,7 @@ public class EventsRepository {
     }
 
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.addTag(objID, artifactID, tag);
+        Set<Long> updatedEventIDs = eventManager.markEventsTagged(objID, artifactID, true);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -350,7 +350,7 @@ public class EventsRepository {
     }
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.deleteTag(objID, artifactID, tagID, tagged);
+        Set<Long> updatedEventIDs = eventManager.markEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -593,7 +593,7 @@ public class EventsRepository {
                 }
                 updateProgress(i, currentWorkTotal);
                 BlackboardArtifactTag artifactTag = artifactTags.get(i);
-                eventManager.addTag(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), artifactTag);
+                eventManager.markEventsTagged(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), true);
             }
         }
 
@@ -604,7 +604,7 @@ public class EventsRepository {
                 }
                 updateProgress(i, currentWorkTotal);
                 ContentTag contentTag = contentTags.get(i);
-                eventManager.addTag(contentTag.getContent().getId(), null, contentTag);
+                eventManager.markEventsTagged(contentTag.getContent().getId(), null, true);
             }
         }
 
