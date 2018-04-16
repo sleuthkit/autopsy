@@ -25,14 +25,14 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Encapsulates data being pushed to Common Files component in top right pane.
+ * Used by the Common Files search feature to encapsulate instances of a given 
+ * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
  */
-public class CommonFileChildNode extends FileNode {
-//TODO rename this to something good
+public class FileInstanceNode extends FileNode {
     
     private final String dataSource;
 
-    public CommonFileChildNode(AbstractFile fsContent, String dataSource) {
+    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
@@ -82,7 +82,7 @@ public class CommonFileChildNode extends FileNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, CommonFileChildNode node) {
+    static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
 
         map.put(CommonFilePropertyType.File.toString(), node.getName());
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());

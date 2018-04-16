@@ -22,7 +22,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
+import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
