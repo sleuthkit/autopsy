@@ -26,14 +26,15 @@ import java.util.Map;
  */
 class AllDataSources extends CommonFilesMetaDataBuilder {
 
-    private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
     public AllDataSources(Map<Long, String> dataSourceIdMap) {
         super(dataSourceIdMap);
     }
 
     @Override
-    protected String buildSqlWhereClause() {
-        return AllDataSources.WHERE_CLAUSE;
+    protected String buildSqlSelectStatement() {
+        Object[] args = new String[] {CommonFilesMetaDataBuilder.SELECT_PREFIX};
+        return String.format(WHERE_CLAUSE, args);
     }
 }

@@ -26,7 +26,7 @@ import java.util.Map;
  */
 class SingleDataSource extends CommonFilesMetaDataBuilder {
 
-    private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
     private final Long selectedDataSourceId;
 
     public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap) {
@@ -35,8 +35,8 @@ class SingleDataSource extends CommonFilesMetaDataBuilder {
     }
 
     @Override
-    protected String buildSqlWhereClause() {
-        Object[] args = new String[]{Long.toString(this.selectedDataSourceId)};
+    protected String buildSqlSelectStatement() {
+        Object[] args = new String[]{CommonFilesMetaDataBuilder.SELECT_PREFIX, Long.toString(this.selectedDataSourceId)};
         return String.format(SingleDataSource.WHERE_CLAUSE, args);
     }
 }

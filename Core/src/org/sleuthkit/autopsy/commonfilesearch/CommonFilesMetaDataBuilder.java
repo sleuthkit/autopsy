@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -82,14 +84,18 @@ abstract class CommonFilesMetaDataBuilder {
         return metaDataModels;
     }
 
+    protected static String SELECT_PREFIX = "SELECT obj_id, md5 from tsk_files where";
+    
     /**
-     * Should build a SQL WHERE clause to be passed to
-     * SleuthkitCase.findAllFilesWhere(sql) which will select the desired common
-     * files ordered by MD5.
+     * Should build a SQL SELECT statement to be passed to
+     * SleuthkitCase.executeQuery(sql) which will select the desired 
+     * file ids and MD5 hashes.
+     * 
+     * The statement should select obj_id and md5 in that order.
      *
-     * @return sql string where clause
+     * @return sql string select statement
      */
-    protected abstract String buildSqlWhereClause();
+    protected abstract String buildSqlSelectStatement();
 
     private void collateParentChildRelationships(List<AbstractFile> files, Map<String, List<AbstractFile>> parentNodes, Map<String, Set<String>> md5ToDataSourcesStringMap) {
         for (AbstractFile file : files) {
@@ -115,11 +121,28 @@ abstract class CommonFilesMetaDataBuilder {
         }
     }
 
-    private List<AbstractFile> findCommonFiles() throws TskCoreException, NoCurrentCaseException {
-        SleuthkitCase sleuthkitCase;
-        sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
-        String whereClause = this.buildSqlWhereClause();
-        List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
-        return files;
+    private Map<String, List<Long>> findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+        
+        Map<String, List<Long>> md5ToObjIdMap = new HashMap<>();
+        
+        SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+        String selectStatement = this.buildSqlSelectStatement();
+        
+        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)){
+            ResultSet resultSet = query.getResultSet();
+            while(resultSet.next()){
+                String md5 = resultSet.getString(1);
+                Long objectId = resultSet.getLong(2);
+                
+                if(md5ToObjIdMap.containsKey(md5)){
+                    md5ToObjIdMap.get(md5).add(objectId);
+                } else {
+                    List<Long> objectIds = new ArrayList<>();
+                    md5ToObjIdMap.put(md5, objectIds);
+                }
+            }
+        }        
+        
+        return md5ToObjIdMap;
     }
 }
