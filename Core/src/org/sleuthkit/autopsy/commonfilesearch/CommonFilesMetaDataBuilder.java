@@ -136,14 +136,14 @@ abstract class CommonFilesMetaDataBuilder {
         return metaDataModels;
     }
 
-    protected static String SELECT_PREFIX = "SELECT obj_id, md5 from tsk_files where";
+    protected static String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
     
     /**
      * Should build a SQL SELECT statement to be passed to
      * SleuthkitCase.executeQuery(sql) which will select the desired 
      * file ids and MD5 hashes.
      * 
-     * The statement should select obj_id and md5 in that order.
+     * The statement should select obj_id,  md5, data_source_obj_id in that order.
      *
      * @return sql string select statement
      */
@@ -185,6 +185,7 @@ abstract class CommonFilesMetaDataBuilder {
             while(resultSet.next()){
                 String md5 = resultSet.getString(1);
                 Long objectId = resultSet.getLong(2);
+                Long dataSourceId = resultSet.getLong(3);
                 
                 if(md5ToObjIdMap.containsKey(md5)){
                     md5ToObjIdMap.get(md5).add(objectId);
