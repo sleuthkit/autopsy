@@ -33,16 +33,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Represents a common files match - two or more files which appear to be the
- * same file and appear as children of this node.
+ * same file and appear as children of this node.  This node will simply contain
+ * the MD5 of the matched files, 
  */
-public class CommonFileParentNode extends DisplayableItemNode {
-//TODO rename this to something good
+public class Md5Node extends DisplayableItemNode {
     
     private final String md5Hash;
     private final int commonFileCount;
     private final String dataSources;
 
-    public CommonFileParentNode(CommonFilesMetaData metaData) {
+    public Md5Node(CommonFilesMetaData metaData) {
         super(Children.create(
                 new CommonFilesChildFactory(metaData.getChildren(),
                         metaData.getDataSourceIdToNameMap()), true),
@@ -79,7 +79,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
         fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
-        for (CommonFileParentNode.CommonFileParentPropertyType propType : CommonFileParentNode.CommonFileParentPropertyType.values()) {
+        for (Md5Node.CommonFileParentPropertyType propType : Md5Node.CommonFileParentPropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }
@@ -94,7 +94,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, CommonFileParentNode node) {
+    static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
         map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
         map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
@@ -134,7 +134,7 @@ public class CommonFileParentNode extends DisplayableItemNode {
             //TODO minimize work here - this is the UI thread
             final String dataSource = this.dataSourceMap.get(file.getDataSourceObjectId());
 
-            return new CommonFileChildNode(file, dataSource);
+            return new FileInstanceNode(file, dataSource);
         }
 
         @Override

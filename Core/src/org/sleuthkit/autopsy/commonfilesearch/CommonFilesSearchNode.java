@@ -24,7 +24,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
+import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
@@ -84,7 +84,7 @@ final public class CommonFilesSearchNode extends DisplayableItemNode {
         @Override
         protected Node createNodeForKey(CommonFilesMetaData metaData) {
 
-            return new CommonFileParentNode(metaData);
+            return new Md5Node(metaData);
         }
 
         @Override
