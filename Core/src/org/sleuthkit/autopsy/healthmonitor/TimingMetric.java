@@ -25,7 +25,7 @@ public class TimingMetric {
     
     private final String name;
     private final long startingTimestamp;
-    private Long duration;
+    private Double duration;
     
     TimingMetric(String name) {
         this.name = name;
@@ -38,7 +38,7 @@ public class TimingMetric {
      */
     void stopTiming() {
         long endingTimestamp = System.nanoTime();
-        this.duration = endingTimestamp - startingTimestamp;
+        this.duration = (double)(endingTimestamp - startingTimestamp) / 1000000;
     }
 
     /**
@@ -52,10 +52,10 @@ public class TimingMetric {
     /**
      * Get the duration of the metric. Will throw an exception if the
      * metric has not been stopped.
-     * @return how long the metric was running (nanoseconds)
+     * @return how long the metric was running (milliseconds)
      * @throws HealthMonitorException 
      */
-    long getDuration() throws HealthMonitorException {
+    double getDuration() throws HealthMonitorException {
         if (duration != null) {
             return duration;
         } else {
