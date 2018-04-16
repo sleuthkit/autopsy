@@ -44,7 +44,7 @@ public class Md5Node extends DisplayableItemNode {
 
     public Md5Node(CommonFilesMetaData metaData) {
         super(Children.create(
-                new CommonFilesChildFactory(metaData.getChildren(),
+                new FileInstanceNodeFactory(metaData.getChildren(),
                         metaData.getDataSourceIdToNameMap()), true),
                 Lookups.singleton(metaData.getMd5()));
         this.commonFileCount = metaData.getChildren().size();
@@ -116,14 +116,14 @@ public class Md5Node extends DisplayableItemNode {
     }
 
     /**
-     * Child generator for FileNodes of CommonFileParentNodes
+     * Child generator for <code>FileInstanceNode</code> of <code>Md5Node</code>.
      */
-    static class CommonFilesChildFactory extends ChildFactory<AbstractFile> {
+    static class FileInstanceNodeFactory extends ChildFactory<AbstractFile> {
 
         private final List<AbstractFile> descendants;
         private final Map<Long, String> dataSourceMap;
 
-        CommonFilesChildFactory(List<AbstractFile> descendants, Map<Long, String> dataSourceMap) {
+        FileInstanceNodeFactory(List<AbstractFile> descendants, Map<Long, String> dataSourceMap) {
             this.descendants = descendants;
             this.dataSourceMap = dataSourceMap;
         }
