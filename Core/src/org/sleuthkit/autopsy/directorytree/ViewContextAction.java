@@ -177,7 +177,12 @@ public class ViewContextAction extends AbstractAction {
                  * such as the root directory of the file system for file system
                  * content.
                  */
+                
+               
                 Children treeNodeChildren = parentTreeViewNode.getChildren();
+                
+                 //TODO: See Vik-3561.  
+                // When Device nodes are displayed, this search to find the node for the parent content breaks
                 for (int i = 0; i < ancestorChildren.getNodesCount(); i++) {
                     Node ancestorNode = ancestorChildren.getNodeAt(i);
                     for (int j = 0; j < treeNodeChildren.getNodesCount(); j++) {
