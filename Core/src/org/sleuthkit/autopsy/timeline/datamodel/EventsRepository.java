@@ -153,7 +153,7 @@ public class EventsRepository {
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(new CacheLoader<Long, SingleEvent>() {
                     @Override
-                    public SingleEvent load(Long eventID) throws Exception {
+                    public SingleEvent load(Long eventID) throws TskCoreException {
                         return eventManager.getEventById(eventID);
                     }
                 });
@@ -162,7 +162,7 @@ public class EventsRepository {
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(new CacheLoader<ZoomParams, Map<EventType, Long>>() {
                     @Override
-                    public Map<EventType, Long> load(ZoomParams params) throws Exception {
+                    public Map<EventType, Long> load(ZoomParams params) throws TskCoreException {
                         return eventManager.countEventsByType(params);
                     }
                 });
@@ -171,7 +171,7 @@ public class EventsRepository {
                 .expireAfterAccess(10, TimeUnit.MINUTES
                 ).build(new CacheLoader<ZoomParams, List<EventStripe>>() {
                     @Override
-                    public List<EventStripe> load(ZoomParams params) throws Exception {
+                    public List<EventStripe> load(ZoomParams params) throws TskCoreException {
                         return eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone());
                     }
                 });
@@ -534,7 +534,7 @@ public class EventsRepository {
             "progressWindow.msg.refreshingResultTags=Refreshing result tags",
             "progressWindow.msg.gatheringData=Gathering event data",
             "progressWindow.msg.commitingDb=Committing events database"})
-        protected Void call() throws Exception {
+        protected Void call() throws TskCoreException {
             SleuthkitCase.CaseDbTransaction trans = eventManager.beginTransaction();
             if (dbPopulationMode == DBPopulationMode.FULL) {
                 //drop old db, and add back MAC and artifact events
@@ -555,7 +555,7 @@ public class EventsRepository {
             if (dbPopulationMode == DBPopulationMode.TAGS_ONLY) {
                 trans = eventManager.beginTransaction();
                 logger.log(Level.INFO, "dropping old tags"); // NON-NLS
-                eventManager.reInitializeTags();
+//                eventManager.reInitializeTags();
             }
 
             logger.log(Level.INFO, "updating content tags"); // NON-NLS
@@ -696,7 +696,7 @@ public class EventsRepository {
             } catch (CancellationException ex) {
                 logger.log(Level.WARNING, "Timeline database population was cancelled by the user. " //NON-NLS
                         + " Not all events may be present or accurate."); // NON-NLS
-            } catch (Exception ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.msgdlg_problem_text());
             }
