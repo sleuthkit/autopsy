@@ -27,6 +27,8 @@ import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
 import org.sleuthkit.datamodel.AbstractFile;
