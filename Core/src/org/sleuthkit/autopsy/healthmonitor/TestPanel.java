@@ -393,7 +393,7 @@ public class TestPanel extends javax.swing.JDialog {
                 System.out.println("  Making panel for " + name);
                 JLabel label = new JLabel(name);
                 graphPanel.add(label);
-                TimingMetricGraphPanel timingGraphPanel = new TimingMetricGraphPanel(timingData.get(name), TimingMetricGraphPanel.TimingMetricType.AVERAGE, true);
+                TimingMetricGraphPanel timingGraphPanel = new TimingMetricGraphPanel(timingData.get(name), TimingMetricGraphPanel.TimingMetricType.AVERAGE, null, true);
                 timingGraphPanel.setPreferredSize(new Dimension(800,200));
                 graphPanel.add(timingGraphPanel);
             }

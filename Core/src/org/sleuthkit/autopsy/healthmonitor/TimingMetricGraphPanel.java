@@ -27,6 +27,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.util.Collections;
+import java.util.stream.Collectors;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.logging.Level;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.DatabaseTimingResult;
 
 /**
@@ -57,13 +59,26 @@ class TimingMetricGraphPanel extends JPanel {
     private List<DatabaseTimingResult> timingResults;
     private TimingMetricType timingMetricType;
     private boolean doLineGraph;
+    private String yUnitString;
     private TrendLine trendLine;
     private final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+    long maxTimestamp;
+    long minTimestamp;
+    double maxMetricTime;
+    double minMetricTime;
 
-    TimingMetricGraphPanel(List<DatabaseTimingResult> timingResults, TimingMetricType timingMetricType, boolean doLineGraph) {
-        this.timingResults = timingResults;
+    TimingMetricGraphPanel(List<DatabaseTimingResult> timingResultsFull, TimingMetricType timingMetricType, String hostName, boolean doLineGraph) {
+
         this.timingMetricType = timingMetricType;
         this.doLineGraph = doLineGraph;
+        if(hostName == null || hostName.isEmpty()) {
+            timingResults = timingResultsFull;
+        } else {
+            timingResults = timingResultsFull.stream()
+                            .filter(t -> t.getHostName().equals(hostName))
+                            .collect(Collectors.toList());
+        }
+        
         try {
             trendLine = new TrendLine(timingResults, timingMetricType);
         } catch (HealthMonitorException ex) {
@@ -71,80 +86,81 @@ class TimingMetricGraphPanel extends JPanel {
             logger.log(Level.WARNING, "Can not generate a trend line on empty data set");
             trendLine = null;
         }
+        
+        // Calculate these using the full data set, to make it easier to compare the results for
+        // individual hosts
+        calcMaxTimestamp(timingResultsFull);
+        calcMinTimestamp(timingResultsFull);
+        calcMaxMetricTime(timingResultsFull);
+        calcMinMetricTime(timingResultsFull);  
+        
+        
     }
     
     /**
-     * Get the highest metric time for the given type
-     * @return the highest metric time
+     * Set the highest metric time for the given type
      */
-    private double getMaxMetricTime() {
+    private void calcMaxMetricTime(List<DatabaseTimingResult> timingResultsFull) {
         // Find the highest of the values being graphed
-        double maxScore = Double.MIN_VALUE;
-        for (DatabaseTimingResult score : timingResults) {
+        maxMetricTime = Double.MIN_VALUE;
+        for (DatabaseTimingResult score : timingResultsFull) {
             // Use only the data we're graphing to determing the max
             switch (timingMetricType) {
                 case MAX:
-                    maxScore = Math.max(maxScore, score.getMax());
+                    maxMetricTime = Math.max(maxMetricTime, score.getMax());
                     break;
                 case MIN:
-                    maxScore = Math.max(maxScore, score.getMin());
+                    maxMetricTime = Math.max(maxMetricTime, score.getMin());
                     break;
                 case AVERAGE:
                 default:
-                    maxScore = Math.max(maxScore, score.getAverage());
+                    maxMetricTime = Math.max(maxMetricTime, score.getAverage());
                     break;
             }
         }
-        return maxScore;
     }
     
     /**
-     * Get the lowest metric time for the given type
-     * @return the lowest metric time
+     * Set the lowest metric time for the given type
      */
-    private double getMinMetricTime() {
+    private void calcMinMetricTime(List<DatabaseTimingResult> timingResultsFull) {
         // Find the lowest of the values being graphed
-        double minScore = Double.MAX_VALUE;
-        for (DatabaseTimingResult score : timingResults) {
+        minMetricTime = Double.MAX_VALUE;
+        for (DatabaseTimingResult result : timingResultsFull) {
             // Use only the data we're graphing to determing the min
             switch (timingMetricType) {
                 case MAX:
-                    minScore = Math.min(minScore, score.getMax());
+                    minMetricTime = Math.min(minMetricTime, result.getMax());
                     break;
                 case MIN:
-                    minScore = Math.min(minScore, score.getMin());
+                    minMetricTime = Math.min(minMetricTime, result.getMin());
                     break;
                 case AVERAGE:
                 default:
-                    minScore = Math.min(minScore, score.getAverage());
+                    minMetricTime = Math.min(minMetricTime, result.getAverage());
                     break;
             }
         }
-        return minScore;
     }
     
     /**
-     * Get the largest timestamp in the data collection
-     * @return the largest timestamp
+     * Set the largest timestamp in the data collection
      */
-    private long getMaxTimestamp() {
-        long maxTimestamp = Long.MIN_VALUE;
-        for (DatabaseTimingResult score : timingResults) {
+    private void calcMaxTimestamp(List<DatabaseTimingResult> timingResultsFull) {
+        maxTimestamp = Long.MIN_VALUE;
+        for (DatabaseTimingResult score : timingResultsFull) {
             maxTimestamp = Math.max(maxTimestamp, score.getTimestamp());
         }
-        return maxTimestamp;
     }
     
     /**
-     * Get the smallest timestamp in the data collection
-     * @return the minimum timestamp
+     * Set the smallest timestamp in the data collection
      */
-    private long getMinTimestamp() {
-        long minTimestamp = Long.MAX_VALUE;
-        for (DatabaseTimingResult score : timingResults) {
+    private void calcMinTimestamp(List<DatabaseTimingResult> timingResultsFull) {
+        minTimestamp = Long.MAX_VALUE;
+        for (DatabaseTimingResult score : timingResultsFull) {
             minTimestamp = Math.min(minTimestamp, score.getTimestamp());
         }
-        return minTimestamp;
     }
 
     /**
@@ -166,25 +182,24 @@ class TimingMetricGraphPanel extends JPanel {
         
         // Get the max and min timestamps to create the x-axis.
         // We add a small buffer to each side so the data won't overwrite the axes.
-        long originalMaxTimestamp = getMaxTimestamp();
-        double maxValueOnXAxis = (double) originalMaxTimestamp + 1000 * 60 *60 * 2; // Two hour buffer
-        double minValueOnXAxis = getMinTimestamp() - 1000 * 60 * 60 * 2; // Two hour buffer
+        double maxValueOnXAxis = maxTimestamp + 1000 * 60 *60 * 2; // Two hour buffer
+        double minValueOnXAxis = minTimestamp - 1000 * 60 * 60 * 2; // Two hour buffer
         
         // Get the max and min times to create the y-axis
         // We add a small buffer to each side so the data won't overwrite the axes.
-        double maxValueOnYAxis = getMaxMetricTime();
-        double minValueOnYAxis = getMinMetricTime();  
+        double maxValueOnYAxis = maxMetricTime;
+        double minValueOnYAxis = minMetricTime;  
         minValueOnYAxis = Math.max(0, minValueOnYAxis - (maxValueOnYAxis * 0.1));
         maxValueOnYAxis = maxValueOnYAxis * 1.1;
 
         // The graph itself has the following corners:
-        // (padding + label padding, padding) - top left
+        // (padding + label padding, padding + font height) - top left
         // (padding + label padding, getHeight() - label padding - padding x 2) - bottom left
-        // (getWidth() - padding, getHeight() - label padding - padding x 2) - top right ??
+        // (getWidth() - padding, padding + font height) - top right 
         // (padding + label padding, getHeight() - label padding - padding x 2) - bottom right
         int leftGraphPadding = padding + labelPadding;
         int rightGraphPadding = padding;
-        int topGraphPadding = padding;
+        int topGraphPadding = padding + g2.getFontMetrics().getHeight();
         int bottomGraphPadding = padding + labelPadding;
         
         // Calculate the scale for each axis.
@@ -198,13 +213,42 @@ class TimingMetricGraphPanel extends JPanel {
         int graphWidth = getWidth() - leftGraphPadding - rightGraphPadding;
         int graphHeight = getHeight() - topGraphPadding - bottomGraphPadding;
         double xScale = ((double) graphWidth) / (maxValueOnXAxis - minValueOnXAxis);
-        double yScale = ((double) graphHeight) / (maxValueOnYAxis - minValueOnYAxis);
+        double yScale = ((double) graphHeight) / (maxValueOnYAxis - minValueOnYAxis);  
         
-        // draw white background
-        g2.setColor(Color.WHITE);
-        g2.fillRect(leftGraphPadding, topGraphPadding, graphWidth, graphHeight);       
+        // Check if we should use a scale other than milliseconds
+        long middleOfGraphNano = (long)(minValueOnYAxis + (maxValueOnYAxis - minValueOnYAxis) / 2) * 1000000;
+        double yLabelScale;
+        
+        // The idea here is to pick the scale that would most commonly be used to 
+        // represent the middle of our data. For example, if the middle of the graph
+        // would be 45,000,000 nanoseconds, then we would use milliseconds for the 
+        // y-axis.
+        if(middleOfGraphNano < 1000) {
+            yUnitString = "nanoseconds";
+            yLabelScale = 1000000;
+        } else if (TimeUnit.NANOSECONDS.toMicros(middleOfGraphNano) < 1000) {
+            yUnitString = "microseconds";
+            yLabelScale = 1000;
+        } else if (TimeUnit.NANOSECONDS.toMillis(middleOfGraphNano) < 1000) {
+            yUnitString = "milliseconds";
+            yLabelScale = 1;
+        } else if (TimeUnit.NANOSECONDS.toSeconds(middleOfGraphNano) < 60) {
+            yUnitString = "seconds";
+            yLabelScale = 1.0 / 1000;
+        } else if (TimeUnit.NANOSECONDS.toMinutes(middleOfGraphNano) < 60) {
+            yUnitString = "minutes";
+            yLabelScale = 1.0 / (1000 * 60);
+        } else {
+            yUnitString = "hours";
+            yLabelScale = 1.0 / (1000 * 60 * 60);
+        }
 
-        // create hatch marks and grid lines for y axis.
+        // Draw white background
+        g2.setColor(Color.WHITE);
+        g2.fillRect(leftGraphPadding, topGraphPadding, graphWidth, graphHeight); 
+        
+        // Create hatch marks and grid lines for y axis.
+        int labelWidth;
         for (int i = 0; i < numberYDivisions + 1; i++) {
             int x0 = leftGraphPadding;
             int x1 = pointWidth + leftGraphPadding;
@@ -219,10 +263,19 @@ class TimingMetricGraphPanel extends JPanel {
                 // Create the label
                 g2.setColor(Color.BLACK);
                 double yValue = minValueOnYAxis + ((maxValueOnYAxis - minValueOnYAxis) * ((i * 1.0) / numberYDivisions));
-                String yLabel = ((int) (yValue * 100)) / 100.0 + "";
+                String yLabel = ((int) (yValue * 100 * yLabelScale)) / 100.0 + "";
                 FontMetrics fontMetrics = g2.getFontMetrics();
-                int labelWidth = fontMetrics.stringWidth(yLabel);
+                labelWidth = fontMetrics.stringWidth(yLabel);
                 g2.drawString(yLabel, x0 - labelWidth - 5, y0 + (fontMetrics.getHeight() / 2) - 3);
+                
+                // The nicest looking alignment for this label seems to be left-aligned with the top
+                // y-axis label
+                if (i == numberYDivisions) {
+                    // Write the scale
+                    g2.setColor(Color.BLACK);
+                    String scaleStr = "Displaying time in " + yUnitString;
+                    g2.drawString(scaleStr, x0 - labelWidth - 5, padding);
+                }
             }
             
             // Draw the small hatch mark
@@ -232,7 +285,7 @@ class TimingMetricGraphPanel extends JPanel {
         
         // On the x-axis, the farthest right grid line should represent midnight preceding the last recorded value
         Calendar maxDate = new GregorianCalendar();
-        maxDate.setTimeInMillis(originalMaxTimestamp);
+        maxDate.setTimeInMillis(maxTimestamp);
         maxDate.set(Calendar.HOUR_OF_DAY, 0);
         maxDate.set(Calendar.MINUTE, 0);
         maxDate.set(Calendar.SECOND, 0);
@@ -279,7 +332,7 @@ class TimingMetricGraphPanel extends JPanel {
             
             String xLabel = month + "/" + day;
             FontMetrics metrics = g2.getFontMetrics();
-            int labelWidth = metrics.stringWidth(xLabel);
+            labelWidth = metrics.stringWidth(xLabel);
             g2.drawString(xLabel, x0 - labelWidth / 2, y0 + metrics.getHeight() + 3);           
         }
 
@@ -325,7 +378,7 @@ class TimingMetricGraphPanel extends JPanel {
         });
             
         // Draw the selected type of graph. If there's only one data point,
-        // draw it.
+        // draw that single point.
         g2.setStroke(NARROW_STROKE);
         g2.setColor(lineColor);
         if(doLineGraph && graphPoints.size() > 1) {
@@ -346,13 +399,13 @@ class TimingMetricGraphPanel extends JPanel {
             }
         }
         
-        // Draw the trend line
-        // Don't draw anything if there's only one data point
+        // Draw the trend line.
+        // Don't draw anything if we don't have at least two data points.
         if(trendLine != null && (timingResults.size() > 1)) {
-            int x0 = (int) (padding + labelPadding);
-            int y0 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(minValueOnXAxis)) * yScale + padding);
-            int x1 = (int) ((maxValueOnXAxis - minValueOnXAxis) * xScale + padding + labelPadding);
-            int y1 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(maxValueOnXAxis)) * yScale + padding);
+            int x0 = (int) (leftGraphPadding);
+            int y0 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(minValueOnXAxis)) * yScale + topGraphPadding);
+            int x1 = (int) ((maxValueOnXAxis - minValueOnXAxis) * xScale + leftGraphPadding);
+            int y1 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(maxValueOnXAxis)) * yScale + topGraphPadding);
             g2.setStroke(GRAPH_STROKE);
             g2.setColor(trendLineColor);
             g2.drawLine(x0, y0, x1, y1);

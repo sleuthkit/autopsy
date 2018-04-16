@@ -675,8 +675,10 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
-     * TODO: remove this - testing only
-     * Will put a bunch of sample data into the database
+     * Debugging method to generate sample data for the database.
+     * It will delete all current timing data and replace it with randomly generated values.
+     * If it is set to generate data for more than one node, the second node may be set to
+     * take longer than the others.
      */
     final void populateDatabase(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
         
@@ -692,9 +694,11 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         
         int minIndexTime = 9000000;
         int maxIndexTimeOverMin = 50000000;
+        long indexMultiplier = 1;  // To test different scales
         
         int minConnTime = 15000000;
         int maxConnTimeOverMin = 18000000;
+        long connTimeMultiplier = 1; // To test different scales
         
         Random rand = new Random();
         
@@ -724,10 +728,21 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
 
+                    double count = 0;
+                    double maxCount = nDays * 24 + 1;
+                    
                     // Record index chunk every hour
                     for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += millisPerHour) {
 
                         long aveTime;
+                        
+                        // This creates data that increases in the last couple of days of the simulated
+                        // collection
+                        count++;
+                        double slowNodeMultiplier = 1.0;
+                        if((maxCount - count) <= 3 * 24) {
+                            slowNodeMultiplier += (3 - (maxCount - count) / 24) * 0.33;
+                        }
                         
                         if( ! createVerificationData ) {
                             // Try to make a reasonable sample data set, with most points in a small range
@@ -741,6 +756,10 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                                 aveTime = minIndexTime + (rand.nextInt(maxIndexTimeOverMin) / 2);
                             } else {
                                 aveTime = minIndexTime + rand.nextInt(maxIndexTimeOverMin);
+                            }
+                            aveTime = aveTime * indexMultiplier;
+                            if(node == 1) {
+                                aveTime = (long)((double)aveTime * slowNodeMultiplier);
                             }
                         } else {
                             // Create a data set strictly for testing that the display is working
@@ -781,6 +800,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                             } else if(outlierVal == 8){
                                 aveTime = (minConnTime / 2) + rand.nextInt(minConnTime / 2);
                             }
+                            aveTime *= connTimeMultiplier;
                         } else {
                             // Create a data set strictly for testing that the display is working
                             // correctly. The average time will equal the day of the month from

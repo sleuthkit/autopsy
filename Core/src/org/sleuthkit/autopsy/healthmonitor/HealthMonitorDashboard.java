@@ -18,18 +18,13 @@
  */
 package org.sleuthkit.autopsy.healthmonitor;
 
-import com.mchange.v2.cfg.DelayedLogItem;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Font;
@@ -84,7 +79,6 @@ public class HealthMonitorDashboard {
         JDialog dialog = new JDialog();
         //dialog.setPreferredSize(new Dimension(1500, 800));
         dialog.setTitle("Enterprise Health Monitor");
-        //dialog.add(graphPanel);
         dialog.add(scrollPane);
         dialog.pack();
         dialog.setVisible(true);
@@ -231,12 +225,6 @@ public class HealthMonitorDashboard {
         timingMetricPanel.add(new JSeparator());
         
         for(String name:timingData.keySet()) {
-            // Add the metric name
-            JLabel metricNameLabel = new JLabel(name);
-            metricNameLabel.setFont(new Font("Serif", Font.BOLD, 12));
-            timingMetricPanel.add(metricNameLabel);
-            JLabel timingLabel = new JLabel("Displaying time in milliseconds");
-            timingMetricPanel.add(timingLabel);
             
             // If necessary, trim down the list of results to fit the selected time range
             List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
@@ -254,17 +242,18 @@ public class HealthMonitorDashboard {
                 intermediateTimingDataForDisplay = timingData.get(name);
             }
             
-            // If necessary, trim down the resulting list to only one host name
-            List<EnterpriseHealthMonitor.DatabaseTimingResult> timingDataForDisplay;
+            // Get the name of the selected host, if there is one
+            String hostToDisplay = null;
             if(hostCheckBox.isSelected() && (hostComboBox.getSelectedItem() != null)) {
-                timingDataForDisplay = intermediateTimingDataForDisplay.stream()
-                            .filter(t -> t.getHostName().equals(hostComboBox.getSelectedItem().toString()))
-                            .collect(Collectors.toList());
-            } else {
-                timingDataForDisplay = intermediateTimingDataForDisplay;
+                hostToDisplay = hostComboBox.getSelectedItem().toString();
             }
             
-            TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(timingDataForDisplay, TimingMetricGraphPanel.TimingMetricType.AVERAGE, true);
+            TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(intermediateTimingDataForDisplay, 
+                    TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true);
+            // Add the metric name
+            JLabel metricNameLabel = new JLabel(name);
+            metricNameLabel.setFont(new Font("Serif", Font.BOLD, 12));
+            timingMetricPanel.add(metricNameLabel);
             singleTimingGraphPanel.setPreferredSize(new Dimension(900,250));
             timingMetricPanel.add(singleTimingGraphPanel);
         }
