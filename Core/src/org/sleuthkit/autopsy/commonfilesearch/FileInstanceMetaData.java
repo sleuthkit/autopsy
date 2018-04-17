@@ -20,29 +20,36 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 /**
- * Encalsulates data required to instantiate a <code>FileInstanceNode</code>.
+ * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-public class FileInstanceMetaData {
+final public class FileInstanceMetaData {
     
     private Long objectId;
     private String dataSourceName;
-    private Long dataSourceId;
     
-    public FileInstanceMetaData (Long objectId, String dataSourceName, Long dataSourceId){
+    /**
+     * Create meta data required to find an abstract file and build a FileInstanceNode.
+     * @param objectId id of abstract file to find
+     * @param dataSourceName name of datasource where the object is found
+     */
+    FileInstanceMetaData (Long objectId, String dataSourceName){
         this.objectId = objectId;
         this.dataSourceName = dataSourceName;
-        this.dataSourceId = dataSourceId;
     }
     
+    /**
+     * obj_id for the file represented by this object
+     * @return 
+     */
     public Long getObjectId(){
         return this.objectId;
     }
     
+    /**
+     * Name of datasource where this instance was found.
+     * @return 
+     */
     public String getDataSourceName(){
         return this.dataSourceName;
-    }
-    
-    public Long getDataSourceId(){
-        return this.dataSourceId;
     }    
 }

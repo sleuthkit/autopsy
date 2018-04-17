@@ -247,16 +247,16 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 CommonFilesMetaDataBuilder builder;
 
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                    builder = new AllDataSources(dataSourceMap);
+                    builder = new AllDataSources(CommonFilesPanel.this.dataSourceMap);
 
                     setTitleForAllDataSources();
                 } else {
-                    builder = new SingleDataSource(dataSourceId, dataSourceMap);
+                    builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.dataSourceMap);
 
                     setTitleForSingleSource(dataSourceId);
                 }
-                
-                CommonFilesMetaData metaData = new CommonFilesMetaData(builder.findCommonFiles(), CommonFilesPanel.this.dataSourceMap);
+                                
+                CommonFilesMetaData metaData = builder.findCommonFiles();
 
                 return metaData;
             }

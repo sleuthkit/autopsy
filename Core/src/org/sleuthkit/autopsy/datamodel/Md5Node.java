@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -31,8 +32,10 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel;
 import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetaData;
 import org.sleuthkit.autopsy.commonfilesearch.Md5MetaData;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,9 +43,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Represents a common files match - two or more files which appear to be the
  * same file and appear as children of this node.  This node will simply contain
- * the MD5 of the matched files, 
+ * the MD5 of the matched files, the data sources those files were found within,
+ * and a count of the instances represented by the md5.
  */
 public class Md5Node extends DisplayableItemNode {
+    
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());    
     
     private final String md5Hash;
     private final int commonFileCount;
@@ -108,7 +114,7 @@ public class Md5Node extends DisplayableItemNode {
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
-        return visitor.visit(this); //TODO need to work on this
+        return visitor.visit(this);
     }
 
     @Override
@@ -141,31 +147,19 @@ public class Md5Node extends DisplayableItemNode {
                 
                 return new FileInstanceNode(abstractFile, file.getDataSourceName());
             } catch (NoCurrentCaseException ex) {
-                Exceptions.printStackTrace(ex);
-                //TODO log this
+                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-                //TODO log this
+                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
             }
-            //TODO smells bad...
+            //TODO smells bad...do something?
             return null;
         }
 
         @Override
-        protected boolean createKeys(List<FileInstanceMetaData> list) {
-            
-            //TODO load children from db here
-            //TODO consider doing db work here???
-            
+        protected boolean createKeys(List<FileInstanceMetaData> list) {            
             list.addAll(this.descendants.getMetaData());
             return true;
         }
-
-//        @Override
-//        protected Node createWaitNode() {
-//            //TODO could skip this...maybe???
-//            return new CommonFileChildNodeLoading(Children.LEAF);
-//        }
     }
 
     @NbBundle.Messages({

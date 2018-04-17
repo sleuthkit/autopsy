@@ -19,19 +19,21 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Encaspsulates data required to instantiate an <code>Md5Node</code>.
+ * Encapsulates data required to instantiate an <code>Md5Node</code>.
  */
-public class Md5MetaData {
+final public class Md5MetaData {
     
     private String md5;
     private List<FileInstanceMetaData> fileInstances;
     
-    public Md5MetaData(String md5, List<FileInstanceMetaData> fileInstances){
+    Md5MetaData(String md5, List<FileInstanceMetaData> fileInstances){
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
@@ -40,8 +42,12 @@ public class Md5MetaData {
         return this.md5;
     }
     
-    public List<FileInstanceMetaData> getMetaData(){
-        return this.fileInstances;
+    void addFileInstanceMetaData(FileInstanceMetaData metadata){
+        this.fileInstances.add(metadata);
+    }
+    
+    public Collection<FileInstanceMetaData> getMetaData(){
+        return Collections.unmodifiableCollection(this.fileInstances);
     }
     
     public int size(){
