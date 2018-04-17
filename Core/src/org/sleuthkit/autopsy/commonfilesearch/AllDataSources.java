@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Provides logic for selecting common files from all data sources.
  */
-class AllDataSources extends CommonFilesMetaDataBuilder {
+final class AllDataSources extends CommonFilesMetaDataBuilder {
 
     private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
