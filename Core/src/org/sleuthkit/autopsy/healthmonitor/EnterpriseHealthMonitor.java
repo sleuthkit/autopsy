@@ -277,6 +277,27 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Submit the metric that was previously obtained through getTimingMetric(),
+     * incorporating a count that the time should be divided by.
+     * Call this immediately after the section of code being timed.
+     * This method is safe to call regardless of whether the Enterprise Health
+     * Monitor is enabled.
+     * @param metric The TimingMetric object obtained from getTimingMetric()
+     * @param count The number to divide the time by
+     */
+    public static void submitNormalizedTimingMetric(TimingMetric metric, long count) {
+        if(isEnabled.get() && (metric != null)) {
+            metric.stopTiming();
+            try {
+                getInstance().addTimingMetric(metric); // TODO - make new method using count
+            } catch (HealthMonitorException ex) {
+                // We don't want calling methods to have to check for exceptions, so just log it
+                logger.log(Level.SEVERE, "Error adding timing metric", ex);
+            }
+        }
+    }
+    
+    /**
      * Add the timing metric data to the map.
      * @param metric The metric to add. stopTiming() should already have been called.
      */
