@@ -22,7 +22,6 @@ import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -71,7 +70,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public CommonFilesPanel() {
         initComponents();
 
-        //TODO: should refresh data sources periodically ***if*** we figure out how to not recreate the panel every time the user tries to open the dialog
         setupDataSources();
     }
 

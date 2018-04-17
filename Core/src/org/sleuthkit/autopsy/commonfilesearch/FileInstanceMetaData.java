@@ -20,7 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 /**
- * 
+ * Encalsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
 public class FileInstanceMetaData {
     
