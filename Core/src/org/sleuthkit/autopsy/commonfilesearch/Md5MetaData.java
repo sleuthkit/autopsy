@@ -19,13 +19,12 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * TODO
+ * Encaspsulates data required to instantiate an <code>Md5Node</code>.
  */
 public class Md5MetaData {
     
