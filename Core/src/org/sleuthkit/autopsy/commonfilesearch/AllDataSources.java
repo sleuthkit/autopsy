@@ -26,15 +26,20 @@ import java.util.Map;
  */
 final class AllDataSources extends CommonFilesMetaDataBuilder {
 
-    private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
+    /**
+     * Implements the algorithm for getting common files across all data sources.
+     * @param dataSourceIdMap a map of obj_id to datasource name
+     */
     public AllDataSources(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+
     }
 
     @Override
     protected String buildSqlSelectStatement() {
-        Object[] args = new String[] {CommonFilesMetaDataBuilder.SELECT_PREFIX};
+        Object[] args = new String[] {CommonFilesMetaDataBuilder.SELECT_PREFIX, determineMimeTypeFilter()};
         return String.format(WHERE_CLAUSE, args);
     }
 }

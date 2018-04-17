@@ -36,15 +36,15 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
      * once in the given data source.
      * @param dataSourceId data source id for which common files must appear at least once
      * @param dataSourceIdMap map of obj_id to data source name
-     */    
-public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+     */
+    public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         this.selectedDataSourceId = dataSourceId;
     }
 
     @Override
     protected String buildSqlSelectStatement() {
-        Object[] args = new String[]{CommonFilesMetaDataBuilder.SELECT_PREFIX, Long.toString(this.selectedDataSourceId)};
+        Object[] args = new String[]{CommonFilesMetaDataBuilder.SELECT_PREFIX, Long.toString(this.selectedDataSourceId), determineMimeTypeFilter()};
         return String.format(SingleDataSource.WHERE_CLAUSE, args);
     }
 }

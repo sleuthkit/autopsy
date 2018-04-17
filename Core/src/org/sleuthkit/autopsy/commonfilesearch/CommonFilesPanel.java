@@ -255,11 +255,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     }
                 }
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                    builder = new AllDataSources(dataSourceMap, filterByMedia, filterByDocuments);
+                    builder = new AllDataSources(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
 
                     setTitleForAllDataSources();
                 } else {
-                    builder = new SingleDataSource(dataSourceId, dataSourceMap, filterByMedia, filterByDocuments);
+                    builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
 
                     setTitleForSingleSource(dataSourceId);
                 }
