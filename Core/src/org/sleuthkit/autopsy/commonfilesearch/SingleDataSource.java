@@ -19,24 +19,26 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Provides logic for selecting common files from a single data source.
  */
 class SingleDataSource extends CommonFilesMetaDataBuilder {
 
-    private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
     private final Long selectedDataSourceId;
 
-    public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap) {
-        super(dataSourceIdMap);
+    public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         this.selectedDataSourceId = dataSourceId;
     }
 
     @Override
     protected String buildSqlWhereClause() {
-        Object[] args = new String[]{Long.toString(this.selectedDataSourceId)};
+        Object[] args = new String[]{Long.toString(this.selectedDataSourceId), determineMimeTypeFilter()};
         return String.format(SingleDataSource.WHERE_CLAUSE, args);
     }
 }
