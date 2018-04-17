@@ -84,7 +84,7 @@ import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 
 /**
  * Provides higher-level public API (over TimelineManager) to access events. In
- * theory this insulates the rest of the timeline module form the details of the
+ * theory this insulates the rest of the timeline module from the details of the
  * db implementation. Since there are no other implementations of the database
  * or clients of this class, and no Java Interface defined yet, in practice this
  * just delegates everything to the eventDB. Some results are also cached by
