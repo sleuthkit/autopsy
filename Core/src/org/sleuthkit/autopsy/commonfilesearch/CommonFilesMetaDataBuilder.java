@@ -103,39 +103,6 @@ abstract class CommonFilesMetaDataBuilder {
         filterByDoc = filterByDocMimeType;
     }
 
-    private void addDataSource(Set<String> dataSources, AbstractFile file, Map<Long, String> dataSourceIdToNameMap) {
-        long datasourceId = file.getDataSourceObjectId();
-        String dataSourceName = dataSourceIdToNameMap.get(datasourceId);
-        dataSources.add(dataSourceName);
-    }
-
-    /**
-     * Sorts files in selection into a parent/child hierarchy where actual files
-     * are nested beneath a parent node which represents the common match.
-     *
-     * @return returns a reference to itself for ease of use.
-     * @throws TskCoreException
-     */
-    List<CommonFilesMetaData> collateFiles() throws TskCoreException, SQLException {
-        List<CommonFilesMetaData> metaDataModels = new ArrayList<>();
-        Map<String, Set<String>> md5ToDataSourcesStringMap = new HashMap<>();
-
-        try {
-            List<AbstractFile> files = findCommonFiles();
-
-            Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
-
-            collateParentChildRelationships(files, parentNodes, md5ToDataSourcesStringMap);
-            for (String key : parentNodes.keySet()) {
-                metaDataModels.add(new CommonFilesMetaData(key, parentNodes.get(key), String.join(", ", md5ToDataSourcesStringMap.get(key)), dataSourceIdToNameMap));
-            }
-        } catch (NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-
-        return metaDataModels;
-    }
-
     protected static String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
     
     /**
@@ -149,33 +116,9 @@ abstract class CommonFilesMetaDataBuilder {
      */
     protected abstract String buildSqlSelectStatement();
 
-    private void collateParentChildRelationships(List<AbstractFile> files, Map<String, List<AbstractFile>> parentNodes, Map<String, Set<String>> md5ToDataSourcesStringMap) {
-        for (AbstractFile file : files) {
-
-            String currentMd5 = file.getMd5Hash();
-            if ((currentMd5 == null) || (HashUtility.isNoDataMd5(currentMd5))) {
-                continue;
-            }
-            if (parentNodes.containsKey(currentMd5)) {
-                parentNodes.get(currentMd5).add(file);
-                Set<String> currentDataSources = md5ToDataSourcesStringMap.get(currentMd5);
-                addDataSource(currentDataSources, file, dataSourceIdToNameMap);
-                md5ToDataSourcesStringMap.put(currentMd5, currentDataSources);
-
-            } else {
-                List<AbstractFile> children = new ArrayList<>();
-                Set<String> dataSources = new HashSet<>();
-                children.add(file);
-                parentNodes.put(currentMd5, children);
-                addDataSource(dataSources, file, dataSourceIdToNameMap);
-                md5ToDataSourcesStringMap.put(currentMd5, dataSources);
-            }
-        }
-    }
-
-    private Map<String, List<Long>> findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public Map<String, Md5MetaData> findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
         
-        Map<String, List<Long>> md5ToObjIdMap = new HashMap<>();
+        Map<String, Md5MetaData> commonFiles = new HashMap<>();
         
         SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
@@ -183,20 +126,23 @@ abstract class CommonFilesMetaDataBuilder {
         try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)){
             ResultSet resultSet = query.getResultSet();
             while(resultSet.next()){
-                String md5 = resultSet.getString(1);
-                Long objectId = resultSet.getLong(2);
+                Long objectId = resultSet.getLong(1);
+                String md5 = resultSet.getString(2);
                 Long dataSourceId = resultSet.getLong(3);
+                String dataSource = this.dataSourceIdToNameMap.get(dataSourceId);
                 
-                if(md5ToObjIdMap.containsKey(md5)){
-                    md5ToObjIdMap.get(md5).add(objectId);
+                if(commonFiles.containsKey(md5)){
+                    commonFiles.get(md5).getMetaData().add(new FileInstanceMetaData(objectId, dataSource, dataSourceId));
                 } else {
-                    List<Long> objectIds = new ArrayList<>();
-                    md5ToObjIdMap.put(md5, objectIds);
+                    List<FileInstanceMetaData> fileInstances = new ArrayList<>();
+                    fileInstances.add(new FileInstanceMetaData(objectId, dataSource, dataSourceId));
+                    Md5MetaData md5s = new Md5MetaData(md5, fileInstances);
+                    commonFiles.put(md5, md5s);
                 }
             }
         }        
         
-        return md5ToObjIdMap;
+        return commonFiles;
     }
     
     String determineMimeTypeFilter() {

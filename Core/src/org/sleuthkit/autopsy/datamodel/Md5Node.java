@@ -19,17 +19,25 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetaData;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetaData;
+import org.sleuthkit.autopsy.commonfilesearch.Md5MetaData;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a common files match - two or more files which appear to be the
@@ -42,16 +50,16 @@ public class Md5Node extends DisplayableItemNode {
     private final int commonFileCount;
     private final String dataSources;
 
-    public Md5Node(CommonFilesMetaData metaData) {
+    public Md5Node(Md5MetaData data) {
         super(Children.create(
-                new FileInstanceNodeFactory(metaData.getChildren(),
-                        metaData.getDataSourceIdToNameMap()), true),
-                Lookups.singleton(metaData.getMd5()));
-        this.commonFileCount = metaData.getChildren().size();
-        this.dataSources = metaData.getDataSources();
-        this.md5Hash = metaData.getMd5();
+                new FileInstanceNodeFactory(data), true),
+                Lookups.singleton(data.getMd5()));
+        
+        this.commonFileCount = data.size();
+        this.dataSources = String.join(", ", data.getDataSources());
+        this.md5Hash = data.getMd5();
 
-        this.setDisplayName(md5Hash);
+        this.setDisplayName(this.md5Hash);
     }
 
     int getCommonFileCount() {
@@ -118,40 +126,48 @@ public class Md5Node extends DisplayableItemNode {
     /**
      * Child generator for <code>FileInstanceNode</code> of <code>Md5Node</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<AbstractFile> {
+    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetaData> {
 
-        private final List<AbstractFile> descendants;
-        private final Map<Long, String> dataSourceMap;
+        private final Md5MetaData descendants;
 
-        FileInstanceNodeFactory(List<AbstractFile> descendants, Map<Long, String> dataSourceMap) {
+        FileInstanceNodeFactory(Md5MetaData descendants) {
             this.descendants = descendants;
-            this.dataSourceMap = dataSourceMap;
         }
 
         @Override
-        protected Node createNodeForKey(AbstractFile file) {
-
-            //TODO minimize work here - this is the UI thread
-            final String dataSource = this.dataSourceMap.get(file.getDataSourceObjectId());
-
-            return new FileInstanceNode(file, dataSource);
+        protected Node createNodeForKey(FileInstanceMetaData file) {
+            try {
+                Case currentCase = Case.getOpenCase();
+                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+                AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
+                
+                return new FileInstanceNode(abstractFile, file.getDataSourceName());
+            } catch (NoCurrentCaseException ex) {
+                Exceptions.printStackTrace(ex);
+                //TODO log this
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+                //TODO log this
+            }
+            //TODO smells bad...
+            return null;
         }
 
         @Override
-        protected boolean createKeys(List<AbstractFile> list) {
+        protected boolean createKeys(List<FileInstanceMetaData> list) {
             
-            //TODO change param to Long rather than AbstractFile
             //TODO load children from db here
+            //TODO consider doing db work here???
             
-            list.addAll(this.descendants);
+            list.addAll(this.descendants.getMetaData());
             return true;
         }
 
-        @Override
-        protected Node createWaitNode() {
-            //TODO could skip this...maybe???
-            return new CommonFileChildNodeLoading(Children.LEAF);
-        }
+//        @Override
+//        protected Node createWaitNode() {
+//            //TODO could skip this...maybe???
+//            return new CommonFileChildNodeLoading(Children.LEAF);
+//        }
     }
 
     @NbBundle.Messages({

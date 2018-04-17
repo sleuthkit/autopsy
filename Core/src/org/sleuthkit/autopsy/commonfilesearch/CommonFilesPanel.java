@@ -212,7 +212,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void search() {
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<List<CommonFilesMetaData>, Void>() {
+        new SwingWorker<CommonFilesMetaData, Void>() {
 
             private String tabTitle;
 
@@ -242,7 +242,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
                 Long dataSourceId = determineDataSourceId();
 
                 CommonFilesMetaDataBuilder builder;
@@ -265,8 +265,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     setTitleForSingleSource(dataSourceId);
                 }
+                
+                CommonFilesMetaData metaData = new CommonFilesMetaData(builder.findCommonFiles(), CommonFilesPanel.this.dataSourceMap);
 
-                return builder.collateFiles();
+                return metaData;
             }
 
             @Override
@@ -274,7 +276,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    List<CommonFilesMetaData> metadata = get();
+                    CommonFilesMetaData metadata = get();
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 
@@ -283,15 +285,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    //TODO get this information from CommonFilesMetaData rather than enumerating the children as below
-                    int totalNodes = 0;
-                    for (CommonFilesMetaData meta : metadata) {
-                        totalNodes += meta.getChildren().size();
-                    }
-
                     DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
 
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, 0/*totalNodes*/, component);
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, metadata.size(), component);
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
