@@ -91,19 +91,10 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-        <if>
-            <equals arg1="${os.family}" arg2="unix"/>
-            <then>
-                <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
-                <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
-            </then>
-        </if>
-        <if>
-            <equals arg1="${os.family}" arg2="windows"/>
-            <then>
-                <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
-            </then>
-        </if>
+        <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
+        <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
+        <unzip src="${thirdparty.dir}/gstreamer/windows/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
+            
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
