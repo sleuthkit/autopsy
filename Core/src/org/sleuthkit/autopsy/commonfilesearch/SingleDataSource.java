@@ -26,19 +26,25 @@ import java.util.Set;
 /**
  * Provides logic for selecting common files from a single data source.
  */
-class SingleDataSource extends CommonFilesMetaDataBuilder {
+final class SingleDataSource extends CommonFilesMetaDataBuilder {
 
-    private static final String WHERE_CLAUSE = "md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
     private final Long selectedDataSourceId;
 
+    /**
+     * Implements the algorithm for getting common files that appear at least
+     * once in the given data source.
+     * @param dataSourceId data source id for which common files must appear at least once
+     * @param dataSourceIdMap map of obj_id to data source name
+     */
     public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         this.selectedDataSourceId = dataSourceId;
     }
 
     @Override
-    protected String buildSqlWhereClause() {
-        Object[] args = new String[]{Long.toString(this.selectedDataSourceId), determineMimeTypeFilter()};
+    protected String buildSqlSelectStatement() {
+        Object[] args = new String[]{CommonFilesMetaDataBuilder.SELECT_PREFIX, Long.toString(this.selectedDataSourceId), determineMimeTypeFilter()};
         return String.format(SingleDataSource.WHERE_CLAUSE, args);
     }
 }

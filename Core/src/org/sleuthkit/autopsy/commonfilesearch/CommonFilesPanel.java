@@ -22,7 +22,6 @@ import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -71,7 +70,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public CommonFilesPanel() {
         initComponents();
 
-        //TODO: should refresh data sources periodically ***if*** we figure out how to not recreate the panel every time the user tries to open the dialog
         setupDataSources();
     }
 
@@ -212,7 +210,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void search() {
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<List<CommonFilesMetaData>, Void>() {
+        new SwingWorker<CommonFilesMetaData, Void>() {
 
             private String tabTitle;
 
@@ -242,7 +240,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected List<CommonFilesMetaData> doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
                 Long dataSourceId = determineDataSourceId();
 
                 CommonFilesMetaDataBuilder builder;
@@ -257,16 +255,18 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     }
                 }
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                    builder = new AllDataSources(dataSourceMap, filterByMedia, filterByDocuments);
+                    builder = new AllDataSources(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
 
                     setTitleForAllDataSources();
                 } else {
-                    builder = new SingleDataSource(dataSourceId, dataSourceMap, filterByMedia, filterByDocuments);
+                    builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
 
                     setTitleForSingleSource(dataSourceId);
                 }
+                                
+                CommonFilesMetaData metaData = builder.findCommonFiles();
 
-                return builder.collateFiles();
+                return metaData;
             }
 
             @Override
@@ -274,24 +274,18 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    List<CommonFilesMetaData> metadata = get();
+                    CommonFilesMetaData metadata = get();
 
-                    CommonFilesSearchNode commonFilesNode = new CommonFilesSearchNode(metadata);
+                    CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 
                     //TODO consider getting em from ExplorerManager.find(this) rather the this wonky stuff seen here...
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.getDefault().getExplorerManager());
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    //TODO get this information from CommonFilesMetaData rather than enumerating the children as below
-                    int totalNodes = 0;
-                    for (CommonFilesMetaData meta : metadata) {
-                        totalNodes += meta.getChildren().size();
-                    }
-
                     DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
 
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, 0/*totalNodes*/, component);
+                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, metadata.size(), component);
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);

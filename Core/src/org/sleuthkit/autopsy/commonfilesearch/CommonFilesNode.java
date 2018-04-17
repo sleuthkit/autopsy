@@ -24,19 +24,18 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.CommonFileParentNode;
+import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- * Wrapper node for CommonFilesParentNode used to display common files search
- * results in the top right pane. Calls CommonFilesParentFactory.
+ * Wrapper node for <code>Md5Node</code> used to display common files search
+ * results in the top right pane. Calls <code>Md5NodeFactory</code>.
  */
-final public class CommonFilesSearchNode extends DisplayableItemNode {
-    //TODO rename this to something good
+final public class CommonFilesNode extends DisplayableItemNode {
     
-    CommonFilesSearchNode(List<CommonFilesMetaData> metaDataList) {
-        super(Children.create(new CommonFilesParentFactory(metaDataList), true), Lookups.singleton(CommonFilesSearchNode.class));
+    CommonFilesNode(CommonFilesMetaData metaDataList) {
+        super(Children.create(new Md5NodeFactory(metaDataList), true), Lookups.singleton(CommonFilesNode.class));
     }
 
     @NbBundle.Messages({
@@ -65,31 +64,31 @@ final public class CommonFilesSearchNode extends DisplayableItemNode {
      * ChildFactory which builds CommonFileParentNodes from the
      * CommonFilesMetaaData models.
      */
-    static class CommonFilesParentFactory extends ChildFactory<CommonFilesMetaData> {
+    static class Md5NodeFactory extends ChildFactory<String> {
 
         /**
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
-        private List<CommonFilesMetaData> metaDataList;
+        private CommonFilesMetaData metadata;
 
-        CommonFilesParentFactory(List<CommonFilesMetaData> theMetaDataList) {
-            this.metaDataList = theMetaDataList;
+        Md5NodeFactory(CommonFilesMetaData theMetaDataList) {
+            this.metadata = theMetaDataList;
         }
 
         protected void removeNotify() {
-            metaDataList = null;
+            metadata = null;
+        }
+        
+        @Override
+        protected Node createNodeForKey(String md5){
+            Md5MetaData metaData = this.metadata.getMetaDataForMd5(md5);
+            return new Md5Node(metaData);
         }
 
         @Override
-        protected Node createNodeForKey(CommonFilesMetaData metaData) {
-
-            return new CommonFileParentNode(metaData);
-        }
-
-        @Override
-        protected boolean createKeys(List<CommonFilesMetaData> toPopulate) {
-            toPopulate.addAll(metaDataList);
+        protected boolean createKeys(List<String> list) {
+            list.addAll(this.metadata.getMataData().keySet());
             return true;
         }
     }

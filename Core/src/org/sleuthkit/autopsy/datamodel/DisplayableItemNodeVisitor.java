@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesSearchNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -110,11 +110,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.SetNameNode ihsn);
     
-    T visit (CommonFileParentNode cfpn);
+    T visit (Md5Node cfpn);
     
-    T visit (CommonFilesSearchNode cfsn);
+    T visit (CommonFilesNode cfsn);
     
-    T visit (CommonFileChildNode cfcn);
+    T visit (FileInstanceNode cfcn);
     
     T visit (CommonFileChildNodeLoading cfcnl);
 
@@ -187,17 +187,17 @@ public interface DisplayableItemNodeVisitor<T> {
         protected abstract T defaultVisit(DisplayableItemNode c);
 
         @Override
-        public T visit(CommonFileChildNode c){  //TODO this may be fine but how do we add missing functions back to nows?  or do we?
+        public T visit(FileInstanceNode c){  //TODO this may be fine but how do we add missing functions back to nows?  or do we?
             return defaultVisit(c);
         }
         
         @Override
-        public T visit(CommonFileParentNode p){ //TODO this may be fine but how do we add missing functions back to nows?  or do we?
+        public T visit(Md5Node p){ //TODO this may be fine but how do we add missing functions back to nows?  or do we?
             return defaultVisit(p);
         }
         
         @Override
-        public T visit(CommonFilesSearchNode cfsn){
+        public T visit(CommonFilesNode cfsn){
             return defaultVisit(cfsn);
         }
         

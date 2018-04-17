@@ -19,29 +19,28 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import org.openide.util.Exceptions;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * Generates a List<CommonFilesMetaData> when collateFiles() is called, which
- * organizes AbstractFiles by md5 to prepare to display in viewer.
+ * Generates a <code>List<CommonFilesMetaData></code> when 
+ * <code>findCommonFiles()</code> is called, which
+ * organizes files by md5 to prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
@@ -101,78 +100,64 @@ abstract class CommonFilesMetaDataBuilder {
         filterByDoc = filterByDocMimeType;
     }
 
-    private void addDataSource(Set<String> dataSources, AbstractFile file, Map<Long, String> dataSourceIdToNameMap) {
-        long datasourceId = file.getDataSourceObjectId();
-        String dataSourceName = dataSourceIdToNameMap.get(datasourceId);
-        dataSources.add(dataSourceName);
-    }
+    /**
+     * Use this as a prefix when building the SQL select statement.
+     * 
+     * <ul>
+     * <li>You only have to specify the WHERE clause if you use this.</li>
+     * <li>If you do not use this string, you must use at least the columns selected below, in that order.</li>
+     * </ul>
+     */
+    protected static String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
+    
+    /**
+     * Should build a SQL SELECT statement to be passed to
+     * SleuthkitCase.executeQuery(sql) which will select the desired 
+     * file ids and MD5 hashes.
+     * 
+     * The statement should select obj_id,  md5, data_source_obj_id in that order.
+     *
+     * @return sql string select statement
+     */
+    protected abstract String buildSqlSelectStatement();
 
     /**
-     * Sorts files in selection into a parent/child hierarchy where actual files
-     * are nested beneath a parent node which represents the common match.
-     *
-     * @return returns a reference to itself for ease of use.
+     * Generate a meta data object which encapsulates everything need to 
+     * add the tree table tab to the top component.
+     * @return a data object with all of the matched files in a hierarchical 
+     * format
      * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     * @throws SQLException 
      */
-    List<CommonFilesMetaData> collateFiles() throws TskCoreException, SQLException {
-        List<CommonFilesMetaData> metaDataModels = new ArrayList<>();
-        Map<String, Set<String>> md5ToDataSourcesStringMap = new HashMap<>();
-
-        try {
-            List<AbstractFile> files = findCommonFiles();
-
-            Map<String, List<AbstractFile>> parentNodes = new HashMap<>();
-
-            collateParentChildRelationships(files, parentNodes, md5ToDataSourcesStringMap);
-            for (String key : parentNodes.keySet()) {
-                metaDataModels.add(new CommonFilesMetaData(key, parentNodes.get(key), String.join(", ", md5ToDataSourcesStringMap.get(key)), dataSourceIdToNameMap));
-            }
-        } catch (NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
+    public CommonFilesMetaData findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+        
+        Map<String, Md5MetaData> commonFiles = new HashMap<>();
+        
+        SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+        String selectStatement = this.buildSqlSelectStatement();
+        
+        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)){
+            ResultSet resultSet = query.getResultSet();
+            while(resultSet.next()){
+                Long objectId = resultSet.getLong(1);
+                String md5 = resultSet.getString(2);
+                Long dataSourceId = resultSet.getLong(3);
+                String dataSource = this.dataSourceIdToNameMap.get(dataSourceId);
+                
+                if(commonFiles.containsKey(md5)){
+                    final Md5MetaData md5MetaData = commonFiles.get(md5);
+                    md5MetaData.addFileInstanceMetaData(new FileInstanceMetaData(objectId, dataSource));
+                } else {
+                    final List<FileInstanceMetaData> fileInstances = new ArrayList<>();
+                    fileInstances.add(new FileInstanceMetaData(objectId, dataSource));
+                    Md5MetaData md5MetaData = new Md5MetaData(md5, fileInstances);
+                    commonFiles.put(md5, md5MetaData);
+                }
+            }        
         }
-
-        return metaDataModels;
-    }
-
-    /**
-     * Should build a SQL WHERE clause to be passed to
-     * SleuthkitCase.findAllFilesWhere(sql) which will select the desired common
-     * files ordered by MD5.
-     *
-     * @return sql string where clause
-     */
-    protected abstract String buildSqlWhereClause();
-
-    private void collateParentChildRelationships(List<AbstractFile> files, Map<String, List<AbstractFile>> parentNodes, Map<String, Set<String>> md5ToDataSourcesStringMap) {
-        for (AbstractFile file : files) {
-
-            String currentMd5 = file.getMd5Hash();
-            if ((currentMd5 == null) || (HashUtility.isNoDataMd5(currentMd5))) {
-                continue;
-            }
-            if (parentNodes.containsKey(currentMd5)) {
-                parentNodes.get(currentMd5).add(file);
-                Set<String> currentDataSources = md5ToDataSourcesStringMap.get(currentMd5);
-                addDataSource(currentDataSources, file, dataSourceIdToNameMap);
-                md5ToDataSourcesStringMap.put(currentMd5, currentDataSources);
-
-            } else {
-                List<AbstractFile> children = new ArrayList<>();
-                Set<String> dataSources = new HashSet<>();
-                children.add(file);
-                parentNodes.put(currentMd5, children);
-                addDataSource(dataSources, file, dataSourceIdToNameMap);
-                md5ToDataSourcesStringMap.put(currentMd5, dataSources);
-            }
-        }
-    }
-
-    private List<AbstractFile> findCommonFiles() throws TskCoreException, NoCurrentCaseException {
-        SleuthkitCase sleuthkitCase;
-        sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
-        String whereClause = this.buildSqlWhereClause();
-        List<AbstractFile> files = sleuthkitCase.findAllFilesWhere(whereClause);
-        return files;
+        
+        return new CommonFilesMetaData(commonFiles, this.dataSourceIdToNameMap);
     }
     
     String determineMimeTypeFilter() {
