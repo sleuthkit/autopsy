@@ -19,44 +19,42 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Utility and wrapper model around data required for Common Files Search results.
  * Subclass this to implement different selections of files from the case.
  */
 public class CommonFilesMetaData {
-        
-    private final String parentMd5;
-    private final List<Long> children;
-    private final String dataSources;
+    
+    private final Map<String, Md5MetaData> metadata;
     private final Map<Long, String> dataSourceIdToNameMap;
 
-    CommonFilesMetaData(String md5, List<Long> childNodes, String dataSourcesString, Map<Long,String> dataSourcesMap) throws TskCoreException, SQLException, NoCurrentCaseException {
-        parentMd5 = md5;
-        children = childNodes;
-        dataSources = dataSourcesString;
-        dataSourceIdToNameMap = dataSourcesMap;
-    }
-
-    public String getMd5() {
-        return parentMd5;
+    CommonFilesMetaData(Map<String, Md5MetaData> metadata, Map<Long,String> dataSourcesMap) {
+        this.metadata = metadata;
+        this.dataSourceIdToNameMap = dataSourcesMap;
     }
     
-    public List<Long> getChildren() {
-        return Collections.unmodifiableList(this.children);
+    public Md5MetaData getMetaDataForMd5(String md5){
+        return this.metadata.get(md5);
     }
-
+    
+    public Map<String, Md5MetaData> getMataData(){
+        return Collections.unmodifiableMap(this.metadata);
+    }
+    
     public Map<Long, String> getDataSourceIdToNameMap() {
-        return Collections.unmodifiableMap(dataSourceIdToNameMap);
+        return Collections.unmodifiableMap(this.dataSourceIdToNameMap);
     }
 
-    public String getDataSources() {
-        return dataSources;
+    int size() {
+        int count = 0;
+        for(Md5MetaData data : this.metadata.values()){
+            count += data.size();
+        }        
+        return count;
     }
 }
