@@ -432,70 +432,70 @@ public class TimeLineController {
             return;  //if they cancel, do nothing.
         }
 
-        //get a task that rebuilds the repo with the below state listener attached
-        final CancellationProgressTask<?> rebuildRepositoryTask;
-        rebuildRepositoryTask = repoBuilder.apply(new Consumer<Worker.State>() {
-            @Override
-            public void accept(Worker.State newSate) {
-                //this will be on JFX thread
-                switch (newSate) {
-                    case SUCCEEDED:
-                        /*
-                         * Record if ingest was running the last time the db was
-                         * rebuilt, and hence it might stale.
-                         */
-                        try {
-                            perCaseTimelineProperties.setIngestRunning(ingestRunning);
-                        } catch (IOException ex) {
-                            MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                                    ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
-                                            : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
-                            logger.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
-                        }
-                        if (markDBNotStale) {
-                            setEventsDBStale(false);
-                            filteredEvents.postDBUpdated();
-                        }
-                        if (file == null && artifact == null) {
-                            SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                            TimeLineController.this.showFullRange();
-                        } else {
-
-                            try {
-                                //prompt user to pick specific event and time range
-                                ShowInTimelineDialog showInTimelineDilaog = (file == null)
-                                        ? new ShowInTimelineDialog(TimeLineController.this, artifact)
-                                        : new ShowInTimelineDialog(TimeLineController.this, file);
-                                Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
-                                dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
-                                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                                    try {
-                                        showInListView(viewInTimelineRequestedEvent); //show requested event in list view
-                                    } catch (TskCoreException ex) {
-                                        logger.log(Level.SEVERE, "Error showing requested events in listview: " + viewInTimelineRequestedEvent, ex);
-                                        new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
-                                    }
-                                });
-                            } catch (TskCoreException tskCoreException) {
-                                logger.log(Level.SEVERE, "Error showing Timeline " , tskCoreException);
-                                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
-                            }
-
-                        }
-                        break;
-                    case FAILED:
-                    case CANCELLED:
-                        setEventsDBStale(true);
-                        break;
-                }
-            }
-        });
-
-        /*
-         * Since both of the expected repoBuilders start the back ground task,
-         * all we have to do is show progress dialog for the task
-         */
-        promptDialogManager.showDBPopulationProgressDialog(rebuildRepositoryTask);
+//        //get a task that rebuilds the repo with the below state listener attached
+//        final CancellationProgressTask<?> rebuildRepositoryTask;
+//        rebuildRepositoryTask = repoBuilder.apply(new Consumer<Worker.State>() {
+//            @Override
+//            public void accept(Worker.State newSate) {
+//                //this will be on JFX thread
+//                switch (newSate) {
+//                    case SUCCEEDED:
+//                        /*
+//                         * Record if ingest was running the last time the db was
+//                         * rebuilt, and hence it might stale.
+//                         */
+//                        try {
+//                            perCaseTimelineProperties.setIngestRunning(ingestRunning);
+//                        } catch (IOException ex) {
+//                            MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
+//                                    ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
+//                                            : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
+//                            logger.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
+//                        }
+//                        if (markDBNotStale) {
+//                            setEventsDBStale(false);
+//                            filteredEvents.postDBUpdated();
+//                        }
+//                        if (file == null && artifact == null) {
+//                            SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+//                            TimeLineController.this.showFullRange();
+//                        } else {
+//
+//                            try {
+//                                //prompt user to pick specific event and time range
+//                                ShowInTimelineDialog showInTimelineDilaog = (file == null)
+//                                        ? new ShowInTimelineDialog(TimeLineController.this, artifact)
+//                                        : new ShowInTimelineDialog(TimeLineController.this, file);
+//                                Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
+//                                dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
+//                                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+//                                    try {
+//                                        showInListView(viewInTimelineRequestedEvent); //show requested event in list view
+//                                    } catch (TskCoreException ex) {
+//                                        logger.log(Level.SEVERE, "Error showing requested events in listview: " + viewInTimelineRequestedEvent, ex);
+//                                        new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+//                                    }
+//                                });
+//                            } catch (TskCoreException tskCoreException) {
+//                                logger.log(Level.SEVERE, "Error showing Timeline " , tskCoreException);
+//                                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+//                            }
+//
+//                        }
+//                        break;
+//                    case FAILED:
+//                    case CANCELLED:
+//                        setEventsDBStale(true);
+//                        break;
+//                }
+//            }
+//        });
+//
+//        /*
+//         * Since both of the expected repoBuilders start the back ground task,
+//         * all we have to do is show progress dialog for the task
+//         */
+//        promptDialogManager.showDBPopulationProgressDialog(rebuildRepositoryTask);
     }
 
     /**

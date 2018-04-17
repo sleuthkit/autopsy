@@ -541,7 +541,7 @@ public class EventsRepository {
                 logger.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
                 restartProgressHandle(Bundle.progressWindow_msg_gatheringData(), "", -1D, 1, true);
                 //reset database //TODO: can we do more incremental updates? -jm
-                eventManager.reInitializeDB();
+//                eventManager.reInitializeDB();
                 //grab ids of all files
                 List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"
                         + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
