@@ -35,13 +35,13 @@ install:
   - ps: >-
       if (!(Test-path -Path $env:TSK_HOME)){
         pushd C:\
-        git clone https://github.com/sleuthkit/sleuthkit
+        git clone https://github.com/sleuthkit/sleuthkit 2>&1 | %{ "$_" }
         popd
       } else {
         pushd $env:TSK_HOME
         git reset --hard
-        git checkout develop
-        git pull
+        git checkout develop 2>&1 | %{ "$_" }
+        git pull 2>&1 | %{ "$_" }
         popd
       }
 services:
