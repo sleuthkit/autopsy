@@ -777,7 +777,9 @@ public class Server {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrServer("http://" + properties.getHost() + ":" + properties.getPort() + "/solr"); //NON-NLS
             }
+            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Connectivity check");
             connectToSolrServer(currentSolrServer);
+            EnterpriseHealthMonitor.submitTimingMetric(metric);
 
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);

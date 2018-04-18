@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.io.File;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.openide.modules.Places;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -39,6 +41,8 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
+    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
+    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
 
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
@@ -189,22 +193,31 @@ final class AutoIngestJobsNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            switch (jobStatus) {
-                case PENDING_JOB:
-                    actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));
-                    actions.add(new PrioritizationAction.PrioritizeCaseAction(autoIngestJob));
-                    PrioritizationAction.DeprioritizeJobAction deprioritizeJobAction = new PrioritizationAction.DeprioritizeJobAction(autoIngestJob);
-                    deprioritizeJobAction.setEnabled(autoIngestJob.getPriority() > 0);
-                    actions.add(deprioritizeJobAction);
-                    PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(autoIngestJob);
-                    deprioritizeCaseAction.setEnabled(autoIngestJob.getPriority() > 0);
-                    actions.add(deprioritizeCaseAction);
-                    break;
-                case RUNNING_JOB:
-                    break;
-                case COMPLETED_JOB:
-                    break;
-                default:
+            File f = new File(ADMIN_ACCESS_FILE_PATH);
+            if (f.exists()) {
+                switch (jobStatus) {
+                    case PENDING_JOB:
+                        actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));
+                        actions.add(new PrioritizationAction.PrioritizeCaseAction(autoIngestJob));
+                        PrioritizationAction.DeprioritizeJobAction deprioritizeJobAction = new PrioritizationAction.DeprioritizeJobAction(autoIngestJob);
+                        deprioritizeJobAction.setEnabled(autoIngestJob.getPriority() > 0);
+                        actions.add(deprioritizeJobAction);
+                        PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(autoIngestJob);
+                        deprioritizeCaseAction.setEnabled(autoIngestJob.getPriority() > 0);
+                        actions.add(deprioritizeCaseAction);
+                        break;
+                    case RUNNING_JOB:
+                        actions.add(new AutoIngestAdminActions.ProgressDialogAction());
+                        actions.add(new AutoIngestAdminActions.CancelJobAction());
+                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
+                        break;
+                    case COMPLETED_JOB:
+                        actions.add(new AutoIngestAdminActions.ReprocessJobAction());
+                        actions.add(new AutoIngestAdminActions.DeleteCaseAction());
+                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction());
+                        break;
+                    default:
+                }
             }
             return actions.toArray(new Action[actions.size()]);
         }
