@@ -47,7 +47,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeStateSnapshot;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.LongDateCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
@@ -474,19 +474,19 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        EventQueue.invokeLater(new RefreshComponentsTask((JobsSnapshot) arg));
+        EventQueue.invokeLater(new RefreshComponentsTask((AutoIngestNodeStateSnapshot) arg));
     }
 
     /**
      * Reloads the table models using a jobs snapshot and refreshes the JTables
      * that use the models.
      *
-     * @param jobsSnapshot The jobs snapshot.
+     * @param nodeStateSnapshot The jobs snapshot.
      */
-    private void refreshTables(JobsSnapshot jobsSnapshot) {
-        List<AutoIngestJob> pendingJobs = jobsSnapshot.getPendingJobs();
-        List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
-        List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
+    private void refreshTables(AutoIngestNodeStateSnapshot nodeStateSnapshot) {
+        List<AutoIngestJob> pendingJobs = nodeStateSnapshot.getPendingJobs();
+        List<AutoIngestJob> runningJobs = nodeStateSnapshot.getRunningJobs();
+        List<AutoIngestJob> completedJobs = nodeStateSnapshot.getCompletedJobs();
         pendingJobs.sort(new AutoIngestJob.PriorityComparator());
         runningJobs.sort(new AutoIngestJob.DataSourceFileNameComparator());
         completedJobs.sort(new AutoIngestJob.CompletedDateDescendingComparator());
@@ -637,7 +637,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private class RefreshComponentsTask implements Runnable {
 
-        private final JobsSnapshot jobsSnapshot;
+        private final AutoIngestNodeStateSnapshot jobsSnapshot;
 
         /**
          * Constructs a task that refreshes the UI components on this panel to
@@ -646,7 +646,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
          *
          * @param jobsSnapshot The jobs snapshot.
          */
-        RefreshComponentsTask(JobsSnapshot jobsSnapshot) {
+        RefreshComponentsTask(AutoIngestNodeStateSnapshot jobsSnapshot) {
             this.jobsSnapshot = jobsSnapshot;
         }
 
@@ -913,7 +913,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        JobsSnapshot jobsSnapshot = autoIngestMonitor.refreshJobsSnapshot();
+        AutoIngestNodeStateSnapshot jobsSnapshot = autoIngestMonitor.refreshJobsSnapshot();
         refreshTables(jobsSnapshot);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_refreshButtonActionPerformed
@@ -923,7 +923,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
-            JobsSnapshot jobsSnapshot;
+            AutoIngestNodeStateSnapshot jobsSnapshot;
             try {
                 jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
                 refreshTables(jobsSnapshot);
@@ -941,7 +941,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            JobsSnapshot jobsSnapshot;
+            AutoIngestNodeStateSnapshot jobsSnapshot;
             try {
                 jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
                 refreshTables(jobsSnapshot);
@@ -963,7 +963,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
-            JobsSnapshot jobsSnapshot;
+            AutoIngestNodeStateSnapshot jobsSnapshot;
             try {
                 jobsSnapshot = autoIngestMonitor.deprioritizeJob(job);
                 refreshTables(jobsSnapshot);
@@ -981,7 +981,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            JobsSnapshot jobsSnapshot;
+            AutoIngestNodeStateSnapshot jobsSnapshot;
             try {
                 jobsSnapshot = autoIngestMonitor.deprioritizeCase(caseName);
                 refreshTables(jobsSnapshot);
