@@ -710,7 +710,9 @@ public class Server {
             if (null == currentCore) {
                 throw new NoOpenCoreException();
             }
+            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Index chunk");
             currentCore.addDocument(doc);
+            EnterpriseHealthMonitor.submitTimingMetric(metric);
         } finally {
             currentCoreLock.readLock().unlock();
         }
@@ -1319,11 +1321,13 @@ public class Server {
      * @throws IOException
      */
     void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
+        TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Connectivity check");            
         CoreAdminRequest statusRequest = new CoreAdminRequest();
         statusRequest.setCoreName( null );
         statusRequest.setAction( CoreAdminParams.CoreAdminAction.STATUS );
         statusRequest.setIndexInfoNeeded(false);
         statusRequest.process(solrServer);
+        EnterpriseHealthMonitor.submitTimingMetric(metric);
     }
 
     /**

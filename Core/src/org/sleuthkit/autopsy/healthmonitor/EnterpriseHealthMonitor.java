@@ -349,9 +349,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                     statement.setString(2, hostName);
                     statement.setLong(3, System.currentTimeMillis());
                     statement.setLong(4, info.getCount());
-                    statement.setLong(5, info.getAverage());
-                    statement.setLong(6, info.getMax());
-                    statement.setLong(7, info.getMin());
+                    statement.setDouble(5, info.getAverage());
+                    statement.setDouble(6, info.getMax());
+                    statement.setDouble(7, info.getMin());
 
                     statement.execute();
                 }
@@ -599,9 +599,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 "host text NOT NULL," + 
                 "timestamp bigint NOT NULL," + 
                 "count bigint NOT NULL," + 
-                "average bigint NOT NULL," + 
-                "max bigint NOT NULL," + 
-                "min bigint NOT NULL" + 
+                "average double precision NOT NULL," + 
+                "max double precision NOT NULL," + 
+                "min double precision NOT NULL" + 
                 ")";
             statement.execute(createTimingTable);
             
@@ -715,9 +715,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      */
     private class TimingInfo {
         private long count; // Number of metrics collected
-        private long sum;   // Sum of the durations collected (nanoseconds)
-        private long max;   // Maximum value found (nanoseconds)
-        private long min;   // Minimum value found (nanoseconds)
+        private double sum;   // Sum of the durations collected (nanoseconds)
+        private double max;   // Maximum value found (nanoseconds)
+        private double min;   // Minimum value found (nanoseconds)
         
         TimingInfo(TimingMetric metric) throws HealthMonitorException {
             count = 1;
@@ -752,25 +752,25 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         
         /**
          * Get the average duration
-         * @return average duration (nanoseconds)
+         * @return average duration (milliseconds)
          */
-        long getAverage() {
+        double getAverage() {
             return sum / count;
         }
         
         /**
          * Get the maximum duration
-         * @return maximum duration (nanoseconds)
+         * @return maximum duration (milliseconds)
          */
-        long getMax() {
+        double getMax() {
             return max;
         }
         
         /**
          * Get the minimum duration
-         * @return minimum duration (nanoseconds)
+         * @return minimum duration (milliseconds)
          */
-        long getMin() {
+        double getMin() {
             return min;
         }
         
