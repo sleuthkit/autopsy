@@ -22,16 +22,15 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.openide.util.Exceptions;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -108,7 +107,7 @@ abstract class CommonFilesMetaDataBuilder {
      * <li>If you do not use this string, you must use at least the columns selected below, in that order.</li>
      * </ul>
      */
-    protected static String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
+    static final String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
     
     /**
      * Should build a SQL SELECT statement to be passed to
@@ -161,7 +160,7 @@ abstract class CommonFilesMetaDataBuilder {
     }
     
     String determineMimeTypeFilter() {
-        StringBuilder mimeTypeFilter = new StringBuilder();
+        
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         String mimeTypeString = "";
         if(filterByMedia) {
@@ -170,12 +169,15 @@ abstract class CommonFilesMetaDataBuilder {
         if(filterByDoc) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
+        StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
         if(mimeTypesToFilterOn.size() > 0) {
            for (String mimeType : mimeTypesToFilterOn) {
-               mimeTypeFilter.append("\"" + mimeType + "\",");
+               mimeTypeFilter.append("\"").append(mimeType).append("\",");
            }
            mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
         }
         return String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
     }
+
+ 
 }
