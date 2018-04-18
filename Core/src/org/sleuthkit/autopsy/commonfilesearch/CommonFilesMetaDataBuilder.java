@@ -45,9 +45,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * Generates a <code>List<CommonFilesMetaData></code> when 
- * <code>findCommonFiles()</code> is called, which
- * organizes files by md5 to prepare to display in viewer.
+ * Generates a <code>List<CommonFilesMetaData></code> when
+ * <code>findCommonFiles()</code> is called, which organizes files by md5 to
+ * prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
@@ -58,7 +58,7 @@ abstract class CommonFilesMetaDataBuilder {
     private final boolean filterByDoc;
     private final String filterByMimeTypesWhereClause = " and mime_type in (%s)"; // where %s is csv list of mime_types to filter on
 
-     /*
+    /*
      * The set of the MIME types that will be checked for extension mismatches
      * when checkType is ONLY_MEDIA.
      * ".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp", ".tec"
@@ -89,9 +89,9 @@ abstract class CommonFilesMetaDataBuilder {
             "application/vnd.ms-asf",
             "application/vnd.rn-realmedia",
             "application/x-shockwave-flash"
-            ).collect(Collectors.toSet());
-    
-     /*
+    ).collect(Collectors.toSet());
+
+    /*
      * The set of the MIME types that will be checked for extension mismatches
      * when checkType is ONLY_TEXT_FILES.
      * ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx"
@@ -121,7 +121,7 @@ abstract class CommonFilesMetaDataBuilder {
             "application/vnd.oasis.opendocument.presentation",
             "application/vnd.oasis.opendocument.spreadsheet",
             "application/vnd.oasis.opendocument.text"//NON-NLS
-            ).collect(Collectors.toSet());
+    ).collect(Collectors.toSet());
 
     CommonFilesMetaDataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         dataSourceIdToNameMap = dataSourceIdMap;
@@ -131,50 +131,57 @@ abstract class CommonFilesMetaDataBuilder {
 
     /**
      * Use this as a prefix when building the SQL select statement.
-     * 
+     *
      * <ul>
      * <li>You only have to specify the WHERE clause if you use this.</li>
-     * <li>If you do not use this string, you must use at least the columns selected below, in that order.</li>
+     * <li>If you do not use this string, you must use at least the columns
+     * selected below, in that order.</li>
      * </ul>
      */
     static final String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
-    
+
     /**
      * Should build a SQL SELECT statement to be passed to
-     * SleuthkitCase.executeQuery(sql) which will select the desired 
-     * file ids and MD5 hashes.
-     * 
-     * The statement should select obj_id,  md5, data_source_obj_id in that order.
+     * SleuthkitCase.executeQuery(sql) which will select the desired file ids
+     * and MD5 hashes.
+     *
+     * The statement should select obj_id, md5, data_source_obj_id in that
+     * order.
      *
      * @return sql string select statement
      */
     protected abstract String buildSqlSelectStatement();
 
     /**
-     * Generate a meta data object which encapsulates everything need to 
-     * add the tree table tab to the top component.
-     * @return a data object with all of the matched files in a hierarchical 
+     * Generate a meta data object which encapsulates everything need to add the
+     * tree table tab to the top component.
+     *
+     * @return a data object with all of the matched files in a hierarchical
      * format
      * @throws TskCoreException
      * @throws NoCurrentCaseException
-     * @throws SQLException 
+     * @throws SQLException
      */
     public CommonFilesMetaData findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
-        
+
         Map<String, Md5MetaData> commonFiles = new HashMap<>();
-        
+
         SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
-        
-        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)){
+
+        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)) {
             ResultSet resultSet = query.getResultSet();
-            while(resultSet.next()){
+            while (resultSet.next()) {
                 Long objectId = resultSet.getLong(1);
                 String md5 = resultSet.getString(2);
                 Long dataSourceId = resultSet.getLong(3);
                 String dataSource = this.dataSourceIdToNameMap.get(dataSourceId);
                 
-                if(commonFiles.containsKey(md5)){
+                if(md5 == null || HashUtility.isNoDataMd5(md5)){
+                    continue;
+                }
+
+                if (commonFiles.containsKey(md5)) {
                     final Md5MetaData md5MetaData = commonFiles.get(md5);
                     md5MetaData.addFileInstanceMetaData(new FileInstanceMetaData(objectId, dataSource));
                 } else {
@@ -183,32 +190,30 @@ abstract class CommonFilesMetaDataBuilder {
                     Md5MetaData md5MetaData = new Md5MetaData(md5, fileInstances);
                     commonFiles.put(md5, md5MetaData);
                 }
-            }        
+            }
         }
-        
+
         return new CommonFilesMetaData(commonFiles, this.dataSourceIdToNameMap);
     }
-    
+
     String determineMimeTypeFilter() {
-        
+
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         String mimeTypeString = "";
-        if(filterByMedia) {
+        if (filterByMedia) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
         }
-        if(filterByDoc) {
+        if (filterByDoc) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
-        if(mimeTypesToFilterOn.size() > 0) {
-           for (String mimeType : mimeTypesToFilterOn) {
-               mimeTypeFilter.append("\"").append(mimeType).append("\",");
-           }
-           mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
-           mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
+        if (mimeTypesToFilterOn.size() > 0) {
+            for (String mimeType : mimeTypesToFilterOn) {
+                mimeTypeFilter.append("\"").append(mimeType).append("\",");
+            }
+            mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
+            mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
         }
         return mimeTypeString;
     }
-
- 
 }
