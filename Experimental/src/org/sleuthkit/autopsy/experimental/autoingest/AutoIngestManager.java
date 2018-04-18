@@ -132,7 +132,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
-        Event.JOB_STARTED.toString()}));
+        Event.JOB_STARTED.toString(),
+        Event.REPORT_STATE.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -3074,7 +3075,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         RESUMED,
         STARTING_UP,
         RUNNING,
-        SHUTTING_DOWN
+        SHUTTING_DOWN,
+        REPORT_STATE
     }
 
     /**

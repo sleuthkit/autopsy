@@ -103,7 +103,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         eventPublisher.addSubscriber(EVENT_LIST, this);
 
         // Publish an event that asks running nodes to send their state.
-        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent());
+        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent(AutoIngestManager.Event.REPORT_STATE));
     }
 
     /**

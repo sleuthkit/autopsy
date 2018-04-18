@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 public class AutoIngestRequestNodeStateEvent extends AutopsyEvent implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    public AutoIngestRequestNodeStateEvent() {
-        super("", null, null);
+    public AutoIngestRequestNodeStateEvent(AutoIngestManager.Event eventType) {
+        super(eventType.toString(), null, null);
     }
 }
