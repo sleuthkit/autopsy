@@ -40,7 +40,7 @@ install:
       } else {
         pushd $env:TSK_HOME
         git reset --hard
-        git checkout master
+        git checkout develop
         git pull
         popd
       }
