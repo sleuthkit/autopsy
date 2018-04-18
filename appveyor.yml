@@ -2,7 +2,6 @@ version: 4.6.0.{build}
 
 cache:
   - C:\Users\appveyor\.ant
-  - C:\Users\appveyor\.ivy2
   - C:\ProgramData\chocolatey\bin
   - C:\ProgramData\chocolatey\lib
   - C:\libewf_64bit
