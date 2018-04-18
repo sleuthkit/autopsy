@@ -10,7 +10,7 @@ cache:
   - C:\libvmdk_64bit
   - C:\zlib
   - C:\sleuthkit
-  - %APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data
+  - '%APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data'
 
 branches:
     only:
