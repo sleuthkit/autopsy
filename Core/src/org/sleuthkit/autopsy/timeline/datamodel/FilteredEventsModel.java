@@ -24,12 +24,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
+import javafx.collections.SetChangeListener;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -81,13 +83,13 @@ import org.sleuthkit.datamodel.timeline.SingleEvent;
  * This class is implemented as a filtered view into an underlying
  * EventsRepository.
  *
- * TODO: as many methods as possible should cache their results so as to avoid
- * unnecessary db calls through the EventsRepository -jm
+ * Maintainers, NOTE: as many methods as possible should cache their results
+ * so as to avoid unnecessary db calls through the EventsRepository -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
  * access the repo atomically do not need further synchronization
  *
- * all other member state variables should only be accessed with intrinsic lock
+ * All other member state variables should only be accessed with intrinsic lock
  * of containing FilteredEventsModel held. Many methods delegate to a task
  * submitted to the dbQueryThread executor. These methods should synchronize on
  * this object, and the tasks should too. Since the tasks execute asynchronously
@@ -137,8 +139,8 @@ public final class FilteredEventsModel {
             rootFilter.getDataSourcesFilter().addSubFilter(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
-        repo.getHashSetMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
-            HashSetFilter hashSetFilter = new HashSetFilter(change.getValueAdded(), change.getKey());
+        repo.getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
+            HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
             RootFilter rootFilter = filterProperty().get();
             rootFilter.getHashHitsFilter().addSubFilter(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
@@ -239,21 +241,21 @@ public final class FilteredEventsModel {
 
         repo.getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(t.getValue(), t.getKey());
-            dataSourceFilter.setSelected(Boolean.TRUE);
+            dataSourceFilter.setSelected(true);
             dataSourcesFilter.addSubFilter(dataSourceFilter);
         });
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
-        repo.getHashSetMap().entrySet().stream().forEach((Map.Entry<Long, String> t) -> {
-            HashSetFilter hashSetFilter = new HashSetFilter(t.getValue(), t.getKey());
-            hashSetFilter.setSelected(Boolean.TRUE);
+        repo.getHashSets().forEach(hashSetName -> {
+            HashSetFilter hashSetFilter = new HashSetFilter(hashSetName);
+            hashSetFilter.setSelected(true);
             hashHitsFilter.addSubFilter(hashSetFilter);
         });
 
         TagsFilter tagsFilter = new TagsFilter();
         repo.getTagNames().stream().forEach(t -> {
             TagNameFilter tagNameFilter = new TagNameFilter(t);
-            tagNameFilter.setSelected(Boolean.TRUE);
+            tagNameFilter.setSelected(true);
             tagsFilter.addSubFilter(tagNameFilter);
         });
         return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, Collections.emptySet());
@@ -316,7 +318,7 @@ public final class FilteredEventsModel {
      *
      * @return
      */
-    public Map<EventType, Long> getEventCounts(Interval timeRange) {
+    public Map<EventType, Long> getEventCounts(Interval timeRange) throws ExecutionException {
 
         final RootFilter filter;
         final EventTypeZoomLevel typeZoom;

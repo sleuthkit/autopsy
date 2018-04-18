@@ -45,6 +45,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 import javafx.concurrent.Worker;
 import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
@@ -113,7 +114,7 @@ public class EventsRepository {
     private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
 
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
-    private final ObservableMap<Long, String> hashSetMap = FXCollections.observableHashMap();
+    private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
 
     public Case getAutoCase() {
@@ -128,12 +129,12 @@ public class EventsRepository {
         return datasourcesMap;
     }
 
-    synchronized public ObservableMap<Long, String> getHashSetMap() {
-        return hashSetMap;
+    synchronized public ObservableSet< String> getHashSets() {
+        return hashSets;
     }
 
     public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
-        return eventManager.getBoundingEventsInterval(timeRange, filter, timeZone);
+        return eventManager.getSpanningInterval(timeRange, filter, timeZone);
     }
 
     /**
@@ -226,8 +227,8 @@ public class EventsRepository {
         }
     }
 
-    synchronized public Map<EventType, Long> countEvents(ZoomParams params) {
-        return eventCountsCache.getUnchecked(params);
+    synchronized public Map<EventType, Long> countEvents(ZoomParams params) throws ExecutionException {
+        return eventCountsCache.get(params);
     }
 
     synchronized public int countAllEvents() throws TskCoreException {
@@ -321,9 +322,8 @@ public class EventsRepository {
      */
     synchronized private void populateFilterData(SleuthkitCase skCase) throws TskCoreException {
 
-        for (Map.Entry<Long, String> hashSet : eventManager.getHashSetNames().entrySet()) {
-            hashSetMap.putIfAbsent(hashSet.getKey(), hashSet.getValue());
-        }
+        hashSets.addAll(eventManager.getHashSetNames());
+
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : eventManager.getDataSourceIDs()) {
             try {
@@ -342,7 +342,7 @@ public class EventsRepository {
     }
 
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.markEventsTagged(objID, artifactID, true);
+        Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, true);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -350,7 +350,7 @@ public class EventsRepository {
     }
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.markEventsTagged(objID, artifactID, tagged);
+        Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -593,7 +593,7 @@ public class EventsRepository {
                 }
                 updateProgress(i, currentWorkTotal);
                 BlackboardArtifactTag artifactTag = artifactTags.get(i);
-                eventManager.markEventsTagged(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), true);
+                eventManager.setEventsTagged(artifactTag.getContent().getId(), artifactTag.getArtifact().getArtifactID(), true);
             }
         }
 
@@ -604,7 +604,7 @@ public class EventsRepository {
                 }
                 updateProgress(i, currentWorkTotal);
                 ContentTag contentTag = contentTags.get(i);
-                eventManager.markEventsTagged(contentTag.getContent().getId(), null, true);
+                eventManager.setEventsTagged(contentTag.getContent().getId(), null, true);
             }
         }
 
