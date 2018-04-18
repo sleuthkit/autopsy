@@ -140,18 +140,18 @@ public class DeletedContent implements AutopsyVisitableItem {
             "DeletedContent.createSheet.name.displayName=Name",
             "DeletedContent.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>("Name", //NON-NLS
+            sheetSet.put(new NodeProperty<>("Name", //NON-NLS
                     Bundle.DeletedContent_createSheet_name_displayName(),
                     Bundle.DeletedContent_createSheet_name_desc(),
                     NAME));
-            return s;
+            return sheet;
         }
 
         @Override
@@ -314,19 +314,19 @@ public class DeletedContent implements AutopsyVisitableItem {
                 "DeletedContent.createSheet.filterType.displayName=Type",
                 "DeletedContent.createSheet.filterType.desc=no description"})
             protected Sheet createSheet() {
-                Sheet s = super.createSheet();
-                Sheet.Set ss = s.get(Sheet.PROPERTIES);
-                if (ss == null) {
-                    ss = Sheet.createPropertiesSet();
-                    s.put(ss);
+                Sheet sheet = super.createSheet();
+                Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+                if (sheetSet == null) {
+                    sheetSet = Sheet.createPropertiesSet();
+                    sheet.put(sheetSet);
                 }
 
-                ss.put(new NodeProperty<>("Type", //NON_NLS
+                sheetSet.put(new NodeProperty<>("Type", //NON_NLS
                         Bundle.DeletedContent_createSheet_filterType_displayName(),
                         Bundle.DeletedContent_createSheet_filterType_desc(),
                         filter.getDisplayName()));
 
-                return s;
+                return sheet;
             }
 
             @Override
