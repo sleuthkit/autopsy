@@ -40,6 +40,9 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     private transient ExplorerManager explorerManager;
 
+    AbstractDataResultViewer() {
+    }    
+    
     /**
      * This constructor is intended to allow an AbstractDataResultViewer to use
      * an ExplorerManager provided by a TopComponent, allowing Node selections
@@ -54,26 +57,8 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
         this.explorerManager = explorerManager;
     }
 
-    /**
-     * This constructor can be used by AbstractDataResultViewers that do not
-     * need to make Node selections available to Actions via the action global
-     * context lookup.
-     */
-    public AbstractDataResultViewer() {
-        this(new ExplorerManager());
-    }
-
     @Override
     public void clearComponent() {
-    }
-
-    public Node getSelectedNode() {
-        Node result = null;
-        Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
-        if (selectedNodes.length > 0) {
-            result = selectedNodes[0];
-        }
-        return result;
     }
 
     @Override

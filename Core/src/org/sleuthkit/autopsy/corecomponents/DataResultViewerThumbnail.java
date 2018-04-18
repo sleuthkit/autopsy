@@ -50,6 +50,7 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
@@ -69,8 +70,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * restore implementation of DataResultViewerTable as a DataResultViewer service
  * provider.
  */
-//@ServiceProvider(service = DataResultViewer.class)
-final class DataResultViewerThumbnail extends AbstractDataResultViewer {
+@ServiceProvider(service = DataResultViewer.class)
+public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
@@ -88,7 +89,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
      *
      * @param explorerManager The shared ExplorerManager for the result viewers.
      */
-    DataResultViewerThumbnail(ExplorerManager explorerManager) {
+    public DataResultViewerThumbnail(ExplorerManager explorerManager) {
         super(explorerManager);
         initialize();
     }
@@ -97,7 +98,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
      * Constructs a thumbnail viewer for the results view, with paging support,
      * that is NOT compatible with node multiple selection actions.
      */
-    DataResultViewerThumbnail() {
+    public DataResultViewerThumbnail() {
         initialize();
     }
 

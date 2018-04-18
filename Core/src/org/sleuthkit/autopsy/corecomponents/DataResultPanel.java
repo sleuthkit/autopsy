@@ -292,23 +292,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         /*
          * Load the child result viewers into the tabbed pane.
          */
-        if (0 == dataResultTabbedPanel.getTabCount()) {
-            /*
-             * TODO (JIRA-2658): Fix the DataResultViewer extension point. When
-             * this is done, restore the implementation of DataResultViewerTable
-             * and DataREsultViewerThumbnail as DataResultViewer service
-             * providers.
-             */
-            addResultViewer(new DataResultViewerTable(this.explorerManager));
-            addResultViewer(new DataResultViewerThumbnail(this.explorerManager));
-            for (DataResultViewer factory : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
-                DataResultViewer resultViewer;
+        if (dataResultTabbedPanel.getTabCount() == 0) {
+            for (DataResultViewer resultViewer : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
                 if (isMain) {
-                    resultViewer = factory;
+                    addResultViewer(resultViewer);
                 } else {
-                    resultViewer = factory.createInstance();
+                    addResultViewer(resultViewer.createInstance());
                 }
-                addResultViewer(resultViewer);
             }
         }
 
