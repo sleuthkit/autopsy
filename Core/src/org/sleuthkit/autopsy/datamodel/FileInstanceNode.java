@@ -88,20 +88,23 @@ public class FileInstanceNode extends FileNode {
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
+        map.put(CommonFilePropertyType.MimeType.toString(), node.getContent().getMIMEType());
     }
 
     @NbBundle.Messages({
         "CommonFilePropertyType.fileColLbl=File",
         "CommonFilePropertyType.pathColLbl=Parent Path",
         "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source"
+        "CommonFilePropertyType.dataSourceColLbl=Data Source",
+        "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
     })
     public enum CommonFilePropertyType {
 
         File(Bundle.CommonFilePropertyType_fileColLbl()),
         ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
         HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl());
+        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
+        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
 
         final private String displayString;
 
