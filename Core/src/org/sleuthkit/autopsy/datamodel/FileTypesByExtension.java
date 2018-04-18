@@ -65,8 +65,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /**
@@ -177,8 +177,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -297,8 +297,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -463,8 +463,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -520,8 +520,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -567,8 +567,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override

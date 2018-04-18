@@ -30,13 +30,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class RecentFilesNode extends DisplayableItemNode {
 
     private static final String NAME = NbBundle.getMessage(RecentFilesNode.class, "RecentFilesNode.name.text");
-    private SleuthkitCase skCase;
-
+    
     RecentFilesNode(SleuthkitCase skCase) {
         super(Children.create(new RecentFilesChildren(skCase), true), Lookups.singleton(NAME));
         super.setName(NAME);
         super.setDisplayName(NAME);
-        this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png"); //NON-NLS
     }
 
@@ -46,8 +44,8 @@ public class RecentFilesNode extends DisplayableItemNode {
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override
