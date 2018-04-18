@@ -61,6 +61,9 @@ abstract class CommonFilesMetaDataBuilder {
      /*
      * The set of the MIME types that will be checked for extension mismatches
      * when checkType is ONLY_MEDIA.
+     * ".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp", ".tec"
+     * ".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", //NON-NLS
+     * ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf"
      */
     private static final Set<String> MEDIA_PICS_VIDEO_MIME_TYPES = Stream.of(
             "image/bmp",
@@ -68,6 +71,8 @@ abstract class CommonFilesMetaDataBuilder {
             "image/jpeg",
             "image/png",
             "image/tiff",
+            "image/vnd.adobe.photoshop",
+            "image/x-raw-nikon",
             "image/x-ms-bmp",
             "image/x-icon",
             "video/webm",
@@ -75,12 +80,24 @@ abstract class CommonFilesMetaDataBuilder {
             "video/3gpp2",
             "video/ogg",
             "video/mpeg",
-            "video/x-msvideo"
+            "video/mp4",
+            "video/quicktime",
+            "video/x-msvideo",
+            "video/x-flv",
+            "video/x-m4v",
+            "video/x-ms-wmv",
+            "application/vnd.ms-asf",
+            "application/vnd.rn-realmedia",
+            "application/x-shockwave-flash"
             ).collect(Collectors.toSet());
     
      /*
      * The set of the MIME types that will be checked for extension mismatches
      * when checkType is ONLY_TEXT_FILES.
+     * ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx"
+     * ".txt", ".rtf", ".log", ".text", ".xml"
+     * ".html", ".htm", ".css", ".js", ".php", ".aspx"
+     * ".pdf"
      */
     private static final Set<String> TEXT_FILES_MIME_TYPES = Stream.of(
             "text/plain",
@@ -93,12 +110,17 @@ abstract class CommonFilesMetaDataBuilder {
             "application/javascript",
             "application/xml",
             "text/calendar",
+            "application/x-msoffice",
+            "application/x-ooxml",
             "application/msword", //NON-NLS
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
             "application/vnd.ms-powerpoint", //NON-NLS
             "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
             "application/vnd.ms-excel", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" //NON-NLS
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/vnd.oasis.opendocument.spreadsheet",
+            "application/vnd.oasis.opendocument.text"//NON-NLS
             ).collect(Collectors.toSet());
 
     CommonFilesMetaDataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
