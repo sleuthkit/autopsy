@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -48,6 +47,21 @@ import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.RootEventType;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.datamodel.timeline.filters.Filter;
@@ -59,21 +73,6 @@ import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.CombinedEvent;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.RootEventType;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
  * This class acts as the model for a TimelineView
@@ -83,8 +82,8 @@ import org.sleuthkit.datamodel.timeline.SingleEvent;
  * This class is implemented as a filtered view into an underlying
  * EventsRepository.
  *
- * Maintainers, NOTE: as many methods as possible should cache their results
- * so as to avoid unnecessary db calls through the EventsRepository -jm
+ * Maintainers, NOTE: as many methods as possible should cache their results so
+ * as to avoid unnecessary db calls through the EventsRepository -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
  * access the repo atomically do not need further synchronization
@@ -318,7 +317,7 @@ public final class FilteredEventsModel {
      *
      * @return
      */
-    public Map<EventType, Long> getEventCounts(Interval timeRange) throws ExecutionException {
+    public Map<EventType, Long> getEventCounts(Interval timeRange) throws TimelineCacheException {
 
         final RootFilter filter;
         final EventTypeZoomLevel typeZoom;
@@ -349,7 +348,7 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or
      *         requested ranges
      */
-    public Long getMinTime() {
+    public Long getMinTime() throws TimelineCacheException {
         return repo.getMinTime();
     }
 
@@ -358,7 +357,7 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or
      *         requested ranges
      */
-    public Long getMaxTime() {
+    public Long getMaxTime() throws TimelineCacheException {
         return repo.getMaxTime();
     }
 
@@ -367,7 +366,7 @@ public final class FilteredEventsModel {
      * @return a list of event clusters at the requested zoom levels that are
      *         within the requested time range and pass the requested filter
      */
-    public List<EventStripe> getEventStripes() {
+    public List<EventStripe> getEventStripes() throws TimelineCacheException {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
@@ -388,7 +387,7 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventStripe> getEventStripes(ZoomParams params) {
+    public List<EventStripe> getEventStripes(ZoomParams params) throws TimelineCacheException {
         return repo.getEventStripes(params);
     }
 

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
@@ -37,7 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -194,41 +194,55 @@ public class EventsRepository {
     /**
      * @return min time (in seconds from unix epoch)
      */
-    public Long getMaxTime() {
-        return maxCache.getUnchecked("max"); // NON-NLS
-
+    public Long getMaxTime() throws TimelineCacheException {
+        try {
+            return maxCache.get("max"); // NON-NLS
+        } catch (ExecutionException ex) {
+            throw new TimelineCacheException("Error getting cached max time", ex); // NON-NLS
+        }
     }
 
     /**
      * @return max tie (in seconds from unix epoch)
      */
-    public Long getMinTime() {
-        return minCache.getUnchecked("min"); // NON-NLS
-
-    }
-
-    public SingleEvent getEventById(Long eventID) {
-        return idToEventCache.getUnchecked(eventID);
-    }
-
-    synchronized public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
-        return eventIDs.stream()
-                .map(idToEventCache::getUnchecked)
-                .collect(Collectors.toSet());
-
-    }
-
-    synchronized public List<EventStripe> getEventStripes(ZoomParams params) {
+    public Long getMinTime() throws TimelineCacheException {
         try {
-            return eventStripeCache.get(params);
+            return minCache.get("min"); // NON-NLS
         } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex); //NON-NLS
-            return Collections.emptyList();
+            throw new TimelineCacheException("Error getting cached min time", ex); // NON-NLS
         }
     }
 
-    synchronized public Map<EventType, Long> countEvents(ZoomParams params) throws ExecutionException {
-        return eventCountsCache.get(params);
+    public SingleEvent getEventById(Long eventID) throws TimelineCacheException {
+        try {
+            return idToEventCache.get(eventID);
+        } catch (ExecutionException ex) {
+            throw new TimelineCacheException("Error getting cached event from id " + eventID, ex);  // NON-NLS
+        }
+    }
+
+    synchronized public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) throws TimelineCacheException {
+        HashSet<SingleEvent> events = new HashSet<>();
+        for (Long eventID : eventIDs) {
+            events.add(getEventById(eventID));
+        }
+        return events;
+    }
+
+    synchronized public List<EventStripe> getEventStripes(ZoomParams params) throws TimelineCacheException {
+        try {
+            return eventStripeCache.get(params);
+        } catch (ExecutionException ex) {
+            throw new TimelineCacheException("Failed to load Event Stripes from cache for " + params.toString(), ex); //NON-NLS
+        }
+    }
+
+    synchronized public Map<EventType, Long> countEvents(ZoomParams params) throws TimelineCacheException {
+        try {
+            return eventCountsCache.get(params);
+        } catch (ExecutionException ex) {
+            throw new TimelineCacheException("Failed to load event counts from cache for " + params.toString(), ex); //NON-NLS
+        }
     }
 
     synchronized public int countAllEvents() throws TskCoreException {
@@ -678,9 +692,9 @@ public class EventsRepository {
                 for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
                     if (timeEntry.getValue() > 0) {
                         // if the time is legitimate ( greater than zero ) insert it
-                        eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
+                        eventManager.addEvent(timeEntry.getValue(), timeEntry.getKey(),
                                 datasourceID, f.getId(), null, uniquePath, medDesc,
-                                shortDesc, known, hashSets, tags);
+                                shortDesc, known, hashSets.isEmpty() == false, tags.isEmpty() == false);
                     }
                 }
             }
@@ -743,7 +757,7 @@ public class EventsRepository {
                 String fullDescription = eventDescription.getFullDescription();
                 String medDescription = eventDescription.getMedDescription();
                 String shortDescription = eventDescription.getShortDescription();
-                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags);
+                eventManager.addEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets.isEmpty() == false, tags.isEmpty() == false);
             }
         }
     }
