@@ -205,8 +205,9 @@ abstract class CommonFilesMetaDataBuilder {
                mimeTypeFilter.append("\"").append(mimeType).append("\",");
            }
            mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
+           mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
         }
-        return String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
+        return mimeTypeString;
     }
 
  
