@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
@@ -182,8 +184,10 @@ public class HashDbIngestModule implements FileIngestModule {
         String md5Hash = file.getMd5Hash();
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
+                TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Disk: Hash Calculation (time per byte)");
                 long calcstart = System.currentTimeMillis();
                 md5Hash = HashUtility.calculateMd5Hash(file);
+                EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, file.getSize());
                 file.setMd5Hash(md5Hash);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);

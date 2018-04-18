@@ -62,4 +62,23 @@ public class TimingMetric {
             throw new HealthMonitorException("getDuration() called before stopTiming()");
         }
     }
+    
+    /**
+     * Normalize the metric by dividing the time by the given counter.
+     * If the counter is zero, it will be treated the same way as if the
+     * counter were one.
+     * @param count Value to divide the duration by
+     * @throws HealthMonitorException 
+     */
+    void normalize(long count) throws HealthMonitorException {
+        if (duration != null) {
+            if(count < 0) {
+                throw new HealthMonitorException("normalize() called with negative count (" + count + ")");
+            } else if(count > 1) { // Small optimization to prevent dividing by one
+                duration = duration / count;
+            } // If count = 0, do nothing
+        } else {
+            throw new HealthMonitorException("normalize() called before stopTiming()");
+        }
+    }
 }

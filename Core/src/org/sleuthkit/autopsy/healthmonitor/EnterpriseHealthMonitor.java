@@ -283,12 +283,14 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * This method is safe to call regardless of whether the Enterprise Health
      * Monitor is enabled.
      * @param metric The TimingMetric object obtained from getTimingMetric()
-     * @param count The number to divide the time by
+     * @param count The number to divide the time by (a zero here will be treated as a one)
      */
     public static void submitNormalizedTimingMetric(TimingMetric metric, long count) {
         if(isEnabled.get() && (metric != null)) {
             metric.stopTiming();
             try {
+                System.out.println("### duration: " + metric.getDuration() + " count: " + count);
+                metric.normalize(count);
                 getInstance().addTimingMetric(metric); // TODO - make new method using count
             } catch (HealthMonitorException ex) {
                 // We don't want calling methods to have to check for exceptions, so just log it
