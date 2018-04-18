@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
@@ -70,14 +71,16 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.timeline.CombinedEvent;
 import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.FileSystemTypes;
-import org.sleuthkit.datamodel.timeline.RootEventType;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.eventtype.ArtifactEventType;
+import org.sleuthkit.datamodel.timeline.eventtype.EventType;
+import org.sleuthkit.datamodel.timeline.eventtype.FileSystemType;
+import org.sleuthkit.datamodel.timeline.eventtype.RootEventType;
+import org.sleuthkit.datamodel.timeline.eventtype.WebType;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
@@ -610,8 +613,7 @@ public class EventsRepository {
 
         private void insertArtifactDerivedEvents() {
             //insert artifact based events
-            //TODO: use (not-yet existing api) to grab all artifacts with timestamps, rather than the hardcoded lists in EventType -jm
-            for (EventType type : RootEventType.allTypes) {
+            for (EventType type : eventManager.getArtifactEventTypes()) {
                 if (isCancelRequested()) {
                     break;
                 }
@@ -648,11 +650,11 @@ public class EventsRepository {
 
         private void insertEventsForFile(AbstractFile f) throws TskCoreException {
             //gather time stamps into map
-            EnumMap<FileSystemTypes, Long> timeMap = new EnumMap<>(FileSystemTypes.class);
-            timeMap.put(FileSystemTypes.FILE_CREATED, f.getCrtime());
-            timeMap.put(FileSystemTypes.FILE_ACCESSED, f.getAtime());
-            timeMap.put(FileSystemTypes.FILE_CHANGED, f.getCtime());
-            timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
+            HashMap<FileSystemType, Long> timeMap = new HashMap<>();
+            timeMap.put(FileSystemType.FILE_CREATED, f.getCrtime());
+            timeMap.put(FileSystemType.FILE_ACCESSED, f.getAtime());
+            timeMap.put(FileSystemType.FILE_CHANGED, f.getCtime());
+            timeMap.put(FileSystemType.FILE_MODIFIED, f.getMtime());
 
             /*
              * if there are no legitimate ( greater than zero ) time stamps (
@@ -675,7 +677,7 @@ public class EventsRepository {
                 Set<String> hashSets = f.getHashSetNames();
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
-                for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
+                for (Map.Entry<FileSystemType, Long> timeEntry : timeMap.entrySet()) {
                     if (timeEntry.getValue() > 0) {
                         // if the time is legitimate ( greater than zero ) insert it
                         eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
@@ -725,12 +727,12 @@ public class EventsRepository {
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "There was a problem getting events with sub type " + type.toString() + ".", ex); // NON-NLS
+                logger.log(Level.SEVERE, "There was a problem getting events with sub type " + type.getDisplayName() + ".", ex); // NON-NLS
             }
         }
 
         private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart) throws TskCoreException {
-            ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
+            ArtifactEventType.AttributeEventDescription eventDescription = type.buildEventDescription(bbart);
 
             // if the time is legitimate ( greater than zero ) insert it into the db
             if (eventDescription != null && eventDescription.getTime() > 0) {
