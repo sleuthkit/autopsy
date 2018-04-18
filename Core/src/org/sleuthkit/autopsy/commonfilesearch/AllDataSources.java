@@ -32,14 +32,14 @@ final class AllDataSources extends CommonFilesMetaDataBuilder {
      * Implements the algorithm for getting common files across all data sources.
      * @param dataSourceIdMap a map of obj_id to datasource name
      */
-    public AllDataSources(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    AllDataSources(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
 
     }
 
     @Override
     protected String buildSqlSelectStatement() {
-        Object[] args = new String[] {CommonFilesMetaDataBuilder.SELECT_PREFIX, determineMimeTypeFilter()};
+        Object[] args = new String[] {SELECT_PREFIX, determineMimeTypeFilter()};
         return String.format(WHERE_CLAUSE, args);
     }
 }
