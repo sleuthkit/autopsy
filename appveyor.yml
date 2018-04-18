@@ -10,6 +10,7 @@ cache:
   - C:\libvmdk_64bit
   - C:\zlib
   - C:\sleuthkit
+  - %APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data
 
 branches:
     only:
@@ -34,16 +35,16 @@ install:
   - set PATH=C:\Python36-x64\';%PATH%
   - ps: >-
       if (!(Test-path -Path $env:TSK_HOME)){
+        pushd C:\
         git clone https://github.com/sleuthkit/sleuthkit
+        popd
       } else {
-        cd $env:TSK_HOME
+        pushd $env:TSK_HOME
         git reset --hard
         git checkout master
         git pull
+        popd
       }
-  - ps: pushd C:\
-  - git clone https://github.com/sleuthkit/sleuthkit
-  - ps: popd
 services:
       - postgresql95
 
