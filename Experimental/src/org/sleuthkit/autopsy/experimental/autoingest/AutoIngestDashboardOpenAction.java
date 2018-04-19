@@ -32,31 +32,31 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionRegistration(displayName = "#CTL_AutoIngestDashboardOpenAction", lazy = false)
 @Messages({"CTL_AutoIngestDashboardOpenAction=Auto Ingest Dashboard"})
 public final class AutoIngestDashboardOpenAction extends CallableSystemAction {
-
+    
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboardOpenAction.class.getName());
     private static final String DISPLAY_NAME = Bundle.CTL_AutoIngestDashboardOpenAction();
-
+    
     @Override
     public boolean isEnabled() {
         return (UserPreferences.getIsMultiUserModeEnabled());
     }
-
+    
     @Override
     @SuppressWarnings("fallthrough")
     public void performAction() {
         AutoIngestDashboardTopComponent.openTopComponent();
     }
-
+    
     @Override
     public String getName() {
         return DISPLAY_NAME;
     }
-
+    
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-
+    
     @Override
     public boolean asynchronous() {
         return false; // run on edt
