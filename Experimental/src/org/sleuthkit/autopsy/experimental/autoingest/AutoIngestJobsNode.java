@@ -41,8 +41,6 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
-    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
-    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
 
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
@@ -193,8 +191,7 @@ final class AutoIngestJobsNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            File f = new File(ADMIN_ACCESS_FILE_PATH);
-            if (f.exists()) {
+            if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                 switch (jobStatus) {
                     case PENDING_JOB:
                         actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));

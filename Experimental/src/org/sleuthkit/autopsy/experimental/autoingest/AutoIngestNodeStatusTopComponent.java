@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -34,63 +33,51 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * Top component which displays the Auto Ingest Dashboard interface.
  */
 @TopComponent.Description(
-        preferredID = "AutoIngestDashboardTopComponent",
+        preferredID = "AutoIngestNodeStatusTopComponent",
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
-@TopComponent.Registration(mode = "dashboard", openAtStartup = false)
+@TopComponent.Registration(mode = "nodeStatus", openAtStartup = false)
 @Messages({
-    "CTL_AutoIngestDashboardAction=Auto Ingest Jobs",
-    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs"})
-public final class AutoIngestDashboardTopComponent extends TopComponent {
+    "CTL_AutoIngestNodeStatusAction=Auto Ingest Nodes",
+    "CTL_AutoIngestNodeStatusTopComponent=Auto Ingest Nodes"})
+public final class AutoIngestNodeStatusTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    public final static String PREFERRED_ID = "AutoIngestDashboardTopComponent"; // NON-NLS
-    private static final Logger logger = Logger.getLogger(AutoIngestDashboardTopComponent.class.getName());
+    public final static String PREFERRED_ID = "AutoIngestNodeStatusTopComponent"; // NON-NLS
+    private static final Logger logger = Logger.getLogger(AutoIngestNodeStatusTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
     @Messages({
-        "AutoIngestDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.",})
-    public static void openTopComponent() {
-        final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        "AutoIngestNodeStatusTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.",})
+    public static void openTopComponent(AutoIngestMonitor monitor) {
+        final AutoIngestNodeStatusTopComponent tc = (AutoIngestNodeStatusTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
 
-            try {
-                if (tc.isOpened() == false) {
-                    Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
-                    if (mode != null) {
-                        mode.dockInto(tc);
-                    }
-                    /*
-                     * Make sure we have a clean-slate before attaching a new
-                     * dashboard instance so we don't accumulate them.
-                     */
-                    tc.removeAll();
-
-                    /*
-                     * Create a new dashboard instance to ensure we're using the
-                     * most recent configuration.
-                     */
-                    AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
-                    tc.add(dashboard);
-                    dashboard.setSize(dashboard.getPreferredSize());
-                    //if the user has administrator access enabled open the Node Status top component as well
-                    if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
-                        EventQueue.invokeLater(() -> {  
-                            AutoIngestNodeStatusTopComponent.openTopComponent(dashboard.getMonitor());
-                        });          
-                    }
-                    tc.open();
-
+            if (tc.isOpened() == false) {
+                Mode mode = WindowManager.getDefault().findMode("nodeStatus"); // NON-NLS
+                if (mode != null) {
+                    mode.dockInto(tc);
                 }
-                tc.toFront();
-                tc.requestActive();
-            } catch (AutoIngestDashboard.AutoIngestDashboardException ex) {
-                logger.log(Level.SEVERE, "Unable to create auto ingest dashboard", ex);
-                MessageNotifyUtil.Message.error(Bundle.AutoIngestDashboardTopComponent_exceptionMessage_failedToCreateDashboard());
+                /*
+                 * Make sure we have a clean-slate before attaching a new
+                 * dashboard instance so we don't accumulate them.
+                 */
+                tc.removeAll();
+                
+                /*
+                 * Create a new dashboard instance to ensure we're using the
+                 * most recent configuration.
+                 */
+                AutoIngestNodeStatus nodeTab = new AutoIngestNodeStatus(monitor);
+                nodeTab.setSize(nodeTab.getPreferredSize());
+                tc.add(nodeTab);
+                tc.open();
             }
+            tc.toFront();
+            tc.requestActive();
         }
     }
 
@@ -107,24 +94,11 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         }
     }
 
-    public AutoIngestDashboardTopComponent() {
+    public AutoIngestNodeStatusTopComponent() {
         initComponents();
-        setName(Bundle.CTL_AutoIngestDashboardTopComponent());
+        setName(Bundle.CTL_AutoIngestNodeStatusTopComponent());
     }
 
-    /**
-     * Get the current AutoIngestDashboard if there is one.
-     *
-     * @return the current AutoIngestDashboard or null if there is not one
-     */
-    AutoIngestDashboard getAutoIngestDashboard() {
-        for (Component comp : getComponents()) {
-            if (comp instanceof AutoIngestDashboard) {
-                return (AutoIngestDashboard) comp;
-            }
-        }
-        return null;
-    }
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
@@ -133,7 +107,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
          * to indicate this method is effectively deprecated. A break point
          * placed here was never hit.
          */
-        return modes.stream().filter(mode -> mode.getName().equals("dashboard") || mode.getName().equals("ImageGallery"))
+        return modes.stream().filter(mode -> mode.getName().equals("nodeStatus") || mode.getName().equals("ImageGallery"))
                 .collect(Collectors.toList());
     }
 
