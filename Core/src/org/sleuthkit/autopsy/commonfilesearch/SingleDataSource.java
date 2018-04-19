@@ -28,6 +28,7 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
     private final Long selectedDataSourceId;
+    private final String dataSourceName;
 
     /**
      * Implements the algorithm for getting common files that appear at least
@@ -38,6 +39,7 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
     SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         this.selectedDataSourceId = dataSourceId;
+        this.dataSourceName = dataSourceIdMap.get(this.selectedDataSourceId);
     }
 
     @Override
@@ -48,6 +50,8 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
 
     @Override
     protected String buildTabTitle() {
-        return String.format(Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleSingle(), new Object[]{this.buildCategorySelectionString()});
+        final String buildCategorySelectionString = this.buildCategorySelectionString();
+        final String titleTemplate = Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleSingle();
+        return String.format(titleTemplate, new Object[]{this.dataSourceName, buildCategorySelectionString});
     }
 }

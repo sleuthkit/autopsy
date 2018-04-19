@@ -45,6 +45,8 @@ final class AllDataSources extends CommonFilesMetaDataBuilder {
 
     @Override
     protected String buildTabTitle() {
-        return String.format(Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleAll(), new Object[]{this.buildCategorySelectionString()});
+        final String buildCategorySelectionString = this.buildCategorySelectionString();
+        final String titleTemplate = Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleAll();
+        return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
     }
 }
