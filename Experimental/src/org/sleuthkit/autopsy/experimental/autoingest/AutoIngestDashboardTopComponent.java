@@ -79,7 +79,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                     //if the user has administrator access enabled open the Node Status top component as well
                     if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                         EventQueue.invokeLater(() -> {  
-                            AutoIngestNodeStatusTopComponent.openTopComponent(dashboard.getMonitor());
+                            AinStatusDashboardTopComponent.openTopComponent(dashboard.getMonitor());
                         });          
                     }
                     tc.open();

@@ -1,31 +1,41 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Cursor;
 
-/**
- *
- * @author wschaefer
- */
-public class AutoIngestNodeStatus extends javax.swing.JPanel {
+public class AinStatusDashboard extends javax.swing.JPanel {
 
-      private final AutoIngestMonitor autoIngestMonitor;
-      private final AutoIngestNodesPanel nodesPanel;
+    private final AutoIngestMonitor autoIngestMonitor;
+    private final AinStatusPanel nodesPanel;
+
     /**
      * Creates new form AutoIngestNodeStatus
      */
-    public AutoIngestNodeStatus(AutoIngestMonitor monitor) {
+    public AinStatusDashboard(AutoIngestMonitor monitor) {
         initComponents();
-        super.setName("Auto Ingest Nodes");
         autoIngestMonitor = monitor;
-        nodesPanel = new AutoIngestNodesPanel();
-                nodesPanel.setSize(nodesPanel.getSize());
+        nodesPanel = new AinStatusPanel();
+        nodesPanel.setSize(nodesPanel.getSize());
         jScrollPane1.add(nodesPanel);
         jScrollPane1.setViewportView(nodesPanel);
+        nodesPanel.refresh(autoIngestMonitor);
     }
 
     /**
@@ -44,8 +54,8 @@ public class AutoIngestNodeStatus extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         jLabel1 = new javax.swing.JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(AutoIngestNodeStatus.class, "AutoIngestNodeStatus.refreshButton.text")); // NOI18N
-        refreshButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestNodeStatus.class, "AutoIngestNodeStatus.refreshButton.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.text")); // NOI18N
+        refreshButton.setToolTipText(org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.toolTipText")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
@@ -53,14 +63,14 @@ public class AutoIngestNodeStatus extends javax.swing.JPanel {
         });
 
         lbServicesStatus.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(lbServicesStatus, org.openide.util.NbBundle.getMessage(AutoIngestNodeStatus.class, "AutoIngestNodeStatus.lbServicesStatus.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbServicesStatus, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.lbServicesStatus.text")); // NOI18N
 
         tbServicesStatusMessage.setEditable(false);
         tbServicesStatusMessage.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        tbServicesStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestNodeStatus.class, "AutoIngestNodeStatus.tbServicesStatusMessage.text")); // NOI18N
+        tbServicesStatusMessage.setText(org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.tbServicesStatusMessage.text")); // NOI18N
         tbServicesStatusMessage.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(clusterMetricsButton, org.openide.util.NbBundle.getMessage(AutoIngestNodeStatus.class, "AutoIngestNodeStatus.clusterMetricsButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(clusterMetricsButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.clusterMetricsButton.text")); // NOI18N
         clusterMetricsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 clusterMetricsButtonActionPerformed(evt);
@@ -68,7 +78,7 @@ public class AutoIngestNodeStatus extends javax.swing.JPanel {
         });
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AutoIngestNodeStatus.class, "AutoIngestNodeStatus.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -119,10 +129,10 @@ public class AutoIngestNodeStatus extends javax.swing.JPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_refreshButtonActionPerformed
 
-    private void refreshTables(){
+    private void refreshTables() {
         nodesPanel.refresh(autoIngestMonitor);
     }
-    
+
     private void clusterMetricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clusterMetricsButtonActionPerformed
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed

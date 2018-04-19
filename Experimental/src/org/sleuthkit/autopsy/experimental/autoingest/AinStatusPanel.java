@@ -26,23 +26,14 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
  */
-final class AutoIngestNodesPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
+final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
-    private static final int INITIAL_CASENAME_WIDTH = 170;
-    private static final int INITIAL_DATASOURCE_WIDTH = 270;
-    private static final int INITIAL_PRIORITIZED_WIDTH = 20;
-    private static final int INITIAL_STATUS_WIDTH = 20;
-    private static final int INVALID_INDEX = -1;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
     private ExplorerManager explorerManager;
@@ -52,7 +43,7 @@ final class AutoIngestNodesPanel extends javax.swing.JPanel implements ExplorerM
      *
      * @param jobStatus the status of the jbos to be displayed on this panel
      */
-    AutoIngestNodesPanel() {
+    AinStatusPanel() {
         initComponents();
         outlineView = new org.openide.explorer.view.OutlineView();
         outline = outlineView.getOutline();
@@ -64,7 +55,7 @@ final class AutoIngestNodesPanel extends javax.swing.JPanel implements ExplorerM
      * the correct columns for the specified AutoIngestJobStatus
      */
     void customize() {
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Host Name");
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AinStatusNode_hostName_title());
         outline.setRowSelectionAllowed(false); //rows will be made selectable after table has been populated
         outline.setFocusable(false);  //table will be made focusable after table has been populated
         if (null == explorerManager) {
@@ -72,19 +63,10 @@ final class AutoIngestNodesPanel extends javax.swing.JPanel implements ExplorerM
         }
 
         outlineView.setPropertyColumns(
-                "Status", "Status");
+                Bundle.AinStatusNode_status_title(), Bundle.AinStatusNode_status_title());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
         add(outlineView, java.awt.BorderLayout.CENTER);
-    }
-
-    private int getColumnIndexByName(String columnName) {
-        for (int index = 0; index < outline.getColumnModel().getColumnCount(); index++) {
-            if (outline.getColumnModel().getColumn(index).getHeaderValue().toString().equals(columnName)) {
-                return index;
-            }
-        }
-        return INVALID_INDEX;
     }
 
     @Override

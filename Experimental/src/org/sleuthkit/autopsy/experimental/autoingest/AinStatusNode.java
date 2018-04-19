@@ -18,27 +18,23 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-
 import javax.swing.Action;
-
 import java.util.ArrayList;
-
 import java.util.List;
-
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-
 
 /**
  * A node which represents all AutoIngestJobs of a given AutoIngestJobStatus.
  * Each job with the specified status will have a child node representing it.
  */
 final class AinStatusNode extends AbstractNode {
+
     /**
      * Construct a new AutoIngestJobsNode.
      */
@@ -57,7 +53,8 @@ final class AinStatusNode extends AbstractNode {
          * Create children nodes for the AutoIngestJobsNode which will each
          * represent a single AutoIngestJob
          *
-         * @param autoIngestMonitor the monitor which contains the AutoIngestJobs
+         * @param autoIngestMonitor the monitor which contains the
+         *                          AutoIngestJobs
          */
         AinStatusChildren(AutoIngestMonitor autoIngestMonitor) {
             monitor = autoIngestMonitor;
@@ -83,28 +80,25 @@ final class AinStatusNode extends AbstractNode {
      */
     static final class StatusNode extends AbstractNode {
 
-        private final AutoIngestJob autoIngestJob;
+        private final String hostName;
+        private final String status;
 
         /**
          * Construct a new JobNode to represent an AutoIngestJob and its status.
          *
-         * @param job    - the AutoIngestJob being represented by this node
+         * @param job - the AutoIngestJob being represented by this node
          */
         StatusNode(AutoIngestJob job) {
             super(Children.LEAF);
-            autoIngestJob = job;
-        }
-
-        /**
-         * Get the AutoIngestJob which this node represents.
-         *
-         * @return autoIngestJob
-         */
-        AutoIngestJob getAutoIngestJob() {
-            return autoIngestJob;
+            hostName = "TODO - ADD HOST NAME";
+            status = "TODO - ADD NODE STATUS";
+            setName(hostName);
+            setDisplayName(hostName);
         }
 
         @Override
+        @Messages({"AinStatusNode.hostName.title=Host Name",
+            "AinStatusNode.status.title=Status"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -112,9 +106,10 @@ final class AinStatusNode extends AbstractNode {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-            ss.put(new NodeProperty<>("Host Name", "Host Name", "Host Name", //host name
-                    "TODO - ADD HOST NAME"));
-            ss.put(new NodeProperty<>("Status","Status","Status","TODO - ADD NODE STATUS"));            
+            ss.put(new NodeProperty<>(Bundle.AinStatusNode_hostName_title(), Bundle.AinStatusNode_hostName_title(), Bundle.AinStatusNode_hostName_title(),
+                    hostName));
+            ss.put(new NodeProperty<>(Bundle.AinStatusNode_status_title(), Bundle.AinStatusNode_status_title(), Bundle.AinStatusNode_status_title(),
+                    status));
             return s;
         }
 
@@ -122,9 +117,15 @@ final class AinStatusNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
-               //Add actions
+//                if (status.equals("Paused")) {
+//                    actions.add(new AutoIngestAdminActions.ResumeAction());
+//                } else if (status.equals("Running")){
+//                    actions.add(new AutoIngestAdminActions.PauseAction());
+//                }
+                actions.add(new AutoIngestAdminActions.ShutdownAction());
             }
             return actions.toArray(new Action[actions.size()]);
         }
     }
+
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.awt.Component;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -27,31 +26,30 @@ import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- * Top component which displays the Auto Ingest Dashboard interface.
+ * Top component which displays the Auto Ingest Node Status Dashboard interface.
  */
 @TopComponent.Description(
-        preferredID = "AutoIngestNodeStatusTopComponent",
+        preferredID = "AinStatusDashboardTopComponent",
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(mode = "nodeStatus", openAtStartup = false)
 @Messages({
-    "CTL_AutoIngestNodeStatusAction=Auto Ingest Nodes",
-    "CTL_AutoIngestNodeStatusTopComponent=Auto Ingest Nodes"})
-public final class AutoIngestNodeStatusTopComponent extends TopComponent {
+    "CTL_AinStatusDashboardAction=Auto Ingest Nodes",
+    "CTL_AinStatusDashboardTopComponent=Auto Ingest Nodes"})
+public final class AinStatusDashboardTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
-    public final static String PREFERRED_ID = "AutoIngestNodeStatusTopComponent"; // NON-NLS
-    private static final Logger logger = Logger.getLogger(AutoIngestNodeStatusTopComponent.class.getName());
+    public final static String PREFERRED_ID = "AinStatusDashboardTopComponent"; // NON-NLS
+    private static final Logger logger = Logger.getLogger(AinStatusDashboardTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
     @Messages({
-        "AutoIngestNodeStatusTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.",})
+        "AinStatusDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Node Status Dashboard.",})
     public static void openTopComponent(AutoIngestMonitor monitor) {
-        final AutoIngestNodeStatusTopComponent tc = (AutoIngestNodeStatusTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        final AinStatusDashboardTopComponent tc = (AinStatusDashboardTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
@@ -71,7 +69,7 @@ public final class AutoIngestNodeStatusTopComponent extends TopComponent {
                  * Create a new dashboard instance to ensure we're using the
                  * most recent configuration.
                  */
-                AutoIngestNodeStatus nodeTab = new AutoIngestNodeStatus(monitor);
+                AinStatusDashboard nodeTab = new AinStatusDashboard(monitor);
                 nodeTab.setSize(nodeTab.getPreferredSize());
                 tc.add(nodeTab);
                 tc.open();
@@ -94,7 +92,7 @@ public final class AutoIngestNodeStatusTopComponent extends TopComponent {
         }
     }
 
-    public AutoIngestNodeStatusTopComponent() {
+    public AinStatusDashboardTopComponent() {
         initComponents();
         setName(Bundle.CTL_AutoIngestNodeStatusTopComponent());
     }
