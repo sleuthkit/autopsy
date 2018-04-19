@@ -29,7 +29,7 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 
 /**
- * A panel which displays an outline view with all jobs for a specified status.
+ * A panel which displays an outline view with all auto ingest nodes and their status.
  */
 final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -39,9 +39,7 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
     private ExplorerManager explorerManager;
 
     /**
-     * Creates a new AutoIngestJobsPanel of the specified jobStatus
-     *
-     * @param jobStatus the status of the jbos to be displayed on this panel
+     * Creates a new AinStatusPanel
      */
     AinStatusPanel() {
         initComponents();
@@ -51,8 +49,8 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
     }
 
     /**
-     * Set up the AutoIngestJobsPanel's so that its outlineView is displaying
-     * the correct columns for the specified AutoIngestJobStatus
+     * Set up the AinStatusPanel's so that its outlineView is displaying
+     * the host name and the node status.
      */
     void customize() {
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AinStatusNode_hostName_title());
@@ -61,7 +59,6 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
         if (null == explorerManager) {
             explorerManager = new ExplorerManager();
         }
-
         outlineView.setPropertyColumns(
                 Bundle.AinStatusNode_status_title(), Bundle.AinStatusNode_status_title());
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

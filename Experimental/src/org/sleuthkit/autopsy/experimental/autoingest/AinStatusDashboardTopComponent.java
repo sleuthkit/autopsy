@@ -32,14 +32,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @TopComponent.Description(
         preferredID = "AinStatusDashboardTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(mode = "nodeStatus", openAtStartup = false)
 @Messages({
     "CTL_AinStatusDashboardAction=Auto Ingest Nodes",
     "CTL_AinStatusDashboardTopComponent=Auto Ingest Nodes"})
-public final class AinStatusDashboardTopComponent extends TopComponent {
+final class AinStatusDashboardTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
     public final static String PREFERRED_ID = "AinStatusDashboardTopComponent"; // NON-NLS
@@ -48,7 +47,7 @@ public final class AinStatusDashboardTopComponent extends TopComponent {
 
     @Messages({
         "AinStatusDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Node Status Dashboard.",})
-    public static void openTopComponent(AutoIngestMonitor monitor) {
+    static void openTopComponent(AutoIngestMonitor monitor) {
         final AinStatusDashboardTopComponent tc = (AinStatusDashboardTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
@@ -79,7 +78,7 @@ public final class AinStatusDashboardTopComponent extends TopComponent {
         }
     }
 
-    public static void closeTopComponent() {
+    static void closeTopComponent() {
         if (topComponentInitialized) {
             final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (tc != null) {
@@ -92,9 +91,9 @@ public final class AinStatusDashboardTopComponent extends TopComponent {
         }
     }
 
-    public AinStatusDashboardTopComponent() {
+    AinStatusDashboardTopComponent() {
         initComponents();
-        setName(Bundle.CTL_AutoIngestNodeStatusTopComponent());
+        setName(Bundle.CTL_AinStatusDashboardTopComponent());
     }
 
 

@@ -30,20 +30,20 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * A node which represents all AutoIngestJobs of a given AutoIngestJobStatus.
- * Each job with the specified status will have a child node representing it.
+ * A node which represents all AutoIngestNodes .
+ * Each AuotIngestNode will have a child node representing it and its status.
  */
 final class AinStatusNode extends AbstractNode {
 
     /**
-     * Construct a new AutoIngestJobsNode.
+     * Construct a new AinStatusNode.
      */
     AinStatusNode(AutoIngestMonitor monitor) {
         super(Children.create(new AinStatusChildren(monitor), false));
     }
 
     /**
-     * A ChildFactory for generating JobNodes.
+     * A ChildFactory for generating StatusNodes.
      */
     static class AinStatusChildren extends ChildFactory<AutoIngestJob> {
 
@@ -64,6 +64,8 @@ final class AinStatusNode extends AbstractNode {
         protected boolean createKeys(List<AutoIngestJob> list) {
             //get keys from monitor
             //add keys to List
+            //TODO replace getting of pending jobs with getting of AINs 
+            //TODO change appropriate contructors to accomidate AINs instead of AutoIngestJobs
             list.addAll(monitor.getJobsSnapshot().getPendingJobs());
             return true;
         }
@@ -76,7 +78,7 @@ final class AinStatusNode extends AbstractNode {
     }
 
     /**
-     * A node which represents a single auto ingest job.
+     * A node which represents a single AutoIngestNode and its status.
      */
     static final class StatusNode extends AbstractNode {
 
@@ -84,7 +86,7 @@ final class AinStatusNode extends AbstractNode {
         private final String status;
 
         /**
-         * Construct a new JobNode to represent an AutoIngestJob and its status.
+         * Construct a new StatusNode to represent an AutoIngestNode and its status.
          *
          * @param job - the AutoIngestJob being represented by this node
          */
