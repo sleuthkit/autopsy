@@ -33,7 +33,9 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
     /**
      * Implements the algorithm for getting common files that appear at least
      * once in the given data source.
-     * @param dataSourceId data source id for which common files must appear at least once
+     *
+     * @param dataSourceId data source id for which common files must appear at
+     * least once
      * @param dataSourceIdMap map of obj_id to data source name
      */
     SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {

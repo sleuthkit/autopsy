@@ -29,16 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.openide.util.Exceptions;
-import org.openide.util.Exceptions;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -223,21 +216,21 @@ abstract class CommonFilesMetaDataBuilder {
         "CommonFilesMetaDataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
     })
     protected abstract String buildTabTitle();
-    
+
     @NbBundle.Messages({
         "CommonFilesMetaDataBuilder.buildCategorySelectionString.doc=Documents",
         "CommonFilesMetaDataBuilder.buildCategorySelectionString.media=Media",
         "CommonFilesMetaDataBuilder.buildCategorySelectionString.all=All File Categories"
     })
-    protected String buildCategorySelectionString(){
-        if(!this.filterByDoc && !this.filterByMedia){
+    protected String buildCategorySelectionString() {
+        if (!this.filterByDoc && !this.filterByMedia) {
             return Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_all();
         } else {
-            List<String> filters = new ArrayList<String>();
-            if(this.filterByDoc){
+            List<String> filters = new ArrayList<>();
+            if (this.filterByDoc) {
                 filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_doc());
             }
-            if(this.filterByMedia){
+            if (this.filterByMedia) {
                 filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_media());
             }
             return String.join(", ", filters);

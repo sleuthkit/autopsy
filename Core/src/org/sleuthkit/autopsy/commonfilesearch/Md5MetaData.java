@@ -30,8 +30,8 @@ import java.util.Set;
  */
 final public class Md5MetaData {
     
-    private String md5;
-    private List<FileInstanceMetaData> fileInstances;
+    private final String md5;
+    private final List<FileInstanceMetaData> fileInstances;
     
     Md5MetaData(String md5, List<FileInstanceMetaData> fileInstances){
         this.md5 = md5;
@@ -55,7 +55,7 @@ final public class Md5MetaData {
     }
 
     public String getDataSources() {
-        Set<String> sources = new HashSet<String> ();
+        Set<String> sources = new HashSet<> ();
         for(FileInstanceMetaData data  : this.fileInstances){
             sources.add(data.getDataSourceName());
         }
