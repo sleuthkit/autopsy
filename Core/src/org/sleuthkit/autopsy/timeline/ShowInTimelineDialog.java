@@ -63,9 +63,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.eventtype.EventType;
 
 /**
  * A Dialog that, given an AbstractFile or BlackBoardArtifact, allows the user

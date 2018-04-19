@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -64,7 +63,6 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -82,22 +80,22 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.EventsRepository;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.eventtype.EventType;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -150,7 +148,7 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
-    private EventBus eventbus = new EventBus("TimeLineController_EventBus");
+    private final EventBus eventbus = new EventBus("TimeLineController_EventBus");
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
