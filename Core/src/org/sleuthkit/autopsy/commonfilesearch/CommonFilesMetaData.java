@@ -29,16 +29,14 @@ import java.util.Map;
 final class CommonFilesMetaData {
     
     private final Map<String, Md5MetaData> metadata;
-    private final Map<Long, String> dataSourceIdToNameMap;
 
     /**
      * Create meta dat object which can be handed off to the node factories
      * @param metadata map of md5 to parent-level node meta data
      * @param dataSourcesMap map of obj_id to data source name
      */
-    CommonFilesMetaData(Map<String, Md5MetaData> metadata, Map<Long,String> dataSourcesMap) {
+    CommonFilesMetaData(Map<String, Md5MetaData> metadata) {
         this.metadata = metadata;
-        this.dataSourceIdToNameMap = dataSourcesMap;
     }
     
     /**

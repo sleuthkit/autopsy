@@ -42,4 +42,9 @@ final class AllDataSources extends CommonFilesMetaDataBuilder {
         Object[] args = new String[] {SELECT_PREFIX, determineMimeTypeFilter()};
         return String.format(WHERE_CLAUSE, args);
     }
+
+    @Override
+    protected String buildTabTitle() {
+        return String.format(Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleAll(), new Object[]{this.buildCategorySelectionString()});
+    }
 }

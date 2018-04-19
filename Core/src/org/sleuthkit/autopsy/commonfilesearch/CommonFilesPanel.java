@@ -246,11 +246,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 CommonFilesMetaDataBuilder builder;
                 boolean filterByMedia = false;
                 boolean filterByDocuments = false;
-                if(selectedFileCategoriesButton.isSelected()) {
-                    if(pictureVideoCheckbox.isSelected()) {
+                if (selectedFileCategoriesButton.isSelected()) {
+                    if (pictureVideoCheckbox.isSelected()) {
                         filterByMedia = true;
                     }
-                     if(documentsCheckbox.isSelected()) {
+                    if (documentsCheckbox.isSelected()) {
                         filterByDocuments = true;
                     }
                 }
@@ -263,9 +263,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     setTitleForSingleSource(dataSourceId);
                 }
-                                
+                
+                this.tabTitle = builder.buildTabTitle();
+                
                 CommonFilesMetaData metaData = builder.findCommonFiles();
-
+                
                 return metaData;
             }
 
@@ -382,7 +384,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         selectDataSourceComboBox = new javax.swing.JComboBox<>();
         commonFilesSearchLabel = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
-        allRadioButton = new javax.swing.JRadioButton();
+        allFileCategoriesRadioButton = new javax.swing.JRadioButton();
         selectedFileCategoriesButton = new javax.swing.JRadioButton();
         pictureVideoCheckbox = new javax.swing.JCheckBox();
         documentsCheckbox = new javax.swing.JCheckBox();
@@ -437,14 +439,24 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         });
 
-        fileTypeFilterButtonGroup.add(allRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(allRadioButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allRadioButton.text")); // NOI18N
-        allRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allRadioButton.toolTipText")); // NOI18N
+        fileTypeFilterButtonGroup.add(allFileCategoriesRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allFileCategoriesRadioButton.text")); // NOI18N
+        allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
+        allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                allFileCategoriesRadioButtonActionPerformed(evt);
+            }
+        });
 
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
         selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
+        selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectedFileCategoriesButtonActionPerformed(evt);
+            }
+        });
 
         pictureVideoCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.pictureVideoCheckbox.text")); // NOI18N
@@ -457,28 +469,29 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(withinDataSourceRadioButton)
-                    .addComponent(allDataSourcesRadioButton)
-                    .addComponent(commonFilesSearchLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(allRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(searchButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton))
-                    .addComponent(selectedFileCategoriesButton)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
+                        .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(pictureVideoCheckbox)
-                            .addComponent(documentsCheckbox))))
+                            .addComponent(withinDataSourceRadioButton)
+                            .addComponent(allDataSourcesRadioButton)
+                            .addComponent(commonFilesSearchLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(allFileCategoriesRadioButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(searchButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cancelButton))
+                            .addComponent(selectedFileCategoriesButton)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(pictureVideoCheckbox)
+                                    .addComponent(documentsCheckbox)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(38, 38, 38)
+                        .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(38, 38, 38)
-                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(19, 19, 19))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -506,7 +519,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(documentsCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(allRadioButton)
+                        .addComponent(allFileCategoriesRadioButton)
                         .addGap(38, 38, 38))))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -538,6 +551,20 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
+        if (this.allFileCategoriesRadioButton.isSelected()) {
+            this.pictureVideoCheckbox.setEnabled(false);
+            this.documentsCheckbox.setEnabled(false);
+        }
+    }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
+
+    private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
+        if (this.selectedFileCategoriesButton.isSelected()) {
+            this.pictureVideoCheckbox.setEnabled(true);
+            this.documentsCheckbox.setEnabled(true);
+        }
+    }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
+
     private void withinDataSourceSelected(boolean selected) {
         selectDataSourceComboBox.setEnabled(selected);
         if (selectDataSourceComboBox.isEnabled()) {
@@ -548,7 +575,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allDataSourcesRadioButton;
-    private javax.swing.JRadioButton allRadioButton;
+    private javax.swing.JRadioButton allFileCategoriesRadioButton;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commonFilesSearchLabel;
     private javax.swing.ButtonGroup dataSourcesButtonGroup;

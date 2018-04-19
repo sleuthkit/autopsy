@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.HashUtility;
@@ -169,8 +170,8 @@ abstract class CommonFilesMetaDataBuilder {
                 String md5 = resultSet.getString(2);
                 Long dataSourceId = resultSet.getLong(3);
                 String dataSource = this.dataSourceIdToNameMap.get(dataSourceId);
-                
-                if(md5 == null || HashUtility.isNoDataMd5(md5)){
+
+                if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                     continue;
                 }
 
@@ -186,7 +187,7 @@ abstract class CommonFilesMetaDataBuilder {
             }
         }
 
-        return new CommonFilesMetaData(commonFiles, this.dataSourceIdToNameMap);
+        return new CommonFilesMetaData(commonFiles);
     }
 
     String determineMimeTypeFilter() {
@@ -208,5 +209,31 @@ abstract class CommonFilesMetaDataBuilder {
             mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
         }
         return mimeTypeString;
+    }
+
+    @NbBundle.Messages({
+        "CommonFilesMetaDataBuilder.buildTabTitle.titleAll=Common Files (All Data Sources, %s)",
+        "CommonFilesMetaDataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
+    })
+    protected abstract String buildTabTitle();
+    
+    @NbBundle.Messages({
+        "CommonFilesMetaDataBuilder.buildCategorySelectionString.doc=Documents",
+        "CommonFilesMetaDataBuilder.buildCategorySelectionString.media=Media",
+        "CommonFilesMetaDataBuilder.buildCategorySelectionString.all=All File Categories"
+    })
+    protected String buildCategorySelectionString(){
+        if(!this.filterByDoc && !this.filterByMedia){
+            return Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_all();
+        } else {
+            List<String> filters = new ArrayList<String>();
+            if(this.filterByDoc){
+                filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_doc());
+            }
+            if(this.filterByMedia){
+                filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_media());
+            }
+            return String.join(", ", filters);
+        }
     }
 }
