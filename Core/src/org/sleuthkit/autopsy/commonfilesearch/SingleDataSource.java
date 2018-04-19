@@ -45,4 +45,9 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
         Object[] args = new String[]{SELECT_PREFIX, Long.toString(this.selectedDataSourceId), determineMimeTypeFilter()};
         return String.format(SingleDataSource.WHERE_CLAUSE, args);
     }
+
+    @Override
+    protected String buildTabTitle() {
+        return String.format(Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleSingle(), new Object[]{this.buildCategorySelectionString()});
+    }
 }

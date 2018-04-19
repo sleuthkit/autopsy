@@ -27,34 +27,37 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
+          <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="withinDataSourceRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="allDataSourcesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="commonFilesSearchLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="allRadioButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="searchButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cancelButton" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="selectedFileCategoriesButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="pictureVideoCheckbox" min="-2" max="-2" attributes="0"/>
-                          <Component id="documentsCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="withinDataSourceRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="allDataSourcesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="commonFilesSearchLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="allFileCategoriesRadioButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="searchButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cancelButton" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="selectedFileCategoriesButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="pictureVideoCheckbox" min="-2" max="-2" attributes="0"/>
+                                  <Component id="documentsCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
                       </Group>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
+                      <Component id="selectDataSourceComboBox" min="-2" pref="261" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
-          </Group>
-          <Group type="102" alignment="0" attributes="0">
-              <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
-              <Component id="selectDataSourceComboBox" min="-2" pref="261" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -86,7 +89,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="documentsCheckbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="allRadioButton" min="-2" max="-2" attributes="0"/>
+                      <Component id="allFileCategoriesRadioButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -172,18 +175,21 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cancelButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JRadioButton" name="allRadioButton">
+    <Component class="javax.swing.JRadioButton" name="allFileCategoriesRadioButton">
       <Properties>
         <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
           <ComponentRef name="fileTypeFilterButtonGroup"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonFilesPanel.allRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonFilesPanel.allFileCategoriesRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonFilesPanel.allRadioButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonFilesPanel.allFileCategoriesRadioButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="allFileCategoriesRadioButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JRadioButton" name="selectedFileCategoriesButton">
       <Properties>
@@ -198,6 +204,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonFilesPanel.selectedFileCategoriesButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="selectedFileCategoriesButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="pictureVideoCheckbox">
       <Properties>
