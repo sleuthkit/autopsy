@@ -12,12 +12,11 @@ By default the search will match against the data in all fields which are curren
 
 Where it can be used
 -----
-- The tree view 
-- The table view 
-- The open multi-user case panel 
-- The Auto Ingest Dashboard’s tables
-- The Timeline tool’s table view
-- The Communication tool’s browse panel
-- The Communication tool’s message panel
+- The \ref tree_viewer_page "tree viewer"
+- The \ref result_viewer_page "table view" 
+- The \ref case_open "open multi-user case panel"
+- The \ref timeline_page tool’s table view
+- The \ref communications_page "Communication Visualization Tool's" browse panel
+- The \ref communications_page "Communication Visualization Tool's" message panel
 
 */
