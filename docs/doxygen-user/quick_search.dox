@@ -1,0 +1,25 @@
+/*! \page quick_search Quick Search
+
+Where it can be used
+========
+
+- The tree view (at the left of the main window)
+- The table view (in the results listing)
+- The open multi user case panel 
+- The Auto Ingest Dashboard’s three job information panels
+- The Timeline tool’s table view
+- The Communication tool’s browse panel
+- The Communication tool’s message panel
+
+How to use it
+=======
+
+In order to use the search you need to select any item in the area you wish to search, and start typing what you are searching for. If the area you have selected is a search-able area a search field will appear at the bottom of the area. As you type the string you are searching for it will auto-update to select one of the results which matches your string. You can switch between the results which match the string you have typed with the up and down keys.
+
+
+Configuration
+======
+By default the search will match against the data in all fields which are currently visible in that area. By default the search will also ignore case. If you want to change either of these default behaviors you can click the spyglass with down area icon and configure which columns will be searched as well as if the search should ignore case. The search does not support the use of regular expressions but will match against any sub-sting in the fields it searches, not just at the beginning of the field.
+
+
+*/
