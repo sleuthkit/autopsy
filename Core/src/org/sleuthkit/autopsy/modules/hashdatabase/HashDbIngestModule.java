@@ -184,10 +184,12 @@ public class HashDbIngestModule implements FileIngestModule {
         String md5Hash = file.getMd5Hash();
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
-                TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Disk: Hash Calculation (time per byte)");
+                TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Disk: Hash Calculation (time per byte nono)");
                 long calcstart = System.currentTimeMillis();
                 md5Hash = HashUtility.calculateMd5Hash(file);
-                EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, file.getSize());
+                if(file.getSize() > 0) {
+                    EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, 1);
+                }
                 file.setMd5Hash(md5Hash);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);

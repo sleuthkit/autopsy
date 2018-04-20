@@ -65,7 +65,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
     private final static String MODULE_NAME = "EnterpriseHealthMonitor";
     private final static String IS_ENABLED_KEY = "is_enabled";
-    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
     
