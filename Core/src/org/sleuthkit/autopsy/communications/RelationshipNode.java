@@ -56,14 +56,14 @@ final class RelationshipNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet s = new Sheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = new Sheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
-        ss.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
+        sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
 
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
@@ -71,42 +71,42 @@ final class RelationshipNode extends BlackboardArtifactNode {
             //Consider refactoring this to reduce boilerplate
             switch (fromID) {
                 case TSK_EMAIL_MSG:
-                    ss.put(new NodeProperty<>("From", "From", "From",
+                    sheetSet.put(new NodeProperty<>("From", "From", "From",
                             StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_FROM), " \t\n;")));
-                    ss.put(new NodeProperty<>("To", "To", "To",
+                    sheetSet.put(new NodeProperty<>("To", "To", "To",
                             StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_TO), " \t\n;")));
-                    ss.put(new NodeProperty<>("Date", "Date", "Date",
+                    sheetSet.put(new NodeProperty<>("Date", "Date", "Date",
                             getAttributeDisplayString(artifact, TSK_DATETIME_SENT)));
-                    ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
+                    sheetSet.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
                     try {
-                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
+                        sheetSet.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
                     }
 
                     break;
                 case TSK_MESSAGE:
-                    ss.put(new NodeProperty<>("From", "From", "From",
+                    sheetSet.put(new NodeProperty<>("From", "From", "From",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM)));
-                    ss.put(new NodeProperty<>("To", "To", "To",
+                    sheetSet.put(new NodeProperty<>("To", "To", "To",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO)));
-                    ss.put(new NodeProperty<>("Date", "Date", "Date",
+                    sheetSet.put(new NodeProperty<>("Date", "Date", "Date",
                             getAttributeDisplayString(artifact, TSK_DATETIME)));
-                    ss.put(new NodeProperty<>("Subject", "Subject", "Subject",
+                    sheetSet.put(new NodeProperty<>("Subject", "Subject", "Subject",
                             getAttributeDisplayString(artifact, TSK_SUBJECT)));
                     try {
-                        ss.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
+                        sheetSet.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount()));
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex);
                     }
                     break;
                 case TSK_CALLLOG:
-                    ss.put(new NodeProperty<>("From", "From", "From",
+                    sheetSet.put(new NodeProperty<>("From", "From", "From",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM)));
-                    ss.put(new NodeProperty<>("To", "To", "To",
+                    sheetSet.put(new NodeProperty<>("To", "To", "To",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO)));
-                    ss.put(new NodeProperty<>("Date", "Date", "Date",
+                    sheetSet.put(new NodeProperty<>("Date", "Date", "Date",
                             getAttributeDisplayString(artifact, TSK_DATETIME_START)));
                     break;
                 default:
@@ -114,9 +114,9 @@ final class RelationshipNode extends BlackboardArtifactNode {
             }
         }
 
-        addTagProperty(ss);
+        addTagProperty(sheetSet);
         
-        return s;
+        return sheet;
     }
 
     /**

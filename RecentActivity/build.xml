@@ -23,7 +23,7 @@
     
     <target name="get-deps" depends="init-ivy,get-thirdparty-tools">
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
-        <ivy:resolve/>
+        <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="recent-activity" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
         

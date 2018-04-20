@@ -74,11 +74,11 @@ final class AccountDeviceInstanceNode extends AbstractNode {
     @Override
     @NbBundle.Messages(value = {"AccountNode.device=Device", "AccountNode.accountName=Account", "AccountNode.accountType=Type", "AccountNode.messageCount=Msgs"})
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set properties = s.get(Sheet.PROPERTIES);
+        Sheet sheet = super.createSheet();
+        Sheet.Set properties = sheet.get(Sheet.PROPERTIES);
         if (properties == null) {
             properties = Sheet.createPropertiesSet();
-            s.put(properties);
+            sheet.put(properties);
         }
         properties.put(new NodeProperty<>("type",
                 Bundle.AccountNode_accountType(),
@@ -92,7 +92,7 @@ final class AccountDeviceInstanceNode extends AbstractNode {
                 Bundle.AccountNode_device(),
                 "device",
                 accountDeviceInstanceKey.getDataSourceName())); // NON-NLS
-        return s;
+        return sheet;
     }
 
     @Override
