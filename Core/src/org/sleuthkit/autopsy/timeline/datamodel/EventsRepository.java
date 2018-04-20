@@ -21,11 +21,11 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,16 +71,12 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.timeline.CombinedEvent;
 import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.FileSystemTypes;
+import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
-import org.sleuthkit.datamodel.timeline.eventtype.ArtifactEventType;
-import org.sleuthkit.datamodel.timeline.eventtype.EventType;
-import org.sleuthkit.datamodel.timeline.eventtype.FileSystemType;
-import org.sleuthkit.datamodel.timeline.eventtype.RootEventType;
-import org.sleuthkit.datamodel.timeline.eventtype.WebType;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
@@ -446,6 +442,10 @@ public class EventsRepository {
         return dbWorker;
     }
 
+    ImmutableList<EventType> getEventTypes() {
+        return eventManager.getEventTypes();
+    }
+
     private enum DBPopulationMode {
 
         FULL,
@@ -547,7 +547,7 @@ public class EventsRepository {
 //                eventManager.reInitializeDB();
                 //grab ids of all files
                 List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"
-                        + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
+                                                                + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
                 final int numFiles = fileIDs.size();
 
                 insertMACTimeEvents(numFiles, fileIDs);
@@ -650,11 +650,11 @@ public class EventsRepository {
 
         private void insertEventsForFile(AbstractFile f) throws TskCoreException {
             //gather time stamps into map
-            HashMap<FileSystemType, Long> timeMap = new HashMap<>();
-            timeMap.put(FileSystemType.FILE_CREATED, f.getCrtime());
-            timeMap.put(FileSystemType.FILE_ACCESSED, f.getAtime());
-            timeMap.put(FileSystemType.FILE_CHANGED, f.getCtime());
-            timeMap.put(FileSystemType.FILE_MODIFIED, f.getMtime());
+            HashMap<EventType, Long> timeMap = new HashMap<>();
+            timeMap.put(EventType.FILE_CREATED, f.getCrtime());
+            timeMap.put(EventType.FILE_ACCESSED, f.getAtime());
+            timeMap.put(EventType.FILE_CHANGED, f.getCtime());
+            timeMap.put(EventType.FILE_MODIFIED, f.getMtime());
 
             /*
              * if there are no legitimate ( greater than zero ) time stamps (
@@ -677,7 +677,7 @@ public class EventsRepository {
                 Set<String> hashSets = f.getHashSetNames();
                 List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
 
-                for (Map.Entry<FileSystemType, Long> timeEntry : timeMap.entrySet()) {
+                for (Map.Entry<EventType, Long> timeEntry : timeMap.entrySet()) {
                     if (timeEntry.getValue() > 0) {
                         // if the time is legitimate ( greater than zero ) insert it
                         eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
@@ -690,14 +690,14 @@ public class EventsRepository {
 
         @Override
         @NbBundle.Messages("msgdlg.problem.text=There was a problem populating the timeline."
-                + "  Not all events may be present or accurate.")
+                           + "  Not all events may be present or accurate.")
         protected void done() {
             super.done();
             try {
                 get();
             } catch (CancellationException ex) {
                 logger.log(Level.WARNING, "Timeline database population was cancelled by the user. " //NON-NLS
-                        + " Not all events may be present or accurate."); // NON-NLS
+                                          + " Not all events may be present or accurate."); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.msgdlg_problem_text());

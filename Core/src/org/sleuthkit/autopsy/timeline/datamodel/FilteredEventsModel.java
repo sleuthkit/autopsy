@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.datamodel;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,8 +62,7 @@ import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
-import org.sleuthkit.datamodel.timeline.eventtype.EventType;
-import org.sleuthkit.datamodel.timeline.eventtype.RootEventType;
+import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.datamodel.timeline.filters.Filter;
@@ -83,8 +83,8 @@ import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
  * This class is implemented as a filtered view into an underlying
  * EventsRepository.
  *
- * Maintainers, NOTE: as many methods as possible should cache their results
- * so as to avoid unnecessary db calls through the EventsRepository -jm
+ * Maintainers, NOTE: as many methods as possible should cache their results so
+ * as to avoid unnecessary db calls through the EventsRepository -jm
  *
  * Concurrency Policy: repo is internally synchronized, so methods that only
  * access the repo atomically do not need further synchronization
@@ -258,7 +258,7 @@ public final class FilteredEventsModel {
             tagNameFilter.setSelected(true);
             tagsFilter.addSubFilter(tagNameFilter);
         });
-        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(RootEventType.getInstance()), dataSourcesFilter, Collections.emptySet());
+        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(EventType.ROOT_EVEN_TYPE), dataSourcesFilter, Collections.emptySet());
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone tz) throws TskCoreException {
@@ -539,4 +539,7 @@ public final class FilteredEventsModel {
         eventbus.post(event);
     }
 
+    public ImmutableList<EventType> getEventTypes() {
+        return repo.getEventTypes();
+    }
 }

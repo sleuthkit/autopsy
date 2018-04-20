@@ -1,59 +1,99 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.eventtype;
 
+import java.util.HashMap;
+import java.util.Map;
 import javafx.scene.image.Image;
-import org.sleuthkit.datamodel.timeline.eventtype.BaseType;
-import org.sleuthkit.datamodel.timeline.eventtype.EventType;
-import org.sleuthkit.datamodel.timeline.eventtype.FileSystemType;
-import org.sleuthkit.datamodel.timeline.eventtype.RootEventType;
-import org.sleuthkit.datamodel.timeline.eventtype.WebType;
+import javafx.scene.paint.Color;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  *
  */
-public class EventTypeUtils {
+final public class EventTypeUtils {
 
     static final private String IMAGE_BASE_PATH = "/org/sleuthkit/autopsy/timeline/images/";
+    static private final Map<EventType, Image> imageMap = new HashMap<>();
 
-    Image getImage(EventType type) {
+    public static Image getImage(EventType type) {
+        return imageMap.computeIfAbsent(type, type2 -> new Image(getImagePath(type2)));
+    }
+
+    public static String getImagePath(EventType type) {
         int typeID = type.getTypeID();
-        String imagePath;
-        if (typeID == BaseType.FILE_SYSTEM.getTypeID()) {
-            imagePath = "blue-document.png";
-        } else if (typeID == BaseType.MISC_TYPES.getTypeID()) {
-            imagePath = "block.png";
-        } else if (typeID == BaseType.WEB_ACTIVITY.getTypeID()) {
-            imagePath = "web-file.png";
-        } else if (typeID == BaseType.MISC_TYPES.getTypeID()) {
-            imagePath = "block.png";
-        } else if (typeID == FileSystemType.FILE_ACCESSED.getTypeID()) {
-            imagePath = "blue-document-attribute-a.png";
-        } else if (typeID == FileSystemType.FILE_CHANGED.getTypeID()) {
-            imagePath = "blue-document-attribute-c.png";
-        } else if (typeID == FileSystemType.FILE_MODIFIED.getTypeID()) {
-            imagePath = "blue-document-attribute-m.png";
-        } else if (typeID == FileSystemType.FILE_CREATED.getTypeID()) {
-            imagePath = "blue-document-attribute-b.png";
-        } else if (typeID == WebType.WEB_DOWNLOADS.getTypeID()) {
-            imagePath = "downloads.png";
-        } else if (typeID == WebType.WEB_COOKIE.getTypeID()) {
-            imagePath = "cookies.png";
-        } else if (typeID == WebType.WEB_BOOKMARK.getTypeID()) {
-            imagePath = "bookmarks.png";
-        } else if (typeID == WebType.WEB_HISTORY.getTypeID()) {
-            imagePath = "history.png";
-        } else if (typeID == WebType.WEB_SEARCH.getTypeID()) {
-            imagePath = "searchquery.png";
-
+        String imageFileName;
+        if (typeID == EventType.FILE_SYSTEM.getTypeID()) {
+            imageFileName = "blue-document.png";
+        } else if (typeID == EventType.MISC_TYPES.getTypeID()) {
+            imageFileName = "block.png";
+        } else if (typeID == EventType.WEB_ACTIVITY.getTypeID()) {
+            imageFileName = "web-file.png";
+        } else if (typeID == EventType.MISC_TYPES.getTypeID()) {
+            imageFileName = "block.png";
+        } else if (typeID == EventType.FILE_ACCESSED.getTypeID()) {
+            imageFileName = "blue-document-attribute-a.png";
+        } else if (typeID == EventType.FILE_CHANGED.getTypeID()) {
+            imageFileName = "blue-document-attribute-c.png";
+        } else if (typeID == EventType.FILE_MODIFIED.getTypeID()) {
+            imageFileName = "blue-document-attribute-m.png";
+        } else if (typeID == EventType.FILE_CREATED.getTypeID()) {
+            imageFileName = "blue-document-attribute-b.png";
+        } else if (typeID == EventType.WEB_DOWNLOADS.getTypeID()) {
+            imageFileName = "downloads.png";
+        } else if (typeID == EventType.WEB_COOKIE.getTypeID()) {
+            imageFileName = "cookies.png";
+        } else if (typeID == EventType.WEB_BOOKMARK.getTypeID()) {
+            imageFileName = "bookmarks.png";
+        } else if (typeID == EventType.WEB_HISTORY.getTypeID()) {
+            imageFileName = "history.png";
+        } else if (typeID == EventType.WEB_SEARCH.getTypeID()) {
+            imageFileName = "searchquery.png";
+        } else if (typeID == EventType.CALL_LOG.getTypeID()) {
+            imageFileName = "calllog.png";
+        } else if (typeID == EventType.DEVICES_ATTACHED.getTypeID()) {
+            imageFileName = "usb_devices.png";
+        } else if (typeID == EventType.EMAIL.getTypeID()) {
+            imageFileName = "mail-icon-16.png";
+        } else if (typeID == EventType.EXIF.getTypeID()) {
+            imageFileName = "camera-icon-16.png";
+        } else if (typeID == EventType.GPS_ROUTE.getTypeID()) {
+            imageFileName = "gps-search.png";
+        } else if (typeID == EventType.GPS_TRACKPOINT.getTypeID()) {
+            imageFileName = "gps-trackpoint.png";
+        } else if (typeID == EventType.INSTALLED_PROGRAM.getTypeID()) {
+            imageFileName = "programs.png";
+        } else if (typeID == EventType.MESSAGE.getTypeID()) {
+            imageFileName = "message.png";
+        } else if (typeID == EventType.RECENT_DOCUMENTS.getTypeID()) {
+            imageFileName = "recent_docs.png";
         } else {
-            imagePath = "default";
+            imageFileName = "timeline_marker.png";
         }
 
-        return new Image(EventTypeUtils.class
-                .getResourceAsStream(IMAGE_BASE_PATH
-                        + imagePath));
+        return IMAGE_BASE_PATH + imageFileName;
     }
+
+    public static Color getColor(EventType superType) {
+        return new Color(superType.getTypeID(), superType.getSuperType().getTypeID(), 0, 0);
+    }
+
+    private EventTypeUtils() {
+    }
+}

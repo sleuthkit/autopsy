@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getImage;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
@@ -58,7 +59,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
     SingleEventNode(DetailsChartLane<?> chart, SingleEvent event, MultiEventNodeBase<?, ?, ?> parent) {
         super(event, parent, chart);
         this.descrLabel.setText(event.getFullDescription());
-        eventTypeImageView.setImage(getEventType().getFXImage());
+        eventTypeImageView.setImage(getImage(getEventType()));
         descrLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
         descrLabel.setGraphic(eventTypeImageView);
         descrLabel.setPrefWidth(USE_COMPUTED_SIZE);

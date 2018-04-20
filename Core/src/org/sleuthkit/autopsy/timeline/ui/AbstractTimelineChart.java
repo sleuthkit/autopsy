@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.timeline.EventType;
  */
 public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartType extends Region & TimeLineChart<X>> extends AbstractTimeLineView {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractTimelineChart.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractTimelineChart.class.getName());
 
     @NbBundle.Messages("AbstractTimelineChart.defaultTooltip.text=Drag the mouse to select a time interval to zoom into.\nRight-click for more actions.")
     private static final Tooltip DEFAULT_TOOLTIP = new Tooltip(Bundle.AbstractTimelineChart_defaultTooltip_text());
@@ -229,7 +229,8 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Make a series for each event type in a consistent order.
      */
     protected final void createSeries() {
-        for (EventType eventType : EventType.allTypes) {
+      ;
+        for (EventType eventType :   getController().getEventsModel().getEventTypes()) {
             XYChart.Series<X, Y> series = new XYChart.Series<>();
             series.setName(eventType.getDisplayName());
             eventTypeToSeriesMap.put(eventType, series);

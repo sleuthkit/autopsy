@@ -78,6 +78,8 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
+import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
@@ -142,7 +144,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
         sleuthkitCase = chartLane.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chartLane.getController().getEventsModel();
-        eventTypeImageView.setImage(getEventType().getFXImage());
+        eventTypeImageView.setImage(new Image(getImagePath(getEventType())));
 
         if (tlEvent.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
@@ -153,9 +155,9 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
 
         if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
-            evtColor = getEventType().getColor();
+            evtColor = getColor(getEventType());
         } else {
-            evtColor = getEventType().getBaseType().getColor();
+            evtColor = getColor(getEventType().getBaseType());
         }
         SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
 
@@ -218,6 +220,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         setBorder(applied ? SELECTION_BORDER : null);
     }
 
+    @Override
     protected void layoutChildren() {
         super.layoutChildren();
     }
@@ -237,7 +240,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     final void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(-10, eventType.getColor()));
+                eventType -> new DropShadow(-10, getColor(eventType)));
         setEffect(showControls ? dropShadow : null);
         installTooltip();
         enableTooltip(showControls);
@@ -463,8 +466,8 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     void showFullDescription(final int size) {
         countLabel.setText((size == 1) ? "" : " (" + size + ")"); // NON-NLS
-        String description = getParentNode().map(pNode ->
-                "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
+        String description = getParentNode().map(pNode
+                -> "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
                 .orElseGet(getEvent()::getDescription);
 
         descrLabel.setText(description);

@@ -37,6 +37,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -53,13 +54,15 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
+import org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils;
+import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
- * Shows all EventBundles from the assigned DetailViewPane in a
- * tree organized by type and then description. Hidden bundles are shown grayed
- * out. Right clicking on a item in the tree shows a context menu to show/hide
- * it.
+ * Shows all EventBundles from the assigned DetailViewPane in a tree organized
+ * by type and then description. Hidden bundles are shown grayed out. Right
+ * clicking on a item in the tree shows a context menu to show/hide it.
  */
 final public class EventsTree extends BorderPane {
 
@@ -178,7 +181,7 @@ final public class EventsTree extends BorderPane {
                 setText(text);
                 setTooltip(new Tooltip(text));
 
-                imageView.setImage(treeItem.getEventType().getFXImage());
+                imageView.setImage(new Image(getImagePath(treeItem.getEventType())));
                 setGraphic(new StackPane(rect, imageView));
                 updateHiddenState(treeItem);
                 deRegisterListeners(controller.getQuickHideFilters());
@@ -230,17 +233,18 @@ final public class EventsTree extends BorderPane {
             hidden.set(event != null && controller.getQuickHideFilters().stream().
                     filter(DescriptionFilter::isActive)
                     .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getDescription(), event.getDescription())));
+            Color color = getColor(treeItem.getEventType());
             if (hidden.get()) {
                 treeItem.setExpanded(false);
                 setTextFill(Color.gray(0, HIDDEN_MULTIPLIER));
                 imageView.setOpacity(HIDDEN_MULTIPLIER);
-                rect.setStroke(treeItem.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
-                rect.setFill(treeItem.getEventType().getColor().deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
+                rect.setStroke(color.deriveColor(0, HIDDEN_MULTIPLIER, 1, HIDDEN_MULTIPLIER));
+                rect.setFill(color.deriveColor(0, HIDDEN_MULTIPLIER, HIDDEN_MULTIPLIER, 0.1));
             } else {
                 setTextFill(Color.BLACK);
                 imageView.setOpacity(1);
-                rect.setStroke(treeItem.getEventType().getColor());
-                rect.setFill(treeItem.getEventType().getColor().deriveColor(0, 1, 1, 0.1));
+                rect.setStroke(color);
+                rect.setFill(color.deriveColor(0, 1, 1, 0.1));
             }
         }
     }
