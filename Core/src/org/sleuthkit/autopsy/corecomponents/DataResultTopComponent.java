@@ -78,7 +78,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      */
     public DataResultTopComponent(boolean isMain, String title) {
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
-        this.dataResultPanel = new DataResultPanel(title, isMain);
+        this.dataResultPanel = new DataResultPanel(title, isMain, Collections.emptyList(), null);
         initComponents();
         customizeComponent(isMain, title);
     }
@@ -96,7 +96,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         this.customModeName = mode;
-        dataResultPanel = new DataResultPanel(name, customContentViewer);
+        this.dataResultPanel = new DataResultPanel(name, false, Collections.emptyList(), customContentViewer);
         initComponents();
         customizeComponent(isMain, name);
     }
@@ -129,7 +129,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      *                      uninitialized instance
      */
     public static void initInstance(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
-        newDataResult.setNumMatches(totalMatches);
+        newDataResult.setNumberOfChildNodes(totalMatches);
 
         newDataResult.open(); // open it first so the component can be initialized
 
@@ -357,17 +357,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         return (!this.isMain) || openCase.hasData() == false;
     }
 
-    /**
-     * Resets the tabs based on the selected Node. If the selected node is null
-     * or not supported, disable that tab as well.
-     *
-     * @param selectedNode the selected content Node
-     */
-    public void resetTabs(Node selectedNode) {
-
-        dataResultPanel.resetTabs(selectedNode);
-    }
-
     public void setSelectedNodes(Node[] selected) {
         dataResultPanel.setSelectedNodes(selected);
     }
@@ -376,7 +365,21 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         return dataResultPanel.getRootNode();
     }
 
-    void setNumMatches(int matches) {
-        this.dataResultPanel.setNumMatches(matches);
+
+    void setNumberOfChildNodes(int matches) {
+        this.dataResultPanel.setNumberOfChildNodes(matches);
     }
+
+    /**
+     * Resets the tabs based on the selected Node. If the selected node is null
+     * or not supported, disable that tab as well.
+     *
+     * @param selectedNode the selected content Node
+     * @deprecated Use setNode instead.
+     */
+    @Deprecated
+    public void resetTabs(Node selectedNode) {
+        dataResultPanel.setNode(selectedNode);
+    }
+
 }

@@ -82,6 +82,16 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private final PageUpdater pageUpdater = new PageUpdater();
     private TableFilterNode tfn;
     private ThumbnailViewChildren tvc;
+    private NodeSelectionListener selectionListener;
+
+    /**
+     * Constructs a thumbnail viewer for the results view, with paging support,
+     * that is NOT compatible with node multiple selection actions.
+     */
+    public DataResultViewerThumbnail() {
+        super();
+        initialize();
+    }
 
     /**
      * Constructs a thumbnail viewer for the results view, with paging support,
@@ -94,14 +104,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         initialize();
     }
 
-    /**
-     * Constructs a thumbnail viewer for the results view, with paging support,
-     * that is NOT compatible with node multiple selection actions.
-     */
-    public DataResultViewerThumbnail() {
-        initialize();
-    }
-
     @NbBundle.Messages({"DataResultViewerThumbnail.thumbnailSizeComboBox.small=Small Thumbnails",
         "DataResultViewerThumbnail.thumbnailSizeComboBox.medium=Medium Thumbnails",
         "DataResultViewerThumbnail.thumbnailSizeComboBox.large=Large Thumbnails"
@@ -109,7 +111,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        this.getExplorerManager().addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
+//        this.getExplorerManager().addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
                 new String[]{Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
                     Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
@@ -301,8 +303,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             Node root = this.getExplorerManager().getRootContext();
             ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(thumbSize);
 
-           
-
             // Temporarily set the explored context to the root, instead of a child node.
             // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
             // update even though the new and old Node values are identical. This in turn
@@ -380,6 +380,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        if (selectionListener == null) {
+            this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener()); // RJCTODO: remove listener on cleanup
+        }
         if (tvc != null) {
             tvc.cancelLoadingThumbnails();
         }
@@ -391,7 +394,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                tvc = new ThumbnailViewChildren(givenNode,thumbSize);
+                tvc = new ThumbnailViewChildren(givenNode, thumbSize);
                 final Node root = new AbstractNode(tvc);
 
                 pageUpdater.setRoot(root);
@@ -506,8 +509,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d =
-                            new NotifyDescriptor.Message(
+                    NotifyDescriptor d
+                            = new NotifyDescriptor.Message(
                                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
                                             ex.getMessage()),
                                     NotifyDescriptor.ERROR_MESSAGE);
@@ -642,7 +645,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
     }
 
-    private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+    private class NodeSelectionListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {

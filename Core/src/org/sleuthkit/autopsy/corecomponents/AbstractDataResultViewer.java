@@ -30,26 +30,34 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * This class provides a default implementation of selected methods of the
- * DataResultViewer interface. Derived classes will be Swing JPanel objects.
- * Additionally, the ExplorerManager.Provider interface is implemented to supply
- * an ExplorerManager to derived classes and their child components.
+ * Provides a JPanel base class that provides a default implementation of the
+ * ExplorerManager.Provider interface and selected methods of
+ * theDataResultViewer interface. The ExplorerManager.Provider interface is
+ * implemented to supply an explorer manager to subclasses and their child
+ * components. The explorer manager is expected to be the explorer manager of a
+ * top component that exposes a lookup maintained by the explorer manager to the
+ * actions global context. This connects the nodes displayed in the result
+ * viewer to the actions global context. The explorer manager may be either
+ * supplied during construction or discovered at runtime.
  */
 abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     private transient ExplorerManager explorerManager;
 
-    AbstractDataResultViewer() {
-    }    
-    
     /**
-     * This constructor is intended to allow an AbstractDataResultViewer to use
-     * an ExplorerManager provided by a TopComponent, allowing Node selections
-     * to be available to Actions via the action global context lookup when the
-     * TopComponent has focus. The ExplorerManager must be present when the
-     * object is constructed so that its child components can discover it using
-     * the ExplorerManager.find() method.
+     * Constructs a JPanel base class instance that provides a default
+     * implementation of selected methods of the DataResultViewer and
+     * ExplorerManager.Provider interfaces. The explorer manager of this viewer
+     * will be discovered at runtime.
+     */
+    AbstractDataResultViewer() {
+    }
+
+    /**
+     * Constructs a JPanel base class instance that provides a default
+     * implementation of selected methods of the DataResultViewer and
+     * ExplorerManager.Provider interfaces.
      *
      * @param explorerManager
      */
@@ -95,4 +103,5 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
     @Override
     public void setContentViewer(DataContent contentViewer) {
     }
+
 }

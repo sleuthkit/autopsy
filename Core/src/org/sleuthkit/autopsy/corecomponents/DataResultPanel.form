@@ -25,13 +25,13 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <Component id="directoryTablePath" min="-2" max="-2" attributes="0"/>
+              <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
-              <Component id="numberMatchLabel" min="-2" max="-2" attributes="0"/>
+              <Component id="numberOfChildNodesLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="matchLabel" min="-2" max="-2" attributes="0"/>
           </Group>
-          <Component id="dataResultTabbedPanel" max="32767" attributes="0"/>
+          <Component id="resultViewerTabs" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -39,32 +39,32 @@
           <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                      <Component id="numberMatchLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="numberOfChildNodesLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="matchLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="directoryTablePath" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="descriptionLabel" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-              <Component id="dataResultTabbedPanel" max="32767" attributes="0"/>
+              <Component id="resultViewerTabs" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="directoryTablePath">
+    <Component class="javax.swing.JLabel" name="descriptionLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataResultPanel.directoryTablePath.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataResultPanel.descriptionLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[5, 14]"/>
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="numberMatchLabel">
+    <Component class="javax.swing.JLabel" name="numberOfChildNodesLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataResultPanel.numberMatchLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataResultPanel.numberOfChildNodesLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -75,7 +75,7 @@
         </Property>
       </Properties>
     </Component>
-    <Container class="javax.swing.JTabbedPane" name="dataResultTabbedPanel">
+    <Container class="javax.swing.JTabbedPane" name="resultViewerTabs">
       <Properties>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[0, 5]"/>

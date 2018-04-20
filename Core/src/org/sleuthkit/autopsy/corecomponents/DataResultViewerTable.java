@@ -119,6 +119,12 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         initialize();
     }
 
+//    @Override
+//    public void addNotify() {
+//        super.addNotify();
+//        initialize();
+//    }
+
     /*
      * Initializes this tabular results viewer.
      */
@@ -802,8 +808,8 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
             }
             return component;
         }
-    }    
-    
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
