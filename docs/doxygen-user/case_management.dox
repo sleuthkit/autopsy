@@ -34,7 +34,7 @@ To open a case, either:
 
 "Open Recent Case" will always bring up a screen allowing you to select one of the recently opened cases. "Open Case" will do one of two things;
 - If multi-user cases are not enabled, it will bring up a file chooser that can be used to browse to the ".aut" file in the case directory of the desired case
-- If multi-user case are enabled, it will bring up the multi-user case selection screen. This uses the coordination services to find a list of multi-user cases. If needed, the "Open Single-User Case" button can be used to bring up the normal file chooser. The multi-user case selection screen has a \ref quick_search feature which can be used to quickly find a case in the table. The following shows the multi-user case selection screen:
+- If multi-user cases are enabled, it will bring up the multi-user case selection screen. This uses the coordination services to find a list of multi-user cases. If needed, the "Open Single-User Case" button can be used to bring up the normal file chooser. The multi-user case selection screen has a \ref quick_search feature which can be used to quickly find a case in the table. The following shows the multi-user case selection screen:
 
 \image html multi_user_case_select.png
 
