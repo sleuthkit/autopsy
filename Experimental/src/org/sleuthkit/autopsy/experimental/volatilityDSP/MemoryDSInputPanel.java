@@ -203,7 +203,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         PluginsToRunLabel = new javax.swing.JLabel();
         listsScrollPane = new javax.swing.JScrollPane();
         pluginTable = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
+        profileLabel = new javax.swing.JLabel();
         profileComboBox = new javax.swing.JComboBox<>();
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.text")); // NOI18N
@@ -244,7 +244,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         ));
         listsScrollPane.setViewportView(pluginTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(profileLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.profileLabel.text")); // NOI18N
 
         profileComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -276,7 +276,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(errorLabel)
                     .addComponent(PluginsToRunLabel)
-                    .addComponent(jLabel1))
+                    .addComponent(profileLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -295,7 +295,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                 .addComponent(errorLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(profileLabel)
                     .addComponent(profileComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -335,12 +335,12 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.ButtonGroup infileTypeButtonGroup;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane listsScrollPane;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JTable pluginTable;
     private javax.swing.JComboBox<String> profileComboBox;
+    private javax.swing.JLabel profileLabel;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables

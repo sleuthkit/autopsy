@@ -46,7 +46,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="errorLabel" min="-2" max="-2" attributes="0"/>
                   <Component id="PluginsToRunLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="profileLabel" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -70,7 +70,7 @@
               <Component id="errorLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="profileLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="profileComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -173,10 +173,10 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JLabel" name="jLabel1">
+    <Component class="javax.swing.JLabel" name="profileLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/volatilityDSP/Bundle.properties" key="MemoryDSInputPanel.jLabel1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/volatilityDSP/Bundle.properties" key="MemoryDSInputPanel.profileLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
