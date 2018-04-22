@@ -193,7 +193,7 @@ class VolatilityProcessor {
         commandLine.add("\"" + executableFile + "\""); //NON-NLS
         File memoryImage = new File(memoryImagePath);
         commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
-        if (profile.isEmpty() == false) {
+        if (!profile.isEmpty()) {
             commandLine.add("--profile=" + profile); //NON-NLS
         }
         commandLine.add(pluginToRun);
