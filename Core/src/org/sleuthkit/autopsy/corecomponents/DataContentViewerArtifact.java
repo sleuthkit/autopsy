@@ -474,7 +474,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         // file and not more details about the artifact
         if ((artifact == null)
                 || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())) {        
             return 3;
         } else {
             return 6;
