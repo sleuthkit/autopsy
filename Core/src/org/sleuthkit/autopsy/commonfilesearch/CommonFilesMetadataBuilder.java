@@ -50,7 +50,7 @@ abstract class CommonFilesMetadataBuilder {
     private final Map<Long, String> dataSourceIdToNameMap;
     private final boolean filterByMedia;
     private final boolean filterByDoc;
-    private final String filterByMimeTypesWhereClause = " and mime_type in (%s)"; // where %s is csv list of mime_types to filter on
+    private final String filterByMimeTypesWhereClause = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     /*
      * The set of the MIME types that will be checked for extension mismatches
