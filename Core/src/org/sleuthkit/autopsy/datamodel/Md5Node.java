@@ -31,7 +31,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel;
 import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -47,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Md5Node extends DisplayableItemNode {
     
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());    
+    private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());    
     
     private final String md5Hash;
     private final int commonFileCount;
