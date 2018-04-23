@@ -149,7 +149,6 @@ public class Md5Node extends DisplayableItemNode {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
             }
-            //TODO smells bad...do something?
             return null;
         }
 
