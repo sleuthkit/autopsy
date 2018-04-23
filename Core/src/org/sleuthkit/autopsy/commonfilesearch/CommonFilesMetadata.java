@@ -57,6 +57,10 @@ final class CommonFilesMetadata {
         return Collections.unmodifiableMap(this.metadata);
     }
 
+    /**
+     * How many distinct file instances exist for this metadata?
+     * @return number of file instances
+     */
     int size() {
         int count = 0;
         for (Md5Metadata data : this.metadata.values()) {
