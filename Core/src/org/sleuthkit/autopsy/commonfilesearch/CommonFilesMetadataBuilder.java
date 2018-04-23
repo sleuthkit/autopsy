@@ -60,29 +60,29 @@ abstract class CommonFilesMetadataBuilder {
      * ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf"
      */
     private static final Set<String> MEDIA_PICS_VIDEO_MIME_TYPES = Stream.of(
-            "image/bmp",
-            "image/gif",
-            "image/jpeg",
-            "image/png",
-            "image/tiff",
-            "image/vnd.adobe.photoshop",
-            "image/x-raw-nikon",
-            "image/x-ms-bmp",
-            "image/x-icon",
-            "video/webm",
-            "video/3gpp",
-            "video/3gpp2",
-            "video/ogg",
-            "video/mpeg",
-            "video/mp4",
-            "video/quicktime",
-            "video/x-msvideo",
-            "video/x-flv",
-            "video/x-m4v",
-            "video/x-ms-wmv",
-            "application/vnd.ms-asf",
-            "application/vnd.rn-realmedia",
-            "application/x-shockwave-flash"
+            "image/bmp", //NON-NLS
+            "image/gif", //NON-NLS
+            "image/jpeg", //NON-NLS
+            "image/png", //NON-NLS
+            "image/tiff", //NON-NLS
+            "image/vnd.adobe.photoshop", //NON-NLS
+            "image/x-raw-nikon", //NON-NLS
+            "image/x-ms-bmp", //NON-NLS
+            "image/x-icon", //NON-NLS
+            "video/webm", //NON-NLS
+            "video/3gpp", //NON-NLS
+            "video/3gpp2", //NON-NLS
+            "video/ogg", //NON-NLS
+            "video/mpeg", //NON-NLS
+            "video/mp4", //NON-NLS
+            "video/quicktime", //NON-NLS
+            "video/x-msvideo", //NON-NLS
+            "video/x-flv", //NON-NLS
+            "video/x-m4v", //NON-NLS
+            "video/x-ms-wmv", //NON-NLS
+            "application/vnd.ms-asf", //NON-NLS
+            "application/vnd.rn-realmedia", //NON-NLS
+            "application/x-shockwave-flash" //NON-NLS
     ).collect(Collectors.toSet());
 
     /*
@@ -94,35 +94,37 @@ abstract class CommonFilesMetadataBuilder {
      * ".pdf"
      */
     private static final Set<String> TEXT_FILES_MIME_TYPES = Stream.of(
-            "text/plain",
-            "application/rtf",
-            "application/pdf",
-            "text/css",
-            "text/html",
-            "text/csv",
-            "application/json",
-            "application/javascript",
-            "application/xml",
-            "text/calendar",
-            "application/x-msoffice",
-            "application/x-ooxml",
+            "text/plain", //NON-NLS
+            "application/rtf", //NON-NLS
+            "application/pdf", //NON-NLS
+            "text/css", //NON-NLS
+            "text/html", //NON-NLS
+            "text/csv", //NON-NLS
+            "application/json", //NON-NLS
+            "application/javascript", //NON-NLS
+            "application/xml", //NON-NLS
+            "text/calendar", //NON-NLS
+            "application/x-msoffice", //NON-NLS
+            "application/x-ooxml", //NON-NLS
             "application/msword", //NON-NLS
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
             "application/vnd.ms-powerpoint", //NON-NLS
             "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
             "application/vnd.ms-excel", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.oasis.opendocument.presentation",
-            "application/vnd.oasis.opendocument.spreadsheet",
-            "application/vnd.oasis.opendocument.text"//NON-NLS
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
+            "application/vnd.oasis.opendocument.presentation", //NON-NLS
+            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
+            "application/vnd.oasis.opendocument.text" //NON-NLS
     ).collect(Collectors.toSet());
 
-        /**
+    /**
      * Subclass this to implement different algorithms for getting common files.
      *
      * @param dataSourceIdMap a map of obj_id to datasource name
-     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
-     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
+     * @param filterByMediaMimeType match only on files whose mime types can be
+     * broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be
+     * broadly categorized as document types
      */
     CommonFilesMetadataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         dataSourceIdToNameMap = dataSourceIdMap;
@@ -139,7 +141,7 @@ abstract class CommonFilesMetadataBuilder {
      * selected below, in that order.</li>
      * </ul>
      */
-    static final String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where";
+    static final String SELECT_PREFIX = "SELECT obj_id, md5, data_source_obj_id from tsk_files where"; //NON-NLS
 
     /**
      * Should build a SQL SELECT statement to be passed to

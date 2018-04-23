@@ -26,7 +26,7 @@ import java.util.Map;
  */
 final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
 
-    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5"; //NON-NLS
 
     /**
      * Implements the algorithm for getting common files across all data
