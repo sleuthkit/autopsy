@@ -26,12 +26,14 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
+import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -41,7 +43,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * A dashboard for monitoring an automated ingest cluster.
  */
 final class AutoIngestDashboard extends JPanel implements Observer {
-
+    
+    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
+    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
@@ -222,7 +226,13 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
         autoIngestMonitor = new AutoIngestMonitor();
         autoIngestMonitor.addObserver(this);
-        autoIngestMonitor.startUp();
+        new Thread(() -> {
+            try {
+                autoIngestMonitor.startUp();
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
+            }
+        }).start();
     }
 
     @Override
@@ -273,6 +283,11 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             super(message, cause);
         }
 
+    }
+
+    static boolean isAdminAutoIngestDashboard() {
+        File f = new File(ADMIN_ACCESS_FILE_PATH);
+        return f.exists();
     }
 
     /**

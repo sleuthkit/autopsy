@@ -65,9 +65,15 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * Set up the AutoIngestJobsPanel's so that its outlineView is displaying
      * the correct columns for the specified AutoIngestJobStatus
      */
-    @Messages({"AutoIngestJobsPanel.waitNode.text=Please wait..."})
+    @Messages({"AutoIngestJobsPanel.waitNode.text=Please Wait..."})
     void customize() {
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AutoIngestJobsNode_caseName_text());
+        outline.setRowSelectionAllowed(false); //rows will be made selectable after table has been populated
+        outline.setFocusable(false);  //table will be made focusable after table has been populated
+        if (null == explorerManager) {
+            explorerManager = new ExplorerManager();
+        }
+        explorerManager.setRootContext(new EmptyNode(Bundle.AutoIngestJobsPanel_waitNode_text()));
         int indexOfColumn;
         switch (status) {
             case PENDING_JOB:
@@ -116,14 +122,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         if (indexOfColumn != INVALID_INDEX) {
             outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_DATASOURCE_WIDTH);
         }
-        if (null == explorerManager) {
-            explorerManager = new ExplorerManager();
-
-        }
-        outline.setRowSelectionAllowed(false);
         add(outlineView, java.awt.BorderLayout.CENTER);
-        EmptyNode emptyNode = new EmptyNode(Bundle.AutoIngestJobsPanel_waitNode_text());
-        explorerManager.setRootContext(emptyNode);
     }
 
     private int getColumnIndexByName(String columnName) {
@@ -170,14 +169,15 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             Node[] selectedNodes = explorerManager.getSelectedNodes();
             AutoIngestJobsNode autoIngestNode = new AutoIngestJobsNode(jobsSnapshot, status);
             explorerManager.setRootContext(autoIngestNode);
-            outline.setRowSelectionAllowed(true);
-            if (selectedNodes.length > 0) {
+            outline.setRowSelectionAllowed(true);     
+            if (selectedNodes.length > 0 && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
                 try {
                     explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
                 } catch (PropertyVetoException ignore) {
                     //Unable to select previously selected node
                 }
             }
+            outline.setFocusable(true);
         }
     }
 
