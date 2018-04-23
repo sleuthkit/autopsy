@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel used for common files search configuration and configuration business
  * logic. Nested within CommonFilesDialog.
  */
-public final class CommonFilesPanel extends javax.swing.JPanel {
+final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
