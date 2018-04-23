@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Provides logic for selecting common files from all data sources.
  */
-final class AllDataSources extends CommonFilesMetaDataBuilder {
+final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetaDataBuilder {
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
@@ -34,7 +34,7 @@ final class AllDataSources extends CommonFilesMetaDataBuilder {
      *
      * @param dataSourceIdMap a map of obj_id to datasource name
      */
-    AllDataSources(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    AllDataSourcesCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
 
     }

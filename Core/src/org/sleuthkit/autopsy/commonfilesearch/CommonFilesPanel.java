@@ -255,7 +255,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     }
                 }
                 if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                    builder = new AllDataSources(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
+                    builder = new AllDataSourcesCommonFilesAlgorithm(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
 
                     setTitleForAllDataSources();
                 } else {
