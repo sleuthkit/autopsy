@@ -54,7 +54,7 @@ final public class Md5Metadata {
      * How many distinct file instances exist for the MD5 represented by this object?
      * @return number of instances
      */
-    int size(){
+    public int size(){
         return this.fileInstances.size();
     }
 
