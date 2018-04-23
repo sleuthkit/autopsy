@@ -190,9 +190,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         SYS_LOGGER.log(Level.INFO, "Initializing auto ingest");
         state = State.IDLE;
         eventPublisher = new AutopsyEventPublisher();
-        // TODO: I would have liked to publish a STARTING_UP event here but
-        // the event channel isn't opened until startup() below.
-//        eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.STARTING_UP, LOCAL_HOST_NAME));
         scanMonitor = new Object();
         inputScanSchedulingExecutor = new ScheduledThreadPoolExecutor(NUM_INPUT_SCAN_SCHEDULING_THREADS, new ThreadFactoryBuilder().setNameFormat(INPUT_SCAN_SCHEDULER_THREAD_NAME).build());
         inputScanExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INPUT_SCAN_THREAD_NAME).build());
