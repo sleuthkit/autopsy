@@ -42,10 +42,7 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- * Sample data source ingest module that doesn't do much. Demonstrates per
- * ingest job module settings, checking for job cancellation, updating the
- * DataSourceIngestModuleProgress object, and use of a subset of the available
- * ingest services.
+ * Data source module to detect encryption.
  */
 class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModule {
 
@@ -55,7 +52,13 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
     private double calculatedEntropy;
 
     private final double minimumEntropy;
-
+    
+    /**
+     * Create a EncryptionDetectionDataSourceIngestModule object that will detect
+     * volumes that are encrypted and create blackboard artifacts as appropriate.
+     * The supplied EncryptionDetectionIngestJobSettings object is used to
+     * configure the module.
+     */
     EncryptionDetectionDataSourceIngestModule(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropy = settings.getMinimumEntropy();
     }
@@ -80,7 +83,7 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
                 for (VolumeSystem volumeSystem : volumeSystems) {
                     for (Volume volume : volumeSystem.getVolumes()) {
                         if (volume.getFileSystems().isEmpty()) {
-                            if (isDataSourceEncrypted(volume)) {
+                            if (isVolumeEncrypted(volume)) {
                                 System.out.println("VOLUME ENCRYPTED");
                                 return flagVolume(volume);
                             }
@@ -106,9 +109,9 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
     /**
      * Create a blackboard artifact.
      *
-     * @param The file to be processed.
+     * @param The volume to be processed.
      *
-     * @return 'OK' if the file was processed successfully, or 'ERROR' if there
+     * @return 'OK' if the volume was processed successfully, or 'ERROR' if there
      *         was a problem.
      */
     private IngestModule.ProcessResult flagVolume(Volume volume) {
@@ -157,9 +160,9 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
      *
      * @param file AbstractFile to be checked.
      *
-     * @return True if the AbstractFile is encrypted.
+     * @return True if the Volume is encrypted.
      */
-    private boolean isDataSourceEncrypted(Content dataSource) throws ReadContentInputStream.ReadContentInputStreamException, IOException, TskCoreException {
+    private boolean isVolumeEncrypted(Volume volume) throws ReadContentInputStream.ReadContentInputStreamException, IOException, TskCoreException {
         /*
          * Criteria for the checks in this method are partially based on
          * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
@@ -168,10 +171,8 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
         boolean possiblyEncrypted = true;
 
         if (possiblyEncrypted) {
-            System.out.println("CALCULATE ENTROPY");
-            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(dataSource);
+            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(volume);
             if (calculatedEntropy >= minimumEntropy) {
-                System.out.println("ENTROPY INDICATED ENCRYPTED DS");
                 return true;
             }
         }

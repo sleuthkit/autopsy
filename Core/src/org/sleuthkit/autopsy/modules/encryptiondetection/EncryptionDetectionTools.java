@@ -37,17 +37,25 @@ final class EncryptionDetectionTools {
     static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
 
     static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
-    
+
     @NbBundle.Messages({
         "EncryptionDetectionTools.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0.",
         "EncryptionDetectionTools.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater."
     })
+    /**
+     * Check if the minimum entropy setting is in the accepted range for this
+     * module.
+     */
     static void validateMinEntropyValue(double minimumEntropy) throws IngestModule.IngestModuleException {
         if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
             throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionTools_errorMessage_minimumEntropyInput());
         }
     }
 
+    /**
+     * Check if the minimum file size setting is in the accepted range for this
+     * module.
+     */
     static void validateMinFileSizeValue(int minimumFileSize) throws IngestModule.IngestModuleException {
         if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
             throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionTools_errorMessage_minimumFileSizeInput());
@@ -55,17 +63,17 @@ final class EncryptionDetectionTools {
     }
 
     /**
-     * Calculate the entropy of the file. The result is used to qualify the file
-     * as an encrypted file.
+     * Calculate the entropy of the content. The result is used to qualify the
+     * content as an encrypted content.
      *
-     * @param file The file to be calculated against.
+     * @param content The content to be calculated against.
      *
-     * @return The entropy of the file.
+     * @return The entropy of the content.
      *
      * @throws IOException If there is a failure closing or reading from the
      *                     InputStream.
      */
-    static double calculateEntropy(Content file) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
+    static double calculateEntropy(Content content) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
         /*
          * Logic in this method is based on
          * https://github.com/willjasen/entropy/blob/master/entropy.java
@@ -75,7 +83,7 @@ final class EncryptionDetectionTools {
         BufferedInputStream bin = null;
 
         try {
-            in = new ReadContentInputStream(file);
+            in = new ReadContentInputStream(content);
             bin = new BufferedInputStream(in);
 
             /*
@@ -90,7 +98,7 @@ final class EncryptionDetectionTools {
             /*
              * Calculate the entropy based on the byte occurence counts.
              */
-            long dataLength = file.getSize() - 1;
+            long dataLength = content.getSize() - 1;
             double entropyAccumulator = 0;
             for (int i = 0; i < BYTE_OCCURENCES_BUFFER_SIZE; i++) {
                 if (byteOccurences[i] > 0) {
@@ -98,7 +106,6 @@ final class EncryptionDetectionTools {
                     entropyAccumulator += (byteProbability * Math.log(byteProbability) * ONE_OVER_LOG2);
                 }
             }
-            System.out.println("ENTROPY VALUE: " + -entropyAccumulator);
             return -entropyAccumulator;
 
         } finally {
