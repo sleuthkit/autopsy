@@ -23,63 +23,47 @@ import java.beans.PropertyVetoException;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.ExplorerManager.Provider;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Provides a JPanel base class that provides a default implementation of the
- * ExplorerManager.Provider interface and selected methods of
- * theDataResultViewer interface. The ExplorerManager.Provider interface is
- * implemented to supply an explorer manager to subclasses and their child
- * components. The explorer manager is expected to be the explorer manager of a
- * top component that exposes a lookup maintained by the explorer manager to the
- * actions global context. This connects the nodes displayed in the result
- * viewer to the actions global context. The explorer manager may be either
- * supplied during construction or discovered at runtime.
+ * An abstract base class for an implementation of the result viewer interface
+ * that is a JPanel that displays the child nodes of a given node using a
+ * NetBeans explorer view as a child component. Such a result viewer should use
+ * the explorer manager of an ancestor top component to connect the lookups of
+ * the nodes displayed in the NetBeans explorer view to the actions global
+ * context. This class handles some key aspects of working with the ancestor top
+ * component's explorer manager.
+ *
+ * Instances of this class can be supplied with the top component's explorer
+ * manager during construction, but the typical use case is for the result
+ * viewer to find the ancestor top component's explorer manager at runtime.
+ *
+ * IMPORTANT: If the result viewer is going to find the ancestor top component's
+ * explorer manager at runtime, the first call to the getExplorerManager method
+ * of this class must be made AFTER the component hierarchy is fully
+ * constructed.
+ *
  */
-abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider {
+public abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
     private transient ExplorerManager explorerManager;
 
     /**
-     * Constructs a JPanel base class instance that provides a default
-     * implementation of selected methods of the DataResultViewer and
-     * ExplorerManager.Provider interfaces. The explorer manager of this viewer
-     * will be discovered at runtime.
-     */
-    AbstractDataResultViewer() {
-    }
-
-    /**
-     * Constructs a JPanel base class instance that provides a default
-     * implementation of selected methods of the DataResultViewer and
-     * ExplorerManager.Provider interfaces.
+     * Constructs an abstract base class for an implementation of the result
+     * viewer interface that is a JPanel that displays the child nodes of the
+     * given node using a NetBeans explorer view as a child component.
      *
-     * @param explorerManager
+     * @param explorerManager The explorer manager to use in the NetBeans
+     *                        explorer view child component of this result
+     *                        viewer, may be null. If null, the explorer manager
+     *                        will be discovered the first time
+     *                        getExplorerManager is called.
      */
-    AbstractDataResultViewer(ExplorerManager explorerManager) {
+    public AbstractDataResultViewer(ExplorerManager explorerManager) {
         this.explorerManager = explorerManager;
-    }
-
-    @Override
-    public void clearComponent() {
-    }
-
-    @Override
-    public void expandNode(Node n) {
-    }
-
-    @Override
-    public void resetComponent() {
-    }
-
-    @Override
-    public Component getComponent() {
-        return this;
     }
 
     @Override
@@ -95,13 +79,13 @@ abstract class AbstractDataResultViewer extends JPanel implements DataResultView
         try {
             this.getExplorerManager().setSelectedNodes(selected);
         } catch (PropertyVetoException ex) {
-            logger.log(Level.WARNING, "Couldn't set selected nodes.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Couldn't set selected nodes", ex); //NON-NLS
         }
     }
 
-    @Deprecated
     @Override
-    public void setContentViewer(DataContent contentViewer) {
+    public Component getComponent() {
+        return this;
     }
 
 }
