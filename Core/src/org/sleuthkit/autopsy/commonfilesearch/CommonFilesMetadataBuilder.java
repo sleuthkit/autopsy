@@ -172,8 +172,10 @@ abstract class CommonFilesMetadataBuilder {
         SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
 
-        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)) {
-            ResultSet resultSet = query.getResultSet();
+        try (
+                CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement);
+                ResultSet resultSet = query.getResultSet()) {
+
             while (resultSet.next()) {
                 Long objectId = resultSet.getLong(1);
                 String md5 = resultSet.getString(2);
