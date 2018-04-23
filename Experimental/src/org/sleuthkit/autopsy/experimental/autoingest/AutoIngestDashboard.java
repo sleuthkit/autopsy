@@ -224,12 +224,20 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         autoIngestMonitor.addObserver(this);
         new Thread(() -> {
             try {
-            autoIngestMonitor.startUp();
-            }
-            catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                autoIngestMonitor.startUp();
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
-            }      
+            }
         }).start();
+    }
+
+    /**
+     * Shut down parts of the AutoIngestDashboard which were initialized
+     */
+    void shutDown() {
+        if (autoIngestMonitor != null) {
+            autoIngestMonitor.shutDown();
+        }
     }
 
     @Override
