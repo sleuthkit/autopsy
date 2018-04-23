@@ -109,14 +109,14 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(InterestingHits.RootNode ihrn);
 
     T visit(InterestingHits.SetNameNode ihsn);
-    
-    T visit (Md5Node cfpn);
-    
-    T visit (CommonFilesNode cfsn);
-    
-    T visit (FileInstanceNode cfcn);
-    
-    T visit (CommonFileChildNodeLoading cfcnl);
+
+    T visit(Md5Node mn);
+
+    T visit(CommonFilesNode cfn);
+
+    T visit(FileInstanceNode fin);
+
+    T visit(CommonFileChildNodeLoading cfcnl);
 
     /*
      * Tags
@@ -187,25 +187,25 @@ public interface DisplayableItemNodeVisitor<T> {
         protected abstract T defaultVisit(DisplayableItemNode c);
 
         @Override
-        public T visit(FileInstanceNode c){  //TODO this may be fine but how do we add missing functions back to nows?  or do we?
-            return defaultVisit(c);
+        public T visit(FileInstanceNode fin) {
+            return defaultVisit(fin);
         }
-        
+
         @Override
-        public T visit(Md5Node p){ //TODO this may be fine but how do we add missing functions back to nows?  or do we?
-            return defaultVisit(p);
+        public T visit(Md5Node mn) {
+            return defaultVisit(mn);
         }
-        
+
         @Override
-        public T visit(CommonFilesNode cfsn){
-            return defaultVisit(cfsn);
+        public T visit(CommonFilesNode cfn) {
+            return defaultVisit(cfn);
         }
-        
+
         @Override
-        public T visit(CommonFileChildNodeLoading cfcnl){
+        public T visit(CommonFileChildNodeLoading cfcnl) {
             return defaultVisit(cfcnl);
         }
-        
+
         @Override
         public T visit(DirectoryNode dn) {
             return defaultVisit(dn);
