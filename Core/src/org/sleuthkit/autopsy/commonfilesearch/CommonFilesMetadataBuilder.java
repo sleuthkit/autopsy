@@ -201,6 +201,16 @@ abstract class CommonFilesMetadataBuilder {
         return new CommonFilesMetadata(commonFiles);
     }
 
+    /**
+     * Should be used by subclasses, in their 
+     * <code>buildSqlSelectStatement()</code> function to create an SQL boolean 
+     * expression which will filter our matches based on mime type.  The 
+     * expression will be conjoined to base query with an AND operator.
+     * 
+     * @return sql fragment of the form:
+     *      'and "mime_type" in ( [comma delimited list of mime types] )'
+     *      or empty string in the event that no types to filter on were given.
+     */
     String determineMimeTypeFilter() {
 
         Set<String> mimeTypesToFilterOn = new HashSet<>();
