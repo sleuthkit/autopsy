@@ -35,7 +35,6 @@ final class CommonFilesMetadata {
      * Create meta dat object which can be handed off to the node factories
      *
      * @param metadata map of md5 to parent-level node meta data
-     * @param dataSourcesMap map of obj_id to data source name
      */
     CommonFilesMetadata(Map<String, Md5Metadata> metadata) {
         this.metadata = metadata;
