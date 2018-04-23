@@ -73,7 +73,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     @GuardedBy("jobsLock")
     private JobsSnapshot jobsSnapshot;
 
-    private Map<String, AutoIngestNodeState> nodeStates = new ConcurrentHashMap<>();
+    private final Map<String, AutoIngestNodeState> nodeStates = new ConcurrentHashMap<>();
 
     /**
      * Constructs an auto ingest monitor responsible for monitoring and
@@ -670,6 +670,9 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     static final class AutoIngestNodeState {
 
+        /**
+         * The set of AIN states.
+         */
         enum State {
             STARTING_UP,
             SHUTTING_DOWN,
