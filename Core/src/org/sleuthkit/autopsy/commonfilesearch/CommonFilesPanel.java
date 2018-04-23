@@ -210,7 +210,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void search() {
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<CommonFilesMetaData, Void>() {
+        new SwingWorker<CommonFilesMetadata, Void>() {
 
             private String tabTitle;
 
@@ -240,10 +240,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonFilesMetaData doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
                 Long dataSourceId = determineDataSourceId();
 
-                CommonFilesMetaDataBuilder builder;
+                CommonFilesMetadataBuilder builder;
                 boolean filterByMedia = false;
                 boolean filterByDocuments = false;
                 if (selectedFileCategoriesButton.isSelected()) {
@@ -266,9 +266,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 this.tabTitle = builder.buildTabTitle();
 
-                CommonFilesMetaData metaData = builder.findCommonFiles();
+                CommonFilesMetadata metadata = builder.findCommonFiles();
 
-                return metaData;
+                return metadata;
             }
 
             @Override
@@ -276,7 +276,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
 
-                    CommonFilesMetaData metadata = get();
+                    CommonFilesMetadata metadata = get();
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 

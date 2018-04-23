@@ -39,13 +39,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * Generates a <code>List<CommonFilesMetaData></code> when
+ * Generates a <code>List<CommonFilesMetadata></code> when
  * <code>findCommonFiles()</code> is called, which organizes files by md5 to
  * prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
-abstract class CommonFilesMetaDataBuilder {
+abstract class CommonFilesMetadataBuilder {
 
     private final Map<Long, String> dataSourceIdToNameMap;
     private final boolean filterByMedia;
@@ -124,7 +124,7 @@ abstract class CommonFilesMetaDataBuilder {
      * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
-    CommonFilesMetaDataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    CommonFilesMetadataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         dataSourceIdToNameMap = dataSourceIdMap;
         filterByMedia = filterByMediaMimeType;
         filterByDoc = filterByDocMimeType;
@@ -163,9 +163,9 @@ abstract class CommonFilesMetaDataBuilder {
      * @throws NoCurrentCaseException
      * @throws SQLException
      */
-    public CommonFilesMetaData findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public CommonFilesMetadata findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
 
-        Map<String, Md5MetaData> commonFiles = new HashMap<>();
+        Map<String, Md5Metadata> commonFiles = new HashMap<>();
 
         SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
@@ -183,18 +183,18 @@ abstract class CommonFilesMetaDataBuilder {
                 }
 
                 if (commonFiles.containsKey(md5)) {
-                    final Md5MetaData md5MetaData = commonFiles.get(md5);
-                    md5MetaData.addFileInstanceMetaData(new FileInstanceMetaData(objectId, dataSource));
+                    final Md5Metadata md5Metadata = commonFiles.get(md5);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
                 } else {
-                    final List<FileInstanceMetaData> fileInstances = new ArrayList<>();
-                    fileInstances.add(new FileInstanceMetaData(objectId, dataSource));
-                    Md5MetaData md5MetaData = new Md5MetaData(md5, fileInstances);
-                    commonFiles.put(md5, md5MetaData);
+                    final List<FileInstanceMetadata> fileInstances = new ArrayList<>();
+                    fileInstances.add(new FileInstanceMetadata(objectId, dataSource));
+                    Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
+                    commonFiles.put(md5, md5Metadata);
                 }
             }
         }
 
-        return new CommonFilesMetaData(commonFiles);
+        return new CommonFilesMetadata(commonFiles);
     }
 
     String determineMimeTypeFilter() {
@@ -219,26 +219,26 @@ abstract class CommonFilesMetaDataBuilder {
     }
 
     @NbBundle.Messages({
-        "CommonFilesMetaDataBuilder.buildTabTitle.titleAll=Common Files (All Data Sources, %s)",
-        "CommonFilesMetaDataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
+        "CommonFilesMetadataBuilder.buildTabTitle.titleAll=Common Files (All Data Sources, %s)",
+        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
     })
     protected abstract String buildTabTitle();
 
     @NbBundle.Messages({
-        "CommonFilesMetaDataBuilder.buildCategorySelectionString.doc=Documents",
-        "CommonFilesMetaDataBuilder.buildCategorySelectionString.media=Media",
-        "CommonFilesMetaDataBuilder.buildCategorySelectionString.all=All File Categories"
+        "CommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents",
+        "CommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
+        "CommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
     })
     protected String buildCategorySelectionString() {
         if (!this.filterByDoc && !this.filterByMedia) {
-            return Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_all();
+            return Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_all();
         } else {
             List<String> filters = new ArrayList<>();
             if (this.filterByDoc) {
-                filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_doc());
+                filters.add(Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_doc());
             }
             if (this.filterByMedia) {
-                filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_media());
+                filters.add(Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_media());
             }
             return String.join(", ", filters);
         }

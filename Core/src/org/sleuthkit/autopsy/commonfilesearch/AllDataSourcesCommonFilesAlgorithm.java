@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Provides logic for selecting common files from all data sources.
  */
-final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetaDataBuilder {
+final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
 
@@ -50,7 +50,7 @@ final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetaDataBuilde
     @Override
     protected String buildTabTitle() {
         final String buildCategorySelectionString = this.buildCategorySelectionString();
-        final String titleTemplate = Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleAll();
+        final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleAll();
         return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
     }
 }
