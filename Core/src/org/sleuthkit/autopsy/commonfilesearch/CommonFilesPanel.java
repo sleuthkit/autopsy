@@ -52,7 +52,7 @@ final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    public static final Long NO_DATA_SOURCE_SELECTED = -1L;
+    private static final Long NO_DATA_SOURCE_SELECTED = -1L;
 
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
