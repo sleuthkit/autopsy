@@ -134,8 +134,7 @@ class VolatilityProcessor {
         moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), VOLATILITY, dataSourceId.toString()).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
-            directory.mkdirs();
-            
+            directory.mkdirs();   
         }
         
         // if they did not specify a profile, then run imageinfo to get one
@@ -198,7 +197,24 @@ class VolatilityProcessor {
         }
         commandLine.add(pluginToRun);
 
-        String outputFileAsString = moduleOutputPath + "\\" + pluginToRun + ".txt"; //NON-NLS
+        switch (pluginToRun) {
+            case "dlldump":
+            case "moddump":
+            case "procdump":
+            case "dumpregistry":
+            case "dumpfiles":      
+                String outputDir = moduleOutputPath + File.separator + pluginToRun;
+                File directory = new File(outputDir);
+                if (!directory.exists()) {
+                    directory.mkdirs();   
+                }
+                commandLine.add("--dump-dir=" + outputDir); //NON-NLS
+                break;
+            default:
+                break;
+        }
+        
+        String outputFileAsString = moduleOutputPath + File.separator + pluginToRun + ".txt"; //NON-NLS
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
          * Add an environment variable to force Volatility to run with the same
@@ -207,7 +223,7 @@ class VolatilityProcessor {
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
         File outputFile = new File(outputFileAsString);
         processBuilder.redirectOutput(outputFile);
-        processBuilder.redirectError(new File(moduleOutputPath + "\\Volatility_Run.err"));  //NON-NLS
+        processBuilder.redirectError(new File(moduleOutputPath + File.separator +  "Volatility_err.txt"));  //NON-NLS
         processBuilder.directory(new File(memoryImage.getParent()));
 
         try {
@@ -262,7 +278,7 @@ class VolatilityProcessor {
         "VolatilityProcessor_exceptionMessage_failedToParseImageInfo=Could not parse image info"
     })
     private String getProfileFromImageInfoOutput() throws VolatilityProcessorException {
-        File imageOutputFile = new File(moduleOutputPath + "\\imageinfo.txt"); //NON-NLS  
+        File imageOutputFile = new File(moduleOutputPath + File.separator + "imageinfo.txt"); //NON-NLS  
         try (BufferedReader br = new BufferedReader(new FileReader(imageOutputFile))) {
             String fileRead = br.readLine();
             if (fileRead != null) {

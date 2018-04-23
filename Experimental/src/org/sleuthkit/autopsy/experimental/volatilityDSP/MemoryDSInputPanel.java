@@ -75,7 +75,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
      * Creates new MemoryDSInputPanel panel for user input
      */
     private MemoryDSInputPanel(String context) {
-        this.pluginList = new String[]{"amcache", "cmdline", "cmdscan", "consoles", "malfind", "netscan", "notepad", "pslist", "psxview", "shellbags", "shimcache", "shutdown", "userassist", "apihooks", "connscan", "devicetree", "dlllist", "envars", "filescan", "gahti", "getservicesids", "getsids", "handles", "hashdump", "hivelist", "hivescan", "impscan", "ldrmodules", "lsadump", "modules", "mutantscan", "privs", "psscan", "pstree", "sockets", "svcscan", "shimcache", "timeliner", "unloadedmodules", "userhandles", "vadinfo", "verinfo"};
+        this.pluginList = new String[]{"amcache", "cmdline", "cmdscan", "consoles", "malfind", "netscan", "notepad", "pslist", "psxview", "shellbags", "shimcache", "shutdown", "userassist", "apihooks", "connscan", "devicetree", "dlllist", "envars", "filescan", "gahti", "getservicesids", "getsids", "handles", "hashdump", "hivelist", "hivescan", "impscan", "ldrmodules", "lsadump", "modules", "mutantscan", "privs", "psscan", "pstree", "sockets", "svcscan", "shimcache", "timeliner", "unloadedmodules", "userhandles", "vadinfo", "verinfo",  "dlldump", "moddump", "procdump", "dumpfiles", "dumpregistry"};
         Arrays.sort(this.pluginList);
 
         initComponents();
