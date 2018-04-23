@@ -33,6 +33,8 @@ final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetaDataBuilde
      * sources.
      *
      * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
     AllDataSourcesCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);

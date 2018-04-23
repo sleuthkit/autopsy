@@ -36,7 +36,9 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
      *
      * @param dataSourceId data source id for which common files must appear at
      * least once
-     * @param dataSourceIdMap map of obj_id to data source name
+     * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
     SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);

@@ -117,6 +117,13 @@ abstract class CommonFilesMetaDataBuilder {
             "application/vnd.oasis.opendocument.text"//NON-NLS
     ).collect(Collectors.toSet());
 
+        /**
+     * Subclass this to implement different algorithms for getting common files.
+     *
+     * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
+     */
     CommonFilesMetaDataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         dataSourceIdToNameMap = dataSourceIdMap;
         filterByMedia = filterByMediaMimeType;
